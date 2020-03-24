@@ -44,7 +44,7 @@ fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings
+atomic strings dot_atom
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -83,11 +83,15 @@ attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4').
 attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3').
 attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3').
 
+dot_atom -> atom : '$1'.
+dot_atom -> '.' atom : {dot,?anno('$1'),{atom,?anno('$1'),''},'$2'}.
+dot_atom -> dot_atom '.' atom : {dot,?anno('$1'),'$1','$3'}.
+
 type_spec -> spec_fun type_sigs : {'$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
 
-spec_fun ->                           atom : '$1'.
-spec_fun ->                  atom ':' atom : {'$1', '$3'}.
+spec_fun ->                       dot_atom : '$1'.
+spec_fun ->              dot_atom ':' atom : {'$1', '$3'}.
 
 typed_attr_val -> expr ',' typed_record_fields : {typed_record, '$1', '$3'}.
 typed_attr_val -> expr '::' top_type           : {type_def, '$1', '$3'}.
@@ -138,12 +142,12 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> atom                              : '$1'.
-type -> atom '(' ')'                      : build_gen_type('$1').
-type -> atom '(' top_types ')'            : build_type('$1', '$3').
-type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1'),
+type -> dot_atom                          : '$1'.
+type -> dot_atom '(' ')'                  : build_gen_type('$1').
+type -> dot_atom '(' top_types ')'        : build_type('$1', '$3').
+type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
                                              ['$1', '$3', []]}.
-type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1'),
+type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
                                              ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1'), list, ['$2']}.
