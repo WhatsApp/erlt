@@ -153,7 +153,11 @@ type -> '#' '{' '}'                       : {type, ?anno('$1'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1'), map, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1'), tuple, '$2'}.
+type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1'), record, [{qualified_record,'$2','$4'}]}.
 type -> '#' atom '{' '}'                  : {type, ?anno('$1'), record, ['$2']}.
+type ->
+ '#' atom ':' atom '{' field_types '}'    : {type, ?anno('$1'),
+                                             record, [{qualified_record,'$2','$4'}|'$6']}.
 type -> '#' atom '{' field_types '}'      : {type, ?anno('$1'),
                                              record, ['$2'|'$4']}.
 type -> binary_type                       : '$1'.
@@ -326,8 +330,12 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$2'),'$1','$3'}.
 
+record_pat_expr -> '#' atom ':' atom '.' atom :
+	{record_index,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
 record_pat_expr -> '#' atom '.' atom :
 	{record_index,?anno('$1'),element(3, '$2'),'$4'}.
+record_pat_expr -> '#' atom ':' atom record_tuple :
+	{record,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
 record_pat_expr -> '#' atom record_tuple :
 	{record,?anno('$1'),element(3, '$2'),'$3'}.
 
@@ -409,16 +417,28 @@ map_key -> expr : '$1'.
 %% N.B. Field names are returned as the complete object, even if they are
 %% always atoms for the moment, this might change in the future.
 
+record_expr -> '#' atom ':' atom '.' atom :
+	{record_index,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
 record_expr -> '#' atom '.' atom :
 	{record_index,?anno('$1'),element(3, '$2'),'$4'}.
+record_expr -> '#' atom ':' atom record_tuple :
+	{record,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
 record_expr -> '#' atom record_tuple :
 	{record,?anno('$1'),element(3, '$2'),'$3'}.
+record_expr -> expr_max '#' atom ':' atom '.' atom :
+	{record_field,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
 record_expr -> expr_max '#' atom '.' atom :
 	{record_field,?anno('$2'),'$1',element(3, '$3'),'$5'}.
+record_expr -> expr_max '#' atom ':' atom record_tuple :
+	{record,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
 record_expr -> expr_max '#' atom record_tuple :
 	{record,?anno('$2'),'$1',element(3, '$3'),'$4'}.
+record_expr -> record_expr '#' atom ':' atom '.' atom :
+	{record_field,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
 record_expr -> record_expr '#' atom '.' atom :
 	{record_field,?anno('$2'),'$1',element(3, '$3'),'$5'}.
+record_expr -> record_expr '#' atom ':' atom record_tuple :
+	{record,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
 record_expr -> record_expr '#' atom record_tuple :
 	{record,?anno('$2'),'$1',element(3, '$3'),'$4'}.
 
@@ -1127,6 +1147,9 @@ parse_term(Tokens) ->
 build_typed_attribute({atom,Aa,record},
 		      {typed_record, {atom,_An,RecordName}, RecTuple}) ->
     {attribute,Aa,record,{RecordName,record_tuple(RecTuple)}};
+build_typed_attribute({atom,Aa,record},
+		      {typed_record, {remote,_,{atom,MRa,Name1},{atom,_,Name2}}, RecTuple}) ->
+    {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
 build_typed_attribute({atom,Aa,Attr},
                       {type_def, {call,_,{atom,_,TypeName},Args}, Type})
   when Attr =:= 'type' ; Attr =:= 'opaque' ->
@@ -1254,6 +1277,8 @@ build_attribute({atom,Aa,record}, Val) ->
     case Val of
 	[{atom,_An,Record},RecTuple] ->
 	    {attribute,Aa,record,{Record,record_tuple(RecTuple)}};
+	[{remote,_,{atom,MRa,Name1},{atom,_,Name2}},RecTuple] ->
+        {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
 	_Other -> error_bad_decl(Aa, record)
     end;
 build_attribute({atom,Aa,file}, Val) ->
@@ -1414,7 +1439,7 @@ normalise_list([]) ->
       AbsTerm :: abstract_expr().
 abstract(T) ->
     Anno = erl_anno:new(0),
-    abstract(T, Anno, enc_func(epp:default_encoding())).
+    abstract(T, Anno, enc_func(epp2:default_encoding())).
 
 -type encoding_func() :: fun((non_neg_integer()) -> boolean()).
 
@@ -1429,10 +1454,10 @@ abstract(T) ->
 
 abstract(T, Line) when is_integer(Line) ->
     Anno = erl_anno:new(Line),
-    abstract(T, Anno, enc_func(epp:default_encoding()));
+    abstract(T, Anno, enc_func(epp2:default_encoding()));
 abstract(T, Options) when is_list(Options) ->
     Line = proplists:get_value(line, Options, 0),
-    Encoding = proplists:get_value(encoding, Options,epp:default_encoding()),
+    Encoding = proplists:get_value(encoding, Options,epp2:default_encoding()),
     EncFunc = enc_func(Encoding),
     Anno = erl_anno:new(Line),
     abstract(T, Anno, EncFunc).
