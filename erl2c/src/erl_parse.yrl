@@ -90,8 +90,8 @@ dot_atom -> dot_atom '.' atom : {dot,?anno('$1'),'$1','$3'}.
 type_spec -> spec_fun type_sigs : {'$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
 
-spec_fun ->                       dot_atom : '$1'.
-spec_fun ->              dot_atom ':' atom : {'$1', '$3'}.
+spec_fun ->                       dot_atom : fold_dots('$1').
+spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
 
 typed_attr_val -> expr ',' typed_record_fields : {typed_record, '$1', '$3'}.
 typed_attr_val -> expr '::' top_type           : {type_def, '$1', '$3'}.
@@ -142,13 +142,13 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> dot_atom                          : '$1'.
-type -> dot_atom '(' ')'                  : build_gen_type('$1').
-type -> dot_atom '(' top_types ')'        : build_type('$1', '$3').
+type -> dot_atom                          : fold_dots('$1').
+type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
+type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
 type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
-                                             ['$1', '$3', []]}.
+                                             [fold_dots('$1'), '$3', []]}.
 type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
-                                             ['$1', '$3', '$5']}.
+                                             [fold_dots('$1'), '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1'), list, ['$2']}.
 type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1'),
@@ -268,10 +268,10 @@ expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
-expr_700 -> expr_800 : '$1'.
+expr_700 -> expr_800 : fold_dots('$1').
 
 expr_800 -> expr_900 ':' expr_900 :
-	{remote,?anno('$2'),'$1','$3'}.
+	{remote,?anno('$2'),fold_dots('$1'),'$3'}.
 expr_800 -> expr_900 : '$1'.
 
 expr_900 -> expr_900 '.' expr_max :
@@ -1456,6 +1456,12 @@ normalise_list([H|T]) ->
     [normalise(H)|normalise_list(T)];
 normalise_list([]) ->
     [].
+
+fold_dots(A) ->
+    case dotted_name(A) of
+        error -> A;
+        As -> {atom,?anno(A),list_to_atom(concat_dotted(As))}
+    end.
 
 dotted_name(Name) ->
     dotted_name(Name, [], []).
