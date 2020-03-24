@@ -608,6 +608,13 @@ Erlang code.
 
 -export_type([abstract_clause/0, abstract_expr/0, abstract_form/0,
               abstract_type/0, form_info/0, error_info/0]).
+%% The following types are exported because they are used by syntax_tools
+-export_type([af_binelement/1, af_generator/0, af_remote_function/0]).
+
+%% Removed functions
+-removed([{set_line,2,"use erl_anno:set_line/2"},
+          {get_attributes,1,"erl_anno:{column,line,location,text}/1 instead"},
+          {get_attribute,2,"erl_anno:{column,line,location,text}/1 instead"}]).
 
 %% Start of Abstract Format
 
@@ -637,7 +644,7 @@ Erlang code.
 
 -type af_export() :: {'attribute', anno(), 'export', af_fa_list()}.
 
--type af_import() :: {'attribute', anno(), 'import', af_fa_list()}.
+-type af_import() :: {'attribute', anno(), 'import', {module(), af_fa_list()}}.
 
 -type af_fa_list() :: [{function_name(), arity()}].
 
@@ -1455,7 +1462,19 @@ abstract(List, A, E) when is_list(List) ->
 abstract(Tuple, A, E) when is_tuple(Tuple) ->
     {tuple,A,abstract_tuple_list(tuple_to_list(Tuple), A, E)};
 abstract(Map, A, E) when is_map(Map) ->
-    {map,A,abstract_map_fields(maps:to_list(Map),A,E)}.
+    {map,A,abstract_map_fields(maps:to_list(Map),A,E)};
+abstract(Fun, A, E) when is_function(Fun) ->
+    case erlang:fun_info(Fun, type) of
+        {type, external} ->
+            Info = erlang:fun_info(Fun),
+            {module, M} = lists:keyfind(module, 1, Info),
+            {name, F} = lists:keyfind(name, 1, Info),
+            {arity, Arity} = lists:keyfind(arity, 1, Info),
+            {'fun', A, {function,
+                        abstract(M, A, E),
+                        abstract(F, A, E),
+                        abstract(Arity, A, E)}}
+    end.
 
 abstract_list([H|T], String, A, E) ->
     case is_integer(H) andalso H >= 0 andalso E(H) of
