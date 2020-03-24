@@ -270,8 +270,6 @@ expr_800 -> expr_900 ':' expr_900 :
 	{remote,?anno('$2'),'$1','$3'}.
 expr_800 -> expr_900 : '$1'.
 
-expr_900 -> '.' expr_max :
-        {dot,?anno('$1'),{atom,?anno('$1'),''},'$2'}.
 expr_900 -> expr_900 '.' expr_max :
         {dot,?anno('$1'),'$1','$3'}.
 expr_900 -> expr_max : '$1'.
@@ -461,7 +459,9 @@ record_field -> atom '=' expr : {record_field,?anno('$1'),'$1','$3'}.
 
 function_call -> expr_800 argument_list :
 	{call,?anno('$1'),'$1',element(1, '$2')}.
-
+function_call -> '.' expr_800 argument_list :
+	{call,?anno('$1'),{dot,?anno('$1'),{atom,?anno('$1'),''},'$2'},
+         element(1, '$3')}.
 
 if_expr -> 'if' if_clauses 'end' : {'if',?anno('$1'),'$2'}.
 
