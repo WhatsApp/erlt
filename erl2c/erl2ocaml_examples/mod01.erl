@@ -215,3 +215,19 @@ comp7(X, Y) ->
 
 comp8(X, Y) ->
   X =/= Y.
+
+guard1(X, Y) when X == 1, Y == 1; X =/= Y ->
+  true;
+guard1(X, Y) when false ->
+  false;
+guard1(X, Y) ->
+  false.
+
+guard2(X, Y, []) ->
+  case X of
+    [X1|Xs] when X1 == Y ->
+      Xs;
+    Xs -> Xs
+  end;
+guard2(X, _, Z) when X == Z ->
+  Z.

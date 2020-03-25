@@ -54,11 +54,19 @@ clauses([]) -> [].
 
 clause({clause, Line, Head, Guard, Body}) ->
     case Guard of
-        [] -> ok;
-        _ -> erlang:error({not_supported, Line, guards, Guard})
-    end,
-    OHead = {"| " ++ head(Head) ++ " ->" },
-    [OHead, expr_seq(Body)].
+        [] ->
+            OHead = {"| " ++ head(Head) ++ " ->" },
+            [OHead, expr_seq(Body)];
+        Guards ->
+            [Guard1|Guards1] =
+                lists:map(
+                    fun([E0|Es]) ->
+                        lists:foldl(fun(H,Acc) -> {op, Line, 'and', Acc, H} end, E0, Es)
+                    end,
+                    Guards),
+            GuardExp = lists:foldl(fun(H,Acc) -> {op, Line, 'or', Acc, H} end, Guard1, Guards1),
+            [{"| " ++ head(Head) ++ " when" }, [expr(GuardExp)], {"->"}, expr_seq(Body)]
+    end.
 
 head(Ps) ->
     OPs = patterns(Ps),

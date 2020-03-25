@@ -168,3 +168,13 @@ let rec comp6'2 = function v_X, v_Y -> v_X > v_Y
 let rec comp7'2 = function v_X, v_Y -> v_X = v_Y
 
 let rec comp8'2 = function v_X, v_Y -> v_X <> v_Y
+
+let rec guard1'2 = function
+  | v_X, v_Y when (v_X = 1 && v_Y = 1) || v_X <> v_Y -> true
+  | v_X, v_Y when false -> false
+  | v_X, v_Y -> false
+
+let rec guard2'3 = function
+  | v_X, v_Y, [] -> (
+      match v_X with v_X1 :: v_Xs when v_X1 = v_Y -> v_Xs | v_Xs -> v_Xs )
+  | v_X, _, v_Z when v_X = v_Z -> v_Z
