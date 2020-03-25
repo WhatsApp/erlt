@@ -271,7 +271,7 @@ expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : fold_dots('$1').
 
 expr_800 -> expr_900 ':' expr_900 :
-	{remote,?anno('$2'),fold_dots('$1'),'$3'}.
+	{remote,?anno('$2'),fold_dots('$1'),fold_dots('$3')}.
 expr_800 -> expr_900 : '$1'.
 
 expr_900 -> expr_900 '.' expr_max :
