@@ -1439,7 +1439,7 @@ normalise_list([]) ->
       AbsTerm :: abstract_expr().
 abstract(T) ->
     Anno = erl_anno:new(0),
-    abstract(T, Anno, enc_func(epp2:default_encoding())).
+    abstract(T, Anno, enc_func(epp:default_encoding())).
 
 -type encoding_func() :: fun((non_neg_integer()) -> boolean()).
 
@@ -1454,10 +1454,10 @@ abstract(T) ->
 
 abstract(T, Line) when is_integer(Line) ->
     Anno = erl_anno:new(Line),
-    abstract(T, Anno, enc_func(epp2:default_encoding()));
+    abstract(T, Anno, enc_func(epp:default_encoding()));
 abstract(T, Options) when is_list(Options) ->
     Line = proplists:get_value(line, Options, 0),
-    Encoding = proplists:get_value(encoding, Options,epp2:default_encoding()),
+    Encoding = proplists:get_value(encoding, Options,epp:default_encoding()),
     EncFunc = enc_func(Encoding),
     Anno = erl_anno:new(Line),
     abstract(T, Anno, EncFunc).
