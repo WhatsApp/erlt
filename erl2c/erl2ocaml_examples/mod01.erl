@@ -1,4 +1,4 @@
--module(example01).
+-module(mod01).
 
 -compile(export_all).
 
@@ -123,3 +123,6 @@ local_n_fun() ->
       Local([]) -> []
       end,
   F.
+
+mod01F(X) ->
+  X.

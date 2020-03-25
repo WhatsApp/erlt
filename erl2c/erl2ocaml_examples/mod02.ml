@@ -9,3 +9,5 @@ let rec id'1 = function v_X -> v_X
 let rec id_caller'1 = function v_X -> id'1 v_X
 
 let rec id_rec'1 = function v_X -> id_rec'1 v_X
+
+let rec mod01call'1 = function v_X -> Mod01.mod01F'1 v_X

@@ -1,4 +1,4 @@
--module(example02).
+-module(mod02).
 -compile(export_all).
 
 odd(X) ->
@@ -15,3 +15,6 @@ id_rec(X) ->
 
 even(X) ->
   odd(X).
+
+mod01call(X) ->
+  mod01:mod01F(X).
