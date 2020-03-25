@@ -3,4 +3,3 @@
 *._.ml
 erl2c/erl2ocaml_examples/*.cmi
 erl2c/erl2ocaml_examples/*.cmo
-erl2c/erl2ocaml_examples/mods

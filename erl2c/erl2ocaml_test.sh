@@ -9,4 +9,4 @@ diff mod01._.ml mod01.ml;
 ~/.opam/default/bin/ocamlformat --enable-outside-detected-project mod02.raw._.ml -o mod02._.ml;
 diff mod02._.ml mod02.ml;
 
-ocamlc -o mods mod01.ml mod02.ml)
+ocamlc -c Ffi.ml mod01.ml mod02.ml)
