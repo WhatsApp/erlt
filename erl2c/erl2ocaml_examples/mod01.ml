@@ -118,3 +118,53 @@ let rec unary_minus'1 = function v_X -> - (-v_X)
 let rec unary_not'1 = function v_X -> not (not v_X)
 
 let rec unary_bnot'1 = function v_X -> lnot (lnot v_X)
+
+let rec binary_star'2 = function v_X, v_Y -> v_X * v_Y
+
+let rec binary_div'2 = function v_X, v_Y -> v_X / v_Y
+
+let rec binary_rem'2 = function v_X, v_Y -> v_X mod v_Y
+
+let rec binary_band'2 = function v_X, v_Y -> v_X land v_Y
+
+let rec binary_and'2 = function v_X, v_Y -> v_X && v_Y
+
+let rec binary_plus'2 = function v_X, v_Y -> v_X + v_Y
+
+let rec binary_minus'2 = function v_X, v_Y -> v_X - v_Y
+
+let rec binary_bor'2 = function v_X, v_Y -> v_X lor v_Y
+
+let rec binary_bxor'2 = function v_X, v_Y -> v_X lxor v_Y
+
+let rec binary_bsl'2 = function v_X, v_Y -> v_X lsl v_Y
+
+let rec binary_bsr'2 = function v_X, v_Y -> v_X lsr v_Y
+
+let rec binary_or'2 = function v_X, v_Y -> v_X || v_Y
+
+let rec binary_xor'2 = function v_X, v_Y -> (not v_X) <> not v_Y
+
+let rec binary_orelse'2 = function v_X, v_Y -> v_X || v_Y
+
+let rec binary_andalso'2 = function v_X, v_Y -> v_X && v_Y
+
+let rec list_plus'2 = function v_X, v_Y -> v_X @ v_Y
+
+let rec list_minus'2 = function v_X, v_Y -> Ffi.list_diff'2 (v_X, v_Y)
+
+let rec comp1'2 = function v_X, v_Y -> v_X = v_Y
+
+let rec comp2'2 = function v_X, v_Y -> v_X <> v_Y
+
+let rec comp3'2 = function v_X, v_Y -> v_X <= v_Y
+
+let rec comp4'2 = function v_X, v_Y -> v_X < v_Y
+
+let rec comp5'2 = function v_X, v_Y -> v_X >= v_Y
+
+let rec comp6'2 = function v_X, v_Y -> v_X > v_Y
+
+let rec comp7'2 = function v_X, v_Y -> v_X = v_Y
+
+let rec comp8'2 = function v_X, v_Y -> v_X <> v_Y

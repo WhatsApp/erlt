@@ -218,9 +218,12 @@ expr({call,Line,F,As}) ->
     [{"("}, expr(F), {")"}, expr({tuple, Line, As})];
 expr({op,_Line,Op,A}) ->
     [{uop(Op)}, {"("}, expr(A), {")"}];
-expr({op,Line,_Op,_L,_R}) ->
-    %% TODO - unary operations
-    erlang:error({not_supported, Line, binary_operation});
+expr({op,_Line,'xor',L,R}) ->
+    [{"("}, {"not"}, {"("}, expr(L), {")"}, {")"}, {"<>"}, {"("}, {"not"}, {"("}, expr(R), {")"}, {")"}];
+expr({op,Line,'--',L,R}) ->
+    [{"("}, {"Ffi.list_diff'2"}, expr({tuple, Line, [L, R]}), {")"}];
+expr({op,_Line,Op,L,R}) ->
+    [{"("}, expr(L), {")"}, {bop(Op)}, {"("}, expr(R), {")"}];
 expr(E={remote,Line,_M,_F}) ->
     erlang:error({not_supported, Line, E});
 expr(Exp) ->
@@ -230,6 +233,30 @@ uop('+') -> "+";
 uop('-') -> "-";
 uop('not') -> "not";
 uop('bnot') -> "lnot".
+
+bop('*') -> "*";
+bop('div') -> "/";
+bop('rem') -> "mod";
+bop('band') -> "land";
+bop('and') -> "&&";
+bop('+') -> "+";
+bop('-') -> "-";
+bop('bor') -> "lor";
+bop('bxor') -> "lxor";
+bop('bsl') -> "lsl";
+bop('bsr') -> "lsr";
+bop('or') -> "||";
+bop('orelse') -> "||";
+bop('andalso') -> "&&";
+bop('++') -> "@";
+bop('==') -> "=";
+bop('/=') -> "<>";
+bop('=<') -> "<=";
+bop('<') -> "<";
+bop('>=') -> ">=";
+bop('>') -> ">";
+bop('=:=') -> "=";
+bop('=/=') -> "<>".
 
 remote_fun(M,F,Arity) ->
     M1 = atom_to_list(M),

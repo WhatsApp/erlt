@@ -139,3 +139,79 @@ unary_not(X) ->
 
 unary_bnot(X) ->
   bnot (bnot X).
+
+%% Binary operations
+binary_star(X, Y) ->
+  X * Y.
+
+binary_div(X, Y) ->
+  X div Y.
+
+binary_rem(X, Y) ->
+  X rem Y.
+
+binary_band(X, Y) ->
+  X band Y.
+
+binary_and(X, Y) ->
+  X and Y.
+
+binary_plus(X, Y) ->
+  X + Y.
+
+binary_minus(X, Y) ->
+  X - Y.
+
+binary_bor(X, Y) ->
+  X bor Y.
+
+binary_bxor(X, Y) ->
+  X bxor Y.
+
+binary_bsl(X, Y) ->
+  X bsl Y.
+
+binary_bsr(X, Y) ->
+  X bsr Y.
+
+binary_or(X, Y) ->
+  X or Y.
+
+binary_xor(X, Y) ->
+  X xor Y.
+
+binary_orelse(X, Y) ->
+  X orelse Y.
+
+binary_andalso(X, Y) ->
+  X andalso Y.
+
+list_plus(X, Y) ->
+  X ++ Y.
+
+list_minus(X, Y) ->
+  X -- Y.
+
+comp1(X, Y) ->
+  X == Y.
+
+comp2(X, Y) ->
+  X /= Y.
+
+comp3(X, Y) ->
+  X =< Y.
+
+comp4(X, Y) ->
+  X < Y.
+
+comp5(X, Y) ->
+  X >= Y.
+
+comp6(X, Y) ->
+  X > Y.
+
+comp7(X, Y) ->
+  X =:= Y.
+
+comp8(X, Y) ->
+  X =/= Y.
