@@ -216,9 +216,8 @@ expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
     [{"("}, {FQFn}, expr({tuple, Line, As}), {")"}];
 expr({call,Line,F,As}) ->
     [{"("}, expr(F), {")"}, expr({tuple, Line, As})];
-expr({op,Line,_Op,_A0}) ->
-    %% TODO - unary operations
-    erlang:error({not_supported, Line, unary_operation});
+expr({op,_Line,Op,A}) ->
+    [{uop(Op)}, {"("}, expr(A), {")"}];
 expr({op,Line,_Op,_L,_R}) ->
     %% TODO - unary operations
     erlang:error({not_supported, Line, binary_operation});
@@ -226,6 +225,11 @@ expr(E={remote,Line,_M,_F}) ->
     erlang:error({not_supported, Line, E});
 expr(Exp) ->
     erlang:error({not_supported, erlang:element(2, Exp), expr, Exp}).
+
+uop('+') -> "+";
+uop('-') -> "-";
+uop('not') -> "not";
+uop('bnot') -> "lnot".
 
 remote_fun(M,F,Arity) ->
     M1 = atom_to_list(M),

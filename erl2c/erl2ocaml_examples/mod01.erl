@@ -126,3 +126,16 @@ local_n_fun() ->
 
 mod01F(X) ->
   X.
+
+%% Unary operations
+unary_plus(X) ->
+  + (+ X).
+
+unary_minus(X) ->
+  - (- X).
+
+unary_not(X) ->
+  not (not X).
+
+unary_bnot(X) ->
+  bnot (bnot X).

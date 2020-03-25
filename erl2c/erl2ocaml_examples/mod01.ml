@@ -110,3 +110,11 @@ let rec local_n_fun'0 = function
       v_F
 
 let rec mod01F'1 = function v_X -> v_X
+
+let rec unary_plus'1 = function v_X -> + (+v_X)
+
+let rec unary_minus'1 = function v_X -> - (-v_X)
+
+let rec unary_not'1 = function v_X -> not (not v_X)
+
+let rec unary_bnot'1 = function v_X -> lnot (lnot v_X)
