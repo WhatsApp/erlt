@@ -5,8 +5,8 @@
 
 main(["-in", InFile, "-out", OutFile]) ->
     {ok, Forms} = epp:parse_file(InFile, []),
-    Funs = getFns(Forms),
-    SortedFuns = mkSCCs(Funs),
+    Funs = get_fns(Forms),
+    SortedFuns = mk_sccs(Funs),
     RawDocs = erl2ocaml_sccs(SortedFuns),
     %% io:format("RawDocs:\n~p\n", [RawDocs]),
     IndentedDocs = indent_docs(RawDocs),
@@ -14,8 +14,8 @@ main(["-in", InFile, "-out", OutFile]) ->
 main(["-ast", File]) ->
     {ok, Forms} = epp:parse_file(File, []),
     io:format("Forms:\n~p\n", [Forms]),
-    Funs = getFns(Forms),
-    SortedFuns = mkSCCs(Funs),
+    Funs = get_fns(Forms),
+    SortedFuns = mk_sccs(Funs),
     io:format("SortedFuns:\n~p\n", [SortedFuns]);
 main(_) ->
     usage().
@@ -338,22 +338,22 @@ first_upper([]) ->
 first_upper([H|T]) ->
     string:uppercase([H]) ++ T.
 
-getFns([]) ->
+get_fns([]) ->
     [];
-getFns([{attribute,_,etc,skip}|[_|Forms]]) ->
-    getFns(Forms);
-getFns([F={function,_,_,_,_}|Forms]) ->
-    [F|getFns(Forms)];
-getFns([_|Forms]) ->
-    getFns(Forms).
+get_fns([{attribute,_,etc,skip}|[_|Forms]]) ->
+    get_fns(Forms);
+get_fns([F={function,_,_,_,_}|Forms]) ->
+    [F| get_fns(Forms)];
+get_fns([_|Forms]) ->
+    get_fns(Forms).
 
 %%%%%%%%%%%%%%%%%
 
-mkSCCs(Functions) ->
+mk_sccs(Functions) ->
     Graph = digraph:new(),
     VFuns = lists:map(
         fun(Fun) ->
-            V = {getFnName(Fun),getFnArgLen(Fun)},
+            V = {get_fn_name(Fun), get_fn_arg_len(Fun)},
             digraph:add_vertex(Graph,V),
             {V,Fun}
         end,
@@ -361,15 +361,15 @@ mkSCCs(Functions) ->
     % For every function
     lists:map(
         fun(Fun) ->
-            Clauses = getFnClauses(Fun),
+            Clauses = get_fn_clauses(Fun),
             % a function needs the type of the function calls in it's body
             % hence edges are of from FromV -(needed_by)-> ToV
-            ToV = {getFnName(Fun),getFnArgLen(Fun)},
+            ToV = {get_fn_name(Fun), get_fn_arg_len(Fun)},
             % For every clause
             lists:map(
                 fun(C) ->
                     % get calls in a clause
-                    FromVs = getCallsFromClause(C),
+                    FromVs = get_calls_from_clause(C),
                     % add all the calls as edges to the graph
                     lists:map(
                         fun(FromV)->
@@ -381,13 +381,13 @@ mkSCCs(Functions) ->
         end,
         Functions),
     SCCs = digraph_utils:strong_components(Graph),
-    FunsIndex = lists:map(fun(Fun) -> {getFnName(Fun),getFnArgLen(Fun)} end, Functions),
+    FunsIndex = lists:map(fun(Fun) -> {get_fn_name(Fun), get_fn_arg_len(Fun)} end, Functions),
     OFuns = lists:foldl(fun(F, Map) -> Map#{F => maps:size(Map)} end, #{}, FunsIndex),
     SCCs1 = lists:map(
         fun(SCC) -> lists:sort(fun(A, B) -> maps:get(A, OFuns) < maps:get(B, OFuns) end, SCC) end,
         SCCs),
     SCCs2 = lists:sort(fun([F1|_],[F2|_]) -> maps:get(F1, OFuns) < maps:get(F2, OFuns) end, SCCs1),
-    SCCGraph = buildSccGraph(Graph, SCCs2),
+    SCCGraph = build_scc_graph(Graph, SCCs2),
     SortedSCCs1 = topsort(SCCs2, SCCGraph),
     lists:map(
         fun(SCC) ->
@@ -413,43 +413,34 @@ topsort(SCCs, SCCGraph) ->
     digraph:del_vertex(SCCGraph, Free),
     [Free] ++ topsort(Rest, SCCGraph).
 
-getCallsFromClause(Clause) ->
-    getCallsFromBody(element(5,Clause)).
+get_calls_from_clause(Clause) ->
+    get_calls_from_body(element(5,Clause)).
 
-getCallsFromBody(Exprs) ->
+get_calls_from_body(Exprs) ->
     lists:concat(
-        lists:map(fun getCallsFromExpr/1,Exprs)).
+        lists:map(fun get_calls_from_expr/1,Exprs)).
 
-% TODO: unmatched cases:
-% - call to fn in qualified with module,
-% - fun module:foo/x
-
-% case of standard call: "FnAtom(Args)"
-getCallsFromExpr({call,_,{atom,_,Fn},FnArgs}) ->
+get_calls_from_expr({call,_,{atom,_,Fn},FnArgs}) ->
     [ {Fn,length(FnArgs)} |
         lists:concat(
-            lists:map(fun getCallsFromExpr/1, FnArgs))];
-% If the value "fun Fn/Arity" is present in the body,
-% then the function (most probably) calls it!
-getCallsFromExpr({'fun',_,{function,Fn,Arity}}) ->
+            lists:map(fun get_calls_from_expr/1, FnArgs))];
+get_calls_from_expr({'fun',_,{function,Fn,Arity}}) ->
     [ {Fn,Arity} ];
-getCallsFromExpr(E) when is_tuple(E) ->
+get_calls_from_expr(E) when is_tuple(E) ->
     Es_ = erlang:tuple_to_list(E),
-    lists:concat(lists:map(fun getCallsFromExpr/1, Es_));
-getCallsFromExpr(Es) when is_list(Es) ->
-    lists:concat(lists:map(fun getCallsFromExpr/1, Es));
-getCallsFromExpr(_) -> [].
+    lists:concat(lists:map(fun get_calls_from_expr/1, Es_));
+get_calls_from_expr(Es) when is_list(Es) ->
+    lists:concat(lists:map(fun get_calls_from_expr/1, Es));
+get_calls_from_expr(_) -> [].
 
--spec buildSccGraph(digraph:graph(),[[digraph:vertex()]]) -> digraph:graph().
-buildSccGraph(FunDGraph,SCCs) ->
+-spec build_scc_graph(digraph:graph(),[[digraph:vertex()]]) -> digraph:graph().
+build_scc_graph(FunDGraph,SCCs) ->
     SCCGraph = digraph:new(),
     % add all SCC vertices to SCCGraph
     lists:map(fun(V) -> digraph:add_vertex(SCCGraph,V) end, SCCs),
     % add edges between SCCs using the (component) edges between members
     % If an edge exists between members of two different SCCs,
     % then there exists an edge between the two SCCs in the exact same direction.
-    % Since we separated strongly connected components as vertices in SCCGraph,
-    % there are no cycles in SCCGraph (PROOF?!)
     lists:map(
         fun(FromSCC) ->
             % for every element of an SCC
@@ -459,7 +450,7 @@ buildSccGraph(FunDGraph,SCCs) ->
                     % (FunV -needed_by-> Neighbour)
                     Neighbours = digraph:out_neighbours(FunDGraph,FunV),
                     % find parents of neighbours
-                    ToSCCs = lists:map(fun(Nb) -> findParentSCC(SCCs,Nb) end, Neighbours),
+                    ToSCCs = lists:map(fun(Nb) -> find_parent_sCC(SCCs,Nb) end, Neighbours),
                     lists:map(
                         fun(ToSCC) ->
                             digraph:add_edge(SCCGraph,FromSCC,ToSCC)
@@ -471,11 +462,11 @@ buildSccGraph(FunDGraph,SCCs) ->
         SCCs),
     SCCGraph.
 
-findParentSCC(SCCs,FunV) ->
+find_parent_sCC(SCCs,FunV) ->
     Parents = lists:dropwhile(
         fun(SCC) -> not lists:member(FunV,SCC) end, SCCs),
     lists:nth(1,Parents).
 
-getFnName (Fun) -> element(3,Fun).
-getFnArgLen (Fun) -> element(4,Fun).
-getFnClauses (Fun) -> element(5,Fun).
+get_fn_name(Fun) -> element(3,Fun).
+get_fn_arg_len(Fun) -> element(4,Fun).
+get_fn_clauses(Fun) -> element(5,Fun).
