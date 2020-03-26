@@ -675,9 +675,10 @@ type({type,Line,map,any},_Context) ->
 type({type,Line,map,Ps},Context) ->
     Ps1 = map_pair_types(Ps,Context),
     {type,Line,map,Ps1};
-type({type,Line,record,[{atom,La,N}|Fs]},Context) ->
+type({type,Line,record,[Name|Fs]},Context) ->
     Fs1 = field_types(Fs,Context),
-    {type,Line,record,[{atom,La,N}|Fs1]};
+    %% minor change to not die on qualified records
+    {type,Line,record,[Name|Fs1]};
 type({remote_type,Line,[{atom,Lm,M},{atom,Ln,N},As]},Context) ->
     As1 = type_list(As,Context),
     {remote_type,Line,[{atom,Lm,M},{atom,Ln,N},As1]};
