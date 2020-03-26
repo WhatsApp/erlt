@@ -142,13 +142,13 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> dot_atom                          : fold_dots('$1').
+type -> dot_atom                          : '$1'.
 type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
 type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
 type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
-                                             [fold_dots('$1'), '$3', []]}.
+                                             ['$1', '$3', []]}.
 type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
-                                             [fold_dots('$1'), '$3', '$5']}.
+                                             ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1'), list, ['$2']}.
 type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1'),
@@ -268,10 +268,10 @@ expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
-expr_700 -> expr_800 : fold_dots('$1').
+expr_700 -> expr_800 : '$1'.
 
 expr_800 -> expr_900 ':' expr_900 :
-	{remote,?anno('$2'),fold_dots('$1'),fold_dots('$3')}.
+	{remote,?anno('$2'),'$1','$3'}.
 expr_800 -> expr_900 : '$1'.
 
 expr_900 -> expr_900 '.' expr_max :
@@ -464,7 +464,14 @@ record_field -> atom '=' expr : {record_field,?anno('$1'),'$1','$3'}.
 function_call -> expr_800 argument_list :
 	{call,?anno('$1'),'$1',element(1, '$2')}.
 function_call -> '.' expr_800 argument_list :
-	{call,?anno('$1'),{dot,?anno('$1'),{atom,?anno('$1'),''},'$2'},
+        {call,?anno('$1'),
+         case '$2' of
+             {remote,L,M,F} ->
+                 %% move dot inside remote
+                 {remote,L,{dot,?anno('$1'),{atom,?anno('$1'),''},M},F};
+             _ ->
+                 {dot,?anno('$1'),{atom,?anno('$1'),''},'$2'}
+         end,
          element(1, '$3')}.
 
 if_expr -> 'if' if_clauses 'end' : {'if',?anno('$1'),'$2'}.
@@ -626,7 +633,7 @@ Erlang code.
 
 -export([parse_form/1,parse_exprs/1,parse_term/1]).
 -export([normalise/1,abstract/1,tokens/1,tokens/2]).
--export([abstract/2,dotted_name/1,balance_dotted/1]).
+-export([abstract/2,dotted_name/1,balance_dotted/1,fold_dots/1]).
 -export([inop_prec/1,preop_prec/1,func_prec/0,max_prec/0]).
 -export([type_inop_prec/1,type_preop_prec/1]).
 -export([map_anno/2, fold_anno/3, mapfold_anno/3,
@@ -1269,6 +1276,8 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
+build_attribute({atom,Aa,module}, [{dot,_,_,_}=M]) ->
+    build_attribute({atom,Aa,module}, [fold_dots(M)]);
 build_attribute({atom,Aa,module}, Val) ->
     case Val of
 	[{atom,_Am,Module}] ->
