@@ -1,2 +1,5 @@
 **/*.swp
 *.beam
+*._.ml
+erl2c/erl2ocaml_examples/*.cmi
+erl2c/erl2ocaml_examples/*.cmo
