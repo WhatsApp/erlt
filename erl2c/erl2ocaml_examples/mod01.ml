@@ -178,3 +178,12 @@ let rec guard2'3 = function
   | v_X, v_Y, [] -> (
       match v_X with v_X1 :: v_Xs when v_X1 = v_Y -> v_Xs | v_Xs -> v_Xs )
   | v_X, _, v_Z when v_X = v_Z -> v_Z
+
+let rec p_match_tuple0'1 = function () -> Ffi.Tuple1 ()
+
+let rec p_match_tuple1'1 = function Ffi.Tuple1 v_X -> ()
+
+let rec p_match_invoke'0 = function
+  | () ->
+      let _ = p_match_tuple0'1 () in
+      p_match_tuple0'1 (Ffi.Tuple1 ())

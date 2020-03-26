@@ -106,6 +106,9 @@ pattern({nil,_Line}) ->
     "[]";
 pattern({cons,_Line,H,T}) ->
     "(" ++ pattern(H) ++  "::" ++ pattern(T) ++ ")";
+pattern({tuple,_Line,[P]}) ->
+    Docs = ["Ffi.Tuple1(", [pattern(P)] , ")"],
+    binary_to_list(iolist_to_binary(Docs));
 pattern({tuple,_Line,Ps}) ->
     OPs = patterns(Ps),
     Ops1 = interleave(false, OPs),
@@ -171,7 +174,11 @@ expr(E={lc,Line,_,_}) ->
     erlang:error({not_supported, Line, list_comprehension, E});
 expr(E={bc,Line,_,_}) ->
     erlang:error({not_supported, Line, binary_comprehension, E});
+expr({tuple,_Line,[E]}) ->
+    [{"Ffi.Tuple1("}, [expr(E)], {")"}];
 expr({tuple,_Line,Es}) ->
+    expr({tuple1,_Line,Es});
+expr({tuple1,_Line,Es}) ->
     Docs0 = lists:map(fun expr/1, Es),
     Docs1 = interleave1(false, Docs0),
     Docs2 = [{"("}, Docs1, {")"}],
@@ -214,22 +221,22 @@ expr({named_fun,Line,Name,Clauses}) ->
     expr({block, Line, Exprs});
 expr({call,Line,{atom, _, F},As}) ->
     Fn = atom_to_list(F) ++ "'" ++ integer_to_list(length(As)),
-    [{"("}, {Fn}, expr({tuple, Line, As}), {")"}];
+    [{"("}, {Fn}, expr({tuple1, Line, As}), {")"}];
 expr({call,_Line,{remote,_Line,{atom,_,maps},{atom,_,get}},[{atom,_,K}, M]}) ->
     MExp = expr(M),
     [{"("}, MExp, {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
 expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
     Arity = length(As),
     FQFn = remote_fun(M,F,Arity),
-    [{"("}, {FQFn}, expr({tuple, Line, As}), {")"}];
+    [{"("}, {FQFn}, expr({tuple1, Line, As}), {")"}];
 expr({call,Line,F,As}) ->
-    [{"("}, expr(F), {")"}, expr({tuple, Line, As})];
+    [{"("}, expr(F), {")"}, expr({tuple1, Line, As})];
 expr({op,_Line,Op,A}) ->
     [{uop(Op)}, {"("}, expr(A), {")"}];
 expr({op,_Line,'xor',L,R}) ->
     [{"("}, {"not"}, {"("}, expr(L), {")"}, {")"}, {"<>"}, {"("}, {"not"}, {"("}, expr(R), {")"}, {")"}];
 expr({op,Line,'--',L,R}) ->
-    [{"("}, {"Ffi.list_diff'2"}, expr({tuple, Line, [L, R]}), {")"}];
+    [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}), {")"}];
 expr({op,_Line,Op,L,R}) ->
     [{"("}, expr(L), {")"}, {bop(Op)}, {"("}, expr(R), {")"}];
 expr(E={remote,Line,_M,_F}) ->

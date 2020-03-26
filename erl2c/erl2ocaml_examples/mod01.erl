@@ -231,3 +231,13 @@ guard2(X, Y, []) ->
     end;
 guard2(X, _, Z) when X == Z ->
     Z.
+
+p_match_tuple0({}) ->
+    {{}}.
+
+p_match_tuple1({X}) ->
+    {}.
+
+p_match_invoke() ->
+    p_match_tuple0({}),
+    p_match_tuple0({{}}).
