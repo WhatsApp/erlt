@@ -240,4 +240,4 @@ p_match_tuple1({X}) ->
 
 p_match_invoke() ->
     p_match_tuple0({}),
-    p_match_tuple0({{}}).
+    p_match_tuple1({{}}).
