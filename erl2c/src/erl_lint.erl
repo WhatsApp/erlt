@@ -2556,11 +2556,12 @@ expr({op,Line,Op,L,R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
     {Evt2,St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op,Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3),St2};
+expr({op,Line,'.',_L,_R}, _Vt, St) ->
+    %% remove later - specific warning for now makes it easier to debug
+    {[],add_error(Line, illegal_dots, St)};
 expr({op,_Line,_Op,L,R}, Vt, St) ->
     expr_list([L,R], Vt, St);                   %They see the same variables
 %% The following are not allowed to occur anywhere!
-expr({dot,Line,_L,_R}, _Vt, St) ->
-    {[],add_error(Line, illegal_dots, St)};
 expr({remote,Line,_M,_F}, _Vt, St) ->
     {[],add_error(Line, illegal_expr, St)}.
 

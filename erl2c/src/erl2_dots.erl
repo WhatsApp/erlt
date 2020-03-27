@@ -503,16 +503,16 @@ expr({'fun',Line,Body},Context) ->
     end;
 expr({named_fun,Loc,Name,Cs},Context) ->
     {named_fun,Loc,Name,fun_clauses(Cs,Context)};
-expr({call,Line,{dot,L1,{atom,_,''},{dot,L1,M0,F0}},As0},Context) ->
+expr({call,Line,{op,L1,'.',{atom,_,''},{op,L1,'.',M0,F0}},As0},Context) ->
     %% '.'-prefixed call does not get namespace expanded
     expr({call,Line,{remote,L1,M0,F0},As0},Context);
-expr({call,Line,{dot,L1,M0,F0},As0},Context) ->
+expr({call,Line,{op,L1,'.',M0,F0},As0},Context) ->
     %% dot as module/function separator in call
     case M0 of
         {atom,_,_} ->
             Prefix = Context#context.namespace,
             %% non-dotted module name gets expanded to local namespace
-            M1 = {dot,L1,{atom,L1,Prefix},M0},
+            M1 = {op,L1,'.',{atom,L1,Prefix},M0},
             expr({call,Line,{remote,L1,M1,F0},As0},Context);
         _ ->
             expr({call,Line,{remote,L1,M0,F0},As0},Context)
@@ -538,16 +538,17 @@ expr({bin,Line,Fs},Context) ->
 expr({op,Line,Op,A0},Context) ->
     A1 = expr(A0,Context),
     {op,Line,Op,A1};
+expr({op,Line,'.',L,R}=D,Context) ->
+    %% fold dotted atoms
+    D1 = erl_parse:fold_dots(D),
+    case D1 of
+        {atom,_,_} -> D1;
+        _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
+    end;
 expr({op,Line,Op,L0,R0},Context) ->
     L1 = expr(L0,Context),
     R1 = expr(R0,Context),				%They see the same variables
     {op,Line,Op,L1,R1};
-expr({dot,Line,L,R}=D,Context) ->
-    D1 = erl_parse:fold_dots(D),
-    case D1 of
-        {atom,_,_} -> D1;
-        _ -> {dot,Line,expr(L,Context),expr(R,Context)}  % leave to the linter
-    end;
 %% The following are not allowed to occur anywhere!
 expr({remote,Line,M0,F0},Context) ->
     M1 = expr(M0,Context),
@@ -647,16 +648,17 @@ type({integer,Line,I},_Context) ->
 type({op,Line,Op,T},Context) ->
     T1 = type(T,Context),
     {op,Line,Op,T1};
+type({op,Line,'.',L,R}=D,Context) ->
+    %% fold dotted atoms
+    D1 = erl_parse:fold_dots(D),
+    case D1 of
+        {atom,_,_} -> D1;
+        _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
+    end;
 type({op,Line,Op,L,R},Context) ->
     L1 = type(L,Context),
     R1 = type(R,Context),
     {op,Line,Op,L1,R1};
-type({dot,Line,L,R}=D,Context) ->
-    D1 = erl_parse:fold_dots(D),
-    case D1 of
-        {atom,_,_} -> D1;
-        _ -> {dot,Line,expr(L,Context),expr(R,Context)}  % leave to the linter
-    end;
 type({type,Line,binary,[M,N]},Context) ->
     M1 = type(M,Context),
     N1 = type(N,Context),
@@ -684,9 +686,10 @@ type({remote_type,Line,[{atom,Lm,M},{atom,Ln,N},As]},Context) ->
     {remote_type,Line,[{atom,Lm,M},{atom,Ln,N},As1]};
 type({remote_type,Line,[M,{atom,Ln,N},As]},Context) ->
     As1 = type_list(As,Context),
+    %% fold dotted atoms
     M1 = case erl_parse:fold_dots(M) of
              {atom,La,A} -> {atom,La,A};
-             {dot,Ld,L,R} -> {dot,Ld,L,R}  % leave to the linter
+             {op,Ld,'.',L,R} -> {op,Ld,'.',L,R}  % leave to linter
          end,
     {remote_type,Line,[M1,{atom,Ln,N},As1]};
 type({type,Line,tuple,any},_Context) ->

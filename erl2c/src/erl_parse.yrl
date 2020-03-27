@@ -84,8 +84,8 @@ attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3').
 attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3').
 
 dot_atom -> atom : '$1'.
-dot_atom -> '.' atom : {dot,?anno('$1'),{atom,?anno('$1'),''},'$2'}.
-dot_atom -> dot_atom '.' atom : {dot,?anno('$1'),'$1','$3'}.
+dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
+dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
 
 type_spec -> spec_fun type_sigs : {'$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
@@ -275,7 +275,7 @@ expr_800 -> expr_900 ':' expr_900 :
 expr_800 -> expr_900 : '$1'.
 
 expr_900 -> expr_900 '.' expr_max :
-        {dot,?anno('$1'),'$1','$3'}.
+        ?mkop2('$1', '$2', '$3').
 expr_900 -> expr_max : '$1'.
 
 expr_max -> var : '$1'.
@@ -468,9 +468,9 @@ function_call -> '.' expr_800 argument_list :
          case '$2' of
              {remote,L,M,F} ->
                  %% move dot inside remote
-                 {remote,L,{dot,?anno('$1'),{atom,?anno('$1'),''},M},F};
+                 {remote,L,?mkop2({atom,?anno('$1'),''},'$1',M),F};
              _ ->
-                 {dot,?anno('$1'),{atom,?anno('$1'),''},'$2'}
+                 ?mkop2({atom,?anno('$1'),''},'$1','$2')
          end,
          element(1, '$3')}.
 
@@ -1276,7 +1276,7 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
-build_attribute({atom,Aa,module}, [{dot,_,_,_}=M]) ->
+build_attribute({atom,Aa,module}, [{op,_Am,'.',_L,_R}=M]) ->
     build_attribute({atom,Aa,module}, [fold_dots(M)]);
 build_attribute({atom,Aa,module}, Val) ->
     case Val of
@@ -1447,7 +1447,7 @@ normalise({map,_,Pairs}=M) ->
 normalise({'fun',_,{function,{atom,_,M},{atom,_,F},{integer,_,A}}}) ->
     fun M:F/A;
 %% Dotted atom
-normalise({dot, _, _, _}=D) ->
+normalise({op,_,'.',_,_}=D) ->
     case dotted_name(D) of
         error -> erlang:error({badarg,D});
         As -> list_to_atom(concat_dotted(As))
@@ -1475,7 +1475,7 @@ fold_dots(A) ->
 dotted_name(Name) ->
     dotted_name(Name, [], []).
 
-dotted_name({dot, _, E1, E2}, Es, As) ->
+dotted_name({op, _, '.', E1, E2}, Es, As) ->
     dotted_name(E1, [E2 | Es], As);
 dotted_name({atom, _, A}, [E | Es], As) ->
     dotted_name(E, Es, [A | As]);
@@ -1487,12 +1487,12 @@ dotted_name(_, _, _) ->
 %% ensure that dotted atoms are nested left-associatively even if
 %% parentheses were used to force another parse: X.(b.a) -> (X.b).a, and
 %% X.(p.(q.r)) -> (X.((p.q).r) -> (X.(p.q)).r) -> ((X.p).q).r)
-balance_dotted({dot, L1, E1, E2}) ->
+balance_dotted({op, L1, '.', E1, E2}) ->
     case balance_dotted(E2) of
-        {dot,L2,E21,{atom,_,_}=E22} ->
-            {dot,L2,balance_dotted({dot,L1,E1,E21}),E22};
+        {op,L2,'.',E21,{atom,_,_}=E22} ->
+            {op,L2,'.',balance_dotted({op,L1,'.',E1,E21}),E22};
         NewE2 ->
-            {dot,L1,balance_dotted(E1),NewE2}
+            {op,L1,'.',balance_dotted(E1),NewE2}
     end;
 balance_dotted(E) ->
     E.
