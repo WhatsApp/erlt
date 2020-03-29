@@ -1,8 +1,6 @@
-let same''2 (x, y) = x == y
+let rec odd'1 = function v_X -> even'1 (v_X - 1)
 
-let rec odd'1 = function v_X -> even'1 v_X
-
-and even'1 = function v_X -> odd'1 v_X
+and even'1 = function 0 -> true | v_X -> odd'1 (v_X - 1)
 
 let rec id'1 = function v_X -> v_X
 

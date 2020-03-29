@@ -1,5 +1,3 @@
-let same''2 (x, y) = x == y
-
 let rec id'1 = function v_X -> v_X
 
 let rec arg13'3 = function v_X, v_Y, v_Z -> v_X
@@ -40,11 +38,37 @@ let rec mk_map'2 = function
         method set_b new_val_b = {<val_b = new_val_b>}
       end
 
-let rec update_map'3 = function
-  | v_M, v_A, v_B ->
-      let _ = same''2 (v_M, v_M#set_a (v_A, v_B)) in
-      let _ = same''2 (v_M, v_M#set_b (v_B, v_A)) in
-      (v_M#set_a (v_A, v_B))#set_b (v_B, v_A)
+let rec update_map1'2 = function
+  | v_M, v_A ->
+      let _ = Ffi.same'2 (v_M, v_M#set_a v_A) in
+      let _ = Ffi.same'2 (v_A, v_M#get_a) in
+      v_M#set_a v_A
+
+let rec update_map2'2 = function
+  | v_M, v_A ->
+      let _ = Ffi.same'2 (v_M, v_M#set_a v_A) in
+      let _ = Ffi.same'2 (v_A, v_M#get_a) in
+      v_M#set_a v_A
+
+let rec update_map3'1 = function
+  | v_M ->
+      let v_A0 = v_M#get_a in
+      let v_B0 = v_M#get_a in
+      let _ = Ffi.same'2 (v_M, v_M#set_a v_B0) in
+      let _ = Ffi.same'2 (v_M, v_M#set_b v_A0) in
+      let _ = Ffi.same'2 (v_B0, v_M#get_a) in
+      let _ = Ffi.same'2 (v_A0, v_M#get_b) in
+      (v_M#set_a v_B0)#set_b v_A0
+
+let rec update_map4'1 = function
+  | v_M ->
+      let v_A0 = v_M#get_a in
+      let v_B0 = v_M#get_a in
+      let _ = Ffi.same'2 (v_M, v_M#set_a v_B0) in
+      let _ = Ffi.same'2 (v_M, v_M#set_b v_A0) in
+      let _ = Ffi.same'2 (v_B0, v_M#get_a) in
+      let _ = Ffi.same'2 (v_A0, v_M#get_b) in
+      (v_M#set_a v_B0)#set_b v_A0
 
 let rec access_map'1 = function v_M -> (v_M#get_id, v_M#get_location)
 
@@ -52,12 +76,6 @@ let rec mk_seq'0 = function
   | () ->
       let v_X = 1 in
       let v_Y = 2 in
-      let _ = 3 in
-      let _ = 4 in
-      (v_X, v_Y)
-
-let rec mk_seq'2 = function
-  | v_X, v_Y ->
       let _ = 3 in
       let _ = 4 in
       (v_X, v_Y)
@@ -178,6 +196,7 @@ let rec guard2'3 = function
   | v_X, v_Y, [] -> (
       match v_X with v_X1 :: v_Xs when v_X1 = v_Y -> v_Xs | v_Xs -> v_Xs )
   | v_X, _, v_Z when v_X = v_Z -> v_Z
+  | _, _, v_Z -> v_Z
 
 let rec p_match_tuple0'1 = function () -> Ffi.Tuple1 ()
 
