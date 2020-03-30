@@ -269,7 +269,7 @@ comp3(X, Y) ->
 comp4(X, Y) ->
     X < Y.
 
--spec comp4(A, A) -> boolean().
+-spec comp5(A, A) -> boolean().
 comp5(X, Y) ->
     X >= Y.
 

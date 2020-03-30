@@ -8,6 +8,6 @@ val even'1 : int -> bool
 
 val mod01call'1 : 'X -> 'X
 
-val list_to_string'1 : 'A list -> string
+val list_to_string'1 : _ list -> string
 
 val int_to_string'1 : int -> string

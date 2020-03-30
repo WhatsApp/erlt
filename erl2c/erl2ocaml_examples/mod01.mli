@@ -148,7 +148,7 @@ val comp3'2 : 'A * 'A -> bool
 
 val comp4'2 : 'A * 'A -> bool
 
-val comp4'2 : 'A * 'A -> bool
+val comp5'2 : 'A * 'A -> bool
 
 val comp6'2 : 'A * 'A -> bool
 

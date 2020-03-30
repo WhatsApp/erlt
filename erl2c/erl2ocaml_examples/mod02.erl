@@ -26,7 +26,7 @@ even(X) ->
 mod01call(X) ->
     mod01:mod01F(X).
 
--spec list_to_string([A]) -> string().
+-spec list_to_string([_]) -> string().
 list_to_string([]) ->
     ffi:to_string([]);
 list_to_string(X) ->
