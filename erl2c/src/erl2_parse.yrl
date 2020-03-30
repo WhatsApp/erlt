@@ -58,7 +58,7 @@ bin_base_type bin_unit_type type_200 type_300 type_400 type_500.
 Terminals
 char integer float atom string var
 
-'(' ')' ',' '->' '{' '}' '[' ']' '|' '||' '<-' ';' ':' '#' '.'
+'(' ')' ',' '->' '{' '}' '[' ']' '|' '||' '<-' ';' ':' '#' '.' '^'
 'after' 'begin' 'case' 'try' 'catch' 'end' 'fun' 'if' 'of' 'receive' 'when'
 'andalso' 'orelse'
 'bnot' 'not'
@@ -600,6 +600,7 @@ prefix_op -> '+' : '$1'.
 prefix_op -> '-' : '$1'.
 prefix_op -> 'bnot' : '$1'.
 prefix_op -> 'not' : '$1'.
+prefix_op -> '^' : '$1'.
 
 mult_op -> '/' : '$1'.
 mult_op -> '*' : '$1'.
@@ -1059,7 +1060,7 @@ Erlang code.
 
 -type af_unary_op(T) :: {'op', anno(), unary_op(), T}.
 
--type unary_op() :: '+' | '-' | 'bnot' | 'not'.
+-type unary_op() :: '+' | '-' | 'bnot' | 'not' | '^'.
 
 %% See also lib/stdlib/{src/erl_bits.erl,include/erl_bits.hrl}.
 -type type_specifier_list() :: 'default' | [type_specifier(), ...].
@@ -1705,7 +1706,7 @@ inop_prec('#') -> {800,700,800};
 inop_prec(':') -> {900,800,900};
 inop_prec('.') -> {900,900,1000}.
 
--type pre_op() :: 'catch' | '+' | '-' | 'bnot' | 'not' | '#'.
+-type pre_op() :: 'catch' | '+' | '-' | 'bnot' | 'not' | '#' | '^'.
 
 -spec preop_prec(pre_op()) -> {prec(), prec()}.
 
@@ -1714,6 +1715,7 @@ preop_prec('+') -> {600,700};
 preop_prec('-') -> {600,700};
 preop_prec('bnot') -> {600,700};
 preop_prec('not') -> {600,700};
+preop_prec('^') -> {600,700};
 preop_prec('#') -> {700,800}.
 
 -spec func_prec() -> {prec(),prec()}.
@@ -1729,7 +1731,7 @@ max_prec() -> 1000.
 -type type_inop() :: '::' | '|' | '..' | '+' | '-' | 'bor' | 'bxor'
                    | 'bsl' | 'bsr' | '*' | '/' | 'div' | 'rem' | 'band'.
 
--type type_preop() :: '+' | '-' | 'bnot' | '#'.
+-type type_preop() :: '+' | '-' | 'bnot' | '#' | '^'.
 
 -spec type_inop_prec(type_inop()) -> {prec(), prec(), prec()}.
 
@@ -1755,6 +1757,7 @@ type_inop_prec('#') -> {800,700,800}.
 type_preop_prec('+') -> {600,700};
 type_preop_prec('-') -> {600,700};
 type_preop_prec('bnot') -> {600,700};
+type_preop_prec('^') -> {600,700};
 type_preop_prec('#') -> {700,800}.
 
 -type erl2_parse_tree() :: abstract_clause()
