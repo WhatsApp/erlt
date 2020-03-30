@@ -671,7 +671,7 @@ type({type,Line,tuple,any},_Context) ->
 type({type,Line,tuple,Ts},Context) ->
     Ts1 = type_list(Ts,Context),
     {type,Line,tuple,Ts1};
-type({type,Line,enum,A,Ts},Context) ->
+type({type,Line,enum,[A|Ts]},Context) ->
     M = {atom, Line, Context#context.module},
     A1 = type(A,Context),
     Ts1 = type_list(Ts,Context),
