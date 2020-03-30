@@ -1,3 +1,7 @@
+type ('A, 'B) my_pair = 'A * 'B
+
+type 'A my_pair2 = ('A, 'A) my_pair
+
 val id'1 : 'X -> 'X
 
 val arg13'3 : 'X * _ * _ -> 'X
@@ -165,3 +169,45 @@ val p_match_tuple0'1 : unit -> unit Ffi.tuple1
 val p_match_tuple1'1 : _ Ffi.tuple1 -> unit
 
 val p_match_invoke'0 : unit -> unit
+
+val any_id'1 : Ffi.any -> Ffi.any
+
+val atom_id'1 : Ffi.atom -> Ffi.atom
+
+val binary_id'1 : Ffi.binary -> Ffi.binary
+
+val bitstring_id'1 : Ffi.bitstring -> Ffi.bitstring
+
+val byte_id'1 : Ffi.byte -> Ffi.byte
+
+val float_id'1 : float -> float
+
+val identifier_id'1 : Ffi.identifier -> Ffi.identifier
+
+val iodata_id'1 : Ffi.iodata -> Ffi.iodata
+
+val iolist_id'1 : Ffi.iolist -> Ffi.iolist
+
+val map_id'1 : ('A, 'B) Ffi.map -> ('A, 'B) Ffi.map
+
+val none_id'1 : Ffi.none -> Ffi.none
+
+val noreturn_id'1 : Ffi.no_return -> Ffi.no_return
+
+val number_id'1 : Ffi.none -> Ffi.none
+
+val pid_id'1 : Ffi.pid -> Ffi.pid
+
+val port_id'1 : Ffi.port -> Ffi.port
+
+val reference_id'1 : Ffi.reference -> Ffi.reference
+
+val term_id'1 : Ffi.term -> Ffi.term
+
+val timeout_id'1 : Ffi.timeout -> Ffi.timeout
+
+val ints_id'1 :
+  Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer ->
+  Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer
+
+val mk_my_pair'2 : 'A * 'B -> ('A, 'B) my_pair

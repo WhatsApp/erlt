@@ -317,3 +317,66 @@ p_match_tuple1({X}) ->
 p_match_invoke() ->
     p_match_tuple0({}),
     p_match_tuple1({{}}).
+
+-spec any_id(any()) -> any().
+any_id(A) -> A.
+
+-spec atom_id(atom()) -> atom().
+atom_id(A) -> A.
+
+-spec binary_id(binary()) -> binary().
+binary_id(A) -> A.
+
+-spec bitstring_id(bitstring()) -> bitstring().
+bitstring_id(A) -> A.
+
+-spec byte_id(byte()) -> byte().
+byte_id(A) -> A.
+
+-spec float_id(float()) -> float().
+float_id(X) -> X.
+
+-spec identifier_id(identifier()) -> identifier().
+identifier_id(A) -> A.
+
+-spec iodata_id(iodata()) -> iodata().
+iodata_id(A) -> A.
+
+-spec iolist_id(iolist()) -> iolist().
+iolist_id(A) -> A.
+
+-spec map_id(#{A => B}) -> #{A => B}.
+map_id(M) -> M.
+
+-spec none_id(none()) -> none().
+none_id(A) -> A.
+
+-spec noreturn_id(no_return()) -> no_return().
+noreturn_id(A) -> none_id(A).
+
+-spec number_id(none()) -> none().
+number_id(A) -> A.
+
+-spec pid_id(pid()) -> pid().
+pid_id(A) -> A.
+
+-spec port_id(port()) -> port().
+port_id(A) -> A.
+
+-spec reference_id(reference()) -> reference().
+reference_id(A) -> A.
+
+-spec term_id(term()) -> term().
+term_id(A) -> A.
+
+-spec timeout_id(timeout()) -> timeout().
+timeout_id(A) -> A.
+
+-spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
+ints_id(X) -> X.
+
+-type my_pair(A, B) :: {A, B}.
+-type my_pair2(A) :: my_pair(A, A).
+
+-spec mk_my_pair(A, B) -> my_pair(A, B).
+mk_my_pair(A,B) -> {A, B}.

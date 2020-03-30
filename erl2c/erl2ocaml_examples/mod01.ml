@@ -1,3 +1,7 @@
+type ('A, 'B) my_pair = 'A * 'B
+
+type 'A my_pair2 = ('A, 'A) my_pair
+
 let rec id'1 = function v_X -> v_X
 
 let rec arg13'3 = function v_X, v_Y, v_Z -> v_X
@@ -206,3 +210,43 @@ let rec p_match_invoke'0 = function
   | () ->
       let _ = p_match_tuple0'1 () in
       p_match_tuple1'1 (Ffi.Tuple1 ())
+
+let rec any_id'1 = function v_A -> v_A
+
+let rec atom_id'1 = function v_A -> v_A
+
+let rec binary_id'1 = function v_A -> v_A
+
+let rec bitstring_id'1 = function v_A -> v_A
+
+let rec byte_id'1 = function v_A -> v_A
+
+let rec float_id'1 = function v_X -> v_X
+
+let rec identifier_id'1 = function v_A -> v_A
+
+let rec iodata_id'1 = function v_A -> v_A
+
+let rec iolist_id'1 = function v_A -> v_A
+
+let rec map_id'1 = function v_M -> v_M
+
+let rec none_id'1 = function v_A -> v_A
+
+let rec noreturn_id'1 = function v_A -> none_id'1 v_A
+
+let rec number_id'1 = function v_A -> v_A
+
+let rec pid_id'1 = function v_A -> v_A
+
+let rec port_id'1 = function v_A -> v_A
+
+let rec reference_id'1 = function v_A -> v_A
+
+let rec term_id'1 = function v_A -> v_A
+
+let rec timeout_id'1 = function v_A -> v_A
+
+let rec ints_id'1 = function v_X -> v_X
+
+let rec mk_my_pair'2 = function v_A, v_B -> (v_A, v_B)

@@ -9,12 +9,16 @@ main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     SortedFuns = mk_sccs(Funs),
     RawDocs = erl2ocaml_sccs(SortedFuns),
     %% io:format("RawDocs:\n~p\n", [RawDocs]),
-    IndentedDocs = indent_docs(RawDocs),
-    file:write_file(MlFile, iolist_to_binary(IndentedDocs)),
-
+    FunLines = indent_docs(RawDocs),
     Specs = get_specs(Forms),
     SpecLines = lists:map(fun erl2ocaml_spec/1, Specs),
-    file:write_file(MliFile, iolist_to_binary(SpecLines));
+    %% TODO - this also requires SCCs
+    TypeDefs = get_type_defs(Forms),
+    TypeDefLines = lists:map(fun erl2ocaml_type_def/1, TypeDefs),
+    InterfaceLines = TypeDefLines ++ SpecLines,
+    ImplementationLines = TypeDefLines ++ FunLines,
+    file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
+    file:write_file(MlFile, iolist_to_binary(ImplementationLines));
 main(["-ast", File]) ->
     {ok, Forms} = epp:parse_file(File, []),
     io:format("Forms:\n~p\n", [Forms]),
@@ -22,7 +26,9 @@ main(["-ast", File]) ->
     SortedFuns = mk_sccs(Funs),
     io:format("SortedFuns:\n~p\n", [SortedFuns]),
     Specs = get_specs(Forms),
-    io:format("Specs:\n~p\n", [Specs]);
+    io:format("Specs:\n~p\n", [Specs]),
+    TypeDefs = get_type_defs(Forms),
+    io:format("Types:\n~p\n", [TypeDefs]);
 main(_) ->
     usage().
 
@@ -42,7 +48,6 @@ erl2ocaml_scc1(true, [F|Fs]) ->
     [translateFun("let rec ", F) | erl2ocaml_scc1(false, Fs)];
 erl2ocaml_scc1(false, [F|Fs]) ->
     [translateFun("and ", F) | erl2ocaml_scc1(false, Fs)].
-
 
 translateFun(Prefix, {function, _Line, Name, Arity, Clauses}) ->
     function(Prefix, Name, Arity, Clauses).
@@ -316,13 +321,20 @@ update_assoc(_Acc, {map_field_exact,Line,E,_V}) ->
 update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}) ->
     erlang:error({not_supported, Line, update_map_field_assoc, E}).
 
+erl2ocaml_type_def({N,T,[]}) ->
+    "type " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
+erl2ocaml_type_def({N,T,[TV]}) ->
+    "type " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
+erl2ocaml_type_def({N,T,TVs}) ->
+    TVs1 = lists:map(fun type/1, TVs),
+    "type (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
+
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
     FTStr = type(FT),
     "val " ++ NameStr ++ " : " ++ FTStr ++ "\n";
 erl2ocaml_spec({attribute,Line,spec,_}) ->
     erlang:error({not_supported, Line, spec}).
-
 
 get_map_tv([]) -> undefined;
 get_map_tv([{type,_,map_field_exact,[{var,_,'_'},{var,_,G}]}]) ->
@@ -338,6 +350,46 @@ gen_map_tv() ->
     erlang:put('map_tv_counter', Counter + 1),
     "'map_" ++ integer_to_list(Counter).
 
+type({type,Ln,any,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,any},[]]});
+type({type,Ln,atom,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,atom},[]]});
+type({type,Ln,binary,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,binary},[]]});
+type({type,Ln,bitstring,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,bitstring},[]]});
+type({type,Ln,byte,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,byte},[]]});
+type({type,Ln,identifier,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,identifier},[]]});
+type({type,Ln,iodata,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iodata},[]]});
+type({type,Ln,iolist,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iolist},[]]});
+type({type,Ln,neg_integer,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,neg_integer},[]]});
+type({type,Ln,node,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,node},[]]});
+type({type,Ln,non_neg_integer,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,non_neg_integer},[]]});
+type({type,Ln,none,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,none},[]]});
+type({type,Ln,no_return,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,no_return},[]]});
+type({type,Ln,number,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,number},[]]});
+type({type,Ln,pid,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pid},[]]});
+type({type,Ln,port,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,port},[]]});
+type({type,Ln,pos_integer,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pos_integer},[]]});
+type({type,Ln,reference,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,reference},[]]});
+type({type,Ln,term,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,term},[]]});
+type({type,Ln,timeout,[]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,timeout},[]]});
 type({type,_Line,'fun',[{type,_,product,[A]},B]}) ->
     T1 = "(" ++ type(A) ++ ")",
     T2 = "(" ++ type(B) ++ ")",
@@ -348,6 +400,8 @@ type({type,_Line,'fun',[{type,Lt,product,As},B]}) ->
     T1 ++ " ->" ++ T2;
 type({type, _,integer,[]}) ->
     "int";
+type({type, _,float,[]}) ->
+    "float";
 type({type, _,string,[]}) ->
     "string";
 type({type, _,char,[]}) ->
@@ -356,6 +410,8 @@ type({type, _,boolean,[]}) ->
     "bool";
 type({type, _,list,[T]}) ->
     type(T) ++ " list";
+type({type,Ln,map,[{type,_,map_field_assoc,[KT,VT]}]}) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,map},[KT,VT]]});
 type({type,_,map,Assocs}) ->
     {MapTV, Suffix, Assocs1} =
         case get_map_tv(Assocs) of
@@ -378,6 +434,16 @@ type({type,_Line,tuple,[T]}) ->
 type({type,_Line,tuple,TS}) ->
     TSStrings = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, TS),
     interleave(false, " * ", TSStrings);
+type({user_type,_,N,[]}) ->
+    atom_to_list(N);
+type({user_type,_,N,Ts}) ->
+    Ts1 = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts),
+    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ atom_to_list(N);
+type({remote_type,_,[{atom,_,M},{atom,_,N},[]]}) ->
+    first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
+type({remote_type,_,[{atom,_,M},{atom,_,N},Ts]}) ->
+    Ts1 = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts),
+    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
 type(Type) ->
     Line = erlang:element(2, Type),
     erlang:error({not_supported, Line, Type}).
@@ -442,7 +508,12 @@ get_specs([{attribute,_,spec,_}=Spec|Forms]) ->
 get_specs([_|Forms]) ->
     get_specs(Forms).
 
-%%%%%%%%%%%%%%%%%
+get_type_defs([]) ->
+    [];
+get_type_defs([{attribute,_,type,Type}|Forms]) ->
+    [Type| get_type_defs(Forms)];
+get_type_defs([_|Forms]) ->
+    get_type_defs(Forms).
 
 mk_sccs(Functions) ->
     Graph = digraph:new(),
