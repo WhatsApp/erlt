@@ -193,6 +193,11 @@ pattern({cons,Line,H0,T0},Context) ->
 pattern({tuple,Line,Ps0},Context) ->
     Ps1 = pattern_list(Ps0,Context),
     {tuple,Line,Ps1};
+pattern({enum,Line,{op,_L,'.',M0,A0},Ps0},Context) ->
+    M1 = pattern(M0,Context),
+    A1 = pattern(A0,Context),
+    Ps1 = pattern_list(Ps0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, A1 | Ps1]};
 pattern({enum,Line,A0,Ps0},Context) ->
     M = {atom, Line, Context#context.module},
     A1 = pattern(A0,Context),
@@ -428,6 +433,11 @@ expr({bc,Line,E0,Qs0},Context) ->
 expr({tuple,Line,Es0},Context) ->
     Es1 = expr_list(Es0,Context),
     {tuple,Line,Es1};
+expr({enum,Line,{op,_L,'.',M0,A0},Es0},Context) ->
+    M1 = expr(M0,Context),
+    A1 = expr(A0,Context),
+    Es1 = expr_list(Es0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, A1 | Es1]};
 expr({enum,Line,A0,Es0},Context) ->
     M = {atom, Line, Context#context.module},
     A1 = expr(A0,Context),
@@ -671,6 +681,11 @@ type({type,Line,tuple,any},_Context) ->
 type({type,Line,tuple,Ts},Context) ->
     Ts1 = type_list(Ts,Context),
     {type,Line,tuple,Ts1};
+type({type,Line,enum,[{op,_L,'.',M0,A0}|Ts]},Context) ->
+    M1 = type(M0,Context),
+    A1 = type(A0,Context),
+    Ts1 = type_list(Ts,Context),
+    {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M1, A1 | Ts1]};
 type({type,Line,enum,[A|Ts]},Context) ->
     M = {atom, Line, Context#context.module},
     A1 = type(A,Context),
