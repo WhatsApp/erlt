@@ -1,6 +1,6 @@
-type ('A, 'B) my_pair = 'A * 'B
-
 type 'A my_pair2 = ('A, 'A) my_pair
+
+and ('A, 'B) my_pair = 'A * 'B
 
 let rec id'1 = function v_X -> v_X
 

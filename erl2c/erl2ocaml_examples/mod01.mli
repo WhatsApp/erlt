@@ -1,6 +1,6 @@
-type ('A, 'B) my_pair = 'A * 'B
-
 type 'A my_pair2 = ('A, 'A) my_pair
+
+and ('A, 'B) my_pair = 'A * 'B
 
 val id'1 : 'X -> 'X
 

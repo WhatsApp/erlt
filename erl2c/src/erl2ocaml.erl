@@ -14,7 +14,7 @@ main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     SpecLines = lists:map(fun erl2ocaml_spec/1, Specs),
     %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
-    TypeDefLines = lists:map(fun erl2ocaml_type_def/1, TypeDefs),
+    TypeDefLines = type_def_scc(TypeDefs),
     InterfaceLines = TypeDefLines ++ SpecLines,
     ImplementationLines = TypeDefLines ++ FunLines,
     file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
@@ -321,13 +321,23 @@ update_assoc(_Acc, {map_field_exact,Line,E,_V}) ->
 update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}) ->
     erlang:error({not_supported, Line, update_map_field_assoc, E}).
 
-erl2ocaml_type_def({N,T,[]}) ->
-    "type " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
-erl2ocaml_type_def({N,T,[TV]}) ->
-    "type " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
-erl2ocaml_type_def({N,T,TVs}) ->
+type_def_scc(TypeDefs) ->
+    type_def_scc(true, TypeDefs).
+
+type_def_scc(_, []) ->
+    "";
+type_def_scc(true, [TypeDef|TypeDefs]) ->
+    type_def("type", TypeDef) ++ type_def_scc(false, TypeDefs);
+type_def_scc(false, [TypeDef|TypeDefs]) ->
+    type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
+
+type_def(OCamlPrefix, {N,T,[]}) ->
+    OCamlPrefix ++ " " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
+type_def(OCamlPrefix, {N,T,[TV]}) ->
+    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
+type_def(OCamlPrefix, {N,T,TVs}) ->
     TVs1 = lists:map(fun type/1, TVs),
-    "type (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
+    OCamlPrefix ++ " (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),

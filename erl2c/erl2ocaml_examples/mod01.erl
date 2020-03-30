@@ -375,8 +375,8 @@ timeout_id(A) -> A.
 -spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
 ints_id(X) -> X.
 
--type my_pair(A, B) :: {A, B}.
 -type my_pair2(A) :: my_pair(A, A).
+-type my_pair(A, B) :: {A, B}.
 
 -spec mk_my_pair(A, B) -> my_pair(A, B).
 mk_my_pair(A,B) -> {A, B}.
