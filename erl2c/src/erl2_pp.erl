@@ -28,13 +28,13 @@
 
 -import(lists, [append/1,foldr/3,map/2,mapfoldl/3,reverse/1,reverse/2]).
 -import(io_lib, [write/1,format/2]).
--import(erl_parse, [inop_prec/1,preop_prec/1,func_prec/0,max_prec/0,
+-import(erl2_parse, [inop_prec/1,preop_prec/1,func_prec/0,max_prec/0,
                     type_inop_prec/1, type_preop_prec/1]).
 
 -define(MAXLINE, 72).
 
 -type(hook_function() :: none
-                       | fun((Expr :: erl_parse:abstract_expr(),
+                       | fun((Expr :: erl2_parse:abstract_expr(),
                               CurrentIndentation :: integer(),
                               CurrentPrecedence :: non_neg_integer(),
                               Options :: options()) ->
@@ -66,7 +66,7 @@
         %% erl_pp does not use the annoations, but test it anyway.
         %% Note: hooks are not handled.
         _ = try
-                erl_parse:map_anno(fun(A) when is_list(A) -> A end, T)
+                erl2_parse:map_anno(fun(A) when is_list(A) -> A end, T)
             catch
                 _:_ ->
                     erlang:error(badarg, [T])
@@ -82,13 +82,13 @@
 %%%
 
 -spec(form(Form) -> io_lib:chars() when
-      Form :: erl_parse:abstract_form() | erl_parse:form_info()).
+      Form :: erl2_parse:abstract_form() | erl2_parse:form_info()).
 
 form(Thing) ->
     form(Thing, none).
 
 -spec(form(Form, Options) -> io_lib:chars() when
-      Form :: erl_parse:abstract_form() | erl_parse:form_info(),
+      Form :: erl2_parse:abstract_form() | erl2_parse:form_info(),
       Options :: options()).
 
 form(Thing, Options) ->
@@ -97,13 +97,13 @@ form(Thing, Options) ->
     frmt(lform(Thing, options(Options)), State).
 
 -spec(attribute(Attribute) -> io_lib:chars() when
-      Attribute :: erl_parse:abstract_form()).
+      Attribute :: erl2_parse:abstract_form()).
 
 attribute(Thing) ->
     attribute(Thing, none).
 
 -spec(attribute(Attribute, Options) -> io_lib:chars() when
-      Attribute :: erl_parse:abstract_form(),
+      Attribute :: erl2_parse:abstract_form(),
       Options :: options()).
 
 attribute(Thing, Options) ->
@@ -112,13 +112,13 @@ attribute(Thing, Options) ->
     frmt(lattribute(Thing, options(Options)), State).
 
 -spec(function(Function) -> io_lib:chars() when
-      Function :: erl_parse:abstract_form()).
+      Function :: erl2_parse:abstract_form()).
 
 function(F) ->
     function(F, none).
 
 -spec(function(Function, Options) -> io_lib:chars() when
-      Function :: erl_parse:abstract_form(),
+      Function :: erl2_parse:abstract_form(),
       Options :: options()).
 
 function(F, Options) ->
@@ -126,13 +126,13 @@ function(F, Options) ->
     frmt(lfunction(F, options(Options)), state(Options)).
 
 -spec(guard(Guard) -> io_lib:chars() when
-      Guard :: [erl_parse:abstract_expr()]).
+      Guard :: [erl2_parse:abstract_expr()]).
 
 guard(Gs) ->
     guard(Gs, none).
 
 -spec(guard(Guard, Options) -> io_lib:chars() when
-      Guard :: [erl_parse:abstract_expr()],
+      Guard :: [erl2_parse:abstract_expr()],
       Options :: options()).
 
 guard(Gs, Options) ->
@@ -140,20 +140,20 @@ guard(Gs, Options) ->
     frmt(lguard(Gs, options(Options)), state(Options)).
 
 -spec(exprs(Expressions) -> io_lib:chars() when
-      Expressions :: [erl_parse:abstract_expr()]).
+      Expressions :: [erl2_parse:abstract_expr()]).
 
 exprs(Es) ->
     exprs(Es, 0, none).
 
 -spec(exprs(Expressions, Options) -> io_lib:chars() when
-      Expressions :: [erl_parse:abstract_expr()],
+      Expressions :: [erl2_parse:abstract_expr()],
       Options :: options()).
 
 exprs(Es, Options) ->
     exprs(Es, 0, Options).
 
 -spec(exprs(Expressions, Indent, Options) -> io_lib:chars() when
-      Expressions :: [erl_parse:abstract_expr()],
+      Expressions :: [erl2_parse:abstract_expr()],
       Indent :: integer(),
       Options :: options()).
 
@@ -162,14 +162,14 @@ exprs(Es, I, Options) ->
     frmt({seq,[],[],[$,],lexprs(Es, options(Options))}, I, state(Options)).
 
 -spec(expr(Expression) -> io_lib:chars() when
-      Expression :: erl_parse:abstract_expr()).
+      Expression :: erl2_parse:abstract_expr()).
 
 expr(E) ->
     ?TEST(E),
     frmt(lexpr(E, 0, options(none)), state(none)).
 
 -spec(expr(Expression, Options) -> io_lib:chars() when
-      Expression :: erl_parse:abstract_expr(),
+      Expression :: erl2_parse:abstract_expr(),
       Options :: options()).
 
 expr(E, Options) ->
@@ -177,7 +177,7 @@ expr(E, Options) ->
     frmt(lexpr(E, 0, options(Options)), state(Options)).
 
 -spec(expr(Expression, Indent, Options) -> io_lib:chars() when
-      Expression :: erl_parse:abstract_expr(),
+      Expression :: erl2_parse:abstract_expr(),
       Indent :: integer(),
       Options :: options()).
 
@@ -186,7 +186,7 @@ expr(E, I, Options) ->
     frmt(lexpr(E, 0, options(Options)), I, state(Options)).
 
 -spec(expr(Expression, Indent, Precedence, Options) -> io_lib:chars() when
-      Expression :: erl_parse:abstract_expr(),
+      Expression :: erl2_parse:abstract_expr(),
       Indent :: integer(),
       Precedence :: non_neg_integer(),
       Options :: options()).
@@ -314,7 +314,7 @@ lattribute(Name, Arg, Options) ->
     attr(Name, [abstract(Arg, Options)]).
 
 abstract(Arg, #options{encoding = Encoding}) ->
-    erl_parse:abstract(Arg, [{encoding,Encoding}]).
+    erl2_parse:abstract(Arg, [{encoding,Encoding}]).
 
 typeattr(Tag, {TypeName,Type,Args}, _Opts) ->
     {first,leaf("-"++atom_to_list(Tag)++" "),
@@ -624,9 +624,9 @@ lexpr({'fun',L,{function,_,_}=Func,Extra}, Prec, Opts) ->
 lexpr({'fun',L,{function,M,F,A}}, Prec, Opts)
   when is_atom(M), is_atom(F), is_integer(A) ->
     %% For backward compatibility with pre-R15 abstract format.
-    Mod = erl_parse:abstract(M),
-    Fun = erl_parse:abstract(F),
-    Arity = erl_parse:abstract(A),
+    Mod = erl2_parse:abstract(M),
+    Fun = erl2_parse:abstract(F),
+    Arity = erl2_parse:abstract(A),
     lexpr({'fun',L,{function,Mod,Fun,Arity}}, Prec, Opts);
 lexpr({'fun',_,{function,M,F,A}}, _Prec, Opts) ->
     %% New format in R15.
@@ -685,6 +685,12 @@ lexpr({match,_,Lhs,Rhs}, Prec, Opts) ->
     Pl = lexpr(Lhs, L, Opts),
     Rl = lexpr(Rhs, R, Opts),
     El = {list,[{cstep,[Pl,' ='],Rl}]},
+    maybe_paren(P, Prec, El);
+lexpr({op,_,Op,Arg}, Prec, Opts) when Op =:= '^' ->
+    %% no space after caret
+    {P,R} = preop_prec(Op),
+    Ol = {reserved, leaf(format("~s", [Op]))},
+    El = [Ol,lexpr(Arg, R, Opts)],
     maybe_paren(P, Prec, El);
 lexpr({op,_,Op,Arg}, Prec, Opts) ->
     {P,R} = preop_prec(Op),
@@ -785,11 +791,11 @@ bit_elem_types([T | Rest]) ->
     [bit_elem_type(T), $-|bit_elem_types(Rest)].
 
 bit_elem_type({A,B}) ->
-    [lexpr(erl_parse:abstract(A), options(none)),
+    [lexpr(erl2_parse:abstract(A), options(none)),
      $:,
-     lexpr(erl_parse:abstract(B), options(none))];
+     lexpr(erl2_parse:abstract(B), options(none))];
 bit_elem_type(T) ->
-    lexpr(erl_parse:abstract(T), options(none)).
+    lexpr(erl2_parse:abstract(T), options(none)).
 
 %% end of BITS
 

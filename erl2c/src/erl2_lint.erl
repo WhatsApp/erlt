@@ -1657,6 +1657,11 @@ pattern({var,_Line,'_'}, _Vt, _Old, _Bvt, St) ->
     {[],[],St}; %Ignore anonymous variable
 pattern({var,Line,V}, _Vt, Old, Bvt, St) ->
     pat_var(V, Line, Old, Bvt, St);
+pattern({op,_,'^',{var,Line,V}}, Vt, _Old, _Bvt, St) ->
+    %% this is checked like a normal expression variable,
+    %% since it will actually become a guard test
+    {Vt1,St1} = expr_var(V, Line, Vt, St),
+    {Vt1,[],St1};
 pattern({char,_Line,_C}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({integer,_Line,_I}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({float,_Line,_F}, _Vt, _Old, _Bvt, St) -> {[],[],St};

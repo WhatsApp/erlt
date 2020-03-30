@@ -1268,7 +1268,7 @@ erl2_to_erl1(Code, St) ->
 
 
 do_erl2_to_erl1(Code, St) ->
-    foldl_transform([erl2_enum,erl2_dots], Code, St).
+    foldl_transform([erl2_enum,erl2_dots,erl2_caret], Code, St).
 
 
 foldl_transform([T|Ts], Code0, St) ->
