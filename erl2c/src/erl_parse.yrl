@@ -30,7 +30,7 @@ expr expr_100 expr_150 expr_160 expr_200 expr_300 expr_400 expr_500
 expr_600 expr_650 expr_700 expr_800 expr_900
 expr_max
 pat_expr pat_expr_200 pat_expr_300 pat_expr_400 pat_expr_500
-pat_expr_600 pat_expr_650 pat_expr_700 pat_expr_800
+pat_expr_600 pat_expr_650 pat_expr_700 pat_expr_800 pat_expr_900
 pat_expr_max map_pat_expr record_pat_expr
 pat_argument_list pat_exprs
 list tail
@@ -322,7 +322,11 @@ pat_expr_650 -> pat_expr_700 : '$1'.
 pat_expr_700 -> record_pat_expr : '$1'.
 pat_expr_700 -> pat_expr_800 : '$1'.
 
-pat_expr_800 -> pat_expr_max : '$1'.
+pat_expr_800 -> pat_expr_900 : '$1'.
+
+pat_expr_900 -> pat_expr_900 '.' pat_expr_max :
+        ?mkop2('$1', '$2', '$3').
+pat_expr_900 -> pat_expr_max : '$1'.
 
 pat_expr_max -> var : '$1'.
 pat_expr_max -> atomic : '$1'.

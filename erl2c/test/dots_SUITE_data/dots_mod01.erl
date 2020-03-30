@@ -1,6 +1,6 @@
 -module(dots_mod01) .
 
--export([f/0, g/0, p/1, q/1, r/1, s/1, t/2]).
+-export([f/0, g/0, p/1, q/1, r/1, s/1, t/2, u/2, v/1]).
 
 -type foo() :: ab.bc.cd | de.ef.
 
@@ -55,3 +55,15 @@ t(X, [_]=Y) ->
     .lists.append(X, Y);
 t(X, Y) ->
     .lists:append(X, Y).
+
+%% dotted atoms in function heads and match patterns
+u(X, foo.bar) ->
+    {ok, abc.de.fg, _} = X.
+
+v(X) ->
+    %% dotted atoms in case-like patterns and catch clause patterns
+    try lists:reverse(X) of
+        {ok, abc.d.ef.g} -> ok
+    catch
+        exit: foo.bar.baz : Trace -> {caught, Trace}
+    end.

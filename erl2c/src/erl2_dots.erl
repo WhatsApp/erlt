@@ -220,6 +220,13 @@ pattern({bin,Line,Fs},Context) ->
     {bin,Line,Fs2};
 pattern({op,Line,Op,A},_Context) ->
     {op,Line,Op,A};
+pattern({op,Line,'.',L,R}=D,Context) ->
+    %% fold dotted atoms
+    D1 = erl_parse:fold_dots(D),
+    case D1 of
+        {atom,_,_} -> D1;
+        _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
+    end;
 pattern({op,Line,Op,L,R},_Context) ->
     {op,Line,Op,L,R}.
 
