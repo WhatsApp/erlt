@@ -339,7 +339,9 @@ type_def_scc(false, [TypeDef|TypeDefs]) ->
     type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
 
 type_def(OCamlPrefix, {alias, {N,T,TVs}}) ->
-    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ type(T) ++ "\n".
+    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ type(T) ++ "\n";
+type_def(OCamlPrefix, {enum, {N,T,TVs}}) ->
+    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ enum_ctr_defs(T) ++ "\n".
 
 type_def_lhs(OCamlPrefix, N, []) ->
     OCamlPrefix ++ " " ++ atom_to_list(N);
@@ -347,6 +349,18 @@ type_def_lhs(OCamlPrefix, N, [TV]) ->
     OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N);
 type_def_lhs(OCamlPrefix, N, TVs) ->
     OCamlPrefix ++ " (" ++ interleave(false, ", ", lists:map(fun type/1, TVs))  ++ ") " ++ atom_to_list(N).
+
+enum_ctr_defs({type,_Ln,union, CtrDefs}) ->
+    interleave(false, " | ", lists:map(fun enum_ctr_def/1, CtrDefs));
+enum_ctr_defs(CtrDef) ->
+    enum_ctr_def(CtrDef).
+
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}]}) ->
+    first_upper(atom_to_list(CtrN));
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}) ->
+    first_upper(atom_to_list(CtrN))
+        ++ " of "
+        ++ interleave(false, " * ", lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts)).
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
