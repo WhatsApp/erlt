@@ -260,6 +260,10 @@ expr({op,Line,'--',L,R}) ->
     [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}), {")"}];
 expr({op,_Line,Op,L,R}) ->
     [{"("}, expr(L), {")"}, {bop(Op)}, {"("}, expr(R), {")"}];
+expr({enum,_,{atom,_,Ctr},[]}) ->
+    {first_upper(atom_to_list(Ctr))};
+expr({enum,_,{atom,_,Ctr},Args}) ->
+    [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, lists:map(fun expr/1, Args)), {")"}];
 expr(E={remote,Line,_M,_F}) ->
     erlang:error({not_supported, Line, E});
 expr(Exp) ->
