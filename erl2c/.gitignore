@@ -1,2 +1,6 @@
 /build
 /src/erl_parse.erl
+*._.ml
+*._.mli
+*.cmi
+*.cmo
