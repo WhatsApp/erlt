@@ -506,7 +506,7 @@ fix_compile_options(Options) ->
     %% If any of them is unused then erl_lint:check_unused_records will produce a warning,
     %% which can be bad in the settings when warnings are errors.
     Options1 = lists:filter(fun (O) -> O =/= warn_unused_record orelse O =/= nowarn_unused_record end, Options),
-    [nowarn_unused_record|Options1].
+    [nowarn_unused_record,no_error_module_mismatch|Options1].
 
 compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
@@ -777,7 +777,7 @@ transform_module(Code0, #compile{options=Opt}=St) ->
     end.
 
 erl2_to_erl1(Code, St) ->
-  foldl_transform([erl2_module_record], Code, St).
+  foldl_transform([erl2_dots,erl2_module_record], Code, St).
 
 foldl_transform([T|Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),

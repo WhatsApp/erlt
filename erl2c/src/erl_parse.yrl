@@ -27,10 +27,10 @@ attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_100 expr_150 expr_160 expr_200 expr_300 expr_400 expr_500
-expr_600 expr_650 expr_700 expr_800
+expr_600 expr_650 expr_700 expr_800 expr_900
 expr_max
 pat_expr pat_expr_200 pat_expr_300 pat_expr_400 pat_expr_500
-pat_expr_600 pat_expr_650 pat_expr_700 pat_expr_800
+pat_expr_600 pat_expr_650 pat_expr_700 pat_expr_800 pat_expr_900
 pat_expr_max map_pat_expr record_pat_expr
 pat_argument_list pat_exprs
 list tail
@@ -44,7 +44,7 @@ fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings
+atomic strings dot_atom
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -83,11 +83,15 @@ attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4').
 attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3').
 attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3').
 
+dot_atom -> atom : '$1'.
+dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
+dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
+
 type_spec -> spec_fun type_sigs : {'$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
 
-spec_fun ->                           atom : '$1'.
-spec_fun ->                  atom ':' atom : {'$1', '$3'}.
+spec_fun ->                       dot_atom : fold_dots('$1').
+spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
 
 typed_attr_val -> expr ',' typed_record_fields : {typed_record, '$1', '$3'}.
 typed_attr_val -> expr '::' top_type           : {type_def, '$1', '$3'}.
@@ -138,12 +142,12 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> atom                              : '$1'.
-type -> atom '(' ')'                      : build_gen_type('$1').
-type -> atom '(' top_types ')'            : build_type('$1', '$3').
-type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1'),
+type -> dot_atom                          : '$1'.
+type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
+type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
+type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
                                              ['$1', '$3', []]}.
-type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1'),
+type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
                                              ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1'), list, ['$2']}.
@@ -266,9 +270,13 @@ expr_700 -> function_call : '$1'.
 expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : '$1'.
 
-expr_800 -> expr_max ':' expr_max :
+expr_800 -> expr_900 ':' expr_900 :
 	{remote,?anno('$2'),'$1','$3'}.
-expr_800 -> expr_max : '$1'.
+expr_800 -> expr_900 : '$1'.
+
+expr_900 -> expr_900 '.' expr_max :
+        ?mkop2('$1', '$2', '$3').
+expr_900 -> expr_max : '$1'.
 
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
@@ -314,7 +322,11 @@ pat_expr_650 -> pat_expr_700 : '$1'.
 pat_expr_700 -> record_pat_expr : '$1'.
 pat_expr_700 -> pat_expr_800 : '$1'.
 
-pat_expr_800 -> pat_expr_max : '$1'.
+pat_expr_800 -> pat_expr_900 : '$1'.
+
+pat_expr_900 -> pat_expr_900 '.' pat_expr_max :
+        ?mkop2('$1', '$2', '$3').
+pat_expr_900 -> pat_expr_max : '$1'.
 
 pat_expr_max -> var : '$1'.
 pat_expr_max -> atomic : '$1'.
@@ -455,7 +467,16 @@ record_field -> atom '=' expr : {record_field,?anno('$1'),'$1','$3'}.
 
 function_call -> expr_800 argument_list :
 	{call,?anno('$1'),'$1',element(1, '$2')}.
-
+function_call -> '.' expr_800 argument_list :
+        {call,?anno('$1'),
+         case '$2' of
+             {remote,L,M,F} ->
+                 %% move dot inside remote
+                 {remote,L,?mkop2({atom,?anno('$1'),''},'$1',M),F};
+             _ ->
+                 ?mkop2({atom,?anno('$1'),''},'$1','$2')
+         end,
+         element(1, '$3')}.
 
 if_expr -> 'if' if_clauses 'end' : {'if',?anno('$1'),'$2'}.
 
@@ -616,7 +637,7 @@ Erlang code.
 
 -export([parse_form/1,parse_exprs/1,parse_term/1]).
 -export([normalise/1,abstract/1,tokens/1,tokens/2]).
--export([abstract/2]).
+-export([abstract/2,dotted_name/1,balance_dotted/1,fold_dots/1]).
 -export([inop_prec/1,preop_prec/1,func_prec/0,max_prec/0]).
 -export([type_inop_prec/1,type_preop_prec/1]).
 -export([map_anno/2, fold_anno/3, mapfold_anno/3,
@@ -630,6 +651,13 @@ Erlang code.
               abstract_type/0, form_info/0, error_info/0]).
 %% The following types are exported because they are used by syntax_tools
 -export_type([af_binelement/1, af_generator/0, af_remote_function/0]).
+
+%% stuff for dotted names
+-export([concat_dotted/1, is_valid_dotted/1, is_dotted/1,
+	 split_dotted/1, dotted_last/1, dotted_butlast/1,
+         dotted_striplast/1]).
+-type dotted_name() :: atom() | string().
+-export_type([dotted_name/0]).
 
 %% Removed functions
 -removed([{set_line,2,"use erl_anno:set_line/2"},
@@ -1252,6 +1280,8 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
+build_attribute({atom,Aa,module}, [{op,_Am,'.',_L,_R}=M]) ->
+    build_attribute({atom,Aa,module}, [fold_dots(M)]);
 build_attribute({atom,Aa,module}, Val) ->
     case Val of
 	[{atom,_Am,Module}] ->
@@ -1420,6 +1450,12 @@ normalise({map,_,Pairs}=M) ->
 	    end, Pairs));
 normalise({'fun',_,{function,{atom,_,M},{atom,_,F},{integer,_,A}}}) ->
     fun M:F/A;
+%% Dotted atom
+normalise({op,_,'.',_,_}=D) ->
+    case dotted_name(D) of
+        error -> erlang:error({badarg,D});
+        As -> list_to_atom(concat_dotted(As))
+    end;
 %% Special case for unary +/-.
 normalise({op,_,'+',{char,_,I}}) -> I;
 normalise({op,_,'+',{integer,_,I}}) -> I;
@@ -1433,6 +1469,37 @@ normalise_list([H|T]) ->
     [normalise(H)|normalise_list(T)];
 normalise_list([]) ->
     [].
+
+fold_dots(A) ->
+    case dotted_name(A) of
+        error -> A;
+        As -> {atom,?anno(A),list_to_atom(concat_dotted(As))}
+    end.
+
+dotted_name(Name) ->
+    dotted_name(Name, [], []).
+
+dotted_name({op, _, '.', E1, E2}, Es, As) ->
+    dotted_name(E1, [E2 | Es], As);
+dotted_name({atom, _, A}, [E | Es], As) ->
+    dotted_name(E, Es, [A | As]);
+dotted_name({atom, _, A}, [], As) ->
+    lists:reverse([A | As]);
+dotted_name(_, _, _) ->
+    error.
+
+%% ensure that dotted atoms are nested left-associatively even if
+%% parentheses were used to force another parse: X.(b.a) -> (X.b).a, and
+%% X.(p.(q.r)) -> (X.((p.q).r) -> (X.(p.q)).r) -> ((X.p).q).r)
+balance_dotted({op, L1, '.', E1, E2}) ->
+    case balance_dotted(E2) of
+        {op,L2,'.',E21,{atom,_,_}=E22} ->
+            {op,L2,'.',balance_dotted({op,L1,'.',E1,E21}),E22};
+        NewE2 ->
+            {op,L1,'.',balance_dotted(E1),NewE2}
+    end;
+balance_dotted(E) ->
+    E.
 
 -spec abstract(Data) -> AbsTerm when
       Data :: term(),
@@ -1609,7 +1676,7 @@ inop_prec('.') -> {900,900,1000}.
 
 -type pre_op() :: 'catch' | '+' | '-' | 'bnot' | 'not' | '#'.
 
--spec preop_prec(pre_op()) -> {0 | 600 | 700, 100 | 700 | 800}.
+-spec preop_prec(pre_op()) -> {prec(), prec()}.
 
 preop_prec('catch') -> {0,100};
 preop_prec('+') -> {600,700};
@@ -1618,13 +1685,13 @@ preop_prec('bnot') -> {600,700};
 preop_prec('not') -> {600,700};
 preop_prec('#') -> {700,800}.
 
--spec func_prec() -> {800,700}.
+-spec func_prec() -> {prec(),prec()}.
 
 func_prec() -> {800,700}.
 
--spec max_prec() -> 900.
+-spec max_prec() -> prec().
 
-max_prec() -> 900.
+max_prec() -> 1000.
 
 -type prec() :: non_neg_integer().
 
@@ -1812,5 +1879,100 @@ modify_anno1([H|T], Ac, Mf) ->
     {[H1|T1],Ac2};
 modify_anno1([], Ac, _Mf) -> {[],Ac};
 modify_anno1(E, Ac, _Mf) when not is_tuple(E), not is_list(E) -> {E,Ac}.
+
+%% support functions for dotted names (move elsewhere later)
+
+%% `concat_dotted' does not insert a leading dot if the first segment is
+%% the empty string or empty atom. However, if any of the segments after
+%% the first are empty, the result may contain leading, consecutive or
+%% dangling dot characters. Use 'is_valid_dotted' afterwards if needed.
+
+-spec concat_dotted([dotted_name()]) -> string().
+concat_dotted(['' | T]) ->
+    concat_dotted_1(T);
+concat_dotted(["" | T]) ->
+    concat_dotted_1(T);
+concat_dotted(L) ->
+    concat_dotted_1(L).
+
+concat_dotted_1([H]) when is_atom(H) ->
+    atom_to_list(H);
+concat_dotted_1([H]) ->
+    H;
+concat_dotted_1([H | T]) when is_atom(H) ->
+    atom_to_list(H) ++ "." ++ concat_dotted_1(T);
+concat_dotted_1([H | T]) ->
+    H ++ "." ++ concat_dotted_1(T);
+concat_dotted_1([]) ->
+    "";
+concat_dotted_1(Name) ->
+    erlang:error({badarg, Name}).
+
+%% dotted names may not begin or end with a dot, or have consecutive dots
+-spec is_valid_dotted(dotted_name()) -> boolean().
+is_valid_dotted(Name) when is_atom(Name) ->
+    is_valid_dotted(atom_to_list(Name));
+is_valid_dotted([$. | _]) ->
+    false;
+is_valid_dotted(Name) ->
+    is_valid_dotted_1(Name).
+
+is_valid_dotted_1([$.]) -> false;
+is_valid_dotted_1([$., $. | _]) -> false;
+is_valid_dotted_1([_ | T]) -> is_valid_dotted_1(T);
+is_valid_dotted_1([]) -> true;
+is_valid_dotted_1(_) -> false.
+
+-spec split_dotted(dotted_name()) -> [string()].
+split_dotted(Name) when is_atom(Name) ->
+    split_dotted_1(atom_to_list(Name), []);
+split_dotted(Name) ->
+    split_dotted_1(Name, []).
+
+split_dotted_1([$. | T], Cs) ->
+    [lists:reverse(Cs) | split_dotted_1(T, [])];
+split_dotted_1([H | T], Cs) when is_integer(H), H >= 0 ->
+    split_dotted_1(T, [H | Cs]);
+split_dotted_1([], Cs) ->
+    [lists:reverse(Cs)];
+split_dotted_1(_, _) ->
+    erlang:error(badarg).
+
+%% This is equivalent to testing if `split_dotted(Name)' yields a list of
+%% length larger than one (i.e., if the name can be split into two or more
+%% segments), but is cheaper.
+
+-spec is_dotted(dotted_name()) -> boolean().
+is_dotted(Name) when is_atom(Name) ->
+    is_dotted_1(atom_to_list(Name));
+is_dotted(Name) ->
+    is_dotted_1(Name).
+
+is_dotted_1([$. | _]) -> true;
+is_dotted_1([_ | T]) ->
+    is_dotted_1(T);
+is_dotted_1([]) -> false;
+is_dotted_1(_) ->
+    erlang:error(badarg).
+
+-spec dotted_last(dotted_name()) -> string().
+dotted_last(Name) ->
+    %% can be done cheaper by not doing a full split
+    dotted_last_1(split_dotted(Name)).
+
+dotted_last_1([H]) -> H;
+dotted_last_1([_ | T]) -> dotted_last_1(T).
+
+-spec dotted_butlast(dotted_name()) -> [string()].
+dotted_butlast(Name) ->
+    %% can be done cheaper by not doing a full split
+    dotted_butlast_1(split_dotted(Name)).
+
+dotted_butlast_1([H | T]) when T =/= [] -> [H | dotted_butlast_1(T)];
+dotted_butlast_1(_) -> [].
+
+-spec dotted_striplast(dotted_name()) -> string().
+dotted_striplast(Name) ->
+    concat_dotted(dotted_butlast(Name)).
 
 %% vim: ft=erlang
