@@ -21,3 +21,31 @@ mk_left(A) -> left{A}.
 
 -spec mk_right(B) -> either(_, B).
 mk_right(B) -> right{B}.
+
+-spec zero(unit0(), V) -> V.
+zero(unit0{}, Val) -> Val.
+
+-spec unbox(boxed(E)) -> E.
+unbox(Boxed) ->
+  case Boxed of
+    boxed{Elem} -> Elem
+  end.
+
+-spec un_either(either(A,A)) -> A.
+un_either(Either) ->
+  case Either of
+    left{Elem} -> Elem;
+    right{Elem} -> Elem
+  end.
+
+-spec un_pair(pair(A,B)) -> {A,B}.
+un_pair(Pair) ->
+  case Pair of
+    pair{A, B} -> {A, B}
+  end.
+
+-spec first(pair(A,_)) -> A.
+first(pair{F,_}) -> F.
+
+-spec second(pair(_,B)) -> B.
+second(pair{_,S}) -> S.

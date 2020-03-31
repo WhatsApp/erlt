@@ -21,3 +21,15 @@ val mk_box'1 : 'A -> 'A boxed
 val mk_left'1 : 'A -> ('A, _) either
 
 val mk_right'1 : 'B -> (_, 'B) either
+
+val zero'2 : unit0 * 'V -> 'V
+
+val unbox'1 : 'E boxed -> 'E
+
+val un_either'1 : ('A, 'A) either -> 'A
+
+val un_pair'1 : ('A, 'B) pair -> 'A * 'B
+
+val first'1 : ('A, _) pair -> 'A
+
+val second'1 : (_, 'B) pair -> 'B
