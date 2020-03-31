@@ -338,13 +338,15 @@ type_def_scc(true, [TypeDef|TypeDefs]) ->
 type_def_scc(false, [TypeDef|TypeDefs]) ->
     type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
 
-type_def(OCamlPrefix, {alias, {N,T,[]}}) ->
-    OCamlPrefix ++ " " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {alias, {N,T,[TV]}}) ->
-    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
 type_def(OCamlPrefix, {alias, {N,T,TVs}}) ->
-    TVs1 = lists:map(fun type/1, TVs),
-    OCamlPrefix ++ " (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
+    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ type(T) ++ "\n".
+
+type_def_lhs(OCamlPrefix, N, []) ->
+    OCamlPrefix ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, [TV]) ->
+    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, TVs) ->
+    OCamlPrefix ++ " (" ++ interleave(false, ", ", lists:map(fun type/1, TVs))  ++ ") " ++ atom_to_list(N).
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
