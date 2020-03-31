@@ -338,11 +338,11 @@ type_def_scc(true, [TypeDef|TypeDefs]) ->
 type_def_scc(false, [TypeDef|TypeDefs]) ->
     type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
 
-type_def(OCamlPrefix, {N,T,[]}) ->
+type_def(OCamlPrefix, {alias, {N,T,[]}}) ->
     OCamlPrefix ++ " " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {N,T,[TV]}) ->
+type_def(OCamlPrefix, {alias, {N,T,[TV]}}) ->
     OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {N,T,TVs}) ->
+type_def(OCamlPrefix, {alias, {N,T,TVs}}) ->
     TVs1 = lists:map(fun type/1, TVs),
     OCamlPrefix ++ " (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
 
@@ -528,7 +528,9 @@ get_specs([_|Forms]) ->
 get_type_defs([]) ->
     [];
 get_type_defs([{attribute,_,type,Type}|Forms]) ->
-    [Type| get_type_defs(Forms)];
+    [{alias,Type}|get_type_defs(Forms)];
+get_type_defs([{attribute,_,opaque,Type}|Forms]) ->
+    [{enum,Type}|get_type_defs(Forms)];
 get_type_defs([_|Forms]) ->
     get_type_defs(Forms).
 
