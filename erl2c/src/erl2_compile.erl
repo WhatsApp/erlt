@@ -777,7 +777,7 @@ transform_module(Code0, #compile{options=Opt}=St) ->
     end.
 
 erl2_to_erl1(Code, St) ->
-  foldl_transform([erl2_dots,erl2_module_record], Code, St).
+  foldl_transform([erl2_enum,erl2_dots,erl2_module_record], Code, St).
 
 foldl_transform([T|Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),

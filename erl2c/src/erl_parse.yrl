@@ -31,12 +31,12 @@ expr_600 expr_650 expr_700 expr_800 expr_900
 expr_max
 pat_expr pat_expr_200 pat_expr_300 pat_expr_400 pat_expr_500
 pat_expr_600 pat_expr_650 pat_expr_700 pat_expr_800 pat_expr_900
-pat_expr_max map_pat_expr record_pat_expr
+pat_expr_max map_pat_expr record_pat_expr enum_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
-tuple
+tuple enum_expr
 record_expr record_tuple record_field record_fields
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
@@ -145,6 +145,10 @@ type -> var                               : '$1'.
 type -> dot_atom                          : '$1'.
 type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
 type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
+type -> dot_atom '{' '}'                  : {type, ?anno('$1'), enum,
+                                             ['$1']}.
+type -> dot_atom '{' top_types '}'        : {type, ?anno('$1'), enum,
+                                             ['$1' | '$3']}.
 type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
                                              ['$1', '$3', []]}.
 type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
@@ -267,6 +271,7 @@ expr_650 -> map_expr : '$1'.
 expr_650 -> expr_700 : '$1'.
 
 expr_700 -> function_call : '$1'.
+expr_700 -> enum_expr : '$1'.
 expr_700 -> record_expr : '$1'.
 expr_700 -> expr_800 : '$1'.
 
@@ -322,6 +327,7 @@ pat_expr_650 -> pat_expr_700 : '$1'.
 pat_expr_700 -> record_pat_expr : '$1'.
 pat_expr_700 -> pat_expr_800 : '$1'.
 
+pat_expr_800 -> enum_pat_expr : '$1'.
 pat_expr_800 -> pat_expr_900 : '$1'.
 
 pat_expr_900 -> pat_expr_900 '.' pat_expr_max :
@@ -334,6 +340,9 @@ pat_expr_max -> list : '$1'.
 pat_expr_max -> binary : '$1'.
 pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
+
+enum_pat_expr -> pat_expr_800 '{' '}' : {enum,?anno('$1'),'$1',[]}.
+enum_pat_expr -> pat_expr_800 '{' pat_exprs '}' : {enum,?anno('$1'),'$1','$3'}.
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1'),'$2'}.
@@ -399,6 +408,10 @@ lc_expr -> binary '<=' expr : {b_generate,?anno('$2'),'$1','$3'}.
 
 tuple -> '{' '}' : {tuple,?anno('$1'),[]}.
 tuple -> '{' exprs '}' : {tuple,?anno('$1'),'$2'}.
+
+%% This is called from expr_700
+enum_expr -> expr_800 '{' '}' : {enum,?anno('$1'),'$1',[]}.
+enum_expr -> expr_800 '{' exprs '}' : {enum,?anno('$1'),'$1','$3'}.
 
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1'),'$2'}.
@@ -1178,6 +1191,9 @@ build_typed_attribute({atom,Aa,record},
 build_typed_attribute({atom,Aa,record},
 		      {typed_record, {remote,_,{atom,MRa,Name1},{atom,_,Name2}}, RecTuple}) ->
     {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
+build_typed_attribute({atom,Aa,enum},Type) ->
+    %% turn enum declarations into opaques for now
+    build_typed_attribute({atom,Aa,opaque},Type);
 build_typed_attribute({atom,Aa,Attr},
                       {type_def, {call,_,{atom,_,TypeName},Args}, Type})
   when Attr =:= 'type' ; Attr =:= 'opaque' ->
@@ -1195,6 +1211,7 @@ build_typed_attribute({atom,Aa,Attr},_) ->
         record -> error_bad_decl(Aa, record);
         type   -> error_bad_decl(Aa, type);
 	opaque -> error_bad_decl(Aa, opaque);
+	enum   -> error_bad_decl(Aa, enum);
         _      -> ret_err(Aa, "bad attribute")
     end.
 
