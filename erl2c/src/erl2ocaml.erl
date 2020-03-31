@@ -1,9 +1,9 @@
 -module(erl2ocaml).
 
--mode(compile).
 -export([main/1]).
 
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
+    swap_erl_parse(),
     {ok, Forms} = epp:parse_file(InFile, []),
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
@@ -20,6 +20,7 @@ main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
     file:write_file(MlFile, iolist_to_binary(ImplementationLines));
 main(["-ast", File]) ->
+    swap_erl_parse(),
     {ok, Forms} = epp:parse_file(File, []),
     io:format("Forms:\n~p\n", [Forms]),
     Funs = get_fns(Forms),
@@ -31,6 +32,12 @@ main(["-ast", File]) ->
     io:format("Types:\n~p\n", [TypeDefs]);
 main(_) ->
     usage().
+
+swap_erl_parse() ->
+    code:purge(erl_parse),
+    true = code:delete(erl_parse),
+    {_,Code,File} = code:get_object_code(erl_parse),
+    {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 usage() ->
     io:format("usage:\n"),
