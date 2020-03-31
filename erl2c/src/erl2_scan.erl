@@ -774,7 +774,7 @@ scan_qatom(Cs, St, Line, Col, Toks, {Wcs,Str,Line0,Col0}) ->
             case catch list_to_atom(Nwcs) of
                 A when is_atom(A) ->
                     Anno = anno(Line0, Col0, St, Nstr),
-                    scan1(Ncs, St, Nline, Ncol, [{atom,Anno,A}|Toks]);
+                    scan1(Ncs, St, Nline, Ncol, [{qatom,Anno,A}|Toks]);
                 _ ->
                     scan_error({illegal,atom}, Line0, Col0, Nline, Ncol, Ncs)
             end

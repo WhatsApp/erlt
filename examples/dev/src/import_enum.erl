@@ -1,5 +1,5 @@
 -lang([erl2]).
--module('import_enum').
+-module(import_enum).
 -compile([warn_unused_import,warnings_as_errors]).
 
 -export([swap/1]).

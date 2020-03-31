@@ -56,7 +56,7 @@ map_pair_types map_pair_type
 bin_base_type bin_unit_type type_200 type_300 type_400 type_500.
 
 Terminals
-char integer float atom string var
+char integer float atom qatom string var
 
 '(' ')' ',' '->' '{' '}' '[' ']' '|' '||' '<-' ';' ':' '#' '.' '^'
 'after' 'begin' 'case' 'try' 'catch' 'end' 'fun' 'if' 'of' 'receive' 'when'
@@ -143,6 +143,7 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
+type -> qatom                             : '$1'.
 type -> dot_atom                          : fold_dots('$1').
 type -> dot_atom '{' '}'                  : build_enum_type('$1', []).
 type -> dot_atom '{' top_types '}'        : build_enum_type('$1', '$3').
@@ -595,6 +596,7 @@ atomic -> char : '$1'.
 atomic -> integer : '$1'.
 atomic -> float : '$1'.
 atomic -> atom : '$1'.
+atomic -> qatom : '$1'.
 atomic -> strings : '$1'.
 
 strings -> string : '$1'.

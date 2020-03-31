@@ -1,5 +1,5 @@
 -lang([erl2,st]).
--module('import_type').
+-module(import_type).
 -compile([warn_unused_import,warnings_as_errors]).
 
 -export([f/1]).

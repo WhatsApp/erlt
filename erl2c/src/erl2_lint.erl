@@ -1667,6 +1667,8 @@ pattern({integer,_Line,_I}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({float,_Line,_F}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({atom,Line,A}, _Vt, _Old, _Bvt, St) ->
     {[],[],keyword_warning(Line, A, St)};
+pattern({qatom,_Line,_A}, _Vt, _Old, _Bvt, St) ->
+    {[],[],St};
 pattern({string,_Line,_S}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({nil,_Line}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({cons,_Line,H,T}, Vt, Old,  Bvt, St0) ->
@@ -2104,6 +2106,8 @@ gexpr({integer,_Line,_I}, _Vt, St) -> {[],St};
 gexpr({float,_Line,_F}, _Vt, St) -> {[],St};
 gexpr({atom,Line,A}, _Vt, St) ->
     {[],keyword_warning(Line, A, St)};
+gexpr({qatom,_Line,_A}, _Vt, St) ->
+    {[],St};
 gexpr({string,_Line,_S}, _Vt, St) -> {[],St};
 gexpr({nil,_Line}, _Vt, St) -> {[],St};
 gexpr({cons,_Line,H,T}, Vt, St) ->
@@ -2284,6 +2288,7 @@ is_gexpr({char,_L,_C}, _Info) -> true;
 is_gexpr({integer,_L,_I}, _Info) -> true;
 is_gexpr({float,_L,_F}, _Info) -> true;
 is_gexpr({atom,_L,_A}, _Info) -> true;
+is_gexpr({qatom,_L,_A}, _Info) -> true;
 is_gexpr({string,_L,_S}, _Info) -> true;
 is_gexpr({nil,_L}, _Info) -> true;
 is_gexpr({cons,_L,H,T}, Info) -> is_gexpr_list([H,T], Info);
@@ -2377,6 +2382,8 @@ expr({integer,_Line,_I}, _Vt, St) -> {[],St};
 expr({float,_Line,_F}, _Vt, St) -> {[],St};
 expr({atom,Line,A}, _Vt, St) ->
     {[],keyword_warning(Line, A, St)};
+expr({qatom,_Line,_A}, _Vt, St) ->
+    {[],St};
 expr({string,_Line,_S}, _Vt, St) -> {[],St};
 expr({nil,_Line}, _Vt, St) -> {[],St};
 expr({cons,_Line,H,T}, Vt, St) ->
@@ -3108,6 +3115,7 @@ check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]},
     end;
 check_type({integer, _L, _}, SeenVars, St) -> {SeenVars, St};
 check_type({atom, _L, _}, SeenVars, St) -> {SeenVars, St};
+check_type({qatom, _L, _}, SeenVars, St) -> {SeenVars, St};
 check_type({var, _L, '_'}, SeenVars, St) -> {SeenVars, St};
 check_type({var, L, Name}, SeenVars, St) ->
     NewSeenVars =

@@ -23,7 +23,7 @@
 -export_type([order/0]).
 -export([lt/2, lt/1, gt/2, gt/1, le/2, le/1, ge/2, ge/1, min/2, min/1, max/2, max/1, compare/2, compare/1]).
 %% BOOLEANS
--export(['not'/1, 'and'/2, 'and'/1, 'or'/2, 'or'/1, 'xor'/2, 'xor'/1]).
+-export([bool_not/1, bool_and/2, bool_and/1, bool_or/2, bool_or/1, bool_xor/2, bool_xor/1]).
 %% FANCIER MATH
 -export([mod_by/2, mod_by/1, remainder_by/2, remainder_by/1, negate/1, abs/1, clamp/3]).
 %% FUNCTION HELPERS
@@ -138,26 +138,26 @@ compare(X1) -> fun(X2) -> compare(X1, X2) end.
 
 %% BOOLEANS
 
--spec 'not'(boolean()) -> boolean().
-'not'(B) -> not B.
+-spec bool_not(boolean()) -> boolean().
+bool_not(B) -> not B.
 
--spec 'and'(boolean(), boolean()) -> boolean().
-'and'(B1, B2) -> B1 and B2.
+-spec bool_and(boolean(), boolean()) -> boolean().
+bool_and(B1, B2) -> B1 and B2.
 
--spec 'and'(boolean()) -> fun((boolean()) -> boolean()).
-'and'(B1) -> fun(B2) -> 'and'(B1, B2) end.
+-spec bool_and(boolean()) -> fun((boolean()) -> boolean()).
+bool_and(B1) -> fun(B2) -> bool_and(B1, B2) end.
 
--spec 'or'(boolean(), boolean()) -> boolean().
-'or'(B1, B2) -> B1 or B2.
+-spec bool_or(boolean(), boolean()) -> boolean().
+bool_or(B1, B2) -> B1 or B2.
 
--spec 'or'(boolean()) -> fun((boolean()) -> boolean()).
-'or'(B1) -> fun(B2) -> 'or'(B1, B2) end.
+-spec bool_or(boolean()) -> fun((boolean()) -> boolean()).
+bool_or(B1) -> fun(B2) -> bool_or(B1, B2) end.
 
--spec 'xor'(boolean(), boolean()) -> boolean().
-'xor'(B1, B2) -> B1 xor B2.
+-spec bool_xor(boolean(), boolean()) -> boolean().
+bool_xor(B1, B2) -> B1 xor B2.
 
--spec 'xor'(boolean()) -> fun((boolean()) -> boolean()).
-'xor'(B1) -> fun(B2) -> 'xor'(B1, B2) end.
+-spec bool_xor(boolean()) -> fun((boolean()) -> boolean()).
+bool_xor(B1) -> fun(B2) -> bool_xor(B1, B2) end.
 
 %% FANCIER MATH
 

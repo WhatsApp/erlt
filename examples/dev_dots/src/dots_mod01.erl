@@ -38,8 +38,9 @@ f() ->
 
 -spec g() -> any().
 g() ->
-    %% generic atom concatenation
-    'Foo'.'x.y'.'$'.
+    %% dot is not an atom concatenation operator
+    %'Foo'.'x.y'.'$'.  % not this
+    'Foo.x.y.$'.
 
 
 -spec p(list()) -> list().

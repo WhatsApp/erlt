@@ -163,6 +163,8 @@ type({op, L, Op, T1, T2}, St) ->
     {{op, L, Op, E1, E2}, St1};
 type(Ts, St) when is_list(Ts) ->
     type_list(Ts, St);
+type({qatom,L,A}, St) ->
+    {{atom,L,A}, St};
 type(Other, St) ->
     {Other, St}.
 
@@ -196,6 +198,8 @@ pattern({float,_,_}=Float, St) ->
     {Float,St};
 pattern({atom,_,_}=Atom, St) ->
     {Atom,St};
+pattern({qatom,L,A}, St) ->
+    {{atom,L,A},St};
 pattern({string,_,_}=String, St) ->
     {String,St};
 pattern({nil,_}=Nil, St) ->
@@ -375,6 +379,8 @@ expr({float,_,_}=Float, St) ->
     {Float,St};
 expr({atom,_,_}=Atom, St) ->
     {Atom,St};
+expr({qatom,L,A}, St) ->
+    {{atom,L,A},St};
 expr({string,_,_}=String, St) ->
     {String,St};
 expr({nil,_}=Nil, St) ->
