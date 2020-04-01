@@ -46,10 +46,18 @@ jobs:
         run: |
           eval $(opam env)
           make -C examples/dev/src
+      - name: "examples/elm-core/src: make"
+        run: |
+          eval $(opam env)
+          make -C examples/elm-core/src
       - name: "examples/dev/src: test-ir"
         run: |
           eval $(opam env)
           make test-ir -C examples/dev/src
+      - name: "examples/elm-core/src: test-ir"
+        run: |
+          eval $(opam env)
+          make test-ir -C examples/elm-core/src
       - name: erl2ocaml test
         run: |
           eval $(opam env)
