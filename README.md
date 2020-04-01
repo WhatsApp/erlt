@@ -12,14 +12,9 @@ cd erl2c; ./erl2ocaml_test.sh
 
 ## Requirements
 
-For using erl2ocaml:
-- `ocamlc` in PATH
-- `ocamlformat` in default OPAM location: (`~/.opam/default/bin/ocamlformat`)
-
-To install (on Mac):
-- `brew install ocaml`
-- `brew install opam`
-- `opam install ocamlformat`
+For running `erl2ocaml` tests:
+- `ocamlc` in `PATH`
+- `ocamlformat` in `PATH`
 
 ## Building
 
