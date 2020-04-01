@@ -217,5 +217,3 @@ val timeout_id'1 : Ffi.timeout -> Ffi.timeout
 val ints_id'1 :
   Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer ->
   Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer
-
-val mk_my_pair'2 : 'A * 'B -> ('A, 'B) my_pair

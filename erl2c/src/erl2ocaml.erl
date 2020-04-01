@@ -7,14 +7,15 @@ main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     {ok, Forms} = epp:parse_file(InFile, []),
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
-    RawDocs = erl2ocaml_sccs(SortedFuns),
-    %% io:format("RawDocs:\n~p\n", [RawDocs]),
-    FunLines = indent_docs(RawDocs),
     Specs = get_specs(Forms),
-    SpecLines = lists:map(fun erl2ocaml_spec/1, Specs),
+    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
+    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
     %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
     TypeDefLines = type_def_scc(TypeDefs),
+    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes),
+    %% io:format("RawDocs:\n~p\n", [RawDocs]),
+    FunLines = indent_docs(RawDocs),
     InterfaceLines = TypeDefLines ++ SpecLines,
     ImplementationLines = TypeDefLines ++ FunLines,
     file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
@@ -43,25 +44,29 @@ usage() ->
     io:format("usage:\n"),
     io:format("  erl2ocaml -erl mod.erl -ml mod.ml -mli mod.mli:\n").
 
-erl2ocaml_sccs(SCCs) ->
-    lists:flatmap(fun erl2ocaml_scc/1, SCCs).
+erl2ocaml_sccs(SCCs, OTypes) ->
+    lists:flatmap(fun(SCC) -> erl2ocaml_scc(SCC, OTypes) end, SCCs).
 
-erl2ocaml_scc(Funs) ->
-    erl2ocaml_scc1(true, Funs).
+erl2ocaml_scc(Funs, OTypes) ->
+    erl2ocaml_scc1(true, Funs, OTypes).
 
-erl2ocaml_scc1(_, []) ->
+erl2ocaml_scc1(_, [], _) ->
     [];
-erl2ocaml_scc1(true, [F|Fs]) ->
-    [translateFun("let rec ", F) | erl2ocaml_scc1(false, Fs)];
-erl2ocaml_scc1(false, [F|Fs]) ->
-    [translateFun("and ", F) | erl2ocaml_scc1(false, Fs)].
+erl2ocaml_scc1(true, [F|Fs], OTypes) ->
+    [translateFun("let rec ", F, OTypes) | erl2ocaml_scc1(false, Fs, OTypes)];
+erl2ocaml_scc1(false, [F|Fs], OTypes) ->
+    [translateFun("and ", F, OTypes) | erl2ocaml_scc1(false, Fs, OTypes)].
 
-translateFun(Prefix, {function, _Line, Name, Arity, Clauses}) ->
-    function(Prefix, Name, Arity, Clauses).
+translateFun(Prefix, {function, _Line, Name, Arity, Clauses}, OTypes) ->
+    function(Prefix, Name, Arity, Clauses, OTypes).
 
-function(Prefix, Name, Arity, Clauses) ->
+function(Prefix, Name, Arity, Clauses, OTypes) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
-    [{Prefix ++ NameStr ++ " = function"}, clauses(Clauses), {""}].
+    TypeSpec = case lists:keyfind(NameStr, 1, OTypes) of
+                   {_, Ts} -> " : " ++ Ts;
+                   _ -> ""
+               end,
+    [{Prefix ++ NameStr ++ TypeSpec ++ " = function"}, clauses(Clauses), {""}].
 
 clauses([EC|Cs]) ->
     OC = clause(EC),
@@ -400,9 +405,7 @@ enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}) ->
         ++ interleave(false, " * ", lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts)).
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
-    NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
-    FTStr = type(FT),
-    "val " ++ NameStr ++ " : " ++ FTStr ++ "\n";
+    {atom_to_list(Name) ++ "'" ++ integer_to_list(Arity), type(FT)};
 erl2ocaml_spec({attribute,Line,spec,_}) ->
     erlang:error({not_supported, Line, spec}).
 

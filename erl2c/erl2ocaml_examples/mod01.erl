@@ -382,5 +382,4 @@ ints_id(X) -> X.
 -type my_pair2(A) :: my_pair(A, A).
 -type my_pair(A, B) :: {A, B}.
 
--spec mk_my_pair(A, B) -> my_pair(A, B).
 mk_my_pair(A,B) -> {A, B}.
