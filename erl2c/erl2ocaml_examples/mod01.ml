@@ -76,6 +76,8 @@ let rec update_map4'1 = function
 
 let rec access_map'1 = function v_M -> (v_M#get_id, v_M#get_location)
 
+let rec access_map2'1 = function v_M -> v_M#get_inner1#get_inner2
+
 let rec mk_seq'0 = function
   | () ->
       let v_X = 1 in

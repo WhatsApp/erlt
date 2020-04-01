@@ -225,9 +225,8 @@ expr({map,_Line, InitAssocs}) ->
     [{"object"}, Fields, {"end"}];
 expr({map,Line,Map,UpdateAssocs}) ->
     FfiSame = {remote, Line, {atom, Line, 'ffi'}, {atom, Line, 'same'}},
-    MapsGet = {remote, Line, {atom, Line, 'maps'}, {atom, Line, 'get'}},
     SameFields =
-        [{'call',Line,FfiSame,[V,{'call',Line,MapsGet,[K,Map]}]} || {map_field_exact,_,K={atom,_,_},V} <- UpdateAssocs],
+        [{'call',Line,FfiSame,[V,{'op',Line,'.',Map,K}]} || {map_field_exact,_,K={atom,_,_},V} <- UpdateAssocs],
     SameMaps =
         [{'call',Line,FfiSame,[Map,{map1,Line, Map, [UA]}]} || UA <- UpdateAssocs],
     Exprs = SameMaps ++ SameFields ++ [{map1,Line, Map, UpdateAssocs}],
@@ -264,9 +263,8 @@ expr({named_fun,Line,Name,Clauses}) ->
 expr({call,Line,{atom, _, F},As}) ->
     Fn = atom_to_list(F) ++ "'" ++ integer_to_list(length(As)),
     [{"("}, {Fn}, expr({tuple1, Line, As}), {")"}];
-expr({call,_Line,{remote,_Line,{atom,_,maps},{atom,_,get}},[{atom,_,K}, M]}) ->
-    MExp = expr(M),
-    [{"("}, MExp, {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
+expr({op,_,'.',Rec,{atom,_,K}}) ->
+    [{"("}, expr(Rec), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
 expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
     Arity = length(As),
     FQFn = remote_fun(M,F,Arity),

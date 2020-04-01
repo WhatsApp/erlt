@@ -62,19 +62,23 @@ update_map2(M, A) ->
 
 -spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
 update_map3(M) ->
-    A0 = maps:get(a, M),
-    B0 = maps:get(a, M),
+    A0 = M.a,
+    B0 = M.a,
     M#{a := B0, b := A0}.
 
 -spec update_map4(#{a := A, b := A, _ := M}) -> #{a := A, b := A, _ := M}.
 update_map4(M) ->
-    A0 = maps:get(a, M),
-    B0 = maps:get(a, M),
+    A0 = M.a,
+    B0 = M.a,
     M#{a := B0, b := A0}.
 
 -spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
 access_map(M) ->
-    {maps:get(id, M), maps:get(location, M)}.
+    {M.id, M.location}.
+
+-spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
+access_map2(M) ->
+    M.inner1.inner2.
 
 -spec mk_seq() -> {integer(), integer()}.
 mk_seq() ->

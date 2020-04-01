@@ -74,6 +74,14 @@ val access_map'1 :
    'map__) ->
   'Id * 'Location
 
+val access_map2'1 :
+  (< get_inner1 : (< get_inner2 : 'A ; set_inner2 : 'A -> 'map_7 > as 'map_7)
+   ; set_inner1 :
+       (< get_inner2 : 'A ; set_inner2 : 'A -> 'map_7 > as 'map_7) -> 'map_6 >
+   as
+   'map_6) ->
+  'A
+
 val mk_seq'0 : unit -> int * int
 
 val is_empty'1 : _ list -> bool
