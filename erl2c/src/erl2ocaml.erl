@@ -1,9 +1,9 @@
 -module(erl2ocaml).
 
--mode(compile).
 -export([main/1]).
 
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
+    swap_erl_parse(),
     {ok, Forms} = epp:parse_file(InFile, []),
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
@@ -20,6 +20,7 @@ main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
     file:write_file(MlFile, iolist_to_binary(ImplementationLines));
 main(["-ast", File]) ->
+    swap_erl_parse(),
     {ok, Forms} = epp:parse_file(File, []),
     io:format("Forms:\n~p\n", [Forms]),
     Funs = get_fns(Forms),
@@ -31,6 +32,12 @@ main(["-ast", File]) ->
     io:format("Types:\n~p\n", [TypeDefs]);
 main(_) ->
     usage().
+
+swap_erl_parse() ->
+    code:purge(erl_parse),
+    true = code:delete(erl_parse),
+    {_,Code,File} = code:get_object_code(erl_parse),
+    {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 usage() ->
     io:format("usage:\n"),
@@ -109,6 +116,27 @@ pattern({atom,_Line,false}) ->
     "false";
 pattern({atom,Line,A}) ->
     erlang:error({not_supported, Line, atom, A});
+pattern({enum,_,{atom,_,Ctr},[]}) ->
+    first_upper(atom_to_list(Ctr));
+pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
+pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
+pattern({enum,_,{atom,_,Ctr},Args}) ->
+    first_upper(atom_to_list(Ctr))
+        ++ "("
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ ")";
+pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
+        ++ "("
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ ")";
+pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
+        ++ "("
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ ")";
 pattern({string,_Line,S}) ->
     "\"" ++ S ++ "\"";
 pattern({nil,_Line}) ->
@@ -253,6 +281,24 @@ expr({op,Line,'--',L,R}) ->
     [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}), {")"}];
 expr({op,_Line,Op,L,R}) ->
     [{"("}, expr(L), {")"}, {bop(Op)}, {"("}, expr(R), {")"}];
+expr({enum,_,{atom,_,Ctr},[]}) ->
+    {first_upper(atom_to_list(Ctr))};
+expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
+expr({enum,_,{atom,_,Ctr},Args}) ->
+    [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, lists:map(fun expr/1, Args)), {")"}];
+expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
+        {"("},
+        interleave1(false, lists:map(fun expr/1, Args)),
+        {")"}];
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
+        {"("},
+        interleave1(false, lists:map(fun expr/1, Args)),
+        {")"}];
 expr(E={remote,Line,_M,_F}) ->
     erlang:error({not_supported, Line, E});
 expr(Exp) ->
@@ -331,13 +377,29 @@ type_def_scc(true, [TypeDef|TypeDefs]) ->
 type_def_scc(false, [TypeDef|TypeDefs]) ->
     type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
 
-type_def(OCamlPrefix, {N,T,[]}) ->
-    OCamlPrefix ++ " " ++ atom_to_list(N) + " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {N,T,[TV]}) ->
-    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {N,T,TVs}) ->
-    TVs1 = lists:map(fun type/1, TVs),
-    OCamlPrefix ++ " (" ++ interleave(false, ", ", TVs1)  ++ ") " ++ atom_to_list(N) ++ " = " ++ type(T) ++ "\n".
+type_def(OCamlPrefix, {alias, {N,T,TVs}}) ->
+    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ type(T) ++ "\n";
+type_def(OCamlPrefix, {enum, {N,T,TVs}}) ->
+    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ enum_ctr_defs(T) ++ "\n".
+
+type_def_lhs(OCamlPrefix, N, []) ->
+    OCamlPrefix ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, [TV]) ->
+    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, TVs) ->
+    OCamlPrefix ++ " (" ++ interleave(false, ", ", lists:map(fun type/1, TVs))  ++ ") " ++ atom_to_list(N).
+
+enum_ctr_defs({type,_Ln,union, CtrDefs}) ->
+    interleave(false, " | ", lists:map(fun enum_ctr_def/1, CtrDefs));
+enum_ctr_defs(CtrDef) ->
+    enum_ctr_def(CtrDef).
+
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}]}) ->
+    first_upper(atom_to_list(CtrN));
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}) ->
+    first_upper(atom_to_list(CtrN))
+        ++ " of "
+        ++ interleave(false, " * ", lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts)).
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
@@ -521,7 +583,9 @@ get_specs([_|Forms]) ->
 get_type_defs([]) ->
     [];
 get_type_defs([{attribute,_,type,Type}|Forms]) ->
-    [Type| get_type_defs(Forms)];
+    [{alias,Type}|get_type_defs(Forms)];
+get_type_defs([{attribute,_,opaque,Type}|Forms]) ->
+    [{enum,Type}|get_type_defs(Forms)];
 get_type_defs([_|Forms]) ->
     get_type_defs(Forms).
 
