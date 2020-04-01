@@ -120,12 +120,19 @@ pattern({enum,_,{atom,_,Ctr},[]}) ->
     first_upper(atom_to_list(Ctr));
 pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
     first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
+pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
 pattern({enum,_,{atom,_,Ctr},Args}) ->
     first_upper(atom_to_list(Ctr))
         ++ "("
         ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
         ++ ")";
 pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
+        ++ "("
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ ")";
+pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
     first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
         ++ "("
         ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
@@ -278,9 +285,16 @@ expr({enum,_,{atom,_,Ctr},[]}) ->
     {first_upper(atom_to_list(Ctr))};
 expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
     {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+    {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
 expr({enum,_,{atom,_,Ctr},Args}) ->
     [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, lists:map(fun expr/1, Args)), {")"}];
 expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+    [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
+        {"("},
+        interleave1(false, lists:map(fun expr/1, Args)),
+        {")"}];
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
     [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
         {"("},
         interleave1(false, lists:map(fun expr/1, Args)),
