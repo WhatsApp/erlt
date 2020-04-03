@@ -45,13 +45,11 @@ jobs:
       - name: "examples: make"
         run: |
           eval $(opam env)
-          cd examples/src
-          make
-      - name: "examples: make ir"
+          make -C examples/src
+      - name: "examples: test-ir"
         run: |
           eval $(opam env)
-          cd examples/src
-          make ir
+          make test-ir -C examples/src
       - name: erl2ocaml test
         run: |
           eval $(opam env)
