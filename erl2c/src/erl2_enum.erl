@@ -89,6 +89,10 @@ form({attribute,Line,opaque,{N,T,Vs}},Context) ->
     T1 = type(T,Context),
     Vs1 = variable_list(Vs,Context),
     {attribute,Line,opaque,{N,T1,Vs1}};
+form({attribute,Line,enum,{N,T,Vs}},Context) ->
+    T1 = type(T,Context),
+    Vs1 = variable_list(Vs,Context),
+    {attribute,Line,type,{N,T1,Vs1}};
 form({attribute,Line,spec,{{N,A},FTs}},Context) ->
     FTs1 = function_type_list(FTs,Context),
     {attribute,Line,spec,{{N,A},FTs1}};

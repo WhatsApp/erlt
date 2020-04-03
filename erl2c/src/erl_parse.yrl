@@ -731,7 +731,7 @@ Erlang code.
 -type af_type_decl() :: {'attribute', anno(), type_attr(),
                          {type_name(), abstract_type(), [af_variable()]}}.
 
--type type_attr() :: 'opaque' | 'type'.
+-type type_attr() :: 'opaque' | 'type' | 'enum'.
 
 -type af_function_spec() :: {'attribute', anno(), spec_attr(),
                              {{function_name(), arity()},
@@ -1183,7 +1183,7 @@ parse_term(Tokens) ->
     end.
 
 -type attributes() :: 'export' | 'file' | 'import' | 'module'
-		    | 'opaque' | 'record' | 'type'.
+		    | 'opaque' | 'record' | 'type' | 'enum'.
 
 build_typed_attribute({atom,Aa,record},
 		      {typed_record, {atom,_An,RecordName}, RecTuple}) ->
@@ -1191,12 +1191,9 @@ build_typed_attribute({atom,Aa,record},
 build_typed_attribute({atom,Aa,record},
 		      {typed_record, {remote,_,{atom,MRa,Name1},{atom,_,Name2}}, RecTuple}) ->
     {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
-build_typed_attribute({atom,Aa,enum},Type) ->
-    %% turn enum declarations into opaques for now
-    build_typed_attribute({atom,Aa,opaque},Type);
 build_typed_attribute({atom,Aa,Attr},
                       {type_def, {call,_,{atom,_,TypeName},Args}, Type})
-  when Attr =:= 'type' ; Attr =:= 'opaque' ->
+  when Attr =:= 'type' ; Attr =:= 'opaque' ; Attr =:= 'enum' ->
     lists:foreach(fun({var, A, '_'}) -> ret_err(A, "bad type variable");
                      (_)             -> ok
                   end, Args),
