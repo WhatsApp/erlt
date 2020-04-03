@@ -120,7 +120,7 @@ do_file(File, Options0) ->
     Suffix = ".erl",
 
     CompileMode =
-        case member(makedep2, Options0) of
+        case is_makedep2_mode(Options0) of
             true ->
                 makedep2;
             false ->
@@ -134,8 +134,7 @@ do_file(File, Options0) ->
                 % for optimizing compilation by caching information already
                 % obtained during the "scan" phase
                 [
-                    % TODO: do not remove the output file unless we know
-                    % save_binary() is going to run
+                    % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
                     ?pass(parse_module),
 
@@ -145,12 +144,9 @@ do_file(File, Options0) ->
                     ?pass(maybe_save_binary)
                 ];
             makedep2 ->
-                % NOTE: assigning to a tmp variable instead of inlining -- this
-                % is a workaround for Erlang 22.0 compiler bug that was fixed
-                % in fixed upstream in OTP 22.1 (https://github.com/erlang/otp/pull/2236)
+                % 'erlc -M2' -- a new dependency scanner, alternative to 'erlc -M' aka makedep; among other things, it
+                % allows to establish the order in which .erl files should be compiled
                 TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
-
-                % 'erlc -M2' -- a new dependency scanner, alternative to 'erlc -M' aka makedep
                 [
                     ?pass(parse_module),
                     ?pass(check_epp_errors)
@@ -165,6 +161,10 @@ do_file(File, Options0) ->
         end,
 
     internal_comp(Passes, _Code0 = unused, File, Suffix, St0).
+
+
+is_makedep2_mode(Options) ->
+    member(makedep2, Options) andalso member(makedep, Options).
 
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
@@ -757,7 +757,7 @@ transform_module(Code0, #compile{options=Opt}=St) ->
 	    %% Remove parse_transform attributes from the abstract code to
 	    %% prevent parse transforms to be run more than once.
 	    Code =
-                case _IsMakedep2Mode = member(makedep2, Opt) of
+                case is_makedep2_mode(Opt) of
                     true ->
                         % keep parse_transform attributes in place -- they are
                         % going to be retrieved by a later

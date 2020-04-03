@@ -64,7 +64,15 @@
                   encoding=none :: none | epp:source_encoding(),
 		  errors=[]     :: [err_warn_info()],
 		  warnings=[]   :: [err_warn_info()],
-                  compile_deps=[] :: [compile_dep()]
+                  compile_deps=[] :: [compile_dep()],
+
+                  % indicator of Erlang language flavor; valid combinations are
+                  %
+                  %    []                  -- erl1
+                  %    [erl2, dt], [erl2]  -- dynamically typed erl2
+                  %    [erl2, st]          -- statically typed erl2
+                  lang=[] :: [erl2 | st | dt]
+
 }).
 
 -define(pass(P), {P,fun P/2}).
@@ -121,22 +129,23 @@ do_file(File, Options0) ->
     Suffix = ".erl",
 
     CompileMode =
-        case member(makedep2, Options0) of
+        case is_makedep2_mode(Options0) of
             true ->
                 makedep2;
             false ->
                 erl2c
         end,
 
+
     Passes =
         case CompileMode of
             erl2c ->  % normal .erl compilation
                 [
-                    % TODO: do not remove the output file unless we know save_binary() is
-                    % going to run
+                    % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
                     ?pass(parse_module),
 
+                    ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
 
                     ?pass(transform_module),
@@ -144,13 +153,14 @@ do_file(File, Options0) ->
                     ?pass(maybe_save_binary)
                 ];
             makedep2 ->
-                % "erl2c -M2" -- dependency scan that allows, among other
-                % things, to establish the order in which .erl files should be compiled
+                % 'erl2c -M2' -- a new dependency scanner, alternative to 'erl2c -M' aka makedep; among other things, it
+                % allows to establish the order in which .erl files should be compiled
                 TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
                 [
                     ?pass(parse_module),
-                    ?pass(collect_erl2_compile_deps),
+                    ?pass(check_epp_errors),
 
+                    ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1)
                 ]
                 ++
@@ -163,6 +173,10 @@ do_file(File, Options0) ->
         end,
 
     internal_comp(Passes, _Code0 = unused, File, Suffix, St0).
+
+
+is_makedep2_mode(Options) ->
+    member(makedep2, Options) andalso member(makedep, Options).
 
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
@@ -331,19 +345,18 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     gen_make_rule(Target, Deps1).
 
 
-collect_erl2_compile_deps(Forms, St0) ->
-    % under erl2 stricter compilation model we no longer allow epp errors, e.g.
-    % includes that are not found at the dependency scan stage. For example,
-    % adding originally missing include later may result in a different compile
-    % order, which could, in turn, result in inconsistent build
+check_epp_errors(Forms, St0) ->
+    % under erl2 stricter compilation model we no longer allow epp errors,
+    % e.g. includes that are not found at the dependency scan stage. For
+    % example, adding originally missing include later may result in a
+    % different compile order, not including transitive dependencies, or a
+    % different parse output, because of conditional compilation. This may lead
+    % to inconsistent build.
     %
-    % in erl1 such errors are reported by erl_lint.erl and NOT during makedep
-    % depedency scan
+    % in normal Erlang compilation such errors are reported by erl_lint.erl and
+    % NOT during makedep depedency scan
     case get_epp_errors(Forms) of
         [] ->
-            % TODO: insert scan for erl2 compile-time dependencies here, e.g.
-            % module aliases when used for importing module-scoped record
-            % definitions
             {ok, Forms, St0};
         Errors ->
             {error, St0#compile{errors=Errors}}
@@ -368,7 +381,7 @@ get_epp_errors([_|Rest], File, Acc) ->
 
 collect_erl1_compile_deps(Forms, St0) ->
     Deps = get_erl1_deps_from_forms(Forms, St0),
-    %io:format("deps: ~p~n", [Deps]),
+    %io:format("erl1 deps: ~p~n", [Deps]),
 
     St1 = St0#compile{
         compile_deps = St0#compile.compile_deps ++ Deps
@@ -387,11 +400,7 @@ get_erl1_deps_from_forms([], _St, _File, Acc) ->
 
 get_erl1_deps_from_forms([{attribute,_,file,{NewFile0,_}}|Rest], St, _File, Acc) ->
     % Remove "./" in front of the dependency filename.
-    NewFile =
-        case NewFile0 of
-            "./" ++ NewFile1 -> NewFile1;
-            _ -> NewFile0
-        end,
+    NewFile = remove_dot_slash(NewFile0),
 
     Dep = {file, NewFile},
     NewAcc =
@@ -408,6 +417,13 @@ get_erl1_deps_from_forms([{attribute,Line,Name,Value}|Rest], St, File, Acc) ->
 
 get_erl1_deps_from_forms([_|Rest], St, File, Acc) ->
     get_erl1_deps_from_forms(Rest, St, File, Acc).
+
+
+remove_dot_slash(NewFile0) ->
+    case NewFile0 of
+        "./" ++ NewFile1 -> NewFile1;
+        _ -> NewFile0
+    end.
 
 
 get_erl1_deps_from_attr(File, Line, Name, Value, St) ->
@@ -461,7 +477,7 @@ get_deps_from_compile_item(Loc, Value, St) ->
     end.
 
 
-% attr_type = behavior | parse_transform | core_transform
+% attr_type = behavior | parse_transform | core_transform | depends_on
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
     case filelib:is_regular(Erl) of
@@ -536,6 +552,8 @@ maybe_save_binary(Code, St) ->
     end.
 
 
+format_error({ocaml_typechecker,ExitCode,Output}) ->
+    io_lib:format("ocaml exited with error code ~w: ~n~s~n", [ExitCode, Output]);
 format_error({module_dependency,ModuleDepType,Mod}) ->
     io_lib:format("can't find ~s.beam from -~s(~s)", [Mod, ModuleDepType, Mod]);
 format_error(X) ->
@@ -673,8 +691,10 @@ remove_file(Code, St) ->
 
 parse_module(_Code, St0) ->
     case do_parse_module(utf8, St0) of
-	{ok,_,_}=Ret ->
-	    Ret;
+	{ok,Fs0,St1} ->
+            % extract indicator of Erlang language flavor
+            {Lang, Fs1} = parse_lang(Fs0),
+            {ok,Fs1,St1#compile{lang = Lang}};
 	{error,_}=Ret ->
 	    Ret;
 	{invalid_unicode,File,Line} ->
@@ -687,6 +707,23 @@ parse_module(_Code, St0) ->
 		    {error,St#compile{errors=Es++St#compile.errors}}
 	    end
     end.
+
+
+parse_lang(Forms) ->
+    parse_lang(Forms, _Lang = [], _Acc = []).
+
+
+% NOTE: to count, -lang(...) has to preceed -module(...)
+parse_lang([], Lang, Acc) ->
+    {Lang, lists:reverse(Acc)};
+parse_lang([{attribute,_,module,_} | _] = Forms, Lang, Acc) ->
+    {Lang, lists:reverse(Acc, Forms)};
+parse_lang([{attribute,_,lang,Lang} | Rest], _, Acc) ->
+    % TODO: validate Lang -- see #compile{} definition for list of valid values
+    {Lang, lists:reverse(Acc, Rest)};
+parse_lang([Form | Rest], Lang, Acc) ->
+    parse_lang(Rest, Lang, [Form | Acc]).
+
 
 do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St) ->
     SourceName0 = proplists:get_value(source, Opts, File),
@@ -764,7 +801,7 @@ transform_module(Code0, #compile{options=Opt}=St) ->
 	    %% Remove parse_transform attributes from the abstract code to
 	    %% prevent parse transforms to be run more than once.
 	    Code =
-                case _IsMakedep2Mode = member(makedep2, Opt) of
+		case is_makedep2_mode(Opt) of
                     true ->
                         % keep parse_transform attributes in place -- they are
                         % going to be retrieved by a later
@@ -776,8 +813,159 @@ transform_module(Code0, #compile{options=Opt}=St) ->
 	    foldl_transform(Ts, Code, St)
     end.
 
+
+is_lang_erl2(St) ->
+    member(erl2, St#compile.lang).
+
+
+is_lang_st(St) ->
+    member(st, St#compile.lang).
+
+
+collect_erl2_compile_deps(Forms, St0) ->
+    case is_lang_erl2(St0) of
+        true ->
+            do_collect_erl2_compile_deps(Forms, St0);
+        false ->
+            {ok, Forms, St0}
+    end.
+
+
+do_collect_erl2_compile_deps(Forms, St0) ->
+    % TODO: insert scan for erl2 compile-time dependencies here, e.g.
+    % module aliases when used for importing module-scoped enum and record
+    % definitions
+    Deps = get_erl2_deps_from_forms(Forms, St0),
+    %io:format("erl2 deps: ~p~n", [Deps]),
+
+    St1 = St0#compile{
+        compile_deps = St0#compile.compile_deps ++ Deps
+    },
+    {ok, Forms, St1}.
+
+
+% TODO: remove code duplication between this and get_erl1_deps_from_forms()
+get_erl2_deps_from_forms(Forms, St0) ->
+    get_erl2_deps_from_forms(Forms, St0, _File = St0#compile.ifile, _Acc = []).
+
+
+get_erl2_deps_from_forms([], _St, _File, Acc) ->
+    % NOTE: returning in the order they were present in the file
+    lists:reverse(Acc);
+
+get_erl2_deps_from_forms([{attribute,_,file,{NewFile0,_}}|Rest], St, _File, Acc) ->
+    % Remove "./" in front of the dependency filename.
+    NewFile = remove_dot_slash(NewFile0),
+
+    % update the name of the current file
+    %
+    % NOTE: not adding the file to the list of dependencies, because it will be added
+    % during get_erl1_deps_from_forms() pass
+    get_erl2_deps_from_forms(Rest, St, NewFile, Acc);
+
+get_erl2_deps_from_forms([{attribute,Line,Name,Value}|Rest], St, File, Acc) ->
+    Deps = get_erl2_deps_from_attr(File, Line, Name, Value, St),
+    get_erl2_deps_from_forms(Rest, St, File, Deps ++ Acc);
+
+get_erl2_deps_from_forms([_|Rest], St, File, Acc) ->
+    get_erl2_deps_from_forms(Rest, St, File, Acc).
+
+
+get_erl2_deps_from_attr(File, Line, Name, Value, St) ->
+    Loc = {File, Line},
+    case Name of
+	depends_on ->
+            % erl2 feature for specifying dependencies explicitly
+            get_erl2_deps_from_depends_on(Loc, Value, St);
+        _ ->
+            []
+    end.
+
+
+% TODO: validate -depends_on([...]) properly
+get_erl2_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
+    [get_erl2_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
+
+
+get_erl2_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
+    resolve_module_dependency(depends_on, Loc, Mod, St).
+
+
+erl2_typecheck(Code, St) ->
+    case is_lang_erl2(St) andalso is_lang_st(St) of
+        true ->
+            do_erl2_typecheck(Code, St);
+        false ->
+            {ok,Code,St}
+    end.
+
+
+do_erl2_typecheck(Code, St) ->
+    % TODO: figure out a way to pass build directory location from erlbuild
+    BuildDir =
+        case keyfind(outdir, 1, St#compile.options) of
+            {outdir, Outdir} ->
+                filename:join(filename:dirname(Outdir), "build");
+            _ ->
+                "build"
+        end,
+    OcamlDir = filename:join(BuildDir, "ocaml"),
+
+    Basename = filename:rootname(filename:basename(St#compile.ofile)),
+
+    generate_ocaml_code(OcamlDir, Basename, Code, St),
+    call_ocaml_typechecker(OcamlDir, Basename, St),
+
+    {ok,Code,St}.
+
+
+generate_ocaml_code(OcamlDir, Basename, _Forms, _St) ->
+    Rootname = filename:join(OcamlDir, Basename),
+
+    % TODO: ocaml codegen
+    MlCode = [],
+    MliCode = [],
+
+    % TODO: error handling
+    ok = filelib:ensure_dir(Rootname),
+    ok = file:write_file(Rootname ++ ".ml", MlCode),
+    ok = file:write_file(Rootname ++ ".mli", MliCode),
+    ok.
+
+
+call_ocaml_typechecker(OcamlDir, Basename, St) ->
+    Command = lists:append([
+        "ocamlc -c ",
+        Basename, ".mli", " ",
+        Basename, ".ml"
+    ]),
+
+    {ExitCode, Output} = eunit_lib:command(Command, OcamlDir),
+    case ExitCode of
+        0 ->
+            % TODO: check for warnings
+            ok;
+        _ ->
+            ErrorFile = St#compile.filename,
+            Error = {ErrorFile, [{_ErrorLine = 1,?MODULE,{ocaml_typechecker,ExitCode,Output}}]},
+
+            % NOTE: the error thrown here will be caught by internal_comp() -> Run0
+            throw({error,St#compile{errors=[Error]}})
+    end.
+
+
 erl2_to_erl1(Code, St) ->
-  foldl_transform([erl2_enum,erl2_dots,erl2_module_record], Code, St).
+    case is_lang_erl2(St) of
+        true ->
+            do_erl2_to_erl1(Code, St);
+        false ->
+            {ok,Code,St}
+    end.
+
+
+do_erl2_to_erl1(Code, St) ->
+    foldl_transform([erl2_enum,erl2_dots,erl2_module_record], Code, St).
+
 
 foldl_transform([T|Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),

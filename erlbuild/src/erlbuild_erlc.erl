@@ -247,9 +247,9 @@ parse_dep_option("", T) ->
 parse_dep_option("D", T) ->
     {[makedep],T};
 parse_dep_option("2", T) ->
-    {[makedep2],T};
+    {[makedep, makedep2],T};
 parse_dep_option("2C", T) ->
-    {[makedep2, makedep2_compat],T};
+    {[makedep, makedep2, makedep2_compat],T};
 parse_dep_option("MD", T) ->
     {[makedep_side_effect],T};
 parse_dep_option("F"++Opt, T0) ->

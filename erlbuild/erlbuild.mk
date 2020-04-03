@@ -38,8 +38,10 @@
 #         - SOURCES          -- explicitly proivided list of source files to build: .erl, .xrl, .yrl files without directory names
 #         - EXCLUDE_SOURCES  -- when sources are discovered automatically, list of source files that should not be built
 #
-#         - ERLC             -- erlc command. Defaults to 'erlc'.
 #         - ERLBUILD         -- erlbuild command. Defaults to 'erlbuild'.
+#         - ERLC_GENERATE    -- erlc generate command. Defaults to 'erlc'.
+#         - ERLC_COMPILE     -- erlc compile command. Defaults to '$ERLBUILD erlc'.
+#         - ERLC_DEPSCAN     -- erlc depscan command. Defaults to '$ERLBUILD erlc'.
 #
 #         - BUILD_DIR        -- directory for storing intermediate compilation state
 #
@@ -99,8 +101,17 @@ endif
 
 ERLBUILD_FLAGS += --build-dir $(BUILD_DIR)
 
-ifdef ERLC
-ERLBUILD_FLAGS += --erlc $(ERLC)
+
+ifdef ERLC_GENERATE
+ERLBUILD_FLAGS += --erlc-generate "$(ERLC_GENERATE)"
+endif
+
+ifdef ERLC_COMPILE
+ERLBUILD_FLAGS += --erlc-compile "$(ERLC_COMPILE)"
+endif
+
+ifdef ERLC_DEPSCAN
+ERLBUILD_FLAGS += --erlc-depscan "$(ERLC_DEPSCAN)"
 endif
 
 
@@ -142,7 +153,10 @@ endif
 
 
 # full list of .erl and .beam files, incuding those generated from .xrl and .yrl files
-ERLS        := $(addsuffix .erl,$(basename $(SOURCES)))
+#
+# NOTE: using sort to remove duplicates from .erl and .yrl/.xrl
+BASENAMES   := $(sort $(basename $(SOURCES)))
+ERLS        := $(addsuffix .erl,$(BASENAMES))
 BEAMS       := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
 
 

@@ -25,10 +25,11 @@
 #
 #         - SOURCES -- .erl, .xrl, .yrl files
 #
-#         - ERLC
-#         - ERLBUILD
-#         - ERLC_FLAGS
+#         - ERLC_GENERATE
+#         - ERLC_COMPILE
+#         - ERLC_DEPSCAN
 #
+#         - ERLC_FLAGS
 #         - EBIN
 #         - BUILD_DIR
 #
@@ -58,11 +59,14 @@ endif
 ifndef SOURCES
 $(error "missing SOURCES parameter")
 endif
-ifneq ($(origin ERLC),file)
-$(error "missing ERLC parameter")
+ifneq ($(origin ERLC_GENERATE),file)
+$(error "missing ERLC_GENERATE parameter")
 endif
-ifneq ($(origin ERLBUILD),file)
-$(error "missing ERLBUILD parameter")
+ifneq ($(origin ERLC_COMPILE),file)
+$(error "missing ERLC_COMPILE parameter")
+endif
+ifneq ($(origin ERLC_DEPSCAN),file)
+$(error "missing ERLC_DEPSCAN parameter")
 endif
 ifneq ($(origin ERLC_FLAGS),file)
 $(error "missing ERLC_FLAGS parameter")
@@ -161,7 +165,7 @@ do_compile: $(BEAMS)
 
 $(EBIN)/%.beam: %.erl | $(EBIN)
 	$(ECHO_1) "compile $<"
-	$(QUIET)$(ERLC) $(ERLC_FLAGS) $<
+	$(QUIET)$(ERLC_COMPILE) $(ERLC_FLAGS) $<
 
 # using explicit include, because .d have to be built and rebuilt explicitly by
 # "depscan" and we do not tolerate failures
@@ -202,7 +206,7 @@ do_depscan: $(DEPFILES)
 
 $(BUILD_DIR)/%.d: %.erl | $(BUILD_DIR) $(EBIN)
 	$(ECHO_1) "depscan $<"
-	$(QUIET)$(ERLBUILD) depscan -MP -MF $@ $(ERLC_FLAGS) $<
+	$(QUIET)$(ERLC_DEPSCAN) -M -MP -MF $@ $(ERLC_FLAGS) $<
 
 
 # NOTE: including $(DEPFILES) to trigger rebuild of .d makefiles (i.e.
@@ -233,11 +237,11 @@ do_generate: $(GENERATED_ERLS)
 
 $(LEEX_ERLS): %.erl: %.xrl
 	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC) $<
+	$(QUIET)$(ERLC_GENERATE) $<
 
 $(YECC_ERLS): %.erl: %.yrl
 	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC) $<
+	$(QUIET)$(ERLC_GENERATE) $<
 
 endif  # ENABLE_GENERATE
 
