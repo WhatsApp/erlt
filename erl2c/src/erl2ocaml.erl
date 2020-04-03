@@ -585,7 +585,7 @@ get_type_defs([]) ->
     [];
 get_type_defs([{attribute,_,type,Type}|Forms]) ->
     [{alias,Type}|get_type_defs(Forms)];
-get_type_defs([{attribute,_,opaque,Type}|Forms]) ->
+get_type_defs([{attribute,_,enum,Type}|Forms]) ->
     [{enum,Type}|get_type_defs(Forms)];
 get_type_defs([_|Forms]) ->
     get_type_defs(Forms).
