@@ -1,4 +1,5 @@
 %% tests for remote constructors
+-lang([erl2]).
 -module(enum_mod02).
 
 -export([p/0, q/1, r/1, s/1]).

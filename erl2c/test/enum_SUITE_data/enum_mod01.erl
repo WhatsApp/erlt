@@ -1,3 +1,4 @@
+-lang([erl2]).
 -module(enum_mod01).
 
 -export([f/0, g/0, p/0, q/1, r/1, s/2]).

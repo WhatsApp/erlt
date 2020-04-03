@@ -1,11 +1,9 @@
-
 # erlbuild.mk parameters
 ERLC_FLAGS := -Wall -Werror +debug_info
 
+# targets
 ERL2C := ../bin/erl2c
 ERL2OCAML := ../bin/erl2ocaml
-ERLBUILD := ../../erlbuild/bin/erlbuild
-ERLC := erlc  # looks like rebar3 exports this variable, but we don't want it to get picked up here
 
 
 all: escripts
@@ -22,10 +20,10 @@ clean_escripts:
 	$(QUIET)rm -f $(ERL2OCAML)
 
 
-include ../../erlbuild/erlbuild.mk
+include ../../erl1.mk
 
 
-# NOTE: these rules are below erlbuild.mk, because we need $(BEAMS) variable to be defined
+# NOTE: these rules are below erl1.mk, because we need $(BEAMS) variable to be defined
 $(ERL2C): $(BEAMS)
 	$(ECHO_1) "making escript $@"
 	$(QUIET)./make_escript $@ erl2c $(BEAMS)

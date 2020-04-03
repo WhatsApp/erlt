@@ -12,6 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-lang([erl2]).
 -module(ma_mod01).
 
 -record(?MODULE:r1, {field1, field2}).

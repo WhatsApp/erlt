@@ -12,6 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-lang([erl2]).
 -module(ma_mod08).
 
 -export([test1_global/1, test1_local/1]).

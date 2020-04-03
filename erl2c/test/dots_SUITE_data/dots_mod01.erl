@@ -1,3 +1,4 @@
+-lang([erl2]).
 -module(dots_mod01) .
 
 -export([f/0, g/0, p/1, q/1, r/1, s/1, t/2, u/2, v/1]).
