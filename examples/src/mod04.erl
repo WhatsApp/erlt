@@ -2,7 +2,7 @@
 -module(mod04).
 -compile(export_all).
 
--depends([mod03]).
+-depends_on([mod03]).
 
 -spec mk_unit_remote() -> mod03:unit0().
 mk_unit_remote() -> mod03:unit0{}.
