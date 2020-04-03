@@ -42,11 +42,16 @@ jobs:
         run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: make project
         run: make
-      - name: make examples
+      - name: "examples: make"
         run: |
           eval $(opam env)
           cd examples/src
           make
+      - name: "examples: make ir"
+        run: |
+          eval $(opam env)
+          cd examples/src
+          make ir
       - name: erl2ocaml test
         run: |
           eval $(opam env)
