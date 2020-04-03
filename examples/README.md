@@ -1,4 +1,4 @@
-# To build examples
+# To build all examples
 
     make
 
@@ -9,7 +9,8 @@
 
     make ir
 
-`make ir` puts intermediate representation (IR) of the build into `$(BUILD_DIR)/ir` folder. Namely:
+`make ir` puts intermediate representation (IR) of the build into `$(BUILD_DIR)/ir`
+folder of a corresponding project. Namely:
 
 - `.ml` and `.mli` files - `ocamlformat`ted representation of erl2 files (with `-lang([erl2, st]).`)
 - `.P` files - erl1 representation of erl2 files.
