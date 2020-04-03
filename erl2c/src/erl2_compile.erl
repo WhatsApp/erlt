@@ -919,12 +919,10 @@ do_erl2_typecheck(Code, St) ->
     {ok,Code,St}.
 
 
-generate_ocaml_code(OcamlDir, Basename, _Forms, _St) ->
+generate_ocaml_code(OcamlDir, Basename, Forms, _St) ->
     Rootname = filename:join(OcamlDir, Basename),
 
-    % TODO: ocaml codegen
-    MlCode = [],
-    MliCode = [],
+    {MliCode,MlCode} = erl2ocaml:erl2ocaml(Forms),
 
     % TODO: error handling
     ok = filelib:ensure_dir(Rootname),
@@ -932,8 +930,19 @@ generate_ocaml_code(OcamlDir, Basename, _Forms, _St) ->
     ok = file:write_file(Rootname ++ ".mli", MliCode),
     ok.
 
+ensure_ocaml_ffi(OcamlDir) ->
+    FfiName = filename:join(OcamlDir, "ffi.ml"),
+    case filelib:is_regular(FfiName) of
+        true -> ok;
+        false ->
+            ok = file:write_file(FfiName, erl2ocaml:ffi()),
+            {0, _} = eunit_lib:command("ocamlc -c ffi.ml", OcamlDir),
+            ok
+    end.
 
 call_ocaml_typechecker(OcamlDir, Basename, St) ->
+    ok = ensure_ocaml_ffi(OcamlDir),
+
     Command = lists:append([
         "ocamlc -c ",
         Basename, ".mli", " ",

@@ -1,25 +1,43 @@
 -module(erl2ocaml).
 
--export([main/1]).
+-export([erl2ocaml/1, main/1, ffi/0]).
+
+ffi() ->
+    FfiLines = [
+        "type 'a tuple1 = Tuple1 of 'a\n",
+        "external same'2 : 'a * 'a -> unit = \"same\"\n",
+        "external to_string'1 : 'a -> string = \"to_string\"\n",
+        "external list_diff'2 : 'a list * 'a list -> 'a list = \"list_diff\"\n",
+        "type any = private Any\n",
+        "type atom = private Atom\n",
+        "type binary = private Binary\n",
+        "type bitstring = private Bitstring\n",
+        "type byte = private Byte\n",
+        "type identifier = private Identifier\n",
+        "type iodata = private Iodata\n",
+        "type iolist = private Iolist\n",
+        "type ('k, 'v) map = private Map of 'k * 'v\n",
+        "type neg_integer = private NegInteger\n",
+        "type none = private None\n",
+        "type non_neg_integer = private NonNegInteger\n",
+        "type number = private Number\n",
+        "type pid = private Pid\n",
+        "type port = private Port\n",
+        "type pos_integer = private PosInteger\n",
+        "type reference = private Ref\n",
+        "type term = private Term\n",
+        "type timeout = private Timeout\n",
+        "type node = atom\n",
+        "type no_return = none\n"
+    ],
+    iolist_to_binary(FfiLines).
 
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     swap_erl_parse(),
     {ok, Forms} = epp:parse_file(InFile, []),
-    Funs = get_fns(Forms),
-    SortedFuns = mk_sccs(Funs),
-    Specs = get_specs(Forms),
-    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
-    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
-    %% TODO - this also requires SCCs
-    TypeDefs = get_type_defs(Forms),
-    TypeDefLines = type_def_scc(TypeDefs),
-    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes),
-    %% io:format("RawDocs:\n~p\n", [RawDocs]),
-    FunLines = indent_docs(RawDocs),
-    InterfaceLines = TypeDefLines ++ SpecLines,
-    ImplementationLines = TypeDefLines ++ FunLines,
-    file:write_file(MliFile, iolist_to_binary(InterfaceLines)),
-    file:write_file(MlFile, iolist_to_binary(ImplementationLines));
+    {MliCode, MlCode} = erl2ocaml(Forms),
+    file:write_file(MliFile, MliCode),
+    file:write_file(MlFile, MlCode);
 main(["-ast", File]) ->
     swap_erl_parse(),
     {ok, Forms} = epp:parse_file(File, []),
@@ -33,6 +51,24 @@ main(["-ast", File]) ->
     io:format("Types:\n~p\n", [TypeDefs]);
 main(_) ->
     usage().
+
+erl2ocaml(Forms) ->
+    Funs = get_fns(Forms),
+    SortedFuns = mk_sccs(Funs),
+    Specs = get_specs(Forms),
+    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
+    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
+    %% TODO - this also requires SCCs
+    TypeDefs = get_type_defs(Forms),
+    TypeDefLines = type_def_scc(TypeDefs),
+    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes),
+    %% io:format("RawDocs:\n~p\n", [RawDocs]),
+    FunLines = indent_docs(RawDocs),
+    InterfaceLines = TypeDefLines ++ SpecLines,
+    ImplementationLines = TypeDefLines ++ FunLines,
+    MliCode = iolist_to_binary(InterfaceLines),
+    MlCode = iolist_to_binary(ImplementationLines),
+    {MliCode, MlCode}.
 
 swap_erl_parse() ->
     code:purge(erl_parse),

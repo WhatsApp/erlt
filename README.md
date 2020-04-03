@@ -12,8 +12,10 @@ cd erl2c; ./erl2ocaml_test.sh
 
 ## Requirements
 
+For usring erl2c with `-lang([erl2, st]).`:
+- `ocamlc` in PATH
+
 For running `erl2ocaml` tests:
-- `ocamlc` in `PATH`
 - `ocamlformat` in `PATH`
 
 ## Building
