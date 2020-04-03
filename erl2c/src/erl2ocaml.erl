@@ -482,7 +482,7 @@ type({type, _,char,[]}) ->
 type({type, _,boolean,[]}) ->
     "bool";
 type({type, _,list,[T]}) ->
-    type(T) ++ " list";
+    "(" ++ type(T) ++ ") list";
 type({type,Ln,map,[{type,_,map_field_assoc,[KT,VT]}]}) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,map},[KT,VT]]});
 type({type,_,map,Assocs}) ->
