@@ -8,7 +8,7 @@
 -enum rgb() :: r{} | g{} | b{}.
 -enum pair(A, B) :: pair{A,B}.
 -enum triple(A,B,C) :: triple{A,B,C}.
--enum list(A) :: cons{A, list(A)} | nil{}.
+-enum my_list(A) :: cons{A, my_list(A)} | nil{}.
 -enum option(A) :: none{} | some{A}.
 
 -spec mk_unit() -> unit0().
