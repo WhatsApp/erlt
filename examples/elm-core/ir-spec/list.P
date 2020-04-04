@@ -30,7 +30,7 @@ range(Lo, Hi) ->
 
 range_help(Lo, Hi, L) when Lo =< Hi ->
     range_help(Lo, Hi - 1, [Hi | L]);
-range_help(Lo, Hi, L) ->
+range_help(_Lo, _Hi, L) ->
     L.
 
 -spec cons(A, [A]) -> [A].
@@ -42,7 +42,7 @@ cons(H, T) ->
 
 map(F, [H | T]) ->
     [F(H) | map(F, T)];
-map(F, []) ->
+map(_F, []) ->
     [].
 
 -spec indexed_map(fun((integer(), A) -> B), [A]) -> [B].
@@ -54,14 +54,14 @@ indexed_map(F, Xs) ->
 
 foldl(F, Acc, [H | T]) ->
     foldl(F, F(H, Acc), T);
-foldl(F, Acc, []) ->
+foldl(_F, Acc, []) ->
     Acc.
 
 -spec foldr(fun((A, B) -> B), B, [A]) -> B.
 
 foldr(F, Acc, [H | T]) ->
     F(H, foldr(F, Acc, T));
-foldr(F, Acc, []) ->
+foldr(_F, Acc, []) ->
     Acc.
 
 -spec filter(fun((A) -> boolean()), [A]) -> [A].
@@ -126,7 +126,7 @@ all(Pred, [H | T]) ->
         false ->
             false
     end;
-all(Pred, []) ->
+all(_Pred, []) ->
     true.
 
 -spec any(fun((A) -> boolean()), [A]) -> boolean().
@@ -138,7 +138,7 @@ any(Pred, [H | T]) ->
         false ->
             any(Pred, T)
     end;
-any(Pred, []) ->
+any(_Pred, []) ->
     false.
 
 -spec maximum([A]) -> maybe:maybe(A).
@@ -189,7 +189,7 @@ intersperse(Sep, [H | T]) ->
         end,
     Spersed = foldr(Step, [], T),
     [H | Spersed];
-intersperse(Sep, []) ->
+intersperse(_Sep, []) ->
     [].
 
 -spec map2(fun((A, B) -> Res), [A], [B]) -> [Res].
@@ -222,9 +222,9 @@ tail([]) ->
 
 -spec take(integer(), [A]) -> [A].
 
-take(N, L) when N =< 0 ->
+take(N, _L) when N =< 0 ->
     [];
-take(N, []) ->
+take(_N, []) ->
     [];
 take(N, [H | T]) ->
     [H | take(N - 1, T)].
@@ -233,9 +233,9 @@ take(N, [H | T]) ->
 
 drop(N, L) when N =< 0 ->
     L;
-drop(N, []) ->
+drop(_N, []) ->
     [];
-drop(N, [H | T]) ->
+drop(N, [_H | T]) ->
     drop(N - 1, T).
 
 -spec partition(fun((A) -> boolean()), [A]) -> {[A], [A]}.

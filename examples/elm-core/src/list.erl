@@ -19,7 +19,7 @@ range(Lo, Hi) -> range_help(Lo, Hi, []).
 
 -spec range_help(integer(), integer(), list(integer())) -> list(integer()).
 range_help(Lo, Hi, L) when Lo =< Hi -> range_help(Lo, Hi - 1, [Hi|L]);
-range_help(Lo, Hi, L) -> L.
+range_help(_Lo, _Hi, L) -> L.
 
 -spec cons(A, list(A)) -> list(A).
 cons(H, T) -> [H|T].
@@ -28,18 +28,18 @@ cons(H, T) -> [H|T].
 
 -spec map(fun((A) -> B), list(A)) -> list(B).
 map(F, [H|T]) -> [F(H) | map(F, T)];
-map(F, []) -> [].
+map(_F, []) -> [].
 
 -spec indexed_map(fun((integer(), A) -> B), list(A)) -> list(B).
 indexed_map(F, Xs) -> map2(F, range(0, length(Xs) - 1), Xs).
 
 -spec foldl(fun((A, B) -> B), B, list(A)) -> B.
 foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);
-foldl(F, Acc, []) -> Acc.
+foldl(_F, Acc, []) -> Acc.
 
 -spec foldr(fun((A, B) -> B), B, list(A)) -> B.
 foldr(F, Acc, [H|T]) -> F(H, foldr(F, Acc, T));
-foldr(F, Acc, []) -> Acc.
+foldr(_F, Acc, []) -> Acc.
 
 -spec filter(fun((A) -> boolean()), list(A)) -> list(A).
 filter(F, List) ->
@@ -72,12 +72,12 @@ member(X, Xs) -> any(basics:eq(X), Xs).
 -spec all(fun((A) -> boolean()), list(A)) -> boolean().
 all(Pred, [H|T]) ->
     case Pred(H) of true -> all(Pred, T); false -> false end;
-all(Pred, []) -> true.
+all(_Pred, []) -> true.
 
 -spec any(fun((A) -> boolean()), list(A)) -> boolean().
 any(Pred, [H|T]) ->
     case Pred(H) of true -> true; false -> any(Pred, T) end;
-any(Pred, []) -> false.
+any(_Pred, []) -> false.
 
 -spec maximum(list(A)) -> maybe:maybe(A).
 maximum([]) -> maybe.nothing{};
@@ -109,7 +109,7 @@ intersperse(Sep, [H|T]) ->
     Step = fun(X, Rest) -> [Sep|[X|Rest]] end,
     Spersed = foldr(Step, [], T),
     [H|Spersed];
-intersperse(Sep, []) -> [].
+intersperse(_Sep, []) -> [].
 
 -spec map2(fun((A, B) -> Res), list(A), list(B)) -> list(Res).
 map2(F,[H1|T1],[H2|T2]) -> [F(H1, H2)|map2(F,T1,T2)];
@@ -133,14 +133,14 @@ tail([_|T]) -> maybe.just{T};
 tail([]) -> maybe.nothing{}.
 
 -spec take(integer(), list(A)) -> list(A).
-take(N, L) when N =< 0 -> [];
-take(N, []) -> [];
+take(N, _L) when N =< 0 -> [];
+take(_N, []) -> [];
 take(N, [H|T]) -> [H|take(N - 1, T)].
 
 -spec drop(integer(), list(A)) -> list(A).
 drop(N, L) when N =< 0 -> L;
-drop(N, []) -> [];
-drop(N, [H|T]) -> drop(N - 1, T).
+drop(_N, []) -> [];
+drop(N, [_H|T]) -> drop(N - 1, T).
 
 -spec partition(fun((A) -> boolean()), list(A)) -> {list(A), list(A)}.
 partition(Pred,List) ->

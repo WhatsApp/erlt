@@ -8,13 +8,13 @@ id(X) ->
     X.
 
 -spec arg13(X, _, _) -> X.
-arg13(X, Y, Z) ->
+arg13(X, _Y, _Z) ->
     X.
 -spec arg23(_, Y, _) -> Y.
-arg23(X, Y, Z) ->
+arg23(_X, Y, _Z) ->
     Y.
 -spec arg33(_, _, Z) -> Z.
-arg33(X, Y, Z) ->
+arg33(_X, _Y, Z) ->
     Z.
 
 -spec mk_int() -> integer().
@@ -85,14 +85,12 @@ access_map2(M) ->
 mk_seq() ->
     X = 1,
     Y = 2,
-    3,
-    4,
     {X, Y}.
 
 -spec is_empty([_]) -> boolean().
 is_empty([]) ->
     true;
-is_empty([H|T]) ->
+is_empty([_H|_T]) ->
     false.
 
 -spec is_empty2([_]) -> boolean().
@@ -151,12 +149,12 @@ fun_to_var() ->
     F.
 
 -spec local_fun_to_var(_, _) -> fun(([_],[_]) -> boolean()).
-local_fun_to_var(A, B) ->
+local_fun_to_var(_A, _B) ->
     F = fun call/2,
     F.
 
 -spec remote_fun_to_var(_, _) -> fun(([A]) -> [A]).
-remote_fun_to_var(A, B) ->
+remote_fun_to_var(_A, _B) ->
     F = fun ocaml_list:rev/1,
     F.
 
@@ -293,9 +291,9 @@ comp8(X, Y) ->
 -spec guard1(integer(), integer()) -> boolean().
 guard1(X, Y) when X == 1, Y == 1; X =/= Y ->
     true;
-guard1(X, Y) when false ->
+guard1(X, Y) when X > Y ->
     false;
-guard1(X, Y) ->
+guard1(_X, _Y) ->
     false.
 
 -spec guard2([A], A, [A]) -> [A].
@@ -315,7 +313,7 @@ p_match_tuple0({}) ->
     {{}}.
 
 -spec p_match_tuple1({_}) -> {}.
-p_match_tuple1({X}) ->
+p_match_tuple1({_X}) ->
     {}.
 
 -spec p_match_invoke() -> {}.
@@ -383,4 +381,5 @@ ints_id(X) -> X.
 -type my_pair2(A) :: my_pair(A, A).
 -type my_pair(A, B) :: {A, B}.
 
+-spec mk_my_pair(A, A) -> my_pair2(A).
 mk_my_pair(A,B) -> {A, B}.

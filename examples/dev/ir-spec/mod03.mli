@@ -14,6 +14,12 @@ and 'tA my_list = Cons of 'tA * 'tA my_list | Nil
 
 and 'tA option = None | Some of 'tA
 
+val mk_rgb'0 : unit -> rgb
+
+val mk_triple'1 : 'tA -> ('tA, 'tA, 'tA) triple
+
+val mk_none'0 : unit -> _ option
+
 val mk_unit'0 : unit -> unit0
 
 val mk_box'1 : 'tA -> 'tA boxed

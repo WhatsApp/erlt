@@ -14,6 +14,13 @@ and 'tA my_list = Cons of 'tA * 'tA my_list | Nil
 
 and 'tA option = None | Some of 'tA
 
+let rec mk_rgb'0 : unit -> rgb = function () -> R
+
+let rec mk_triple'1 : 'tA -> ('tA, 'tA, 'tA) triple = function
+  | v_A -> Triple (v_A, v_A, v_A)
+
+let rec mk_none'0 : unit -> _ option = function () -> None
+
 let rec mk_unit'0 : unit -> unit0 = function () -> Unit0
 
 let rec mk_box'1 : 'tA -> 'tA boxed = function v_A -> Boxed v_A

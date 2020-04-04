@@ -23,6 +23,21 @@
 
 -type option(A) :: {969696, mod03, none} | {969696, mod03, some, A}.
 
+-spec mk_rgb() -> rgb().
+
+mk_rgb() ->
+    {969696, mod03, r}.
+
+-spec mk_triple(A) -> triple(A, A, A).
+
+mk_triple(A) ->
+    {969696, mod03, triple, A, A, A}.
+
+-spec mk_none() -> option(_).
+
+mk_none() ->
+    {969696, mod03, none}.
+
 -spec mk_unit() -> unit0().
 
 mk_unit() ->

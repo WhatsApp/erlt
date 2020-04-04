@@ -11,6 +11,15 @@
 -enum my_list(A) :: cons{A, my_list(A)} | nil{}.
 -enum option(A) :: none{} | some{A}.
 
+-spec mk_rgb() -> rgb().
+mk_rgb() -> r{}.
+
+-spec mk_triple(A) -> triple(A, A, A).
+mk_triple(A) -> triple{A, A, A}.
+
+-spec mk_none() -> option(_).
+mk_none() ->  none{}.
+
 -spec mk_unit() -> unit0().
 mk_unit() -> unit0{}.
 

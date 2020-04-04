@@ -4,11 +4,11 @@ and ('tA, 'tB) my_pair = 'tA * 'tB
 
 let rec id'1 : 'tX -> 'tX = function v_X -> v_X
 
-let rec arg13'3 : 'tX * _ * _ -> 'tX = function v_X, v_Y, v_Z -> v_X
+let rec arg13'3 : 'tX * _ * _ -> 'tX = function v_X, v__Y, v__Z -> v_X
 
-let rec arg23'3 : _ * 'tY * _ -> 'tY = function v_X, v_Y, v_Z -> v_Y
+let rec arg23'3 : _ * 'tY * _ -> 'tY = function v__X, v_Y, v__Z -> v_Y
 
-let rec arg33'3 : _ * _ * 'tZ -> 'tZ = function v_X, v_Y, v_Z -> v_Z
+let rec arg33'3 : _ * _ * 'tZ -> 'tZ = function v__X, v__Y, v_Z -> v_Z
 
 let rec mk_int'0 : unit -> int = function () -> 1
 
@@ -139,13 +139,11 @@ let rec mk_seq'0 : unit -> int * int = function
   | () ->
       let v_X = 1 in
       let v_Y = 2 in
-      let _ = 3 in
-      let _ = 4 in
       (v_X, v_Y)
 
 let rec is_empty'1 : _ list -> bool = function
   | [] -> true
-  | v_H :: v_T -> false
+  | v__H :: v__T -> false
 
 let rec is_empty2'1 : _ list -> bool = function [] -> true | _ -> false
 
@@ -176,12 +174,12 @@ let rec fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB = function
       v_F
 
 let rec local_fun_to_var'2 : _ * _ -> _ list * _ list -> bool = function
-  | v_A, v_B ->
+  | v__A, v__B ->
       let v_F = call'2 in
       v_F
 
 let rec remote_fun_to_var'2 : _ * _ -> 'tA list -> 'tA list = function
-  | v_A, v_B ->
+  | v__A, v__B ->
       let v_F = List.rev in
       v_F
 
@@ -260,8 +258,8 @@ let rec comp8'2 : 'tA * 'tA -> bool = function v_X, v_Y -> v_X <> v_Y
 
 let rec guard1'2 : int * int -> bool = function
   | v_X, v_Y when (v_X = 1 && v_Y = 1) || v_X <> v_Y -> true
-  | v_X, v_Y when false -> false
-  | v_X, v_Y -> false
+  | v_X, v_Y when v_X > v_Y -> false
+  | v__X, v__Y -> false
 
 let rec guard2'3 : 'tA list * 'tA * 'tA list -> 'tA list = function
   | v_X, v_Y, [] -> (
@@ -273,7 +271,7 @@ let rec p_match_tuple0'1 : unit -> unit Ffi.tuple1 = function
   | () -> Ffi.Tuple1 ()
 
 let rec p_match_tuple1'1 : _ Ffi.tuple1 -> unit = function
-  | Ffi.Tuple1 v_X -> ()
+  | Ffi.Tuple1 v__X -> ()
 
 let rec p_match_invoke'0 : unit -> unit = function
   | () ->
@@ -324,4 +322,5 @@ let rec ints_id'1 :
     Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer = function
   | v_X -> v_X
 
-let rec mk_my_pair'2 = function v_A, v_B -> (v_A, v_B)
+let rec mk_my_pair'2 : 'tA * 'tA -> 'tA my_pair2 = function
+  | v_A, v_B -> (v_A, v_B)
