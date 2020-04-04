@@ -931,12 +931,12 @@ generate_ocaml_code(OcamlDir, Basename, Forms, _St) ->
     ok.
 
 ensure_ocaml_ffi(OcamlDir) ->
-    FfiName = filename:join(OcamlDir, "ffi.ml"),
+    FfiName = filename:join(OcamlDir, "ffi.mli"),
     case filelib:is_regular(FfiName) of
         true -> ok;
         false ->
             ok = file:write_file(FfiName, erl2ocaml:ffi()),
-            {0, _} = eunit_lib:command("ocamlc -c ffi.ml", OcamlDir),
+            {0, _} = eunit_lib:command("ocamlc -c ffi.mli", OcamlDir),
             ok
     end.
 

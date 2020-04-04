@@ -11,7 +11,7 @@ done
 (cd erl2ocaml_examples;
 
 rm -f *.cmi *.cmo
-ocamlc -c Ffi.ml;
+ocamlc -c Ffi.mli;
 
 for m in "mod01" "mod02" "mod03" "mod04"
 do
