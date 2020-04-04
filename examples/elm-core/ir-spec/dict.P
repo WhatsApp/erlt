@@ -8,7 +8,7 @@
 
 -type dict(K, V) :: dict_ffi:dict(K, V).
 
--spec empty() -> dict(_, _).
+-spec empty() -> dict(_K, _V).
 
 empty() ->
     dict_ffi:empty().
@@ -18,7 +18,7 @@ empty() ->
 get(Key, Dict) ->
     dict_ffi:get(Key, Dict).
 
--spec member(K, dict(K, _)) -> boolean().
+-spec member(K, dict(K, _V)) -> boolean().
 
 member(Key, Dict) ->
     case get(Key, Dict) of
@@ -28,12 +28,12 @@ member(Key, Dict) ->
             false
     end.
 
--spec size(dict(_, _)) -> integer().
+-spec size(dict(_K, _V)) -> integer().
 
 size(Dict) ->
     dict_ffi:size(Dict).
 
--spec is_empty(dict(_, _)) -> boolean().
+-spec is_empty(dict(_K, _V)) -> boolean().
 
 is_empty(Dict) ->
     size(Dict) =:= 0.
@@ -115,12 +115,12 @@ partition(F, Dict) ->
         end,
     fold(Add, {empty(), empty()}, Dict).
 
--spec keys(dict(K, _)) -> [K].
+-spec keys(dict(K, _V)) -> [K].
 
 keys(Dict) ->
     dict_ffi:keys(Dict).
 
--spec values(dict(_, V)) -> [V].
+-spec values(dict(_K, V)) -> [V].
 
 values(Dict) ->
     dict_ffi:values(Dict).

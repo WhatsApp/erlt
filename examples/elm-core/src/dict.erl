@@ -6,25 +6,25 @@
 
 -type dict(K, V) :: dict_ffi:dict(K, V).
 
--spec empty() -> dict(_,_).
+-spec empty() -> dict(_K,_V).
 empty() ->
     dict_ffi:empty().
 
 -spec get(K, dict(K, V)) -> maybe:maybe(V).
 get(Key, Dict) -> dict_ffi:get(Key, Dict).
 
--spec member(K, dict(K, _)) -> boolean().
+-spec member(K, dict(K, _V)) -> boolean().
 member(Key, Dict) ->
     case get(Key, Dict) of
         maybe.just{_} -> true;
         maybe.nothing{} -> false
     end.
 
--spec size(dict(_,_)) -> integer().
+-spec size(dict(_K,_V)) -> integer().
 size(Dict) ->
     dict_ffi:size(Dict).
 
--spec is_empty(dict(_, _)) -> boolean().
+-spec is_empty(dict(_K, _V)) -> boolean().
 is_empty(Dict) ->
     size(Dict) =:= 0.
 
@@ -88,18 +88,18 @@ partition(F, Dict) ->
 
 %% LISTS
 
--spec keys(dict(K,_)) -> list(K).
+-spec keys(dict(K, _V)) -> list(K).
 keys(Dict) ->
     dict_ffi:keys(Dict).
 
--spec values(dict(_,V)) -> list(V).
+-spec values(dict(_K, V)) -> list(V).
 values(Dict) ->
     dict_ffi:values(Dict).
 
--spec to_list(dict(K,V)) -> list({K,V}).
+-spec to_list(dict(K, V)) -> list({K, V}).
 to_list(Dict) ->
     dict_ffi:to_list(Dict).
 
--spec from_list(list({K,V})) -> dict(K,V).
+-spec from_list(list({K, V})) -> dict(K, V).
 from_list(List) ->
     dict_ffi:from_list(List).

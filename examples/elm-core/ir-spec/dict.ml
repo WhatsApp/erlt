@@ -1,20 +1,21 @@
 type ('tK, 'tV) dict = ('tK, 'tV) Dict_ffi.dict
 
-let rec empty'0 : unit -> (_, _) dict = function () -> Dict_ffi.empty'0 ()
+let rec empty'0 : unit -> ('t_K, 't_V) dict = function
+  | () -> Dict_ffi.empty'0 ()
 
 let rec get'2 : 'tK * ('tK, 'tV) dict -> 'tV Maybe.maybe = function
   | v_Key, v_Dict -> Dict_ffi.get'2 (v_Key, v_Dict)
 
-let rec member'2 : 'tK * ('tK, _) dict -> bool = function
+let rec member'2 : 'tK * ('tK, 't_V) dict -> bool = function
   | v_Key, v_Dict -> (
       match get'2 (v_Key, v_Dict) with
       | Maybe.Just _ -> true
       | Maybe.Nothing -> false )
 
-let rec size'1 : (_, _) dict -> int = function
+let rec size'1 : ('t_K, 't_V) dict -> int = function
   | v_Dict -> Dict_ffi.size'1 v_Dict
 
-let rec is_empty'1 : (_, _) dict -> bool = function
+let rec is_empty'1 : ('t_K, 't_V) dict -> bool = function
   | v_Dict -> size'1 v_Dict = 0
 
 let rec insert'3 : 'tK * 'tV * ('tK, 'tV) dict -> ('tK, 'tV) dict = function
@@ -71,10 +72,10 @@ let rec partition'2 :
       in
       fold'3 (v_Add, (empty'0 (), empty'0 ()), v_Dict)
 
-let rec keys'1 : ('tK, _) dict -> 'tK list = function
+let rec keys'1 : ('tK, 't_V) dict -> 'tK list = function
   | v_Dict -> Dict_ffi.keys'1 v_Dict
 
-let rec values'1 : (_, 'tV) dict -> 'tV list = function
+let rec values'1 : ('t_K, 'tV) dict -> 'tV list = function
   | v_Dict -> Dict_ffi.values'1 v_Dict
 
 let rec to_list'1 : ('tK, 'tV) dict -> ('tK * 'tV) list = function

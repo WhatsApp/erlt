@@ -1,10 +1,10 @@
 type ('tK, 'tV) dict = ('tK, 'tV) Ffi.map
 
-val empty'0 : unit -> (_, _) dict
+val empty'0 : unit -> ('t_K, 't_V) dict
 
 val get'2 : 'tK * ('tK, 'tV) dict -> 'tV Maybe.maybe
 
-val size'1 : (_, _) dict -> int
+val size'1 : ('t_K, 't_V) dict -> int
 
 val insert'3 : 'tK * 'tV * ('tK, 'tV) dict -> ('tK, 'tV) dict
 
@@ -18,9 +18,9 @@ val filter'2 : ('tK * 'tV -> bool) * ('tK, 'tV) dict -> ('tK, 'tV) dict
 
 val map'2 : ('tK * 'tA -> 'tB) * ('tK, 'tA) dict -> ('tK, 'tB) dict
 
-val keys'1 : ('tK, _) dict -> 'tK list
+val keys'1 : ('tK, 't_V) dict -> 'tK list
 
-val values'1 : (_, 'tV) dict -> 'tV list
+val values'1 : ('t_K, 'tV) dict -> 'tV list
 
 val to_list'1 : ('tK, 'tV) dict -> ('tK * 'tV) list
 

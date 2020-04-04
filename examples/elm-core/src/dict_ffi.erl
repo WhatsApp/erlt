@@ -7,7 +7,7 @@
 
 -type dict(K, V) :: #{K => V}.
 
--spec empty() -> dict(_, _).
+-spec empty() -> dict(_K, _V).
 empty() ->
     maps:new().
 
@@ -19,7 +19,7 @@ get(Key, Dict) ->
     end.
 
 
--spec size(dict(_,_)) -> integer().
+-spec size(dict(_K,_V)) -> integer().
 size(Dict) ->
     maps:size(Dict).
 
@@ -47,11 +47,11 @@ filter(F, Dict) ->
 map(F, Dict) ->
     maps:map(F, Dict).
 
--spec keys(dict(K, _)) -> list(K).
+-spec keys(dict(K, _V)) -> list(K).
 keys(Dict) ->
     maps:keys(Dict).
 
--spec values(dict(_, V)) -> list(V).
+-spec values(dict(_K, V)) -> list(V).
 values(Dict) ->
     maps:values(Dict).
 
