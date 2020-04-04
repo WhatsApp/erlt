@@ -58,8 +58,3 @@ jobs:
         run: |
           eval $(opam env)
           make test-ir -C examples/elm-core/src
-      - name: erl2ocaml test
-        run: |
-          eval $(opam env)
-          cd erl2c/
-          ./erl2ocaml_test.sh

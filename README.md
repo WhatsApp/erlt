@@ -4,19 +4,12 @@ This repository is for prototyping and collaborating around the Modern Erlang pr
 
 ## Examples
 
-Testing erl to ocaml translation:
-
-```
-cd erl2c; ./erl2ocaml_test.sh
-```
+See the [examples](examples/) folder.
 
 ## Requirements
 
-For usring erl2c with `-lang([erl2, st]).`:
+For using erl2c with `-lang([erl2, st]).`:
 - `ocamlc` in PATH
-
-For running `erl2ocaml` tests:
-- `ocamlformat` in `PATH`
 
 ## Building
 
