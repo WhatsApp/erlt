@@ -1,6 +1,7 @@
 -lang([erl2, st]).
 -module(basics).
 -compile(export_all).
+-compile({no_auto_import,[min/2,max/2]}).
 
 %% MATHEMATICS
 
