@@ -22,57 +22,57 @@ let rec idiv'2 : int * int -> int = function v_X1, v_X2 -> v_X1 / v_X2
 let rec idiv'1 : int -> int -> int = function
   | v_X1 -> ( function v_X2 -> idiv'2 (v_X1, v_X2) )
 
-let rec eq'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 = v_X2
+let rec eq'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 = v_X2
 
-let rec eq'1 : 'A -> 'A -> bool = function
+let rec eq'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> eq'2 (v_X1, v_X2) )
 
-let rec neq'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 <> v_X2
+let rec neq'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 <> v_X2
 
-let rec neq'1 : 'A -> 'A -> bool = function
+let rec neq'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> neq'2 (v_X1, v_X2) )
 
-let rec lt'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 < v_X2
+let rec lt'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 < v_X2
 
-let rec lt'1 : 'A -> 'A -> bool = function
+let rec lt'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> lt'2 (v_X1, v_X2) )
 
-let rec gt'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 > v_X2
+let rec gt'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 > v_X2
 
-let rec gt'1 : 'A -> 'A -> bool = function
+let rec gt'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> gt'2 (v_X1, v_X2) )
 
-let rec le'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 <= v_X2
+let rec le'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 <= v_X2
 
-let rec le'1 : 'A -> 'A -> bool = function
+let rec le'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> le'2 (v_X1, v_X2) )
 
-let rec ge'2 : 'A * 'A -> bool = function v_X1, v_X2 -> v_X1 >= v_X2
+let rec ge'2 : 'tA * 'tA -> bool = function v_X1, v_X2 -> v_X1 >= v_X2
 
-let rec ge'1 : 'A -> 'A -> bool = function
+let rec ge'1 : 'tA -> 'tA -> bool = function
   | v_X1 -> ( function v_X2 -> ge'2 (v_X1, v_X2) )
 
-let rec min'2 : 'A * 'A -> 'A = function
+let rec min'2 : 'tA * 'tA -> 'tA = function
   | v_X1, v_X2 -> (
       match lt'2 (v_X1, v_X2) with true -> v_X1 | false -> v_X2 )
 
-let rec min'1 : 'A -> 'A -> 'A = function
+let rec min'1 : 'tA -> 'tA -> 'tA = function
   | v_X1 -> ( function v_X2 -> min'2 (v_X1, v_X2) )
 
-let rec max'2 : 'A * 'A -> 'A = function
+let rec max'2 : 'tA * 'tA -> 'tA = function
   | v_X1, v_X2 -> (
       match gt'2 (v_X1, v_X2) with true -> v_X1 | false -> v_X2 )
 
-let rec max'1 : 'A -> 'A -> 'A = function
+let rec max'1 : 'tA -> 'tA -> 'tA = function
   | v_X1 -> ( function v_X2 -> max'2 (v_X1, v_X2) )
 
-let rec compare'2 : 'A * 'A -> order = function
+let rec compare'2 : 'tA * 'tA -> order = function
   | v_X1, v_X2 -> (
       match lt'2 (v_X1, v_X2) with
       | true -> Lt
       | false -> ( match eq'2 (v_X1, v_X2) with true -> Eq | false -> Gt ) )
 
-let rec compare'1 : 'A -> 'A -> order = function
+let rec compare'1 : 'tA -> 'tA -> order = function
   | v_X1 -> ( function v_X2 -> compare'2 (v_X1, v_X2) )
 
 let rec not'1 : bool -> bool = function v_B -> not v_B
@@ -116,33 +116,33 @@ let rec clamp'3 : int * int * int -> int = function
       | false -> (
           match gt'2 (v_Num, v_High) with true -> v_High | false -> v_Num ) )
 
-let rec composeL'2 : ('B -> 'C) * ('A -> 'B) -> 'A -> 'C = function
+let rec composeL'2 : ('tB -> 'tC) * ('tA -> 'tB) -> 'tA -> 'tC = function
   | v_G, v_F -> ( function v_X -> v_G (v_F v_X) )
 
-let rec composeL'1 : ('B -> 'C) -> ('A -> 'B) -> 'A -> 'C = function
+let rec composeL'1 : ('tB -> 'tC) -> ('tA -> 'tB) -> 'tA -> 'tC = function
   | v_G -> ( function v_F -> composeL'2 (v_G, v_F) )
 
-let rec composeR'2 : ('A -> 'B) * ('B -> 'C) -> 'A -> 'C = function
+let rec composeR'2 : ('tA -> 'tB) * ('tB -> 'tC) -> 'tA -> 'tC = function
   | v_F, v_G -> ( function v_X -> v_G (v_F v_X) )
 
 let rec composeR'1 = function
   | v_F -> ( function v_G -> composeR'2 (v_F, v_G) )
 
-let rec apR'2 : 'A * ('A -> 'B) -> 'B = function v_X, v_F -> v_F v_X
+let rec apR'2 : 'tA * ('tA -> 'tB) -> 'tB = function v_X, v_F -> v_F v_X
 
-let rec apR'1 : 'A -> ('A -> 'B) -> 'B = function
+let rec apR'1 : 'tA -> ('tA -> 'tB) -> 'tB = function
   | v_X -> ( function v_F -> apR'2 (v_X, v_F) )
 
-let rec apL'2 : ('A -> 'B) * 'A -> 'B = function v_F, v_X -> v_F v_X
+let rec apL'2 : ('tA -> 'tB) * 'tA -> 'tB = function v_F, v_X -> v_F v_X
 
-let rec apL'1 : ('A -> 'B) -> 'A -> 'B = function
+let rec apL'1 : ('tA -> 'tB) -> 'tA -> 'tB = function
   | v_F -> ( function v_X -> apL'2 (v_F, v_X) )
 
-let rec identity'1 : 'A -> 'A = function v_X -> v_X
+let rec identity'1 : 'tA -> 'tA = function v_X -> v_X
 
-let rec always'2 : 'A * _ -> 'A = function v_A, _ -> v_A
+let rec always'2 : 'tA * _ -> 'tA = function v_A, _ -> v_A
 
-let rec always'1 : 'A -> _ -> 'A = function
+let rec always'1 : 'tA -> _ -> 'tA = function
   | v_A -> ( function v_X -> always'2 (v_A, v_X) )
 
 let rec never'1 : never -> _ = function Just_one_more v_Nvr -> never'1 v_Nvr

@@ -1,14 +1,14 @@
-type 'A my_pair2 = ('A, 'A) my_pair
+type 'tA my_pair2 = ('tA, 'tA) my_pair
 
-and ('A, 'B) my_pair = 'A * 'B
+and ('tA, 'tB) my_pair = 'tA * 'tB
 
-val id'1 : 'X -> 'X
+val id'1 : 'tX -> 'tX
 
-val arg13'3 : 'X * _ * _ -> 'X
+val arg13'3 : 'tX * _ * _ -> 'tX
 
-val arg23'3 : _ * 'Y * _ -> 'Y
+val arg23'3 : _ * 'tY * _ -> 'tY
 
-val arg33'3 : _ * _ * 'Z -> 'Z
+val arg33'3 : _ * _ * 'tZ -> 'tZ
 
 val mk_int'0 : unit -> int
 
@@ -20,67 +20,67 @@ val mk_char'0 : unit -> char
 
 val mk_nil'0 : unit -> _ list
 
-val mk_cons'2 : 'A * 'A list -> 'A list
+val mk_cons'2 : 'tA * 'tA list -> 'tA list
 
-val mk_tuple'3 : 'A * 'B * 'C -> 'A * 'B * 'C
+val mk_tuple'3 : 'tA * 'tB * 'tC -> 'tA * 'tB * 'tC
 
-val mk_tuple2'1 : 'A -> int * int * int * 'A
+val mk_tuple2'1 : 'tA -> int * int * int * 'tA
 
 val mk_map'2 :
-  'A * 'B ->
-  (< get_a : 'A ; set_a : 'A -> 'map_1 ; get_b : 'B ; set_b : 'B -> 'map_1 >
+  'tA * 'tB ->
+  (< get_a : 'tA ; set_a : 'tA -> 'map_1 ; get_b : 'tB ; set_b : 'tB -> 'map_1 >
    as
    'map_1)
 
 val update_map1'2 :
-  (< get_a : 'A ; set_a : 'A -> 'map_2 > as 'map_2) * 'A ->
-  (< get_a : 'A ; set_a : 'A -> 'map_3 > as 'map_3)
+  (< get_a : 'tA ; set_a : 'tA -> 'map_2 > as 'map_2) * 'tA ->
+  (< get_a : 'tA ; set_a : 'tA -> 'map_3 > as 'map_3)
 
 val update_map2'2 :
-  (< get_a : 'A ; set_a : 'A -> 'map_M ; .. > as 'map_M) * 'A ->
-  (< get_a : 'A ; set_a : 'A -> 'map_M ; .. > as 'map_M)
+  (< get_a : 'tA ; set_a : 'tA -> 'map_M ; .. > as 'map_M) * 'tA ->
+  (< get_a : 'tA ; set_a : 'tA -> 'map_M ; .. > as 'map_M)
 
 val update_map3'1 :
-  (< get_a : 'A ; set_a : 'A -> 'map_4 ; get_b : 'A ; set_b : 'A -> 'map_4 >
+  (< get_a : 'tA ; set_a : 'tA -> 'map_4 ; get_b : 'tA ; set_b : 'tA -> 'map_4 >
    as
    'map_4) ->
-  (< get_a : 'A ; set_a : 'A -> 'map_5 ; get_b : 'A ; set_b : 'A -> 'map_5 >
+  (< get_a : 'tA ; set_a : 'tA -> 'map_5 ; get_b : 'tA ; set_b : 'tA -> 'map_5 >
    as
    'map_5)
 
 val update_map4'1 :
-  (< get_a : 'A
-   ; set_a : 'A -> 'map_M
-   ; get_b : 'A
-   ; set_b : 'A -> 'map_M
+  (< get_a : 'tA
+   ; set_a : 'tA -> 'map_M
+   ; get_b : 'tA
+   ; set_b : 'tA -> 'map_M
    ; .. >
    as
    'map_M) ->
-  (< get_a : 'A
-   ; set_a : 'A -> 'map_M
-   ; get_b : 'A
-   ; set_b : 'A -> 'map_M
+  (< get_a : 'tA
+   ; set_a : 'tA -> 'map_M
+   ; get_b : 'tA
+   ; set_b : 'tA -> 'map_M
    ; .. >
    as
    'map_M)
 
 val access_map'1 :
-  (< get_id : 'Id
-   ; set_id : 'Id -> 'map__
-   ; get_location : 'Location
-   ; set_location : 'Location -> 'map__
+  (< get_id : 'tId
+   ; set_id : 'tId -> 'map__
+   ; get_location : 'tLocation
+   ; set_location : 'tLocation -> 'map__
    ; .. >
    as
    'map__) ->
-  'Id * 'Location
+  'tId * 'tLocation
 
 val access_map2'1 :
-  (< get_inner1 : (< get_inner2 : 'A ; set_inner2 : 'A -> 'map_7 > as 'map_7)
+  (< get_inner1 : (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'map_7 > as 'map_7)
    ; set_inner1 :
-       (< get_inner2 : 'A ; set_inner2 : 'A -> 'map_7 > as 'map_7) -> 'map_6 >
+       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'map_7 > as 'map_7) -> 'map_6 >
    as
    'map_6) ->
-  'A
+  'tA
 
 val mk_seq'0 : unit -> int * int
 
@@ -90,7 +90,7 @@ val is_empty2'1 : _ list -> bool
 
 val with_as'1 : int -> int
 
-val block'2 : 'A * 'A list -> 'A list * 'A list
+val block'2 : 'tA * 'tA list -> 'tA list * 'tA list
 
 val is_empty_case'1 : _ list -> bool
 
@@ -98,17 +98,17 @@ val both_empty'2 : _ list * _ list -> bool
 
 val call'2 : _ list * _ list -> bool
 
-val remote_call'1 : 'A list -> 'A list
+val remote_call'1 : 'tA list -> 'tA list
 
-val fun_to_var'0 : unit -> 'A * 'B -> 'A * 'B
+val fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB
 
 val local_fun_to_var'2 : _ * _ -> _ list * _ list -> bool
 
-val remote_fun_to_var'2 : _ * _ -> 'A list -> 'A list
+val remote_fun_to_var'2 : _ * _ -> 'tA list -> 'tA list
 
 val local_n_fun'0 : unit -> _ list -> _ list
 
-val mod01F'1 : 'X -> 'X
+val mod01F'1 : 'tX -> 'tX
 
 val unary_plus'1 : int -> int
 
@@ -148,29 +148,29 @@ val binary_orelse'2 : bool * bool -> bool
 
 val binary_andalso'2 : bool * bool -> bool
 
-val list_plus'2 : 'A list * 'A list -> 'A list
+val list_plus'2 : 'tA list * 'tA list -> 'tA list
 
-val list_minus'2 : 'A list * 'A list -> 'A list
+val list_minus'2 : 'tA list * 'tA list -> 'tA list
 
-val comp1'2 : 'A * 'A -> bool
+val comp1'2 : 'tA * 'tA -> bool
 
-val comp2'2 : 'A * 'A -> bool
+val comp2'2 : 'tA * 'tA -> bool
 
-val comp3'2 : 'A * 'A -> bool
+val comp3'2 : 'tA * 'tA -> bool
 
-val comp4'2 : 'A * 'A -> bool
+val comp4'2 : 'tA * 'tA -> bool
 
-val comp5'2 : 'A * 'A -> bool
+val comp5'2 : 'tA * 'tA -> bool
 
-val comp6'2 : 'A * 'A -> bool
+val comp6'2 : 'tA * 'tA -> bool
 
-val comp7'2 : 'A * 'A -> bool
+val comp7'2 : 'tA * 'tA -> bool
 
-val comp8'2 : 'A * 'A -> bool
+val comp8'2 : 'tA * 'tA -> bool
 
 val guard1'2 : int * int -> bool
 
-val guard2'3 : 'A list * 'A * 'A list -> 'A list
+val guard2'3 : 'tA list * 'tA * 'tA list -> 'tA list
 
 val p_match_tuple0'1 : unit -> unit Ffi.tuple1
 
@@ -196,7 +196,7 @@ val iodata_id'1 : Ffi.iodata -> Ffi.iodata
 
 val iolist_id'1 : Ffi.iolist -> Ffi.iolist
 
-val map_id'1 : ('A, 'B) Ffi.map -> ('A, 'B) Ffi.map
+val map_id'1 : ('tA, 'tB) Ffi.map -> ('tA, 'tB) Ffi.map
 
 val none_id'1 : Ffi.none -> Ffi.none
 

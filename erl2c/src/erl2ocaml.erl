@@ -545,7 +545,7 @@ type({type,_,map,Assocs}) ->
 type({var,_Line,'_'}) ->
     "_";
 type({var,_Line,V}) ->
-    "'" ++ erlang:atom_to_list(V);
+    "'t" ++ erlang:atom_to_list(V);
 type({type,_Line,tuple,[]}) ->
     "unit";
 type({type,_Line,tuple,[T]}) ->

@@ -1,39 +1,39 @@
 type unit0 = Unit0
 
-and 'A boxed = Boxed of 'A
+and 'tA boxed = Boxed of 'tA
 
-and ('A, 'B) either = Left of 'A | Right of 'B
+and ('tA, 'tB) either = Left of 'tA | Right of 'tB
 
 and rgb = R | G | B
 
-and ('A, 'B) pair = Pair of 'A * 'B
+and ('tA, 'tB) pair = Pair of 'tA * 'tB
 
-and ('A, 'B, 'C) triple = Triple of 'A * 'B * 'C
+and ('tA, 'tB, 'tC) triple = Triple of 'tA * 'tB * 'tC
 
-and 'A my_list = Cons of 'A * 'A my_list | Nil
+and 'tA my_list = Cons of 'tA * 'tA my_list | Nil
 
-and 'A option = None | Some of 'A
+and 'tA option = None | Some of 'tA
 
 let rec mk_unit'0 : unit -> unit0 = function () -> Unit0
 
-let rec mk_box'1 : 'A -> 'A boxed = function v_A -> Boxed v_A
+let rec mk_box'1 : 'tA -> 'tA boxed = function v_A -> Boxed v_A
 
-let rec mk_left'1 : 'A -> ('A, _) either = function v_A -> Left v_A
+let rec mk_left'1 : 'tA -> ('tA, _) either = function v_A -> Left v_A
 
-let rec mk_right'1 : 'B -> (_, 'B) either = function v_B -> Right v_B
+let rec mk_right'1 : 'tB -> (_, 'tB) either = function v_B -> Right v_B
 
-let rec zero'2 : unit0 * 'V -> 'V = function Unit0, v_Val -> v_Val
+let rec zero'2 : unit0 * 'tV -> 'tV = function Unit0, v_Val -> v_Val
 
-let rec unbox'1 : 'E boxed -> 'E = function
+let rec unbox'1 : 'tE boxed -> 'tE = function
   | v_Boxed -> ( match v_Boxed with Boxed v_Elem -> v_Elem )
 
-let rec un_either'1 : ('A, 'A) either -> 'A = function
+let rec un_either'1 : ('tA, 'tA) either -> 'tA = function
   | v_Either -> (
       match v_Either with Left v_Elem -> v_Elem | Right v_Elem -> v_Elem )
 
-let rec un_pair'1 : ('A, 'B) pair -> 'A * 'B = function
+let rec un_pair'1 : ('tA, 'tB) pair -> 'tA * 'tB = function
   | v_Pair -> ( match v_Pair with Pair (v_A, v_B) -> (v_A, v_B) )
 
-let rec first'1 : ('A, _) pair -> 'A = function Pair (v_F, _) -> v_F
+let rec first'1 : ('tA, _) pair -> 'tA = function Pair (v_F, _) -> v_F
 
-let rec second'1 : (_, 'B) pair -> 'B = function Pair (_, v_S) -> v_S
+let rec second'1 : (_, 'tB) pair -> 'tB = function Pair (_, v_S) -> v_S

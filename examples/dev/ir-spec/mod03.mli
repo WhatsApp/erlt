@@ -1,35 +1,35 @@
 type unit0 = Unit0
 
-and 'A boxed = Boxed of 'A
+and 'tA boxed = Boxed of 'tA
 
-and ('A, 'B) either = Left of 'A | Right of 'B
+and ('tA, 'tB) either = Left of 'tA | Right of 'tB
 
 and rgb = R | G | B
 
-and ('A, 'B) pair = Pair of 'A * 'B
+and ('tA, 'tB) pair = Pair of 'tA * 'tB
 
-and ('A, 'B, 'C) triple = Triple of 'A * 'B * 'C
+and ('tA, 'tB, 'tC) triple = Triple of 'tA * 'tB * 'tC
 
-and 'A my_list = Cons of 'A * 'A my_list | Nil
+and 'tA my_list = Cons of 'tA * 'tA my_list | Nil
 
-and 'A option = None | Some of 'A
+and 'tA option = None | Some of 'tA
 
 val mk_unit'0 : unit -> unit0
 
-val mk_box'1 : 'A -> 'A boxed
+val mk_box'1 : 'tA -> 'tA boxed
 
-val mk_left'1 : 'A -> ('A, _) either
+val mk_left'1 : 'tA -> ('tA, _) either
 
-val mk_right'1 : 'B -> (_, 'B) either
+val mk_right'1 : 'tB -> (_, 'tB) either
 
-val zero'2 : unit0 * 'V -> 'V
+val zero'2 : unit0 * 'tV -> 'tV
 
-val unbox'1 : 'E boxed -> 'E
+val unbox'1 : 'tE boxed -> 'tE
 
-val un_either'1 : ('A, 'A) either -> 'A
+val un_either'1 : ('tA, 'tA) either -> 'tA
 
-val un_pair'1 : ('A, 'B) pair -> 'A * 'B
+val un_pair'1 : ('tA, 'tB) pair -> 'tA * 'tB
 
-val first'1 : ('A, _) pair -> 'A
+val first'1 : ('tA, _) pair -> 'tA
 
-val second'1 : (_, 'B) pair -> 'B
+val second'1 : (_, 'tB) pair -> 'tB

@@ -1,31 +1,36 @@
-type ('Error, 'Value) result = Ok of 'Value | Err of 'Error
+type ('tError, 'tValue) result = Ok of 'tValue | Err of 'tError
 
-val with_default'2 : 'A * (_, 'A) result -> 'A
+val with_default'2 : 'tA * (_, 'tA) result -> 'tA
 
-val with_default'1 : 'A -> (_, 'A) result -> 'A
+val with_default'1 : 'tA -> (_, 'tA) result -> 'tA
 
-val map'2 : ('A -> 'B) * ('X, 'A) result -> ('X, 'B) result
+val map'2 : ('tA -> 'tB) * ('tX, 'tA) result -> ('tX, 'tB) result
 
-val map'1 : ('A -> 'B) -> ('X, 'A) result -> ('X, 'B) result
+val map'1 : ('tA -> 'tB) -> ('tX, 'tA) result -> ('tX, 'tB) result
 
 val map2'3 :
-  ('A * 'B -> 'C) * ('X, 'A) result * ('X, 'B) result -> ('X, 'C) result
+  ('tA * 'tB -> 'tC) * ('tX, 'tA) result * ('tX, 'tB) result ->
+  ('tX, 'tC) result
 
 val map2'1 :
-  ('A * 'B -> 'C) -> ('X, 'A) result * ('X, 'B) result -> ('X, 'C) result
+  ('tA * 'tB -> 'tC) ->
+  ('tX, 'tA) result * ('tX, 'tB) result ->
+  ('tX, 'tC) result
 
-val and_then'2 : ('A -> ('X, 'B) result) * ('X, 'A) result -> ('X, 'B) result
+val and_then'2 :
+  ('tA -> ('tX, 'tB) result) * ('tX, 'tA) result -> ('tX, 'tB) result
 
-val and_then'1 : ('A -> ('X, 'B) result) -> ('X, 'A) result -> ('X, 'B) result
+val and_then'1 :
+  ('tA -> ('tX, 'tB) result) -> ('tX, 'tA) result -> ('tX, 'tB) result
 
-val map_error'2 : ('X -> 'Y) * ('X, 'A) result -> ('Y, 'A) result
+val map_error'2 : ('tX -> 'tY) * ('tX, 'tA) result -> ('tY, 'tA) result
 
-val map_error'1 : ('X -> 'Y) -> ('X, 'A) result -> ('Y, 'A) result
+val map_error'1 : ('tX -> 'tY) -> ('tX, 'tA) result -> ('tY, 'tA) result
 
-val to_maybe'1 : (_, 'A) result -> 'A Maybe.maybe
+val to_maybe'1 : (_, 'tA) result -> 'tA Maybe.maybe
 
-val from_maybe'2 : 'X * 'A Maybe.maybe -> ('X, 'A) result
+val from_maybe'2 : 'tX * 'tA Maybe.maybe -> ('tX, 'tA) result
 
-val from_maybe'1 : 'X -> 'A Maybe.maybe -> ('X, 'A) result
+val from_maybe'1 : 'tX -> 'tA Maybe.maybe -> ('tX, 'tA) result
 
 val is_ok'1 : (_, _) result -> bool

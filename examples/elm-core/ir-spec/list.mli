@@ -1,67 +1,67 @@
-val singleton'1 : 'A -> 'A list
+val singleton'1 : 'tA -> 'tA list
 
-val repeat'2 : int * 'A -> 'A list
+val repeat'2 : int * 'tA -> 'tA list
 
 val range'2 : int * int -> int list
 
 val range_help'3 : int * int * int list -> int list
 
-val cons'2 : 'A * 'A list -> 'A list
+val cons'2 : 'tA * 'tA list -> 'tA list
 
-val map'2 : ('A -> 'B) * 'A list -> 'B list
+val map'2 : ('tA -> 'tB) * 'tA list -> 'tB list
 
-val indexed_map'2 : (int * 'A -> 'B) * 'A list -> 'B list
+val indexed_map'2 : (int * 'tA -> 'tB) * 'tA list -> 'tB list
 
-val foldl'3 : ('A * 'B -> 'B) * 'B * 'A list -> 'B
+val foldl'3 : ('tA * 'tB -> 'tB) * 'tB * 'tA list -> 'tB
 
-val foldr'3 : ('A * 'B -> 'B) * 'B * 'A list -> 'B
+val foldr'3 : ('tA * 'tB -> 'tB) * 'tB * 'tA list -> 'tB
 
-val filter'2 : ('A -> bool) * 'A list -> 'A list
+val filter'2 : ('tA -> bool) * 'tA list -> 'tA list
 
-val filter_map'2 : ('A -> 'B Maybe.maybe) * 'A list -> 'B list
+val filter_map'2 : ('tA -> 'tB Maybe.maybe) * 'tA list -> 'tB list
 
-val maybe_cons'3 : ('A -> 'B Maybe.maybe) * 'A * 'B list -> 'B list
+val maybe_cons'3 : ('tA -> 'tB Maybe.maybe) * 'tA * 'tB list -> 'tB list
 
-val maybe_cons'1 : ('A -> 'B Maybe.maybe) -> 'A * 'B list -> 'B list
+val maybe_cons'1 : ('tA -> 'tB Maybe.maybe) -> 'tA * 'tB list -> 'tB list
 
 val length'1 : _ list -> int
 
-val reverse'1 : 'A list -> 'A list
+val reverse'1 : 'tA list -> 'tA list
 
-val member'2 : 'A * 'A list -> bool
+val member'2 : 'tA * 'tA list -> bool
 
-val all'2 : ('A -> bool) * 'A list -> bool
+val all'2 : ('tA -> bool) * 'tA list -> bool
 
-val any'2 : ('A -> bool) * 'A list -> bool
+val any'2 : ('tA -> bool) * 'tA list -> bool
 
-val maximum'1 : 'A list -> 'A Maybe.maybe
+val maximum'1 : 'tA list -> 'tA Maybe.maybe
 
-val minimum'1 : 'A list -> 'A Maybe.maybe
+val minimum'1 : 'tA list -> 'tA Maybe.maybe
 
 val sum'1 : int list -> int
 
 val product'1 : int list -> int
 
-val append'2 : 'A list * 'A list -> 'A list
+val append'2 : 'tA list * 'tA list -> 'tA list
 
-val concat'1 : 'A list list -> 'A list
+val concat'1 : 'tA list list -> 'tA list
 
-val concat_map'2 : ('A -> 'B list) * 'A list -> 'B list
+val concat_map'2 : ('tA -> 'tB list) * 'tA list -> 'tB list
 
-val intersperse'2 : 'A * 'A list -> 'A list
+val intersperse'2 : 'tA * 'tA list -> 'tA list
 
-val map2'3 : ('A * 'B -> 'Res) * 'A list * 'B list -> 'Res list
+val map2'3 : ('tA * 'tB -> 'tRes) * 'tA list * 'tB list -> 'tRes list
 
 val is_empty'1 : _ list -> bool
 
-val head'1 : 'A list -> 'A Maybe.maybe
+val head'1 : 'tA list -> 'tA Maybe.maybe
 
-val tail'1 : 'A list -> 'A list Maybe.maybe
+val tail'1 : 'tA list -> 'tA list Maybe.maybe
 
-val take'2 : int * 'A list -> 'A list
+val take'2 : int * 'tA list -> 'tA list
 
-val drop'2 : int * 'A list -> 'A list
+val drop'2 : int * 'tA list -> 'tA list
 
-val partition'2 : ('A -> bool) * 'A list -> 'A list * 'A list
+val partition'2 : ('tA -> bool) * 'tA list -> 'tA list * 'tA list
 
-val unzip'1 : ('A * 'B) list -> 'A list * 'B list
+val unzip'1 : ('tA * 'tB) list -> 'tA list * 'tB list
