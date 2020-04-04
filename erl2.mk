@@ -38,4 +38,8 @@ update-ir-spec: ir
 	rm -rf $(IR_SPEC_DIR)
 	cp -r $(IR_DIR) $(IR_SPEC_DIR)
 
+hard-clean:
+	rm -rf $(BUILD_DIR)
+	rm -rf $(EBIN)
+
 .PHONY: ocamlformat p ir test-ir update-ir-spec
