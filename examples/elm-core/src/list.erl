@@ -1,0 +1,159 @@
+-lang([erl2, st]).
+-module(list).
+-compile(export_all).
+-compile({no_auto_import,[length/1]}).
+
+%% CREATE
+
+-spec singleton(A) -> list(A).
+singleton(Val) -> [Val].
+
+-spec repeat(integer(), A) -> list(A).
+repeat(N, Val) -> repeat_help([], N, Val).
+
+repeat_help(Res, N, _Val) when N =< 0 -> Res;
+repeat_help(Res, N, Val) -> repeat_help([Val|Res], N, Val).
+
+-spec range(integer(), integer()) -> list(integer()).
+range(Lo, Hi) -> range_help(Lo, Hi, []).
+
+-spec range_help(integer(), integer(), list(integer())) -> list(integer()).
+range_help(Lo, Hi, L) when Lo =< Hi -> range_help(Lo, Hi - 1, [Hi|L]);
+range_help(Lo, Hi, L) -> L.
+
+-spec cons(A, list(A)) -> list(A).
+cons(H, T) -> [H|T].
+
+%% TRANSFORM
+
+-spec map(fun((A) -> B), list(A)) -> list(B).
+map(F, [H|T]) -> [F(H) | map(F, T)];
+map(F, []) -> [].
+
+-spec indexed_map(fun((integer(), A) -> B), list(A)) -> list(B).
+indexed_map(F, Xs) -> map2(F, range(0, length(Xs) - 1), Xs).
+
+-spec foldl(fun((A, B) -> B), B, list(A)) -> B.
+foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);
+foldl(F, Acc, []) -> Acc.
+
+-spec foldr(fun((A, B) -> B), B, list(A)) -> B.
+foldr(F, Acc, [H|T]) -> F(H, foldr(F, Acc, T));
+foldr(F, Acc, []) -> Acc.
+
+-spec filter(fun((A) -> boolean()), list(A)) -> list(A).
+filter(F, List) ->
+    foldr(fun(X,Xs) -> case F(X) of true -> [X|Xs]; false -> Xs end end, [], List).
+
+-spec filter_map(fun((A) -> maybe:maybe(B)), list(A)) -> list(B).
+filter_map(F, Xs) -> foldr(maybe_cons(F), [], Xs).
+
+-spec maybe_cons(fun((A) -> maybe:maybe(B)), A, list(B)) -> list(B).
+maybe_cons(F, Mx, Xs) ->
+    case F(Mx) of
+        maybe.just{X} -> cons(X, Xs);
+        maybe.nothing{} -> Xs
+    end.
+
+-spec maybe_cons(fun((A) -> maybe:maybe(B))) -> fun((A, list(B)) -> list(B)).
+maybe_cons(F) -> fun(Mx, Xs) -> maybe_cons(F, Mx, Xs) end.
+
+%% UTILITIES
+
+-spec length(list(_)) -> integer().
+length(Xs) -> foldl(fun (_, I) -> I + 1 end, 0, Xs).
+
+-spec reverse(list(A)) -> list(A).
+reverse(Xs) -> foldl(fun cons/2, [], Xs).
+
+-spec member(A, list(A)) -> boolean().
+member(X, Xs) -> any(basics:eq(X), Xs).
+
+-spec all(fun((A) -> boolean()), list(A)) -> boolean().
+all(Pred, [H|T]) ->
+    case Pred(H) of true -> all(Pred, T); false -> false end;
+all(Pred, []) -> true.
+
+-spec any(fun((A) -> boolean()), list(A)) -> boolean().
+any(Pred, [H|T]) ->
+    case Pred(H) of true -> true; false -> any(Pred, T) end;
+any(Pred, []) -> false.
+
+-spec maximum(list(A)) -> maybe:maybe(A).
+maximum([]) -> maybe.nothing{};
+maximum([H|T]) -> maybe.just{foldl(fun basics:max/2, H, T)}.
+
+-spec minimum(list(A)) -> maybe:maybe(A).
+minimum([]) -> maybe.nothing{};
+minimum([H|T]) -> maybe.just{foldl(fun basics:min/2, H, T)}.
+
+-spec sum(list(integer())) -> integer().
+sum(Ns) -> foldl(fun basics:add/2, 0, Ns).
+
+-spec product(list(integer())) -> integer().
+product(Ns) -> foldl(fun basics:mul/2, 0, Ns).
+
+%% COMBINE
+
+-spec append(list(A), list(A)) -> list(A).
+append(Xs, Ys) -> Xs ++ Ys.
+
+-spec concat(list(list(A))) -> list(A).
+concat(Lists) -> foldr(fun append/2, [], Lists).
+
+-spec concat_map(fun((A) -> list(B)), list(A)) -> list(B).
+concat_map(F, Xs) -> concat(map(F, Xs)).
+
+-spec intersperse(A, list(A)) -> list(A).
+intersperse(Sep, [H|T]) ->
+    Step = fun(X, Rest) -> [Sep|[X|Rest]] end,
+    Spersed = foldr(Step, [], T),
+    [H|Spersed];
+intersperse(Sep, []) -> [].
+
+-spec map2(fun((A, B) -> Res), list(A), list(B)) -> list(Res).
+map2(F,[H1|T1],[H2|T2]) -> [F(H1, H2)|map2(F,T1,T2)];
+map2(_,_,_) -> [].
+
+%% SORT - TODO
+%% elm-core delegates to Elm.Kernel.List (js implementation)
+
+%% DECONSTRUCT
+
+-spec is_empty(list(_)) -> boolean().
+is_empty([_|_]) -> false;
+is_empty([]) -> true.
+
+-spec head(list(A)) -> maybe:maybe(A).
+head([H|_]) -> maybe.just{H};
+head([]) -> maybe.nothing{}.
+
+-spec tail(list(A)) -> maybe:maybe(list(A)).
+tail([_|T]) -> maybe.just{T};
+tail([]) -> maybe.nothing{}.
+
+-spec take(integer(), list(A)) -> list(A).
+take(N, L) when N =< 0 -> [];
+take(N, []) -> [];
+take(N, [H|T]) -> [H|take(N - 1, T)].
+
+-spec drop(integer(), list(A)) -> list(A).
+drop(N, L) when N =< 0 -> L;
+drop(N, []) -> [];
+drop(N, [H|T]) -> drop(N - 1, T).
+
+-spec partition(fun((A) -> boolean()), list(A)) -> {list(A), list(A)}.
+partition(Pred,List) ->
+    Step =
+        fun (X, {Trues, Falses}) ->
+            case Pred(X) of
+                true -> {[X|Trues], Falses};
+                false -> {Trues, [X|Falses]}
+            end
+        end,
+    foldr(Step, {[], []}, List).
+
+-spec unzip(list({A, B})) -> {list(A), list(B)}.
+unzip(Pairs) ->
+    Step = fun ({X, Y}, {Xs, Ys}) -> {[X|Xs], [Y|Ys]} end,
+    foldr(Step, {[], []}, Pairs).
