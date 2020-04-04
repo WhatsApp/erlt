@@ -469,6 +469,8 @@ gen_map_tv() ->
     erlang:put('map_tv_counter', Counter + 1),
     "'row_tv__" ++ integer_to_list(Counter).
 
+type({ann_type,_Ln,[_Var,Tp]}) ->
+    type(Tp);
 type({type,Ln,any,[]}) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,any},[]]});
 type({type,Ln,atom,[]}) ->

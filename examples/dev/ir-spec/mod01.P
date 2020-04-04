@@ -4,22 +4,22 @@
 
 -compile(export_all).
 
--spec id(X) -> X.
+-spec id(Arg1 :: X) -> X.
 
 id(X) ->
     X.
 
--spec arg13(X, _, _) -> X.
+-spec arg13(Arg1 :: X, _, _) -> X.
 
 arg13(X, _Y, _Z) ->
     X.
 
--spec arg23(_, Y, _) -> Y.
+-spec arg23(_, Arg2 :: Y, _) -> Y.
 
 arg23(_X, Y, _Z) ->
     Y.
 
--spec arg33(_, _, Z) -> Z.
+-spec arg33(_, _, Arg3 :: Z) -> Z.
 
 arg33(_X, _Y, Z) ->
     Z.
@@ -49,7 +49,7 @@ mk_char() ->
 mk_nil() ->
     [].
 
--spec mk_cons(A, [A]) -> [A].
+-spec mk_cons(H :: A, T :: [A]) -> [A].
 
 mk_cons(H, T) ->
     [H | T].
@@ -59,7 +59,11 @@ mk_cons(H, T) ->
 mk_tuple(A, B, C) ->
     {A, B, C}.
 
--spec mk_tuple2(A) -> {integer(), integer(), integer(), A}.
+-spec mk_tuple2(A) ->
+                   {El1 :: integer(),
+                    El2 :: integer(),
+                    integer(),
+                    El4 :: A}.
 
 mk_tuple2(A) ->
     {1, 2, 3, A}.
