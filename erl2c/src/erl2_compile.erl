@@ -145,6 +145,7 @@ do_file(File, Options0) ->
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
                     ?pass(parse_module),
+                    ?pass(check_parse_errors),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -159,7 +160,7 @@ do_file(File, Options0) ->
                 TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
                 [
                     ?pass(parse_module),
-                    ?pass(check_epp_errors),
+                    ?pass(check_parse_errors),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1)
@@ -346,17 +347,32 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     gen_make_rule(Target, Deps1).
 
 
-check_epp_errors(Forms, St0) ->
+check_parse_errors(Forms, St0) ->
+    % NOTE: not checking for parse_errors for erl1 -- in order to precisely follow erlc
+    % behavior
+    case is_lang_erl2(St0) of
+        true ->
+            do_check_parse_errors(Forms, St0);
+        false ->
+            {ok, Forms, St0}
+    end.
+
+
+do_check_parse_errors(Forms, St0) ->
+    % in normal Erlang compilation lexer, parser, and epp errors are reported by
+    % erl_lint.erl which is run as one of the later passes inside compile_erl1_forms()
+    %
+    % under erl2 stricter compilation model we no longer allow lexer & parser errors to
+    % slip through, because we need valid forms to be able to run erl2 to erl1
+    % translator and the erl2 typechecker
+    %
     % under erl2 stricter compilation model we no longer allow epp errors,
     % e.g. includes that are not found at the dependency scan stage. For
     % example, adding originally missing include later may result in a
     % different compile order, not including transitive dependencies, or a
     % different parse output, because of conditional compilation. This may lead
     % to inconsistent build.
-    %
-    % in normal Erlang compilation such errors are reported by erl_lint.erl and
-    % NOT during makedep depedency scan
-    case get_epp_errors(Forms) of
+    case get_parse_errors(Forms) of
         [] ->
             {ok, Forms, St0};
         Errors ->
@@ -364,20 +380,20 @@ check_epp_errors(Forms, St0) ->
     end.
 
 
-get_epp_errors(Forms) ->
-    get_epp_errors(Forms, _File = 'undefined', _Acc = []).
+get_parse_errors(Forms) ->
+    get_parse_errors(Forms, _File = 'undefined', _Acc = []).
 
-get_epp_errors([], _File, Acc) ->
+get_parse_errors([], _File, Acc) ->
     lists:reverse(Acc);
-get_epp_errors([{attribute,_,file,{NewFile,_}}|Rest], _File, Acc) ->
+get_parse_errors([{attribute,_,file,{NewFile,_}}|Rest], _File, Acc) ->
     % update the name of the current file
-    get_epp_errors(Rest, NewFile, Acc);
-get_epp_errors([{error,{_,epp,_} = EppError}|Rest], File, Acc) ->
-    % epp error, e.g. include/include_lib wasn't found
-    CompileError = {File, [EppError]},
-    get_epp_errors(Rest, File, [CompileError|Acc]);
-get_epp_errors([_|Rest], File, Acc) ->
-    get_epp_errors(Rest, File, Acc).
+    get_parse_errors(Rest, NewFile, Acc);
+get_parse_errors([{error,Error}|Rest], File, Acc) ->
+    % lexer/parser/epp error
+    CompileError = {File, [Error]},
+    get_parse_errors(Rest, File, [CompileError|Acc]);
+get_parse_errors([_|Rest], File, Acc) ->
+    get_parse_errors(Rest, File, Acc).
 
 
 collect_erl1_compile_deps(Forms, St0) ->
