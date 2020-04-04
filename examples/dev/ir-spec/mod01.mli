@@ -28,58 +28,61 @@ val mk_tuple2'1 : 'tA -> int * int * int * 'tA
 
 val mk_map'2 :
   'tA * 'tB ->
-  (< get_a : 'tA ; set_a : 'tA -> 'map_1 ; get_b : 'tB ; set_b : 'tB -> 'map_1 >
+  (< get_a : 'tA
+   ; set_a : 'tA -> 'row_tv__1
+   ; get_b : 'tB
+   ; set_b : 'tB -> 'row_tv__1 >
    as
-   'map_1)
+   'row_tv__1)
 
 val update_map1'2 :
-  (< get_a : 'tA ; set_a : 'tA -> 'map_2 > as 'map_2) * 'tA ->
-  (< get_a : 'tA ; set_a : 'tA -> 'map_3 > as 'map_3)
+  (< get_a : 'tA ; set_a : 'tA -> 'row_tv__2 > as 'row_tv__2) * 'tA ->
+  (< get_a : 'tA ; set_a : 'tA -> 'row_tv__3 > as 'row_tv__3)
 
 val update_map2'2 :
-  (< get_a : 'tA ; set_a : 'tA -> 'map_M ; .. > as 'map_M) * 'tA ->
-  (< get_a : 'tA ; set_a : 'tA -> 'map_M ; .. > as 'map_M)
+  (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM) * 'tA ->
+  (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM)
 
 val update_map3'1 :
-  (< get_a : 'tA ; set_a : 'tA -> 'map_4 ; get_b : 'tA ; set_b : 'tA -> 'map_4 >
+  (< get_a : 'tA
+   ; set_a : 'tA -> 'row_tv__4
+   ; get_b : 'tA
+   ; set_b : 'tA -> 'row_tv__4 >
    as
-   'map_4) ->
-  (< get_a : 'tA ; set_a : 'tA -> 'map_5 ; get_b : 'tA ; set_b : 'tA -> 'map_5 >
+   'row_tv__4) ->
+  (< get_a : 'tA
+   ; set_a : 'tA -> 'row_tv__5
+   ; get_b : 'tA
+   ; set_b : 'tA -> 'row_tv__5 >
    as
-   'map_5)
+   'row_tv__5)
 
 val update_map4'1 :
-  (< get_a : 'tA
-   ; set_a : 'tA -> 'map_M
-   ; get_b : 'tA
-   ; set_b : 'tA -> 'map_M
-   ; .. >
+  (< get_a : 'tA ; set_a : 'tA -> 'tM ; get_b : 'tA ; set_b : 'tA -> 'tM ; .. >
    as
-   'map_M) ->
-  (< get_a : 'tA
-   ; set_a : 'tA -> 'map_M
-   ; get_b : 'tA
-   ; set_b : 'tA -> 'map_M
-   ; .. >
+   'tM) ->
+  (< get_a : 'tA ; set_a : 'tA -> 'tM ; get_b : 'tA ; set_b : 'tA -> 'tM ; .. >
    as
-   'map_M)
+   'tM)
 
 val access_map'1 :
   (< get_id : 'tId
-   ; set_id : 'tId -> 'map__
+   ; set_id : 'tId -> 't_
    ; get_location : 'tLocation
-   ; set_location : 'tLocation -> 'map__
+   ; set_location : 'tLocation -> 't_
    ; .. >
    as
-   'map__) ->
+   't_) ->
   'tId * 'tLocation
 
 val access_map2'1 :
-  (< get_inner1 : (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'map_7 > as 'map_7)
+  (< get_inner1 :
+       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7)
    ; set_inner1 :
-       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'map_7 > as 'map_7) -> 'map_6 >
+       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7) ->
+       'row_tv__6 >
    as
-   'map_6) ->
+   'row_tv__6) ->
   'tA
 
 val mk_seq'0 : unit -> int * int

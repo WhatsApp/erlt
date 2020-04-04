@@ -457,7 +457,7 @@ erl2ocaml_spec({attribute,Line,spec,_}) ->
 
 get_map_tv([]) -> undefined;
 get_map_tv([{type,_,map_field_exact,[{var,_,'_'},{var,_,G}]}]) ->
-    "'map_" ++ atom_to_list(G);
+    "'t" ++ atom_to_list(G);
 get_map_tv([_|As]) -> get_map_tv(As).
 
 gen_map_tv() ->
@@ -467,7 +467,7 @@ gen_map_tv() ->
             C -> C
         end,
     erlang:put('map_tv_counter', Counter + 1),
-    "'map_" ++ integer_to_list(Counter).
+    "'row_tv__" ++ integer_to_list(Counter).
 
 type({type,Ln,any,[]}) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,any},[]]});
@@ -535,13 +535,13 @@ type({type,_,map,Assocs}) ->
     {MapTV, Suffix, Assocs1} =
         case get_map_tv(Assocs) of
             'undefined' ->
-                {gen_map_tv(), "", Assocs};
+                {gen_map_tv(), [], Assocs};
             TV ->
                 [_|Tmp] = lists:reverse(Assocs),
-                {TV, "; ..", lists:reverse(Tmp)}
+                {TV, [".."], lists:reverse(Tmp)}
         end,
     AssocsTypes = lists:map(fun(A) -> map_field_type(A, MapTV) end, Assocs1),
-    "< " ++ interleave(false, " ; ", AssocsTypes) ++ Suffix ++ " > as " ++ MapTV;
+    "< " ++ interleave(false, " ; ", AssocsTypes ++ Suffix) ++ " > as " ++ MapTV;
 type({var,_Line,'_'}) ->
     "_";
 type({var,_Line,V}) ->
