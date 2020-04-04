@@ -71,7 +71,8 @@
                   %    []                  -- erl1
                   %    [erl2, dt], [erl2]  -- dynamically typed erl2
                   %    [erl2, st]          -- statically typed erl2
-                  lang=[] :: [erl2 | st | dt]
+                  %    [erl2, ffi]         -- ffi erl2
+                  lang=[] :: [erl2 | st | dt | ffi]
 
 }).
 
@@ -817,6 +818,8 @@ transform_module(Code0, #compile{options=Opt}=St) ->
 is_lang_erl2(St) ->
     member(erl2, St#compile.lang).
 
+is_lang_ffi(St) ->
+    member(ffi, St#compile.lang).
 
 is_lang_st(St) ->
     member(st, St#compile.lang).
@@ -892,10 +895,10 @@ get_erl2_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
 
 
 erl2_typecheck(Code, St) ->
-    case is_lang_erl2(St) andalso is_lang_st(St) of
-        true ->
+    case {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St)} of
+        {true, true} ->
             do_erl2_typecheck(Code, St);
-        false ->
+        {_, _} ->
             {ok,Code,St}
     end.
 
@@ -919,16 +922,20 @@ do_erl2_typecheck(Code, St) ->
     {ok,Code,St}.
 
 
-generate_ocaml_code(OcamlDir, Basename, Forms, _St) ->
+generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
     Rootname = filename:join(OcamlDir, Basename),
-
-    {MliCode,MlCode} = erl2ocaml:erl2ocaml(Forms),
-
     % TODO: error handling
     ok = filelib:ensure_dir(Rootname),
-    ok = file:write_file(Rootname ++ ".ml", MlCode),
-    ok = file:write_file(Rootname ++ ".mli", MliCode),
-    ok.
+
+    case is_lang_ffi(St) of
+        true ->
+            MliCode = erl2ocaml:erl2ocaml_ffi(Forms),
+            ok = file:write_file(Rootname ++ ".mli", MliCode);
+        false ->
+            {MliCode,MlCode} = erl2ocaml:erl2ocaml_st(Forms),
+            ok = file:write_file(Rootname ++ ".ml", MlCode),
+            ok = file:write_file(Rootname ++ ".mli", MliCode)
+    end.
 
 ensure_ocaml_ffi(OcamlDir) ->
     FfiName = filename:join(OcamlDir, "ffi.mli"),
@@ -943,11 +950,12 @@ ensure_ocaml_ffi(OcamlDir) ->
 call_ocaml_typechecker(OcamlDir, Basename, St) ->
     ok = ensure_ocaml_ffi(OcamlDir),
 
-    Command = lists:append([
-        "ocamlc -c ",
-        Basename, ".mli", " ",
-        Basename, ".ml"
-    ]),
+    Command =
+        case is_lang_ffi(St) of
+            true ->  lists:append(["ocamlc -c ", Basename, ".mli"]);
+            false -> lists:append(["ocamlc -c ", Basename, ".mli", " ", Basename, ".ml"])
+        end,
+
 
     {ExitCode, Output} = eunit_lib:command(Command, OcamlDir),
     case ExitCode of

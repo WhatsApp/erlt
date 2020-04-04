@@ -1,0 +1,13 @@
+-file("string_ffi.erl", 1).
+
+-module(string_ffi).
+
+-compile(export_all).
+
+-spec length(string()) -> integer().
+
+length(S) ->
+    length(S).
+
+
+

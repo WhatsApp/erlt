@@ -1,6 +1,6 @@
 -module(erl2ocaml).
 
--export([erl2ocaml/1, main/1, ffi/0]).
+-export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0]).
 
 ffi() ->
     FfiLines = [
@@ -35,7 +35,7 @@ ffi() ->
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     swap_erl_parse(),
     {ok, Forms} = epp:parse_file(InFile, []),
-    {MliCode, MlCode} = erl2ocaml(Forms),
+    {MliCode, MlCode} = erl2ocaml_st(Forms),
     file:write_file(MliFile, MliCode),
     file:write_file(MlFile, MlCode);
 main(["-ast", File]) ->
@@ -52,7 +52,17 @@ main(["-ast", File]) ->
 main(_) ->
     usage().
 
-erl2ocaml(Forms) ->
+erl2ocaml_ffi(Forms) ->
+    Specs = get_specs(Forms),
+    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
+    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
+    TypeDefs = get_type_defs(Forms),
+    TypeDefLines = type_def_scc(TypeDefs),
+    InterfaceLines = TypeDefLines ++ SpecLines,
+    MliCode = iolist_to_binary(InterfaceLines),
+    MliCode.
+
+erl2ocaml_st(Forms) ->
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
     Specs = get_specs(Forms),
