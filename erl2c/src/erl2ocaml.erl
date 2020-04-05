@@ -65,11 +65,12 @@ swap_erl_parse() ->
     {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 erl2ocaml_ffi(Forms) ->
+    Ctx = #context{module = get_module(Forms)},
     Specs = get_specs(Forms),
-    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
-    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
+    OTypes = [erl2ocaml_spec(S, Ctx) || S <- Specs],
+    SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- OTypes],
     TypeDefs = get_type_defs(Forms),
-    TypeDefLines = type_def_scc(TypeDefs),
+    TypeDefLines = type_def_scc(TypeDefs, Ctx),
     InterfaceLines = TypeDefLines ++ SpecLines,
     MliCode = iolist_to_binary(InterfaceLines),
     MliCode.
@@ -79,11 +80,11 @@ erl2ocaml_st(Forms) ->
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
     Specs = get_specs(Forms),
-    OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
-    SpecLines = lists:map(fun({N,T}) -> "val " ++ N ++ " : " ++ T ++ "\n" end, OTypes),
+    OTypes = [erl2ocaml_spec(S, Ctx) || S <- Specs],
+    SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- OTypes],
     %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
-    TypeDefLines = type_def_scc(TypeDefs),
+    TypeDefLines = type_def_scc(TypeDefs, Ctx),
     RawDocs = erl2ocaml_sccs(SortedFuns, OTypes, Ctx),
     %% io:format("RawDocs:\n~p\n", [RawDocs]),
     FunLines = indent_docs(RawDocs),
@@ -407,43 +408,43 @@ update_assoc(_Acc, {map_field_exact,Line,E,_V}, _Ctx) ->
 update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}, _Ctx) ->
     erlang:error({not_supported, Line, update_map_field_assoc, E}).
 
-type_def_scc(TypeDefs) ->
-    type_def_scc(true, TypeDefs).
+type_def_scc(TypeDefs, Ctx) ->
+    type_def_scc(true, TypeDefs, Ctx).
 
-type_def_scc(_, []) ->
+type_def_scc(_, [], _Ctx) ->
     "";
-type_def_scc(true, [TypeDef|TypeDefs]) ->
-    type_def("type", TypeDef) ++ type_def_scc(false, TypeDefs);
-type_def_scc(false, [TypeDef|TypeDefs]) ->
-    type_def("and", TypeDef) ++ type_def_scc(false, TypeDefs).
+type_def_scc(true, [TypeDef|TypeDefs], Ctx) ->
+    type_def("type", TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx);
+type_def_scc(false, [TypeDef|TypeDefs], Ctx) ->
+    type_def("and", TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx).
 
-type_def(OCamlPrefix, {alias, {N,T,TVs}}) ->
-    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ type(T) ++ "\n";
-type_def(OCamlPrefix, {enum, {N,T,TVs}}) ->
-    type_def_lhs(OCamlPrefix, N, TVs) ++ " = " ++ enum_ctr_defs(T) ++ "\n".
+type_def(OCamlPrefix, {alias, {N,T,TVs}}, Ctx) ->
+    type_def_lhs(OCamlPrefix, N, TVs, Ctx) ++ " = " ++ type(T, Ctx) ++ "\n";
+type_def(OCamlPrefix, {enum, {N,T,TVs}}, Ctx) ->
+    type_def_lhs(OCamlPrefix, N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(T, Ctx) ++ "\n".
 
-type_def_lhs(OCamlPrefix, N, []) ->
+type_def_lhs(OCamlPrefix, N, [], _Ctx) ->
     OCamlPrefix ++ " " ++ atom_to_list(N);
-type_def_lhs(OCamlPrefix, N, [TV]) ->
-    OCamlPrefix ++ " " ++ type(TV) ++ " " ++ atom_to_list(N);
-type_def_lhs(OCamlPrefix, N, TVs) ->
-    OCamlPrefix ++ " (" ++ interleave(false, ", ", lists:map(fun type/1, TVs))  ++ ") " ++ atom_to_list(N).
+type_def_lhs(OCamlPrefix, N, [TV], Ctx) ->
+    OCamlPrefix ++ " " ++ type(TV, Ctx) ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, TVs, Ctx) ->
+    OCamlPrefix ++ " (" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ atom_to_list(N).
 
-enum_ctr_defs({type,_Ln,union, CtrDefs}) ->
-    interleave(false, " | ", lists:map(fun enum_ctr_def/1, CtrDefs));
-enum_ctr_defs(CtrDef) ->
-    enum_ctr_def(CtrDef).
+enum_ctr_defs({type,_Ln,union, CtrDefs}, Ctx) ->
+    interleave(false, " | ", [enum_ctr_def(CtrDef, Ctx) || CtrDef <- CtrDefs]);
+enum_ctr_defs(CtrDef, Ctx) ->
+    enum_ctr_def(CtrDef, Ctx).
 
-enum_ctr_def({type,_,enum,[{atom,_,CtrN}]}) ->
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}]}, _Ctx) ->
     first_upper(atom_to_list(CtrN));
-enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}) ->
+enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}, Ctx) ->
     first_upper(atom_to_list(CtrN))
         ++ " of "
-        ++ interleave(false, " * ", lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts)).
+        ++ interleave(false, " * ", ["(" ++ type(T, Ctx) ++ ")" || T <- Ts]).
 
-erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}) ->
-    {atom_to_list(Name) ++ "'" ++ integer_to_list(Arity), type(FT)};
-erl2ocaml_spec({attribute,Line,spec,_}) ->
+erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}, Ctx) ->
+    {atom_to_list(Name) ++ "'" ++ integer_to_list(Arity), type(FT, Ctx)};
+erl2ocaml_spec({attribute,Line,spec,_}, _) ->
     erlang:error({not_supported, Line, spec}).
 
 get_map_tv([]) -> undefined;
@@ -460,71 +461,71 @@ gen_map_tv() ->
     erlang:put('map_tv_counter', Counter + 1),
     "'row_tv__" ++ integer_to_list(Counter).
 
-type({ann_type,_Ln,[_Var,Tp]}) ->
-    type(Tp);
-type({type,Ln,any,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,any},[]]});
-type({type,Ln,atom,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,atom},[]]});
-type({type,Ln,binary,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,binary},[]]});
-type({type,Ln,bitstring,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,bitstring},[]]});
-type({type,Ln,byte,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,byte},[]]});
-type({type,Ln,identifier,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,identifier},[]]});
-type({type,Ln,iodata,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iodata},[]]});
-type({type,Ln,iolist,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iolist},[]]});
-type({type,Ln,neg_integer,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,neg_integer},[]]});
-type({type,Ln,node,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,node},[]]});
-type({type,Ln,non_neg_integer,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,non_neg_integer},[]]});
-type({type,Ln,none,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,none},[]]});
-type({type,Ln,no_return,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,no_return},[]]});
-type({type,Ln,number,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,number},[]]});
-type({type,Ln,pid,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pid},[]]});
-type({type,Ln,port,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,port},[]]});
-type({type,Ln,pos_integer,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pos_integer},[]]});
-type({type,Ln,reference,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,reference},[]]});
-type({type,Ln,term,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,term},[]]});
-type({type,Ln,timeout,[]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,timeout},[]]});
-type({type,_Line,'fun',[{type,_,product,[A]},B]}) ->
-    T1 = "(" ++ type(A) ++ ")",
-    T2 = "(" ++ type(B) ++ ")",
+type({ann_type,_Ln,[_Var,Tp]}, Ctx) ->
+    type(Tp, Ctx);
+type({type,Ln,any,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,any},[]]}, Ctx);
+type({type,Ln,atom,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,atom},[]]}, Ctx);
+type({type,Ln,binary,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,binary},[]]}, Ctx);
+type({type,Ln,bitstring,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,bitstring},[]]}, Ctx);
+type({type,Ln,byte,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,byte},[]]}, Ctx);
+type({type,Ln,identifier,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,identifier},[]]}, Ctx);
+type({type,Ln,iodata,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iodata},[]]}, Ctx);
+type({type,Ln,iolist,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iolist},[]]}, Ctx);
+type({type,Ln,neg_integer,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,neg_integer},[]]}, Ctx);
+type({type,Ln,node,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,node},[]]}, Ctx);
+type({type,Ln,non_neg_integer,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,non_neg_integer},[]]}, Ctx);
+type({type,Ln,none,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,none},[]]}, Ctx);
+type({type,Ln,no_return,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,no_return},[]]}, Ctx);
+type({type,Ln,number,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,number},[]]}, Ctx);
+type({type,Ln,pid,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pid},[]]}, Ctx);
+type({type,Ln,port,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,port},[]]}, Ctx);
+type({type,Ln,pos_integer,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,pos_integer},[]]}, Ctx);
+type({type,Ln,reference,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,reference},[]]}, Ctx);
+type({type,Ln,term,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,term},[]]}, Ctx);
+type({type,Ln,timeout,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,timeout},[]]}, Ctx);
+type({type,_Line,'fun',[{type,_,product,[A]},B]}, Ctx) ->
+    T1 = "(" ++ type(A, Ctx) ++ ")",
+    T2 = "(" ++ type(B, Ctx) ++ ")",
     T1 ++ " ->" ++ T2;
-type({type,_Line,'fun',[{type,Lt,product,As},B]}) ->
-    T1 = "(" ++ type({type,Lt,tuple,As}) ++ ")",
-    T2 = "(" ++ type(B) ++ ")",
+type({type,_Line,'fun',[{type,Lt,product,As},B]}, Ctx) ->
+    T1 = "(" ++ type({type,Lt,tuple,As}, Ctx) ++ ")",
+    T2 = "(" ++ type(B, Ctx) ++ ")",
     T1 ++ " ->" ++ T2;
-type({type, _,integer,[]}) ->
+type({type, _,integer,[]}, _Ctx) ->
     "int";
-type({type, _,float,[]}) ->
+type({type, _,float,[]}, _Ctx) ->
     "float";
-type({type, _,string,[]}) ->
+type({type, _,string,[]}, _Ctx) ->
     "string";
-type({type, _,char,[]}) ->
+type({type, _,char,[]}, _Ctx) ->
     "char";
-type({type, _,boolean,[]}) ->
+type({type, _,boolean,[]}, _Ctx) ->
     "bool";
-type({type, _,list,[T]}) ->
-    "(" ++ type(T) ++ ") list";
-type({type,Ln,map,[{type,_,map_field_assoc,[KT,VT]}]}) ->
-    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,map},[KT,VT]]});
-type({type,_,map,Assocs}) ->
+type({type, _,list,[T]}, Ctx) ->
+    "(" ++ type(T, Ctx) ++ ") list";
+type({type,Ln,map,[{type,_,map_field_assoc,[KT,VT]}]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,map},[KT,VT]]}, Ctx);
+type({type,_,map,Assocs}, Ctx) ->
     {MapTV, Suffix, Assocs1} =
         case get_map_tv(Assocs) of
             'undefined' ->
@@ -533,37 +534,39 @@ type({type,_,map,Assocs}) ->
                 [_|Tmp] = lists:reverse(Assocs),
                 {TV, [".."], lists:reverse(Tmp)}
         end,
-    AssocsTypes = lists:map(fun(A) -> map_field_type(A, MapTV) end, Assocs1),
+    AssocsTypes = lists:map(fun(A) -> map_field_type(A, MapTV, Ctx) end, Assocs1),
     "< " ++ interleave(false, " ; ", AssocsTypes ++ Suffix) ++ " > as " ++ MapTV;
-type({var,_Line,'_'}) ->
+type({var,_Line,'_'}, _Ctx) ->
     "_";
-type({var,_Line,V}) ->
+type({var,_Line,V}, _Ctx) ->
     "'t" ++ erlang:atom_to_list(V);
-type({type,_Line,tuple,[]}) ->
+type({type,_Line,tuple,[]}, _Ctx) ->
     "unit";
-type({type,_Line,tuple,[T]}) ->
-    "(" ++ type(T) ++ ") Ffi.tuple1";
-type({type,_Line,tuple,TS}) ->
-    TSStrings = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, TS),
+type({type,_Line,tuple,[T]}, Ctx) ->
+    "(" ++ type(T, Ctx) ++ ") Ffi.tuple1";
+type({type,_Line,tuple,TS}, Ctx) ->
+    TSStrings = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, TS),
     interleave(false, " * ", TSStrings);
-type({user_type,_,N,[]}) ->
+type({user_type,_,N,[]}, _Ctx) ->
     atom_to_list(N);
-type({user_type,_,N,Ts}) ->
-    Ts1 = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts),
+type({user_type,_,N,Ts}, Ctx) ->
+    Ts1 = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
     "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ atom_to_list(N);
-type({remote_type,_,[{atom,_,M},{atom,_,N},[]]}) ->
+type({remote_type,Line,[{atom,_,M},{atom,_,N},Ts]}, Ctx) when M == Ctx#context.module ->
+    type({user_type,Line,N,Ts}, Ctx);
+type({remote_type,_,[{atom,_,M},{atom,_,N},[]]}, _Ctx) ->
     first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
-type({remote_type,_,[{atom,_,M},{atom,_,N},Ts]}) ->
-    Ts1 = lists:map(fun(T) -> "(" ++ type(T) ++ ")" end, Ts),
+type({remote_type,_,[{atom,_,M},{atom,_,N},Ts]}, Ctx) ->
+    Ts1 = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
     "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
-type(Type) ->
+type(Type, _Ctx) ->
     Line = erlang:element(2, Type),
     erlang:error({not_supported, Line, Type}).
 
-map_field_type({type,_,map_field_exact,[{atom,_,K},VT]}, SelfType) ->
-    VType = type(VT),
+map_field_type({type,_,map_field_exact,[{atom,_,K},VT]}, SelfType, Ctx) ->
+    VType = type(VT, Ctx),
     "get_" ++ atom_to_list(K) ++ " : " ++ VType ++ "; set_" ++ atom_to_list(K) ++ " : (" ++ VType ++ ") ->"  ++ SelfType;
-map_field_type(Type={type,Line,_,_}, _SelfType) ->
+map_field_type(Type={type,Line,_,_}, _SelfType, _Ctx) ->
     erlang:error({not_supported, Line, Type}).
 
 %% naive indentation of documents
