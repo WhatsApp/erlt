@@ -2,6 +2,9 @@
 -module(list).
 -compile(export_all).
 
+-depends_on([basics, maybe]).
+
+
 %% CREATE
 
 -spec singleton(A) -> list(A).

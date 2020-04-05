@@ -1,7 +1,9 @@
 -lang([erl2, st]).
 -module(dict).
-
 -compile(export_all).
+
+-depends_on([maybe, dict_ffi]).
+
 
 -type dict(K, V) :: dict_ffi:dict(K, V).
 

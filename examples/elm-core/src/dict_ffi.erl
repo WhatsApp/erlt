@@ -1,7 +1,9 @@
 -lang([erl2, ffi]).
 -module(dict_ffi).
-
 -compile(export_all).
+
+-depends_on([maybe]).
+
 
 -export_type([dict/2]).
 

@@ -2,6 +2,9 @@
 -module(result).
 -compile(export_all).
 
+-depends_on([maybe]).
+
+
 -enum result(Error, Value) :: ok{Value} | err{Error}.
 
 -spec with_default(A, result(_, A)) -> A.
