@@ -1,5 +1,5 @@
 # erlbuild.mk parameters -- see documentation in ../../erlbuild/erlbuild.mk
-ERLC_FLAGS := -Wall +debug_info #-Werror
+ERLC_FLAGS := -Wall +debug_info +nowarn_export_all #-Werror
 
 # exclude sources that don't compile
 EXCLUDE_SOURCES :=
