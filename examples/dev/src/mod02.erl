@@ -2,6 +2,8 @@
 -module(mod02).
 -compile(export_all).
 
+-depends_on([mod01]).
+
 -spec odd(integer()) -> boolean().
 odd(X) ->
     even(X - 1).
