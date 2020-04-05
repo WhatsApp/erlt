@@ -27,7 +27,7 @@ ocamlformat:
 p:
 	rm -f $(IR_DIR)/*.P
 	mkdir -p $(IR_DIR)
-	$(foreach erl, $(SOURCES), $(ERLC_COMPILE) -P -o $(IR_DIR) $(erl);)
+	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLC_COMPILE) -P -o $(IR_DIR) $(erl);)
 
 ir: ocamlformat p
 
