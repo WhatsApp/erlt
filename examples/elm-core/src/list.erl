@@ -1,7 +1,6 @@
 -lang([erl2, st]).
 -module(list).
 -compile(export_all).
--compile({no_auto_import,[length/1]}).
 
 %% CREATE
 
@@ -31,7 +30,7 @@ map(F, [H|T]) -> [F(H) | map(F, T)];
 map(_F, []) -> [].
 
 -spec indexed_map(fun((integer(), A) -> B), list(A)) -> list(B).
-indexed_map(F, Xs) -> map2(F, range(0, length(Xs) - 1), Xs).
+indexed_map(F, Xs) -> map2(F, range(0, list:length(Xs) - 1), Xs).
 
 -spec foldl(fun((A, B) -> B), B, list(A)) -> B.
 foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);

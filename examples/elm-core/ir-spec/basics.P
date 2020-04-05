@@ -4,8 +4,6 @@
 
 -compile(export_all).
 
--compile({no_auto_import, [{min, 2}, {max, 2}]}).
-
 -spec add(integer(), integer()) -> integer().
 
 add(X1, X2) ->
@@ -140,7 +138,7 @@ min(X1, X2) ->
 
 min(X1) ->
     fun(X2) ->
-           min(X1, X2)
+           basics:min(X1, X2)
     end.
 
 -spec max(A, A) -> A.
@@ -157,7 +155,7 @@ max(X1, X2) ->
 
 max(X1) ->
     fun(X2) ->
-           max(X1, X2)
+           basics:max(X1, X2)
     end.
 
 -type order() ::

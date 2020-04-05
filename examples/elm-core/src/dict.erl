@@ -1,7 +1,6 @@
 -lang([erl2, st]).
 -module(dict).
 
--compile({no_auto_import,[size/1]}).
 -compile(export_all).
 
 -type dict(K, V) :: dict_ffi:dict(K, V).
@@ -26,7 +25,7 @@ size(Dict) ->
 
 -spec is_empty(dict(_K, _V)) -> boolean().
 is_empty(Dict) ->
-    size(Dict) =:= 0.
+    dict:size(Dict) =:= 0.
 
 -spec insert(K, V, dict(K, V)) -> dict(K, V).
 insert(Key, Value, Dict) ->

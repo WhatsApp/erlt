@@ -4,8 +4,6 @@
 
 -compile(export_all).
 
--compile({no_auto_import, [{length, 1}]}).
-
 -spec singleton(A) -> [A].
 
 singleton(Val) ->
@@ -48,7 +46,7 @@ map(_F, []) ->
 -spec indexed_map(fun((integer(), A) -> B), [A]) -> [B].
 
 indexed_map(F, Xs) ->
-    map2(F, range(0, length(Xs) - 1), Xs).
+    map2(F, range(0, list:length(Xs) - 1), Xs).
 
 -spec foldl(fun((A, B) -> B), B, [A]) -> B.
 

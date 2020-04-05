@@ -137,7 +137,7 @@ both_empty(L1, L2) ->
 
 -spec call([_],[_]) -> boolean().
 call(L1, L2) ->
-    both_empty(L1, L2).
+    mod01:both_empty(L1, L2).
 
 -spec remote_call([A]) -> [A].
 remote_call(L) ->

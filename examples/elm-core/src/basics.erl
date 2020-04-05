@@ -1,7 +1,6 @@
 -lang([erl2, st]).
 -module(basics).
 -compile(export_all).
--compile({no_auto_import,[min/2,max/2]}).
 
 %% MATHEMATICS
 
@@ -75,7 +74,7 @@ min(X1, X2) ->
     end.
 
 -spec min(A) -> fun((A) -> A).
-min(X1) -> fun(X2) -> min(X1, X2) end.
+min(X1) -> fun(X2) -> basics:min(X1, X2) end.
 
 -spec max(A, A) -> A.
 max(X1, X2) ->
@@ -85,7 +84,7 @@ max(X1, X2) ->
     end.
 
 -spec max(A) -> fun((A) -> A).
-max(X1) -> fun(X2) -> max(X1, X2) end.
+max(X1) -> fun(X2) -> basics:max(X1, X2) end.
 
 -enum order() :: lt{} | eq {} | gt{}.
 

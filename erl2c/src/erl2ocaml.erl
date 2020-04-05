@@ -2,6 +2,8 @@
 
 -export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0]).
 
+-record(context, {module :: atom()}).
+
 ffi() ->
     FfiLines = [
         "type 'a tuple1 = Tuple1 of 'a\n",
@@ -52,6 +54,16 @@ main(["-ast", File]) ->
 main(_) ->
     usage().
 
+usage() ->
+    io:format("usage:\n"),
+    io:format("  erl2ocaml -erl mod.erl -ml mod.ml -mli mod.mli:\n").
+
+swap_erl_parse() ->
+    code:purge(erl_parse),
+    true = code:delete(erl_parse),
+    {_,Code,File} = code:get_object_code(erl_parse),
+    {module, _Name} = code:load_binary(erl_parse, File,Code).
+
 erl2ocaml_ffi(Forms) ->
     Specs = get_specs(Forms),
     OTypes = lists:map(fun erl2ocaml_spec/1, Specs),
@@ -63,6 +75,7 @@ erl2ocaml_ffi(Forms) ->
     MliCode.
 
 erl2ocaml_st(Forms) ->
+    Ctx = #context{module = get_module(Forms)},
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
     Specs = get_specs(Forms),
@@ -71,7 +84,7 @@ erl2ocaml_st(Forms) ->
     %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
     TypeDefLines = type_def_scc(TypeDefs),
-    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes),
+    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes, Ctx),
     %% io:format("RawDocs:\n~p\n", [RawDocs]),
     FunLines = indent_docs(RawDocs),
     InterfaceLines = TypeDefLines ++ SpecLines,
@@ -80,50 +93,32 @@ erl2ocaml_st(Forms) ->
     MlCode = iolist_to_binary(ImplementationLines),
     {MliCode, MlCode}.
 
-swap_erl_parse() ->
-    code:purge(erl_parse),
-    true = code:delete(erl_parse),
-    {_,Code,File} = code:get_object_code(erl_parse),
-    {module, _Name} = code:load_binary(erl_parse, File,Code).
+erl2ocaml_sccs(SCCs, OTypes, Ctx) ->
+    lists:flatmap(fun(SCC) -> erl2ocaml_scc1(SCC, Ctx, OTypes) end, SCCs).
 
-usage() ->
-    io:format("usage:\n"),
-    io:format("  erl2ocaml -erl mod.erl -ml mod.ml -mli mod.mli:\n").
-
-erl2ocaml_sccs(SCCs, OTypes) ->
-    lists:flatmap(fun(SCC) -> erl2ocaml_scc(SCC, OTypes) end, SCCs).
-
-erl2ocaml_scc(Funs, OTypes) ->
-    erl2ocaml_scc1(true, Funs, OTypes).
-
-erl2ocaml_scc1(_, [], _) ->
+erl2ocaml_scc1([], _, _) ->
     [];
-erl2ocaml_scc1(true, [F|Fs], OTypes) ->
-    [translateFun("let rec ", F, OTypes) | erl2ocaml_scc1(false, Fs, OTypes)];
-erl2ocaml_scc1(false, [F|Fs], OTypes) ->
-    [translateFun("and ", F, OTypes) | erl2ocaml_scc1(false, Fs, OTypes)].
+erl2ocaml_scc1([F|Fs], Ctx, OTypes) ->
+    [function(F, Ctx, "let rec ", OTypes) | [function(F1, Ctx, "and ", OTypes) || F1 <- Fs]].
 
-translateFun(Prefix, {function, _Line, Name, Arity, Clauses}, OTypes) ->
-    function(Prefix, Name, Arity, Clauses, OTypes).
-
-function(Prefix, Name, Arity, Clauses, OTypes) ->
+function({function, _Line, Name, Arity, Clauses}, Ctx, Prefix, OTypes) ->
     NameStr = atom_to_list(Name) ++ "'" ++ integer_to_list(Arity),
     TypeSpec = case lists:keyfind(NameStr, 1, OTypes) of
                    {_, Ts} -> " : " ++ Ts;
                    _ -> ""
                end,
-    [{Prefix ++ NameStr ++ TypeSpec ++ " = function"}, clauses(Clauses), {""}].
+    [{Prefix ++ NameStr ++ TypeSpec ++ " = function"}, clauses(Clauses, Ctx), {""}].
 
-clauses([EC|Cs]) ->
-    OC = clause(EC),
-    OC ++ clauses(Cs);
-clauses([]) -> [].
+clauses([EC|Cs], Ctx) ->
+    OC = clause(EC, Ctx),
+    OC ++ clauses(Cs, Ctx);
+clauses([], _) -> [].
 
-clause({clause, Line, Head, Guard, Body}) ->
+clause({clause, Line, Head, Guard, Body}, Ctx) ->
     case Guard of
         [] ->
             OHead = {"| " ++ head(Head) ++ " ->" },
-            [OHead, expr_seq(Body)];
+            [OHead, expr_seq(Body, Ctx)];
         Guards ->
             [Guard1|Guards1] =
                 lists:map(
@@ -132,7 +127,7 @@ clause({clause, Line, Head, Guard, Body}) ->
                     end,
                     Guards),
             GuardExp = lists:foldl(fun(H,Acc) -> {op, Line, 'or', Acc, H} end, Guard1, Guards1),
-            [{"| " ++ head(Head) ++ " when" }, [expr(GuardExp)], {"->"}, expr_seq(Body)]
+            [{"| " ++ head(Head) ++ " when" }, [expr(GuardExp, Ctx)], {"->"}, expr_seq(Body, Ctx)]
     end.
 
 head(Ps) ->
@@ -205,96 +200,94 @@ pattern({tuple,_Line,Ps}) ->
 pattern(Pat = {_,Line,_}) ->
     erlang:error({not_supported, Line, pattern, Pat}).
 
-expr_seq([E={match,Line,_,_}]) ->
+expr_seq([E={match,Line,_,_}], _Ctx) ->
     erlang:error({not_supported, Line, last_match_expr, E});
-expr_seq([E0]) ->
-    E1 = expr(E0),
+expr_seq([E0], Ctx) ->
+    E1 = expr(E0, Ctx),
     [E1];
-expr_seq(ES)->
-    expr1([], ES).
+expr_seq(ES, Ctx)->
+    expr1([], ES, Ctx).
 
-expr1([], [E={match,Line,_,_}]) ->
+expr1([], [E={match,Line,_,_}], _Ctx) ->
     erlang:error({not_supported, Line, last_match_expr, E});
-expr1(Acc, [E]) ->
-    Delta = [expr(E)],
+expr1(Acc, [E], Ctx)->
+    Delta = [expr(E, Ctx)],
     Acc ++ Delta;
-expr1(Acc, [{match,_Line,P,E}|Es]) ->
+expr1(Acc, [{match,_Line,P,E}|Es], Ctx)->
     PatString = pattern(P),
-    ExprDoc = expr(E),
+    ExprDoc = expr(E, Ctx),
     Delta = [{"let " ++ PatString ++ " = "}] ++ [ExprDoc] ++ [{"in"}],
     Acc1 = Acc ++ Delta,
-    expr1(Acc1, Es);
-expr1(Acc, [{match_rec,_Line,P,E}|Es]) ->
+    expr1(Acc1, Es, Ctx);
+expr1(Acc, [{match_rec,_Line,P,E}|Es], Ctx)->
     PatString = pattern(P),
-    ExprDoc = expr(E),
+    ExprDoc = expr(E, Ctx),
     Delta = [{"let rec " ++ PatString ++ " = "}] ++ [ExprDoc] ++ [{"in"}],
     Acc1 = Acc ++ Delta,
-    expr1(Acc1, Es);
-expr1(Acc, [E|Es]) ->
-    ExprDoc = expr(E),
+    expr1(Acc1, Es, Ctx);
+expr1(Acc, [E|Es], Ctx)->
+    ExprDoc = expr(E, Ctx),
     Delta = [{"let _ = "}] ++ [ExprDoc] ++ [{"in"}],
     Acc1 = Acc ++ Delta,
-    expr1(Acc1, Es).
+    expr1(Acc1, Es, Ctx).
 
-expr({var,_Line,V}) ->
+expr({var,_Line,V}, _Ctx) ->
     {"v_" ++ atom_to_list(V)};
-expr({integer,_Line,I}) ->
+expr({integer,_Line,I}, _Ctx) ->
     {integer_to_list(I)};
-expr({float,_Line,F}) ->
+expr({float,_Line,F}, _Ctx) ->
     {float_to_list(F, [{decimals, 0}])};
-expr({atom,_Line,true}) ->
+expr({atom,_Line,true}, _Ctx) ->
     {"true"};
-expr({atom,_Line,false}) ->
+expr({atom,_Line,false}, _Ctx) ->
     {"false"};
-expr({atom,Line,A}) ->
+expr({atom,Line,A}, _Ctx) ->
     erlang:error({not_supported, Line, atom, A});
-expr({string,_Line,S}) ->
+expr({string,_Line,S}, _Ctx) ->
     {"\"" ++ S ++ "\""};
-expr({char,_Line,C}) ->
+expr({char,_Line,C}, _Ctx) ->
     {"'" ++ io_lib:format("~c", [C]) ++ "'"};
-expr({nil,_Line}) ->
+expr({nil,_Line}, _Ctx) ->
     {"[]"};
-expr({cons,_Line,H,T}) ->
-    OH = expr(H),
-    OT = expr(T),
-    [{"("}, OH, {"::"}, OT, {")"}];
-expr(E={lc,Line,_,_}) ->
+expr({cons,_Line,H,T}, Ctx) ->
+    [{"(("}, expr(H, Ctx), {") :: ("}, expr(T, Ctx), {"))"}];
+expr(E={lc,Line,_,_}, _Ctx) ->
     erlang:error({not_supported, Line, list_comprehension, E});
-expr(E={bc,Line,_,_}) ->
+expr(E={bc,Line,_,_}, _Ctx) ->
     erlang:error({not_supported, Line, binary_comprehension, E});
-expr({tuple,_Line,[E]}) ->
-    [{"Ffi.Tuple1("}, [expr(E)], {")"}];
-expr({tuple,_Line,Es}) ->
-    expr({tuple1,_Line,Es});
-expr({tuple1,_Line,Es}) ->
-    Docs0 = lists:map(fun expr/1, Es),
+expr({tuple,_Line,[E]}, Ctx) ->
+    [{"Ffi.Tuple1("}, [expr(E, Ctx)], {")"}];
+expr({tuple,_Line,Es}, Ctx) ->
+    expr({tuple1,_Line,Es},Ctx);
+expr({tuple1,_Line,Es}, Ctx) ->
+    Docs0 = [expr(E, Ctx) || E <- Es],
     Docs1 = interleave1(false, Docs0),
     Docs2 = [{"("}, Docs1, {")"}],
     Docs2;
-expr({map,_Line, InitAssocs}) ->
-    Fields =  lists:map(fun init_assoc/1, InitAssocs),
+expr({map,_Line, InitAssocs}, Ctx) ->
+    Fields =  [init_assoc(A, Ctx) || A <- InitAssocs],
     [{"object"}, Fields, {"end"}];
-expr({map,Line,Map,UpdateAssocs}) ->
+expr({map,Line,Map,UpdateAssocs}, Ctx) ->
     FfiSame = {remote, Line, {atom, Line, 'ffi'}, {atom, Line, 'same'}},
     SameFields =
         [{'call',Line,FfiSame,[V,{'op',Line,'.',Map,K}]} || {map_field_exact,_,K={atom,_,_},V} <- UpdateAssocs],
     SameMaps =
         [{'call',Line,FfiSame,[Map,{map1,Line, Map, [UA]}]} || UA <- UpdateAssocs],
     Exprs = SameMaps ++ SameFields ++ [{map1,Line, Map, UpdateAssocs}],
-    expr({block, Line, Exprs});
-expr({map1,_Line, Map, UpdateAssocs}) ->
-    OMap = expr(Map),
-    update_assocs(OMap, UpdateAssocs);
-expr({block,_Line,Es}) ->
-    expr_seq(Es);
-expr({'if',Line,_Clauses}) ->
+    expr({block, Line, Exprs}, Ctx);
+expr({map1,_Line, Map, UpdateAssocs}, Ctx) ->
+    OMap = expr(Map, Ctx),
+    update_assocs(OMap, UpdateAssocs, Ctx);
+expr({block,_Line,Es}, Ctx) ->
+    expr_seq(Es, Ctx);
+expr({'if',Line,_Clauses}, _Ctx) ->
     erlang:error({not_supported, Line, if_expression});
-expr({'case',_Line,Expr,Clauses}) ->
-    [{"("}, {"match"}] ++ [expr(Expr)] ++ [{"with"}] ++ [clauses(Clauses)] ++ [{")"}];
-expr({'fun',Line,Body}) ->
+expr({'case',_Line,Expr,Clauses}, Ctx) ->
+    [{"("}, {"match"}] ++ [expr(Expr, Ctx)] ++ [{"with"}] ++ [clauses(Clauses, Ctx)] ++ [{")"}];
+expr({'fun',Line,Body}, Ctx) ->
     case Body of
         {clauses,Clauses} ->
-            [{"("}, {"function"}, clauses(Clauses), {")"}];
+            [{"("}, {"function"}, clauses(Clauses, Ctx), {")"}];
         {function,F,A} when is_atom(F), is_integer(A) ->
             Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
             [{Fn}];
@@ -308,49 +301,47 @@ expr({'fun',Line,Body}) ->
             %% _A can be a var, we are not supporting such dynamic reference
             erlang:error({not_supported, Line, such_body, Body})
     end;
-expr({named_fun,Line,Name,Clauses}) ->
+expr({named_fun,Line,Name,Clauses}, Ctx) ->
     Exprs = [{match_rec, Line, {var, Line, Name}, {'fun',Line, {clauses, Clauses}}}, {var, Line, Name}],
-    expr({block, Line, Exprs});
-expr({call,Line,{atom, _, F},As}) ->
+    expr({block, Line, Exprs}, Ctx);
+expr({call,Line,{atom, _, F},As}, Ctx) ->
     Fn = atom_to_list(F) ++ "'" ++ integer_to_list(length(As)),
-    [{"("}, {Fn}, expr({tuple1, Line, As}), {")"}];
-expr({op,_,'.',Rec,{atom,_,K}}) ->
-    [{"("}, expr(Rec), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
-expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
+    [{"("}, {Fn}, expr({tuple1, Line, As}, Ctx), {")"}];
+expr({op,_,'.',Rec,{atom,_,K}}, Ctx) ->
+    [{"("}, expr(Rec, Ctx), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
+expr({call,Line,{remote,_Line,{atom,_,M},{atom,FLine,F}},As}, Ctx) when M == Ctx#context.module ->
+    expr({call,Line,{atom,FLine,F},As}, Ctx);
+expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}, Ctx) ->
     Arity = length(As),
     FQFn = remote_fun(M,F,Arity),
-    [{"("}, {FQFn}, expr({tuple1, Line, As}), {")"}];
-expr({call,Line,F,As}) ->
-    [{"("}, expr(F), {")"}, expr({tuple1, Line, As})];
-expr({op,_Line,Op,A}) ->
-    [{uop(Op)}, {"("}, expr(A), {")"}];
-expr({op,_Line,'xor',L,R}) ->
-    [{"("}, {"not"}, {"("}, expr(L), {")"}, {")"}, {"<>"}, {"("}, {"not"}, {"("}, expr(R), {")"}, {")"}];
-expr({op,Line,'--',L,R}) ->
-    [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}), {")"}];
-expr({op,_Line,Op,L,R}) ->
-    [{"("}, expr(L), {")"}, {bop(Op)}, {"("}, expr(R), {")"}];
-expr({enum,_,{atom,_,Ctr},[]}) ->
+    [{"("}, {FQFn}, expr({tuple1, Line, As}, Ctx), {")"}];
+expr({call,Line,F,As}, Ctx) ->
+    [{"("}, expr(F, Ctx), {")"}, expr({tuple1, Line, As}, Ctx)];
+expr({op,_Line,Op,A}, Ctx) ->
+    [{uop(Op)}, {"("}, expr(A, Ctx), {")"}];
+expr({op,_Line,'xor',L,R}, Ctx) ->
+    [{"("}, {"not"}, {"("}, expr(L, Ctx), {")"}, {")"}, {"<>"}, {"("}, {"not"}, {"("}, expr(R, Ctx), {")"}, {")"}];
+expr({op,Line,'--',L,R}, Ctx) ->
+    [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}, Ctx), {")"}];
+expr({op,_Line,Op,L,R}, Ctx) ->
+    [{"("}, expr(L, Ctx), {")"}, {bop(Op)}, {"("}, expr(R, Ctx), {")"}];
+expr({enum,_,{atom,_,Ctr},[]}, _Ctx) ->
     {first_upper(atom_to_list(Ctr))};
-expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}, _Ctx) ->
     {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
-expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}, _Ctx) ->
     {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
-expr({enum,_,{atom,_,Ctr},Args}) ->
-    [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, lists:map(fun expr/1, Args)), {")"}];
-expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+expr({enum,_,{atom,_,Ctr},Args}, Ctx) ->
+    [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
+expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}, Ctx) ->
     [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
-        {"("},
-        interleave1(false, lists:map(fun expr/1, Args)),
-        {")"}];
-expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
+        {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
+expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}, Ctx) ->
     [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
-        {"("},
-        interleave1(false, lists:map(fun expr/1, Args)),
-        {")"}];
-expr(E={remote,Line,_M,_F}) ->
+        {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
+expr(E={remote,Line,_M,_F}, _Ctx) ->
     erlang:error({not_supported, Line, E});
-expr(Exp) ->
+expr(Exp, _Ctx) ->
     erlang:error({not_supported, erlang:element(2, Exp), expr, Exp}).
 
 uop('+') -> "+";
@@ -393,27 +384,27 @@ remote_fun(M,F,Arity) ->
     FQFn = M3 ++ "." ++ F1,
     FQFn.
 
-init_assoc({map_field_assoc,_Line,{atom,_ALine,A},V}) ->
+init_assoc({map_field_assoc,_Line,{atom,_ALine,A},V}, Ctx) ->
     A1 = atom_to_list(A),
     [
         {"val val_" ++ A1 ++ " = "},
-        [expr(V)],
+        [expr(V, Ctx)],
         {"method get_" ++ A1 ++ " = val_" ++ A1},
         {"method set_" ++ A1 ++ " new_val_" ++ A1 ++ " = {< " ++ "val_" ++ A1 ++ " =  new_val_" ++ A1 ++ " >}"}
     ];
-init_assoc({map_field_assoc,Line,E,_V}) ->
+init_assoc({map_field_assoc,Line,E,_V}, _Ctx) ->
     erlang:error({not_supported, Line, non_atom_key, E}).
 
-update_assocs(Acc, [A|As]) ->
-    update_assocs(update_assoc(Acc, A), As);
-update_assocs(Acc, []) ->
+update_assocs(Acc, [A|As], Ctx) ->
+    update_assocs(update_assoc(Acc, A, Ctx), As, Ctx);
+update_assocs(Acc, [], _Ctx) ->
     Acc.
 
-update_assoc(Acc, {map_field_exact,_Line,{atom,_ALine,A},V}) ->
-    [{"("}, Acc, {")"}, {"#" ++ "set_" ++ atom_to_list(A)}, expr(V)];
-update_assoc(_Acc, {map_field_exact,Line,E,_V}) ->
+update_assoc(Acc, {map_field_exact,_Line,{atom,_ALine,A},V}, Ctx) ->
+    [{"("}, Acc, {")"}, {"#" ++ "set_" ++ atom_to_list(A)}, expr(V, Ctx)];
+update_assoc(_Acc, {map_field_exact,Line,E,_V}, _Ctx) ->
     erlang:error({not_supported, Line, non_atom_key, E});
-update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}) ->
+update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}, _Ctx) ->
     erlang:error({not_supported, Line, update_map_field_assoc, E}).
 
 type_def_scc(TypeDefs) ->
@@ -628,6 +619,9 @@ get_specs([{attribute,_,spec,_}=Spec|Forms]) ->
     [Spec|get_specs(Forms)];
 get_specs([_|Forms]) ->
     get_specs(Forms).
+
+get_module(Forms) ->
+     erlang:hd([M || {attribute,_,module,M} <- Forms]).
 
 get_type_defs([]) ->
     [];
