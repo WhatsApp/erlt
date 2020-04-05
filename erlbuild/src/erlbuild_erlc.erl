@@ -238,6 +238,20 @@ parse_generic_option("P", T, #options{specific=Spec}=Opts) ->
     compile1(T, Opts#options{specific=['P'|Spec]});
 parse_generic_option("S", T, #options{specific=Spec}=Opts) ->
     compile1(T, Opts#options{specific=['S'|Spec]});
+parse_generic_option("-build-phase", T0, #options{specific=Spec}=Opts) ->
+    {PhaseString,T} = get_option("build-phase", "", T0),
+    Phase =
+        case PhaseString of
+            "scan" -> scan;
+            "compile" -> compile;
+            _ -> exit({compiler_error,"Invalid --build-phase '"++PhaseString++"'; must be 'scan' or 'compile'"})
+        end,
+    PhaseOpt = {build_phase, Phase},
+    compile1(T, Opts#options{specific=[PhaseOpt|Spec]});
+parse_generic_option("-build-dir", T0, #options{specific=Spec}=Opts) ->
+    {BuildDir,T} = get_option("-build-dir", "", T0),
+    BuildDirOpt = {build_dir, BuildDir},
+    compile1(T, Opts#options{specific=[BuildDirOpt|Spec]});
 parse_generic_option(Option, _T, _Opts) ->
     io:format(?STDERR, "Unknown option: -~ts\n", [Option]),
     usage().

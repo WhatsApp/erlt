@@ -5,8 +5,7 @@ ROOT := $(dir $(THIS_MAKEFILE))
 ERLBUILD := $(ROOT)/erlbuild/bin/erlbuild
 
 # NOTE: erl2c can compile both erl2 and erl1
-ERLC_COMPILE := $(ROOT)/erl2c/bin/erl2c
-ERLC_DEPSCAN := $(ERLC_COMPILE) +makedep2
+ERLBUILD_ERLC := $(ROOT)/erl2c/bin/erl2c
 
 
 include $(ROOT)/erlbuild/erlbuild.mk
@@ -27,7 +26,7 @@ ocamlformat:
 p:
 	rm -f $(IR_DIR)/*.P
 	mkdir -p $(IR_DIR)
-	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLC_COMPILE) -P -o $(IR_DIR) $(erl);)
+	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLBUILD_ERLC) -P -o $(IR_DIR) $(erl);)
 
 ir: ocamlformat p
 

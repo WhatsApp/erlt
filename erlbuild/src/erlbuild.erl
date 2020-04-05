@@ -57,7 +57,7 @@ commands (Defaults to 'compile'):
 
 private commands (called from erlbuild.template.mk):
 
-  erlc [erlc options] <.erl file>
+  erlc [erlc options] [extra erlc options] <.erl file>
       -- similar to 'erlc', but optimized when run after 'erlbuild erlc -M'; NOTE: accepts only a single .erl file
 
 
@@ -69,9 +69,8 @@ erlbuild options:
   --erlbuild <command>     erlbuild command. Defaults to the current command (argv[0]).
   --gen-only               generate makefile, but don't run make
 
-  --erlc-generate <command>  erlc generate command. Defaults to 'erlc'.
-  --erlc-compile <command>   erlc compile command. Defaults to '<erlbuild> erlc'.
-  --erlc-depscan <command>   erlc depscan command. Defaults to '<erlbuidl> erlc'.
+  --erlc <command>           erlc command. Defaults to 'erlc'.
+  --erlbuild-erlc <command>  erlbuild erlc command. Defaults to '<erlbuidl> erlc'.
 
   -j[jobs]       specifies the number of jobs (commands) to run simultaneously. -j defaults to the number of available CPU cores
   -v[level]      verbose build output, <level> is a non-negative integer. -v defaults to -v9
@@ -89,6 +88,13 @@ erlc options:
   -Wall          enable all warnings
   -W             enable warnings (default; same as -W1)
   +term          pass the Erlang term unchanged to the compiler
+
+
+extra erlc options:
+
+  options used by erlbuild:
+  --build-phase <build_phase>   scan | compile
+  --build-dir <build_dir>       <build_dir> passed from erlbuild
 
   options specific to depscan:
   -M             enable depscan mode: generate a rule for make(1) describing the dependencies
@@ -122,9 +128,8 @@ erlc options:
     erlbuild = "erlbuild",      % --erlbuild
     gen_only = false,           % --gen-only
 
-    erlc_generate,              % --erlc-generate
-    erlc_compile,               % --erlc-compile
-    erlc_depscan,               % --erlc-depscan
+    erlc,                       % --erlc
+    erlbuild_erlc,              % --erlbuild-erlc
 
     input_files = [] :: [string()],  % input file names
     erlc_argv = [] :: [string()]     % argv to pass to erlc
@@ -260,7 +265,7 @@ update_args_output_dir(Args) ->
     end.
 
 
-% Defaults to <output_dir>/../build, if -o is specified
+% Defaults to <output_dir>/../build
 update_args_build_dir(Args) ->
     case Args#args.build_dir of
         undefined ->
@@ -338,24 +343,17 @@ parse_args(["--makefile" | _] = Argv, Args) ->
     parse_args(T, NewArgs);
 
 
-parse_args(["--erlc-generate" | _] = Argv, Args) ->
-    {ErlcGenerate, T} = get_long_option(Argv),
+parse_args(["--erlc" | _] = Argv, Args) ->
+    {Erlc, T} = get_long_option(Argv),
     NewArgs = Args#args{
-        erlc_generate = ErlcGenerate
+        erlc = Erlc
     },
     parse_args(T, NewArgs);
 
-parse_args(["--erlc-compile" | _] = Argv, Args) ->
-    {ErlcCompile, T} = get_long_option(Argv),
+parse_args(["--erlbuild-erlc" | _] = Argv, Args) ->
+    {ErlbuildErlc, T} = get_long_option(Argv),
     NewArgs = Args#args{
-        erlc_compile = ErlcCompile
-    },
-    parse_args(T, NewArgs);
-
-parse_args(["--erlc-depscan" | _] = Argv, Args) ->
-    {ErlcDepscan, T} = get_long_option(Argv),
-    NewArgs = Args#args{
-        erlc_depscan = ErlcDepscan
+        erlbuild_erlc = ErlbuildErlc
     },
     parse_args(T, NewArgs);
 
@@ -586,28 +584,20 @@ generate_makefile(Args) ->
 
     Erlbuild = Args#args.erlbuild,
 
-    ErlcGenerate =
-        case Args#args.erlc_generate of
+    Erlc =
+        case Args#args.erlc of
             'undefined' ->
                 "erlc";
-            ErlcGenerate_ ->
-                ErlcGenerate_
+            Erlc_ ->
+                Erlc_
         end,
 
-    ErlcCompile =
-        case Args#args.erlc_compile of
+    ErlbuildErlc =
+        case Args#args.erlbuild_erlc of
             'undefined' ->
                 Erlbuild ++ " erlc";
-            ErlcCompile_ ->
-                ErlcCompile_
-        end,
-
-    ErlcDepscan =
-        case Args#args.erlc_depscan of
-            'undefined' ->
-                Erlbuild ++ " erlc +makedep2";
-            ErlcDepscan_ ->
-                ErlcDepscan_
+            ErlbuildErlc_ ->
+                ErlbuildErlc_
         end,
 
     % see ./erlbuild.template.mk for complete list of input parameters
@@ -616,9 +606,8 @@ generate_makefile(Args) ->
         gen_input_parameter("BUILD_DIR", Args#args.build_dir),
         gen_input_parameter("ERLC_FLAGS", lists:join(" ", [quote_shell_arg(X) || X <- Args#args.erlc_argv])),
 
-        gen_input_parameter("ERLC_GENERATE", ErlcGenerate),
-        gen_input_parameter("ERLC_COMPILE", ErlcCompile),
-        gen_input_parameter("ERLC_DEPSCAN", ErlcDepscan),
+        gen_input_parameter("ERLC", Erlc),
+        gen_input_parameter("ERLBUILD_ERLC", ErlbuildErlc),
 
         gen_input_parameter("SOURCES", lists:join(" ", Args#args.input_files)),
         "\n"

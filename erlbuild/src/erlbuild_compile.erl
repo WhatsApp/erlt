@@ -66,7 +66,9 @@
                   encoding=none :: none | epp:source_encoding(),
 		  errors=[]     :: [err_warn_info()],
 		  warnings=[]   :: [err_warn_info()],
-                  compile_deps=[] :: [compile_dep()]
+                  compile_deps=[] :: [compile_dep()],
+
+                  build_dir :: undefined | file:filename()
 }).
 
 -define(pass(P), {P,fun P/2}).
@@ -113,26 +115,90 @@ do_file(File, Options0) ->
     % running parse_transforms twice. Plus, we are going to be restricting how
     % parse transforms can be specified anyway.
     EnvCompilerOptions = compile:env_compiler_options(),
-
     Options1 = Options0 ++ EnvCompilerOptions,
-    St0 = #compile{options=Options1},
 
-    Suffix = ".erl",
-
-    CompileMode =
-        case is_makedep2_mode(Options0) of
-            true ->
-                makedep2;
+    % TODO, XXX: derive makedep_output from it?
+    BuildDir =
+        case keyfind(build_dir, 1, Options0) of
+            {build_dir, Dir} -> Dir;
             false ->
+                "build"
+        end,
+
+    St0 = #compile{
+        options=Options1,
+        build_dir=BuildDir
+    },
+
+    BuildPhase =
+        case keyfind(build_phase, 1, Options0) of
+            {build_phase, Phase} -> Phase;
+            false -> undefined
+        end,
+
+    IsMakedep2Mode = is_makedep2_mode(Options0),
+    CompileMode =
+        case BuildPhase of
+            scan ->
+                build_scan;
+            compile ->
+                build_compile;
+            undefined when IsMakedep2Mode ->
+                makedep2;
+            _ ->
                 compile
         end,
 
     Passes =
         case CompileMode of
+            makedep2 ->
+                % 'erlc -M2' -- a new dependency scanner, alternative to 'erlc -M' aka makedep; among other things, it
+                % allows to establish the order in which .erl files should be compiled
+                %
+                % this mode exists mainly for testing the new dependency scanner
+                TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
+                [
+                    ?pass(parse_module),
+                    ?pass(check_parse_errors)
+                ]
+                ++
+                TransformPasses
+                ++
+                [
+                    ?pass(collect_compile_deps),
+                    ?pass(output_compile_deps)
+                ];
+            build_scan ->
+                % build scan phase -- generate depfiles; later, we are also going to
+                % extract declarations from parsed module, and cache the parse tree
+                [
+                    ?pass(parse_module),
+                    % NOTE: parse_module may return a parse tree with errors; as we are
+                    % going to be using it for extracting static information about the
+                    % parsed module, we don't want the parse tree to be invalid
+                    ?pass(check_parse_errors),
+
+                    ?pass(collect_compile_deps),
+                    ?pass(output_compile_deps)
+                ];
+            build_compile ->
+                % build compile phase -- later, we are going to use this for optimizing
+                % compilation by recovering information cached during the "scan" phase
+                [
+                    % TODO: do not remove the output file unless we know save_binary() is going to run
+                    ?pass(remove_file),
+                    ?pass(parse_module),
+                    ?pass(check_parse_errors),
+
+                    ?pass(transform_module),
+
+                    ?pass(compile_forms),
+                    ?pass(maybe_save_binary)
+                ];
             compile ->
-                % normal .erl compilation -- later, we are going to use this
-                % for optimizing compilation by caching information already
-                % obtained during the "scan" phase
+                % normal .erl compilation -- should be identical to erlc behavior
+                %
+                % this mode exists mainly for testing this erlc flavor
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
@@ -142,25 +208,10 @@ do_file(File, Options0) ->
 
                     ?pass(compile_forms),
                     ?pass(maybe_save_binary)
-                ];
-            makedep2 ->
-                % 'erlc -M2' -- a new dependency scanner, alternative to 'erlc -M' aka makedep; among other things, it
-                % allows to establish the order in which .erl files should be compiled
-                TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
-                [
-                    ?pass(parse_module),
-                    ?pass(check_epp_errors)
-                ]
-                ++
-                TransformPasses
-                ++
-                [
-                    ?pass(collect_compile_deps),
-                    ?pass(output_compile_deps)
                 ]
         end,
 
-    internal_comp(Passes, _Code0 = unused, File, Suffix, St0).
+    internal_comp(Passes, _Code0 = unused, File, _Suffix = ".erl", St0).
 
 
 is_makedep2_mode(Options) ->
@@ -333,17 +384,21 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     gen_make_rule(Target, Deps1).
 
 
-check_epp_errors(Forms, St0) ->
+check_parse_errors(Forms, St0) ->
+    % in normal Erlang compilation lexer, parser, and epp errors are reported by
+    % erl_lint.erl which is run as one of the later passes inside compile_erl1_forms()
+    %
+    % under erlbuild stricter compilation model we no longer allow lexer & parser errors
+    % to slip through, because we need valid forms for static analysis and to be able to
+    % cache a valid ast betwen "scan" and "compile" phases
+    %
     % under erlbuild stricter compilation model we no longer allow epp errors,
     % e.g. includes that are not found at the dependency scan stage. For
     % example, adding originally missing include later may result in a
     % different compile order, not including transitive dependencies, or a
     % different parse output, because of conditional compilation. This may lead
     % to inconsistent build.
-    %
-    % in normal Erlang compilation such errors are reported by erl_lint.erl and
-    % NOT during makedep depedency scan
-    case get_epp_errors(Forms) of
+    case get_parse_errors(Forms) of
         [] ->
             {ok, Forms, St0};
         Errors ->
@@ -351,20 +406,20 @@ check_epp_errors(Forms, St0) ->
     end.
 
 
-get_epp_errors(Forms) ->
-    get_epp_errors(Forms, _File = 'undefined', _Acc = []).
+get_parse_errors(Forms) ->
+    get_parse_errors(Forms, _File = 'undefined', _Acc = []).
 
-get_epp_errors([], _File, Acc) ->
+get_parse_errors([], _File, Acc) ->
     lists:reverse(Acc);
-get_epp_errors([{attribute,_,file,{NewFile,_}}|Rest], _File, Acc) ->
+get_parse_errors([{attribute,_,file,{NewFile,_}}|Rest], _File, Acc) ->
     % update the name of the current file
-    get_epp_errors(Rest, NewFile, Acc);
-get_epp_errors([{error,{_,epp,_} = EppError}|Rest], File, Acc) ->
-    % epp error, e.g. include/include_lib wasn't found
-    CompileError = {File, [EppError]},
-    get_epp_errors(Rest, File, [CompileError|Acc]);
-get_epp_errors([_|Rest], File, Acc) ->
-    get_epp_errors(Rest, File, Acc).
+    get_parse_errors(Rest, NewFile, Acc);
+get_parse_errors([{error,Error}|Rest], File, Acc) ->
+    % lexer/parser/epp error
+    CompileError = {File, [Error]},
+    get_parse_errors(Rest, File, [CompileError|Acc]);
+get_parse_errors([_|Rest], File, Acc) ->
+    get_parse_errors(Rest, File, Acc).
 
 
 collect_compile_deps(Forms, St0) ->
@@ -375,7 +430,6 @@ collect_compile_deps(Forms, St0) ->
         compile_deps = St0#compile.compile_deps ++ Deps
     },
     {ok, Forms, St1}.
-
 
 
 get_deps_from_forms(Forms, St0) ->

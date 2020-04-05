@@ -53,10 +53,10 @@ Details of how it works:
 2.  The build process is divided into 3 non-overlapping phases:
 
     - "generate"     -- generation of .erl files from .xrl and .yrl (if .xrl/yrl files are given as input)
-    - "depscan"      -- scanning of .erl files to build or update the dependency graph
+    - "scan"         -- scanning of .erl files to build or update the dependency graph, and extract metadata
     - "compile"      -- compiling or recompiling .erl files into .beam files
 
-    "depscan" and "compile" are the main build phases.
+    "scan" and "compile" are the main build phases.
 
     "generate" was introduced mainly to simplify integration of 'erlbuild'
     with the existing build systems (i.e. rebar3 and app.mk).
@@ -64,7 +64,7 @@ Details of how it works:
     Importantly, each phase is incremental and fully parallelizable.
 
 
-3.  "depscan" builds or updates an exhaustive graph of compile-time dependencies
+3.  "scan" builds or updates an exhaustive graph of compile-time dependencies
 
     Compiled .beam files depend on source .erl files, .hrl files, and also
     behavior and parse transform .beams.
@@ -84,7 +84,7 @@ Details of how it works:
     and .hrl files, but *not* on behavior and parse transform .beams.
 
     Dependency scan of individual .erl files is performed by calling 'erlbuild
-    depscan ...'. See "erlbuild dependency scanner" section below for
+    erlc --build-phase scan ...'. See "erlbuild dependency scanner" section below for
     details.
 
     These are the exact 'make' directives implementing this logic. See
@@ -94,7 +94,7 @@ Details of how it works:
         DEPFILES := $(ERLS:%.erl=$(BUILD_DIR)/%.d)
 
         $(BUILD_DIR)/%.d: %.erl
-                erlbuild -M -MP -MF $@ $(ERLC_FLAGS) $<
+                erlbuild erlc --build-phase scan -M -MP -MF $@ $(ERLC_FLAGS) $<
 
         include $(wildcard $(DEPFILES))
     ```
@@ -112,7 +112,7 @@ Details of how it works:
 
     ```
         $(EBIN)/%.beam: %.erl
-                erlc $(ERLC_FLAGS) $<
+                erlbuild erlc --build-phase compile $(ERLC_FLAGS) $<
 
         include $(DEPFILES)
     ```
@@ -157,7 +157,7 @@ Overall, it follows Erlang standard dependency scanner ('erlc -M') logic and
 interface. There are several critical extensions:
 
 - in addition to included files treated as dependencies by 'erlc -M',
-  'erlbuild depscan' generates a list of .beam dependencies from behaviors
+  'erlbuild erlc -M2' generates a list of .beam dependencies from behaviors
   and parse transforms
 
 - unlike 'erlc -M', it does not tolerate epp errors. For example, the original
@@ -171,9 +171,9 @@ interface. There are several critical extensions:
   turn, allows to maintain and consistently update the dependency graph during
   incremental builds.
 
-- by default, 'erlbuild depscan' does not run parse transforms.
+- by default, 'erlbuild erlc -M2' does not run parse transforms.
 
-  This behavior can be overridden by `erlbuild depscan +makedep2_run_parse_transforms`
+  This behavior can be overridden by `erlbuild erlc -M2 +makedep2_run_parse_transforms`
   option.
 
   Not executing parse transforms during dependency scan allows us to build all
@@ -206,14 +206,14 @@ interface. There are several critical extensions:
 ## Future Steps
 
 1. Currently, erlbuild is slower and less efficient than it could be, because
-   each individual compile and depscan commands have a ~100ms overhead for
+   each individual compile and scan commands have a ~100ms overhead for
    starting Erlang VM. This inefficiency can be addressed by implementing a
-   build server as a part of erlbuild, and implementing depscan and compile
+   build server as a part of erlbuild, and implementing scan and compile
    steps as requests to the build server.
 
 2. Implementing a build server would open up more optimization opportunities.
-   For example, caching AST obtained during depscan, and avoiding parsing it
-   the second time during compile.
+   For example, caching AST obtained during the scan phas, and avoiding parsing
+   it the second time during compile.
 
 3. Another potential optimization is not rebuilding .beam when a source file
    change doesn't change the AST.

@@ -25,9 +25,8 @@
 #
 #         - SOURCES -- .erl, .xrl, .yrl files
 #
-#         - ERLC_GENERATE
-#         - ERLC_COMPILE
-#         - ERLC_DEPSCAN
+#         - ERLC
+#         - ERLBUILD_ERLC
 #
 #         - ERLC_FLAGS
 #         - EBIN
@@ -59,14 +58,11 @@ endif
 ifndef SOURCES
 $(error "missing SOURCES parameter")
 endif
-ifneq ($(origin ERLC_GENERATE),file)
-$(error "missing ERLC_GENERATE parameter")
+ifneq ($(origin ERLC),file)
+$(error "missing ERLC parameter")
 endif
-ifneq ($(origin ERLC_COMPILE),file)
-$(error "missing ERLC_COMPILE parameter")
-endif
-ifneq ($(origin ERLC_DEPSCAN),file)
-$(error "missing ERLC_DEPSCAN parameter")
+ifneq ($(origin ERLBUILD_ERLC),file)
+$(error "missing ERLBUILD_ERLC parameter")
 endif
 ifneq ($(origin ERLC_FLAGS),file)
 $(error "missing ERLC_FLAGS parameter")
@@ -128,7 +124,7 @@ ENABLE_GENERATE := true
 # more reliable anyway.
 #
 # also, although we support generating .erl from .xrl, .yrl inline when running
-# depscan, it is better to run it as a separate explicit step before
+# scan, it is better to run it as a separate explicit step before
 # compilation
 all: compile_erls
 
@@ -136,7 +132,7 @@ all: compile_erls
 # NOTE: using -C $(CURDIR) to make it easier to reproduce individual steps
 # by copy-pasting the command from the output listing
 compile_erls: generate_erls
-	$(QUIET)$(MAKE) -C $(CURDIR) --no-print-directory -f $(THIS_MAKEFILE) depscan
+	$(QUIET)$(MAKE) -C $(CURDIR) --no-print-directory -f $(THIS_MAKEFILE) scan
 	$(QUIET)$(MAKE) -C $(CURDIR) --no-print-directory -f $(THIS_MAKEFILE) compile
 
 
@@ -165,10 +161,10 @@ do_compile: $(BEAMS)
 
 $(EBIN)/%.beam: %.erl | $(EBIN)
 	$(ECHO_1) "compile $<"
-	$(QUIET)$(ERLC_COMPILE) $(ERLC_FLAGS) $<
+	$(QUIET)$(ERLBUILD_ERLC) --build-phase compile --build-dir $(BUILD_DIR) $(ERLC_FLAGS) $<
 
 # using explicit include, because .d have to be built and rebuilt explicitly by
-# "depscan" and we do not tolerate failures
+# "scan" and we do not tolerate failures
 include $(DEPFILES)
 
 endif  # compile
@@ -178,7 +174,7 @@ endif  # compile
 # order in which they need to be compiled
 #
 # for details on how this works: http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
-ifeq ($(MAKECMDGOALS),depscan)
+ifeq ($(MAKECMDGOALS),scan)
 
 # prevent implicit generation of .erl from .xrl/yrl
 ENABLE_GENERATE :=
@@ -186,10 +182,10 @@ ENABLE_GENERATE :=
 # NOTE: checking that all .erl files are present and up-to-date (some of them may be generated from .xrl/.yrl)
 #
 # NOTE: using @: action to silence "Nothing to be done for `...' message
-depscan: do_depscan $(ERLS)
+scan: do_scan $(ERLS)
 	@:
 
-do_depscan: $(DEPFILES)
+do_scan: $(DEPFILES)
 
 
 # NOTE: we need $(EBIN) directory to be present, because otherwise
@@ -205,8 +201,8 @@ do_depscan: $(DEPFILES)
 # builds.
 
 $(BUILD_DIR)/%.d: %.erl | $(BUILD_DIR) $(EBIN)
-	$(ECHO_1) "depscan $<"
-	$(QUIET)$(ERLC_DEPSCAN) -M -MP -MF $@ $(ERLC_FLAGS) $<
+	$(ECHO_1) "scan $<"
+	$(QUIET)$(ERLBUILD_ERLC) --build-phase scan --build-dir $(BUILD_DIR) -M -MP -MF $@ $(ERLC_FLAGS) $<
 
 
 # NOTE: including $(DEPFILES) to trigger rebuild of .d makefiles (i.e.
@@ -218,13 +214,13 @@ $(BUILD_DIR)/%.d: %.erl | $(BUILD_DIR) $(EBIN)
 #
 # XXX: instead of using wildcard, we could have erlbuild create empty .d files
 # with 0 timestamp, if they are missing. (This could also potentially help with
-# combining the depscan and compile phases by having make automatically
+# combining the scan and compile phases by having make automatically
 # reload the included .d files between the phases. We'll probably need to make
 # .beam depend on .d files for this to work.)
 
 include $(wildcard $(DEPFILES))
 
-endif  # depscan
+endif  # scan
 
 
 ifdef ENABLE_GENERATE
@@ -237,18 +233,17 @@ do_generate: $(GENERATED_ERLS)
 
 $(LEEX_ERLS): %.erl: %.xrl
 	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC_GENERATE) $<
+	$(QUIET)$(ERLC) $<
 
 $(YECC_ERLS): %.erl: %.yrl
 	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC_GENERATE) $<
+	$(QUIET)$(ERLC) $<
 
 endif  # ENABLE_GENERATE
 
 
-# NOTE: can't rm -rf $(BUILD_DIR) here, because there could be other build
-# modules (e.g. "test" directory in case of rebar) storing build state there;
-# however still trying to delete it if it's empty
+# XXX: should we simply rm -rf $(BUILD_DIR) here? It comes down to whether the
+# build directory could used for other build modules or other functionality
 clean:
 	$(QUIET)rm -f $(BEAMS)
 	$(QUIET)rm -f $(DEPFILES)
@@ -259,10 +254,10 @@ endif
 
 
 # One of the supported modes is when generation of .erl from .xrl/.yrl files
-# runs inline during compile or depscan. In such case, they are triggered
+# runs inline during compile or scan. In such case, they are triggered
 # by implicit rules. Adding such generated .erl files as .SECONDARY ensures
 # that they don't get automatically deleted by make. Specifically, if they are
-# automatically generated during depscan phase, they need to be kept
+# automatically generated during scan phase, they need to be kept
 # around through compile phase.
 #
 # NOTE: preventing empty .SECONDARY as it badly interferes with the dependency
@@ -277,5 +272,5 @@ endif
 
 
 .PHONY: all clean generate_erls compile_erls \
-	generate compile depscan \
-        do_generate do_compile do_depscan
+	generate compile scan \
+        do_generate do_compile do_scan

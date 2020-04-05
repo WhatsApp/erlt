@@ -66,6 +66,7 @@
 		  warnings=[]   :: [err_warn_info()],
                   compile_deps=[] :: [compile_dep()],
 
+                  build_dir :: undefined | file:filename(),
                   % indicator of Erlang language flavor; valid combinations are
                   %
                   %    []                  -- erl1
@@ -122,41 +123,48 @@ do_file(File, Options0) ->
     % running parse_transforms twice. Plus, we are going to be restricting how
     % parse transforms can be specified anyway.
     EnvCompilerOptions = compile:env_compiler_options(),
-
     Options1 = Options0 ++ EnvCompilerOptions,
     Options2 = fix_compile_options(Options1),
-    St0 = #compile{options=Options2},
 
-    Suffix = ".erl",
-
-    CompileMode =
-        case is_makedep2_mode(Options0) of
-            true ->
-                makedep2;
+    % TODO, XXX: derive makedep_output from it?
+    BuildDir =
+        case keyfind(build_dir, 1, Options0) of
+            {build_dir, Dir} -> Dir;
             false ->
-                erl2c
+                "build"
         end,
 
+    St0 = #compile{
+        options=Options2,
+        build_dir=BuildDir
+    },
+
+    BuildPhase =
+        case keyfind(build_phase, 1, Options0) of
+            {build_phase, Phase} -> Phase;
+            false -> undefined
+        end,
+
+    IsMakedep2Mode = is_makedep2_mode(Options0),
+    CompileMode =
+        case BuildPhase of
+            scan ->
+                build_scan;
+            compile ->
+                build_compile;
+            undefined when IsMakedep2Mode ->
+                makedep2;
+            _ ->
+                compile
+        end,
 
     Passes =
         case CompileMode of
-            erl2c ->  % normal .erl compilation
-                [
-                    % TODO: do not remove the output file unless we know save_binary() is going to run
-                    ?pass(remove_file),
-                    ?pass(parse_module),
-                    ?pass(check_parse_errors),
-
-                    ?pass(erl2_typecheck),
-                    ?pass(erl2_to_erl1),
-
-                    ?pass(transform_module),
-                    ?pass(compile_erl1_forms),
-                    ?pass(maybe_save_binary)
-                ];
             makedep2 ->
-                % 'erl2c -M2' -- a new dependency scanner, alternative to 'erl2c -M' aka makedep; among other things, it
+                % 'erlc -M2' -- a new dependency scanner, alternative to 'erlc -M' aka makedep; among other things, it
                 % allows to establish the order in which .erl files should be compiled
+                %
+                % this mode exists mainly for testing the new dependency scanner
                 TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
                 [
                     ?pass(parse_module),
@@ -171,10 +179,54 @@ do_file(File, Options0) ->
                 [
                     ?pass(collect_erl1_compile_deps),
                     ?pass(output_compile_deps)
+                ];
+            build_scan ->
+                % build scan phase -- generate depfiles; later, we are also going to
+                % extract declarations from parsed module, and cache the parse tree
+                [
+                    ?pass(parse_module),
+                    ?pass(check_parse_errors),
+
+                    ?pass(collect_erl2_compile_deps),
+                    ?pass(erl2_to_erl1),
+
+                    ?pass(collect_erl1_compile_deps),
+                    ?pass(output_compile_deps)
+                ];
+            build_compile ->
+                % build compile phase -- later, we are going to use this for optimizing
+                % compilation by recovering information cached during the "scan" phase
+                [
+                    % TODO: do not remove the output file unless we know save_binary() is going to run
+                    ?pass(remove_file),
+                    ?pass(parse_module),
+                    ?pass(check_parse_errors),
+
+                    ?pass(erl2_typecheck),
+                    ?pass(erl2_to_erl1),
+
+                    ?pass(transform_module),
+                    ?pass(compile_erl1_forms),
+                    ?pass(maybe_save_binary)
+                ];
+            compile ->
+                % normal .erl compilation -- for erl1, should be identical to erlc behavior
+                [
+                    % TODO: do not remove the output file unless we know save_binary() is going to run
+                    ?pass(remove_file),
+                    ?pass(parse_module),
+                    ?pass(check_parse_errors),
+
+                    ?pass(erl2_typecheck),
+                    ?pass(erl2_to_erl1),
+
+                    ?pass(transform_module),
+                    ?pass(compile_erl1_forms),
+                    ?pass(maybe_save_binary)
                 ]
         end,
 
-    internal_comp(Passes, _Code0 = unused, File, Suffix, St0).
+    internal_comp(Passes, _Code0 = unused, File, _Suffix = ".erl", St0).
 
 
 is_makedep2_mode(Options) ->
@@ -920,15 +972,7 @@ erl2_typecheck(Code, St) ->
 
 
 do_erl2_typecheck(Code, St) ->
-    % TODO: figure out a way to pass build directory location from erlbuild
-    BuildDir =
-        case keyfind(outdir, 1, St#compile.options) of
-            {outdir, Outdir} ->
-                filename:join(filename:dirname(Outdir), "build");
-            _ ->
-                "build"
-        end,
-    OcamlDir = filename:join(BuildDir, "ocaml"),
+    OcamlDir = filename:join(St#compile.build_dir, "ocaml"),
 
     Basename = filename:rootname(filename:basename(St#compile.ofile)),
 

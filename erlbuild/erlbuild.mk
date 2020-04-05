@@ -38,10 +38,9 @@
 #         - SOURCES          -- explicitly proivided list of source files to build: .erl, .xrl, .yrl files without directory names
 #         - EXCLUDE_SOURCES  -- when sources are discovered automatically, list of source files that should not be built
 #
+#         - ERLC             -- erlc command. Defaults to 'erlc'.
 #         - ERLBUILD         -- erlbuild command. Defaults to 'erlbuild'.
-#         - ERLC_GENERATE    -- erlc generate command. Defaults to 'erlc'.
-#         - ERLC_COMPILE     -- erlc compile command. Defaults to '$ERLBUILD erlc'.
-#         - ERLC_DEPSCAN     -- erlc depscan command. Defaults to '$ERLBUILD erlc'.
+#         - ERLBUILD_ERLC    -- erlbuild erlc command. Defaults to '$ERLBUILD erlc'.
 #
 #         - BUILD_DIR        -- directory for storing intermediate compilation state
 #
@@ -102,16 +101,12 @@ endif
 ERLBUILD_FLAGS += --build-dir $(BUILD_DIR)
 
 
-ifdef ERLC_GENERATE
-ERLBUILD_FLAGS += --erlc-generate "$(ERLC_GENERATE)"
+ifdef ERLC
+ERLBUILD_FLAGS += --erlc "$(ERLC)"
 endif
 
-ifdef ERLC_COMPILE
-ERLBUILD_FLAGS += --erlc-compile "$(ERLC_COMPILE)"
-endif
-
-ifdef ERLC_DEPSCAN
-ERLBUILD_FLAGS += --erlc-depscan "$(ERLC_DEPSCAN)"
+ifdef ERLBUILD_ERLC
+ERLBUILD_FLAGS += --erlbuild-erlc "$(ERLBUILD_ERLC)"
 endif
 
 
@@ -163,23 +158,28 @@ BEAMS       := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
 ERLBUILD_MK := $(BUILD_DIR)/erlbuild.mk
 
 
-all: compile delete_extra_beams
+all: erlbuild-compile delete_extra_beams
 
 
-clean: clean_beams
+clean: erlbuild-clean
+	$(QUIET)rm -rf $(BUILD_DIR)
 
 
-$(BEAMS): compile
+# shorthand for erlbuild-compile
+compile: erlbuild-compile
+
+
+$(BEAMS): erlbuild-compile
 
 
 # NOTE: checking that all source files are present just in case
-compile: $(SOURCES)
+erlbuild-compile: $(SOURCES)
 	$(ECHO_2) "=== erlbuild.mk: $@"
-	$(QUIET)$(ERLBUILD) --gen-only --makefile $(ERLBUILD_MK) $(ERLBUILD_FLAGS) $(SOURCES)
+	$(QUIET)$(ERLBUILD) compile --gen-only --makefile $(ERLBUILD_MK) $(ERLBUILD_FLAGS) $(SOURCES)
 	$(QUIET)$(MAKE) --no-print-directory -f $(ERLBUILD_MK)
 
 
-clean_beams:
+erlbuild-clean:
 ifneq ($(wildcard $(ERLBUILD_MK)),)
 	$(QUIET)$(MAKE) --no-print-directory -f $(ERLBUILD_MK) clean
 	$(QUIET)rm -f $(ERLBUILD_MK)
@@ -193,11 +193,11 @@ EXTRA_BEAMS := $(filter-out $(BEAMS),$(EXISTING_BEAMS))
 endif
 
 
-delete_extra_beams: compile
+delete_extra_beams: erlbuild-compile
 ifneq ($(EXTRA_BEAMS),)
 	$(ECHO_2) "=== erlbuild.mk: $@: $(EXTRA_BEAMS)"
 	$(QUIET)rm -f $(EXTRA_BEAMS)
 endif
 
 
-.PHONY: all compile clean clean_beams delete_extra_beams
+.PHONY: all compile clean erlbuild-compile erlbuild-clean delete_extra_beams
