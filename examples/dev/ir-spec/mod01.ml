@@ -32,11 +32,11 @@ let rec mk_tuple2'1 : 'tA -> int * int * int * 'tA = function
 let rec mk_map'2 :
     'tA * 'tB ->
     (< get_a : 'tA
-     ; set_a : 'tA -> 'row_tv__1
+     ; set_a : 'tA -> 'rec_tv__1
      ; get_b : 'tB
-     ; set_b : 'tB -> 'row_tv__1 >
+     ; set_b : 'tB -> 'rec_tv__1 >
      as
-     'row_tv__1) = function
+     'rec_tv__1) = function
   | v_A, v_B ->
       object
         val val_a = v_A
@@ -53,16 +53,8 @@ let rec mk_map'2 :
       end
 
 let rec update_map1'2 :
-    (< get_a : 'tA ; set_a : 'tA -> 'row_tv__2 > as 'row_tv__2) * 'tA ->
-    (< get_a : 'tA ; set_a : 'tA -> 'row_tv__3 > as 'row_tv__3) = function
-  | v_M, v_A ->
-      let _ = Ffi.same'2 (v_M, v_M#set_a v_A) in
-      let _ = Ffi.same'2 (v_A, v_M#get_a) in
-      v_M#set_a v_A
-
-let rec update_map2'2 :
-    (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM) * 'tA ->
-    (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM) = function
+    (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__2 > as 'rec_tv__2) * 'tA ->
+    (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__3 > as 'rec_tv__3) = function
   | v_M, v_A ->
       let _ = Ffi.same'2 (v_M, v_M#set_a v_A) in
       let _ = Ffi.same'2 (v_A, v_M#get_a) in
@@ -70,41 +62,17 @@ let rec update_map2'2 :
 
 let rec update_map3'1 :
     (< get_a : 'tA
-     ; set_a : 'tA -> 'row_tv__4
+     ; set_a : 'tA -> 'rec_tv__4
      ; get_b : 'tA
-     ; set_b : 'tA -> 'row_tv__4 >
+     ; set_b : 'tA -> 'rec_tv__4 >
      as
-     'row_tv__4) ->
+     'rec_tv__4) ->
     (< get_a : 'tA
-     ; set_a : 'tA -> 'row_tv__5
+     ; set_a : 'tA -> 'rec_tv__5
      ; get_b : 'tA
-     ; set_b : 'tA -> 'row_tv__5 >
+     ; set_b : 'tA -> 'rec_tv__5 >
      as
-     'row_tv__5) = function
-  | v_M ->
-      let v_A0 = v_M#get_a in
-      let v_B0 = v_M#get_a in
-      let _ = Ffi.same'2 (v_M, v_M#set_a v_B0) in
-      let _ = Ffi.same'2 (v_M, v_M#set_b v_A0) in
-      let _ = Ffi.same'2 (v_B0, v_M#get_a) in
-      let _ = Ffi.same'2 (v_A0, v_M#get_b) in
-      (v_M#set_a v_B0)#set_b v_A0
-
-let rec update_map4'1 :
-    (< get_a : 'tA
-     ; set_a : 'tA -> 'tM
-     ; get_b : 'tA
-     ; set_b : 'tA -> 'tM
-     ; .. >
-     as
-     'tM) ->
-    (< get_a : 'tA
-     ; set_a : 'tA -> 'tM
-     ; get_b : 'tA
-     ; set_b : 'tA -> 'tM
-     ; .. >
-     as
-     'tM) = function
+     'rec_tv__5) = function
   | v_M ->
       let v_A0 = v_M#get_a in
       let v_B0 = v_M#get_a in
@@ -116,23 +84,23 @@ let rec update_map4'1 :
 
 let rec access_map'1 :
     (< get_id : 'tId
-     ; set_id : 'tId -> 't_
+     ; set_id : 'tId -> 'rec_tv__6
      ; get_location : 'tLocation
-     ; set_location : 'tLocation -> 't_
+     ; set_location : 'tLocation -> 'rec_tv__6
      ; .. >
      as
-     't_) ->
+     'rec_tv__6) ->
     'tId * 'tLocation = function
   | v_M -> (v_M#get_id, v_M#get_location)
 
 let rec access_map2'1 :
     (< get_inner1 :
-         (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7)
+         (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'rec_tv__8 > as 'rec_tv__8)
      ; set_inner1 :
-         (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7) ->
-         'row_tv__6 >
+         (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'rec_tv__8 > as 'rec_tv__8) ->
+         'rec_tv__7 >
      as
-     'row_tv__6) ->
+     'rec_tv__7) ->
     'tA = function
   | v_M -> v_M#get_inner1#get_inner2
 

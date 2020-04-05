@@ -29,60 +29,48 @@ val mk_tuple2'1 : 'tA -> int * int * int * 'tA
 val mk_map'2 :
   'tA * 'tB ->
   (< get_a : 'tA
-   ; set_a : 'tA -> 'row_tv__1
+   ; set_a : 'tA -> 'rec_tv__1
    ; get_b : 'tB
-   ; set_b : 'tB -> 'row_tv__1 >
+   ; set_b : 'tB -> 'rec_tv__1 >
    as
-   'row_tv__1)
+   'rec_tv__1)
 
 val update_map1'2 :
-  (< get_a : 'tA ; set_a : 'tA -> 'row_tv__2 > as 'row_tv__2) * 'tA ->
-  (< get_a : 'tA ; set_a : 'tA -> 'row_tv__3 > as 'row_tv__3)
-
-val update_map2'2 :
-  (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM) * 'tA ->
-  (< get_a : 'tA ; set_a : 'tA -> 'tM ; .. > as 'tM)
+  (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__2 > as 'rec_tv__2) * 'tA ->
+  (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__3 > as 'rec_tv__3)
 
 val update_map3'1 :
   (< get_a : 'tA
-   ; set_a : 'tA -> 'row_tv__4
+   ; set_a : 'tA -> 'rec_tv__4
    ; get_b : 'tA
-   ; set_b : 'tA -> 'row_tv__4 >
+   ; set_b : 'tA -> 'rec_tv__4 >
    as
-   'row_tv__4) ->
+   'rec_tv__4) ->
   (< get_a : 'tA
-   ; set_a : 'tA -> 'row_tv__5
+   ; set_a : 'tA -> 'rec_tv__5
    ; get_b : 'tA
-   ; set_b : 'tA -> 'row_tv__5 >
+   ; set_b : 'tA -> 'rec_tv__5 >
    as
-   'row_tv__5)
-
-val update_map4'1 :
-  (< get_a : 'tA ; set_a : 'tA -> 'tM ; get_b : 'tA ; set_b : 'tA -> 'tM ; .. >
-   as
-   'tM) ->
-  (< get_a : 'tA ; set_a : 'tA -> 'tM ; get_b : 'tA ; set_b : 'tA -> 'tM ; .. >
-   as
-   'tM)
+   'rec_tv__5)
 
 val access_map'1 :
   (< get_id : 'tId
-   ; set_id : 'tId -> 't_
+   ; set_id : 'tId -> 'rec_tv__6
    ; get_location : 'tLocation
-   ; set_location : 'tLocation -> 't_
+   ; set_location : 'tLocation -> 'rec_tv__6
    ; .. >
    as
-   't_) ->
+   'rec_tv__6) ->
   'tId * 'tLocation
 
 val access_map2'1 :
   (< get_inner1 :
-       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7)
+       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'rec_tv__8 > as 'rec_tv__8)
    ; set_inner1 :
-       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'row_tv__7 > as 'row_tv__7) ->
-       'row_tv__6 >
+       (< get_inner2 : 'tA ; set_inner2 : 'tA -> 'rec_tv__8 > as 'rec_tv__8) ->
+       'rec_tv__7 >
    as
-   'row_tv__6) ->
+   'rec_tv__7) ->
   'tA
 
 val mk_seq'0 : unit -> int * int

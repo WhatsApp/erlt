@@ -65,6 +65,7 @@ swap_erl_parse() ->
     {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 erl2ocaml_ffi(Forms) ->
+    erlang:put('rec_tv_gen', 1),
     Ctx = #context{module = get_module(Forms)},
     Specs = get_specs(Forms),
     OTypes = [erl2ocaml_spec(S, Ctx) || S <- Specs],
@@ -76,6 +77,7 @@ erl2ocaml_ffi(Forms) ->
     MliCode.
 
 erl2ocaml_st(Forms) ->
+    erlang:put('rec_tv_gen', 1),
     Ctx = #context{module = get_module(Forms)},
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
@@ -447,19 +449,6 @@ erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}, Ctx) ->
 erl2ocaml_spec({attribute,Line,spec,_}, _) ->
     erlang:error({not_supported, Line, spec}).
 
-get_map_tv([]) -> undefined;
-get_map_tv([{type,_,map_field_exact,[{var,_,'_'},{var,_,G}]}]) ->
-    "'t" ++ atom_to_list(G);
-get_map_tv([_|As]) -> get_map_tv(As).
-
-gen_map_tv() ->
-    Counter =
-        case erlang:get('map_tv_counter') of
-            'undefined' -> 1;
-            C -> C
-        end,
-    erlang:put('map_tv_counter', Counter + 1),
-    "'row_tv__" ++ integer_to_list(Counter).
 
 type({ann_type,_Ln,[_Var,Tp]}, Ctx) ->
     type(Tp, Ctx);
@@ -526,16 +515,18 @@ type({type, _,list,[T]}, Ctx) ->
 type({type,Ln,map,[{type,_,map_field_assoc,[KT,VT]}]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,map},[KT,VT]]}, Ctx);
 type({type,_,map,Assocs}, Ctx) ->
-    {MapTV, Suffix, Assocs1} =
-        case get_map_tv(Assocs) of
-            'undefined' ->
-                {gen_map_tv(), [], Assocs};
-            TV ->
-                [_|Tmp] = lists:reverse(Assocs),
-                {TV, [".."], lists:reverse(Tmp)}
+    {Suffix,Assocs1} =
+        case lists:reverse(Assocs) of
+            [{type,_,map_field_exact,[{var,_,'_'},{var,_,'_'}]}|T] ->
+                {[".."],lists:reverse(T)};
+            _ ->
+                {[], Assocs}
         end,
-    AssocsTypes = lists:map(fun(A) -> map_field_type(A, MapTV, Ctx) end, Assocs1),
-    "< " ++ interleave(false, " ; ", AssocsTypes ++ Suffix) ++ " > as " ++ MapTV;
+    Counter = erlang:get('rec_tv_gen'),
+    erlang:put('rec_tv_gen', Counter + 1),
+    RecTV = "'rec_tv__" ++ integer_to_list(Counter),
+    AssocsTypes = lists:map(fun(A) -> map_field_type(A, RecTV, Ctx) end, Assocs1),
+    "< " ++ interleave(false, " ; ", AssocsTypes ++ Suffix) ++ " > as " ++ RecTV;
 type({var,_Line,'_'}, _Ctx) ->
     "_";
 type({var,_Line,V}, _Ctx) ->

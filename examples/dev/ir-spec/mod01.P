@@ -78,22 +78,9 @@ mk_map(A, B) ->
 update_map1(M, A) ->
     M#{a := A}.
 
--spec update_map2(#{a := A, _ := M}, A) -> #{a := A, _ := M}.
-
-update_map2(M, A) ->
-    M#{a := A}.
-
 -spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
 
 update_map3(M) ->
-    A0 = M . a,
-    B0 = M . a,
-    M#{a := B0, b := A0}.
-
--spec update_map4(#{a := A, b := A, _ := M}) ->
-                     #{a := A, b := A, _ := M}.
-
-update_map4(M) ->
     A0 = M . a,
     B0 = M . a,
     M#{a := B0, b := A0}.
