@@ -23,7 +23,7 @@
 %% N.B. All the code necessary for checking structs (tagged tuples) is
 %% here. Just comment out the lines in pattern/2, gexpr/3 and expr/3.
 
--module(erl_lint).
+-module(erl2_lint).
 
 -export([module/1,module/2,module/3,format_error/1]).
 -export([exprs/2,exprs_opt/3,used_vars/2]). % Used from erl_eval.erl.

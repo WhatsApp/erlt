@@ -19,7 +19,7 @@
 %%
 %% Purpose: Run the Erlang compiler.
 
--module(compile).
+-module(erl2_compile2).
 
 %% High-level interface.
 -export([file/1,file/2,noenv_file/2,format_error/1,iofile/1]).
