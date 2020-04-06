@@ -46,7 +46,7 @@
 
 %%----------------------------------------------------------------------
 
--type abstract_code() :: [erl_parse:abstract_form()].
+-type abstract_code() :: [erl2_parse:abstract_form()].
 
 %% Internal representations used for 'from_asm' and 'from_beam' compilation can
 %% also be valid, but have no relevant types defined.
@@ -185,10 +185,10 @@ env_default_opts() ->
     case os:getenv(Key) of
 	false -> [];
 	Str when is_list(Str) ->
-	    case erl_scan:string(Str) of
+	    case erl2_scan:string(Str) of
 		{ok,Tokens,_} ->
                     Dot = {dot, erl_anno:new(1)},
-		    case erl_parse:parse_term(Tokens ++ [Dot]) of
+		    case erl2_parse:parse_term(Tokens ++ [Dot]) of
 			{ok,List} when is_list(List) -> List;
 			{ok,Term} -> [Term];
 			{error,_Reason} ->
@@ -306,7 +306,7 @@ format_error({native_crash,E,Stk}) ->
 format_error({open,E}) ->
     io_lib:format("open error '~ts'", [file:format_error(E)]);
 format_error({epp,E}) ->
-    epp:format_error(E);
+    erl2_epp:format_error(E);
 format_error(write_error) ->
     "error writing file";
 format_error({write_error, Error}) ->
@@ -362,7 +362,7 @@ format_error_reason(Reason) ->
 		  abstract_code=[] :: abstract_code(), %Abstract code for debugger.
 		  options=[]  :: [option()],  %Options for compilation
 		  mod_options=[]  :: [option()], %Options for module_info
-                  encoding=none :: none | epp:source_encoding(),
+                  encoding=none :: none | erl2_epp:source_encoding(),
 		  errors=[]     :: [err_warn_info()],
 		  warnings=[]   :: [err_warn_info()],
 		  extra_chunks=[] :: [{binary(), binary()}]}).
@@ -542,7 +542,7 @@ werror(#compile{options=Opts,warnings=Ws}) ->
 %% messages_per_file([{File,[Message]}]) -> [{File,[Message]}]
 messages_per_file(Ms) ->
     T = lists:sort([{File,M} || {File,Messages} <- Ms, M <- Messages]),
-    PrioMs = [erl_scan, epp, erl_parse],
+    PrioMs = [erl2_scan, erl2_epp, erl2_parse],
     {Prio0, Rest} =
         lists:mapfoldl(fun(M, A) ->
                                lists:partition(fun({_,{_,Mod,_}}) -> Mod =:= M;
@@ -960,7 +960,7 @@ collect_asm([X | Rest], R) ->
 beam_consult_asm(_Code, St) ->
     case file:consult(St#compile.ifile) of
 	{ok,Forms0} ->
-            Encoding = epp:read_encoding(St#compile.ifile),
+            Encoding = erl2_epp:read_encoding(St#compile.ifile),
 	    {Module,Forms} = preprocess_asm_forms(Forms0),
 	    {ok,Forms,St#compile{module=Module,encoding=Encoding}};
 	{error,E} ->
@@ -1036,7 +1036,7 @@ do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St) ->
                      true -> filename:basename(SourceName0);
                      false -> SourceName0
                  end,
-    R = epp:parse_file(File,
+    R = erl2_epp:parse_file(File,
                        [{includes,[".",Dir|inc_paths(Opts)]},
                         {source_name, SourceName},
                         {macros,pre_defs(Opts)},
@@ -1224,7 +1224,7 @@ add_default_base(St, Forms) ->
     end.
 
 lint_module(Code, St) ->
-    case erl_lint:module(Code, St#compile.ifile, St#compile.options) of
+    case erl2_lint:module(Code, St#compile.ifile, St#compile.options) of
 	{ok,Ws} ->
 	    %% Insert name of module as base name, if needed. This is
 	    %% for compile:forms to work with listing files.
@@ -1490,7 +1490,7 @@ core_inline_module(Code0, #compile{options=Opts}=St) ->
     {ok,Code,St}.
 
 save_abstract_code(Code, St) ->
-    {ok,Code,St#compile{abstract_code=erl_parse:anno_to_term(Code)}}.
+    {ok,Code,St#compile{abstract_code=erl2_parse:anno_to_term(Code)}}.
 
 debug_info(#compile{module=Module,mod_options=Opts0,ofile=OFile,abstract_code=Abst}) ->
     AbstOpts = cleanup_compile_options(Opts0),
@@ -1925,10 +1925,10 @@ to_dis(Code, #compile{module=Module,ofile=Outfile}=St) ->
     {ok,Code,St}.
 
 output_encoding(F, #compile{encoding = none}) ->
-    ok = io:setopts(F, [{encoding, epp:default_encoding()}]);
+    ok = io:setopts(F, [{encoding, erl2_epp:default_encoding()}]);
 output_encoding(F, #compile{encoding = Encoding}) ->
     ok = io:setopts(F, [{encoding, Encoding}]),
-    ok = io:fwrite(F, <<"%% ~s\n">>, [epp:encoding_to_string(Encoding)]).
+    ok = io:fwrite(F, <<"%% ~s\n">>, [erl2_epp:encoding_to_string(Encoding)]).
 
 restore_expanded_types("E", {M,I,Fs0}) ->
     Fs = restore_expand_module(Fs0),
@@ -2129,12 +2129,12 @@ pre_load() ->
 	 cerl_sets,
 	 cerl_trees,
 	 core_lib,
-	 epp,
+	 erl2_epp,
 	 erl_bifs,
 	 erl_expand_records,
-	 erl_lint,
-	 erl_parse,
-	 erl_scan,
+	 erl2_lint,
+	 erl2_parse,
+	 erl2_scan,
 	 sys_core_alias,
 	 sys_core_bsm,
 	 sys_core_fold,

@@ -488,7 +488,7 @@ used_vars(Exprs, BindingsList) ->
 %%  really all ordsets!
 
 -spec(module(AbsForms) -> {ok, Warnings} | {error, Errors, Warnings} when
-      AbsForms :: [erl_parse:abstract_form() | erl_parse:form_info()],
+      AbsForms :: [erl2_parse:abstract_form() | erl2_parse:form_info()],
       Warnings :: [{file:filename(),[ErrorInfo]}],
       Errors :: [{FileName2 :: file:filename(),[ErrorInfo]}],
       ErrorInfo :: error_info()).
@@ -500,7 +500,7 @@ module(Forms) ->
 
 -spec(module(AbsForms, FileName) ->
              {ok, Warnings} | {error, Errors, Warnings} when
-      AbsForms :: [erl_parse:abstract_form() | erl_parse:form_info()],
+      AbsForms :: [erl2_parse:abstract_form() | erl2_parse:form_info()],
       FileName :: atom() | string(),
       Warnings :: [{file:filename(),[ErrorInfo]}],
       Errors :: [{FileName2 :: file:filename(),[ErrorInfo]}],
@@ -513,7 +513,7 @@ module(Forms, FileName) ->
 
 -spec(module(AbsForms, FileName, CompileOptions) ->
              {ok, Warnings} | {error, Errors, Warnings} when
-      AbsForms :: [erl_parse:abstract_form() | erl_parse:form_info()],
+      AbsForms :: [erl2_parse:abstract_form() | erl2_parse:form_info()],
       FileName :: atom() | string(),
       CompileOptions :: [compile:option()],
       Warnings :: [{file:filename(),[ErrorInfo]}],
@@ -649,7 +649,7 @@ add_error(E, St) -> add_lint_error(E, St#lint.file, St).
 
 add_error(Anno, E, St) ->
     {File,Location} = loc(Anno, St),
-    add_lint_error({Location,erl_lint,E}, File, St).
+    add_lint_error({Location,erl2_lint,E}, File, St).
 
 add_lint_error(E, File, St) ->
     St#lint{errors=[{File,E}|St#lint.errors]}.
@@ -658,7 +658,7 @@ add_warning(W, St) -> add_lint_warning(W, St#lint.file, St).
 
 add_warning(FileLine, W, St) ->
     {File,Location} = loc(FileLine, St),
-    add_lint_warning({Location,erl_lint,W}, File, St).
+    add_lint_warning({Location,erl2_lint,W}, File, St).
 
 add_lint_warning(W, File, St) ->
     St#lint{warnings=[{File,W}|St#lint.warnings]}.
@@ -734,7 +734,7 @@ set_file(T, File) ->
 
 anno_set_file(T, File) ->
     F = fun(Anno) -> erl_anno:set_file(File, Anno) end,
-    erl_parse:map_anno(F, T).
+    erl2_parse:map_anno(F, T).
 
 %% form(Form, State) -> State'
 %%  Check a form returning the updated State. Handle generic cases here.
@@ -880,16 +880,16 @@ not_removed(Forms, #lint{compile=Opts}=St0) ->
 %% The nowarn_bif_clash directive is not only deprecated, it's actually an error from R14A
 disallowed_compile_flags(Forms, St0) ->
     %% There are (still) no line numbers in St0#lint.compile.
-    Errors0 =  [ {St0#lint.file,{L,erl_lint,disallowed_nowarn_bif_clash}} ||
+    Errors0 =  [ {St0#lint.file,{L,erl2_lint,disallowed_nowarn_bif_clash}} ||
 		    {attribute,A,compile,nowarn_bif_clash} <- Forms,
                    {_,L} <- [loc(A, St0)] ],
-    Errors1 = [ {St0#lint.file,{L,erl_lint,disallowed_nowarn_bif_clash}} ||
+    Errors1 = [ {St0#lint.file,{L,erl2_lint,disallowed_nowarn_bif_clash}} ||
 		    {attribute,A,compile,{nowarn_bif_clash, {_,_}}} <- Forms,
                    {_,L} <- [loc(A, St0)] ],
     Disabled = (not is_warn_enabled(bif_clash, St0)),
     Errors = if
 		   Disabled andalso Errors0 =:= [] ->
-		       [{St0#lint.file,{erl_lint,disallowed_nowarn_bif_clash}} | St0#lint.errors];
+		       [{St0#lint.file,{erl2_lint,disallowed_nowarn_bif_clash}} | St0#lint.errors];
                    Disabled ->
 		       Errors0 ++ Errors1 ++ St0#lint.errors;
 		   true ->
@@ -2064,7 +2064,7 @@ gexpr_list(Es, Vt, St) ->
 %%  no definition of a local function that may override a guard BIF
 %%  (for example, in the shell).
 -spec is_guard_test(Expr) -> boolean() when
-      Expr :: erl_parse:abstract_expr().
+      Expr :: erl2_parse:abstract_expr().
 
 is_guard_test(E) ->
     is_guard_test2(E, {dict:new(),fun(_) -> false end}).
@@ -2085,8 +2085,8 @@ is_guard_test(Expression, Forms) ->
 %%    fun(_) -> true end
 %%
 -spec is_guard_test(Expr, Forms, IsOverridden) -> boolean() when
-      Expr :: erl_parse:abstract_expr(),
-      Forms :: [erl_parse:abstract_form() | erl_parse:form_info()],
+      Expr :: erl2_parse:abstract_expr(),
+      Forms :: [erl2_parse:abstract_form() | erl2_parse:form_info()],
       IsOverridden :: fun((fa()) -> boolean()).
 
 is_guard_test(Expression, Forms, IsOverridden) ->
@@ -2748,7 +2748,7 @@ ginit_fields(Ifs, Line, Name, Dfs, Vt0, St0) ->
     St2 = St1#lint{errors = []},
     {_,St3} = check_fields(Defs, Name, Dfs, Vt1, St2, fun gexpr/3),
     #lint{usage = Usage, errors = Errors} = St3,
-    IllErrs = [E || {_File,{_Line,erl_lint,illegal_guard_expr}}=E <- Errors],
+    IllErrs = [E || {_File,{_Line,erl2_lint,illegal_guard_expr}}=E <- Errors],
     St4 = St1#lint{usage = Usage, errors = IllErrs ++ St1#lint.errors},
     {Vt1,St4}.
 
@@ -3752,7 +3752,7 @@ vt_no_unused(Vt) -> [V || {_,{_,U,_L}}=V <- Vt, U =/= unused].
 %%  Make a copy of Expr converting all line numbers to Line.
 
 copy_expr(Expr, Anno) ->
-    erl_parse:map_anno(fun(_A) -> Anno end, Expr).
+    erl2_parse:map_anno(fun(_A) -> Anno end, Expr).
 
 %% Check a record_info call. We have already checked that it is not
 %% shadowed by an import.

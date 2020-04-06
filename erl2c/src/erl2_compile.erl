@@ -61,7 +61,7 @@
 		  ofile=""    :: file:filename(),
 		  module=[]   :: module() | [],
 		  options=[]  :: [option()],  %Options for compilation
-                  encoding=none :: none | epp:source_encoding(),
+                  encoding=none :: none | erl2_epp:source_encoding(),
 		  errors=[]     :: [err_warn_info()],
 		  warnings=[]   :: [err_warn_info()],
                   compile_deps=[] :: [compile_dep()],
@@ -738,7 +738,7 @@ werror(#compile{options=Opts,warnings=Ws}) ->
 %% messages_per_file([{File,[Message]}]) -> [{File,[Message]}]
 messages_per_file(Ms) ->
     T = lists:sort([{File,M} || {File,Messages} <- Ms, M <- Messages]),
-    PrioMs = [erl_scan, epp, erl_parse],
+    PrioMs = [erl2_scan, erl2_epp, erl2_parse],
     {Prio0, Rest} =
         lists:mapfoldl(fun(M, A) ->
                                lists:partition(fun({_,{_,Mod,_}}) -> Mod =:= M;
@@ -800,7 +800,7 @@ do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St) ->
                      true -> filename:basename(SourceName0);
                      false -> SourceName0
                  end,
-    R = epp:parse_file(File,
+    R = erl2_epp:parse_file(File,
                         [{includes,[".",Dir|inc_paths(Opts)]},
                          {source_name, SourceName},
                          {macros,pre_defs(Opts)},
