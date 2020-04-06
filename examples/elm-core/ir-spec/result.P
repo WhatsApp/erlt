@@ -4,6 +4,8 @@
 
 -compile(export_all).
 
+-depends_on([maybe]).
+
 -type result(Error, Value) ::
           {969696, result, ok, Value} | {969696, result, err, Error}.
 

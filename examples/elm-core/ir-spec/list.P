@@ -4,6 +4,8 @@
 
 -compile(export_all).
 
+-depends_on([basics, maybe]).
+
 -spec singleton(A) -> [A].
 
 singleton(Val) ->
