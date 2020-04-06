@@ -2,9 +2,9 @@
 ERLC_FLAGS := -Wall +debug_info +nowarn_export_all #-Werror
 
 # exclude sources that don't compile
-EXCLUDE_SOURCES := dict.erl dict_ffi.erl
+EXCLUDE_SOURCES :=
 
 # temporary workaround for 'make test-ir' which needs explicitly ordered list of sources
-EXPLICIT_SOURCES := basics.erl tuple.erl maybe.erl result.erl list.erl #dict_ffi.erl dict.erl
+EXPLICIT_SOURCES := basics.erl tuple.erl maybe.erl result.erl list.erl map_ffi.erl map.erl
 
 include ../../../erl2.mk
