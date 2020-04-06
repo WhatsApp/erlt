@@ -623,6 +623,8 @@ get_type_defs([{attribute,_,type,Type}|Forms]) ->
     [{alias,Type}|get_type_defs(Forms)];
 get_type_defs([{attribute,_,enum,Type}|Forms]) ->
     [{enum,Type}|get_type_defs(Forms)];
+get_type_defs([{attribute,Line,opaque,_Type}|_Forms]) ->
+    erlang:error({not_supported, Line, opaque_type});
 get_type_defs([_|Forms]) ->
     get_type_defs(Forms).
 
