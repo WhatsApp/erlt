@@ -1,6 +1,6 @@
-type 'tA my_pair2 = ('tA, 'tA) my_pair
+type 'tA my_pair2'1 = ('tA, 'tA) my_pair'2
 
-and ('tA, 'tB) my_pair = 'tA * 'tB
+and ('tA, 'tB) my_pair'2 = 'tA * 'tB
 
 val id'1 : 'tX -> 'tX
 
@@ -163,50 +163,50 @@ val guard1'2 : int * int -> bool
 
 val guard2'3 : 'tA list * 'tA * 'tA list -> 'tA list
 
-val p_match_tuple0'1 : unit -> unit Ffi.tuple1
+val p_match_tuple0'1 : unit -> unit Ffi.tuple1'1
 
-val p_match_tuple1'1 : _ Ffi.tuple1 -> unit
+val p_match_tuple1'1 : _ Ffi.tuple1'1 -> unit
 
 val p_match_invoke'0 : unit -> unit
 
-val any_id'1 : Ffi.any -> Ffi.any
+val any_id'1 : Ffi.any'0 -> Ffi.any'0
 
-val atom_id'1 : Ffi.atom -> Ffi.atom
+val atom_id'1 : Ffi.atom'0 -> Ffi.atom'0
 
-val binary_id'1 : Ffi.binary -> Ffi.binary
+val binary_id'1 : Ffi.binary'0 -> Ffi.binary'0
 
-val bitstring_id'1 : Ffi.bitstring -> Ffi.bitstring
+val bitstring_id'1 : Ffi.bitstring'0 -> Ffi.bitstring'0
 
-val byte_id'1 : Ffi.byte -> Ffi.byte
+val byte_id'1 : Ffi.byte'0 -> Ffi.byte'0
 
 val float_id'1 : float -> float
 
-val identifier_id'1 : Ffi.identifier -> Ffi.identifier
+val identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0
 
-val iodata_id'1 : Ffi.iodata -> Ffi.iodata
+val iodata_id'1 : Ffi.iodata'0 -> Ffi.iodata'0
 
-val iolist_id'1 : Ffi.iolist -> Ffi.iolist
+val iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0
 
-val map_id'1 : ('tA, 'tB) Ffi.map -> ('tA, 'tB) Ffi.map
+val map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2
 
-val none_id'1 : Ffi.none -> Ffi.none
+val none_id'1 : Ffi.none'0 -> Ffi.none'0
 
-val noreturn_id'1 : Ffi.no_return -> Ffi.no_return
+val noreturn_id'1 : Ffi.no_return'0 -> Ffi.no_return'0
 
-val number_id'1 : Ffi.none -> Ffi.none
+val number_id'1 : Ffi.none'0 -> Ffi.none'0
 
-val pid_id'1 : Ffi.pid -> Ffi.pid
+val pid_id'1 : Ffi.pid'0 -> Ffi.pid'0
 
-val port_id'1 : Ffi.port -> Ffi.port
+val port_id'1 : Ffi.port'0 -> Ffi.port'0
 
-val reference_id'1 : Ffi.reference -> Ffi.reference
+val reference_id'1 : Ffi.reference'0 -> Ffi.reference'0
 
-val term_id'1 : Ffi.term -> Ffi.term
+val term_id'1 : Ffi.term'0 -> Ffi.term'0
 
-val timeout_id'1 : Ffi.timeout -> Ffi.timeout
+val timeout_id'1 : Ffi.timeout'0 -> Ffi.timeout'0
 
 val ints_id'1 :
-  Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer ->
-  Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer
+  Ffi.neg_integer'0 * Ffi.non_neg_integer'0 * Ffi.pos_integer'0 ->
+  Ffi.neg_integer'0 * Ffi.non_neg_integer'0 * Ffi.pos_integer'0
 
-val mk_my_pair'2 : 'tA * 'tA -> 'tA my_pair2
+val mk_my_pair'2 : 'tA * 'tA -> 'tA my_pair2'1

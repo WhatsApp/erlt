@@ -18,11 +18,11 @@ val foldr'3 : ('tA * 'tB -> 'tB) * 'tB * 'tA list -> 'tB
 
 val filter'2 : ('tA -> bool) * 'tA list -> 'tA list
 
-val filter_map'2 : ('tA -> 'tB Maybe.maybe) * 'tA list -> 'tB list
+val filter_map'2 : ('tA -> 'tB Maybe.maybe'1) * 'tA list -> 'tB list
 
-val maybe_cons'3 : ('tA -> 'tB Maybe.maybe) * 'tA * 'tB list -> 'tB list
+val maybe_cons'3 : ('tA -> 'tB Maybe.maybe'1) * 'tA * 'tB list -> 'tB list
 
-val maybe_cons'1 : ('tA -> 'tB Maybe.maybe) -> 'tA * 'tB list -> 'tB list
+val maybe_cons'1 : ('tA -> 'tB Maybe.maybe'1) -> 'tA * 'tB list -> 'tB list
 
 val length'1 : _ list -> int
 
@@ -34,9 +34,9 @@ val all'2 : ('tA -> bool) * 'tA list -> bool
 
 val any'2 : ('tA -> bool) * 'tA list -> bool
 
-val maximum'1 : 'tA list -> 'tA Maybe.maybe
+val maximum'1 : 'tA list -> 'tA Maybe.maybe'1
 
-val minimum'1 : 'tA list -> 'tA Maybe.maybe
+val minimum'1 : 'tA list -> 'tA Maybe.maybe'1
 
 val sum'1 : int list -> int
 
@@ -54,9 +54,9 @@ val map2'3 : ('tA * 'tB -> 'tRes) * 'tA list * 'tB list -> 'tRes list
 
 val is_empty'1 : _ list -> bool
 
-val head'1 : 'tA list -> 'tA Maybe.maybe
+val head'1 : 'tA list -> 'tA Maybe.maybe'1
 
-val tail'1 : 'tA list -> 'tA list Maybe.maybe
+val tail'1 : 'tA list -> 'tA list Maybe.maybe'1
 
 val take'2 : int * 'tA list -> 'tA list
 

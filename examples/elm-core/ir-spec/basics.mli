@@ -1,6 +1,6 @@
-type order = Lt | Eq | Gt
+type order'0 = Lt | Eq | Gt
 
-and never = Just_one_more of never
+and never'0 = Just_one_more of never'0
 
 val add'2 : int * int -> int
 
@@ -50,9 +50,9 @@ val max'2 : 'tA * 'tA -> 'tA
 
 val max'1 : 'tA -> 'tA -> 'tA
 
-val compare'2 : 'tA * 'tA -> order
+val compare'2 : 'tA * 'tA -> order'0
 
-val compare'1 : 'tA -> 'tA -> order
+val compare'1 : 'tA -> 'tA -> order'0
 
 val not'1 : bool -> bool
 
@@ -102,4 +102,4 @@ val always'2 : 'tA * _ -> 'tA
 
 val always'1 : 'tA -> _ -> 'tA
 
-val never'1 : never -> _
+val never'1 : never'0 -> _

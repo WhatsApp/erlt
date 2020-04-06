@@ -6,28 +6,28 @@
 
 ffi() ->
     FfiLines = [
-        "type 'a tuple1 = Tuple1 of 'a\n",
-        "type any\n",
-        "type atom\n",
-        "type binary\n",
-        "type bitstring\n",
-        "type byte\n",
-        "type identifier\n",
-        "type iodata\n",
-        "type iolist\n",
-        "type ('k, 'v) map\n",
-        "type neg_integer\n",
-        "type none\n",
-        "type non_neg_integer\n",
-        "type number\n",
-        "type pid\n",
-        "type port\n",
-        "type pos_integer\n",
-        "type reference\n",
-        "type term\n",
-        "type timeout\n",
-        "type node = atom\n",
-        "type no_return = none\n",
+        "type 'a tuple1'1 = Tuple1 of 'a\n",
+        "type any'0\n",
+        "type atom'0\n",
+        "type binary'0\n",
+        "type bitstring'0\n",
+        "type byte'0\n",
+        "type identifier'0\n",
+        "type iodata'0\n",
+        "type iolist'0\n",
+        "type ('k, 'v) map'2\n",
+        "type neg_integer'0\n",
+        "type none'0\n",
+        "type non_neg_integer'0\n",
+        "type number'0\n",
+        "type pid'0\n",
+        "type port'0\n",
+        "type pos_integer'0\n",
+        "type reference'0\n",
+        "type term'0\n",
+        "type timeout'0\n",
+        "type node'0 = atom'0\n",
+        "type no_return'0 = none'0\n",
         "val same'2 : 'a * 'a -> unit\n",
         "val to_string'1 : 'a -> string\n",
         "val list_diff'2 : 'a list * 'a list -> 'a list\n"
@@ -425,12 +425,12 @@ type_def(OCamlPrefix, {alias, {N,T,TVs}}, Ctx) ->
 type_def(OCamlPrefix, {enum, {N,T,TVs}}, Ctx) ->
     type_def_lhs(OCamlPrefix, N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(T, Ctx) ++ "\n".
 
-type_def_lhs(OCamlPrefix, N, [], _Ctx) ->
-    OCamlPrefix ++ " " ++ atom_to_list(N);
-type_def_lhs(OCamlPrefix, N, [TV], Ctx) ->
-    OCamlPrefix ++ " " ++ type(TV, Ctx) ++ " " ++ atom_to_list(N);
+type_def_lhs(OCamlPrefix, N, TVs=[], _Ctx) ->
+    OCamlPrefix ++ " " ++ type_name(N, TVs);
+type_def_lhs(OCamlPrefix, N, TVs=[TV], Ctx) ->
+    OCamlPrefix ++ " " ++ type(TV, Ctx) ++ " " ++ type_name(N, TVs);
 type_def_lhs(OCamlPrefix, N, TVs, Ctx) ->
-    OCamlPrefix ++ " (" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ atom_to_list(N).
+    OCamlPrefix ++ " (" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ type_name(N, TVs).
 
 enum_ctr_defs({type,_Ln,union, CtrDefs}, Ctx) ->
     interleave(false, " | ", [enum_ctr_def(CtrDef, Ctx) || CtrDef <- CtrDefs]);
@@ -449,6 +449,8 @@ erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}, Ctx) ->
 erl2ocaml_spec({attribute,Line,spec,_}, _) ->
     erlang:error({not_supported, Line, spec}).
 
+type_name(Name, Args) ->
+    atom_to_list(Name) ++ "'" ++ integer_to_list(length(Args)).
 
 type({ann_type,_Ln,[_Var,Tp]}, Ctx) ->
     type(Tp, Ctx);
@@ -534,22 +536,22 @@ type({var,_Line,V}, _Ctx) ->
 type({type,_Line,tuple,[]}, _Ctx) ->
     "unit";
 type({type,_Line,tuple,[T]}, Ctx) ->
-    "(" ++ type(T, Ctx) ++ ") Ffi.tuple1";
+    "(" ++ type(T, Ctx) ++ ") Ffi.tuple1'1";
 type({type,_Line,tuple,TS}, Ctx) ->
     TSStrings = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, TS),
     interleave(false, " * ", TSStrings);
-type({user_type,_,N,[]}, _Ctx) ->
-    atom_to_list(N);
+type({user_type,_,N,Ts=[]}, _Ctx) ->
+    type_name(N, Ts);
 type({user_type,_,N,Ts}, Ctx) ->
     Ts1 = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
-    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ atom_to_list(N);
+    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ type_name(N, Ts);
 type({remote_type,Line,[{atom,_,M},{atom,_,N},Ts]}, Ctx) when M == Ctx#context.module ->
     type({user_type,Line,N,Ts}, Ctx);
-type({remote_type,_,[{atom,_,M},{atom,_,N},[]]}, _Ctx) ->
-    first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
+type({remote_type,_,[{atom,_,M},{atom,_,N},Ts=[]]}, _Ctx) ->
+    first_upper(atom_to_list(M)) ++ "." ++ type_name(N, Ts);
 type({remote_type,_,[{atom,_,M},{atom,_,N},Ts]}, Ctx) ->
     Ts1 = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
-    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ first_upper(atom_to_list(M)) ++ "." ++ atom_to_list(N);
+    "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ first_upper(atom_to_list(M)) ++ "." ++ type_name(N, Ts);
 type(Type, _Ctx) ->
     Line = erlang:element(2, Type),
     erlang:error({not_supported, Line, Type}).

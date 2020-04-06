@@ -38,18 +38,18 @@ let rec filter'2 : ('tA -> bool) * 'tA list -> 'tA list = function
           [],
           v_List )
 
-let rec maybe_cons'3 : ('tA -> 'tB Maybe.maybe) * 'tA * 'tB list -> 'tB list =
+let rec maybe_cons'3 : ('tA -> 'tB Maybe.maybe'1) * 'tA * 'tB list -> 'tB list =
   function
   | v_F, v_Mx, v_Xs -> (
       match v_F v_Mx with
       | Maybe.Just v_X -> cons'2 (v_X, v_Xs)
       | Maybe.Nothing -> v_Xs )
 
-let rec maybe_cons'1 : ('tA -> 'tB Maybe.maybe) -> 'tA * 'tB list -> 'tB list =
-  function
+let rec maybe_cons'1 : ('tA -> 'tB Maybe.maybe'1) -> 'tA * 'tB list -> 'tB list
+    = function
   | v_F -> ( function v_Mx, v_Xs -> maybe_cons'3 (v_F, v_Mx, v_Xs) )
 
-let rec filter_map'2 : ('tA -> 'tB Maybe.maybe) * 'tA list -> 'tB list =
+let rec filter_map'2 : ('tA -> 'tB Maybe.maybe'1) * 'tA list -> 'tB list =
   function
   | v_F, v_Xs -> foldr'3 (maybe_cons'1 v_F, [], v_Xs)
 
@@ -72,11 +72,11 @@ let rec any'2 : ('tA -> bool) * 'tA list -> bool = function
 let rec member'2 : 'tA * 'tA list -> bool = function
   | v_X, v_Xs -> any'2 (Basics.eq'1 v_X, v_Xs)
 
-let rec maximum'1 : 'tA list -> 'tA Maybe.maybe = function
+let rec maximum'1 : 'tA list -> 'tA Maybe.maybe'1 = function
   | [] -> Maybe.Nothing
   | v_H :: v_T -> Maybe.Just (foldl'3 (Basics.max'2, v_H, v_T))
 
-let rec minimum'1 : 'tA list -> 'tA Maybe.maybe = function
+let rec minimum'1 : 'tA list -> 'tA Maybe.maybe'1 = function
   | [] -> Maybe.Nothing
   | v_H :: v_T -> Maybe.Just (foldl'3 (Basics.min'2, v_H, v_T))
 
@@ -113,11 +113,11 @@ let rec indexed_map'2 : (int * 'tA -> 'tB) * 'tA list -> 'tB list = function
 
 let rec is_empty'1 : _ list -> bool = function _ :: _ -> false | [] -> true
 
-let rec head'1 : 'tA list -> 'tA Maybe.maybe = function
+let rec head'1 : 'tA list -> 'tA Maybe.maybe'1 = function
   | v_H :: _ -> Maybe.Just v_H
   | [] -> Maybe.Nothing
 
-let rec tail'1 : 'tA list -> 'tA list Maybe.maybe = function
+let rec tail'1 : 'tA list -> 'tA list Maybe.maybe'1 = function
   | _ :: v_T -> Maybe.Just v_T
   | [] -> Maybe.Nothing
 

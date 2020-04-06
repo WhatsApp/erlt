@@ -1,6 +1,6 @@
-type 'tA my_pair2 = ('tA, 'tA) my_pair
+type 'tA my_pair2'1 = ('tA, 'tA) my_pair'2
 
-and ('tA, 'tB) my_pair = 'tA * 'tB
+and ('tA, 'tB) my_pair'2 = 'tA * 'tB
 
 let rec id'1 : 'tX -> 'tX = function v_X -> v_X
 
@@ -236,10 +236,10 @@ let rec guard2'3 : 'tA list * 'tA * 'tA list -> 'tA list = function
   | v_X, _, v_Z when v_X = v_Z -> v_Z
   | _, _, v_Z -> v_Z
 
-let rec p_match_tuple0'1 : unit -> unit Ffi.tuple1 = function
+let rec p_match_tuple0'1 : unit -> unit Ffi.tuple1'1 = function
   | () -> Ffi.Tuple1 ()
 
-let rec p_match_tuple1'1 : _ Ffi.tuple1 -> unit = function
+let rec p_match_tuple1'1 : _ Ffi.tuple1'1 -> unit = function
   | Ffi.Tuple1 v__X -> ()
 
 let rec p_match_invoke'0 : unit -> unit = function
@@ -247,49 +247,51 @@ let rec p_match_invoke'0 : unit -> unit = function
       let _ = p_match_tuple0'1 () in
       p_match_tuple1'1 (Ffi.Tuple1 ())
 
-let rec any_id'1 : Ffi.any -> Ffi.any = function v_A -> v_A
+let rec any_id'1 : Ffi.any'0 -> Ffi.any'0 = function v_A -> v_A
 
-let rec atom_id'1 : Ffi.atom -> Ffi.atom = function v_A -> v_A
+let rec atom_id'1 : Ffi.atom'0 -> Ffi.atom'0 = function v_A -> v_A
 
-let rec binary_id'1 : Ffi.binary -> Ffi.binary = function v_A -> v_A
+let rec binary_id'1 : Ffi.binary'0 -> Ffi.binary'0 = function v_A -> v_A
 
-let rec bitstring_id'1 : Ffi.bitstring -> Ffi.bitstring = function v_A -> v_A
+let rec bitstring_id'1 : Ffi.bitstring'0 -> Ffi.bitstring'0 = function
+  | v_A -> v_A
 
-let rec byte_id'1 : Ffi.byte -> Ffi.byte = function v_A -> v_A
+let rec byte_id'1 : Ffi.byte'0 -> Ffi.byte'0 = function v_A -> v_A
 
 let rec float_id'1 : float -> float = function v_X -> v_X
 
-let rec identifier_id'1 : Ffi.identifier -> Ffi.identifier = function
+let rec identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0 = function
   | v_A -> v_A
 
-let rec iodata_id'1 : Ffi.iodata -> Ffi.iodata = function v_A -> v_A
+let rec iodata_id'1 : Ffi.iodata'0 -> Ffi.iodata'0 = function v_A -> v_A
 
-let rec iolist_id'1 : Ffi.iolist -> Ffi.iolist = function v_A -> v_A
+let rec iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0 = function v_A -> v_A
 
-let rec map_id'1 : ('tA, 'tB) Ffi.map -> ('tA, 'tB) Ffi.map = function
+let rec map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2 = function
   | v_M -> v_M
 
-let rec none_id'1 : Ffi.none -> Ffi.none = function v_A -> v_A
+let rec none_id'1 : Ffi.none'0 -> Ffi.none'0 = function v_A -> v_A
 
-let rec noreturn_id'1 : Ffi.no_return -> Ffi.no_return = function
+let rec noreturn_id'1 : Ffi.no_return'0 -> Ffi.no_return'0 = function
   | v_A -> none_id'1 v_A
 
-let rec number_id'1 : Ffi.none -> Ffi.none = function v_A -> v_A
+let rec number_id'1 : Ffi.none'0 -> Ffi.none'0 = function v_A -> v_A
 
-let rec pid_id'1 : Ffi.pid -> Ffi.pid = function v_A -> v_A
+let rec pid_id'1 : Ffi.pid'0 -> Ffi.pid'0 = function v_A -> v_A
 
-let rec port_id'1 : Ffi.port -> Ffi.port = function v_A -> v_A
+let rec port_id'1 : Ffi.port'0 -> Ffi.port'0 = function v_A -> v_A
 
-let rec reference_id'1 : Ffi.reference -> Ffi.reference = function v_A -> v_A
+let rec reference_id'1 : Ffi.reference'0 -> Ffi.reference'0 = function
+  | v_A -> v_A
 
-let rec term_id'1 : Ffi.term -> Ffi.term = function v_A -> v_A
+let rec term_id'1 : Ffi.term'0 -> Ffi.term'0 = function v_A -> v_A
 
-let rec timeout_id'1 : Ffi.timeout -> Ffi.timeout = function v_A -> v_A
+let rec timeout_id'1 : Ffi.timeout'0 -> Ffi.timeout'0 = function v_A -> v_A
 
 let rec ints_id'1 :
-    Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer ->
-    Ffi.neg_integer * Ffi.non_neg_integer * Ffi.pos_integer = function
+    Ffi.neg_integer'0 * Ffi.non_neg_integer'0 * Ffi.pos_integer'0 ->
+    Ffi.neg_integer'0 * Ffi.non_neg_integer'0 * Ffi.pos_integer'0 = function
   | v_X -> v_X
 
-let rec mk_my_pair'2 : 'tA * 'tA -> 'tA my_pair2 = function
+let rec mk_my_pair'2 : 'tA * 'tA -> 'tA my_pair2'1 = function
   | v_A, v_B -> (v_A, v_B)

@@ -1,46 +1,46 @@
-type 'a tuple1 = Tuple1 of 'a
+type 'a tuple1'1 = Tuple1 of 'a
 
-type any
+type any'0
 
-type atom
+type atom'0
 
-type binary
+type binary'0
 
-type bitstring
+type bitstring'0
 
-type byte
+type byte'0
 
-type identifier
+type identifier'0
 
-type iodata
+type iodata'0
 
-type iolist
+type iolist'0
 
-type ('k, 'v) map
+type ('k, 'v) map'2
 
-type neg_integer
+type neg_integer'0
 
-type none
+type none'0
 
-type non_neg_integer
+type non_neg_integer'0
 
-type number
+type number'0
 
-type pid
+type pid'0
 
-type port
+type port'0
 
-type pos_integer
+type pos_integer'0
 
-type reference
+type reference'0
 
-type term
+type term'0
 
-type timeout
+type timeout'0
 
-type node = atom
+type node'0 = atom'0
 
-type no_return = none
+type no_return'0 = none'0
 
 val same'2 : 'a * 'a -> unit
 
