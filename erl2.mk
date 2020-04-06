@@ -26,19 +26,15 @@ ocamlformat:
 p:
 	rm -f $(IR_DIR)/*.P
 	mkdir -p $(IR_DIR)
-	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLBUILD_ERLC) -P -o $(IR_DIR) $(erl);)
+	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLBUILD_ERLC) -P -o $(IR_DIR) --build-dir $(BUILD_DIR) $(erl);)
 
 ir: ocamlformat p
 
 test-ir: ir
-	diff -r $(BUILD_DIR)/ir ../ir-spec/
+	diff -r $(IR_DIR) $(IR_SPEC_DIR)
 
 update-ir-spec: ir
 	rm -rf $(IR_SPEC_DIR)
 	cp -r $(IR_DIR) $(IR_SPEC_DIR)
-
-hard-clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(EBIN)
 
 .PHONY: ocamlformat p ir test-ir update-ir-spec
