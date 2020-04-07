@@ -75,15 +75,29 @@ erl2ocaml_ffi(Forms) ->
         module = get_module(Forms),
         export_types = get_export_types(Forms)
     },
-    Specs = get_specs(Forms),
-    PubSpecs = [PubSpec || PubSpec = {_,_,_,{FId,_}} <- Specs, lists:member(FId,Exports)],
-    OTypes = [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
-    SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- OTypes],
+
+    AllSpecs = get_specs(Forms),
+    {PubSpecs, SpecIds} =
+        lists:unzip([{PubSpec,FId} || PubSpec = {_,_,_,{FId,_}} <- AllSpecs, lists:member(FId,Exports)]),
+    UnSpecedFunIds = Exports -- SpecIds,
+    check_export_specs(UnSpecedFunIds),
+
+    PrivOTypes = [erl2ocaml_spec(S, Ctx) || S <- AllSpecs],
+    PubOTypes =  [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
+    PubSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PubOTypes],
+    PrivSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PrivOTypes],
     TypeDefs = get_type_defs(Forms),
+
     PubTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'pub'}),
-    InterfaceLines = PubTypeDefLines ++ SpecLines,
-    MliCode = iolist_to_binary(InterfaceLines),
-    MliCode.
+    PrivTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'priv'}),
+
+    PubInterfaceLines = PubTypeDefLines ++ PubSpecLines,
+    PrivInterfaceLines = PrivTypeDefLines ++ PrivSpecLines,
+
+    PubMliCode = iolist_to_binary(PubInterfaceLines),
+    PrivMliCode = iolist_to_binary(PrivInterfaceLines),
+
+    {PubMliCode, PrivMliCode}.
 
 erl2ocaml_st(Forms) ->
     erlang:put('rec_tv_gen', 1),
@@ -105,14 +119,12 @@ erl2ocaml_st(Forms) ->
     PubOTypes = [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
     PubSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PubOTypes],
     PrivSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PrivOTypes],
-    %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
 
     PubTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'pub'}),
     PrivTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'priv'}),
 
     RawDocs = erl2ocaml_sccs(SortedFuns, PrivOTypes, Ctx),
-    %% io:format("RawDocs:\n~p\n", [RawDocs]),
     FunLines = indent_docs(RawDocs),
 
     PubInterfaceLines = PubTypeDefLines ++ PubSpecLines,
