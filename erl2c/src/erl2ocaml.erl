@@ -2,7 +2,11 @@
 
 -export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0]).
 
--record(context, {module :: atom()}).
+-record(context, {
+    module :: atom(),
+    mode :: 'priv' | 'pub',
+    export_types :: [{atom, integer()}]
+}).
 
 ffi() ->
     FfiLines = [
@@ -66,35 +70,76 @@ swap_erl_parse() ->
 
 erl2ocaml_ffi(Forms) ->
     erlang:put('rec_tv_gen', 1),
-    Ctx = #context{module = get_module(Forms)},
+    Exports = get_exports(Forms),
+    Ctx = #context{
+        module = get_module(Forms),
+        export_types = get_export_types(Forms)
+    },
     Specs = get_specs(Forms),
-    OTypes = [erl2ocaml_spec(S, Ctx) || S <- Specs],
+    PubSpecs = [PubSpec || PubSpec = {_,_,_,{FId,_}} <- Specs, lists:member(FId,Exports)],
+    OTypes = [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
     SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- OTypes],
     TypeDefs = get_type_defs(Forms),
-    TypeDefLines = type_def_scc(TypeDefs, Ctx),
-    InterfaceLines = TypeDefLines ++ SpecLines,
+    PubTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'pub'}),
+    InterfaceLines = PubTypeDefLines ++ SpecLines,
     MliCode = iolist_to_binary(InterfaceLines),
     MliCode.
 
 erl2ocaml_st(Forms) ->
     erlang:put('rec_tv_gen', 1),
-    Ctx = #context{module = get_module(Forms)},
+    Exports = get_exports(Forms),
+    Ctx = #context{
+        module = get_module(Forms),
+        export_types = get_export_types(Forms)
+    },
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
-    Specs = get_specs(Forms),
-    OTypes = [erl2ocaml_spec(S, Ctx) || S <- Specs],
-    SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- OTypes],
+
+    AllSpecs = get_specs(Forms),
+    {PubSpecs, SpecIds} =
+        lists:unzip([{PubSpec,FId} || PubSpec = {_,_,_,{FId,_}} <- AllSpecs, lists:member(FId,Exports)]),
+    UnSpecedFunIds = Exports -- SpecIds,
+    check_export_specs(UnSpecedFunIds),
+
+    PrivOTypes = [erl2ocaml_spec(S, Ctx) || S <- AllSpecs],
+    PubOTypes = [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
+    PubSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PubOTypes],
+    PrivSpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PrivOTypes],
     %% TODO - this also requires SCCs
     TypeDefs = get_type_defs(Forms),
-    TypeDefLines = type_def_scc(TypeDefs, Ctx),
-    RawDocs = erl2ocaml_sccs(SortedFuns, OTypes, Ctx),
+
+    PubTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'pub'}),
+    PrivTypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'priv'}),
+
+    RawDocs = erl2ocaml_sccs(SortedFuns, PrivOTypes, Ctx),
     %% io:format("RawDocs:\n~p\n", [RawDocs]),
     FunLines = indent_docs(RawDocs),
-    InterfaceLines = TypeDefLines ++ SpecLines,
-    ImplementationLines = TypeDefLines ++ FunLines,
-    MliCode = iolist_to_binary(InterfaceLines),
+
+    PubInterfaceLines = PubTypeDefLines ++ PubSpecLines,
+    PrivInterfaceLines = PrivTypeDefLines ++ PrivSpecLines,
+    ImplementationLines = PrivTypeDefLines ++ FunLines,
+
+    OcamlModule = first_upper(atom_to_list(Ctx#context.module)),
+    OcamlPrivModule = OcamlModule ++ "_priv",
+
+    PubMliCode = iolist_to_binary(PubInterfaceLines),
     MlCode = iolist_to_binary(ImplementationLines),
-    {MliCode, MlCode}.
+    PrivMlCode =
+        "module "
+            ++ OcamlPrivModule
+            ++ " : sig\n"
+            ++ PrivInterfaceLines
+            ++ "\n" ++ "end = struct\n"
+            ++ ImplementationLines
+            ++ "\n" ++ "end",
+
+    {PubMliCode, MlCode, PrivMlCode}.
+
+check_export_specs(UnSpecedFunIds) ->
+    case UnSpecedFunIds of
+        [] -> ok;
+        _ -> erlang:error({unspeced_exported_funs, UnSpecedFunIds})
+    end.
 
 erl2ocaml_sccs(SCCs, OTypes, Ctx) ->
     lists:flatmap(fun(SCC) -> erl2ocaml_scc1(SCC, Ctx, OTypes) end, SCCs).
@@ -416,21 +461,50 @@ type_def_scc(TypeDefs, Ctx) ->
 type_def_scc(_, [], _Ctx) ->
     "";
 type_def_scc(true, [TypeDef|TypeDefs], Ctx) ->
-    type_def("type", TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx);
+    case api_type_def(TypeDef, Ctx) of
+        true ->
+            "type " ++ type_def(TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx);
+        false ->
+            type_def_scc(true, TypeDefs, Ctx)
+    end;
 type_def_scc(false, [TypeDef|TypeDefs], Ctx) ->
-    type_def("and", TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx).
+    case api_type_def(TypeDef, Ctx) of
+        true -> "and " ++ type_def(TypeDef, Ctx) ++ type_def_scc(false, TypeDefs, Ctx);
+        false -> type_def_scc(false, TypeDefs, Ctx)
+    end.
 
-type_def(OCamlPrefix, {alias, {N,T,TVs}}, Ctx) ->
-    type_def_lhs(OCamlPrefix, N, TVs, Ctx) ++ " = " ++ type(T, Ctx) ++ "\n";
-type_def(OCamlPrefix, {enum, {N,T,TVs}}, Ctx) ->
-    type_def_lhs(OCamlPrefix, N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(T, Ctx) ++ "\n".
+api_type_def({Kind, {N,_T,TVs}}, Ctx) ->
+    case Ctx#context.mode of
+        'priv' ->
+            true;
+        'pub'  ->
+            case Kind of
+                'opaque' -> true;
+                _ ->
+                    TypeKey = {N, erlang:length(TVs)},
+                    lists:member(TypeKey, Ctx#context.export_types)
+            end
+    end.
 
-type_def_lhs(OCamlPrefix, N, TVs=[], _Ctx) ->
-    OCamlPrefix ++ " " ++ type_name(N, TVs);
-type_def_lhs(OCamlPrefix, N, TVs=[TV], Ctx) ->
-    OCamlPrefix ++ " " ++ type(TV, Ctx) ++ " " ++ type_name(N, TVs);
-type_def_lhs(OCamlPrefix, N, TVs, Ctx) ->
-    OCamlPrefix ++ " (" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ type_name(N, TVs).
+type_def({Kind, {N,T,TVs}}, Ctx) ->
+    type_def_lhs(N, TVs, Ctx) ++ type_def_rhs(Kind, T, Ctx) ++ "\n".
+
+type_def_lhs(N, TVs=[], _Ctx) ->
+    type_name(N, TVs);
+type_def_lhs(N, TVs=[TV], Ctx) ->
+    type(TV, Ctx) ++ " " ++ type_name(N, TVs);
+type_def_lhs(N, TVs, Ctx) ->
+    "(" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ type_name(N, TVs).
+
+type_def_rhs(alias, T, Ctx) ->
+    " = " ++ type(T, Ctx);
+type_def_rhs(enum, T, Ctx) ->
+    " = " ++ enum_ctr_defs(T, Ctx);
+type_def_rhs('opaque', T, Ctx) ->
+    case Ctx#context.mode of
+        'pub' -> "";
+        'priv' -> " = " ++ type(T, Ctx)
+    end.
 
 enum_ctr_defs({type,_Ln,union, CtrDefs}, Ctx) ->
     interleave(false, " | ", [enum_ctr_def(CtrDef, Ctx) || CtrDef <- CtrDefs]);
@@ -625,10 +699,16 @@ get_type_defs([{attribute,_,type,Type}|Forms]) ->
     [{alias,Type}|get_type_defs(Forms)];
 get_type_defs([{attribute,_,enum,Type}|Forms]) ->
     [{enum,Type}|get_type_defs(Forms)];
-get_type_defs([{attribute,Line,opaque,_Type}|_Forms]) ->
-    erlang:error({not_supported, Line, opaque_type});
+get_type_defs([{attribute,_,opaque,Type}|Forms]) ->
+    [{opaque,Type}|get_type_defs(Forms)];
 get_type_defs([_|Forms]) ->
     get_type_defs(Forms).
+
+get_exports(Forms) ->
+    lists:flatten([Fs || {attribute,_,export,Fs} <- Forms]).
+
+get_export_types(Forms) ->
+    lists:flatten([Ts || {attribute,_,export_type,Ts} <- Forms]).
 
 mk_sccs(Functions) ->
     Graph = digraph:new(),

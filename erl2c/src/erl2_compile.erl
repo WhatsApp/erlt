@@ -992,9 +992,10 @@ generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
             MliCode = erl2ocaml:erl2ocaml_ffi(Forms),
             ok = file:write_file(Rootname ++ ".mli", MliCode);
         false ->
-            {MliCode,MlCode} = erl2ocaml:erl2ocaml_st(Forms),
+            {MliCode,MlCode,PrivMlCode} = erl2ocaml:erl2ocaml_st(Forms),
             ok = file:write_file(Rootname ++ ".ml", MlCode),
-            ok = file:write_file(Rootname ++ ".mli", MliCode)
+            ok = file:write_file(Rootname ++ ".mli", MliCode),
+            ok = file:write_file(Rootname ++ "_priv.ml", PrivMlCode)
     end.
 
 ensure_ocaml_ffi(OcamlDir) ->
@@ -1012,8 +1013,10 @@ call_ocaml_typechecker(OcamlDir, Basename, St) ->
 
     Command =
         case is_lang_ffi(St) of
-            true ->  lists:append(["ocamlc -c ", Basename, ".mli"]);
-            false -> lists:append(["ocamlc -c ", Basename, ".mli", " ", Basename, ".ml"])
+            true ->
+                lists:append(["ocamlc -c ", Basename, ".mli"]);
+            false ->
+                lists:append(["ocamlc -c ", Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"])
         end,
 
 
