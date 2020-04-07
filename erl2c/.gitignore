@@ -1,4 +1,4 @@
-/src/erl_parse.erl
+/src/erl2_parse.erl
 *._.ml
 *._.mli
 *.cmi

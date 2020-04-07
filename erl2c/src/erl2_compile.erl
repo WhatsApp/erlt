@@ -61,7 +61,7 @@
 		  ofile=""    :: file:filename(),
 		  module=[]   :: module() | [],
 		  options=[]  :: [option()],  %Options for compilation
-                  encoding=none :: none | epp:source_encoding(),
+                  encoding=none :: none | erl2_epp:source_encoding(),
 		  errors=[]     :: [err_warn_info()],
 		  warnings=[]   :: [err_warn_info()],
                   compile_deps=[] :: [compile_dep()],
@@ -122,7 +122,7 @@ do_file(File, Options0) ->
     % defined, does not specify parse_transforms. Otherwise, we are risking
     % running parse_transforms twice. Plus, we are going to be restricting how
     % parse transforms can be specified anyway.
-    EnvCompilerOptions = compile:env_compiler_options(),
+    EnvCompilerOptions = erl2_compile2:env_compiler_options(),
     Options1 = Options0 ++ EnvCompilerOptions,
     Options2 = fix_compile_options(Options1),
 
@@ -596,7 +596,7 @@ fix_compile_options(Options) ->
 compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
     % appended env_compiler_options() above
-    Ret = compile:noenv_forms(Forms, [{source, St0#compile.filename} | St0#compile.options]),
+    Ret = erl2_compile2:noenv_forms(Forms, [{source, St0#compile.filename} | St0#compile.options]),
 
     % TODO: handling of ok is not exhaustive, there could also be {ok, ModuleName, Warnings}
     case Ret of
@@ -628,7 +628,7 @@ format_error({module_dependency,ModuleDepType,Mod}) ->
 format_error(X) ->
     % TODO: copy formatters for locally-generated errors from copy-pasted code
     % here to avoid problems with error format compatibility in the future
-    compile:format_error(X).
+    erl2_compile2:format_error(X).
 
 
 internal_comp(Passes, Code0, File, Suffix, St0) ->
@@ -738,7 +738,7 @@ werror(#compile{options=Opts,warnings=Ws}) ->
 %% messages_per_file([{File,[Message]}]) -> [{File,[Message]}]
 messages_per_file(Ms) ->
     T = lists:sort([{File,M} || {File,Messages} <- Ms, M <- Messages]),
-    PrioMs = [erl_scan, epp, erl_parse],
+    PrioMs = [erl2_scan, erl2_epp, erl2_parse],
     {Prio0, Rest} =
         lists:mapfoldl(fun(M, A) ->
                                lists:partition(fun({_,{_,Mod,_}}) -> Mod =:= M;
@@ -800,7 +800,7 @@ do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St) ->
                      true -> filename:basename(SourceName0);
                      false -> SourceName0
                  end,
-    R = epp:parse_file(File,
+    R = erl2_epp:parse_file(File,
                         [{includes,[".",Dir|inc_paths(Opts)]},
                          {source_name, SourceName},
                          {macros,pre_defs(Opts)},

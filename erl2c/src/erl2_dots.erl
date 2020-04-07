@@ -35,7 +35,7 @@ parse_transform(Forms, _Options) ->
 
 init_context(Forms) ->
     [Module] = [M || {attribute,_,module,M} <- Forms],
-    Namespace = erl_parse:concat_dotted(erl_parse:dotted_butlast(Module)),
+    Namespace = erl2_parse:concat_dotted(erl2_parse:dotted_butlast(Module)),
     #context{
        module = Module,
        namespace = list_to_atom(Namespace)
@@ -222,7 +222,7 @@ pattern({op,Line,Op,A},_Context) ->
     {op,Line,Op,A};
 pattern({op,Line,'.',L,R}=D,Context) ->
     %% fold dotted atoms
-    D1 = erl_parse:fold_dots(D),
+    D1 = erl2_parse:fold_dots(D),
     case D1 of
         {atom,_,_} -> D1;
         _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
@@ -547,7 +547,7 @@ expr({op,Line,Op,A0},Context) ->
     {op,Line,Op,A1};
 expr({op,Line,'.',L,R}=D,Context) ->
     %% fold dotted atoms
-    D1 = erl_parse:fold_dots(D),
+    D1 = erl2_parse:fold_dots(D),
     case D1 of
         {atom,_,_} -> D1;
         _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
@@ -657,7 +657,7 @@ type({op,Line,Op,T},Context) ->
     {op,Line,Op,T1};
 type({op,Line,'.',L,R}=D,Context) ->
     %% fold dotted atoms
-    D1 = erl_parse:fold_dots(D),
+    D1 = erl2_parse:fold_dots(D),
     case D1 of
         {atom,_,_} -> D1;
         _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
@@ -694,7 +694,7 @@ type({remote_type,Line,[{atom,Lm,M},{atom,Ln,N},As]},Context) ->
 type({remote_type,Line,[M,{atom,Ln,N},As]},Context) ->
     As1 = type_list(As,Context),
     %% fold dotted atoms
-    M1 = case erl_parse:fold_dots(M) of
+    M1 = case erl2_parse:fold_dots(M) of
              {atom,La,A} -> {atom,La,A};
              {op,Ld,'.',L,R} -> {op,Ld,'.',L,R}  % leave to linter
          end,
@@ -711,19 +711,19 @@ type({var,Line,V},_Context) ->
     {var,Line,V};
 type({user_type,Line,N,As},Context) ->
     As1 = type_list(As,Context),
-    case erl_parse:split_dotted(N) of
+    case erl2_parse:split_dotted(N) of
         [_] ->
             % plain local type name
             {user_type,Line,N,As1};
         [M,T] ->
             %% remote type with plain module part - expand to local namespace
-            Prefix = erl_parse:split_dotted(Context#context.namespace),
-            M1 = list_to_atom(erl_parse:concat_dotted(Prefix ++ [M])),
+            Prefix = erl2_parse:split_dotted(Context#context.namespace),
+            M1 = list_to_atom(erl2_parse:concat_dotted(Prefix ++ [M])),
             T1 = list_to_atom(T),
             {remote_type,Line, [{atom,Line,M1},{atom,Line,T1}, As]};
         Ns ->
             %% remote type with dotted module part - uses global namespace
-            M = list_to_atom(erl_parse:concat_dotted(lists:droplast(Ns))),
+            M = list_to_atom(erl2_parse:concat_dotted(lists:droplast(Ns))),
             T = list_to_atom(lists:last(Ns)),
             {remote_type,Line, [{atom,Line,M},{atom,Line,T}, As]}
     end;
