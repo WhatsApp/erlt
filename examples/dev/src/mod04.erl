@@ -1,8 +1,6 @@
 -lang([erl2, st]).
 -module(mod04).
 
--depends_on([mod03]).
-
 -export([
   mk_unit_remote_dot/0, mk_left_remote_dot/1, mk_right_remote_dot/1,
   zero_remote_dot/2, zero_remote1_dot/2,

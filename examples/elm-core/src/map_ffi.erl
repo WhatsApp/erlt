@@ -1,8 +1,6 @@
 -lang([erl2, ffi]).
 -module(map_ffi).
 
--depends_on([maybe]).
-
 -export_type([map/2]).
 
 -export([empty/0, get/2, size/1, insert/3, remove/2, fold/3, union/2, filter/2, map/2]).

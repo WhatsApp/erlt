@@ -1,8 +1,6 @@
 -lang([erl2, st]).
 -module(map).
 
--depends_on([maybe, map_ffi]).
-
 -export_type([map/2]).
 -export([empty/0, get/2, member/2, size/1, is_empty/1, insert/3, remove/2, update/3, singleton/2]).
 %% COMBINE

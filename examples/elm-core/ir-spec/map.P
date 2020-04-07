@@ -2,8 +2,6 @@
 
 -module(map).
 
--depends_on([maybe, map_ffi]).
-
 -export_type([map/2]).
 
 -export([empty/0,

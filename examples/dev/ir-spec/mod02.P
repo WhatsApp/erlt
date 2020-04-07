@@ -2,8 +2,6 @@
 
 -module(mod02).
 
--depends_on([mod01]).
-
 -export([odd/1,
          id/1,
          id_caller/1,
