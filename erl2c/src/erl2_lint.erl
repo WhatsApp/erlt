@@ -258,6 +258,7 @@ format_error(illegal_map_key) -> "illegal map key in pattern";
 format_error(illegal_bin_pattern) ->
     "binary patterns cannot be matched in parallel using '='";
 format_error(illegal_expr) -> "illegal expression";
+format_error(illegal_dots) -> "illegal dots";
 format_error({illegal_guard_local_call, {F,A}}) -> 
     io_lib:format("call to local/imported function ~tw/~w is illegal in guard",
 		  [F,A]);
@@ -2424,6 +2425,9 @@ expr({op,Line,Op,L,R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
     {Evt2,St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op,Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3),St2};
+expr({op,Line,'.',_L,_R}, _Vt, St) ->
+    %% remove later - specific warning for now makes it easier to debug
+    {[],add_error(Line, illegal_dots, St)};
 expr({op,_Line,_Op,L,R}, Vt, St) ->
     expr_list([L,R], Vt, St);                   %They see the same variables
 %% The following are not allowed to occur anywhere!
