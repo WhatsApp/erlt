@@ -485,17 +485,13 @@ type_def_scc(false, [TypeDef|TypeDefs], Ctx) ->
         false -> type_def_scc(false, TypeDefs, Ctx)
     end.
 
-api_type_def({Kind, {N,_T,TVs}}, Ctx) ->
+api_type_def({_, {N,_T,TVs}}, Ctx) ->
     case Ctx#context.mode of
         'priv' ->
             true;
         'pub'  ->
-            case Kind of
-                'opaque' -> true;
-                _ ->
-                    TypeKey = {N, erlang:length(TVs)},
-                    lists:member(TypeKey, Ctx#context.export_types)
-            end
+            TypeKey = {N, erlang:length(TVs)},
+            lists:member(TypeKey, Ctx#context.export_types)
     end.
 
 type_def({Kind, {N,T,TVs}}, Ctx) ->
