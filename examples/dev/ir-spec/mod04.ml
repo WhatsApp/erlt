@@ -15,3 +15,12 @@ let rec zero_remote1_dot'2 : Mod03.unit0'0 * 'tV -> 'tV = function
 
 let rec un_pair_remote_dot'1 : ('tA, 'tB) Mod03.pair'2 -> 'tA * 'tB = function
   | v_Pair -> ( match v_Pair with Mod03.Pair (v_A, v_B) -> (v_A, v_B) )
+
+let rec funs'0 : unit -> (unit -> Mod03.unit0'0) list = function
+  | () ->
+      [
+        Mod03.mk_unit'0;
+        mk_unit_remote_dot'0;
+        mk_unit_remote_dot'0;
+        (function () -> Mod03.Unit0);
+      ]

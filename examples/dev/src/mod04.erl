@@ -6,7 +6,7 @@
 -export([
   mk_unit_remote_dot/0, mk_left_remote_dot/1, mk_right_remote_dot/1,
   zero_remote_dot/2, zero_remote1_dot/2,
-  un_pair_remote_dot/1
+  un_pair_remote_dot/1, funs/0
 ]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
@@ -36,3 +36,11 @@ un_pair_remote_dot(Pair) ->
   case Pair of
     mod03.pair{A, B} -> {A, B}
 end.
+
+-spec funs() -> list(fun(() -> mod03:unit0())).
+funs() -> [
+  fun mod03:mk_unit/0,
+  fun mod04:mk_unit_remote_dot/0,
+  fun mk_unit_remote_dot/0,
+  fun () -> mod03.unit0{} end
+].

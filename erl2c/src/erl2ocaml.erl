@@ -352,10 +352,10 @@ expr({'fun',Line,Body}, Ctx) ->
             Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
             [{Fn}];
         {function,M,F,A} when is_atom(M), is_atom(F), is_integer(A) ->
-            FQFn = "(" ++ remote_fun(M,F,A) ++ ")",
+            FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
             {FQFn};
         {function,{atom,_,M},{atom,_,F},{integer,_,A}} when is_atom(M), is_atom(F), is_integer(A) ->
-            FQFn = "(" ++ remote_fun(M,F,A) ++ ")",
+            FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
             {FQFn};
         {function,_M,_F,_A} ->
             %% _A can be a var, we are not supporting such dynamic reference
@@ -369,11 +369,9 @@ expr({call,Line,{atom, _, F},As}, Ctx) ->
     [{"("}, {Fn}, expr({tuple1, Line, As}, Ctx), {")"}];
 expr({op,_,'.',Rec,{atom,_,K}}, Ctx) ->
     [{"("}, expr(Rec, Ctx), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
-expr({call,Line,{remote,_Line,{atom,_,M},{atom,FLine,F}},As}, Ctx) when M == Ctx#context.module ->
-    expr({call,Line,{atom,FLine,F},As}, Ctx);
 expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}, Ctx) ->
     Arity = length(As),
-    FQFn = remote_fun(M,F,Arity),
+    FQFn = remote_fun(M,F,Arity,Ctx),
     [{"("}, {FQFn}, expr({tuple1, Line, As}, Ctx), {")"}];
 expr({call,Line,F,As}, Ctx) ->
     [{"("}, expr(F, Ctx), {")"}, expr({tuple1, Line, As}, Ctx)];
@@ -433,7 +431,9 @@ bop('>') -> ">";
 bop('=:=') -> "=";
 bop('=/=') -> "<>".
 
-remote_fun(M,F,Arity) ->
+remote_fun(M,F,Arity,Ctx) when M == Ctx#context.module ->
+    atom_to_list(F) ++ "'" ++ integer_to_list(Arity);
+remote_fun(M,F,Arity,_Ctx) ->
     M1 = first_upper(atom_to_list(M)),
     F1 = atom_to_list(F) ++ "'" ++ integer_to_list(Arity),
     M1 ++ "." ++ F1.
