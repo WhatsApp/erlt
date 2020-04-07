@@ -145,11 +145,6 @@ let rec local_fun_to_var'2 : _ * _ -> _ list * _ list -> bool = function
       let v_F = call'2 in
       v_F
 
-let rec remote_fun_to_var'2 : _ * _ -> 'tA list -> 'tA list = function
-  | v__A, v__B ->
-      let v_F = List.rev in
-      v_F
-
 let rec local_n_fun'0 : unit -> _ list -> _ list = function
   | () ->
       let v_F =

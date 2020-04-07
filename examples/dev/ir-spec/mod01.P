@@ -32,7 +32,6 @@
          call/2,
          fun_to_var/0,
          local_fun_to_var/2,
-         remote_fun_to_var/2,
          local_n_fun/0,
          unary_plus/1,
          unary_minus/1,
@@ -260,12 +259,6 @@ fun_to_var() ->
 
 local_fun_to_var(_A, _B) ->
     F = fun call/2,
-    F.
-
--spec remote_fun_to_var(_, _) -> fun(([A]) -> [A]).
-
-remote_fun_to_var(_A, _B) ->
-    F = fun ocaml_list:rev/1,
     F.
 
 -spec local_n_fun() -> fun(([_]) -> [_]).

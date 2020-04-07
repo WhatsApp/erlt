@@ -93,8 +93,6 @@ val fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB
 
 val local_fun_to_var'2 : _ * _ -> _ list * _ list -> bool
 
-val remote_fun_to_var'2 : _ * _ -> 'tA list -> 'tA list
-
 val local_n_fun'0 : unit -> _ list -> _ list
 
 val mod01F'1 : 'tX -> 'tX

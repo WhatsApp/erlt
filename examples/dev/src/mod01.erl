@@ -9,7 +9,7 @@
     access_map/1, access_map2/1,
     mk_seq/0, is_empty/1, is_empty2/1, with_as/1, block/2, is_empty_case/1, both_empty/2,
     call/2,
-    fun_to_var/0, local_fun_to_var/2, remote_fun_to_var/2, local_n_fun/0,
+    fun_to_var/0, local_fun_to_var/2, local_n_fun/0,
     unary_plus/1, unary_minus/1, unary_not/1, unary_bnot/1,
     binary_star/2, binary_div/2, binary_rem/2, binary_band/2, binary_and/2, binary_plus/2, binary_minus/2,
     binary_bor/2, binary_bxor/2, binary_bsl/2, binary_bsr/2, binary_or/2, binary_xor/2,
@@ -170,11 +170,6 @@ fun_to_var() ->
 -spec local_fun_to_var(_, _) -> fun(([_],[_]) -> boolean()).
 local_fun_to_var(_A, _B) ->
     F = fun call/2,
-    F.
-
--spec remote_fun_to_var(_, _) -> fun(([A]) -> [A]).
-remote_fun_to_var(_A, _B) ->
-    F = fun ocaml_list:rev/1,
     F.
 
 -spec local_n_fun() -> fun(([_]) -> [_]).

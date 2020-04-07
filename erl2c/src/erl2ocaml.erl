@@ -434,15 +434,9 @@ bop('=:=') -> "=";
 bop('=/=') -> "<>".
 
 remote_fun(M,F,Arity) ->
-    M1 = atom_to_list(M),
-    {M2, F1} =
-        case string:prefix(M1, "ocaml_") of
-            'nomatch' -> {M1, atom_to_list(F) ++ "'" ++ integer_to_list(Arity)};
-            Rest -> {Rest, atom_to_list(F)}
-        end,
-    M3 = first_upper(M2),
-    FQFn = M3 ++ "." ++ F1,
-    FQFn.
+    M1 = first_upper(atom_to_list(M)),
+    F1 = atom_to_list(F) ++ "'" ++ integer_to_list(Arity),
+    M1 ++ "." ++ F1.
 
 init_assoc({map_field_assoc,_Line,{atom,_ALine,A},V}, Ctx) ->
     A1 = atom_to_list(A),
