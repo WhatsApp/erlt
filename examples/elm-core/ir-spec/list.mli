@@ -4,8 +4,6 @@ val repeat'2 : int * 'tA -> 'tA list
 
 val range'2 : int * int -> int list
 
-val range_help'3 : int * int * int list -> int list
-
 val cons'2 : 'tA * 'tA list -> 'tA list
 
 val map'2 : ('tA -> 'tB) * 'tA list -> 'tB list

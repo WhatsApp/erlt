@@ -1,6 +1,11 @@
 -lang([erl2, st]).
 -module(maybe).
--compile(export_all).
+
+-export_type([maybe/1]).
+%% TRANSFORM
+-export([with_default/2, with_default/1, map/2, map/1, map2/3, map2/1, and_then/2, and_then/1]).
+%% FOR INTERNAL USE ONLY (Original Elm comment)
+-export([is_just/1, destruct/3]).
 
 -enum maybe(A) :: just{A} | nothing{}.
 

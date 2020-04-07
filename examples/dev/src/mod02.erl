@@ -1,6 +1,5 @@
 -lang([erl2, st]).
 -module(mod02).
--compile(export_all).
 
 -depends_on([mod01]).
 

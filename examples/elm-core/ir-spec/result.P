@@ -2,9 +2,19 @@
 
 -module(result).
 
--compile(export_all).
-
 -depends_on([maybe]).
+
+-export_type([result/2]).
+
+-export([with_default/2,with_default/1]).
+
+-export([map/2,map/1,map2/3,map2/1]).
+
+-export([and_then/2,and_then/1,map_error/2,map_error/1]).
+
+-export([to_maybe/1,from_maybe/2,from_maybe/1]).
+
+-export([is_ok/1]).
 
 -type result(Error, Value) ::
           {969696, result, ok, Value} | {969696, result, err, Error}.

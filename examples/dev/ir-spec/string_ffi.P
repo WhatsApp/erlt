@@ -2,8 +2,6 @@
 
 -module(string_ffi).
 
--compile(export_all).
-
 -spec length(string()) -> integer().
 
 length(S) ->

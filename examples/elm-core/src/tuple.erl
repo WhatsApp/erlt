@@ -1,8 +1,15 @@
 -lang([erl2, st]).
 -module(tuple).
--compile(export_all).
+
+%% CONSTRUCT
+-export([pair/2, pair/1]).
+%% SELECT
+-export([first/1, second/1]).
+%% TRANSFORM
+-export([map_first/2, map_first/1, map_second/2, map_second/1, map_both/3, map_both/2]).
 
 -spec pair(A, B) -> {A, B}.
+
 pair(A, B) -> {A, B}.
 
 -spec pair(A) -> fun((B) -> {A, B}).

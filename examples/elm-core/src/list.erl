@@ -1,8 +1,18 @@
 -lang([erl2, st]).
 -module(list).
--compile(export_all).
 
 -depends_on([basics, maybe]).
+
+%% CREATE
+-export([singleton/1, repeat/2, range/2, cons/2]).
+%% TRANSFORM
+-export([map/2, indexed_map/2, foldl/3, foldr/3, filter/2, filter_map/2, maybe_cons/3, maybe_cons/1]).
+%% UTILITIES
+-export([length/1, reverse/1, member/2, all/2, any/2, maximum/1, minimum/1, sum/1, product/1]).
+%% COMBINE
+-export([append/2, concat/1, concat_map/2, intersperse/2, map2/3]).
+%% DECONSTRUCT
+-export([is_empty/1, head/1, tail/1, take/2, drop/2, partition/2, unzip/1]).
 
 
 %% CREATE

@@ -2,8 +2,6 @@
 
 -module(mod04).
 
--compile(export_all).
-
 -depends_on([mod03]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().

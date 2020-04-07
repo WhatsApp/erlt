@@ -2,11 +2,27 @@
 
 -module(map).
 
--compile(export_all).
-
 -depends_on([maybe, map_ffi]).
 
--type map(K, V) :: map_ffi:map(K, V).
+-export_type([map/2]).
+
+-export([empty/0,
+         get/2,
+         member/2,
+         size/1,
+         is_empty/1,
+         insert/3,
+         remove/2,
+         update/3,
+         singleton/2]).
+
+-export([union/2,intersect/2,diff/2]).
+
+-export([fold/3,map/2,filter/2,partition/2]).
+
+-export([keys/1,values/1,to_list/1,from_list/1]).
+
+-opaque map(K, V) :: map_ffi:map(K, V).
 
 -spec empty() -> map(_K, _V).
 

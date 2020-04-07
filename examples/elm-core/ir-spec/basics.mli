@@ -6,15 +6,11 @@ val add'2 : int * int -> int
 
 val add'1 : int -> int -> int
 
-val sub'2 : int * int -> int
-
 val sub'1 : int -> int -> int
 
 val mul'2 : int * int -> int
 
 val mul'1 : int -> int -> int
-
-val idiv'2 : int * int -> int
 
 val idiv'1 : int -> int -> int
 
@@ -87,6 +83,8 @@ val composeL'2 : ('tB -> 'tC) * ('tA -> 'tB) -> 'tA -> 'tC
 val composeL'1 : ('tB -> 'tC) -> ('tA -> 'tB) -> 'tA -> 'tC
 
 val composeR'2 : ('tA -> 'tB) * ('tB -> 'tC) -> 'tA -> 'tC
+
+val composeR'1 : ('tA -> 'tB) -> ('tB -> 'tC) -> 'tA -> 'tC
 
 val apR'2 : 'tA * ('tA -> 'tB) -> 'tB
 

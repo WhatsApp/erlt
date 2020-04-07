@@ -2,7 +2,7 @@
 
 -module(mod03).
 
--compile(export_all).
+-export_type([unit0/0,either/2,pair/2]).
 
 -type unit0() :: {969696, mod03, unit0}.
 

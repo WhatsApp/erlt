@@ -1,12 +1,14 @@
 -lang([erl2, ffi]).
 -module(map_ffi).
--compile(export_all).
 
 -depends_on([maybe]).
 
 -export_type([map/2]).
 
--type map(K, V) :: #{K => V}.
+-export([empty/0, get/2, size/1, insert/3, remove/2, fold/3, union/2, filter/2, map/2]).
+-export([keys/1, values/1, to_list/1, from_list/1]).
+
+-opaque map(K, V) :: #{K => V}.
 
 -spec empty() -> map(_K, _V).
 empty() ->

@@ -1,10 +1,28 @@
 -lang([erl2, st]).
 -module(basics).
--compile(export_all).
+
+%% MATHEMATICS
+-export([add/2, add/1, sub/1, mul/2, mul/1, idiv/1]).
+%% EQUALITY
+-export([eq/2, eq/1, neq/2, neq/1]).
+%% COMPARISONS
+-export_type([order/0]).
+-export([lt/2, lt/1, gt/2, gt/1, le/2, le/1, ge/2, ge/1, min/2, min/1, max/2, max/1, compare/2, compare/1]).
+%% BOOLEANS
+-export(['not'/1, 'and'/2, 'and'/1, 'or'/2, 'or'/1, 'xor'/2, 'xor'/1]).
+%% FANCIER MATH
+-export([mod_by/2, mod_by/1, remainder_by/2, remainder_by/1, negate/1, abs/1, clamp/3]).
+%% FUNCTION HELPERS
+-export_type([never/0]).
+-export([composeL/2, composeL/1, composeR/2, composeR/1,
+         apR/2, apR/1, apL/2, apL/1,
+         identity/1, always/2, always/1, never/1]).
+
 
 %% MATHEMATICS
 
 -spec add(integer(), integer()) -> integer().
+
 add(X1, X2) -> X1 + X2.
 
 -spec add(integer()) -> fun((integer()) -> integer()).
@@ -41,6 +59,8 @@ neq(X1, X2) -> X1 =/= X2.
 
 -spec neq(A) -> fun((A) -> boolean()).
 neq(X1) -> fun(X2) -> neq(X1, X2) end.
+
+%% COMPARISONS
 
 -spec lt(A, A) -> boolean().
 lt(X1, X2) -> X1 < X2.
@@ -169,6 +189,7 @@ composeL(G) -> fun(F) -> composeL(G, F) end.
 composeR(F, G) ->
     fun(X) -> G(F(X)) end.
 
+-spec composeR(fun((A) -> B)) -> fun((fun((B) -> C)) -> fun((A) -> C)).
 composeR(F) ->
     fun(G) -> composeR(F, G) end.
 

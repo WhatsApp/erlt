@@ -125,7 +125,7 @@ let rec composeL'1 : ('tB -> 'tC) -> ('tA -> 'tB) -> 'tA -> 'tC = function
 let rec composeR'2 : ('tA -> 'tB) * ('tB -> 'tC) -> 'tA -> 'tC = function
   | v_F, v_G -> ( function v_X -> v_G (v_F v_X) )
 
-let rec composeR'1 = function
+let rec composeR'1 : ('tA -> 'tB) -> ('tB -> 'tC) -> 'tA -> 'tC = function
   | v_F -> ( function v_G -> composeR'2 (v_F, v_G) )
 
 let rec apR'2 : 'tA * ('tA -> 'tB) -> 'tB = function v_X, v_F -> v_F v_X

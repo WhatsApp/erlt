@@ -1,7 +1,7 @@
 -lang([erl2, st]).
 -module(mod01).
 
--compile(export_all).
+-export([mod01F/1]).
 
 -spec id(Arg1::X) -> X.
 id(X) ->

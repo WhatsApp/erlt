@@ -1,6 +1,6 @@
 -lang([erl2, st]).
 -module(mod03).
--compile(export_all).
+-export_type([unit0/0, either/2, pair/2]).
 
 -enum unit0() :: unit0{}.
 -enum boxed(A) :: boxed{A}.
