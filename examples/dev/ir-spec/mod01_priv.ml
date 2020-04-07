@@ -90,8 +90,6 @@ module Mod01_priv : sig
 
   val call'2 : _ list * _ list -> bool
 
-  val remote_call'1 : 'tA list -> 'tA list
-
   val fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB
 
   val local_fun_to_var'2 : _ * _ -> _ list * _ list -> bool
@@ -348,8 +346,6 @@ end = struct
 
   let rec call'2 : _ list * _ list -> bool = function
     | v_L1, v_L2 -> both_empty'2 (v_L1, v_L2)
-
-  let rec remote_call'1 : 'tA list -> 'tA list = function v_L -> List.rev v_L
 
   let rec fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB = function
     | () ->

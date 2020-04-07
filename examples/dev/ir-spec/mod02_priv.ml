@@ -5,6 +5,8 @@ module Mod02_priv : sig
 
   val id_caller'1 : 'tX -> 'tX
 
+  val id_rec'1 : 'tX -> 'tX
+
   val even'1 : int -> bool
 
   val mod01call'1 : 'tX -> 'tX
@@ -21,7 +23,7 @@ end = struct
 
   let rec id_caller'1 : 'tX -> 'tX = function v_X -> id'1 v_X
 
-  let rec id_rec'1 = function v_X -> id_rec'1 v_X
+  let rec id_rec'1 : 'tX -> 'tX = function v_X -> id_rec'1 v_X
 
   let rec mod01call'1 : 'tX -> 'tX = function v_X -> Mod01.mod01F'1 v_X
 

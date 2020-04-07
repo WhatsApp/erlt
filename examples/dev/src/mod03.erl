@@ -1,6 +1,11 @@
 -lang([erl2, st]).
 -module(mod03).
--export_type([unit0/0, either/2, pair/2]).
+-export_type([unit0/0, boxed/1, either/2, rgb/0, pair/2, triple/3, my_list/1, option/1]).
+-export([
+  mk_rgb/0, mk_triple/1, mk_none/0, mk_unit/0, mk_box/1, mk_left/1, mk_right/1,
+  zero/2, unbox/1, un_either/1, un_pair/1,
+  first/1, second/1
+]).
 
 -enum unit0() :: unit0{}.
 -enum boxed(A) :: boxed{A}.

@@ -3,6 +3,8 @@
 
 -depends_on([mod01]).
 
+-export([odd/1, id/1, id_caller/1, id_rec/1, even/1, mod01call/1, list_to_string/1, int_to_string/1]).
+
 -spec odd(integer()) -> boolean().
 odd(X) ->
     even(X - 1).
@@ -15,6 +17,7 @@ id(X) ->
 id_caller(X) ->
     id(X).
 
+-spec id_rec(X) -> X.
 id_rec(X) ->
     id_rec(X).
 

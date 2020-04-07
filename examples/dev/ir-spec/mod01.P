@@ -2,7 +2,92 @@
 
 -module(mod01).
 
--export([mod01F/1]).
+-export_type([my_pair2/1,my_pair/2]).
+
+-export([mod01F/1,
+         id/1,
+         arg13/3,
+         arg23/3,
+         arg33/3,
+         mk_int/0,
+         mk_float/0,
+         mk_string/0,
+         mk_char/0,
+         mk_nil/0,
+         mk_cons/2,
+         mk_tuple/3,
+         mk_tuple2/1,
+         mk_map/2,
+         update_map1/2,
+         update_map3/1,
+         access_map/1,
+         access_map2/1,
+         mk_seq/0,
+         is_empty/1,
+         is_empty2/1,
+         with_as/1,
+         block/2,
+         is_empty_case/1,
+         both_empty/2,
+         call/2,
+         fun_to_var/0,
+         local_fun_to_var/2,
+         remote_fun_to_var/2,
+         local_n_fun/0,
+         unary_plus/1,
+         unary_minus/1,
+         unary_not/1,
+         unary_bnot/1,
+         binary_star/2,
+         binary_div/2,
+         binary_rem/2,
+         binary_band/2,
+         binary_and/2,
+         binary_plus/2,
+         binary_minus/2,
+         binary_bor/2,
+         binary_bxor/2,
+         binary_bsl/2,
+         binary_bsr/2,
+         binary_or/2,
+         binary_xor/2,
+         binary_orelse/2,
+         binary_andalso/2,
+         list_plus/2,
+         list_minus/2,
+         comp1/2,
+         comp2/2,
+         comp3/2,
+         comp4/2,
+         comp5/2,
+         comp6/2,
+         comp7/2,
+         comp8/2,
+         guard1/2,
+         guard2/3,
+         p_match_tuple0/1,
+         p_match_tuple1/1,
+         p_match_invoke/0,
+         any_id/1,
+         atom_id/1,
+         binary_id/1,
+         bitstring_id/1,
+         byte_id/1,
+         float_id/1,
+         identifier_id/1,
+         iodata_id/1,
+         iolist_id/1,
+         map_id/1,
+         none_id/1,
+         noreturn_id/1,
+         number_id/1,
+         pid_id/1,
+         port_id/1,
+         reference_id/1,
+         term_id/1,
+         timeout_id/1,
+         ints_id/1,
+         mk_my_pair/2]).
 
 -spec id(Arg1 :: X) -> X.
 
@@ -162,11 +247,6 @@ both_empty(L1, L2) ->
 
 call(L1, L2) ->
     mod01:both_empty(L1, L2).
-
--spec remote_call([A]) -> [A].
-
-remote_call(L) ->
-    ocaml_list:rev(L).
 
 -spec fun_to_var() -> fun((A, B) -> {A, B}).
 

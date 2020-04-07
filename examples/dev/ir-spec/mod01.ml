@@ -135,8 +135,6 @@ let rec both_empty'2 : _ list * _ list -> bool = function
 let rec call'2 : _ list * _ list -> bool = function
   | v_L1, v_L2 -> both_empty'2 (v_L1, v_L2)
 
-let rec remote_call'1 : 'tA list -> 'tA list = function v_L -> List.rev v_L
-
 let rec fun_to_var'0 : unit -> 'tA * 'tB -> 'tA * 'tB = function
   | () ->
       let v_F = function v_X, v_Y -> (v_X, v_Y) in
