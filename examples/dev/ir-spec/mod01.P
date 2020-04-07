@@ -81,20 +81,20 @@ update_map1(M, A) ->
 -spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
 
 update_map3(M) ->
-    A0 = M . a,
-    B0 = M . a,
+    A0 = map_get(a, M),
+    B0 = map_get(a, M),
     M#{a := B0, b := A0}.
 
 -spec access_map(#{id := Id, location := Location, _ := _}) ->
                     {Id, Location}.
 
 access_map(M) ->
-    {M . id, M . location}.
+    {map_get(id, M), map_get(location, M)}.
 
 -spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
 
 access_map2(M) ->
-    M . inner1 . inner2.
+    map_get(inner2, map_get(inner1, M)).
 
 -spec mk_seq() -> {integer(), integer()}.
 

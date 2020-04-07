@@ -550,7 +550,12 @@ expr({op,Line,'.',L,R}=D,Context) ->
     D1 = erl2_parse:fold_dots(D),
     case D1 of
         {atom,_,_} -> D1;
-        _ -> {op,Line,'.',expr(L,Context),expr(R,Context)}  % leave to linter
+        _ ->
+            %% dereference X.a - assume X is a map
+            expr({call,Line,
+                  {remote,Line,{atom,Line,erlang},{atom,Line,map_get}},
+                  [R, L]},
+                 Context)
     end;
 expr({op,Line,Op,L0,R0},Context) ->
     L1 = expr(L0,Context),
