@@ -50,6 +50,14 @@ jobs:
         run: |
           eval $(opam env)
           make -C examples/elm-core/src
+      - name: "examples/dev_dots/src: make"
+        run: |
+          eval $(opam env)
+          make -C examples/dev_dots/src
+      - name: "examples/dev_enum/src: make"
+        run: |
+          eval $(opam env)
+          make -C examples/dev_enum/src
       - name: "examples/dev/src: test-ir"
         run: |
           eval $(opam env)
@@ -58,3 +66,11 @@ jobs:
         run: |
           eval $(opam env)
           make test-ir -C examples/elm-core/src
+      - name: "examples/dev_dots/src: test-ir"
+        run: |
+          eval $(opam env)
+          make test-ir -C examples/dev_dots/src
+      - name: "examples/dev_enum/src: test-ir"
+        run: |
+          eval $(opam env)
+          make test-ir -C examples/dev_enum/src
