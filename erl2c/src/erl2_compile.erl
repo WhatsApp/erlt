@@ -546,7 +546,7 @@ get_deps_from_compile_item(Loc, Value, St) ->
     end.
 
 
-% attr_type = behavior | parse_transform | core_transform | depends_on
+% ModuleDepType = behavior | parse_transform | core_transform | depends_on | type_checking
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
     case filelib:is_regular(Erl) of
@@ -623,6 +623,8 @@ maybe_save_binary(Code, St) ->
 
 format_error({ocaml_typechecker,ExitCode,Output}) ->
     io_lib:format("ocaml exited with error code ~w: ~n~s~n", [ExitCode, Output]);
+format_error({module_dependency,type_checking,Mod}) ->
+    io_lib:format("can't find ~s.beam", [Mod]);
 format_error({module_dependency,ModuleDepType,Mod}) ->
     io_lib:format("can't find ~s.beam from -~s(~s)", [Mod, ModuleDepType, Mod]);
 format_error(X) ->
@@ -903,10 +905,7 @@ collect_erl2_compile_deps(Forms, St0) ->
 
 
 do_collect_erl2_compile_deps(Forms, St0) ->
-    % TODO: insert scan for erl2 compile-time dependencies here, e.g.
-    % module aliases when used for importing module-scoped enum and record
-    % definitions
-    Deps = get_erl2_deps_from_forms(Forms, St0),
+    Deps = get_erl2_deps_from_forms(Forms, St0) ++ get_erl2_typed_deps(Forms, St0),
     %io:format("erl2 deps: ~p~n", [Deps]),
 
     St1 = St0#compile{
@@ -914,6 +913,15 @@ do_collect_erl2_compile_deps(Forms, St0) ->
     },
     {ok, Forms, St1}.
 
+get_erl2_typed_deps(Forms, St0) ->
+    RawDeps =
+        case {is_lang_st(St0), is_lang_ffi(St0)} of
+            {true, _} -> erl2ocaml:st_deps(Forms);
+            {_, true} -> erl2ocaml:ffi_deps(Forms);
+            {_, _} -> []
+        end,
+    F = St0#compile.ifile,
+    [resolve_module_dependency(type_checking, {F, L}, M, St0) || {L, M} <- RawDeps].
 
 % TODO: remove code duplication between this and get_erl1_deps_from_forms()
 get_erl2_deps_from_forms(Forms, St0) ->
@@ -945,7 +953,7 @@ get_erl2_deps_from_forms([_|Rest], St, File, Acc) ->
 get_erl2_deps_from_attr(File, Line, Name, Value, St) ->
     Loc = {File, Line},
     case Name of
-	depends_on ->
+        depends_on ->
             % erl2 feature for specifying dependencies explicitly
             get_erl2_deps_from_depends_on(Loc, Value, St);
         _ ->

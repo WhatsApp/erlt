@@ -1,8 +1,6 @@
 -lang([erl2, st]).
 -module(list).
 
--depends_on([basics, maybe]).
-
 %% CREATE
 -export([singleton/1, repeat/2, range/2, cons/2]).
 %% TRANSFORM

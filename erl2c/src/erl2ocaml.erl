@@ -1,6 +1,6 @@
 -module(erl2ocaml).
 
--export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0]).
+-export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1]).
 
 -record(context, {
     module :: atom(),
@@ -833,3 +833,62 @@ find_parent_sCC(SCCs,FunV) ->
 get_fn_name(Fun) -> element(3,Fun).
 get_fn_arg_len(Fun) -> element(4,Fun).
 get_fn_clauses(Fun) -> element(5,Fun).
+
+st_deps(Forms) ->
+    Module = get_module(Forms),
+    Remotes = collect(Forms, fun st_pred/1, fun remote/1),
+    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+
+ffi_deps(Forms) ->
+    Module = get_module(Forms),
+    Remotes = collect(Forms, fun ffi_pred/1, fun remote/1),
+    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+
+%% remote call
+remote({remote,_Ln,{atom,Ln,Mod},_}) ->
+    {Ln, Mod};
+%% remote type
+remote({remote_type,_Ln,[{atom,Ln,Mod}|_]}) ->
+    {Ln, Mod};
+%% remote enum ctr
+remote({op,_,'.',{atom,Ln,Mod},_}) ->
+    {Ln, Mod};
+%% fn mod:f/n
+remote({'fun',Ln,{function, Mod,F,A}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
+    {Ln, Mod};
+%% fn mod:f/n
+remote({'fun',_Ln,{function,{atom,Ln,Mod},{atom,_,F},{integer,_,A}}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
+    {Ln, Mod};
+remote(_Form) ->
+    false.
+
+st_pred(_Form) ->
+    true.
+
+%% ffi is not interested in function bodies
+ffi_pred({function,_,_,_,_}) ->
+    false;
+ffi_pred(_) ->
+    true.
+
+collect(Forms, Pred, Collect) ->
+    do_collect(Forms, Pred, Collect, []).
+
+do_collect([], _Pred, _Collect, Acc) ->
+    Acc;
+do_collect([H|T], Pred, Collect, Acc) ->
+    Acc1 = do_collect(T, Pred, Collect, Acc),
+    do_collect(H, Pred, Collect, Acc1);
+do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
+    case Pred(X) of
+        true ->
+            Acc1 = do_collect(tuple_to_list(X), Pred, Collect, Acc),
+            case Collect(X) of
+                false -> Acc1;
+                Delta -> [Delta|Acc1]
+            end;
+        false ->
+            Acc
+    end;
+do_collect(_X, _Pred, _Collect, Acc) ->
+    Acc.

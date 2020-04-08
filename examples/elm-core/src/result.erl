@@ -1,6 +1,5 @@
 -lang([erl2, st]).
 -module(result).
--depends_on([maybe]).
 
 -export_type([result/2]).
 -export([with_default/2, with_default/1]).
