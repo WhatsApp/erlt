@@ -631,7 +631,7 @@ comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
 Header
-"%% This file was automatically generated from the file \"erl_parse.yrl\"."
+"%% This file was automatically generated from the file \"erl2_parse.yrl\"."
 "%%"
 "%% Copyright Ericsson AB 1996-2015. All Rights Reserved."
 "%%"
@@ -1092,15 +1092,15 @@ Erlang code.
 -type type_name() :: atom().
 
 -type form_info() :: {'eof', erl_anno:line()}
-                   | {'error', erl_scan:error_info() | error_info()}
-                   | {'warning', erl_scan:error_info() | error_info()}.
+                   | {'error', erl2_scan:error_info() | error_info()}
+                   | {'warning', erl2_scan:error_info() | error_info()}.
 
 %% End of Abstract Format
 
 %% XXX. To be refined.
 -type error_description() :: term().
 -type error_info() :: {erl_anno:line(), module(), error_description()}.
--type token() :: erl_scan:token().
+-type token() :: erl2_scan:token().
 
 %% mkop(Op, Arg) -> {op,Anno,Op,Arg}.
 %% mkop(Left, Op, Right) -> {op,Anno,Op,Left,Right}.
@@ -1520,7 +1520,7 @@ balance_dotted(E) ->
       AbsTerm :: abstract_expr().
 abstract(T) ->
     Anno = erl_anno:new(0),
-    abstract(T, Anno, enc_func(epp:default_encoding())).
+    abstract(T, Anno, enc_func(erl2_epp:default_encoding())).
 
 -type encoding_func() :: fun((non_neg_integer()) -> boolean()).
 
@@ -1535,10 +1535,10 @@ abstract(T) ->
 
 abstract(T, Line) when is_integer(Line) ->
     Anno = erl_anno:new(Line),
-    abstract(T, Anno, enc_func(epp:default_encoding()));
+    abstract(T, Anno, enc_func(erl2_epp:default_encoding()));
 abstract(T, Options) when is_list(Options) ->
     Line = proplists:get_value(line, Options, 0),
-    Encoding = proplists:get_value(encoding, Options,epp:default_encoding()),
+    Encoding = proplists:get_value(encoding, Options,erl2_epp:default_encoding()),
     EncFunc = enc_func(Encoding),
     Anno = erl_anno:new(Line),
     abstract(T, Anno, EncFunc).
@@ -1740,7 +1740,7 @@ type_preop_prec('-') -> {600,700};
 type_preop_prec('bnot') -> {600,700};
 type_preop_prec('#') -> {700,800}.
 
--type erl_parse_tree() :: abstract_clause()
+-type erl2_parse_tree() :: abstract_clause()
                         | abstract_expr()
                         | abstract_form()
                         | abstract_type().
@@ -1749,8 +1749,8 @@ type_preop_prec('#') -> {700,800}.
       Fun :: fun((Anno) -> NewAnno),
       Anno :: erl_anno:anno(),
       NewAnno :: erl_anno:anno(),
-      Abstr :: erl_parse_tree() | form_info(),
-      NewAbstr :: erl_parse_tree() | form_info().
+      Abstr :: erl2_parse_tree() | form_info(),
+      NewAbstr :: erl2_parse_tree() | form_info().
 
 map_anno(F0, Abstr) ->
     F = fun(A, Acc) -> {F0(A), Acc} end,
@@ -1764,7 +1764,7 @@ map_anno(F0, Abstr) ->
       Acc1 :: term(),
       AccIn :: term(),
       AccOut :: term(),
-      Abstr :: erl_parse_tree() | form_info().
+      Abstr :: erl2_parse_tree() | form_info().
 
 fold_anno(F0, Acc0, Abstr) ->
     F = fun(A, Acc) -> {A, F0(A, Acc)} end,
@@ -1779,15 +1779,15 @@ fold_anno(F0, Acc0, Abstr) ->
       Acc1 :: term(),
       AccIn :: term(),
       AccOut :: term(),
-      Abstr :: erl_parse_tree() | form_info(),
-      NewAbstr :: erl_parse_tree() | form_info().
+      Abstr :: erl2_parse_tree() | form_info(),
+      NewAbstr :: erl2_parse_tree() | form_info().
 
 mapfold_anno(F, Acc0, Abstr) ->
     modify_anno1(Abstr, Acc0, F).
 
 -spec new_anno(Term) -> Abstr when
       Term :: term(),
-      Abstr :: erl_parse_tree() | form_info().
+      Abstr :: erl2_parse_tree() | form_info().
 
 new_anno(Term) ->
     F = fun(L, Acc) -> {erl_anno:new(L), Acc} end,
@@ -1795,14 +1795,14 @@ new_anno(Term) ->
     NewAbstr.
 
 -spec anno_to_term(Abstr) -> term() when
-      Abstr :: erl_parse_tree() | form_info().
+      Abstr :: erl2_parse_tree() | form_info().
 
 anno_to_term(Abstract) ->
     F = fun(Anno, Acc) -> {erl_anno:to_term(Anno), Acc} end,
     {NewAbstract, []} = modify_anno1(Abstract, [], F),
     NewAbstract.
 
--spec anno_from_term(Term) -> erl_parse_tree() | form_info() when
+-spec anno_from_term(Term) -> erl2_parse_tree() | form_info() when
       Term :: term().
 
 anno_from_term(Term) ->

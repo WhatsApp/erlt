@@ -88,7 +88,6 @@ make_erl_options(Opts) ->
 
 % Escript entry point
 main(Args0) ->
-    swap_erl_parse(),
     % handle -pa, -pz and remove them from the original args
     % 
     % NOTE, TODO: for now, only handling well-formed args, if things happen to
@@ -103,16 +102,6 @@ main(Args0) ->
 	error -> my_halt(1);
 	_ -> my_halt(2)
     end.
-
-
-swap_erl_parse() ->
-    %% the escript archive is already the first item on the code:get_path()
-    %% however, the erl_parse could be loaded a way before it (during some escript initialization).
-    %% So, we are unloading the legacy erl_parse and loading the bundled erl_parse.
-		code:purge(erl_parse),
-    true = code:delete(erl_parse),
-    {_,Code,File} = code:get_object_code(erl_parse),
-    {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 
 handle_path_args([]) ->
@@ -439,9 +428,9 @@ file_or_directory(Name) ->
 %% Makes an Erlang term given a string.
 
 make_term(Str) -> 
-    case erl_scan:string(Str) of
+    case erl2_scan:string(Str) of
 	{ok, Tokens, _} ->		  
-	    case erl_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
+	    case erl2_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
 		{ok, Term} -> Term;
 		{error, {_,_,Reason}} ->
 		    io:format(?STDERR, "~ts: ~ts~n", [Reason, Str]),
