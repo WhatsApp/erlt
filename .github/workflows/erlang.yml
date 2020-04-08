@@ -74,3 +74,6 @@ jobs:
         run: |
           eval $(opam env)
           make test-ir -C examples/dev_enum/src
+      - name: "examples/dev_module_record/src: make"
+        run: |
+          make erl2c-records -C examples/dev_module_record/src
