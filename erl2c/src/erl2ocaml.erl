@@ -351,9 +351,6 @@ expr({'fun',Line,Body}, Ctx) ->
         {function,F,A} when is_atom(F), is_integer(A) ->
             Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
             [{Fn}];
-        {function,M,F,A} when is_atom(M), is_atom(F), is_integer(A) ->
-            FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
-            {FQFn};
         {function,{atom,_,M},{atom,_,F},{integer,_,A}} when is_atom(M), is_atom(F), is_integer(A) ->
             FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
             {FQFn};
@@ -852,9 +849,6 @@ remote({remote_type,_Ln,[{atom,Ln,Mod}|_]}) ->
     {Ln, Mod};
 %% remote enum ctr
 remote({op,_,'.',{atom,Ln,Mod},_}) ->
-    {Ln, Mod};
-%% fn mod:f/n
-remote({'fun',Ln,{function, Mod,F,A}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
     {Ln, Mod};
 %% fn mod:f/n
 remote({'fun',_Ln,{function,{atom,Ln,Mod},{atom,_,F},{integer,_,A}}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
