@@ -1,0 +1,54 @@
+-file("enum_mod01.erl", 1).
+
+-module(enum_mod01).
+
+-export([f/0,g/0,p/0,q/1,r/1,s/2]).
+
+-opaque maybe(T) :: {some, T} | none.
+
+-export_type([maybe/1]).
+
+-type possibly(T) ::
+          {969696, enum_mod01, some, T} | {969696, enum_mod01, none}.
+
+-export_type([possibly/1]).
+
+-type pair(T1, T2) :: {969696, enum_mod01, p, T1, T2}.
+
+-spec f() -> maybe(any()).
+
+f() ->
+    none.
+
+-spec g() -> maybe(boolean()).
+
+g() ->
+    {some, true}.
+
+-spec p() -> possibly(any()).
+
+p() ->
+    {969696, enum_mod01, none}.
+
+-spec q(T) -> possibly(T).
+
+q(X) ->
+    {969696, enum_mod01, some, X}.
+
+-spec r(possibly(T)) -> [T].
+
+r(E) ->
+    case E of
+        {969696, enum_mod01, none} ->
+            [];
+        {969696, enum_mod01, some, X} ->
+            [X]
+    end.
+
+-spec s(T1, T2) -> pair(T1, T2).
+
+s(H, T) ->
+    {969696, enum_mod01, p, H, T}.
+
+
+
