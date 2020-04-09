@@ -339,6 +339,16 @@ gexpr({cons,Line,H0,T0},Context) ->
 gexpr({tuple,Line,Es0},Context) ->
     Es1 = gexpr_list(Es0,Context),
     {tuple,Line,Es1};
+gexpr({enum,Line,{op,_L,'.',M0,A0},Es0},Context) ->
+    M1 = gexpr(M0,Context),
+    A1 = gexpr(A0,Context),
+    Es1 = gexpr_list(Es0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, A1 | Es1]};
+gexpr({enum,Line,A0,Es0},Context) ->
+    M = {atom, Line, Context#context.module},
+    A1 = gexpr(A0,Context),
+    Es1 = gexpr_list(Es0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, A1 | Es1]};
 gexpr({record_index,Line,Name,Field0},Context) ->
     Field1 = gexpr(Field0,Context),
     {record_index,Line,Name,Field1};
