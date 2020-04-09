@@ -142,7 +142,7 @@ type_500 -> type                          : '$1'.
 
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> dot_atom                          : '$1'.
+type -> dot_atom                          : fold_dots('$1').
 type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
 type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
 type -> dot_atom '{' '}'                  : {type, ?anno('$1'), enum,
