@@ -23,3 +23,7 @@ folder of a corresponding project. Namely:
 # How to set explicit compile-time dependencies for enforcing compile/typechecking order
 
 Add `-depends_on([mod01, ...]).` to your .erl files -- see `depends_test.erl` for example.
+
+# Some specific examples
+
+[type-errors/src](type-errors/src) - some examples of type errors in `-lang([erl2, st])`.

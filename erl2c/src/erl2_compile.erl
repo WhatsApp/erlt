@@ -981,14 +981,15 @@ erl2_typecheck(Code, St) ->
 
 do_erl2_typecheck(Code, St) ->
     OcamlDir = filename:join(St#compile.build_dir, "ocaml"),
-
     Basename = filename:rootname(filename:basename(St#compile.ofile)),
-
-    generate_ocaml_code(OcamlDir, Basename, Code, St),
-    call_ocaml_typechecker(OcamlDir, Basename, St),
-
-    {ok,Code,St}.
-
+    case generate_ocaml_code(OcamlDir, Basename, Code, St) of
+        ok ->
+            call_ocaml_typechecker(OcamlDir, Basename, St),
+            {ok,Code,St};
+        {error, {Line, ErrorBody}} ->
+            StError = {St#compile.ifile, [{Line, erl2ocaml, ErrorBody}]},
+            {error, St#compile{errors = [StError|St#compile.errors]}}
+    end.
 
 generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
     Rootname = filename:join(OcamlDir, Basename),
@@ -997,14 +998,22 @@ generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
 
     case is_lang_ffi(St) of
         true ->
-            {PubMliCode,PrivMliCode} = erl2ocaml:erl2ocaml_ffi(Forms),
-            ok = file:write_file(Rootname ++ ".mli", PubMliCode),
-            ok = file:write_file(Rootname ++ "_priv.mli", PrivMliCode);
+            case erl2ocaml:erl2ocaml_ffi(Forms) of
+                {ok, PubMliCode, PrivMliCode} ->
+                    ok = file:write_file(Rootname ++ ".mli", PubMliCode),
+                    ok = file:write_file(Rootname ++ "_priv.mli", PrivMliCode);
+                Error = {error, _} ->
+                    Error
+            end;
         false ->
-            {MliCode,MlCode,PrivMlCode} = erl2ocaml:erl2ocaml_st(Forms),
-            ok = file:write_file(Rootname ++ ".ml", MlCode),
-            ok = file:write_file(Rootname ++ ".mli", MliCode),
-            ok = file:write_file(Rootname ++ "_priv.ml", PrivMlCode)
+            case erl2ocaml:erl2ocaml_st(Forms) of
+                {ok, MliCode, MlCode, PrivMlCode} ->
+                    ok = file:write_file(Rootname ++ ".ml", MlCode),
+                    ok = file:write_file(Rootname ++ ".mli", MliCode),
+                    ok = file:write_file(Rootname ++ "_priv.ml", PrivMlCode);
+                Error = {error, _} ->
+                    Error
+            end
     end.
 
 ensure_ocaml_ffi(OcamlDir) ->

@@ -1,6 +1,6 @@
 -module(erl2ocaml).
 
--export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1]).
+-export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1, format_error/1]).
 
 -record(context, {
     module :: atom(),
@@ -41,7 +41,7 @@ ffi() ->
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
     swap_erl_parse(),
     {ok, Forms} = epp:parse_file(InFile, []),
-    {MliCode, MlCode} = erl2ocaml_st(Forms),
+    {ok, MliCode, MlCode} = erl2ocaml_st(Forms),
     file:write_file(MliFile, MliCode),
     file:write_file(MlFile, MlCode);
 main(["-ast", File]) ->
@@ -69,18 +69,26 @@ swap_erl_parse() ->
     {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 erl2ocaml_ffi(Forms) ->
+    try
+        do_erl2ocaml_ffi(Forms)
+    catch
+        throw:{erl2ocaml_error, {Line, ErrorBody}} ->
+            {error, {Line, ErrorBody}}
+    end.
+
+do_erl2ocaml_ffi(Forms) ->
     erlang:put('rec_tv_gen', 1),
     Exports = get_exports(Forms),
     Ctx = #context{
         module = get_module(Forms),
         export_types = get_export_types(Forms)
     },
-
+    Funs = get_fns(Forms),
     AllSpecs = get_specs(Forms),
     {PubSpecs, SpecIds} =
         lists:unzip([{PubSpec,FId} || PubSpec = {_,_,_,{FId,_}} <- AllSpecs, lists:member(FId,Exports)]),
     UnSpecedFunIds = Exports -- SpecIds,
-    check_export_specs(UnSpecedFunIds),
+    check_export_specs(Funs, UnSpecedFunIds),
 
     PrivOTypes = [erl2ocaml_spec(S, Ctx) || S <- AllSpecs],
     PubOTypes =  [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
@@ -97,9 +105,17 @@ erl2ocaml_ffi(Forms) ->
     PubMliCode = iolist_to_binary(PubInterfaceLines),
     PrivMliCode = iolist_to_binary(PrivInterfaceLines),
 
-    {PubMliCode, PrivMliCode}.
+    {ok, PubMliCode, PrivMliCode}.
 
 erl2ocaml_st(Forms) ->
+    try
+        do_erl2ocaml_st(Forms)
+    catch
+        throw:{erl2ocaml_error, {Line, ErrorBody}} ->
+            {error, {Line, ErrorBody}}
+    end.
+
+do_erl2ocaml_st(Forms) ->
     erlang:put('rec_tv_gen', 1),
     Exports = get_exports(Forms),
     Ctx = #context{
@@ -113,7 +129,7 @@ erl2ocaml_st(Forms) ->
     {PubSpecs, SpecIds} =
         lists:unzip([{PubSpec,FId} || PubSpec = {_,_,_,{FId,_}} <- AllSpecs, lists:member(FId,Exports)]),
     UnSpecedFunIds = Exports -- SpecIds,
-    check_export_specs(UnSpecedFunIds),
+    check_export_specs(Funs, UnSpecedFunIds),
 
     PrivOTypes = [erl2ocaml_spec(S, Ctx) || S <- AllSpecs],
     PubOTypes = [erl2ocaml_spec(S, Ctx) || S <- PubSpecs],
@@ -145,12 +161,15 @@ erl2ocaml_st(Forms) ->
             ++ ImplementationLines
             ++ "\n" ++ "end",
 
-    {PubMliCode, MlCode, PrivMlCode}.
+    {ok, PubMliCode, MlCode, PrivMlCode}.
 
-check_export_specs(UnSpecedFunIds) ->
+check_export_specs(Funs, UnSpecedFunIds) ->
     case UnSpecedFunIds of
-        [] -> ok;
-        _ -> erlang:error({unspeced_exported_funs, UnSpecedFunIds})
+        [] ->
+            ok;
+        _ ->
+            [{L,N,A}|_] = [{L,N,A} || {_,L,N,A,_} <- Funs, lists:member({N, A}, UnSpecedFunIds)],
+            throw({erl2ocaml_error, {L, {'unspeced_fun', N, A}}})
     end.
 
 erl2ocaml_sccs(SCCs, OTypes, Ctx) ->
@@ -209,7 +228,7 @@ pattern({var,_Line,V}) ->
 pattern({match,_Line,P,{var,_Line,V}}) ->
     pattern(P) ++ " as " ++ "v_" ++ atom_to_list(V);
 pattern({match,Line,_,MP}) ->
-    erlang:error({not_supported, Line, complex_match_pattern, MP});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', MP, "complex match pattern"}}});
 pattern({integer,_Line,I}) ->
     integer_to_list(I);
 pattern({char,_Line,C}) ->
@@ -220,8 +239,8 @@ pattern({atom,_Line,true}) ->
     "true";
 pattern({atom,_Line,false}) ->
     "false";
-pattern({atom,Line,A}) ->
-    erlang:error({not_supported, Line, atom, A});
+pattern({atom,Line,Atom}) ->
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom in pattern"}}});
 pattern({enum,_,{atom,_,Ctr},[]}) ->
     first_upper(atom_to_list(Ctr));
 pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
@@ -258,10 +277,10 @@ pattern({tuple,_Line,Ps}) ->
     Docs = ["(", Ops1, ")"],
     binary_to_list(iolist_to_binary(Docs));
 pattern(Pat = {_,Line,_}) ->
-    erlang:error({not_supported, Line, pattern, Pat}).
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', Pat}}}).
 
 expr_seq([E={match,Line,_,_}], _Ctx) ->
-    erlang:error({not_supported, Line, last_match_expr, E});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "match expr in the end of a seq"}}});
 expr_seq([E0], Ctx) ->
     E1 = expr(E0, Ctx),
     [E1];
@@ -269,7 +288,7 @@ expr_seq(ES, Ctx)->
     expr1([], ES, Ctx).
 
 expr1([], [E={match,Line,_,_}], _Ctx) ->
-    erlang:error({not_supported, Line, last_match_expr, E});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "match expr in the end of a seq"}}});
 expr1(Acc, [E], Ctx)->
     Delta = [expr(E, Ctx)],
     Acc ++ Delta;
@@ -301,8 +320,8 @@ expr({atom,_Line,true}, _Ctx) ->
     {"true"};
 expr({atom,_Line,false}, _Ctx) ->
     {"false"};
-expr({atom,Line,A}, _Ctx) ->
-    erlang:error({not_supported, Line, atom, A});
+expr(Atom={atom,Line,_A}, _Ctx) ->
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom"}}});
 expr({string,_Line,S}, _Ctx) ->
     {"\"" ++ S ++ "\""};
 expr({char,_Line,C}, _Ctx) ->
@@ -312,9 +331,9 @@ expr({nil,_Line}, _Ctx) ->
 expr({cons,_Line,H,T}, Ctx) ->
     [{"(("}, expr(H, Ctx), {") :: ("}, expr(T, Ctx), {"))"}];
 expr(E={lc,Line,_,_}, _Ctx) ->
-    erlang:error({not_supported, Line, list_comprehension, E});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "list comprehension"}}});
 expr(E={bc,Line,_,_}, _Ctx) ->
-    erlang:error({not_supported, Line, binary_comprehension, E});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "binary comprehension"}}});
 expr({tuple,_Line,[E]}, Ctx) ->
     [{"Ffi.Tuple1("}, [expr(E, Ctx)], {")"}];
 expr({tuple,_Line,Es}, Ctx) ->
@@ -340,11 +359,11 @@ expr({map1,_Line, Map, UpdateAssocs}, Ctx) ->
     update_assocs(OMap, UpdateAssocs, Ctx);
 expr({block,_Line,Es}, Ctx) ->
     expr_seq(Es, Ctx);
-expr({'if',Line,_Clauses}, _Ctx) ->
-    erlang:error({not_supported, Line, if_expression});
+expr(E={'if',Line,_Clauses}, _Ctx) ->
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "if expression"}}});
 expr({'case',_Line,Expr,Clauses}, Ctx) ->
     [{"("}, {"match"}] ++ [expr(Expr, Ctx)] ++ [{"with"}] ++ [clauses(Clauses, Ctx)] ++ [{")"}];
-expr({'fun',Line,Body}, Ctx) ->
+expr(E={'fun',Line,Body}, Ctx) ->
     case Body of
         {clauses,Clauses} ->
             [{"("}, {"function"}, clauses(Clauses, Ctx), {")"}];
@@ -355,8 +374,7 @@ expr({'fun',Line,Body}, Ctx) ->
             FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
             {FQFn};
         {function,_M,_F,_A} ->
-            %% _A can be a var, we are not supporting such dynamic reference
-            erlang:error({not_supported, Line, such_body, Body})
+            throw({erl2ocaml_error, {Line, {'not_supported_syntax', E}}})
     end;
 expr({named_fun,Line,Name,Clauses}, Ctx) ->
     Exprs = [{match_rec, Line, {var, Line, Name}, {'fun',Line, {clauses, Clauses}}}, {var, Line, Name}],
@@ -395,9 +413,10 @@ expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}, Ctx) ->
     [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
         {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
 expr(E={remote,Line,_M,_F}, _Ctx) ->
-    erlang:error({not_supported, Line, E});
-expr(Exp, _Ctx) ->
-    erlang:error({not_supported, erlang:element(2, Exp), expr, Exp}).
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E}}});
+expr(E, _Ctx) ->
+    Line = erlang:element(2, E),
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E}}}).
 
 uop('+') -> "+";
 uop('-') -> "-";
@@ -444,7 +463,7 @@ init_assoc({map_field_assoc,_Line,{atom,_ALine,A},V}, Ctx) ->
         {"method set_" ++ A1 ++ " new_val_" ++ A1 ++ " = {< " ++ "val_" ++ A1 ++ " =  new_val_" ++ A1 ++ " >}"}
     ];
 init_assoc({map_field_assoc,Line,E,_V}, _Ctx) ->
-    erlang:error({not_supported, Line, non_atom_key, E}).
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "non-atom key in map_field_assoc"}}}).
 
 update_assocs(Acc, [A|As], Ctx) ->
     update_assocs(update_assoc(Acc, A, Ctx), As, Ctx);
@@ -454,9 +473,9 @@ update_assocs(Acc, [], _Ctx) ->
 update_assoc(Acc, {map_field_exact,_Line,{atom,_ALine,A},V}, Ctx) ->
     [{"("}, Acc, {")"}, {"#" ++ "set_" ++ atom_to_list(A)}, expr(V, Ctx)];
 update_assoc(_Acc, {map_field_exact,Line,E,_V}, _Ctx) ->
-    erlang:error({not_supported, Line, non_atom_key, E});
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "non-atom key in map_field_exact"}}});
 update_assoc(_Acc, E={map_field_assoc,Line,_K,_V}, _Ctx) ->
-    erlang:error({not_supported, Line, update_map_field_assoc, E}).
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "wrong map_field_assoc"}}}).
 
 type_def_scc(TypeDefs, Ctx) ->
     type_def_scc(true, TypeDefs, Ctx).
@@ -519,8 +538,8 @@ enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}, Ctx) ->
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}, Ctx) ->
     {atom_to_list(Name) ++ "'" ++ integer_to_list(Arity), type(FT, Ctx)};
-erl2ocaml_spec({attribute,Line,spec,_}, _) ->
-    erlang:error({not_supported, Line, spec}).
+erl2ocaml_spec({attribute,Line,spec,Spec}, _) ->
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', Spec, "spec in not supported format"}}}).
 
 type_name(Name, Args) ->
     atom_to_list(Name) ++ "'" ++ integer_to_list(length(Args)).
@@ -625,15 +644,15 @@ type({remote_type,_,[{atom,_,M},{atom,_,N},Ts=[]]}, _Ctx) ->
 type({remote_type,_,[{atom,_,M},{atom,_,N},Ts]}, Ctx) ->
     Ts1 = lists:map(fun(T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
     "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ first_upper(atom_to_list(M)) ++ "." ++ type_name(N, Ts);
-type(Type, _Ctx) ->
-    Line = erlang:element(2, Type),
-    erlang:error({not_supported, Line, Type}).
+type(T, _Ctx) ->
+    Line = erlang:element(2, T),
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', T}}}).
 
 map_field_type({type,_,map_field_exact,[{atom,_,K},VT]}, SelfType, Ctx) ->
     VType = type(VT, Ctx),
     "get_" ++ atom_to_list(K) ++ " : " ++ VType ++ "; set_" ++ atom_to_list(K) ++ " : (" ++ VType ++ ") ->"  ++ SelfType;
 map_field_type(Type={type,Line,_,_}, _SelfType, _Ctx) ->
-    erlang:error({not_supported, Line, Type}).
+    throw({erl2ocaml_error, {Line, {'not_supported_syntax', Type}}}).
 
 %% naive indentation of documents
 indent_docs([Doc|Docs]) ->
@@ -886,3 +905,11 @@ do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
     end;
 do_collect(_X, _Pred, _Collect, Acc) ->
     Acc.
+
+format_error({'unspeced_fun', N, A}) ->
+    Fun = atom_to_list(N) ++ "/" ++ integer_to_list(A),
+    io_lib:format("-lang([erl2, st]): Exported function ~s doesn't have any spec", [Fun]);
+format_error({'not_supported_syntax', Form, Details}) ->
+    io_lib:format("-lang([erl2, st]): Not supported syntax (~s): ~p", [Details, Form]);
+format_error({'not_supported_syntax', Form}) ->
+    io_lib:format("-lang([erl2, st]): Not supported syntax: ~p", [Form]).
