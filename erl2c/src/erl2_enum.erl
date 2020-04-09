@@ -387,6 +387,10 @@ gexpr({op,Line,Op,L0,R0},Context) when Op =:= 'andalso'; Op =:= 'orelse' ->
     L1 = gexpr(L0,Context),
     R1 = gexpr(R0,Context),			%They see the same variables
     {op,Line,Op,L1,R1};
+gexpr({op,Line,'.',L0,R0},Context) ->
+    L1 = gexpr(L0,Context),
+    R1 = gexpr(R0,Context),
+    {op,Line,'.',L1,R1};
 gexpr({op,Line,Op,L0,R0},Context) ->
     case erl_internal:arith_op(Op, 2) or
         erl_internal:bool_op(Op, 2) or
