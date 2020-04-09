@@ -1530,6 +1530,8 @@ pattern({cons,_Line,H,T}, Vt, Old,  Bvt, St0) ->
     {vtmerge_pat(Hvt, Tvt),vtmerge_pat(Bvt1,Bvt2),St2};
 pattern({tuple,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_list(Ps, Vt, Old, Bvt, St);
+pattern({enum,_Line,C,Ps}, Vt, Old, Bvt, St) ->
+    pattern_list([C|Ps], Vt, Old, Bvt, St);
 pattern({map,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
 %%pattern({struct,_Line,_Tag,Ps}, Vt, Old, Bvt, St) ->
@@ -1697,6 +1699,8 @@ is_pattern_expr_1({float,_Line,_F}) -> true;
 is_pattern_expr_1({atom,_Line,_A}) -> true;
 is_pattern_expr_1({tuple,_Line,Es}) ->
     all(fun is_pattern_expr/1, Es);
+is_pattern_expr_1({enum,_Line,C,Es}) ->
+    all(fun is_pattern_expr/1, [C|Es]);
 is_pattern_expr_1({nil,_Line}) -> true;
 is_pattern_expr_1({cons,_Line,H,T}) ->
     is_pattern_expr_1(H) andalso is_pattern_expr_1(T);
@@ -1956,6 +1960,8 @@ gexpr({cons,_Line,H,T}, Vt, St) ->
     gexpr_list([H,T], Vt, St);
 gexpr({tuple,_Line,Es}, Vt, St) ->
     gexpr_list(Es, Vt, St);
+gexpr({enum,_Line,C,Es}, Vt, St) ->
+    gexpr_list([C|Es], Vt, St);
 gexpr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
 gexpr({map,_Line,Src,Es}, Vt, St) ->
@@ -2127,6 +2133,8 @@ is_gexpr({string,_L,_S}, _Info) -> true;
 is_gexpr({nil,_L}, _Info) -> true;
 is_gexpr({cons,_L,H,T}, Info) -> is_gexpr_list([H,T], Info);
 is_gexpr({tuple,_L,Es}, Info) -> is_gexpr_list(Es, Info);
+is_gexpr({enum,_L,C,Es}, Info) ->
+    is_gexpr_list([C|Es], Info);
 %%is_gexpr({struct,_L,_Tag,Es}, Info) ->
 %%    is_gexpr_list(Es, Info);
 is_gexpr({map,_L,Es}, Info) ->
@@ -2224,6 +2232,8 @@ expr({bc,_Line,E,Qs}, Vt, St) ->
     handle_comprehension(E, Qs, Vt, St);
 expr({tuple,_Line,Es}, Vt, St) ->
     expr_list(Es, Vt, St);
+expr({enum,_Line,C,Es}, Vt, St) ->
+    expr_list([C|Es], Vt, St);
 expr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
 expr({map,_Line,Src,Es}, Vt, St) ->
@@ -2511,6 +2521,7 @@ is_valid_call(Call) ->
         {lc, _, _, _} -> false;
         {record_index, _, _, _} -> false;
         {tuple, _, Exprs} when length(Exprs) =/= 2 -> false;
+        {enum, _, _, _} -> false;
         _ -> true
     end.
 
@@ -2535,6 +2546,10 @@ is_valid_map_key_value(K) ->
 	    foldl(fun(E,B) ->
 			B andalso is_valid_map_key_value(E)
 		end,true,Es);
+	{enum,_,C,Es} ->
+	    foldl(fun(E,B) ->
+			B andalso is_valid_map_key_value(E)
+		end,true,[C|Es]);
 	{map,_,Arg,Ps} ->
 	    % only check for value expressions to be valid
 	    % invalid map expressions are later checked in
