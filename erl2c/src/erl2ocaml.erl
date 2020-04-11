@@ -243,17 +243,10 @@ pattern({atom,Line,Atom}) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom in pattern"}}});
 pattern({enum,_,{atom,_,Ctr},[]}) ->
     first_upper(atom_to_list(Ctr));
-pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}) ->
-    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
 pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
     first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
 pattern({enum,_,{atom,_,Ctr},Args}) ->
     first_upper(atom_to_list(Ctr))
-        ++ "("
-        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
-        ++ ")";
-pattern({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}) ->
-    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
         ++ "("
         ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
         ++ ")";
