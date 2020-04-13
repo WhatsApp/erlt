@@ -55,12 +55,6 @@ commands (Defaults to 'compile'):
       -- clean compile results and incremental compilation state stored in <build_dir>
 
 
-private commands (called from erlbuild.template.mk):
-
-  erlc [erlc options] [extra erlc options] <.erl file>
-      -- similar to 'erlc', but optimized when run after 'erlbuild erlc -M'; NOTE: accepts only a single .erl file
-
-
 erlbuild options:
   -o <output_dir>          directory where the compiler is to place the output files. Defaults to ../ebin
   --build-dir <build_dir>  directory for storing intermediate compilation state. Defaults to <output_dir>/../build
@@ -70,7 +64,7 @@ erlbuild options:
   --gen-only               generate makefile, but don't run make
 
   --erlc <command>           erlc command. Defaults to 'erlc'.
-  --erlbuild-erlc <command>  erlbuild erlc command. Defaults to '<erlbuidl> erlc'.
+  --erlbuild-erlc <command>  erlbuild erlc command. Defaults to '<erlbuild>-erlc'.
 
   -j[jobs]       specifies the number of jobs (commands) to run simultaneously. -j defaults to the number of available CPU cores
   -v[level]      verbose build output, <level> is a non-negative integer. -v defaults to -v9
@@ -88,20 +82,6 @@ erlc options:
   -Wall          enable all warnings
   -W             enable warnings (default; same as -W1)
   +term          pass the Erlang term unchanged to the compiler
-
-
-extra erlc options:
-
-  options used by erlbuild:
-  --build-phase <build_phase>   scan | compile
-  --build-dir <build_dir>       <build_dir> passed from erlbuild
-
-  options specific to depscan:
-  -M             enable depscan mode: generate a rule for make(1) describing the dependencies
-  -M2            similar to -M, but also includes dependencies on .beam files from behaviors and parse transforms
-  -M2C           -M2 with -M compatibility mode: -M2C means -M2 wihtout .beam dependencies; -M2C output should be identical to -M
-  -MF file       write the dependencies to 'file'
-  -MP            add a phony target for each dependency
 "
     ]]).
 
@@ -201,8 +181,6 @@ do_run_command(Argv0) ->
             run_compile_command(CompileArgv);
         "clean" ->
             run_clean_command(Argv);
-        "erlc" ->
-            run_erlc_command(Argv);
         _ ->
             throw_error("unknown command '~s'; see '~s -h' for list of commands", [Command, command_name()])
     end.
@@ -235,10 +213,6 @@ run_compile_command(Argv) ->
 run_clean_command(Argv) ->
     Args = parse_command_args(clean, Argv),
     do_clean(Args).
-
-
-run_erlc_command(Argv) ->
-    erlbuild_erlc:main(Argv).  % NOTE: this function doesn't return
 
 
 parse_command_args(Command, Args) ->
@@ -595,7 +569,7 @@ generate_makefile(Args) ->
     ErlbuildErlc =
         case Args#args.erlbuild_erlc of
             'undefined' ->
-                Erlbuild ++ " erlc";
+                Erlbuild ++ "-erlc";
             ErlbuildErlc_ ->
                 ErlbuildErlc_
         end,

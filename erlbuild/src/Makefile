@@ -10,17 +10,23 @@ ERLC_FLAGS += -I ../include
 
 
 ERLBUILD := ../bin/erlbuild
+ERLBUILD_ERLC := ../bin/erlbuild-erlc
 
 
 ERLS := $(wildcard *.erl)
 BEAMS := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
 
 
-all: $(ERLBUILD)
+all: $(ERLBUILD) $(ERLBUILD_ERLC)
+	@:
 
 
+# TODO: be specific about which BEAMS are included in which script
 $(ERLBUILD): $(BEAMS)
 	./make_escript $@ erlbuild $(BEAMS)
+
+$(ERLBUILD_ERLC): $(BEAMS)
+	./make_escript $@ erlbuild_erlc $(BEAMS)
 
 
 # useing explicit order for the parse transform and the file it embeds
@@ -36,4 +42,7 @@ $(EBIN):
 
 
 clean:
-	rm -f $(ERLBUILD) $(BEAMS)
+	rm -f $(ERLBUILD) $(ERLBUILD_ERLC) $(BEAMS)
+
+
+include ../../common.mk
