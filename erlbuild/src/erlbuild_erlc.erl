@@ -320,6 +320,10 @@ usage() ->
 		 ["Usage: erlc [Options] file.ext ...\n",
 		  "Options:\n",
 		  [io_lib:format("~-14s ~s\n", [K,D]) || {K,D} <- H]]),
+    io:put_chars(?STDERR,
+                 ["\nOptions used by erlbuild:\n"
+                  "  --build-phase <build_phase>   scan | compile\n"
+                  "  --build-dir <build_dir>       <build_dir> passed from erlbuild\n"]),
     error.
 
 get_option(_Name, [], [[C|_]=Option|T]) when C =/= $- ->

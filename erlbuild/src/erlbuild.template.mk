@@ -159,7 +159,7 @@ compile: do_compile $(ERLS)
 
 do_compile: $(BEAMS)
 
-$(EBIN)/%.beam: %.erl | $(EBIN)
+$(EBIN)/%.beam: %.erl $(ERLBUILD_ERLC) | $(EBIN)
 	$(ECHO_1) "compile $<"
 	$(QUIET)$(ERLBUILD_ERLC) --build-phase compile --build-dir $(BUILD_DIR) $(ERLC_FLAGS) $<
 
@@ -200,7 +200,7 @@ do_scan: $(DEPFILES)
 # dependencies, this would trigger compilation error in non-incremental CI
 # builds.
 
-$(BUILD_DIR)/%.d: %.erl | $(BUILD_DIR) $(EBIN)
+$(BUILD_DIR)/%.d: %.erl $(ERLBUILD_ERLC) | $(BUILD_DIR) $(EBIN)
 	$(ECHO_1) "scan $<"
 	$(QUIET)$(ERLBUILD_ERLC) --build-phase scan --build-dir $(BUILD_DIR) -M -MP -MF $@ $(ERLC_FLAGS) $<
 

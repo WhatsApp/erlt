@@ -1,3 +1,4 @@
 **/*.swp
 *.beam
 **/build/
+**/.deps.mk

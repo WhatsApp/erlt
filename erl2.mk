@@ -8,7 +8,13 @@ ERLBUILD := $(ROOT)/erlbuild/bin/erlbuild
 ERLBUILD_ERLC := $(ROOT)/erl2c/bin/erl2c
 
 
+DEPS += erlbuild/src erl2c/src
+
+
 include $(ROOT)/erlbuild/erlbuild.mk
+include $(ROOT)/common.mk
+
+
 
 # Helper targets for developement and hacking
 

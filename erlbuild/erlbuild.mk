@@ -158,15 +158,14 @@ BEAMS       := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
 ERLBUILD_MK := $(BUILD_DIR)/erlbuild.mk
 
 
-all: erlbuild-compile delete_extra_beams
+all: compile delete_extra_beams
+
+
+compile: erlbuild-compile
 
 
 clean: erlbuild-clean
 	$(QUIET)rm -rf $(BUILD_DIR)
-
-
-# shorthand for erlbuild-compile
-compile: erlbuild-compile
 
 
 $(BEAMS): erlbuild-compile
