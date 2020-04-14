@@ -233,17 +233,17 @@ pattern({atom,_Line,false}) ->
     "false";
 pattern({atom,Line,Atom}) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom in pattern"}}});
-pattern({enum,_,{atom,_,Ctr},[]}) ->
-    first_upper(atom_to_list(Ctr));
-pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}) ->
-    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr));
-pattern({enum,_,{atom,_,Ctr},Args}) ->
-    first_upper(atom_to_list(Ctr))
+pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},[]}) ->
+    enum_ctr_name(Enum, Ctr);
+pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}) ->
+    enum_ctr_name(Mod, Enum, Ctr);
+pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},Args}) ->
+    enum_ctr_name(Enum, Ctr)
         ++ "("
         ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
         ++ ")";
-pattern({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}) ->
-    first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))
+pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},Args}) ->
+    enum_ctr_name(Mod, Enum, Ctr)
         ++ "("
         ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
         ++ ")";
@@ -261,7 +261,8 @@ pattern({tuple,_Line,Ps}) ->
     Ops1 = interleave(false, ", ", OPs),
     Docs = ["(", Ops1, ")"],
     binary_to_list(iolist_to_binary(Docs));
-pattern(Pat = {_,Line,_}) ->
+pattern(Pat) ->
+    Line = erlang:element(2, Pat),
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Pat}}}).
 
 expr_seq([E={match,Line,_,_}], _Ctx) ->
@@ -383,19 +384,15 @@ expr({op,Line,'--',L,R}, Ctx) ->
     [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}, Ctx), {")"}];
 expr({op,_Line,Op,L,R}, Ctx) ->
     [{"("}, expr(L, Ctx), {")"}, {bop(Op)}, {"("}, expr(R, Ctx), {")"}];
-expr({enum,_,{atom,_,Ctr},[]}, _Ctx) ->
-    {first_upper(atom_to_list(Ctr))};
-expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},[]}, _Ctx) ->
-    {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
-expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},[]}, _Ctx) ->
-    {first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))};
-expr({enum,_,{atom,_,Ctr},Args}, Ctx) ->
-    [{first_upper(atom_to_list(Ctr))}, {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
-expr({enum,_,{remote,_,{atom,_,Mod},{atom,_,Ctr}},Args}, Ctx) ->
-    [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
+expr({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},[]}, _Ctx) ->
+    {enum_ctr_name(Enum, Ctr)};
+expr({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}, _Ctx) ->
+    {enum_ctr_name(Mod, Enum, Ctr)};
+expr({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},Args}, Ctx) ->
+    [{enum_ctr_name(Enum, Ctr)},
         {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
-expr({enum,_,{op,_,'.',{atom,_,Mod},{atom,_,Ctr}},Args}, Ctx) ->
-    [{first_upper(atom_to_list(Mod)) ++ "." ++ first_upper(atom_to_list(Ctr))},
+expr({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},Args}, Ctx) ->
+    [{enum_ctr_name(Mod, Enum, Ctr)},
         {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
 expr(E={remote,Line,_M,_F}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', E}}});
@@ -491,7 +488,7 @@ api_type_def({_, {N,_T,TVs}}, Ctx) ->
 
 type_def({enum, {N,T,TVs}}, Ctx) ->
     EnumAlias = enum_alias(N, TVs, Ctx),
-    EnumDef = enum_def_lhs(N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(T, Ctx) ++ "\n",
+    EnumDef = enum_def_lhs(N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(N, T, Ctx) ++ "\n",
     EnumAlias ++ "\n" ++ "and " ++ EnumDef;
 type_def({Kind, {N,T,TVs}}, Ctx) ->
     type_def_lhs(N, TVs, Ctx) ++ type_def_rhs(Kind, T, Ctx) ++ "\n".
@@ -526,17 +523,25 @@ type_def_rhs('opaque', T, Ctx) ->
         'priv' -> " = " ++ type(T, Ctx)
     end.
 
-enum_ctr_defs({type,_Ln,union, CtrDefs}, Ctx) ->
-    interleave(false, " | ", [enum_ctr_def(CtrDef, Ctx) || CtrDef <- CtrDefs]);
-enum_ctr_defs(CtrDef, Ctx) ->
-    enum_ctr_def(CtrDef, Ctx).
+enum_ctr_defs(EnumN, {type,_Ln,union, CtrDefs}, Ctx) ->
+    interleave(false, " | ", [enum_ctr_def(EnumN, CtrDef, Ctx) || CtrDef <- CtrDefs]);
+enum_ctr_defs(EnumN, CtrDef, Ctx) ->
+    enum_ctr_def(EnumN, CtrDef, Ctx).
 
-enum_ctr_def({type,_,enum,[{atom,_,CtrN}]}, _Ctx) ->
-    first_upper(atom_to_list(CtrN));
-enum_ctr_def({type,_,enum,[{atom,_,CtrN}| Ts]}, Ctx) ->
-    first_upper(atom_to_list(CtrN))
+enum_ctr_def(EnumN, {type,_,enum,[{atom,_,CtrN}]}, _Ctx) ->
+    enum_ctr_name(EnumN, CtrN);
+enum_ctr_def(EnumN, {type,_,enum,[{atom,_,CtrN}| Ts]}, Ctx) ->
+    enum_ctr_name(EnumN, CtrN)
         ++ " of "
         ++ interleave(false, " * ", ["(" ++ type(T, Ctx) ++ ")" || T <- Ts]).
+
+enum_ctr_name(EnumN, CtrN) ->
+    first_upper(atom_to_list(EnumN)) ++ "'" ++ first_upper(atom_to_list(CtrN)).
+
+enum_ctr_name(ModN, EnumN, CtrN) ->
+    first_upper(atom_to_list(ModN)) ++ "." ++
+        first_upper(atom_to_list(EnumN)) ++ "'" ++
+        first_upper(atom_to_list(CtrN)).
 
 erl2ocaml_spec({attribute,_Line,spec,{{Name,Arity},[FT]}}, Ctx) ->
     {atom_to_list(Name) ++ "'" ++ integer_to_list(Arity), type(FT, Ctx)};
@@ -869,7 +874,7 @@ remote({remote,_Ln,{atom,Ln,Mod},_}) ->
 remote({remote_type,_Ln,[{atom,Ln,Mod}|_]}) ->
     {Ln, Mod};
 %% remote enum ctr
-remote({op,_,'.',{atom,Ln,Mod},_}) ->
+remote({enum,_,{op,_,'.',{op,_,'.',{atom,Ln,Mod},{atom,_,_Enum}},{atom,_,_Ctr}},_Args}) ->
     {Ln, Mod};
 %% fn mod:f/n
 remote({'fun',_Ln,{function,{atom,Ln,Mod},{atom,_,F},{integer,_,A}}}) when is_atom(Mod),is_atom(F),is_integer(A) ->

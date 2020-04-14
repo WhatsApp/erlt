@@ -1,34 +1,34 @@
 type unit0'0 = unit0
 
-and unit0 = Unit0
+and unit0 = Unit0'Unit0
 
 and 'tA boxed'1 = 'tA boxed
 
-and 'tA boxed = Boxed of 'tA
+and 'tA boxed = Boxed'Boxed of 'tA
 
 and ('tA, 'tB) either'2 = ('tA, 'tB) either
 
-and ('tA, 'tB) either = Left of 'tA | Right of 'tB
+and ('tA, 'tB) either = Either'Left of 'tA | Either'Right of 'tB
 
 and rgb'0 = rgb
 
-and rgb = R | G | B
+and rgb = Rgb'R | Rgb'G | Rgb'B
 
 and ('tA, 'tB) pair'2 = ('tA, 'tB) pair
 
-and ('tA, 'tB) pair = Pair of 'tA * 'tB
+and ('tA, 'tB) pair = Pair'Pair of 'tA * 'tB
 
 and ('tA, 'tB, 'tC) triple'3 = ('tA, 'tB, 'tC) triple
 
-and ('tA, 'tB, 'tC) triple = Triple of 'tA * 'tB * 'tC
+and ('tA, 'tB, 'tC) triple = Triple'Triple of 'tA * 'tB * 'tC
 
 and 'tA my_list'1 = 'tA my_list
 
-and 'tA my_list = Cons of 'tA * 'tA my_list'1 | Nil
+and 'tA my_list = My_list'Cons of 'tA * 'tA my_list'1 | My_list'Nil
 
 and 'tA option'1 = 'tA option
 
-and 'tA option = None | Some of 'tA
+and 'tA option = Option'None | Option'Some of 'tA
 
 val mk_rgb'0 : unit -> rgb'0
 

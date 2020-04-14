@@ -1,10 +1,10 @@
 type order'0 = order
 
-and order = Lt | Eq | Gt
+and order = Order'Lt | Order'Eq | Order'Gt
 
 and never'0 = never
 
-and never = Just_one_more of never'0
+and never = Never'Just_one_more of never'0
 
 let rec add'2 : int * int -> int = function v_X1, v_X2 -> v_X1 + v_X2
 
@@ -73,8 +73,9 @@ let rec max'1 : 'tA -> 'tA -> 'tA = function
 let rec compare'2 : 'tA * 'tA -> order'0 = function
   | v_X1, v_X2 -> (
       match lt'2 (v_X1, v_X2) with
-      | true -> Lt
-      | false -> ( match eq'2 (v_X1, v_X2) with true -> Eq | false -> Gt ) )
+      | true -> Order'Lt
+      | false -> (
+          match eq'2 (v_X1, v_X2) with true -> Order'Eq | false -> Order'Gt ) )
 
 let rec compare'1 : 'tA -> 'tA -> order'0 = function
   | v_X1 -> ( function v_X2 -> compare'2 (v_X1, v_X2) )
@@ -149,4 +150,5 @@ let rec always'2 : 'tA * _ -> 'tA = function v_A, _ -> v_A
 let rec always'1 : 'tA -> _ -> 'tA = function
   | v_A -> ( function v_X -> always'2 (v_A, v_X) )
 
-let rec never'1 : never'0 -> _ = function Just_one_more v_Nvr -> never'1 v_Nvr
+let rec never'1 : never'0 -> _ = function
+  | Never'Just_one_more v_Nvr -> never'1 v_Nvr

@@ -94,15 +94,15 @@ map_error(F) ->
 -spec to_maybe(result(_, A)) -> maybe:maybe(A).
 
 to_maybe({969696, result, ok, V}) ->
-    {969696, maybe, just, V};
+    {969696, 'maybe.maybe', just, V};
 to_maybe({969696, result, err, _}) ->
-    {969696, maybe, nothing}.
+    {969696, 'maybe.maybe', nothing}.
 
 -spec from_maybe(X, maybe:maybe(A)) -> result(X, A).
 
-from_maybe(_Err, {969696, maybe, just, V}) ->
+from_maybe(_Err, {969696, 'maybe.maybe', just, V}) ->
     {969696, result, ok, V};
-from_maybe(Err, {969696, maybe, nothing}) ->
+from_maybe(Err, {969696, 'maybe.maybe', nothing}) ->
     {969696, result, err, Err}.
 
 -spec from_maybe(X) -> fun((maybe:maybe(A)) -> result(X, A)).

@@ -212,13 +212,13 @@ max(X1) ->
 compare(X1, X2) ->
     case lt(X1, X2) of
         true ->
-            {969696, basics, lt};
+            {969696, order, lt};
         false ->
             case eq(X1, X2) of
                 true ->
-                    {969696, basics, eq};
+                    {969696, order, eq};
                 false ->
-                    {969696, basics, gt}
+                    {969696, order, gt}
             end
     end.
 
@@ -397,7 +397,7 @@ always(A) ->
 
 -spec never(never()) -> _.
 
-never({969696, basics, just_one_more, Nvr}) ->
+never({969696, never, just_one_more, Nvr}) ->
     never(Nvr).
 
 

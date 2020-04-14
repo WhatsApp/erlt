@@ -47,48 +47,48 @@
 -spec mk_rgb() -> rgb().
 
 mk_rgb() ->
-    {969696, mod03, r}.
+    {969696, rgb, r}.
 
 -spec mk_triple(A) -> triple(A, A, A).
 
 mk_triple(A) ->
-    {969696, mod03, triple, A, A, A}.
+    {969696, triple, triple, A, A, A}.
 
 -spec mk_none() -> option(_).
 
 mk_none() ->
-    {969696, mod03, none}.
+    {969696, option, none}.
 
 -spec mk_unit() -> unit0().
 
 mk_unit() ->
-    {969696, mod03, unit0}.
+    {969696, unit0, unit0}.
 
 -spec mk_box(A) -> boxed(A).
 
 mk_box(A) ->
-    {969696, mod03, boxed, A}.
+    {969696, boxed, boxed, A}.
 
 -spec mk_left(A) -> either(A, _).
 
 mk_left(A) ->
-    {969696, mod03, left, A}.
+    {969696, either, left, A}.
 
 -spec mk_right(B) -> either(_, B).
 
 mk_right(B) ->
-    {969696, mod03, right, B}.
+    {969696, either, right, B}.
 
 -spec zero(unit0(), V) -> V.
 
-zero({969696, mod03, unit0}, Val) ->
+zero({969696, unit0, unit0}, Val) ->
     Val.
 
 -spec unbox(boxed(E)) -> E.
 
 unbox(Boxed) ->
     case Boxed of
-        {969696, mod03, boxed, Elem} ->
+        {969696, boxed, boxed, Elem} ->
             Elem
     end.
 
@@ -96,9 +96,9 @@ unbox(Boxed) ->
 
 un_either(Either) ->
     case Either of
-        {969696, mod03, left, Elem} ->
+        {969696, either, left, Elem} ->
             Elem;
-        {969696, mod03, right, Elem} ->
+        {969696, either, right, Elem} ->
             Elem
     end.
 
@@ -106,18 +106,18 @@ un_either(Either) ->
 
 un_pair(Pair) ->
     case Pair of
-        {969696, mod03, pair, A, B} ->
+        {969696, pair, pair, A, B} ->
             {A, B}
     end.
 
 -spec first(pair(A, _)) -> A.
 
-first({969696, mod03, pair, F, _}) ->
+first({969696, pair, pair, F, _}) ->
     F.
 
 -spec second(pair(_, B)) -> B.
 
-second({969696, mod03, pair, _, S}) ->
+second({969696, pair, pair, _, S}) ->
     S.
 
 

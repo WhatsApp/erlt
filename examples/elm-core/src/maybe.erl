@@ -10,32 +10,32 @@
 -enum maybe(A) :: just{A} | nothing{}.
 
 -spec with_default(A, maybe(A)) -> A.
-with_default(_Default, just{Value}) -> Value;
-with_default(Default, nothing{}) -> Default.
+with_default(_Default, maybe.just{Value}) -> Value;
+with_default(Default, maybe.nothing{}) -> Default.
 
 -spec with_default(A) -> fun((maybe(A)) -> A).
 with_default(Default) ->
     fun(Maybe) -> with_default(Default, Maybe) end.
 
 -spec map(fun((A) -> B), maybe(A)) -> maybe(B).
-map(F, just{Value}) -> just{F(Value)};
-map(_F, nothing{}) -> nothing{}.
+map(F, maybe.just{Value}) -> maybe.just{F(Value)};
+map(_F, maybe.nothing{}) -> maybe.nothing{}.
 
 -spec map(fun((A) -> B)) -> fun((maybe(A)) -> maybe(B)).
 map(F) ->
     fun(Maybe) -> map(F, Maybe) end.
 
 -spec map2(fun((A, B) -> C), maybe(A), maybe(B)) -> maybe(C).
-map2(F, just{A}, just{B}) -> just{F(A, B)};
-map2(_F, _Ma, _Mb) -> nothing{}.
+map2(F, maybe.just{A}, maybe.just{B}) -> maybe.just{F(A, B)};
+map2(_F, _Ma, _Mb) -> maybe.nothing{}.
 
 -spec map2(fun((A, B) -> C)) -> fun((maybe(A), maybe(B)) -> maybe(C)).
 map2(F) ->
     fun(Ma, Mb) -> map2(F, Ma, Mb) end.
 
 -spec and_then(fun((A) -> maybe(B)), maybe(A)) -> maybe(B).
-and_then(Callback, just{Value}) -> Callback(Value);
-and_then(_Callback, nothing{}) -> nothing{}.
+and_then(Callback, maybe.just{Value}) -> Callback(Value);
+and_then(_Callback, maybe.nothing{}) -> maybe.nothing{}.
 
 -spec and_then(fun((A) -> maybe(B))) -> fun((maybe(A)) -> maybe(B)).
 and_then(Callback) ->
@@ -44,9 +44,9 @@ and_then(Callback) ->
 %% FOR INTERNAL USE ONLY (Original Elm comment)
 
 -spec is_just(maybe(_)) -> boolean().
-is_just(just{_}) -> true;
-is_just(nothing{}) -> false.
+is_just(maybe.just{_}) -> true;
+is_just(maybe.nothing{}) -> false.
 
 -spec destruct(B, fun((A) -> B), maybe(A)) -> B.
-destruct(_Default, Func, just{A}) -> Func(A);
-destruct(Default, _Func, nothing{}) -> Default.
+destruct(_Default, Func, maybe.just{A}) -> Func(A);
+destruct(Default, _Func, maybe.nothing{}) -> Default.

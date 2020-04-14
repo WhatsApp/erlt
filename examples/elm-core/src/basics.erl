@@ -111,11 +111,11 @@ max(X1) -> fun(X2) -> basics:max(X1, X2) end.
 -spec compare(A, A) -> order().
 compare(X1, X2) ->
     case lt(X1, X2) of
-        true -> lt{};
+        true -> order.lt{};
         false ->
             case eq(X1, X2) of
-                true -> eq{};
-                false -> gt{}
+                true -> order.eq{};
+                false -> order.gt{}
             end
     end.
 
@@ -219,4 +219,4 @@ always(A) -> fun(X) -> always(A, X) end.
 -enum never() :: just_one_more{never()}.
 
 -spec never(never()) -> _.
-never(just_one_more{Nvr}) -> never(Nvr).
+never(never.just_one_more{Nvr}) -> never(Nvr).

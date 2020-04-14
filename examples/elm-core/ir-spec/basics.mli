@@ -1,10 +1,10 @@
 type order'0 = order
 
-and order = Lt | Eq | Gt
+and order = Order'Lt | Order'Eq | Order'Gt
 
 and never'0 = never
 
-and never = Just_one_more of never'0
+and never = Never'Just_one_more of never'0
 
 val add'2 : int * int -> int
 

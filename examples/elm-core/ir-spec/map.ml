@@ -9,8 +9,8 @@ let rec get'2 : 'tK * ('tK, 'tV) map'2 -> 'tV Maybe.maybe'1 = function
 let rec member'2 : 'tK * ('tK, 't_V) map'2 -> bool = function
   | v_Key, v_Map -> (
       match get'2 (v_Key, v_Map) with
-      | Maybe.Just _ -> true
-      | Maybe.Nothing -> false )
+      | Maybe'Just _ -> true
+      | Maybe'Nothing -> false )
 
 let rec size'1 : ('t_K, 't_V) map'2 -> int = function
   | v_Map -> Map_ffi.size'1 v_Map
@@ -29,8 +29,8 @@ let rec update'3 :
     ('tK, 'tV) map'2 = function
   | v_Key, v_Alter, v_Map -> (
       match v_Alter (get'2 (v_Key, v_Map)) with
-      | Maybe.Just v_Value -> insert'3 (v_Key, v_Value, v_Map)
-      | Maybe.Nothing -> remove'2 (v_Key, v_Map) )
+      | Maybe'Just v_Value -> insert'3 (v_Key, v_Value, v_Map)
+      | Maybe'Nothing -> remove'2 (v_Key, v_Map) )
 
 let rec singleton'2 : 'tK * 'tV -> ('tK, 'tV) map'2 = function
   | v_Key, v_Value -> insert'3 (v_Key, v_Value, empty'0 ())

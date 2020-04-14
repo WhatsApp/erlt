@@ -1,15 +1,15 @@
 module Lib_priv : sig
   type public_enum'0 = public_enum
 
-  and public_enum = Public_ctr
+  and public_enum = Public_enum'Public_ctr
 
   and private_enum'0 = private_enum
 
-  and private_enum = Private_ctr
+  and private_enum = Private_enum'Private_ctr
 
   and semi_private_enum'0 = semi_private_enum
 
-  and semi_private_enum = Semi_private_ctr
+  and semi_private_enum = Semi_private_enum'Semi_private_ctr
 
   and opaque_enum_alias'0 = semi_private_enum'0
 
@@ -19,15 +19,15 @@ module Lib_priv : sig
 end = struct
   type public_enum'0 = public_enum
 
-  and public_enum = Public_ctr
+  and public_enum = Public_enum'Public_ctr
 
   and private_enum'0 = private_enum
 
-  and private_enum = Private_ctr
+  and private_enum = Private_enum'Private_ctr
 
   and semi_private_enum'0 = semi_private_enum
 
-  and semi_private_enum = Semi_private_ctr
+  and semi_private_enum = Semi_private_enum'Semi_private_ctr
 
   and opaque_enum_alias'0 = semi_private_enum'0
 

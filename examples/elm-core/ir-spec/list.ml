@@ -42,8 +42,8 @@ let rec maybe_cons'3 : ('tA -> 'tB Maybe.maybe'1) * 'tA * 'tB list -> 'tB list =
   function
   | v_F, v_Mx, v_Xs -> (
       match v_F v_Mx with
-      | Maybe.Just v_X -> cons'2 (v_X, v_Xs)
-      | Maybe.Nothing -> v_Xs )
+      | Maybe'Just v_X -> cons'2 (v_X, v_Xs)
+      | Maybe'Nothing -> v_Xs )
 
 let rec maybe_cons'1 : ('tA -> 'tB Maybe.maybe'1) -> 'tA * 'tB list -> 'tB list
     = function
@@ -73,12 +73,12 @@ let rec member'2 : 'tA * 'tA list -> bool = function
   | v_X, v_Xs -> any'2 (Basics.eq'1 v_X, v_Xs)
 
 let rec maximum'1 : 'tA list -> 'tA Maybe.maybe'1 = function
-  | [] -> Maybe.Nothing
-  | v_H :: v_T -> Maybe.Just (foldl'3 (Basics.max'2, v_H, v_T))
+  | [] -> Maybe'Nothing
+  | v_H :: v_T -> Maybe'Just (foldl'3 (Basics.max'2, v_H, v_T))
 
 let rec minimum'1 : 'tA list -> 'tA Maybe.maybe'1 = function
-  | [] -> Maybe.Nothing
-  | v_H :: v_T -> Maybe.Just (foldl'3 (Basics.min'2, v_H, v_T))
+  | [] -> Maybe'Nothing
+  | v_H :: v_T -> Maybe'Just (foldl'3 (Basics.min'2, v_H, v_T))
 
 let rec sum'1 : int list -> int = function
   | v_Ns -> foldl'3 (Basics.add'2, 0, v_Ns)
@@ -114,12 +114,12 @@ let rec indexed_map'2 : (int * 'tA -> 'tB) * 'tA list -> 'tB list = function
 let rec is_empty'1 : _ list -> bool = function _ :: _ -> false | [] -> true
 
 let rec head'1 : 'tA list -> 'tA Maybe.maybe'1 = function
-  | v_H :: _ -> Maybe.Just v_H
-  | [] -> Maybe.Nothing
+  | v_H :: _ -> Maybe'Just v_H
+  | [] -> Maybe'Nothing
 
 let rec tail'1 : 'tA list -> 'tA list Maybe.maybe'1 = function
-  | _ :: v_T -> Maybe.Just v_T
-  | [] -> Maybe.Nothing
+  | _ :: v_T -> Maybe'Just v_T
+  | [] -> Maybe'Nothing
 
 let rec take'2 : int * 'tA list -> 'tA list = function
   | v_N, v__L when v_N <= 0 -> []

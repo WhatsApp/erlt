@@ -1,6 +1,6 @@
 type ('tError, 'tValue) result'2 = ('tError, 'tValue) result
 
-and ('tError, 'tValue) result = Ok of 'tValue | Err of 'tError
+and ('tError, 'tValue) result = Result'Ok of 'tValue | Result'Err of 'tError
 
 val with_default'2 : 'tA * (_, 'tA) result'2 -> 'tA
 

@@ -17,50 +17,50 @@
 -enum option(A) :: none{} | some{A}.
 
 -spec mk_rgb() -> rgb().
-mk_rgb() -> r{}.
+mk_rgb() -> rgb.r{}.
 
 -spec mk_triple(A) -> triple(A, A, A).
-mk_triple(A) -> triple{A, A, A}.
+mk_triple(A) -> triple.triple{A, A, A}.
 
 -spec mk_none() -> option(_).
-mk_none() ->  none{}.
+mk_none() -> option.none{}.
 
 -spec mk_unit() -> unit0().
-mk_unit() -> unit0{}.
+mk_unit() -> unit0.unit0{}.
 
 -spec mk_box(A) -> boxed(A).
-mk_box(A) -> boxed{A}.
+mk_box(A) -> boxed.boxed{A}.
 
 -spec mk_left(A) -> either(A, _).
-mk_left(A) -> left{A}.
+mk_left(A) -> either.left{A}.
 
 -spec mk_right(B) -> either(_, B).
-mk_right(B) -> right{B}.
+mk_right(B) -> either.right{B}.
 
 -spec zero(unit0(), V) -> V.
-zero(unit0{}, Val) -> Val.
+zero(unit0.unit0{}, Val) -> Val.
 
 -spec unbox(boxed(E)) -> E.
 unbox(Boxed) ->
   case Boxed of
-    boxed{Elem} -> Elem
+    boxed.boxed{Elem} -> Elem
   end.
 
 -spec un_either(either(A,A)) -> A.
 un_either(Either) ->
   case Either of
-    left{Elem} -> Elem;
-    right{Elem} -> Elem
+    either.left{Elem} -> Elem;
+    either.right{Elem} -> Elem
   end.
 
 -spec un_pair(pair(A,B)) -> {A,B}.
 un_pair(Pair) ->
   case Pair of
-    pair{A, B} -> {A, B}
+    pair.pair{A, B} -> {A, B}
   end.
 
 -spec first(pair(A,_)) -> A.
-first(pair{F,_}) -> F.
+first(pair.pair{F,_}) -> F.
 
 -spec second(pair(_,B)) -> B.
-second(pair{_,S}) -> S.
+second(pair.pair{_,S}) -> S.
