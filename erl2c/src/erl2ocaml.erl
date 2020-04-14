@@ -70,6 +70,7 @@ erl2ocaml_ffi(Forms) ->
 
 do_erl2ocaml_ffi(Forms) ->
     erlang:put('rec_tv_gen', 1),
+    erlang:put('d_pat', 1),
     Exports = get_exports(Forms),
     Ctx = #context{
         module = get_module(Forms),
@@ -109,6 +110,7 @@ erl2ocaml_st(Forms) ->
 
 do_erl2ocaml_st(Forms) ->
     erlang:put('rec_tv_gen', 1),
+    erlang:put('d_pat', 1),
     Exports = get_exports(Forms),
     Ctx = #context{
         module = get_module(Forms),
@@ -186,19 +188,45 @@ clauses([EC|Cs], Ctx) ->
 clauses([], _) -> [].
 
 clause({clause, Line, Head, Guard, Body}, Ctx) ->
-    case Guard of
-        [] ->
-            OHead = {"| " ++ head(Head, Ctx) ++ " ->" },
-            [OHead, expr_seq(Body, Ctx)];
-        Guards ->
-            [Guard1|Guards1] =
-                lists:map(
-                    fun([E0|Es]) ->
-                        lists:foldl(fun(H,Acc) -> {op, Line, 'and', Acc, H} end, E0, Es)
-                    end,
-                    Guards),
-            GuardExp = lists:foldl(fun(H,Acc) -> {op, Line, 'or', Acc, H} end, Guard1, Guards1),
-            [{"| " ++ head(Head, Ctx) ++ " when" }, [expr(GuardExp, Ctx)], {"->"}, expr_seq(Body, Ctx)]
+    {Ps1, Env1} = erl2ocaml_pattern:dedup_patterns(Head),
+    {Ps2, Env2} = erl2ocaml_pattern:destruct_patterns(Ps1),
+    ExtraGuard =
+        case Env1 of
+            [] ->
+                undefined;
+            _ ->
+                [Eq1|Eqs] = lists:map(fun ({K, V}) -> {op,Line,'==',{'var',Line,K}, {'var',Line,V}} end, Env1),
+                lists:foldl(fun(H,Acc) -> {op, Line, 'and', Acc, H} end, Eq1, Eqs)
+        end,
+    ExtraBody =
+        lists:map(fun ({P, E}) -> {match_r, Line, P, E} end, Env2),
+    clause1({clause, Line, Ps2, Guard, Body}, ExtraBody, ExtraGuard, Ctx).
+
+clause1({clause, Line, Head, Guard, Body}, ExtraBody, ExtraGuard, Ctx) ->
+    CombinedGuard =
+        case Guard of
+            [] -> ExtraGuard;
+            _ ->
+                [Guard1|Guards1] =
+                    lists:map(
+                        fun([E0|Es]) ->
+                            lists:foldl(fun(H,Acc) -> {op, Line, 'and', Acc, H} end, E0, Es)
+                        end,
+                        Guard),
+                Guard2 = lists:foldl(fun(H,Acc) -> {op, Line, 'or', Acc, H} end, Guard1, Guards1),
+                case ExtraGuard of
+                    undefined -> Guard2;
+                    _ -> {op, Line, 'and', ExtraGuard, Guard2}
+                end
+        end,
+    case {ExtraBody, CombinedGuard} of
+        {_, undefined} ->
+            [{"| " ++ head(Head, Ctx) ++ " ->" }, expr_seq(ExtraBody ++ Body, Ctx)];
+        {[], _} ->
+            [{"| " ++ head(Head, Ctx) ++ " when" }, [expr(CombinedGuard, Ctx)], {"->"}, expr_seq(Body, Ctx)];
+        {_, _} ->
+            CombinedGuardInBody = [{match_r, Line, {atom, Line, true}, CombinedGuard}],
+            [{"| " ++ head(Head, Ctx) ++ " ->" }, expr_seq(ExtraBody ++ CombinedGuardInBody ++ Body, Ctx)]
     end.
 
 head(Ps, Ctx) ->
@@ -218,7 +246,7 @@ pattern({var,_Line,'_'}, _Ctx) ->
 pattern({var,_Line,V}, _Ctx) ->
     "v_" ++ atom_to_list(V);
 pattern({match,_Line,P,{var,_Line,V}}, Ctx) ->
-    pattern(P, Ctx) ++ " as " ++ "v_" ++ atom_to_list(V);
+    "(" ++ pattern(P, Ctx) ++ " as " ++ "v_" ++ atom_to_list(V) ++ ")";
 pattern({match,Line,_,MP}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', MP, "complex match pattern"}}});
 pattern({integer,_Line,I}, _Ctx) ->
@@ -278,7 +306,19 @@ expr1(Acc, [E={match,_Line,P,_}], Ctx) ->
 expr1(Acc, [E], Ctx)->
     Delta = [expr(E, Ctx)],
     Acc ++ Delta;
-expr1(Acc, [{match,_Line,P,E}|Es], Ctx)->
+expr1(Acc, [{match,Ln,P,E}|Es], Ctx) ->
+    {P1, Env1} = erl2ocaml_pattern:dedup_pattern(P),
+    {P2, Env2} = erl2ocaml_pattern:destruct_pattern(P1),
+    RMs1 =
+        lists:map(
+            fun ({K, V}) -> {match_r,Ln,{atom,Ln,true},{op,Ln,'==',{'var',Ln,K},{'var',Ln,V}}} end,
+            Env1
+        ),
+    RMs2 =
+        lists:map(fun ({Ptr, Exp}) -> {match_r, Ln, Ptr, Exp} end, Env2),
+    Seq1 = [{match_r,Ln,P2,E}] ++ RMs2 ++ RMs1 ++ Es,
+    expr1(Acc, Seq1, Ctx);
+expr1(Acc, [{match_r,_Line,P,E}|Es], Ctx)->
     PatString = pattern(P, Ctx),
     ExprDoc = expr(E, Ctx),
     Delta = [{"let " ++ PatString ++ " = "}] ++ [ExprDoc] ++ [{"in"}],
