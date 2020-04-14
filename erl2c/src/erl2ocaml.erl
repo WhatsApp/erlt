@@ -265,16 +265,16 @@ pattern(Pat, _Ctx) ->
     Line = erlang:element(2, Pat),
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Pat}}}).
 
-expr_seq([E={match,Line,_,_}], _Ctx) ->
-    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "match expr in the end of a seq"}}});
-expr_seq([E0], Ctx) ->
-    E1 = expr(E0, Ctx),
-    [E1];
+pattern_to_expr({match,_Line,P,_AsP}) ->
+    pattern_to_expr(P);
+pattern_to_expr(Form) ->
+    Form.
+
 expr_seq(ES, Ctx)->
     expr1([], ES, Ctx).
 
-expr1([], [E={match,Line,_,_}], _Ctx) ->
-    throw({erl2ocaml_error, {Line, {'not_supported_syntax', E, "match expr in the end of a seq"}}});
+expr1(Acc, [E={match,_Line,P,_}], Ctx) ->
+    expr1(Acc, [E, pattern_to_expr(P)], Ctx);
 expr1(Acc, [E], Ctx)->
     Delta = [expr(E, Ctx)],
     Acc ++ Delta;
@@ -343,6 +343,8 @@ expr({map,Line,Map,UpdateAssocs}, Ctx) ->
 expr({map1,_Line, Map, UpdateAssocs}, Ctx) ->
     OMap = expr(Map, Ctx),
     update_assocs(OMap, UpdateAssocs, Ctx);
+expr(E={match,_Line,_Pat,_}, Ctx) ->
+    expr_seq([E], Ctx);
 expr({block,_Line,Es}, Ctx) ->
     expr_seq(Es, Ctx);
 expr(E={'if',Line,_Clauses}, _Ctx) ->
