@@ -39,14 +39,12 @@ ffi() ->
     iolist_to_binary(FfiLines).
 
 main(["-erl", InFile, "-ml", MlFile, "-mli", MliFile]) ->
-    swap_erl_parse(),
-    {ok, Forms} = epp:parse_file(InFile, []),
+    {ok, Forms} = erl2_epp:parse_file(InFile, []),
     {ok, MliCode, MlCode} = erl2ocaml_st(Forms),
     file:write_file(MliFile, MliCode),
     file:write_file(MlFile, MlCode);
 main(["-ast", File]) ->
-    swap_erl_parse(),
-    {ok, Forms} = epp:parse_file(File, []),
+    {ok, Forms} = erl2_epp:parse_file(File, []),
     io:format("Forms:\n~p\n", [Forms]),
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
@@ -61,12 +59,6 @@ main(_) ->
 usage() ->
     io:format("usage:\n"),
     io:format("  erl2ocaml -erl mod.erl -ml mod.ml -mli mod.mli:\n").
-
-swap_erl_parse() ->
-    code:purge(erl_parse),
-    true = code:delete(erl_parse),
-    {_,Code,File} = code:get_object_code(erl_parse),
-    {module, _Name} = code:load_binary(erl_parse, File,Code).
 
 erl2ocaml_ffi(Forms) ->
     try

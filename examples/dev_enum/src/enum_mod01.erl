@@ -4,14 +4,20 @@
 -export([f/0, g/0, p/0, q/1, r/1, s/2]).
 
 
+%% old style tagged tuple for comparison
 -opaque maybe(T) :: {some, T} | none.
 -export_type([ maybe/1 ]).
 
 
+%% proper enum declarations
 -enum possibly(T) :: some{T} | none{}.
+
+%% exporting an enum type
 -export_type([ possibly/1 ]).
 
--type pair(T1, T2) :: p{T1, T2}.
+%% a non-exported enum type
+-enum pair(T1, T2) :: p{T1, T2}.
+
 
 -spec f() -> maybe(any()).
 f() ->

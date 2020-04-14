@@ -122,7 +122,7 @@ do_file(File, Options0) ->
     % defined, does not specify parse_transforms. Otherwise, we are risking
     % running parse_transforms twice. Plus, we are going to be restricting how
     % parse transforms can be specified anyway.
-    EnvCompilerOptions = erl2_compile2:env_compiler_options(),
+    EnvCompilerOptions = compile:env_compiler_options(),
     Options1 = Options0 ++ EnvCompilerOptions,
     Options2 = fix_compile_options(Options1),
 
@@ -169,6 +169,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1)
@@ -186,6 +187,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1),
@@ -201,6 +203,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -216,6 +219,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -596,7 +600,7 @@ fix_compile_options(Options) ->
 compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
     % appended env_compiler_options() above
-    Ret = erl2_compile2:noenv_forms(Forms, [{source, St0#compile.filename} | St0#compile.options]),
+    Ret = compile:noenv_forms(Forms, [{source, St0#compile.filename} | St0#compile.options]),
 
     % TODO: handling of ok is not exhaustive, there could also be {ok, ModuleName, Warnings}
     case Ret of
@@ -630,7 +634,7 @@ format_error({module_dependency,ModuleDepType,Mod}) ->
 format_error(X) ->
     % TODO: copy formatters for locally-generated errors from copy-pasted code
     % here to avoid problems with error format compatibility in the future
-    erl2_compile2:format_error(X).
+    compile:format_error(X).
 
 
 internal_comp(Passes, Code0, File, Suffix, St0) ->
@@ -779,6 +783,14 @@ parse_module(_Code, St0) ->
 	    end
     end.
 
+erl2_lint(Code, St) ->
+    case erl2_lint:module(Code, St#compile.ifile, St#compile.options) of
+	{ok,Ws} ->
+	    {ok,Code,St#compile{warnings=St#compile.warnings ++ Ws}};
+	{error,Es,Ws} ->
+	    {error,St#compile{warnings=St#compile.warnings ++ Ws,
+			      errors=St#compile.errors ++ Es}}
+    end.
 
 parse_lang(Forms) ->
     parse_lang(Forms, _Lang = [], _Acc = []).

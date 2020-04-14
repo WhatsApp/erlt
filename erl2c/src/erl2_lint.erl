@@ -33,6 +33,15 @@
 
 -import(lists, [member/2,map/2,foldl/3,foldr/3,mapfoldl/3,all/2,reverse/1]).
 
+
+%% keeping only our added errors and warnings; the real linter will run later
+
+keep_warning(_) -> false.
+
+keep_error(illegal_dot) -> true;
+keep_error(_) -> false.
+
+
 %% bool_option(OnOpt, OffOpt, Default, Options) -> boolean().
 %% value_option(Flag, Default, Options) -> Value.
 %% value_option(Flag, Default, OnOpt, OnVal, OffOpt, OffVal, Options) ->
@@ -258,7 +267,7 @@ format_error(illegal_map_key) -> "illegal map key in pattern";
 format_error(illegal_bin_pattern) ->
     "binary patterns cannot be matched in parallel using '='";
 format_error(illegal_expr) -> "illegal expression";
-format_error(illegal_dots) -> "illegal dots";
+format_error(illegal_dot) -> "illegal dot operator";
 format_error({illegal_guard_local_call, {F,A}}) -> 
     io_lib:format("call to local/imported function ~tw/~w is illegal in guard",
 		  [F,A]);
@@ -620,11 +629,31 @@ is_warn_enabled(Type, #lint{enabled_warnings=Enabled}) ->
 %%  Pack errors and warnings properly and return ok | error.
 
 return_status(St) ->
-    Ws = pack_warnings(St#lint.warnings),
-    case pack_errors(St#lint.errors) of
+    Ws = pack_warnings(filter_warnings(St#lint.warnings)),
+    case pack_errors(filter_errors(St#lint.errors)) of
         [] -> {ok,Ws};
         Es -> {error,Es,Ws}
     end.
+
+filter_errors([ E={_File, {_Loc,erl2_lint,Err}} | Es]) ->
+    case keep_error(Err) of
+        true -> [E | filter_errors(Es)];
+        false -> filter_errors(Es)
+    end;
+filter_errors([_|Es]) ->
+    filter_errors(Es);
+filter_errors([]) ->
+    [].
+
+filter_warnings([ W={_File, {_Loc,erl2_lint,Warn}} | Ws]) ->
+    case keep_warning(Warn) of
+        true -> [W | filter_errors(Ws)];
+        false -> filter_errors(Ws)
+    end;
+filter_warnings([_|Ws]) ->
+    filter_warnings(Ws);
+filter_warnings([]) ->
+    [].
 
 %% pack_errors([{File,ErrD}]) -> [{File,[ErrD]}].
 %%  Sort on (reversed) insertion order.
@@ -794,6 +823,8 @@ attribute_state({attribute,L,type,{TypeName,TypeDef,Args}}, St) ->
     type_def(type, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
+attribute_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
+    type_def(enum, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute,L,callback,{Fun,Types}}, St) ->
@@ -819,6 +850,8 @@ function_state({attribute,L,type,{TypeName,TypeDef,Args}}, St) ->
     type_def(type, L, TypeName, TypeDef, Args, St);
 function_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
+function_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
+    type_def(enum, L, TypeName, TypeDef, Args, St);
 function_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute,_L,dialyzer,_Val}, St) ->
@@ -1530,6 +1563,8 @@ pattern({cons,_Line,H,T}, Vt, Old,  Bvt, St0) ->
     {vtmerge_pat(Hvt, Tvt),vtmerge_pat(Bvt1,Bvt2),St2};
 pattern({tuple,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_list(Ps, Vt, Old, Bvt, St);
+pattern({enum,_Line,C,Ps}, Vt, Old, Bvt, St) ->
+    pattern_list([C|Ps], Vt, Old, Bvt, St);
 pattern({map,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
 %%pattern({struct,_Line,_Tag,Ps}, Vt, Old, Bvt, St) ->
@@ -1558,6 +1593,11 @@ pattern({op,_Line,'++',{cons,Li,{integer,_L2,_I},T},R}, Vt, Old, Bvt, St) ->
     pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Weird, but compatible!
 pattern({op,_Line,'++',{string,_Li,_S},R}, Vt, Old, Bvt, St) ->
     pattern(R, Vt, Old, Bvt, St);                   %String unimportant here
+pattern({op,_Line,'.',E,{atom,_,_}}, Vt, _Old, _Bvt, St) ->
+    %% we only allow the right hand side to be an atom: X.a, but not X.Y
+    pattern(E, Vt, _Old, _Bvt, St);
+pattern({op,Line,'.',_,_}, _Vt, _Old, _Bvt, St) ->
+    {[],[],add_error(Line, illegal_dot, St)};
 pattern({match,_Line,Pat1,Pat2}, Vt, Old, Bvt, St0) ->
     {Lvt,Bvt1,St1} = pattern(Pat1, Vt, Old, Bvt, St0),
     {Rvt,Bvt2,St2} = pattern(Pat2, Vt, Old, Bvt, St1),
@@ -1697,6 +1737,8 @@ is_pattern_expr_1({float,_Line,_F}) -> true;
 is_pattern_expr_1({atom,_Line,_A}) -> true;
 is_pattern_expr_1({tuple,_Line,Es}) ->
     all(fun is_pattern_expr/1, Es);
+is_pattern_expr_1({enum,_Line,C,Es}) ->
+    all(fun is_pattern_expr/1, [C|Es]);
 is_pattern_expr_1({nil,_Line}) -> true;
 is_pattern_expr_1({cons,_Line,H,T}) ->
     is_pattern_expr_1(H) andalso is_pattern_expr_1(T);
@@ -1956,6 +1998,8 @@ gexpr({cons,_Line,H,T}, Vt, St) ->
     gexpr_list([H,T], Vt, St);
 gexpr({tuple,_Line,Es}, Vt, St) ->
     gexpr_list(Es, Vt, St);
+gexpr({enum,_Line,C,Es}, Vt, St) ->
+    gexpr_list([C|Es], Vt, St);
 gexpr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
 gexpr({map,_Line,Src,Es}, Vt, St) ->
@@ -2038,6 +2082,11 @@ gexpr({op,_,'andalso',L,R}, Vt, St) ->
     gexpr_list([L,R], Vt, St);
 gexpr({op,_,'orelse',L,R}, Vt, St) ->
     gexpr_list([L,R], Vt, St);
+gexpr({op,_,'.',E,{atom,_,_}}, Vt, St) ->
+    %% we only allow the right hand side to be an atom: X.a, but not X.Y
+    gexpr(E, Vt, St);
+gexpr({op,Line,'.',_,_}, _Vt, St) ->
+    {[],add_error(Line, illegal_dot, St)};
 gexpr({op,Line,Op,L,R}, Vt, St0) ->
     {Avt,St1} = gexpr_list([L,R], Vt, St0),
     case is_gexpr_op(Op, 2) of
@@ -2127,6 +2176,8 @@ is_gexpr({string,_L,_S}, _Info) -> true;
 is_gexpr({nil,_L}, _Info) -> true;
 is_gexpr({cons,_L,H,T}, Info) -> is_gexpr_list([H,T], Info);
 is_gexpr({tuple,_L,Es}, Info) -> is_gexpr_list(Es, Info);
+is_gexpr({enum,_L,C,Es}, Info) ->
+    is_gexpr_list([C|Es], Info);
 %%is_gexpr({struct,_L,_Tag,Es}, Info) ->
 %%    is_gexpr_list(Es, Info);
 is_gexpr({map,_L,Es}, Info) ->
@@ -2224,6 +2275,8 @@ expr({bc,_Line,E,Qs}, Vt, St) ->
     handle_comprehension(E, Qs, Vt, St);
 expr({tuple,_Line,Es}, Vt, St) ->
     expr_list(Es, Vt, St);
+expr({enum,_Line,C,Es}, Vt, St) ->
+    expr_list([C|Es], Vt, St);
 expr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
 expr({map,_Line,Src,Es}, Vt, St) ->
@@ -2313,6 +2366,9 @@ expr({named_fun,Line,Name,Cs}, Vt, St0) ->
 expr({call,_Line,{atom,_Lr,is_record},[E,{atom,Ln,Name}]}, Vt, St0) ->
     {Rvt,St1} = expr(E, Vt, St0),
     {Rvt,exist_record(Ln, Name, St1)};
+expr({call,Line,{op,_,'.',{atom,_,''},F},As}, Vt, St) ->
+    %% a '.'-prefixed call may have a dotted atom on the right hand side
+    expr({call,Line,F,As}, Vt, St);
 expr({call,Line,{remote,_Lr,{atom,_Lm,erlang},{atom,Lf,is_record}},[E,A]},
       Vt, St0) ->
     expr({call,Line,{atom,Lf,is_record},[E,A]}, Vt, St0);
@@ -2425,9 +2481,11 @@ expr({op,Line,Op,L,R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
     {Evt2,St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op,Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3),St2};
-expr({op,Line,'.',_L,_R}, _Vt, St) ->
-    %% remove later - specific warning for now makes it easier to debug
-    {[],add_error(Line, illegal_dots, St)};
+expr({op,_Line,'.',E,{atom,_,_}}, Vt, St) ->
+    %% we only allow the right hand side to be an atom: X.a, but not X.Y
+    expr(E, Vt, St);
+expr({op,Line,'.',_,_}, _Vt, St) ->
+    {[],add_error(Line, illegal_dot, St)};
 expr({op,_Line,_Op,L,R}, Vt, St) ->
     expr_list([L,R], Vt, St);                   %They see the same variables
 %% The following are not allowed to occur anywhere!
@@ -2511,6 +2569,7 @@ is_valid_call(Call) ->
         {lc, _, _, _} -> false;
         {record_index, _, _, _} -> false;
         {tuple, _, Exprs} when length(Exprs) =/= 2 -> false;
+        {enum, _, _, _} -> false;
         _ -> true
     end.
 
@@ -2535,6 +2594,10 @@ is_valid_map_key_value(K) ->
 	    foldl(fun(E,B) ->
 			B andalso is_valid_map_key_value(E)
 		end,true,Es);
+	{enum,_,C,Es} ->
+	    foldl(fun(E,B) ->
+			B andalso is_valid_map_key_value(E)
+		end,true,[C|Es]);
 	{map,_,Arg,Ps} ->
 	    % only check for value expressions to be valid
 	    % invalid map expressions are later checked in
@@ -2783,7 +2846,7 @@ find_field(F, [_|Fs]) -> find_field(F, Fs);
 find_field(_F, []) -> error.
 
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
-%%    Attr :: 'type' | 'opaque'
+%%    Attr :: 'type' | 'opaque' | 'enum'
 %% Checks that a type definition is valid.
 
 -dialyzer({no_match, type_def/6}).
@@ -2872,6 +2935,9 @@ check_type({var, L, Name}, SeenVars, St) ->
 	    error -> dict:store(Name, {seen_once, L}, SeenVars)
 	end,
     {NewSeenVars, St};
+check_type({op, _L, '.', T, {atom, _, _}}, SeenVars, St) ->
+    %% dot atom qualifier
+    check_type(T, SeenVars, St);
 check_type({type, L, bool, []}, SeenVars, St) ->
     {SeenVars, add_warning(L, {renamed_type, bool, boolean}, St)};
 check_type({type, L, 'fun', [Dom, Range]}, SeenVars, St) ->
@@ -3195,6 +3261,8 @@ check_local_opaque_types(St) ->
     #lint{types=Ts, exp_types=ExpTs} = St,
     FoldFun =
         fun(_Type, #typeinfo{attr = type}, AccSt) ->
+                AccSt;
+           (_Type, #typeinfo{attr = enum}, AccSt) ->
                 AccSt;
            (Type, #typeinfo{attr = opaque, line = FileLine}, AccSt) ->
                 case gb_sets:is_element(Type, ExpTs) of
