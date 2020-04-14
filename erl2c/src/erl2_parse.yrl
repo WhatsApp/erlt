@@ -143,16 +143,14 @@ type_500 -> type                          : '$1'.
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
 type -> dot_atom                          : fold_dots('$1').
-type -> dot_atom '(' ')'                  : build_gen_type(fold_dots('$1')).
-type -> dot_atom '(' top_types ')'        : build_type(fold_dots('$1'), '$3').
-type -> dot_atom '{' '}'                  : {type, ?anno('$1'), enum,
-                                             ['$1']}.
-type -> dot_atom '{' top_types '}'        : {type, ?anno('$1'), enum,
-                                             ['$1' | '$3']}.
+type -> dot_atom '{' '}'                  : build_enum_type('$1', []).
+type -> dot_atom '{' top_types '}'        : build_enum_type('$1', '$3').
+type -> dot_atom '(' ')'                  : build_gen_type('$1').
+type -> dot_atom '(' top_types ')'        : build_type('$1', '$3').
 type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1'),
-                                             ['$1', '$3', []]}.
+                                             [fold_dots('$1'), '$3', []]}.
 type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1'),
-                                             ['$1', '$3', '$5']}.
+                                             [fold_dots('$1'), '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1'), list, ['$2']}.
 type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1'),
@@ -1261,9 +1259,8 @@ build_gen_type({atom, Aa, tuple}) ->
     {type, Aa, tuple, any};
 build_gen_type({atom, Aa, map}) ->
     {type, Aa, map, any};
-build_gen_type({atom, Aa, Name}) ->
-    Tag = type_tag(Name, 0),
-    {Tag, Aa, Name, []}.
+build_gen_type(Name) ->
+    build_type(Name, []).
 
 build_bin_type([{var, _, '_'}|Left], Int) ->
     build_bin_type(Left, Int);
@@ -1272,6 +1269,13 @@ build_bin_type([], Int) ->
 build_bin_type([{var, Aa, _}|_], _) ->
     ret_err(Aa, "Bad binary type").
 
+build_enum_type({op, A, '.', M, N}, Types) ->
+    {type, A, enum, [{op, A, '.', fold_dots(M), N} | Types]};
+build_enum_type({atom, A, N}, Types) ->
+    {type, A, enum, [{atom, A, N} | Types]}.
+
+build_type({op, A, '.', M, N}, Types) ->
+    {remote_type, A, [fold_dots(M), N, Types]};
 build_type({atom, A, Name}, Types) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
