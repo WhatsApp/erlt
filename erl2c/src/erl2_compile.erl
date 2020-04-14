@@ -169,6 +169,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1)
@@ -186,6 +187,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1),
@@ -201,6 +203,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -216,6 +219,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -779,6 +783,14 @@ parse_module(_Code, St0) ->
 	    end
     end.
 
+erl2_lint(Code, St) ->
+    case erl2_lint:module(Code, St#compile.ifile, St#compile.options) of
+	{ok,Ws} ->
+	    {ok,Code,St#compile{warnings=St#compile.warnings ++ Ws}};
+	{error,Es,Ws} ->
+	    {error,St#compile{warnings=St#compile.warnings ++ Ws,
+			      errors=St#compile.errors ++ Es}}
+    end.
 
 parse_lang(Forms) ->
     parse_lang(Forms, _Lang = [], _Acc = []).
