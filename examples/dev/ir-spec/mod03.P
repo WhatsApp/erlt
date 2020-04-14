@@ -23,7 +23,8 @@
          un_either/1,
          un_pair/1,
          first/1,
-         second/1]).
+         second/1,
+         call_this_mod/1]).
 
 -type unit0() :: {969696, mod03, unit0}.
 
@@ -119,6 +120,14 @@ first({969696, pair, pair, F, _}) ->
 
 second({969696, pair, pair, _, S}) ->
     S.
+
+-spec call_this_mod(pair(A, B)) -> pair(A, B).
+
+call_this_mod(P) ->
+    case P of
+        {969696, 'mod03.pair', pair, A, B} ->
+            {969696, 'mod03.pair', pair, A, B}
+    end.
 
 
 

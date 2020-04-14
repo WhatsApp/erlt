@@ -55,3 +55,5 @@ val un_pair'1 : ('tA, 'tB) pair'2 -> 'tA * 'tB
 val first'1 : ('tA, _) pair'2 -> 'tA
 
 val second'1 : (_, 'tB) pair'2 -> 'tB
+
+val call_this_mod'1 : ('tA, 'tB) pair'2 -> ('tA, 'tB) pair'2

@@ -63,3 +63,6 @@ let rec un_pair'1 : ('tA, 'tB) pair'2 -> 'tA * 'tB = function
 let rec first'1 : ('tA, _) pair'2 -> 'tA = function Pair'Pair (v_F, _) -> v_F
 
 let rec second'1 : (_, 'tB) pair'2 -> 'tB = function Pair'Pair (_, v_S) -> v_S
+
+let rec call_this_mod'1 : ('tA, 'tB) pair'2 -> ('tA, 'tB) pair'2 = function
+  | v_P -> ( match v_P with Pair'Pair (v_A, v_B) -> Pair'Pair (v_A, v_B) )

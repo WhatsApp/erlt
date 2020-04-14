@@ -56,6 +56,8 @@ module Mod03_priv : sig
   val first'1 : ('tA, _) pair'2 -> 'tA
 
   val second'1 : (_, 'tB) pair'2 -> 'tB
+
+  val call_this_mod'1 : ('tA, 'tB) pair'2 -> ('tA, 'tB) pair'2
 end = struct
   type unit0'0 = unit0
 
@@ -125,4 +127,7 @@ end = struct
 
   let rec second'1 : (_, 'tB) pair'2 -> 'tB = function
     | Pair'Pair (_, v_S) -> v_S
+
+  let rec call_this_mod'1 : ('tA, 'tB) pair'2 -> ('tA, 'tB) pair'2 = function
+    | v_P -> ( match v_P with Pair'Pair (v_A, v_B) -> Pair'Pair (v_A, v_B) )
 end

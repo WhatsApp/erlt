@@ -188,7 +188,7 @@ clauses([], _) -> [].
 clause({clause, Line, Head, Guard, Body}, Ctx) ->
     case Guard of
         [] ->
-            OHead = {"| " ++ head(Head) ++ " ->" },
+            OHead = {"| " ++ head(Head, Ctx) ++ " ->" },
             [OHead, expr_seq(Body, Ctx)];
         Guards ->
             [Guard1|Guards1] =
@@ -198,70 +198,70 @@ clause({clause, Line, Head, Guard, Body}, Ctx) ->
                     end,
                     Guards),
             GuardExp = lists:foldl(fun(H,Acc) -> {op, Line, 'or', Acc, H} end, Guard1, Guards1),
-            [{"| " ++ head(Head) ++ " when" }, [expr(GuardExp, Ctx)], {"->"}, expr_seq(Body, Ctx)]
+            [{"| " ++ head(Head, Ctx) ++ " when" }, [expr(GuardExp, Ctx)], {"->"}, expr_seq(Body, Ctx)]
     end.
 
-head(Ps) ->
-    OPs = patterns(Ps),
+head(Ps, Ctx) ->
+    OPs = patterns(Ps, Ctx),
     Ops1 = interleave(false, ", ", OPs),
     Docs = ["(", Ops1, ")"],
     OHead = binary_to_list(iolist_to_binary(Docs)),
     OHead.
 
-patterns([P0|Ps]) ->
-    P1 = pattern(P0),
-    [P1|patterns(Ps)];
-patterns([]) -> [].
+patterns([P0|Ps], Ctx) ->
+    P1 = pattern(P0, Ctx),
+    [P1|patterns(Ps, Ctx)];
+patterns([], _Ctx) -> [].
 
-pattern({var,_Line,'_'}) ->
+pattern({var,_Line,'_'}, _Ctx) ->
     "_";
-pattern({var,_Line,V}) ->
+pattern({var,_Line,V}, _Ctx) ->
     "v_" ++ atom_to_list(V);
-pattern({match,_Line,P,{var,_Line,V}}) ->
-    pattern(P) ++ " as " ++ "v_" ++ atom_to_list(V);
-pattern({match,Line,_,MP}) ->
+pattern({match,_Line,P,{var,_Line,V}}, Ctx) ->
+    pattern(P, Ctx) ++ " as " ++ "v_" ++ atom_to_list(V);
+pattern({match,Line,_,MP}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', MP, "complex match pattern"}}});
-pattern({integer,_Line,I}) ->
+pattern({integer,_Line,I}, _Ctx) ->
     integer_to_list(I);
-pattern({char,_Line,C}) ->
+pattern({char,_Line,C}, _Ctx) ->
     "'" ++ io_lib:format("~c", [C]) ++ "'";
-pattern({float,_Line,F}) ->
+pattern({float,_Line,F}, _Ctx) ->
     float_to_list(F, [{decimals, 0}]);
-pattern({atom,_Line,true}) ->
+pattern({atom,_Line,true}, _Ctx) ->
     "true";
-pattern({atom,_Line,false}) ->
+pattern({atom,_Line,false}, _Ctx) ->
     "false";
-pattern({atom,Line,Atom}) ->
+pattern({atom,Line,Atom}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom in pattern"}}});
-pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},[]}) ->
+pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},[]}, _Ctx) ->
     enum_ctr_name(Enum, Ctr);
-pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}) ->
-    enum_ctr_name(Mod, Enum, Ctr);
-pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},Args}) ->
+pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}, Ctx) ->
+    enum_ctr_name(Mod, Enum, Ctr, Ctx);
+pattern({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},Args}, Ctx) ->
     enum_ctr_name(Enum, Ctr)
         ++ "("
-        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args, Ctx))))
         ++ ")";
-pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},Args}) ->
-    enum_ctr_name(Mod, Enum, Ctr)
+pattern({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},Args}, Ctx) ->
+    enum_ctr_name(Mod, Enum, Ctr, Ctx)
         ++ "("
-        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args))))
+        ++ binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args, Ctx))))
         ++ ")";
-pattern({string,_Line,S}) ->
+pattern({string,_Line,S}, _Ctx) ->
     "\"" ++ S ++ "\"";
-pattern({nil,_Line}) ->
+pattern({nil,_Line}, _Ctx) ->
     "[]";
-pattern({cons,_Line,H,T}) ->
-    "(" ++ pattern(H) ++  "::" ++ pattern(T) ++ ")";
-pattern({tuple,_Line,[P]}) ->
-    Docs = ["Ffi.Tuple1(", [pattern(P)] , ")"],
+pattern({cons,_Line,H,T}, Ctx) ->
+    "(" ++ pattern(H, Ctx) ++  "::" ++ pattern(T, Ctx) ++ ")";
+pattern({tuple,_Line,[P]}, Ctx) ->
+    Docs = ["Ffi.Tuple1(", [pattern(P, Ctx)] , ")"],
     binary_to_list(iolist_to_binary(Docs));
-pattern({tuple,_Line,Ps}) ->
-    OPs = patterns(Ps),
+pattern({tuple,_Line,Ps}, Ctx) ->
+    OPs = patterns(Ps, Ctx),
     Ops1 = interleave(false, ", ", OPs),
     Docs = ["(", Ops1, ")"],
     binary_to_list(iolist_to_binary(Docs));
-pattern(Pat) ->
+pattern(Pat, _Ctx) ->
     Line = erlang:element(2, Pat),
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Pat}}}).
 
@@ -279,13 +279,13 @@ expr1(Acc, [E], Ctx)->
     Delta = [expr(E, Ctx)],
     Acc ++ Delta;
 expr1(Acc, [{match,_Line,P,E}|Es], Ctx)->
-    PatString = pattern(P),
+    PatString = pattern(P, Ctx),
     ExprDoc = expr(E, Ctx),
     Delta = [{"let " ++ PatString ++ " = "}] ++ [ExprDoc] ++ [{"in"}],
     Acc1 = Acc ++ Delta,
     expr1(Acc1, Es, Ctx);
 expr1(Acc, [{match_rec,_Line,P,E}|Es], Ctx)->
-    PatString = pattern(P),
+    PatString = pattern(P, Ctx),
     ExprDoc = expr(E, Ctx),
     Delta = [{"let rec " ++ PatString ++ " = "}] ++ [ExprDoc] ++ [{"in"}],
     Acc1 = Acc ++ Delta,
@@ -386,13 +386,13 @@ expr({op,_Line,Op,L,R}, Ctx) ->
     [{"("}, expr(L, Ctx), {")"}, {bop(Op)}, {"("}, expr(R, Ctx), {")"}];
 expr({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},[]}, _Ctx) ->
     {enum_ctr_name(Enum, Ctr)};
-expr({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}, _Ctx) ->
-    {enum_ctr_name(Mod, Enum, Ctr)};
+expr({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},[]}, Ctx) ->
+    {enum_ctr_name(Mod, Enum, Ctr, Ctx)};
 expr({enum,_,{op,_,'.',{atom,_,Enum},{atom,_,Ctr}},Args}, Ctx) ->
     [{enum_ctr_name(Enum, Ctr)},
         {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
 expr({enum,_,{op,_,'.',{op,_,'.',{atom,_,Mod},{atom,_,Enum}},{atom,_,Ctr}},Args}, Ctx) ->
-    [{enum_ctr_name(Mod, Enum, Ctr)},
+    [{enum_ctr_name(Mod, Enum, Ctr, Ctx)},
         {"("}, interleave1(false, [expr(A, Ctx) || A <- Args]), {")"}];
 expr(E={remote,Line,_M,_F}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', E}}});
@@ -538,7 +538,9 @@ enum_ctr_def(EnumN, {type,_,enum,[{atom,_,CtrN}| Ts]}, Ctx) ->
 enum_ctr_name(EnumN, CtrN) ->
     first_upper(atom_to_list(EnumN)) ++ "'" ++ first_upper(atom_to_list(CtrN)).
 
-enum_ctr_name(ModN, EnumN, CtrN) ->
+enum_ctr_name(ModN, EnumN, CtrN, Ctx) when ModN == Ctx#context.module ->
+    enum_ctr_name(EnumN, CtrN);
+enum_ctr_name(ModN, EnumN, CtrN, _Ctx) ->
     first_upper(atom_to_list(ModN)) ++ "." ++
         first_upper(atom_to_list(EnumN)) ++ "'" ++
         first_upper(atom_to_list(CtrN)).

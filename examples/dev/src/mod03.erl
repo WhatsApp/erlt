@@ -4,7 +4,7 @@
 -export([
   mk_rgb/0, mk_triple/1, mk_none/0, mk_unit/0, mk_box/1, mk_left/1, mk_right/1,
   zero/2, unbox/1, un_either/1, un_pair/1,
-  first/1, second/1
+  first/1, second/1, call_this_mod/1
 ]).
 
 -enum unit0() :: unit0{}.
@@ -64,3 +64,10 @@ first(pair.pair{F,_}) -> F.
 
 -spec second(pair(_,B)) -> B.
 second(pair.pair{_,S}) -> S.
+
+%% calling this_mod.enum.ctr{} in patterns an expressions
+-spec call_this_mod(pair(A,B)) -> pair(A,B).
+call_this_mod(P) ->
+  case P of
+    mod03.pair.pair{A, B} -> mod03.pair.pair{A, B}
+  end.
