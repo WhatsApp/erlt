@@ -489,8 +489,27 @@ api_type_def({_, {N,_T,TVs}}, Ctx) ->
             lists:member(TypeKey, Ctx#context.export_types)
     end.
 
+type_def({enum, {N,T,TVs}}, Ctx) ->
+    EnumAlias = enum_alias(N, TVs, Ctx),
+    EnumDef = enum_def_lhs(N, TVs, Ctx) ++ " = " ++ enum_ctr_defs(T, Ctx) ++ "\n",
+    EnumAlias ++ "\n" ++ "and " ++ EnumDef;
 type_def({Kind, {N,T,TVs}}, Ctx) ->
     type_def_lhs(N, TVs, Ctx) ++ type_def_rhs(Kind, T, Ctx) ++ "\n".
+
+enum_def_lhs(N, [], _Ctx) ->
+    atom_to_list(N);
+enum_def_lhs(N, [TV], Ctx) ->
+    type(TV, Ctx) ++ " " ++ atom_to_list(N);
+enum_def_lhs(N, TVs, Ctx) ->
+    "(" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") " ++ atom_to_list(N).
+
+enum_alias(N, TVs=[], _Ctx) ->
+    type_name(N, TVs) ++ " = " ++ atom_to_list(N);
+enum_alias(N, TVs=[TV], Ctx) ->
+    type(TV, Ctx) ++ " " ++ type_name(N, TVs) ++ " = " ++ type(TV, Ctx) ++ " " ++ atom_to_list(N);
+enum_alias(N, TVs, Ctx) ->
+    Vars = "(" ++ interleave(false, ", ", [type(TV, Ctx) || TV <- TVs])  ++ ") ",
+    Vars ++ type_name(N, TVs) ++ " = " ++ Vars ++ atom_to_list(N).
 
 type_def_lhs(N, TVs=[], _Ctx) ->
     type_name(N, TVs);
@@ -501,8 +520,6 @@ type_def_lhs(N, TVs, Ctx) ->
 
 type_def_rhs(alias, T, Ctx) ->
     " = " ++ type(T, Ctx);
-type_def_rhs(enum, T, Ctx) ->
-    " = " ++ enum_ctr_defs(T, Ctx);
 type_def_rhs('opaque', T, Ctx) ->
     case Ctx#context.mode of
         'pub' -> "";

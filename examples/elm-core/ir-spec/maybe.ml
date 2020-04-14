@@ -1,4 +1,6 @@
-type 'tA maybe'1 = Just of 'tA | Nothing
+type 'tA maybe'1 = 'tA maybe
+
+and 'tA maybe = Just of 'tA | Nothing
 
 let rec with_default'2 : 'tA * 'tA maybe'1 -> 'tA = function
   | v__Default, Just v_Value -> v_Value

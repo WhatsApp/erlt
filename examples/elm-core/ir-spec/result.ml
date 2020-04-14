@@ -1,4 +1,6 @@
-type ('tError, 'tValue) result'2 = Ok of 'tValue | Err of 'tError
+type ('tError, 'tValue) result'2 = ('tError, 'tValue) result
+
+and ('tError, 'tValue) result = Ok of 'tValue | Err of 'tError
 
 let rec with_default'2 : 'tA * (_, 'tA) result'2 -> 'tA = function
   | v__Def, Ok v_A -> v_A

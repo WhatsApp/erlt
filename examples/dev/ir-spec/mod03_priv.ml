@@ -1,19 +1,35 @@
 module Mod03_priv : sig
-  type unit0'0 = Unit0
+  type unit0'0 = unit0
 
-  and 'tA boxed'1 = Boxed of 'tA
+  and unit0 = Unit0
 
-  and ('tA, 'tB) either'2 = Left of 'tA | Right of 'tB
+  and 'tA boxed'1 = 'tA boxed
 
-  and rgb'0 = R | G | B
+  and 'tA boxed = Boxed of 'tA
 
-  and ('tA, 'tB) pair'2 = Pair of 'tA * 'tB
+  and ('tA, 'tB) either'2 = ('tA, 'tB) either
 
-  and ('tA, 'tB, 'tC) triple'3 = Triple of 'tA * 'tB * 'tC
+  and ('tA, 'tB) either = Left of 'tA | Right of 'tB
 
-  and 'tA my_list'1 = Cons of 'tA * 'tA my_list'1 | Nil
+  and rgb'0 = rgb
 
-  and 'tA option'1 = None | Some of 'tA
+  and rgb = R | G | B
+
+  and ('tA, 'tB) pair'2 = ('tA, 'tB) pair
+
+  and ('tA, 'tB) pair = Pair of 'tA * 'tB
+
+  and ('tA, 'tB, 'tC) triple'3 = ('tA, 'tB, 'tC) triple
+
+  and ('tA, 'tB, 'tC) triple = Triple of 'tA * 'tB * 'tC
+
+  and 'tA my_list'1 = 'tA my_list
+
+  and 'tA my_list = Cons of 'tA * 'tA my_list'1 | Nil
+
+  and 'tA option'1 = 'tA option
+
+  and 'tA option = None | Some of 'tA
 
   val mk_rgb'0 : unit -> rgb'0
 
@@ -41,21 +57,37 @@ module Mod03_priv : sig
 
   val second'1 : (_, 'tB) pair'2 -> 'tB
 end = struct
-  type unit0'0 = Unit0
+  type unit0'0 = unit0
 
-  and 'tA boxed'1 = Boxed of 'tA
+  and unit0 = Unit0
 
-  and ('tA, 'tB) either'2 = Left of 'tA | Right of 'tB
+  and 'tA boxed'1 = 'tA boxed
 
-  and rgb'0 = R | G | B
+  and 'tA boxed = Boxed of 'tA
 
-  and ('tA, 'tB) pair'2 = Pair of 'tA * 'tB
+  and ('tA, 'tB) either'2 = ('tA, 'tB) either
 
-  and ('tA, 'tB, 'tC) triple'3 = Triple of 'tA * 'tB * 'tC
+  and ('tA, 'tB) either = Left of 'tA | Right of 'tB
 
-  and 'tA my_list'1 = Cons of 'tA * 'tA my_list'1 | Nil
+  and rgb'0 = rgb
 
-  and 'tA option'1 = None | Some of 'tA
+  and rgb = R | G | B
+
+  and ('tA, 'tB) pair'2 = ('tA, 'tB) pair
+
+  and ('tA, 'tB) pair = Pair of 'tA * 'tB
+
+  and ('tA, 'tB, 'tC) triple'3 = ('tA, 'tB, 'tC) triple
+
+  and ('tA, 'tB, 'tC) triple = Triple of 'tA * 'tB * 'tC
+
+  and 'tA my_list'1 = 'tA my_list
+
+  and 'tA my_list = Cons of 'tA * 'tA my_list'1 | Nil
+
+  and 'tA option'1 = 'tA option
+
+  and 'tA option = None | Some of 'tA
 
   let rec mk_rgb'0 : unit -> rgb'0 = function () -> R
 

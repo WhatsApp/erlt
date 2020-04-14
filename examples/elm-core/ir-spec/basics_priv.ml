@@ -1,7 +1,11 @@
 module Basics_priv : sig
-  type order'0 = Lt | Eq | Gt
+  type order'0 = order
 
-  and never'0 = Just_one_more of never'0
+  and order = Lt | Eq | Gt
+
+  and never'0 = never
+
+  and never = Just_one_more of never'0
 
   val add'2 : int * int -> int
 
@@ -107,9 +111,13 @@ module Basics_priv : sig
 
   val never'1 : never'0 -> _
 end = struct
-  type order'0 = Lt | Eq | Gt
+  type order'0 = order
 
-  and never'0 = Just_one_more of never'0
+  and order = Lt | Eq | Gt
+
+  and never'0 = never
+
+  and never = Just_one_more of never'0
 
   let rec add'2 : int * int -> int = function v_X1, v_X2 -> v_X1 + v_X2
 

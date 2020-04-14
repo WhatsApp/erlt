@@ -1,4 +1,6 @@
-type 'tA maybe'1 = Just of 'tA | Nothing
+type 'tA maybe'1 = 'tA maybe
+
+and 'tA maybe = Just of 'tA | Nothing
 
 val with_default'2 : 'tA * 'tA maybe'1 -> 'tA
 
