@@ -61,8 +61,8 @@ filter_map(F, Xs) -> foldr(maybe_cons(F), [], Xs).
 -spec maybe_cons(fun((A) -> maybe:maybe(B)), A, list(B)) -> list(B).
 maybe_cons(F, Mx, Xs) ->
     case F(Mx) of
-        maybe.just{X} -> cons(X, Xs);
-        maybe.nothing{} -> Xs
+        maybe.maybe.just{X} -> cons(X, Xs);
+        maybe.maybe.nothing{} -> Xs
     end.
 
 -spec maybe_cons(fun((A) -> maybe:maybe(B))) -> fun((A, list(B)) -> list(B)).
@@ -90,12 +90,12 @@ any(Pred, [H|T]) ->
 any(_Pred, []) -> false.
 
 -spec maximum(list(A)) -> maybe:maybe(A).
-maximum([]) -> maybe.nothing{};
-maximum([H|T]) -> maybe.just{foldl(fun basics:max/2, H, T)}.
+maximum([]) -> maybe.maybe.nothing{};
+maximum([H|T]) -> maybe.maybe.just{foldl(fun basics:max/2, H, T)}.
 
 -spec minimum(list(A)) -> maybe:maybe(A).
-minimum([]) -> maybe.nothing{};
-minimum([H|T]) -> maybe.just{foldl(fun basics:min/2, H, T)}.
+minimum([]) -> maybe.maybe.nothing{};
+minimum([H|T]) -> maybe.maybe.just{foldl(fun basics:min/2, H, T)}.
 
 -spec sum(list(integer())) -> integer().
 sum(Ns) -> foldl(fun basics:add/2, 0, Ns).
@@ -135,12 +135,12 @@ is_empty([_|_]) -> false;
 is_empty([]) -> true.
 
 -spec head(list(A)) -> maybe:maybe(A).
-head([H|_]) -> maybe.just{H};
-head([]) -> maybe.nothing{}.
+head([H|_]) -> maybe.maybe.just{H};
+head([]) -> maybe.maybe.nothing{}.
 
 -spec tail(list(A)) -> maybe:maybe(list(A)).
-tail([_|T]) -> maybe.just{T};
-tail([]) -> maybe.nothing{}.
+tail([_|T]) -> maybe.maybe.just{T};
+tail([]) -> maybe.maybe.nothing{}.
 
 -spec take(integer(), list(A)) -> list(A).
 take(N, _L) when N =< 0 -> [];

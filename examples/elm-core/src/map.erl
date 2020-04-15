@@ -22,8 +22,8 @@ get(Key, Map) -> map_ffi:get(Key, Map).
 -spec member(K, map(K, _V)) -> boolean().
 member(Key, Map) ->
     case get(Key, Map) of
-        maybe.just{_} -> true;
-        maybe.nothing{} -> false
+        maybe.maybe.just{_} -> true;
+        maybe.maybe.nothing{} -> false
     end.
 
 -spec size(map(_K,_V)) -> integer().
@@ -45,8 +45,8 @@ remove(Key, Map) ->
 -spec update(K, fun((maybe:maybe(V)) -> maybe:maybe(V)), map(K, V)) -> map(K, V).
 update(Key, Alter, Map) ->
     case Alter(get(Key, Map)) of
-        maybe.just{Value} -> insert(Key, Value, Map);
-        maybe.nothing{} -> remove(Key, Map)
+        maybe.maybe.just{Value} -> insert(Key, Value, Map);
+        maybe.maybe.nothing{} -> remove(Key, Map)
     end.
 
 -spec singleton(K, V) -> map(K, V).
