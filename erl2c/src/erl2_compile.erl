@@ -764,8 +764,30 @@ remove_file(Code, St) ->
     _ = file:delete(St#compile.ofile),
     {ok,Code,St}.
 
-parse_module(_Code, St0) ->
-    case do_parse_module(utf8, St0) of
+
+parse_module(Forms0, St0) ->
+    % try parsing as erl2 first
+    Res = parse_module(Forms0, St0, _EppMod2 = erl2_epp),
+    case Res of
+        {ok, _Forms1, St1} ->
+            case is_lang_erl2(St1) of
+                true ->
+                    % this is erl2, we guessed it right => returning
+                    Res;
+                false ->
+                    % this is erl1, reparsing it as erl1
+                    %
+                    % NOTE, XXX: this is a temporary solution; it is unnecessarily expensive and only works for as long
+                    % as erl2 syntax is an extension of erl1 syntax, which may not be true in the future
+                    parse_module(Forms0, St0, _EppMod1 = epp)
+            end;
+        _ ->  % error
+            Res
+    end.
+
+
+parse_module(_Code, St0, EppMod) ->
+    case do_parse_module(utf8, St0, EppMod) of
 	{ok,Fs0,St1} ->
             % extract indicator of Erlang language flavor
             {Lang, Fs1} = parse_lang(Fs0),
@@ -773,7 +795,7 @@ parse_module(_Code, St0) ->
 	{error,_}=Ret ->
 	    Ret;
 	{invalid_unicode,File,Line} ->
-	    case do_parse_module(latin1, St0) of
+	    case do_parse_module(latin1, St0, EppMod) of
 		{ok,Code,St} ->
 		    Es = [{File,[{Line,?MODULE,reparsing_invalid_unicode}]}],
 		    {ok,Code,St#compile{warnings=Es++St#compile.warnings}};
@@ -783,7 +805,17 @@ parse_module(_Code, St0) ->
 	    end
     end.
 
+
 erl2_lint(Code, St) ->
+    case is_lang_erl2(St) of
+        true ->
+            do_erl2_lint(Code, St);
+        false ->
+            {ok, Code, St}
+    end.
+
+
+do_erl2_lint(Code, St) ->
     case erl2_lint:module(Code, St#compile.ifile, St#compile.options) of
 	{ok,Ws} ->
 	    {ok,Code,St#compile{warnings=St#compile.warnings ++ Ws}};
@@ -808,13 +840,13 @@ parse_lang([Form | Rest], Lang, Acc) ->
     parse_lang(Rest, Lang, [Form | Acc]).
 
 
-do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St) ->
+do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St, EppMod) ->
     SourceName0 = proplists:get_value(source, Opts, File),
     SourceName = case member(deterministic, Opts) of
                      true -> filename:basename(SourceName0);
                      false -> SourceName0
                  end,
-    R = erl2_epp:parse_file(File,
+    R = EppMod:parse_file(File,
                         [{includes,[".",Dir|inc_paths(Opts)]},
                          {source_name, SourceName},
                          {macros,pre_defs(Opts)},
