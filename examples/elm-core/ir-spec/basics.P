@@ -203,22 +203,22 @@ max(X1) ->
     end.
 
 -type order() ::
-          {969696, basics, lt} |
-          {969696, basics, eq} |
-          {969696, basics, gt}.
+          {969696, basics, order, lt} |
+          {969696, basics, order, eq} |
+          {969696, basics, order, gt}.
 
 -spec compare(A, A) -> order().
 
 compare(X1, X2) ->
     case lt(X1, X2) of
         true ->
-            {969696, order, lt};
+            {969696, basics, order, lt};
         false ->
             case eq(X1, X2) of
                 true ->
-                    {969696, order, eq};
+                    {969696, basics, order, eq};
                 false ->
-                    {969696, order, gt}
+                    {969696, basics, order, gt}
             end
     end.
 
@@ -393,11 +393,11 @@ always(A) ->
            always(A, X)
     end.
 
--type never() :: {969696, basics, just_one_more, never()}.
+-type never() :: {969696, basics, never, just_one_more, never()}.
 
 -spec never(never()) -> _.
 
-never({969696, never, just_one_more, Nvr}) ->
+never({969696, basics, never, just_one_more, Nvr}) ->
     never(Nvr).
 
 
