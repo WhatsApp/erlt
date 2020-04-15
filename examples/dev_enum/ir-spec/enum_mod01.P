@@ -9,11 +9,12 @@
 -export_type([maybe/1]).
 
 -type possibly(T) ::
-          {969696, enum_mod01, some, T} | {969696, enum_mod01, none}.
+          {969696, enum_mod01, possibly, some, T} |
+          {969696, enum_mod01, possibly, none}.
 
 -export_type([possibly/1]).
 
--type pair(T1, T2) :: {969696, enum_mod01, p, T1, T2}.
+-type pair(T1, T2) :: {969696, enum_mod01, pair, p, T1, T2}.
 
 -spec f() -> maybe(any()).
 

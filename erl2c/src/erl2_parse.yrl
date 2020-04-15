@@ -1269,8 +1269,10 @@ build_bin_type([], Int) ->
 build_bin_type([{var, Aa, _}|_], _) ->
     ret_err(Aa, "Bad binary type").
 
-build_enum_type({op, A, '.', M, N}, Types) ->
-    {type, A, enum, [{op, A, '.', fold_dots(M), N} | Types]};
+build_enum_type({op, A, '.', {op, A2, '.', M, E}, N}, Types) ->
+    {type, A, enum, [{op, A, '.', {op, A2, '.', fold_dots(M), E}, N} | Types]};
+build_enum_type({op, A, '.', E, N}, Types) ->
+    {type, A, enum, [{op, A, '.', E, N} | Types]};
 build_enum_type({atom, A, N}, Types) ->
     {type, A, enum, [{atom, A, N} | Types]}.
 
