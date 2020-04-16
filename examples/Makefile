@@ -1,4 +1,4 @@
-DIRS := dev/src elm-core/src dev_dots/src dev_enum/src
+DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src
 
 -include ../dir.mk
 
@@ -15,6 +15,7 @@ ir: $(TEST_DIRS:%=.ir/%)
 
 test-ir:
 	$(MAKE) -C dev/src test-ir
+	$(MAKE) -C doc/src test-ir
 	$(MAKE) -C elm-core/src test-ir
 	$(MAKE) -C dev_dots/src test-ir
 	$(MAKE) -C dev_enum/src test-ir
