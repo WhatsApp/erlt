@@ -38,7 +38,13 @@
 
 keep_warning(_) -> false.
 
+%% our added checks
 keep_error(illegal_dot) -> true;
+keep_error(illegal_enum) -> true;
+keep_error({redefine_enum,_T,_C}) -> true;
+%% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
+%% (possibly modified by us to be stricter)
+keep_error({redefine_type, {_T, _A}}) -> true;
 keep_error(_) -> false.
 
 
@@ -150,6 +156,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
                    :: dict:dict(ta(), #typeinfo{}),
                exp_types=gb_sets:empty()        %Exported types
                    :: gb_sets:set(ta()),
+               enums=#{},                       %Enum definitions
                in_try_head=false :: boolean()  %In a try head.
               }).
 
@@ -275,6 +282,11 @@ format_error(illegal_guard_expr) -> "illegal guard expression";
 %% --- maps ---
 format_error(illegal_map_construction) ->
     "only association operators '=>' are allowed in map construction";
+%% --- enums ---
+format_error(illegal_enum) ->
+    "only enum constructors are allowed in an enum type";
+format_error({redefine_enum,T,C}) ->
+    io_lib:format("constructor ~tw already defined in enum ~tw", [C,T]);
 %% --- records ---
 format_error({undefined_record,T}) ->
     io_lib:format("record ~tw undefined", [T]);
@@ -379,9 +391,9 @@ format_error({builtin_type, {TypeName, Arity}}) ->
 format_error({renamed_type, OldName, NewName}) ->
     io_lib:format("type ~w() is now called ~w(); "
 		  "please use the new name instead", [OldName, NewName]);
-format_error({redefine_type, {TypeName, Arity}}) ->
-    io_lib:format("type ~tw~s already defined",
-		  [TypeName, gen_type_paren(Arity)]);
+format_error({redefine_type, {TypeName, _Arity}}) ->
+    io_lib:format("type ~tw already defined",
+		  [TypeName]);
 format_error({type_syntax, Constr}) ->
     io_lib:format("bad ~tw type", [Constr]);
 format_error(old_abstract_code) ->
@@ -824,7 +836,8 @@ attribute_state({attribute,L,type,{TypeName,TypeDef,Args}}, St) ->
 attribute_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
-    type_def(enum, L, TypeName, TypeDef, Args, St);
+    St1 = enum_def(TypeName, TypeDef, St),
+    type_def(enum, L, TypeName, TypeDef, Args, St1);
 attribute_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute,L,callback,{Fun,Types}}, St) ->
@@ -851,7 +864,8 @@ function_state({attribute,L,type,{TypeName,TypeDef,Args}}, St) ->
 function_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
 function_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
-    type_def(enum, L, TypeName, TypeDef, Args, St);
+    St1 = enum_def(TypeName, TypeDef, St),
+    type_def(enum, L, TypeName, TypeDef, Args, St1);
 function_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute,_L,dialyzer,_Val}, St) ->
@@ -2845,6 +2859,31 @@ find_field(_F, [{record_field,_Lf,{atom,_La,_F},Val}|_Fs]) -> {ok,Val};
 find_field(F, [_|Fs]) -> find_field(F, Fs);
 find_field(_F, []) -> error.
 
+%% Checks that constructors of an enum are valid
+%% - only a single constructor or a union of constructors
+%% - no reuse of constructor names within an enum even with different arities
+%% - redefinitions of the enum type name itself are handled by type/opaque/enum
+
+enum_def(TypeName, {type,_,union,Cs}, St) ->
+    enum_def_1(TypeName, Cs, [], [], St);
+enum_def(TypeName, {type,_,enum,_}=C, St) ->
+    enum_def_1(TypeName, [C], [], [], St);
+enum_def(_TypeName, TypeDef, St) ->
+    add_error(element(2, TypeDef), illegal_enum, St).
+
+enum_def_1(TypeName, [{type,_,enum,[{atom,L,C}|As]} | Ts], Ns, NAs, St) ->
+    St1 = case lists:member(C, Ns) of
+              false -> St;
+              true ->
+                  add_error(L, {redefine_enum, TypeName, C}, St)
+          end,
+    enum_def_1(TypeName, Ts, [C | Ns], [{C,length(As)} | NAs], St1);
+enum_def_1(_TypeName, [T | _Ts], _Ns, _NAs, St) ->
+    add_error(element(2, T), illegal_enum, St);
+enum_def_1(TypeName, [], _Ns, NAs, #lint{enums=Map}=St) ->
+    St#lint{enums = Map#{TypeName => NAs}}.
+
+
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
 %%    Attr :: 'type' | 'opaque' | 'enum'
 %% Checks that a type definition is valid.
@@ -2878,7 +2917,9 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
                      end
             end;
         false ->
-            case dict:is_key(TypePair, TypeDefs) of
+            %% erl2 modification: don't allow types overloaded on arity
+            Names = [N || {N,_} <- dict:fetch_keys(TypeDefs)],
+            case lists:member(TypeName, Names) of
                 true ->
                     add_error(Line, {redefine_type, TypePair}, St0);
                 false ->
