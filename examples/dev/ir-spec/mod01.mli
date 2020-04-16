@@ -175,7 +175,7 @@ val bitstring_id'1 : Ffi.bitstring'0 -> Ffi.bitstring'0
 
 val byte_id'1 : Ffi.byte'0 -> Ffi.byte'0
 
-val float_id'1 : float -> float
+val float_id'1 : int -> int
 
 val identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0
 

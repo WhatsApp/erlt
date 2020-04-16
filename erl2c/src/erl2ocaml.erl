@@ -648,7 +648,7 @@ type({type,_Line,'fun',[{type,Lt,product,As},B]}, Ctx) ->
 type({type, _,integer,[]}, _Ctx) ->
     "int";
 type({type, _,float,[]}, _Ctx) ->
-    "float";
+    "int";
 type({type, _,string,[]}, _Ctx) ->
     "string";
 type({type, _,char,[]}, _Ctx) ->

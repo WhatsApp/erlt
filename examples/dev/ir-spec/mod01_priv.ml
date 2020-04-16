@@ -176,7 +176,7 @@ module Mod01_priv : sig
 
   val byte_id'1 : Ffi.byte'0 -> Ffi.byte'0
 
-  val float_id'1 : float -> float
+  val float_id'1 : int -> int
 
   val identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0
 
@@ -461,7 +461,7 @@ end = struct
 
   let rec byte_id'1 : Ffi.byte'0 -> Ffi.byte'0 = function v_A -> v_A
 
-  let rec float_id'1 : float -> float = function v_X -> v_X
+  let rec float_id'1 : int -> int = function v_X -> v_X
 
   let rec identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0 = function
     | v_A -> v_A
