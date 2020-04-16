@@ -426,10 +426,28 @@ collect_compile_deps(Forms, St0) ->
     Deps = get_deps_from_forms(Forms, St0),
     %io:format("deps: ~p~n", [Deps]),
 
-    St1 = St0#compile{
-        compile_deps = St0#compile.compile_deps ++ Deps
-    },
+    St1 = append_compile_deps(Deps, St0),
     {ok, Forms, St1}.
+
+
+append_compile_deps(Deps, St0) ->
+    St0#compile{
+        compile_deps = lists_append_uniq(St0#compile.compile_deps, Deps)
+    }.
+
+
+lists_append_uniq(From, To) ->
+    lists_append_uniq(From, To, _Acc = []).
+
+lists_append_uniq([], To, Acc) ->
+    To ++ lists:reverse(Acc);
+lists_append_uniq([H|T], To, Acc) ->
+    NewAcc =
+        case member(H, Acc) orelse member(H, To) of
+            true -> Acc;
+            false -> [H | Acc]
+        end,
+    lists_append_uniq(T, To, NewAcc).
 
 
 get_deps_from_forms(Forms, St0) ->
