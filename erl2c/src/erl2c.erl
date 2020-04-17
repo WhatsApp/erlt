@@ -292,7 +292,7 @@ usage() ->
 	 {"-I path","where to search for include files"},
 	 {"-M","generate a rule for make(1) describing the dependencies"},
 	 {"-M2","similar to -M, but also includes dependencies on .beam files from behaviors and parse transforms"},
-	 {"-M2C","-M2 with -M compatibility mode: -M2C means -M2 wihtout .beam dependencies; -M2C output should be identical to -M"},
+	 {"-M2C","-M2 with -M compatibility mode: -M2C means -M2 without .beam dependencies; -M2C output should be identical to -M"},
 	 {"-MF file","write the dependencies to 'file'"},
 	 {"-MT target","change the target of the rule emitted by dependency "
 	  "generation"},
