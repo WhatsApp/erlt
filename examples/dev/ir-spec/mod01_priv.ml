@@ -266,8 +266,8 @@ end = struct
       (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__2 > as 'rec_tv__2) * 'tA ->
       (< get_a : 'tA ; set_a : 'tA -> 'rec_tv__3 > as 'rec_tv__3) = function
     | v_M, v_A ->
-        let _ = Ffi.same'2 (v_M, v_M#set_a v_A) in
-        let _ = Ffi.same'2 (v_A, v_M#get_a) in
+        let _ = v_M = v_M#set_a v_A in
+        let _ = v_A = v_M#get_a in
         v_M#set_a v_A
 
   let rec update_map3'1 :
@@ -286,10 +286,10 @@ end = struct
     | v_M ->
         let v_A0 = v_M#get_a in
         let v_B0 = v_M#get_a in
-        let _ = Ffi.same'2 (v_M, v_M#set_a v_B0) in
-        let _ = Ffi.same'2 (v_M, v_M#set_b v_A0) in
-        let _ = Ffi.same'2 (v_B0, v_M#get_a) in
-        let _ = Ffi.same'2 (v_A0, v_M#get_b) in
+        let _ = v_M = v_M#set_a v_B0 in
+        let _ = v_M = v_M#set_b v_A0 in
+        let _ = v_B0 = v_M#get_a in
+        let _ = v_A0 = v_M#get_b in
         (v_M#set_a v_B0)#set_b v_A0
 
   let rec access_map'1 :

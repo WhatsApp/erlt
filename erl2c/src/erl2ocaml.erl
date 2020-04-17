@@ -32,7 +32,6 @@ ffi() ->
         "type timeout'0\n",
         "type node'0 = atom'0\n",
         "type no_return'0 = none'0\n",
-        "val same'2 : 'a * 'a -> unit\n",
         "val to_string'1 : 'a -> string\n",
         "val list_diff'2 : 'a list * 'a list -> 'a list\n"
     ],
@@ -373,11 +372,10 @@ expr({map,_Line, InitAssocs}, Ctx) ->
     Fields =  [init_assoc(A, Ctx) || A <- InitAssocs],
     [{"object"}, Fields, {"end"}];
 expr({map,Line,Map,UpdateAssocs}, Ctx) ->
-    FfiSame = {remote, Line, {atom, Line, 'ffi'}, {atom, Line, 'same'}},
     SameFields =
-        [{'call',Line,FfiSame,[V,{'op',Line,'.',Map,K}]} || {map_field_exact,_,K={atom,_,_},V} <- UpdateAssocs],
+        [{op,Line,'==',V,{'op',Line,'.',Map,K} } || {map_field_exact,_,K={atom,_,_},V} <- UpdateAssocs],
     SameMaps =
-        [{'call',Line,FfiSame,[Map,{map1,Line, Map, [UA]}]} || UA <- UpdateAssocs],
+        [{op,Line,'==',Map,{map1,Line, Map, [UA]}} || UA <- UpdateAssocs],
     Exprs = SameMaps ++ SameFields ++ [{map1,Line, Map, UpdateAssocs}],
     expr({block, Line, Exprs}, Ctx);
 expr({map1,_Line, Map, UpdateAssocs}, Ctx) ->

@@ -42,8 +42,6 @@ type node'0 = atom'0
 
 type no_return'0 = none'0
 
-val same'2 : 'a * 'a -> unit
-
 val to_string'1 : 'a -> string
 
 val list_diff'2 : 'a list * 'a list -> 'a list
