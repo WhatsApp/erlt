@@ -1088,16 +1088,18 @@ ensure_ocaml_ffi(OcamlDir) ->
 call_ocaml_typechecker(OcamlDir, Basename, St) ->
     ok = ensure_ocaml_ffi(OcamlDir),
 
-    Command =
+    FileArgs =
         case is_lang_ffi(St) of
             true ->
-                lists:append(["ocamlc -c ", Basename, ".mli", " ", Basename, "_priv.mli"]);
+                [Basename, ".mli", " ", Basename, "_priv.mli"];
             false ->
-                lists:append(["ocamlc -c ", Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"])
+                [Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"]
         end,
 
-
-    {ExitCode, Output} = eunit_lib:command(Command, OcamlDir),
+    FmtCmd = lists:append(["ocamlformat --enable-outside-detected-project -i " | FileArgs]),
+    CheckCmd = lists:append(["ocamlc  -c " | FileArgs]),
+    {0, _} = eunit_lib:command(FmtCmd, OcamlDir),
+    {ExitCode, Output} = eunit_lib:command(CheckCmd, OcamlDir),
     case ExitCode of
         0 ->
             % TODO: check for warnings
