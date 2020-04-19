@@ -20,7 +20,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: .cache
-          key: opam
+          key: opam_ocaml.4.10.0_ocamlformat.0.14.1
       - name: install opam
         if: steps.cache-opam.outputs.cache-hit != 'true'
         run: |
@@ -35,7 +35,7 @@ jobs:
           sudo apt-get install bubblewrap
           opam init -c 4.10.0
           eval $(opam env)
-          opam install ocamlformat -y
+          opam install ocamlformat.0.14.1 -y
           ocamlc --version
           ocamlformat --version
       - name: Erlang version
