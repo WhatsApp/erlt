@@ -16,8 +16,8 @@ ir: $(TEST_DIRS:%=.ir/%)
 test-ir:
 	$(MAKE) -C dev/src test-ir
 	$(MAKE) -C elm-core/src test-ir
-	$(MAKE) -C dev_dots/src ir
-	$(MAKE) -C dev_enum/src ir
+	$(MAKE) -C dev_dots/src test-ir
+	$(MAKE) -C dev_enum/src test-ir
 
 update-ir-spec: $(TEST_DIRS:%=.update-ir-spec/%)
 
