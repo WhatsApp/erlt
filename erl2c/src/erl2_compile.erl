@@ -259,13 +259,14 @@ output_compile_deps(_Forms, St) ->
                 [X || X = {file, _} <- Deps2]
         end,
 
-    RuleCode = gen_make_rule_compat(TargetBeam, Deps),
+    DepsFilenames = deps_to_unique_filenames(Deps),
+    RuleCode = gen_make_rule_compat(TargetBeam, DepsFilenames),
 
     PhonyRulesCode =
         case proplists:get_value(makedep_phony, St#compile.options) of
                false -> "";
                _ ->
-                   [gen_make_phony_rule(St#compile.ifile, X) || X <- Deps]
+                   [gen_make_phony_rule(St#compile.ifile, X) || X <- DepsFilenames]
         end,
 
     % adding the rule to rebuild the depfile itself
@@ -349,41 +350,45 @@ output_compile_deps(_Forms, St) ->
     end.
 
 
-gen_make_rule(_Target, _Deps = []) ->
+deps_to_unique_filenames(Deps) ->
+    L = [Filename || {_DepType, Filename} <- Deps],
+    lists:usort(L).
+
+
+gen_make_rule(_Target, _DepsFilenames = []) ->
     [];
-gen_make_rule(Target, Deps) ->
-    [FirstFilename | RestFilenames] = [Filename || {_DepType, Filename} <- Deps],
+gen_make_rule(Target, DepsFilenames) ->
+    [FirstFilename | RestFilenames] = DepsFilenames,
     RestLines = [[" \\\n  ", X] || X <- RestFilenames],
     [Target, ": ", FirstFilename, RestLines, "\n"].
 
 
 % same as gen_make_rule(), but make sure the line are no longer than 78
 % characters. This behavior is compatible with erlc (WHY?!)
-gen_make_rule_compat(_Target, _Deps = []) ->
+gen_make_rule_compat(_Target, _DepsFilenames = []) ->
     [];
-gen_make_rule_compat(Target, Deps) ->
+gen_make_rule_compat(Target, DepsFilenames) ->
     FirstLine = Target ++ ":",
-    gen_make_rule_compat(Deps, FirstLine, _Acc = []).
+    gen_make_rule_compat(DepsFilenames, FirstLine, _Acc = []).
 
 
 gen_make_rule_compat([], CurrentLine, Acc) ->
     LastLine = CurrentLine ++ "\n",
     lists:reverse([LastLine | Acc]);
 
-gen_make_rule_compat([H|T], CurrentLine, Acc) ->
-    {_DepType, NextFilename} = H,
+gen_make_rule_compat([NextFilename|RestFilenames], CurrentLine, Acc) ->
     NewCurrentLine = CurrentLine ++ " " ++ NextFilename,
     case length(NewCurrentLine) > 76 of
         false ->
-            gen_make_rule_compat(T, NewCurrentLine, Acc);
+            gen_make_rule_compat(RestFilenames, NewCurrentLine, Acc);
         true ->
             NewAcc = [CurrentLine ++ " \\\n" | Acc],
             NewCurrentLine1 = "  " ++ NextFilename,
-            gen_make_rule_compat(T, NewCurrentLine1, NewAcc)
+            gen_make_rule_compat(RestFilenames, NewCurrentLine1, NewAcc)
     end.
 
 
-gen_make_phony_rule(Ifile, {_DepType, Filename}) ->
+gen_make_phony_rule(Ifile, Filename) ->
     case Ifile =:= Filename of
         true -> "";  % skip the .erl file being compiled
         false ->
@@ -400,7 +405,8 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
         X = {DepType, _} <- Deps0,
         DepType =:= file orelse (DepType =:= parse_transform andalso IncludeParseTransforms)
     ],
-    gen_make_rule(Target, Deps1).
+    DepsFilenames = deps_to_unique_filenames(Deps1),
+    gen_make_rule(Target, DepsFilenames).
 
 
 check_parse_errors(Forms, St0) ->
