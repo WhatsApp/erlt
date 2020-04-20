@@ -83,9 +83,9 @@ Details of how it works:
     Note that the dependency graph (i.e. *.d) files depend on source .erl files,
     and .hrl files, but *not* on behavior and parse transform .beams.
 
-    Dependency scan of individual .erl files is performed by calling 'erlbuild
-    erlc --build-phase scan ...'. See "erlbuild dependency scanner" section below for
-    details.
+    Dependency scan of individual .erl files is performed by calling
+    'erlbuild-erlc --build-phase scan ...'. See "erlbuild dependency scanner"
+    section below for details.
 
     These are the exact 'make' directives implementing this logic. See
     './erlbuild.template.mk' for details.
@@ -94,7 +94,7 @@ Details of how it works:
         DEPFILES := $(ERLS:%.erl=$(BUILD_DIR)/%.d)
 
         $(BUILD_DIR)/%.d: %.erl
-                erlbuild erlc --build-phase scan -M -MP -MF $@ $(ERLC_FLAGS) $<
+                erlbuild-erlc --build-phase scan -M -MP -MF $@ $(ERLC_FLAGS) $<
 
         include $(wildcard $(DEPFILES))
     ```
@@ -112,7 +112,7 @@ Details of how it works:
 
     ```
         $(EBIN)/%.beam: %.erl
-                erlbuild erlc --build-phase compile $(ERLC_FLAGS) $<
+                erlbuild-erlc --build-phase compile $(ERLC_FLAGS) $<
 
         include $(DEPFILES)
     ```
@@ -142,7 +142,7 @@ Details of how it works:
 
 
 6.  The generated 'erlbuild.mk' files, intermediate compilation state, and
-    the dependency graph are kept in a separate directory. See 'erlbuild
+    the dependency graph are kept in a separate directory. See 'erlbuild-erlc
     --build-dir' option for details.
 
 
@@ -157,7 +157,7 @@ Overall, it follows Erlang standard dependency scanner ('erlc -M') logic and
 interface. There are several critical extensions:
 
 - in addition to included files treated as dependencies by 'erlc -M',
-  'erlbuild erlc -M2' generates a list of .beam dependencies from behaviors
+  'erlbuild-erlc -M2' generates a list of .beam dependencies from behaviors
   and parse transforms
 
 - unlike 'erlc -M', it does not tolerate epp errors. For example, the original
@@ -171,9 +171,9 @@ interface. There are several critical extensions:
   turn, allows to maintain and consistently update the dependency graph during
   incremental builds.
 
-- by default, 'erlbuild erlc -M2' does not run parse transforms.
+- by default, 'erlbuild-erlc -M2' does not run parse transforms.
 
-  This behavior can be overridden by `erlbuild erlc -M2 +makedep2_run_parse_transforms`
+  This behavior can be overridden by `erlbuild-erlc -M2 +makedep2_run_parse_transforms`
   option.
 
   Not executing parse transforms during dependency scan allows us to build all
