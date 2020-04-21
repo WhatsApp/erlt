@@ -1103,7 +1103,7 @@ call_ocaml_typechecker(OcamlDir, Basename, St) ->
         end,
 
     FmtCmd = lists:append(["ocamlformat --enable-outside-detected-project -i " | FileArgs]),
-    CheckCmd = lists:append(["ocamlc  -c " | FileArgs]),
+    CheckCmd = lists:append(["ocamlc  -c ", erl2ocaml:compiler_flags(), FileArgs]),
     {0, _} = eunit_lib:command(FmtCmd, OcamlDir),
     {ExitCode, Output} = eunit_lib:command(CheckCmd, OcamlDir),
     case ExitCode of

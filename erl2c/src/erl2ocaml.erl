@@ -1,6 +1,6 @@
 -module(erl2ocaml).
 
--export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1, format_error/1]).
+-export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1, format_error/1, compiler_flags/0]).
 
 -record(context, {
     module :: atom(),
@@ -54,6 +54,10 @@ main(["-ast", File]) ->
     io:format("Types:\n~p\n", [TypeDefs]);
 main(_) ->
     usage().
+
+compiler_flags() ->
+    %% see https://github.com/WhatsApp/erl2/issues/38
+    "-w +40 -warn-error +40 ".
 
 usage() ->
     io:format("usage:\n"),
