@@ -18,6 +18,9 @@
 %% a non-exported enum type
 -enum pair(T1, T2) :: p{T1, T2}.
 
+%% a plain type that refers to constructors from another enum type
+-type t(T) :: possibly.some{T} | possibly.none{}.
+-export_type([ t/1 ]).
 
 -spec f() -> maybe(any()).
 f() ->
@@ -30,22 +33,24 @@ g() ->
 
 -spec p() -> possibly(any()).
 p() ->
-    none{}.
+    possibly.none{}.
 
 -spec q(T) -> possibly(T).
 q(X) ->
-    some{X}.
+    possibly.some{X}.
 
 -spec r(possibly(T)) -> [T].
 r(E) ->
     case E of
-        none{} ->
+        possibly.none{} ->
             [];
-        some{X} ->
+        possibly.some{X} when X =:= possibly.none{} ->
+            [];
+        possibly.some{X} ->
             [X]
     end.
 
 
 -spec s(T1, T2) -> pair(T1, T2).
 s(H, T) ->
-    p{H, T}.
+    pair.p{H, T}.
