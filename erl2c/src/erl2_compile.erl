@@ -617,7 +617,11 @@ fix_compile_options(Options) ->
 compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
     % appended env_compiler_options() above
-    Ret = compile:noenv_forms(Forms, [{source, St0#compile.filename} | St0#compile.options]),
+    % Make the compiler return errors and warnings instead of printing them
+    Opts0 = St0#compile.options -- [report_warnings, report_errors],
+    Ret = compile:noenv_forms(Forms, [return_errors, return_warnings,
+                                      {source, St0#compile.filename}
+                                      | Opts0]),
 
     % TODO: handling of ok is not exhaustive, there could also be {ok, ModuleName, Warnings}
     case Ret of
@@ -627,8 +631,9 @@ compile_erl1_forms(Forms, St0) ->
             {ok, BinaryOrCode, St0#compile{module=ModuleName}};
         {ok,ModuleName,BinaryOrCode,Warnings} ->
             {ok, BinaryOrCode, St0#compile{module=ModuleName, warnings=Warnings}};
-        _ ->
-            % errors in several different shapes
+        {error, Warnings, Errors} ->
+            {error, St0#compile{errors=Errors, warnings=Warnings}};
+        error ->
             {error, St0}
     end.
 
