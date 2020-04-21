@@ -85,3 +85,6 @@ jobs:
       - name: "examples/dev_module_record/src: make"
         run: |
           make erl2c-records -C examples/dev_module_record/src
+      - name: "examples/checks/src: test"
+        run: |
+          make test -C examples/checks/src

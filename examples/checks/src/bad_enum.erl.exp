@@ -1,0 +1,1 @@
+bad_enum.erl:4: -lang([erl2, st]): Not supported syntax: {type,4,enum,[{atom,4,ok}]}

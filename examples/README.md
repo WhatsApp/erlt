@@ -26,4 +26,4 @@ Add `-depends_on([mod01, ...]).` to your .erl files -- see `depends_test.erl` fo
 
 # Some specific examples
 
-[type-errors/src](type-errors/src) - some examples of type errors in `-lang([erl2, st])`.
+[checks/src](checks/src) - some examples of new checks in `-lang([erl2, st])` and `-lang([erl2, dt])`.
