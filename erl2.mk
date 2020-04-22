@@ -43,4 +43,4 @@ update-ir-spec: ir
 	rm -rf $(IR_SPEC_DIR)
 	cp -r $(IR_DIR) $(IR_SPEC_DIR)
 
-.PHONY: ocamlformat p ir test-ir update-ir-spec
+.PHONY: copy-ocaml p ir test-ir update-ir-spec
