@@ -1,0 +1,2 @@
+shadow_var.erl:8: variable 'Y' shadowed in match
+shadow_var.erl:10: variable 'Y' shadowed in pattern
