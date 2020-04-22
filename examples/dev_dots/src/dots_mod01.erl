@@ -1,15 +1,15 @@
 -lang([erl2]).
--module(dots_mod01) .
+-module(dots_mod01).
 
 -export([f/0, g/0, p/1, q/1, r/1, s/1, t/2, u/2, v/1]).
 
 -type foo() :: ab.bc.cd | de.ef.
 
-%% type names may be dotted just like function calls
--type bar() :: a.b(). % type b in module a in local namespace
--type baz() :: xy.zz.y(boolean(), integer()). % type y in module xy.zz
--type mbar() :: a.b.c:def().
--type mbaz() :: xy.zz.y:xyz(boolean(), integer()).
+%% types may use dots as qualifier, just like function calls
+-type bar() :: a.b(). % type b in module a
+-type baz() :: xx.y(boolean(), integer()). % type y in module zz
+-type mbar() :: c:def().
+-type mbaz() :: yy:z(boolean(), integer()).
 
 -export_type([foo/0,bar/0,baz/0,mbar/0,mbaz/0]).
 

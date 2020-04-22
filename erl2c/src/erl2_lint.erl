@@ -39,6 +39,7 @@
 keep_warning(_) -> false.
 
 %% our added checks
+keep_error(dotted_module_name) -> true;
 keep_error(illegal_dot) -> true;
 keep_error(illegal_enum) -> true;
 keep_error({redefine_enum,_T,_C}) -> true;
@@ -280,6 +281,7 @@ format_error(illegal_bin_pattern) ->
     "binary patterns cannot be matched in parallel using '='";
 format_error(illegal_expr) -> "illegal expression";
 format_error(illegal_dot) -> "illegal dot operator";
+format_error(dotted_module_name) -> "module names may not be dotted";
 format_error({illegal_guard_local_call, {F,A}}) -> 
     io_lib:format("call to local/imported function ~tw/~w is illegal in guard",
 		  [F,A]);
@@ -3233,6 +3235,15 @@ is_fa({FuncName, Arity})
 is_fa(_) -> false.
 
 check_module_name(M, Line, St) ->
+    case erl2_parse:split_dotted(M) of
+        [_,_|_] ->
+
+            add_error(Line, dotted_module_name, St);
+        _ ->
+            check_module_name_1(M, Line, St)
+    end.
+
+check_module_name_1(M, Line, St) ->
     case is_latin1_name(M) of
         true -> St;
         false ->

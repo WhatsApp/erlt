@@ -8,11 +8,11 @@
 
 -type bar() :: a:b().
 
--type baz() :: 'xy.zz':y(boolean(), integer()).
+-type baz() :: xx:y(boolean(), integer()).
 
--type mbar() :: 'a.b.c':def().
+-type mbar() :: c:def().
 
--type mbaz() :: 'xy.zz.y':xyz(boolean(), integer()).
+-type mbaz() :: yy:z(boolean(), integer()).
 
 -export_type([foo/0,bar/0,baz/0,mbar/0,mbaz/0]).
 
