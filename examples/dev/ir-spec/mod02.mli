@@ -13,3 +13,5 @@ val mod01call'1 : 'tX -> 'tX
 val list_to_string'1 : _ list -> string
 
 val int_to_string'1 : int -> string
+
+val mk_unit'0 : unit -> int

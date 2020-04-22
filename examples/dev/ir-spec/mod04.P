@@ -9,7 +9,10 @@
          zero_remote1_dot/2,
          un_pair_remote_dot/1,
          funs/0,
-         remote_dot2/0]).
+         remote_dot2/0,
+         import1/0]).
+
+-import(mod03, [mk_unit/0]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
 
@@ -61,6 +64,11 @@ funs() ->
 
 remote_dot2() ->
     mod03:mk_unit().
+
+-spec import1() -> mod03:unit0().
+
+import1() ->
+    mk_unit().
 
 
 

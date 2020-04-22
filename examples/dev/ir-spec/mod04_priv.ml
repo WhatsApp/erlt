@@ -14,6 +14,8 @@ module Mod04_priv : sig
   val funs'0 : unit -> (unit -> Mod03.unit0'0) list
 
   val remote_dot2'0 : unit -> Mod03.unit0'0
+
+  val import1'0 : unit -> Mod03.unit0'0
 end = struct
   let rec mk_unit_remote_dot'0 : unit -> Mod03.unit0'0 = function
     | () -> Mod03.Unit0'Unit0
@@ -43,5 +45,8 @@ end = struct
         ]
 
   let rec remote_dot2'0 : unit -> Mod03.unit0'0 = function
+    | () -> Mod03.mk_unit'0 ()
+
+  let rec import1'0 : unit -> Mod03.unit0'0 = function
     | () -> Mod03.mk_unit'0 ()
 end

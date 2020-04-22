@@ -9,7 +9,8 @@
          even/1,
          mod01call/1,
          list_to_string/1,
-         int_to_string/1]).
+         int_to_string/1,
+         mk_unit/0]).
 
 -spec odd(integer()) -> boolean().
 
@@ -56,6 +57,11 @@ int_to_string(0) ->
     ffi:to_string(0);
 int_to_string(N) ->
     ffi:to_string(N).
+
+-spec mk_unit() -> integer().
+
+mk_unit() ->
+    1.
 
 
 

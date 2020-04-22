@@ -4,8 +4,10 @@
 -export([
   mk_unit_remote_dot/0, mk_left_remote_dot/1, mk_right_remote_dot/1,
   zero_remote_dot/2, zero_remote1_dot/2,
-  un_pair_remote_dot/1, funs/0, remote_dot2/0
+  un_pair_remote_dot/1, funs/0, remote_dot2/0, import1/0
 ]).
+
+-import(mod03, [mk_unit/0]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
 mk_unit_remote_dot() -> mod03.unit0.unit0{}.
@@ -45,3 +47,10 @@ funs() -> [
 
 -spec remote_dot2() -> mod03.unit0().
 remote_dot2() -> mod03.mk_unit().
+
+-spec import1() -> mod03.unit0().
+import1() -> mk_unit().
+
+%% Should work some day - see https://github.com/erlang/otp/blob/9a6e292336cb36561f9a993f86ddee363f1d0850/lib/stdlib/src/erl_lint.erl#L2427-L2435
+%%-spec import2() -> fun(() -> mod03.unit0()).
+%%import2() -> fun mk_unit/0.

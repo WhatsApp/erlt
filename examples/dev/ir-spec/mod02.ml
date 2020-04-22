@@ -17,3 +17,5 @@ let rec list_to_string'1 : _ list -> string = function
 let rec int_to_string'1 : int -> string = function
   | 0 -> Ffi.to_string'1 0
   | v_N -> Ffi.to_string'1 v_N
+
+let rec mk_unit'0 : unit -> int = function () -> 1
