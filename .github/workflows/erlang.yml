@@ -62,6 +62,10 @@ jobs:
         run: |
           eval $(opam env)
           make -C examples/dev_enum/src
+      - name: "examples/calc/src: make"
+        run: |
+          eval $(opam env)
+          make -C examples/calc/src
       - name: "examples/dev/src: test-ir"
         run: |
           eval $(opam env)
@@ -82,6 +86,10 @@ jobs:
         run: |
           eval $(opam env)
           make test-ir -C examples/dev_enum/src
+      - name: "examples/calc/src: test-ir"
+        run: |
+          eval $(opam env)
+          make test-ir -C examples/calc/src
       - name: "examples/dev_module_record/src: make"
         run: |
           make erl2c-records -C examples/dev_module_record/src

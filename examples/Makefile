@@ -1,4 +1,4 @@
-DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src
+DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src calc/src
 
 -include ../dir.mk
 
@@ -19,6 +19,7 @@ test-ir:
 	$(MAKE) -C elm-core/src test-ir
 	$(MAKE) -C dev_dots/src test-ir
 	$(MAKE) -C dev_enum/src test-ir
+	$(MAKE) -C calc/src test-ir
 
 test-others:
 	$(MAKE) -C dev_module_record/src erl2c-records
