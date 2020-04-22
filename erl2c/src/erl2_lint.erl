@@ -50,6 +50,7 @@ keep_error({enum_constructor_wrong_arity,_E,_A,_N}) -> true;
 %% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
+keep_error({shadowed_var,_V,_In}) -> true;
 keep_error(_) -> false.
 
 
@@ -584,9 +585,7 @@ start(File, Opts) ->
 	 {export_vars,
 	  bool_option(warn_export_vars, nowarn_export_vars,
 		      false, Opts)},
-	 {shadow_vars,
-	  bool_option(warn_shadow_vars, nowarn_shadow_vars,
-		      true, Opts)},
+	 {shadow_vars, true},  % not optional here
 	 {unused_import,
 	  bool_option(warn_unused_import, nowarn_unused_import,
 		      false, Opts)},
@@ -1553,7 +1552,7 @@ clause({clause,_Line,H,G,B}, St0) ->
 %%  known variable list will result in multiple error messages/warnings.
 
 head(Ps, Vt, St0) ->
-    head(Ps, Vt, Vt, St0).    % Old = Vt
+    head(Ps, Vt, [], St0).    % No imported pattern variables
 
 head([P|Ps], Vt, Old, St0) ->
     {Pvt,Bvt1,St1} = pattern(P, Vt, Old, [], St0),
@@ -1575,7 +1574,7 @@ head([], _Vt, _Env, St) -> {[],[],St}.
 %%  A = 4, fun(<<A:8,16:A>>) -> % A #1 unused
 
 pattern(P, Vt, St) ->
-    pattern(P, Vt, Vt, [], St).    % Old = Vt
+    pattern(P, Vt, [], [], St).    % No imported pattern variables
 
 pattern({var,_Line,'_'}, _Vt, _Old, _Bvt, St) ->
     {[],[],St}; %Ignore anonymous variable
@@ -2501,7 +2500,8 @@ expr({'catch',Line,E}, Vt, St0) ->
 expr({match,_Line,P,E}, Vt, St0) ->
     {Evt,St1} = expr(E, Vt, St0),
     {Pvt,Bvt,St2} = pattern(P, vtupdate(Evt, Vt), St1),
-    St = reject_invalid_alias_expr(P, E, Vt, St2),
+    St3 = shadow_vars(Bvt, Vt, 'match', St2),
+    St = reject_invalid_alias_expr(P, E, Vt, St3),
     {vtupdate(Bvt, vtmerge(Evt, Pvt)),St};
 %% No comparison or boolean operators yet.
 expr({op,_Line,_Op,A}, Vt, St) ->
@@ -3455,8 +3455,9 @@ icrt_clause({clause,_Line,H,G,B}, Vt0, St0) ->
     Vt1 = taint_stack_var(Vt0, H, St0),
     {Hvt,Binvt,St1} = head(H, Vt1, St0),
     Vt2 = vtupdate(Hvt, Binvt),
-    Vt3 = taint_stack_var(Vt2, H, St0),
-    {Gvt,St2} = guard(G, vtupdate(Vt3, Vt0), St1#lint{in_try_head=false}),
+    St1_1 = shadow_vars(Binvt, Vt0, 'pattern', St1),
+    Vt3 = taint_stack_var(Vt2, H, St1_1),
+    {Gvt,St2} = guard(G, vtupdate(Vt3, Vt0), St1_1#lint{in_try_head=false}),
     Vt4 = vtupdate(Gvt, Vt2),
     {Bvt,St3} = exprs(B, vtupdate(Vt4, Vt0), St2),
     {vtupdate(Bvt, Vt4),St3}.
@@ -3794,7 +3795,7 @@ shadow_vars(Vt, Vt0, In, St0) ->
     case is_warn_enabled(shadow_vars, St0) of
         true ->
             foldl(fun ({V,{_,_,[L | _]}}, St) ->
-                          add_warning(L, {shadowed_var,V,In}, St);
+                          add_error(L, {shadowed_var,V,In}, St);
                       (_, St) -> St
                   end, St0, vtold(Vt, vt_no_unsafe(Vt0)));
         false -> St0
