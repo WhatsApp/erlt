@@ -42,6 +42,10 @@ keep_warning(_) -> false.
 keep_error(illegal_dot) -> true;
 keep_error(illegal_enum) -> true;
 keep_error({redefine_enum,_T,_C}) -> true;
+keep_error({unqualified_enum,_A}) -> true;
+keep_error({undefined_enum,_E}) -> true;
+keep_error({undefined_enum_constructor,_E,_A,_N}) -> true;
+keep_error({enum_constructor_wrong_arity,_E,_A,_N}) -> true;
 %% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
@@ -157,6 +161,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
                exp_types=gb_sets:empty()        %Exported types
                    :: gb_sets:set(ta()),
                enums=#{},                       %Enum definitions
+               enum=[] :: atom() | [],          %Current enum
                in_try_head=false :: boolean()  %In a try head.
               }).
 
@@ -284,9 +289,17 @@ format_error(illegal_map_construction) ->
     "only association operators '=>' are allowed in map construction";
 %% --- enums ---
 format_error(illegal_enum) ->
-    "only enum constructors are allowed in an enum type";
+    "only unqualified enum constructors are allowed in an enum type definition";
 format_error({redefine_enum,T,C}) ->
     io_lib:format("constructor ~tw already defined in enum ~tw", [C,T]);
+format_error({unqualified_enum,A}) ->
+    io_lib:format("missing enum qualifier for constructor ~tw", [A]);
+format_error({undefined_enum,E}) ->
+    io_lib:format("enum ~tw undefined", [E]);
+format_error({undefined_enum_constructor,E,A,N}) ->
+    io_lib:format("enum ~tw has no constructor ~tw/~tw", [E,A,N]);
+format_error({enum_constructor_wrong_arity,E,A,N}) ->
+    io_lib:format("wrong number of arguments for constructor ~tw.~tw/~tw", [E,A,N]);
 %% --- records ---
 format_error({undefined_record,T}) ->
     io_lib:format("record ~tw undefined", [T]);
@@ -837,7 +850,8 @@ attribute_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
-    type_def(enum, L, TypeName, TypeDef, Args, St1);
+    St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum=TypeName}),
+    St2#lint{enum=[]};
 attribute_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute,L,callback,{Fun,Types}}, St) ->
@@ -865,7 +879,8 @@ function_state({attribute,L,opaque,{TypeName,TypeDef,Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
 function_state({attribute,L,enum,{TypeName,TypeDef,Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
-    type_def(enum, L, TypeName, TypeDef, Args, St1);
+    St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum=TypeName}),
+    St2#lint{enum=[]};
 function_state({attribute,L,spec,{Fun,Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute,_L,dialyzer,_Val}, St) ->
@@ -1578,7 +1593,7 @@ pattern({cons,_Line,H,T}, Vt, Old,  Bvt, St0) ->
 pattern({tuple,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_list(Ps, Vt, Old, Bvt, St);
 pattern({enum,_Line,C,Ps}, Vt, Old, Bvt, St) ->
-    pattern_list([C|Ps], Vt, Old, Bvt, St);
+    pattern_list([C|Ps], Vt, Old, Bvt, check_enum(C, Ps, St));
 pattern({map,_Line,Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
 %%pattern({struct,_Line,_Tag,Ps}, Vt, Old, Bvt, St) ->
@@ -2013,7 +2028,7 @@ gexpr({cons,_Line,H,T}, Vt, St) ->
 gexpr({tuple,_Line,Es}, Vt, St) ->
     gexpr_list(Es, Vt, St);
 gexpr({enum,_Line,C,Es}, Vt, St) ->
-    gexpr_list([C|Es], Vt, St);
+    gexpr_list([C|Es], Vt, check_enum(C, Es, St));
 gexpr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
 gexpr({map,_Line,Src,Es}, Vt, St) ->
@@ -2290,7 +2305,7 @@ expr({bc,_Line,E,Qs}, Vt, St) ->
 expr({tuple,_Line,Es}, Vt, St) ->
     expr_list(Es, Vt, St);
 expr({enum,_Line,C,Es}, Vt, St) ->
-    expr_list([C|Es], Vt, St);
+    expr_list([C|Es], Vt, check_enum(C, Es, St));
 expr({map,_Line,Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
 expr({map,_Line,Src,Es}, Vt, St) ->
@@ -2533,6 +2548,35 @@ map_fields([{Tag,_,K,V}|Fs], Vt, St, F) when Tag =:= map_field_assoc;
     {vtupdate(Pvt, Vts),St3};
 map_fields([], _, St, _) ->
   {[],St}.
+
+%% check enum constructor uses
+check_enum({atom,L,A}, _Args, #lint{enum=[]}=St) ->
+    add_error(L, {unqualified_enum,A}, St);
+check_enum({op,_,'.',{atom,L,E},{atom,_,A}}, Args, St) ->
+    %% enum e must exist and define c with right arity
+    N = length(Args),
+    case maps:find(E, St#lint.enums) of
+        error ->
+            add_error(L, {undefined_enum,E}, St);
+        {ok, Cs} ->
+            case lists:keyfind(A, 1, Cs) of
+                {_, N} ->
+                    St;
+                {_, N1} ->
+                    add_error(L, {enum_constructor_wrong_arity,E,A,N1}, St);
+                false ->
+                    add_error(L, {undefined_enum_constructor,E,A,N}, St)
+            end
+    end;
+check_enum({op,L,'.',{op,_,'.',{atom,_,M},E},A}, Args, St) ->
+    if M =:= St#lint.module ->
+            %% actually in this module so check it like a local reference
+            check_enum({op,L,'.',E,A}, Args, St);
+       true ->
+            St
+    end;
+check_enum(_, _Args, St) ->
+    St.
 
 %% warn_invalid_record(Line, Record, State0) -> State
 %% Adds warning if the record is invalid.
@@ -2883,7 +2927,6 @@ enum_def_1(_TypeName, [T | _Ts], _Ns, _NAs, St) ->
 enum_def_1(TypeName, [], _Ns, NAs, #lint{enums=Map}=St) ->
     St#lint{enums = Map#{TypeName => NAs}}.
 
-
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
 %%    Attr :: 'type' | 'opaque' | 'enum'
 %% Checks that a type definition is valid.
@@ -3021,6 +3064,9 @@ check_type({type, L, record, [Name|Fields]}, SeenVars, St) ->
 	    check_record_types(L, Atom, Fields, SeenVars, St1);
 	_ -> {SeenVars, add_error(L, {type_syntax, record}, St)}
     end;
+check_type({type, La, enum, [C|As]}, SeenVars, St) ->
+    St1 = check_enum(C, As, St),
+    check_type({type, La, product, As}, SeenVars, St1);
 check_type({type, _L, Tag, Args}, SeenVars, St) when Tag =:= product;
                                                      Tag =:= union;
                                                      Tag =:= tuple ->
@@ -3202,7 +3248,8 @@ check_specs([FunType|Left], ETag, Arity, St0) ->
 	    {type, _, bounded_fun, [FT = {type, _, 'fun', _}, Cs]} ->
 		Types0 = [T || {type, _, constraint, [_, T]} <- Cs],
 		{FT, lists:append(Types0)};
-	    {type, _, 'fun', _} = FT -> {FT, []}
+	    {type, _, 'fun', _} = FT ->
+                {FT, []}
 	end,
     {type, L, 'fun', [{type, _, product, D}, _]} = FunType1,
     SpecArity = length(D),

@@ -770,24 +770,14 @@ type({type,Line,enum,[{op,_L,'.',_,_}=Op|Ts0]},Context) ->
             Ts1 = type_list(Ts0,Context),
             {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ts1]}
     end;
-type({type,Line,enum,[A|Ts]},Context) ->
+type({type,Line,enum,[{atom,_,_}=A|Ts]},Context) ->
     A1 = type(A,Context),
     Ts1 = type_list(Ts,Context),
-    E1 = case {Context#context.enum, A1} of
-             {[], {atom,_,Name}} ->
-                 case maps:find(Name, Context#context.enums) of
-                     [] ->
-                         throw({error,Line,{unknown_constructor,Name}});
-                     [E] ->
-                         {atom, Line, E};
-                     _ ->
-                         throw({error,Line,{ambiguous_constructor,Name}})
-                 end;
-             {E, _} ->
-                 {atom, Line, E}
-         end,
+    %% unqualified use can only happen in an enum def, so the
+    %% enum name should be given by the context
+    E = {atom, Line, Context#context.enum},
     M = {atom, Line, Context#context.module},
-    {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ts1]};
+    {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M, E, A1 | Ts1]};
 type({type,Line,union,Ts},Context) ->
     Ts1 = type_list(Ts,Context),
     {type,Line,union,Ts1};

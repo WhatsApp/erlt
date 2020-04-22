@@ -27,13 +27,13 @@ q(X) ->
 -spec r(perhaps(T)) -> [T].
 
 %% remote constructors in patterns
-r(enum_mod02.possibly.some{X=41}) ->
+r(enum_mod01.possibly.some{X=41}) ->
     X+1;
 r(E) ->
     case E of
-        enum_mod02.possibly.none{} ->
+        enum_mod01.possibly.none{} ->
             [];
-        enum_mod02.possibly.some{X} ->
+        enum_mod01.possibly.some{X} ->
             [X]
     end.
 
@@ -42,11 +42,11 @@ r(E) ->
 s(E) ->
     %% remote constructors in try-patterns
     try E of
-        enum_mod02.possibly.none{} ->
+        enum_mod01.possibly.none{} ->
             [];
-        enum_mod02.possibly.some{X} ->
+        enum_mod01.possibly.some{X} ->
             [X]
     catch
-        throw: enum_mod02.possibly.some{thing} : Trace ->
+        throw: enum_mod01.possibly.some{thing} : Trace ->
             {caught, Trace}
     end.
