@@ -469,6 +469,7 @@ uop('not') -> "not";
 uop('bnot') -> "lnot".
 
 bop('*') -> "*";
+bop('/') -> "/";
 bop('div') -> "/";
 bop('rem') -> "mod";
 bop('band') -> "land";
