@@ -20,6 +20,10 @@ test-ir:
 	$(MAKE) -C dev_dots/src test-ir
 	$(MAKE) -C dev_enum/src test-ir
 
+test-others:
+	$(MAKE) -C dev_module_record/src erl2c-records
+	$(MAKE) -C checks/src test
+
 update-ir-spec: $(TEST_DIRS:%=.update-ir-spec/%)
 
 
@@ -32,5 +36,9 @@ update-ir-spec: $(TEST_DIRS:%=.update-ir-spec/%)
 .update-ir-spec/%: %
 	$(MAKE) -C $< update-ir-spec
 
+test:
+	$(MAKE)
+	$(MAKE) test-ir
+	$(MAKE) test-others
 
-.PHONY: $(TEST_DIRS)
+.PHONY: $(TEST_DIRS) test test-others
