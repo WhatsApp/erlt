@@ -414,6 +414,10 @@ expr({call,Line,{atom, _, F},As}, Ctx) ->
     [{"("}, {Fn}, expr({tuple1, Line, As}, Ctx), {")"}];
 expr({op,_,'.',Rec,{atom,_,K}}, Ctx) ->
     [{"("}, expr(Rec, Ctx), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
+expr({call,Line,{op,_Line,'.',{atom,_,M},{atom,_,F}},As}, Ctx) ->
+    Arity = length(As),
+    FQFn = remote_fun(M,F,Arity,Ctx),
+    [{"("}, {FQFn}, expr({tuple1, Line, As}, Ctx), {")"}];
 expr({call,Line,{remote,_Line,{atom,_,M},{atom,_,F}},As}, Ctx) ->
     Arity = length(As),
     FQFn = remote_fun(M,F,Arity,Ctx),

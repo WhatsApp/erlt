@@ -11,3 +11,5 @@ val zero_remote1_dot'2 : Mod03.unit0'0 * 'tV -> 'tV
 val un_pair_remote_dot'1 : ('tA, 'tB) Mod03.pair'2 -> 'tA * 'tB
 
 val funs'0 : unit -> (unit -> Mod03.unit0'0) list
+
+val remote_dot2'0 : unit -> Mod03.unit0'0

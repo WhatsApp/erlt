@@ -24,3 +24,6 @@ let rec funs'0 : unit -> (unit -> Mod03.unit0'0) list = function
         mk_unit_remote_dot'0;
         (function () -> Mod03.Unit0'Unit0);
       ]
+
+let rec remote_dot2'0 : unit -> Mod03.unit0'0 = function
+  | () -> Mod03.mk_unit'0 ()

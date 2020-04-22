@@ -4,7 +4,7 @@
 -export([
   mk_unit_remote_dot/0, mk_left_remote_dot/1, mk_right_remote_dot/1,
   zero_remote_dot/2, zero_remote1_dot/2,
-  un_pair_remote_dot/1, funs/0
+  un_pair_remote_dot/1, funs/0, remote_dot2/0
 ]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
@@ -42,3 +42,6 @@ funs() -> [
   fun mk_unit_remote_dot/0,
   fun () -> mod03.unit0.unit0{} end
 ].
+
+-spec remote_dot2() -> mod03.unit0().
+remote_dot2() -> mod03.mk_unit().

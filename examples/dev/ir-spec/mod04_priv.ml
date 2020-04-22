@@ -12,6 +12,8 @@ module Mod04_priv : sig
   val un_pair_remote_dot'1 : ('tA, 'tB) Mod03.pair'2 -> 'tA * 'tB
 
   val funs'0 : unit -> (unit -> Mod03.unit0'0) list
+
+  val remote_dot2'0 : unit -> Mod03.unit0'0
 end = struct
   let rec mk_unit_remote_dot'0 : unit -> Mod03.unit0'0 = function
     | () -> Mod03.Unit0'Unit0
@@ -39,4 +41,7 @@ end = struct
           mk_unit_remote_dot'0;
           (function () -> Mod03.Unit0'Unit0);
         ]
+
+  let rec remote_dot2'0 : unit -> Mod03.unit0'0 = function
+    | () -> Mod03.mk_unit'0 ()
 end

@@ -8,7 +8,8 @@
          zero_remote_dot/2,
          zero_remote1_dot/2,
          un_pair_remote_dot/1,
-         funs/0]).
+         funs/0,
+         remote_dot2/0]).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
 
@@ -55,6 +56,11 @@ funs() ->
      fun() ->
             {969696, mod03, unit0, unit0}
      end].
+
+-spec remote_dot2() -> mod03:unit0().
+
+remote_dot2() ->
+    mod03:mk_unit().
 
 
 
