@@ -1,0 +1,1 @@
+constr_wrong_arity.erl:9: wrong number of arguments for constructor foo.bar/1

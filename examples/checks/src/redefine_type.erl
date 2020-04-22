@@ -1,0 +1,7 @@
+-lang([erl2, st]).
+-module(redefine_type).
+
+-type foo() :: {}.
+
+%% Error: type names may not be reused, even for different arities
+-opaque foo(T) :: {T}.
