@@ -51,6 +51,7 @@ keep_error({enum_constructor_wrong_arity,_E,_A,_N}) -> true;
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
 keep_error({shadowed_var,_V,_In}) -> true;
+keep_error({exported_var,_V,{_What,_Where}}) -> true;
 keep_error(_) -> false.
 
 
@@ -582,9 +583,7 @@ start(File, Opts) ->
 	 {export_all,
 	  bool_option(warn_export_all, nowarn_export_all,
 		      true, Opts)},
-	 {export_vars,
-	  bool_option(warn_export_vars, nowarn_export_vars,
-		      false, Opts)},
+	 {export_vars, true},  % not optional here
 	 {shadow_vars, true},  % not optional here
 	 {unused_import,
 	  bool_option(warn_unused_import, nowarn_unused_import,
@@ -3773,7 +3772,7 @@ expr_var(V, Line, Vt, St) ->
             case is_warn_enabled(export_vars, St) of
                 true ->
                     {[{V,{bound,used,Ls}}],
-                     add_warning(Line, {exported_var,V,From}, St)};
+                     add_error(Line, {exported_var,V,From}, St)};
                 false ->
                     {[{V,{{export,From},used,Ls}}],St}
             end;
@@ -3787,7 +3786,7 @@ expr_var(V, Line, Vt, St) ->
 
 exported_var(Line, V, From, St) ->
     case is_warn_enabled(export_vars, St) of
-        true -> add_warning(Line, {exported_var,V,From}, St);
+        true -> add_error(Line, {exported_var,V,From}, St);
         false -> St
     end.
 
