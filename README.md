@@ -22,7 +22,8 @@ how to install `ocamlc` and `ocamlformat` via [opam](https://opam.ocaml.org/).
 
 
 ## Full documentation
-...
+
+See the [doc](doc) folder.
 
 ## Join the community
 ...
