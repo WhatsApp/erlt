@@ -2,6 +2,8 @@
 
 (Inspired by http://raol.io/post/parsing-with-leex-and-yecc/)
 
+In the [`src`](src) directory:
+
 ```
 $ make
 $ erl -pa ../ebin
