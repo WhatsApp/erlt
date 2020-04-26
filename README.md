@@ -1,6 +1,6 @@
 # erl2: Modern Erlang Project
 
-This repository is for prototyping and collaborating around the Modern Erlang project
+This repository is for prototyping and collaborating around the Modern Erlang project.
 
 ## Examples
 
@@ -20,13 +20,19 @@ how to install `ocamlc` and `ocamlformat` via [opam](https://opam.ocaml.org/).
 
     make
 
+    make -C examples
+
+
+## Testing
+
+    make -C examples test
+
 
 ## Full documentation
 
 See the [doc](doc) folder.
 
-## Join the community
-...
+## Join the erl2 community
 
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 

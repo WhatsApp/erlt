@@ -2,17 +2,14 @@
 We want to make contributing to this project as easy and transparent as
 possible.
 
-## Our Development Process
-...
-
 ## Pull Requests
 We actively welcome your pull requests.
 
 1. Fork the repo and create your branch from `master`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints.
+4. Ensure the test suite passes: `make -C examples test`
+5. Ensure the CI test suite passes on GitHub.
 6. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## Contributor License Agreement ("CLA")
@@ -30,7 +27,8 @@ disclosure of security bugs. In those cases, please go through the process
 outlined on that page and do not file a public issue.
 
 ## Coding Style
-...
+
+To be defined.
 
 ## License
 By contributing to erl2, you agree that your contributions will be licensed
