@@ -1,0 +1,3 @@
+erl2_compile: warnings being treated as errors
+import_type_builtin.erl:5: import directive overrides auto-imported builtin type integer/0
+ - use "-compile({no_auto_import,[integer/0]})." to resolve name clash

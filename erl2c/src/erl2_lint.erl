@@ -37,8 +37,6 @@
 
 %% keeping only our added errors and warnings; the real linter will run later
 
-keep_warning(_) -> false.
-
 %% our added checks
 keep_error(dotted_module_name) -> true;
 keep_error(illegal_dot) -> true;
@@ -48,12 +46,15 @@ keep_error({unqualified_enum,_A}) -> true;
 keep_error({undefined_enum,_E}) -> true;
 keep_error({undefined_enum_constructor,_E,_A,_N}) -> true;
 keep_error({enum_constructor_wrong_arity,_E,_A,_N}) -> true;
+keep_error({redefine_import_type,{{_F,_A},_M}}) -> true;
+keep_error({unused_import_type,{{_F,_A},_M}}) -> true;
+keep_error({redefine_builtin_type_import,{_F,_A}}) -> true;
 %% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
 keep_error({shadowed_var,_V,_In}) -> true;
 keep_error({exported_var,_V,{_What,_Where}}) -> true;
-keep_error(_) -> false.
+keep_error(_X) -> false.
 
 
 %% bool_option(OnOpt, OffOpt, Default, Options) -> boolean().
@@ -111,6 +112,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
 -record(usage, {
           calls = dict:new(),			%Who calls who
           imported = [],                        %Actually imported functions
+          imported_types = [],                  %Actually imported types
           used_records = sets:new()             %Used record definitions
               :: sets:set(atom()),
 	  used_types = dict:new()               %Used type definitions
@@ -162,6 +164,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
                    :: dict:dict(mfa(), line()),
                types = dict:new()               %Type definitions
                    :: dict:dict(ta(), #typeinfo{}),
+               imp_types=[] :: orddict:orddict(fa(), module()),%Imported types
                exp_types=gb_sets:empty()        %Exported types
                    :: gb_sets:set(ta()),
                enums=#{},                       %Enum definitions
@@ -201,6 +204,8 @@ format_error({missing_qlc_hrl,A}) ->
     io_lib:format("qlc:q/~w called, but \"qlc.hrl\" not included", [A]);
 format_error({redefine_import,{{F,A},M}}) ->
     io_lib:format("function ~tw/~w already imported from ~w", [F,A,M]);
+format_error({redefine_import_type,{{F,A},M}}) ->
+    io_lib:format("type ~tw/~w already imported from ~w", [F,A,M]);
 format_error({bad_inline,{F,A}}) ->
     io_lib:format("inlined function ~tw/~w undefined", [F,A]);
 format_error({invalid_deprecated,D}) ->
@@ -230,6 +235,8 @@ format_error({duplicated_export, {F,A}}) ->
     io_lib:format("function ~tw/~w already exported", [F,A]);
 format_error({unused_import,{{F,A},M}}) ->
     io_lib:format("import ~w:~tw/~w is unused", [M,F,A]);
+format_error({unused_import_type,{{F,A},M}}) ->
+    io_lib:format("imported type ~w:~tw/~w is unused", [M,F,A]);
 format_error({undefined_function,{F,A}}) ->
     io_lib:format("function ~tw/~w undefined", [F,A]);
 format_error({redefine_function,{F,A}}) ->
@@ -252,6 +259,9 @@ format_error({redefine_old_bif_import,{F,A}}) ->
 		  "to resolve name clash", [F,A,F,A]);
 format_error({redefine_bif_import,{F,A}}) ->
     io_lib:format("import directive overrides auto-imported BIF ~w/~w~n"
+		  " - use \"-compile({no_auto_import,[~w/~w]}).\" to resolve name clash", [F,A,F,A]);
+format_error({redefine_builtin_type_import,{F,A}}) ->
+    io_lib:format("import directive overrides auto-imported builtin type ~w/~w~n"
 		  " - use \"-compile({no_auto_import,[~w/~w]}).\" to resolve name clash", [F,A,F,A]);
 format_error({deprecated, MFA, ReplacementMFA, Rel}) ->
     io_lib:format("~s is deprecated and will be removed in ~s; use ~s",
@@ -655,30 +665,21 @@ is_warn_enabled(Type, #lint{enabled_warnings=Enabled}) ->
 %%  Pack errors and warnings properly and return ok | error.
 
 return_status(St) ->
-    Ws = pack_warnings(filter_warnings(St#lint.warnings)),
+    Ws = pack_warnings(filter_errors(St#lint.warnings)),
     case pack_errors(filter_errors(St#lint.errors)) of
         [] -> {ok,Ws};
         Es -> {error,Es,Ws}
     end.
 
+%% single filter function for errors and warnings
 filter_errors([ E={_File, {_Loc,erl2_lint,Err}} | Es]) ->
     case keep_error(Err) of
         true -> [E | filter_errors(Es)];
         false -> filter_errors(Es)
     end;
-filter_errors([_|Es]) ->
+filter_errors([_X|Es]) ->
     filter_errors(Es);
 filter_errors([]) ->
-    [].
-
-filter_warnings([ W={_File, {_Loc,erl2_lint,Warn}} | Ws]) ->
-    case keep_warning(Warn) of
-        true -> [W | filter_errors(Ws)];
-        false -> filter_errors(Ws)
-    end;
-filter_warnings([_|Ws]) ->
-    filter_warnings(Ws);
-filter_warnings([]) ->
     [].
 
 %% pack_errors([{File,ErrD}]) -> [{File,[ErrD]}].
@@ -839,6 +840,8 @@ attribute_state({attribute,L,export_type,Es}, St) ->
     export_type(L, Es, St);
 attribute_state({attribute,L,import,Is}, St) ->
     import(L, Is, St);
+attribute_state({attribute,L,import_type,Is}, St) ->
+    import_type(L, Is, St);
 attribute_state({attribute,L,record,{Name,Fields}}, St) ->
     record_def(L, Name, Fields, St);
 attribute_state({attribute,La,behaviour,Behaviour}, St) ->
@@ -1153,7 +1156,13 @@ check_imports(Forms, St0) ->
 		 {attribute,L,import,{Mod,Fs}} <- Forms,
 		 FA <- lists:usort(Fs)],
             Bad = [{FM,L} || FM <- Unused, {FM2,L} <- Imports, FM =:= FM2],
-            func_line_warning(unused_import, Bad, St0)
+            St1 = func_line_warning(unused_import, Bad, St0),
+            TUnused = ordsets:subtract(St1#lint.imp_types, Usage#usage.imported_types),
+            TImports = [{{FA,Mod},L} ||
+		 {attribute,L,import_type,{Mod,Fs}} <- Forms,
+		 FA <- lists:usort(Fs)],
+            TBad = [{FM,L} || FM <- TUnused, {FM2,L} <- TImports, FM =:= FM2],
+            func_line_warning(unused_import_type, TBad, St1)
     end.
 
 %% check_inlines(Forms, State0) -> State
@@ -1453,6 +1462,60 @@ imported(F, A, St) ->
         {ok,Mod} -> {yes,Mod};
         error -> no
     end.
+
+-type import_type() :: {module(), [ta()]} | module().
+-spec import_type(line(), import_type(), lint_state()) -> lint_state().
+
+import_type(Line, {Mod,Ts}, St00) ->
+    St = check_module_name(Mod, Line, St00),
+    Mts = ordsets:from_list(Ts),
+    case check_type_imports(Line, Mts, St#lint.imp_types) of
+	[] ->
+	    St#lint{imp_types=add_imports(Mod, Mts,
+                                          St#lint.imp_types)};
+	Ets ->
+	    {Err, St1} =
+		foldl(fun ({type,{T,A},_}, {Err,St0}) ->
+			      %% bif_clash and no_auto also applies to builtin types
+			      Warn = is_warn_enabled(bif_clash, St0),
+			      AutoImpSup = is_autoimport_suppressed(St0#lint.no_auto,{T,A}),
+			      {Err,if
+				       Warn and (not AutoImpSup) ->
+					   add_warning
+					     (Line,
+					      {redefine_builtin_type_import, {T,A}},
+					      St0);
+				       true ->
+					   St0
+				   end};
+			  (Et, {_Err,St0}) ->
+			      {true,add_error(Line,
+					      {redefine_import_type,Et},
+					      St0)}
+		      end,
+		      {false,St}, Ets),
+	    if
+		not Err ->
+		    St1#lint{imp_types=add_imports(Mod, Mts,
+                                                   St#lint.imp_types)};
+		true ->
+		    St1
+	    end
+    end.
+
+check_type_imports(_Line, Ts, Is) ->
+    foldl(fun (T, Ets) ->
+              case orddict:find(T, Is) of
+                  {ok,Mod} -> [{T,Mod}|Ets];
+                  error ->
+                      {N,A} = T,
+                      case erl_internal:is_type(N, A) of
+                          true ->
+                              [{type,T,erlang}|Ets];
+                          false ->
+                              Ets
+                      end
+              end end, [], Ts).
 
 -spec on_load(erl_anno:anno(), fa(), lint_state()) -> lint_state().
 %%  Check an on_load directive and remember it.

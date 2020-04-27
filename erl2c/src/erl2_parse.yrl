@@ -685,6 +685,7 @@ Erlang code.
                        | af_behaviour()
                        | af_export()
                        | af_import()
+                       | af_import_type()
                        | af_export_type()
                        | af_compile()
                        | af_file()
@@ -707,6 +708,8 @@ Erlang code.
 -type af_import() :: {'attribute', anno(), 'import', {module(), af_fa_list()}}.
 
 -type af_fa_list() :: [{function_name(), arity()}].
+
+-type af_import_type() :: {'attribute', anno(), 'import_type', {module(), af_ta_list()}}.
 
 -type af_export_type() :: {'attribute', anno(), 'export_type', af_ta_list()}.
 
@@ -1181,7 +1184,7 @@ parse_term(Tokens) ->
 	{error,_} = Err -> Err
     end.
 
--type attributes() :: 'export' | 'file' | 'import' | 'module'
+-type attributes() :: 'export' | 'file' | 'import' | 'import_type' | 'module'
 		    | 'opaque' | 'record' | 'type' | 'enum'.
 
 build_typed_attribute({atom,Aa,record},
@@ -1297,6 +1300,7 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,module,Module}
 %%	{attribute,Anno,export,Exports}
 %%	{attribute,Anno,import,Imports}
+%%	{attribute,Anno,import_type,Imports}
 %%	{attribute,Anno,record,{Name,Inits}}
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
@@ -1323,6 +1327,12 @@ build_attribute({atom,Aa,import}, Val) ->
 	[{atom,_Am,Mod},ImpList] ->
 	    {attribute,Aa,import,{Mod,farity_list(ImpList)}};
 	_Other -> error_bad_decl(Aa, import)
+    end;
+build_attribute({atom,Aa,import_type}, Val) ->
+    case Val of
+	[{atom,_Am,Mod},ImpList] ->
+	    {attribute,Aa,import_type,{Mod,farity_list(ImpList)}};
+	_Other -> error_bad_decl(Aa, import_type)
     end;
 build_attribute({atom,Aa,record}, Val) ->
     case Val of
