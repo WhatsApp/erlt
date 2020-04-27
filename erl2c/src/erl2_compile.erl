@@ -169,6 +169,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(extract_options),
                     ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
@@ -187,6 +188,7 @@ do_file(File, Options0) ->
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(extract_options),
                     ?pass(erl2_lint),
 
                     ?pass(collect_erl2_compile_deps),
@@ -203,6 +205,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(extract_options),
                     ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
@@ -219,6 +222,7 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
+                    ?pass(extract_options),
                     ?pass(erl2_lint),
 
                     ?pass(erl2_typecheck),
@@ -913,6 +917,9 @@ find_invalid_unicode([H|T], File0) ->
     end;
 find_invalid_unicode([], _) -> none.
 
+extract_options(Code0, #compile{options=Opt}=St) ->
+    %% Extract compile options from code into options field.
+    {ok, Code0, St#compile{options=Opt ++ compile_options(Code0)}}.
 
 compile_options([{attribute,_L,compile,C}|Fs]) when is_list(C) ->
     C ++ compile_options(Fs);
@@ -938,8 +945,7 @@ clean_parse_transforms_1([], Acc) -> reverse(Acc).
 transforms(Os) -> [ M || {parse_transform,M} <- Os ].
 
 transform_module(Code0, #compile{options=Opt}=St) ->
-    %% Extract compile options from code into options field.
-    case transforms(Opt ++ compile_options(Code0)) of
+    case transforms(Opt) of
 	[] ->
             %% No parse transforms.
             {ok,Code0,St};
