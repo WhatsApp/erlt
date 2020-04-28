@@ -20,17 +20,19 @@
 -export([empty/0, get/2, size/1, insert/3, remove/2, fold/3, union/2, filter/2, map/2]).
 -export([keys/1, values/1, to_list/1, from_list/1]).
 
+-import_type(maybe, [maybe/1]).
+
 -opaque map(K, V) :: #{K => V}.
 
 -spec empty() -> map(_K, _V).
 empty() ->
     maps:new().
 
--spec get(K, map(K, V)) -> maybe:maybe(V).
+-spec get(K, map(K, V)) -> maybe(V).
 get(Key, Map) ->
     case maps:find(Key, Map) of
-        {ok,Value} -> maybe.maybe.just{Value};
-        error -> maybe.maybe.nothing{}
+        {ok,Value} -> maybe.just{Value};
+        error -> maybe.nothing{}
     end.
 
 -spec size(map(_K,_V)) -> integer().

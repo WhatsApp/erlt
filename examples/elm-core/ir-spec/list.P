@@ -27,6 +27,8 @@
 
 -export([is_empty/1,head/1,tail/1,take/2,drop/2,partition/2,unzip/1]).
 
+-import_type({maybe, [{maybe, 1}]}).
+
 -spec singleton(A) -> [A].
 
 singleton(Val) ->

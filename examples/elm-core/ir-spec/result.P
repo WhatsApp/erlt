@@ -14,6 +14,8 @@
 
 -export([is_ok/1]).
 
+-import_type({maybe, [{maybe, 1}]}).
+
 -type result(Error, Value) ::
           {969696, result, result, ok, Value} |
           {969696, result, result, err, Error}.

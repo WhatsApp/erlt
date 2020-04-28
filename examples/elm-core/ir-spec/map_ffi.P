@@ -16,6 +16,8 @@
 
 -export([keys/1,values/1,to_list/1,from_list/1]).
 
+-import_type({maybe, [{maybe, 1}]}).
+
 -opaque map(K, V) :: #{K => V}.
 
 -spec empty() -> map(_K, _V).

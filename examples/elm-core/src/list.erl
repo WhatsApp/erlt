@@ -26,6 +26,7 @@
 %% DECONSTRUCT
 -export([is_empty/1, head/1, tail/1, take/2, drop/2, partition/2, unzip/1]).
 
+-import_type(maybe, [maybe/1]).
 
 %% CREATE
 
@@ -69,17 +70,17 @@ foldr(_F, Acc, []) -> Acc.
 filter(F, List) ->
     foldr(fun(X,Xs) -> case F(X) of true -> [X|Xs]; false -> Xs end end, [], List).
 
--spec filter_map(fun((A) -> maybe:maybe(B)), list(A)) -> list(B).
+-spec filter_map(fun((A) -> maybe(B)), list(A)) -> list(B).
 filter_map(F, Xs) -> foldr(maybe_cons(F), [], Xs).
 
--spec maybe_cons(fun((A) -> maybe:maybe(B)), A, list(B)) -> list(B).
+-spec maybe_cons(fun((A) -> maybe(B)), A, list(B)) -> list(B).
 maybe_cons(F, Mx, Xs) ->
     case F(Mx) of
-        maybe.maybe.just{X} -> cons(X, Xs);
-        maybe.maybe.nothing{} -> Xs
+        maybe.just{X} -> cons(X, Xs);
+        maybe.nothing{} -> Xs
     end.
 
--spec maybe_cons(fun((A) -> maybe:maybe(B))) -> fun((A, list(B)) -> list(B)).
+-spec maybe_cons(fun((A) -> maybe(B))) -> fun((A, list(B)) -> list(B)).
 maybe_cons(F) -> fun(Mx, Xs) -> maybe_cons(F, Mx, Xs) end.
 
 %% UTILITIES
@@ -103,13 +104,13 @@ any(Pred, [H|T]) ->
     case Pred(H) of true -> true; false -> any(Pred, T) end;
 any(_Pred, []) -> false.
 
--spec maximum(list(A)) -> maybe:maybe(A).
-maximum([]) -> maybe.maybe.nothing{};
-maximum([H|T]) -> maybe.maybe.just{foldl(fun basics:max/2, H, T)}.
+-spec maximum(list(A)) -> maybe(A).
+maximum([]) -> maybe.nothing{};
+maximum([H|T]) -> maybe.just{foldl(fun basics:max/2, H, T)}.
 
--spec minimum(list(A)) -> maybe:maybe(A).
-minimum([]) -> maybe.maybe.nothing{};
-minimum([H|T]) -> maybe.maybe.just{foldl(fun basics:min/2, H, T)}.
+-spec minimum(list(A)) -> maybe(A).
+minimum([]) -> maybe.nothing{};
+minimum([H|T]) -> maybe.just{foldl(fun basics:min/2, H, T)}.
 
 -spec sum(list(integer())) -> integer().
 sum(Ns) -> foldl(fun basics:add/2, 0, Ns).
@@ -148,13 +149,13 @@ map2(_,_,_) -> [].
 is_empty([_|_]) -> false;
 is_empty([]) -> true.
 
--spec head(list(A)) -> maybe:maybe(A).
-head([H|_]) -> maybe.maybe.just{H};
-head([]) -> maybe.maybe.nothing{}.
+-spec head(list(A)) -> maybe(A).
+head([H|_]) -> maybe.just{H};
+head([]) -> maybe.nothing{}.
 
--spec tail(list(A)) -> maybe:maybe(list(A)).
-tail([_|T]) -> maybe.maybe.just{T};
-tail([]) -> maybe.maybe.nothing{}.
+-spec tail(list(A)) -> maybe(list(A)).
+tail([_|T]) -> maybe.just{T};
+tail([]) -> maybe.nothing{}.
 
 -spec take(integer(), list(A)) -> list(A).
 take(N, _L) when N =< 0 -> [];

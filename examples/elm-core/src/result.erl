@@ -22,6 +22,8 @@
 -export([to_maybe/1, from_maybe/2, from_maybe/1]).
 -export([is_ok/1]).
 
+-import_type(maybe, [maybe/1]).
+
 -enum result(Error, Value) :: ok{Value} | err{Error}.
 
 -spec with_default(A, result(_, A)) -> A.
@@ -65,15 +67,15 @@ map_error(F, result.err{E}) -> result.err{F(E)}.
 map_error(F) ->
     fun(Res) -> map_error(F, Res) end.
 
--spec to_maybe(result(_, A)) -> maybe:maybe(A).
-to_maybe(result.ok{V}) -> maybe.maybe.just{V};
-to_maybe(result.err{_}) -> maybe.maybe.nothing{}.
+-spec to_maybe(result(_, A)) -> maybe(A).
+to_maybe(result.ok{V}) -> maybe.just{V};
+to_maybe(result.err{_}) -> maybe.nothing{}.
 
--spec from_maybe(X, maybe:maybe(A)) -> result(X, A).
-from_maybe(_Err, maybe.maybe.just{V}) -> result.ok{V};
-from_maybe(Err, maybe.maybe.nothing{}) -> result.err{Err}.
+-spec from_maybe(X, maybe(A)) -> result(X, A).
+from_maybe(_Err, maybe.just{V}) -> result.ok{V};
+from_maybe(Err, maybe.nothing{}) -> result.err{Err}.
 
--spec from_maybe(X) -> fun((maybe:maybe(A)) -> result(X, A)).
+-spec from_maybe(X) -> fun((maybe(A)) -> result(X, A)).
 from_maybe(Err) ->
     fun(Maybe) -> from_maybe(Err, Maybe) end.
 

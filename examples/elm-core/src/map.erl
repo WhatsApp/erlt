@@ -24,20 +24,22 @@
 %% LISTS
 -export([keys/1, values/1, to_list/1, from_list/1]).
 
+-import_type(maybe, [maybe/1]).
+
 -opaque map(K, V) :: map_ffi:map(K, V).
 
 -spec empty() -> map(_K,_V).
 empty() ->
     map_ffi:empty().
 
--spec get(K, map(K, V)) -> maybe:maybe(V).
+-spec get(K, map(K, V)) -> maybe(V).
 get(Key, Map) -> map_ffi:get(Key, Map).
 
 -spec member(K, map(K, _V)) -> boolean().
 member(Key, Map) ->
     case get(Key, Map) of
-        maybe.maybe.just{_} -> true;
-        maybe.maybe.nothing{} -> false
+        maybe.just{_} -> true;
+        maybe.nothing{} -> false
     end.
 
 -spec size(map(_K,_V)) -> integer().
@@ -56,11 +58,11 @@ insert(Key, Value, Map) ->
 remove(Key, Map) ->
     map_ffi:remove(Key, Map).
 
--spec update(K, fun((maybe:maybe(V)) -> maybe:maybe(V)), map(K, V)) -> map(K, V).
+-spec update(K, fun((maybe(V)) -> maybe(V)), map(K, V)) -> map(K, V).
 update(Key, Alter, Map) ->
     case Alter(get(Key, Map)) of
-        maybe.maybe.just{Value} -> insert(Key, Value, Map);
-        maybe.maybe.nothing{} -> remove(Key, Map)
+        maybe.just{Value} -> insert(Key, Value, Map);
+        maybe.nothing{} -> remove(Key, Map)
     end.
 
 -spec singleton(K, V) -> map(K, V).
