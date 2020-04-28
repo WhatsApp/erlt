@@ -171,6 +171,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_module_record),
                     ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
@@ -191,6 +192,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_module_record),
                     ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
@@ -209,6 +211,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_module_record),
                     ?pass(erl2_expand),
 
                     ?pass(erl2_typecheck),
@@ -227,6 +230,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_module_record),
                     ?pass(erl2_expand),
 
                     ?pass(erl2_typecheck),
@@ -844,6 +848,15 @@ parse_module(_Code, St0, EppMod) ->
 	    end
     end.
 
+erl2_module_record(Code, St) ->
+    case is_lang_erl2(St) of
+        true ->
+            Code1 = erl2_module_record:parse_transform(Code, St#compile.options),
+            {ok, Code1, St};
+        false ->
+            {ok, Code, St}
+    end.
+
 erl2_expand(Code, St) ->
     case is_lang_erl2(St) of
         true ->
@@ -1155,7 +1168,7 @@ erl2_to_erl1(Code, St) ->
 
 
 do_erl2_to_erl1(Code, St) ->
-    foldl_transform([erl2_enum,erl2_dots,erl2_module_record], Code, St).
+    foldl_transform([erl2_enum,erl2_dots], Code, St).
 
 
 foldl_transform([T|Ts], Code0, St) ->
