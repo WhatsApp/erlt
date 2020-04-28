@@ -68,7 +68,7 @@ remote_dot2() ->
 -spec import1() -> mod03:unit0().
 
 import1() ->
-    mk_unit().
+    mod03:mk_unit().
 
 
 
