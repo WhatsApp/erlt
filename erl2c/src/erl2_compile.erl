@@ -171,6 +171,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1)
@@ -190,6 +191,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
                     ?pass(erl2_to_erl1),
@@ -207,6 +209,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_expand),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -224,6 +227,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_lint),
+                    ?pass(erl2_expand),
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -840,6 +844,14 @@ parse_module(_Code, St0, EppMod) ->
 	    end
     end.
 
+erl2_expand(Code, St) ->
+    case is_lang_erl2(St) of
+        true ->
+            Code1 = erl2_expand:module(Code, St#compile.options),
+            {ok, Code1, St};
+        false ->
+            {ok, Code, St}
+    end.
 
 erl2_lint(Code, St) ->
     case is_lang_erl2(St) of
