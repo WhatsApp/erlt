@@ -95,4 +95,5 @@ jobs:
           make erl2c-records -C examples/dev_module_record/src
       - name: "examples/checks/src: test"
         run: |
+          eval $(opam env)
           make test -C examples/checks/src
