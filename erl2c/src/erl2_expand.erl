@@ -30,6 +30,7 @@
 -record(exprec, {compile=[],	% Compile flags
 		 vcount=0,	% Variable counter
 		 calltype=#{},	% Call types
+		 types=#{},     % (like calltypes but for types)
 		 records=#{},	% Record definitions
 		 strict_ra=[],	% strict record accesses
 		 checked_ra=[]	% successfully accessed records
@@ -45,7 +46,8 @@
 module(Fs0, Opts0) ->
     Opts = compiler_options(Fs0) ++ Opts0,
     Calltype = init_calltype(Fs0),
-    St0 = #exprec{compile = Opts, calltype = Calltype},
+    Types = init_types(Fs0),
+    St0 = #exprec{compile = Opts, calltype = Calltype, types=Types},
     {Fs,_St} = forms(Fs0, St0),
     Fs.
 
@@ -67,11 +69,55 @@ init_calltype_imports([_|T], Ctype) ->
     init_calltype_imports(T, Ctype);
 init_calltype_imports([], Ctype) -> Ctype.
 
+init_types(Forms) ->
+    Locals = typedefs(Forms),
+    Types = maps:from_list(Locals),
+    init_type_imports(Forms, Types).
+
+typedefs([{attribute,_,type,Info}|Fs]) ->
+    [typedef(Info) | typedefs(Fs)];
+typedefs([{attribute,_,opaque,Info}|Fs]) ->
+    [typedef(Info) | typedefs(Fs)];
+typedefs([{attribute,_,enum,Info}|Fs]) ->
+    [typedef(Info) | typedefs(Fs)];
+typedefs([_|Fs]) ->
+    typedefs(Fs);
+typedefs([]) ->
+    [].
+
+typedef({TypeName,_,Args}) ->
+    {{TypeName, length(Args)}, local}.
+
+init_type_imports([{attribute,_,import_type,{Mod,Ts}}|T], Types0) ->
+    true = is_atom(Mod),
+    Types = foldl(fun(TA, Acc) ->
+			  Acc#{TA=>{imported,Mod}}
+		  end, Types0, Ts),
+    init_type_imports(T, Types);
+init_type_imports([_|T], Types) ->
+    init_type_imports(T, Types);
+init_type_imports([], Types) -> Types.
+
 forms([{attribute,_,record,{Name,Defs}}=Attr | Fs], St0) ->
     NDefs = normalise_fields(Defs),
     St = St0#exprec{records=maps:put(Name, NDefs, St0#exprec.records)},
     {Fs1, St1} = forms(Fs, St),
     {[Attr | Fs1], St1};
+forms([{attribute,L,type,{TypeName,TypeDef0,Args}} | Fs], St0) ->
+    {TypeDef, St1} = type(TypeDef0, St0),
+    Attr = {attribute,L,type,{TypeName,TypeDef,Args}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
+forms([{attribute,L,spec,{Fun,Types}} | Fs], St) ->
+    {Types1, St1} = type_list(Types, St),
+    Attr = {attribute,L,spec,{Fun,Types1}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
+forms([{attribute,L,callback,{Fun,Types}} | Fs], St) ->
+    {Types1, St1} = type_list(Types, St),
+    Attr = {attribute,L,callback,{Fun,Types1}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
 forms([{function,L,N,A,Cs0} | Fs0], St0) ->
     {Cs,St1} = clauses(Cs0, St0),
     {Fs,St2} = forms(Fs0, St1),
@@ -80,6 +126,45 @@ forms([F | Fs0], St0) ->
     {Fs,St} = forms(Fs0, St0),
     {[F | Fs], St};
 forms([], St) -> {[],St}.
+
+type({ann_type, L, [Var, Type]}, St) ->
+    {Type1, St1} = type(Type, St),
+    {{ann_type, L, [Var,Type1]}, St1};
+type({remote_type, L, [M, F, Args]}, St) ->
+    {Args1, St1} = type_list(Args, St),
+    {{remote_type, L, [M, F, Args1]}, St1};
+type({user_type, L, TypeName, Args}, St) ->
+    {Args1, St1} = type_list(Args, St),
+    TA = {TypeName, length(Args)},
+    case St1#exprec.types of
+	#{TA := {imported,Module}} ->
+	    M = {atom,L,Module},
+	    T = {atom,L,TypeName},
+            {{remote_type, L, [M, T, Args1]}, St1};
+	_ ->
+            {{user_type, L, TypeName, Args1}, St1}
+    end;
+type({type, _L, _Tag, any}=T, St) ->
+    {T, St};
+type({type, L, Tag, Args}, St) ->
+    {Args1, St1} = type_list(Args, St),
+    {{type, L, Tag, Args1}, St1};
+type({type, _, any}=T, St) ->
+    {T, St};
+type({op, L, Op, T1, T2}, St) ->
+    {[E1, E2], St1} = type_list([T1, T2], St),
+    {{op, L, Op, E1, E2}, St1};
+type(Ts, St) when is_list(Ts) ->
+    type_list(Ts, St);
+type(Other, St) ->
+    {Other, St}.
+
+type_list([T|Ts],St) ->
+    {T1, St1} = type(T,St),
+    {Ts1, St2} = type_list(Ts, St1),
+    {[T1|Ts1], St2};
+type_list([],St) ->
+    {[], St}.
 
 clauses([{clause,Line,H0,G0,B0} | Cs0], St0) ->
     {H1,St1} = head(H0, St0),
@@ -534,8 +619,10 @@ normalise_fields(Fs) ->
     map(fun ({record_field,Lf,Field}) ->
                 {record_field,Lf,Field,{atom,Lf,undefined}};
 	    ({typed_record_field,{record_field,Lf,Field},_Type}) ->
+                %% TODO: typed record field
 		{record_field,Lf,Field,{atom,Lf,undefined}};
 	    ({typed_record_field,Field,_Type}) ->
+                %% TODO: typed record field
 		Field;
             (F) -> F
 	end, Fs).
