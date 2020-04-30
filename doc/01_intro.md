@@ -27,6 +27,8 @@ There are only few differences:
   (Right now it does it by forbidding ambiguity)
 * It introduces a new construct: enums
   (see [Enum syntax and semantics](04_enums.md))
+* The new [`import_type`](07_import_type.md) construct allows using types from
+  remote modules via short names.
 
 **Erl1+ ST** is (syntactically) a subset of Erl1+ DT. It enforces a typing
 discipline. The type system is standard [Hindley-Milner type
