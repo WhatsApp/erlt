@@ -52,6 +52,7 @@ keep_error({redefine_builtin_type_import,{_F,_A}}) -> true;
 %% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
+keep_error({undefined_type, {_T, _A}}) -> true;
 keep_error({shadowed_var,_V,_In}) -> true;
 keep_error({exported_var,_V,{_What,_Where}}) -> true;
 keep_error(_X) -> false.
@@ -1516,6 +1517,12 @@ check_type_imports(_Line, Ts, Is) ->
                               Ets
                       end
               end end, [], Ts).
+
+imported_type(F, A, St) ->
+    case orddict:find({F,A}, St#lint.imp_types) of
+        {ok,Mod} -> {yes,Mod};
+        error -> no
+    end.
 
 -spec on_load(erl_anno:anno(), fa(), lint_state()) -> lint_state().
 %%  Check an on_load directive and remember it.
@@ -3161,7 +3168,14 @@ check_type({type, La, TypeName, Args}, SeenVars, St) ->
 check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
     Arity = length(Args),
     TypePair = {TypeName, Arity},
-    St1 = used_type(TypePair, L, St),
+    St1 = case imported_type(TypeName, Arity, St) of
+              {yes,M} ->
+                  U0 = St#lint.usage,
+                  Imp = ordsets:add_element({TypePair,M},U0#usage.imported_types),
+                  St#lint{usage=U0#usage{imported = Imp}};
+              no ->
+                  used_type(TypePair, L, St)
+          end,
     lists:foldl(fun(T, {AccSeenVars, AccSt}) ->
 			check_type(T, AccSeenVars, AccSt)
 		end, {SeenVars, St1}, Args);
