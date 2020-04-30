@@ -21,8 +21,7 @@
 -record(context, {
     module :: atom(),
     mode :: 'priv' | 'pub',
-    export_types :: [id()],
-    imports :: #{id() => module()}
+    export_types :: [id()]
 }).
 
 ffi() ->
@@ -94,8 +93,7 @@ do_erl2ocaml_ffi(Forms) ->
     Exports = get_exports(Forms),
     Ctx = #context{
         module = get_module(Forms),
-        export_types = get_export_types(Forms),
-        imports = get_imports(Forms)
+        export_types = get_export_types(Forms)
     },
     Funs = get_fns(Forms),
     AllSpecs = get_specs(Forms),
@@ -135,8 +133,7 @@ do_erl2ocaml_st(Forms) ->
     Exports = get_exports(Forms),
     Ctx = #context{
         module = get_module(Forms),
-        export_types = get_export_types(Forms),
-        imports = get_imports(Forms)
+        export_types = get_export_types(Forms)
     },
     Funs = get_fns(Forms),
     SortedFuns = mk_sccs(Funs),
@@ -417,13 +414,8 @@ expr(E={'fun',Line,Body}, Ctx) ->
         {clauses,Clauses} ->
             [{"("}, {"function"}, clauses(Clauses, Ctx), {")"}];
         {function,F,A} when is_atom(F), is_integer(A) ->
-            case maps:get({F, A}, Ctx#context.imports, undefined) of
-                undefined ->
-                    Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
-                    [{Fn}];
-                M ->
-                    expr({'fun',Line,{function,{atom,Line,M},{atom,Line,F},{integer,Line,A}}}, Ctx)
-            end;
+            Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
+            [{Fn}];
         {function,{atom,_,M},{atom,_,F},{integer,_,A}} when is_atom(M), is_atom(F), is_integer(A) ->
             FQFn = "(" ++ remote_fun(M,F,A,Ctx) ++ ")",
             {FQFn};
@@ -433,14 +425,9 @@ expr(E={'fun',Line,Body}, Ctx) ->
 expr({named_fun,Line,Name,Clauses}, Ctx) ->
     Exprs = [{match_rec, Line, {var, Line, Name}, {'fun',Line, {clauses, Clauses}}}, {var, Line, Name}],
     expr({block, Line, Exprs}, Ctx);
-expr({call,L1,{atom, L2, F},As}, Ctx) ->
-    case maps:get({F, length(As)}, Ctx#context.imports, undefined) of
-        undefined ->
-            Fn = atom_to_list(F) ++ "'" ++ integer_to_list(length(As)),
-            [{"("}, {Fn}, expr({tuple1,L1,As}, Ctx), {")"}];
-        M ->
-            expr({call,L1,{remote,L2,{atom,L2,M},{atom,L2,F}},As}, Ctx)
-    end;
+expr({call,L1,{atom, _, F},As}, Ctx) ->
+    Fn = atom_to_list(F) ++ "'" ++ integer_to_list(length(As)),
+    [{"("}, {Fn}, expr({tuple1,L1,As}, Ctx), {")"}];
 expr({op,_,'.',Rec,{atom,_,K}}, Ctx) ->
     [{"("}, expr(Rec, Ctx), {")"}, {"#" ++ "get_" ++ atom_to_list(K)}];
 expr({call,Line,{op,_Line,'.',{atom,_,M},{atom,_,F}},As}, Ctx) ->
@@ -814,9 +801,6 @@ get_exports(Forms) ->
 
 get_export_types(Forms) ->
     lists:flatten([Ts || {attribute,_,export_type,Ts} <- Forms]).
-
-get_imports(Forms) ->
-    maps:from_list([{{N, A}, M} || {attribute,_,import,{M,Ids}} <- Forms, {N, A} <- Ids]).
 
 mk_sccs(Functions) ->
     Graph = digraph:new(),
