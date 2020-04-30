@@ -56,7 +56,13 @@ keep_error({undefined_type, {_T, _A}}) -> true;
 keep_error({unused_type, {_T, _A}}) -> true;
 keep_error({shadowed_var,_V,_In}) -> true;
 keep_error({exported_var,_V,{_What,_Where}}) -> true;
-keep_error(_X) -> false.
+%% disable these checks for now, mainly for the module records
+keep_error({undefined_record,_T}) -> false;
+keep_error({type_syntax, _C}) -> false;
+keep_error({unbound_var,_V}) -> false;
+keep_error(_X) ->
+    %% check all other errors early for now
+    true.
 
 
 %% bool_option(OnOpt, OffOpt, Default, Options) -> boolean().
