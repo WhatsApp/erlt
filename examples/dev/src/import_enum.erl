@@ -2,10 +2,10 @@
 -module('import_enum').
 -compile([warn_unused_import,warnings_as_errors]).
 
--export([p/2]).
+-export([swap/1]).
 
 -import_type(mod03, [pair/2]).
 
--spec p(A,B) -> pair(A, B).
-p(A,B) ->
-    pair.pair{A, B}.
+-spec swap(pair(A, B)) -> pair(A, B).
+
+swap(pair.pair{A, B}) -> pair.pair{B, A}.
