@@ -53,6 +53,7 @@ keep_error({redefine_builtin_type_import,{_F,_A}}) -> true;
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}) -> true;
 keep_error({undefined_type, {_T, _A}}) -> true;
+keep_error({unused_type, {_T, _A}}) -> true;
 keep_error({shadowed_var,_V,_In}) -> true;
 keep_error({exported_var,_V,{_What,_Where}}) -> true;
 keep_error(_X) -> false.
@@ -1518,10 +1519,10 @@ check_type_imports(_Line, Ts, Is) ->
                       end
               end end, [], Ts).
 
-imported_type(F, A, St) ->
-    case orddict:find({F,A}, St#lint.imp_types) of
-        {ok,Mod} -> {yes,Mod};
-        error -> no
+imported_type(Name, St) ->
+    case [I || {{T,_},_}=I <- St#lint.imp_types, T =:= Name] of
+        [{{Name,Arity},Mod}] -> {yes,Mod,Arity};
+        _ -> no
     end.
 
 -spec on_load(erl_anno:anno(), fa(), lint_state()) -> lint_state().
@@ -2624,20 +2625,31 @@ map_fields([], _, St, _) ->
 %% check enum constructor uses
 check_enum({atom,L,A}, _Args, #lint{enum=[]}=St) ->
     add_error(L, {unqualified_enum,A}, St);
-check_enum({op,_,'.',{atom,L,E},{atom,_,A}}, Args, St) ->
-    %% enum e must exist and define c with right arity
-    N = length(Args),
-    case maps:find(E, St#lint.enums) of
-        error ->
-            add_error(L, {undefined_enum,E}, St);
-        {ok, Cs} ->
-            case lists:keyfind(A, 1, Cs) of
-                {_, N} ->
-                    St;
-                {_, N1} ->
-                    add_error(L, {enum_constructor_wrong_arity,E,A,N1}, St);
-                false ->
-                    add_error(L, {undefined_enum_constructor,E,A,N}, St)
+check_enum({op,L0,'.',{atom,L,E}=E0,{atom,_,A}=A0}, Args, St) ->
+    case imported_type(E, St) of
+        {yes,M,Arity} ->
+            %% actually a remote enum (note: we only know the arity of the data
+            %% type here, as given by import_type, not of the constructors)
+            TypePair = {E,Arity},
+            U0 = St#lint.usage,
+            Imp = ordsets:add_element({TypePair,M},U0#usage.imported_types),
+            St1 = St#lint{usage=U0#usage{imported_types = Imp}},
+            check_enum({op,L0,'.',{op,L0,'.',{atom,L,M},E0},A0}, Args, St1);
+        no ->
+            %% enum e must exist and define c with right arity
+            N = length(Args),
+            case maps:find(E, St#lint.enums) of
+                error ->
+                    add_error(L, {undefined_enum,E}, St);
+                {ok, Cs} ->
+                    case lists:keyfind(A, 1, Cs) of
+                        {_, N} ->
+                            St;
+                        {_, N1} ->
+                            add_error(L, {enum_constructor_wrong_arity,E,A,N1}, St);
+                        false ->
+                            add_error(L, {undefined_enum_constructor,E,A,N}, St)
+                    end
             end
     end;
 check_enum({op,L,'.',{op,_,'.',{atom,_,M},E},A}, Args, St) ->
@@ -3168,12 +3180,12 @@ check_type({type, La, TypeName, Args}, SeenVars, St) ->
 check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
     Arity = length(Args),
     TypePair = {TypeName, Arity},
-    St1 = case imported_type(TypeName, Arity, St) of
-              {yes,M} ->
+    St1 = case imported_type(TypeName, St) of
+              {yes,M,Arity} ->
                   U0 = St#lint.usage,
                   Imp = ordsets:add_element({TypePair,M},U0#usage.imported_types),
-                  St#lint{usage=U0#usage{imported = Imp}};
-              no ->
+                  St#lint{usage=U0#usage{imported_types = Imp}};
+              _ ->
                   used_type(TypePair, L, St)
           end,
     lists:foldl(fun(T, {AccSeenVars, AccSt}) ->
