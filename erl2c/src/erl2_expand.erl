@@ -98,6 +98,13 @@ init_type_imports([_|T], Types) ->
     init_type_imports(T, Types);
 init_type_imports([], Types) -> Types.
 
+imported_type(Name, St) ->
+    Map = St#exprec.types,
+    case [{TA,maps:get(TA, Map)} || {T,_}=TA <- maps:keys(Map), T =:= Name] of
+        [{{Name,Arity},{imported,Mod}}] -> {yes,Mod,Arity};
+        _ -> no
+    end.
+
 forms([{attribute,_,record,{Name,Defs}}=Attr | Fs], St0) ->
     NDefs = normalise_fields(Defs),
     St = St0#exprec{records=maps:put(Name, NDefs, St0#exprec.records)},
@@ -200,6 +207,16 @@ pattern({cons,Line,H,T}, St0) ->
 pattern({tuple,Line,Ps}, St0) ->
     {TPs,St1} = pattern_list(Ps, St0),
     {{tuple,Line,TPs},St1};
+pattern({enum,Line,{op,L0,'.',{atom,L,E}=E0,{atom,_,_}=A0}=C0,Es0}, St0) ->
+    {Es1,St1} = expr_list(Es0, St0),
+    C1 = case imported_type(E, St0) of
+             {yes,Module,_Arity} ->
+                 %% note: the arity is that of the data type, not the constructor
+                 {op,L0,'.',{op,L0,'.',{atom,L,Module},E0},A0};
+             _ ->
+                 C0
+         end,
+    {{enum,Line,C1,Es1},St1};
 pattern({enum,Line,C,Ps}, St0) ->
     {[TC|TPs],St1} = pattern_list([C|Ps], St0),
     {{enum,Line,TC,TPs},St1};
@@ -377,6 +394,16 @@ expr({bc,Line,E0,Qs0}, St0) ->
 expr({tuple,Line,Es0}, St0) ->
     {Es1,St1} = expr_list(Es0, St0),
     {{tuple,Line,Es1},St1};
+expr({enum,Line,{op,L0,'.',{atom,L,E}=E0,{atom,_,_}=A0}=C0,Es0}, St0) ->
+    {Es1,St1} = expr_list(Es0, St0),
+    C1 = case imported_type(E, St0) of
+             {yes,Module,_Arity} ->
+                 %% note: the arity is that of the data type, not the constructor
+                 {op,L0,'.',{op,L0,'.',{atom,L,Module},E0},A0};
+             _ ->
+                 C0
+         end,
+    {{enum,Line,C1,Es1},St1};
 expr({enum,Line,C0,Es0}, St0) ->
     {[C1|Es1],St1} = expr_list([C0|Es0], St0),
     {{enum,Line,C1,Es1},St1};

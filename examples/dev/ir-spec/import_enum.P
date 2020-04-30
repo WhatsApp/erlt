@@ -4,14 +4,14 @@
 
 -compile([warn_unused_import, warnings_as_errors]).
 
--export([p/2]).
+-export([swap/1]).
 
 -import_type({mod03, [{pair, 2}]}).
 
--spec p(A, B) -> mod03:pair(A, B).
+-spec swap(mod03:pair(A, B)) -> mod03:pair(A, B).
 
-p(A, B) ->
-    {969696, import_enum, pair, pair, A, B}.
+swap({969696, mod03, pair, pair, A, B}) ->
+    {969696, mod03, pair, pair, B, A}.
 
 
 
