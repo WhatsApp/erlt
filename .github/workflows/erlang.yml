@@ -38,62 +38,37 @@ jobs:
           opam install ocamlformat.0.14.1 -y
           ocamlc --version
           ocamlformat --version
+      - name: opam_env
+        run:  echo "::set-env name=PATH::$GITHUB_WORKSPACE/.cache/.opam/4.10.0/bin/:$PATH"
       - name: Erlang version
-        run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+        run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: make project
-        run: make
+        run:  make
       - name: "examples/dev/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/dev/src
+        run:  make -C examples/dev/src
       - name: "examples/doc/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/doc/src
+        run:  make -C examples/doc/src
       - name: "examples/elm-core/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/elm-core/src
+        run:  make -C examples/elm-core/src
       - name: "examples/dev_dots/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/dev_dots/src
+        run:  make -C examples/dev_dots/src
       - name: "examples/dev_enum/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/dev_enum/src
+        run:  make -C examples/dev_enum/src
       - name: "examples/calc/src: make"
-        run: |
-          eval $(opam env)
-          make -C examples/calc/src
+        run:  make -C examples/calc/src
       - name: "examples/dev/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/dev/src
+        run:  make test-ir -C examples/dev/src
       - name: "examples/doc/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/doc/src
+        run:  make test-ir -C examples/doc/src
       - name: "examples/elm-core/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/elm-core/src
+        run:  make test-ir -C examples/elm-core/src
       - name: "examples/dev_dots/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/dev_dots/src
+        run:  make test-ir -C examples/dev_dots/src
       - name: "examples/dev_enum/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/dev_enum/src
+        run:  make test-ir -C examples/dev_enum/src
       - name: "examples/calc/src: test-ir"
-        run: |
-          eval $(opam env)
-          make test-ir -C examples/calc/src
+        run:  make test-ir -C examples/calc/src
       - name: "examples/dev_module_record/src: make"
-        run: |
-          make erl2c-records -C examples/dev_module_record/src
+        run:  make erl2c-records -C examples/dev_module_record/src
       - name: "examples/checks/src: test"
-        run: |
-          eval $(opam env)
-          make test -C examples/checks/src
+        run:  make test -C examples/checks/src
