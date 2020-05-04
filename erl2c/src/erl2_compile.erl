@@ -57,6 +57,7 @@
 % NOTE: slimmed down version of the original compile state
 -record(compile, {filename="" :: file:filename(),
                   dir=""      :: file:filename(),
+		  base=""     :: file:filename(),
 		  ifile=""    :: file:filename(),
 		  ofile=""    :: file:filename(),
 		  module=[]   :: module() | [],
@@ -232,6 +233,7 @@ do_file(File, Options0) ->
                     ?pass(erl2_lint),
                     ?pass(erl2_module_record),
                     ?pass(erl2_expand),
+                    {iff,'B',{src_listing,"B"}},
 
                     ?pass(erl2_typecheck),
                     ?pass(erl2_to_erl1),
@@ -241,8 +243,9 @@ do_file(File, Options0) ->
                     ?pass(maybe_save_binary)
                 ]
         end,
+    Passes1 = select_passes(Passes, St0#compile.options),
 
-    internal_comp(Passes, _Code0 = unused, File, _Suffix = ".erl", St0).
+    internal_comp(Passes1, _Code0 = unused, File, _Suffix = ".erl", St0).
 
 
 is_makedep2_mode(Options) ->
@@ -683,7 +686,7 @@ format_error(X) ->
 internal_comp(Passes, Code0, File, Suffix, St0) ->
     Dir = filename:dirname(File),
     Base = filename:basename(File, Suffix),
-    St1 = St0#compile{filename=File, dir=Dir,
+    St1 = St0#compile{filename=File, dir=Dir, base=Base,
 		      ifile=erlfile(Dir, Base, Suffix),
 		      ofile=objfile(Base, St0)},
     Opts = St1#compile.options,
@@ -801,6 +804,103 @@ messages_per_file(Ms) ->
 mpf(Ms) ->
     [{File,[M || {F,M} <- Ms, F =:= File]} ||
 	File <- lists:usort([F || {F,_} <- Ms])].
+
+select_passes([{pass,Mod}|Ps], Opts) ->
+    F = fun(Code0, St) ->
+		case catch Mod:module(Code0, St#compile.options) of
+		    {ok,Code} ->
+			{ok,Code,St};
+		    {ok,Code,Ws} ->
+			{ok,Code,St#compile{warnings=St#compile.warnings++Ws}};
+		    {error,Es} ->
+			{error,St#compile{errors=St#compile.errors ++ Es}}
+		end
+	end,
+    [{Mod,F}|select_passes(Ps, Opts)];
+select_passes([{src_listing,Ext}|_], _Opts) ->
+    [{listing,fun (Code, St) -> src_listing(Ext, Code, St) end}];
+select_passes([{listing,Ext}|_], _Opts) ->
+    [{listing,fun (Code, St) -> listing(Ext, Code, St) end}];
+select_passes([done|_], _Opts) ->
+    [];
+select_passes([{done,Ext}|_], Opts) ->
+    select_passes([{unless,binary,{listing,Ext}}], Opts);
+select_passes([{iff,Flag,Pass}|Ps], Opts) ->
+    select_cond(Flag, true, Pass, Ps, Opts);
+select_passes([{unless,Flag,Pass}|Ps], Opts) ->
+    select_cond(Flag, false, Pass, Ps, Opts);
+select_passes([{_,Fun}=P|Ps], Opts) when is_function(Fun) ->
+    [P|select_passes(Ps, Opts)];
+select_passes([{delay,Passes0}|Ps], Opts) when is_list(Passes0) ->
+    %% Delay evaluation of compiler options and which compiler passes to run.
+    %% Since we must know beforehand whether a listing will be produced, we
+    %% will go through the list of passes and evaluate all conditions that
+    %% select a list pass.
+    case select_list_passes(Passes0, Opts) of
+	{done,Passes} ->
+	    [{delay,Passes}];
+	{not_done,Passes} ->
+	    [{delay,Passes}|select_passes(Ps, Opts)]
+    end;
+select_passes([{_,Test,Fun}=P|Ps], Opts) when is_function(Test),
+					      is_function(Fun) ->
+    [P|select_passes(Ps, Opts)];
+select_passes([], _Opts) ->
+    [];
+select_passes([List|Ps], Opts) when is_list(List) ->
+    case select_passes(List, Opts) of
+	[] -> select_passes(Ps, Opts);
+	Nested ->
+	    case last(Nested) of
+		{listing,_Fun} -> Nested;
+		_Other         -> Nested ++ select_passes(Ps, Opts)
+	    end
+    end.
+
+select_cond(Flag, ShouldBe, Pass, Ps, Opts) ->
+    ShouldNotBe = not ShouldBe,
+    case member(Flag, Opts) of
+	ShouldBe    -> select_passes([Pass|Ps], Opts);
+	ShouldNotBe -> select_passes(Ps, Opts)
+    end.
+
+%% select_list_passes([Pass], Opts) -> {done,[Pass]} | {not_done,[Pass]}
+%%  Evaluate all conditions having to do with listings in the list of
+%%  passes.
+
+select_list_passes(Ps, Opts) ->
+    select_list_passes_1(Ps, Opts, []).
+
+select_list_passes_1([{iff,Flag,{listing,_}=Listing}|Ps], Opts, Acc) ->
+    case member(Flag, Opts) of
+	true -> {done,reverse(Acc, [Listing])};
+	false -> select_list_passes_1(Ps, Opts, Acc)
+    end;
+select_list_passes_1([{iff,Flag,{done,Ext}}|Ps], Opts, Acc) ->
+    case member(Flag, Opts) of
+	false ->
+	    select_list_passes_1(Ps, Opts, Acc);
+	true ->
+	    {done,case member(binary, Opts) of
+		      false -> reverse(Acc, [{listing,Ext}]);
+		      true -> reverse(Acc)
+		  end}
+    end;
+select_list_passes_1([{iff=Op,Flag,List0}|Ps], Opts, Acc) when is_list(List0) ->
+    case select_list_passes(List0, Opts) of
+	{done,List} -> {done,reverse(Acc) ++ List};
+	{not_done,List} -> select_list_passes_1(Ps, Opts, [{Op,Flag,List}|Acc])
+    end;
+select_list_passes_1([{unless=Op,Flag,List0}|Ps], Opts, Acc) when is_list(List0) ->
+    case select_list_passes(List0, Opts) of
+	{done,List} -> {done,reverse(Acc) ++ List};
+	{not_done,List} -> select_list_passes_1(Ps, Opts, [{Op,Flag,List}|Acc])
+    end;
+select_list_passes_1([P|Ps], Opts, Acc) ->
+    select_list_passes_1(Ps, Opts, [P|Acc]);
+select_list_passes_1([], _, Acc) ->
+    {not_done,reverse(Acc)}.
+
 
 %% Remove the target file so we don't have an old one if the compilation fail.
 remove_file(Code, St) ->
@@ -1363,3 +1463,56 @@ pre_defs([]) -> [].
 
 inc_paths(Opts) ->
     [ P || {i,P} <- Opts, is_list(P) ].
+
+src_listing(Ext, Code, St) ->
+    listing(fun (Lf, {_Mod,_Exp,Fs}) -> do_src_listing(Lf, Fs);
+		(Lf, Fs) -> do_src_listing(Lf, Fs) end,
+	    Ext, Code, St).
+
+do_src_listing(Lf, Fs) ->
+    Opts = [lists:keyfind(encoding, 1, io:getopts(Lf))],
+    foreach(fun (F) -> io:put_chars(Lf, [erl2_pp:form(F, Opts),"\n"]) end,
+	    Fs).
+
+listing(Ext, Code, St0) ->
+    St = St0#compile{encoding = none},
+    listing(fun(Lf, Fs) -> beam_listing:module(Lf, Fs) end, Ext, Code, St).
+
+listing(LFun, Ext, Code, St) ->
+    Lfile = outfile(St#compile.base, Ext, St#compile.options),
+    case file:open(Lfile, [write,delayed_write]) of
+	{ok,Lf} ->
+            Code = restore_expanded_types(Ext, Code),
+            output_encoding(Lf, St),
+	    LFun(Lf, Code),
+	    ok = file:close(Lf),
+	    {ok,Code,St};
+	{error,Error} ->
+	    Es = [{Lfile,[{none,compile,{write_error,Error}}]}],
+	    {error,St#compile{errors=St#compile.errors ++ Es}}
+    end.
+
+output_encoding(F, #compile{encoding = none}) ->
+    ok = io:setopts(F, [{encoding, epp:default_encoding()}]);
+output_encoding(F, #compile{encoding = Encoding}) ->
+    ok = io:setopts(F, [{encoding, Encoding}]),
+    ok = io:fwrite(F, <<"%% ~s\n">>, [epp:encoding_to_string(Encoding)]).
+
+restore_expanded_types("E", {M,I,Fs0}) ->
+    Fs = restore_expand_module(Fs0),
+    {M,I,Fs};
+restore_expanded_types(_Ext, Code) -> Code.
+
+restore_expand_module([{attribute,Line,type,[Type]}|Fs]) ->
+    [{attribute,Line,type,Type}|restore_expand_module(Fs)];
+restore_expand_module([{attribute,Line,opaque,[Type]}|Fs]) ->
+    [{attribute,Line,opaque,Type}|restore_expand_module(Fs)];
+restore_expand_module([{attribute,Line,spec,[Arg]}|Fs]) ->
+    [{attribute,Line,spec,Arg}|restore_expand_module(Fs)];
+restore_expand_module([{attribute,Line,callback,[Arg]}|Fs]) ->
+    [{attribute,Line,callback,Arg}|restore_expand_module(Fs)];
+restore_expand_module([{attribute,Line,record,[R]}|Fs]) ->
+    [{attribute,Line,record,R}|restore_expand_module(Fs)];
+restore_expand_module([F|Fs]) ->
+    [F|restore_expand_module(Fs)];
+restore_expand_module([]) -> [].
