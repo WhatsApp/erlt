@@ -46,7 +46,8 @@ copy-ocaml:
 p:
 	rm -f $(IR_DIR)/*.P
 	mkdir -p $(IR_DIR)
-	$(foreach erl, $(EXPLICIT_SOURCES), $(ERLBUILD_ERLC) -P -o $(IR_DIR) --build-dir $(BUILD_DIR) $(erl);)
+	# xxx_lexer.erl and xxx_parser.erl are non-hermetic generated stuff, so filtering them out
+	$(foreach erl, $(filter-out %_lexer.erl %_parser.erl ,$(ERLS)), $(ERLBUILD_ERLC) -P -o $(IR_DIR) --build-dir $(BUILD_DIR) $(erl);)
 
 ir: copy-ocaml p
 
