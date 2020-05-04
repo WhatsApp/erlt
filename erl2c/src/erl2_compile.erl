@@ -235,7 +235,7 @@ do_file(File, Options0) ->
                     ?pass(erl2_expand),
                     {iff,'B',{src_listing,"B"}},
 
-                    ?pass(erl2_typecheck),
+                    {unless,'P',{unless,'E',?pass(erl2_typecheck)}},
                     ?pass(erl2_to_erl1),
 
                     ?pass(transform_module),
