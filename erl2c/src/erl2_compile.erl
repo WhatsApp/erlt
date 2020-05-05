@@ -171,8 +171,8 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_lint),
                     ?pass(erl2_module_record),
+                    ?pass(erl2_lint),
                     ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
@@ -192,8 +192,8 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_lint),
                     ?pass(erl2_module_record),
+                    ?pass(erl2_lint),
                     ?pass(erl2_expand),
 
                     ?pass(collect_erl2_compile_deps),
@@ -211,8 +211,8 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_lint),
                     ?pass(erl2_module_record),
+                    ?pass(erl2_lint),
                     ?pass(erl2_expand),
 
                     ?pass(erl2_typecheck),
@@ -230,8 +230,8 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_lint),
                     ?pass(erl2_module_record),
+                    ?pass(erl2_lint),
                     ?pass(erl2_expand),
                     {iff,'B',{src_listing,"B"}},
 
