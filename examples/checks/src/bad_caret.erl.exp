@@ -1,0 +1,5 @@
+bad_caret.erl:8: operator ^ is only allowed in patterns
+bad_caret.erl:13: illegal guard expression
+bad_caret.erl:20: illegal pattern
+bad_caret.erl:21: illegal pattern
+bad_caret.erl:22: operator ^ is only allowed in patterns

@@ -40,6 +40,7 @@
 %% our added checks
 keep_error(dotted_module_name) -> true;
 keep_error(illegal_dot) -> true;
+keep_error(illegal_caret) -> true;
 keep_error(illegal_enum) -> true;
 keep_error({redefine_enum,_T,_C}) -> true;
 keep_error({unqualified_enum,_A}) -> true;
@@ -300,6 +301,7 @@ format_error(illegal_bin_pattern) ->
     "binary patterns cannot be matched in parallel using '='";
 format_error(illegal_expr) -> "illegal expression";
 format_error(illegal_dot) -> "illegal dot operator";
+format_error(illegal_caret) -> "operator ^ is only allowed in patterns";
 format_error(dotted_module_name) -> "module names may not be dotted";
 format_error({illegal_guard_local_call, {F,A}}) -> 
     io_lib:format("call to local/imported function ~tw/~w is illegal in guard",
@@ -1655,7 +1657,7 @@ pattern({var,_Line,'_'}, _Vt, _Old, _Bvt, St) ->
     {[],[],St}; %Ignore anonymous variable
 pattern({var,Line,V}, _Vt, Old, Bvt, St) ->
     pat_var(V, Line, Old, Bvt, St);
-pattern({op,_,'^',{var,Line,V}}, Vt, _Old, _Bvt, St) ->
+pattern({op,_,'^',{var,Line,V}}, Vt, _Old, _Bvt, St) when V =/= '_' ->
     %% this is checked like a normal expression variable,
     %% since it will actually become a guard test
     {Vt1,St1} = expr_var(V, Line, Vt, St),
@@ -2584,6 +2586,9 @@ expr({match,_Line,P,E}, Vt, St0) ->
     St = reject_invalid_alias_expr(P, E, Vt, St3),
     {vtupdate(Bvt, vtmerge(Evt, Pvt)),St};
 %% No comparison or boolean operators yet.
+expr({op,Line,'^',A}, Vt, St) ->
+    {Vt1,St1} = expr(A, Vt, St),
+    {Vt1,add_error(Line, illegal_caret, St1)};
 expr({op,_Line,_Op,A}, Vt, St) ->
     expr(A, Vt, St);
 expr({op,Line,Op,L,R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
