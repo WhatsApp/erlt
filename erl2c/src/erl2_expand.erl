@@ -110,11 +110,6 @@ forms([{attribute,_,record,{Name,Defs}}=Attr | Fs], St0) ->
     St = St0#exprec{records=maps:put(Name, NDefs, St0#exprec.records)},
     {Fs1, St1} = forms(Fs, St),
     {[Attr | Fs1], St1};
-forms([{attribute,L,type,{TypeName,TypeDef0,Args}} | Fs], St0) ->
-    {TypeDef, St1} = type(TypeDef0, St0),
-    Attr = {attribute,L,type,{TypeName,TypeDef,Args}},
-    {Fs1, St2} = forms(Fs, St1),
-    {[Attr | Fs1], St2};
 forms([{attribute,L,spec,{Fun,Types}} | Fs], St) ->
     {Types1, St1} = type_list(Types, St),
     Attr = {attribute,L,spec,{Fun,Types1}},
@@ -123,6 +118,12 @@ forms([{attribute,L,spec,{Fun,Types}} | Fs], St) ->
 forms([{attribute,L,callback,{Fun,Types}} | Fs], St) ->
     {Types1, St1} = type_list(Types, St),
     Attr = {attribute,L,callback,{Fun,Types1}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
+forms([{attribute,L,T,{TypeName,TypeDef0,Args}} | Fs], St0)
+  when T =:= type ; T =:= opaque ; T =:= enum ->
+    {TypeDef, St1} = type(TypeDef0, St0),
+    Attr = {attribute,L,T,{TypeName,TypeDef,Args}},
     {Fs1, St2} = forms(Fs, St1),
     {[Attr | Fs1], St2};
 forms([{function,L,N,A,Cs0} | Fs0], St0) ->
@@ -161,10 +162,10 @@ type({type, _, any}=T, St) ->
 type({op, L, Op, T1, T2}, St) ->
     {[E1, E2], St1} = type_list([T1, T2], St),
     {{op, L, Op, E1, E2}, St1};
-type(Ts, St) when is_list(Ts) ->
-    type_list(Ts, St);
 type({qatom,L,A}, St) ->
     {{atom,L,A}, St};
+type(Ts, St) when is_list(Ts) ->
+    type_list(Ts, St);
 type(Other, St) ->
     {Other, St}.
 

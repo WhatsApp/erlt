@@ -84,24 +84,24 @@ mk_tuple(A, B, C) ->
 mk_tuple2(A) ->
     {1, 2, 3, A}.
 
--spec mk_map(A, B) -> #{a := A, b := B}.
+-spec mk_map(A, B) -> #{'a' := A, 'b' := B}.
 mk_map(A, B) ->
-    #{a => A, b => B}.
+    #{'a' => A, 'b' => B}.
 
--spec update_map1(#{a := A}, A) -> #{a := A}.
+-spec update_map1(#{'a' := A}, A) -> #{'a' := A}.
 update_map1(M, A) ->
-    M#{a := A}.
+    M#{'a' := A}.
 
 %% Generic updates are forbidden
 %%-spec update_map2(#{a := A, _ := _}, A) -> #{a := A, _ := _}.
 %%update_map2(M, A) ->
 %%    M#{a := A}.
 
--spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
+-spec update_map3(#{'a' := A, 'b' := A}) -> #{'a' := A, 'b' := A}.
 update_map3(M) ->
     A0 = M.a,
     B0 = M.a,
-    M#{a := B0, b := A0}.
+    M#{'a' := B0, 'b' := A0}.
 
 %% Generic updates are forbidden
 %%-spec update_map4(#{a := A, b := A, _ := _}) -> #{a := A, b := A, _ := _}.
@@ -110,11 +110,11 @@ update_map3(M) ->
 %%    B0 = M.a,
 %%    M#{a := B0, b := A0}.
 
--spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
+-spec access_map(#{'id' := Id, 'location' := Location, _ := _}) -> {Id, Location}.
 access_map(M) ->
     {M.id, M.location}.
 
--spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
+-spec access_map2(#{'inner1' := #{'inner2' := A}}) -> A.
 access_map2(M) ->
     M.inner1.inner2.
 
@@ -126,7 +126,7 @@ mk_seq() ->
 
 -spec is_empty([_]) -> boolean().
 is_empty([]) ->
-    'true';
+    true;
 is_empty([_H|_T]) ->
     false.
 

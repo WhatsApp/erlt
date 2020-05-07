@@ -54,19 +54,19 @@ val compare'2 : 'tA * 'tA -> order'0
 
 val compare'1 : 'tA -> 'tA -> order'0
 
-val not'1 : bool -> bool
+val bool_not'1 : bool -> bool
 
-val and'2 : bool * bool -> bool
+val bool_and'2 : bool * bool -> bool
 
-val and'1 : bool -> bool -> bool
+val bool_and'1 : bool -> bool -> bool
 
-val or'2 : bool * bool -> bool
+val bool_or'2 : bool * bool -> bool
 
-val or'1 : bool -> bool -> bool
+val bool_or'1 : bool -> bool -> bool
 
-val xor'2 : bool * bool -> bool
+val bool_xor'2 : bool * bool -> bool
 
-val xor'1 : bool -> bool -> bool
+val bool_xor'1 : bool -> bool -> bool
 
 val mod_by'2 : int * int -> int
 

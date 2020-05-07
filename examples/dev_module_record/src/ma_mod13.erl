@@ -48,16 +48,16 @@ test2_global(#'ma_mod13:r1'{}) ->
 test2_local(#r1{}) ->
     true.
 
-test3_global({record, #'ma_mod13:r1'{}}) ->
+test3_global({'record', #'ma_mod13:r1'{}}) ->
     true.
 
-test3_local({record, #r1{}}) ->
+test3_local({'record', #r1{}}) ->
     true.
 
-test4_global({record, #'ma_mod13:r1'{field1 = a}}) ->
+test4_global({'record', #'ma_mod13:r1'{field1 = 'a'}}) ->
     true.
 
-test4_local({record, #r1{field1 = a}}) ->
+test4_local({'record', #r1{field1 = 'a'}}) ->
     true.
 
 test5_global(X) ->
@@ -122,16 +122,16 @@ test14_local() ->
     #r1{}.
 
 test15_global() ->
-    {record, #'ma_mod13:r1'{}}.
+    {'record', #'ma_mod13:r1'{}}.
 
 test15_local() ->
-    {record, #r1{}}.
+    {'record', #r1{}}.
 
 test16_global() ->
-    {record, #'ma_mod13:r1'{field1 = a}}.
+    {'record', #'ma_mod13:r1'{field1 = 'a'}}.
 
 test16_local() ->
-    {record, #r1{field1 = a}}.
+    {'record', #r1{field1 = 'a'}}.
 
 test17_global(F1, F2) ->
     Y = #'ma_mod13:r1'{field1 = F1, field2 = F2},
@@ -147,33 +147,33 @@ test18_global(X) when X == #'ma_mod13:r1'{} ->
 test18_local(X) when X == #r1{} ->
     true.
 
-test19_global(X) when X == {record, #'ma_mod13:r1'{}} ->
+test19_global(X) when X == {'record', #'ma_mod13:r1'{}} ->
     true.
 
-test19_local(X) when X == {record, #r1{}} ->
+test19_local(X) when X == {'record', #r1{}} ->
     true.
 
 
-test20_global(X) when X == {record, #'ma_mod13:r1'{field1 = a}} ->
+test20_global(X) when X == {'record', #'ma_mod13:r1'{field1 = 'a'}} ->
     true.
 
-test20_local(X) when X == {record, #r1{field1 = a}} ->
+test20_local(X) when X == {'record', #r1{field1 = 'a'}} ->
     true.
 
 %% from ma_mod_11
 test21_global() ->
     X = #'ma_mod13:r1'{},
-    X#'ma_mod13:r1'{field1 = a}.
+    X#'ma_mod13:r1'{field1 = 'a'}.
 test21_local() ->
     X = #r1{},
-    X#r1{field1 = a}.
+    X#r1{field1 = 'a'}.
 
 test22_global() ->
     X = #'ma_mod13:r1'{},
-    X#'ma_mod13:r1'{field1 = a, field2 = b}.
+    X#'ma_mod13:r1'{field1 = 'a', field2 = 'b'}.
 test22_local() ->
     X = #r1{},
-    X#r1{field1 = a, field2 = b}.
+    X#r1{field1 = 'a', field2 = 'b'}.
 
 %% from ma_mod_12
 

@@ -27,14 +27,14 @@
 
 test1_global() ->
   X = #'ma_mod01:r1'{},
-  X#'ma_mod01:r1'{field1 = a}.
+  X#'ma_mod01:r1'{field1 = 'a'}.
 test1_local() ->
   X = #?m01:r1{},
-  X#?m01:r1{field1 = a}.
+  X#?m01:r1{field1 = 'a'}.
 
 test2_global() ->
   X = #'ma_mod01:r1'{},
-  X#'ma_mod01:r1'{field1 = a, field2 = b}.
+  X#'ma_mod01:r1'{field1 = 'a', field2 = 'b'}.
 test2_local() ->
   X = #?m01:r1{},
-  X#?m01:r1{field1 = a, field2 = b}.
+  X#?m01:r1{field1 = 'a', field2 = 'b'}.

@@ -59,19 +59,19 @@ module Basics_priv : sig
 
   val compare'1 : 'tA -> 'tA -> order'0
 
-  val not'1 : bool -> bool
+  val bool_not'1 : bool -> bool
 
-  val and'2 : bool * bool -> bool
+  val bool_and'2 : bool * bool -> bool
 
-  val and'1 : bool -> bool -> bool
+  val bool_and'1 : bool -> bool -> bool
 
-  val or'2 : bool * bool -> bool
+  val bool_or'2 : bool * bool -> bool
 
-  val or'1 : bool -> bool -> bool
+  val bool_or'1 : bool -> bool -> bool
 
-  val xor'2 : bool * bool -> bool
+  val bool_xor'2 : bool * bool -> bool
 
-  val xor'1 : bool -> bool -> bool
+  val bool_xor'1 : bool -> bool -> bool
 
   val mod_by'2 : int * int -> int
 
@@ -194,23 +194,25 @@ end = struct
   let rec compare'1 : 'tA -> 'tA -> order'0 = function
     | v_X1 -> ( function v_X2 -> compare'2 (v_X1, v_X2) )
 
-  let rec not'1 : bool -> bool = function v_B -> not v_B
+  let rec bool_not'1 : bool -> bool = function v_B -> not v_B
 
-  let rec and'2 : bool * bool -> bool = function v_B1, v_B2 -> v_B1 && v_B2
+  let rec bool_and'2 : bool * bool -> bool = function
+    | v_B1, v_B2 -> v_B1 && v_B2
 
-  let rec and'1 : bool -> bool -> bool = function
-    | v_B1 -> ( function v_B2 -> and'2 (v_B1, v_B2) )
+  let rec bool_and'1 : bool -> bool -> bool = function
+    | v_B1 -> ( function v_B2 -> bool_and'2 (v_B1, v_B2) )
 
-  let rec or'2 : bool * bool -> bool = function v_B1, v_B2 -> v_B1 || v_B2
+  let rec bool_or'2 : bool * bool -> bool = function
+    | v_B1, v_B2 -> v_B1 || v_B2
 
-  let rec or'1 : bool -> bool -> bool = function
-    | v_B1 -> ( function v_B2 -> or'2 (v_B1, v_B2) )
+  let rec bool_or'1 : bool -> bool -> bool = function
+    | v_B1 -> ( function v_B2 -> bool_or'2 (v_B1, v_B2) )
 
-  let rec xor'2 : bool * bool -> bool = function
+  let rec bool_xor'2 : bool * bool -> bool = function
     | v_B1, v_B2 -> (not v_B1) <> not v_B2
 
-  let rec xor'1 : bool -> bool -> bool = function
-    | v_B1 -> ( function v_B2 -> xor'2 (v_B1, v_B2) )
+  let rec bool_xor'1 : bool -> bool -> bool = function
+    | v_B1 -> ( function v_B2 -> bool_xor'2 (v_B1, v_B2) )
 
   let rec mod_by'2 : int * int -> int = function v_X1, v_X2 -> v_X2 / v_X1
 

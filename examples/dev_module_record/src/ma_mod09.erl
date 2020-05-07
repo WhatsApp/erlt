@@ -35,16 +35,16 @@ test1_local() ->
     #?m01:r1{}.
 
 test2_global() ->
-    {record, #'ma_mod01:r1'{}}.
+    {'record', #'ma_mod01:r1'{}}.
 
 test2_local() ->
-    {record, #?m01:r1{}}.
+    {'record', #?m01:r1{}}.
 
 test3_global() ->
-    {record, #'ma_mod01:r1'{field1 = a}}.
+    {'record', #'ma_mod01:r1'{field1 = 'a'}}.
 
 test3_local() ->
-    {record, #?m01:r1{field1 = a}}.
+    {'record', #?m01:r1{field1 = 'a'}}.
 
 test4_global(F1, F2) ->
     Y = #'ma_mod01:r1'{field1 = F1, field2 = F2},

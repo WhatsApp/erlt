@@ -23,7 +23,13 @@
          compare/2,
          compare/1]).
 
--export(['not'/1,'and'/2,'and'/1,'or'/2,'or'/1,'xor'/2,'xor'/1]).
+-export([bool_not/1,
+         bool_and/2,
+         bool_and/1,
+         bool_or/2,
+         bool_or/1,
+         bool_xor/2,
+         bool_xor/1]).
 
 -export([mod_by/2,
          mod_by/1,
@@ -229,45 +235,45 @@ compare(X1) ->
            compare(X1, X2)
     end.
 
--spec 'not'(boolean()) -> boolean().
+-spec bool_not(boolean()) -> boolean().
 
-'not'(B) ->
+bool_not(B) ->
     not B.
 
--spec 'and'(boolean(), boolean()) -> boolean().
+-spec bool_and(boolean(), boolean()) -> boolean().
 
-'and'(B1, B2) ->
+bool_and(B1, B2) ->
     B1 and B2.
 
--spec 'and'(boolean()) -> fun((boolean()) -> boolean()).
+-spec bool_and(boolean()) -> fun((boolean()) -> boolean()).
 
-'and'(B1) ->
+bool_and(B1) ->
     fun(B2) ->
-           'and'(B1, B2)
+           bool_and(B1, B2)
     end.
 
--spec 'or'(boolean(), boolean()) -> boolean().
+-spec bool_or(boolean(), boolean()) -> boolean().
 
-'or'(B1, B2) ->
+bool_or(B1, B2) ->
     B1 or B2.
 
--spec 'or'(boolean()) -> fun((boolean()) -> boolean()).
+-spec bool_or(boolean()) -> fun((boolean()) -> boolean()).
 
-'or'(B1) ->
+bool_or(B1) ->
     fun(B2) ->
-           'or'(B1, B2)
+           bool_or(B1, B2)
     end.
 
--spec 'xor'(boolean(), boolean()) -> boolean().
+-spec bool_xor(boolean(), boolean()) -> boolean().
 
-'xor'(B1, B2) ->
+bool_xor(B1, B2) ->
     B1 xor B2.
 
--spec 'xor'(boolean()) -> fun((boolean()) -> boolean()).
+-spec bool_xor(boolean()) -> fun((boolean()) -> boolean()).
 
-'xor'(B1) ->
+bool_xor(B1) ->
     fun(B2) ->
-           'xor'(B1, B2)
+           bool_xor(B1, B2)
     end.
 
 -spec mod_by(integer(), integer()) -> integer().

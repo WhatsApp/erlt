@@ -38,16 +38,16 @@ test1_global(#'ma_mod01:r1'{}) ->
 test1_local(#?m01:r1{}) ->
     true.
 
-test2_global({record, #'ma_mod01:r1'{}}) ->
+test2_global({'record', #'ma_mod01:r1'{}}) ->
     true.
 
-test2_local({record, #?m01:r1{}}) ->
+test2_local({'record', #?m01:r1{}}) ->
     true.
 
-test3_global({record, #'ma_mod01:r1'{field1 = a}}) ->
+test3_global({'record', #'ma_mod01:r1'{field1 = 'a'}}) ->
     true.
 
-test3_local({record, #?m01:r1{field1 = a}}) ->
+test3_local({'record', #?m01:r1{field1 = 'a'}}) ->
     true.
 
 test4_global(X) ->

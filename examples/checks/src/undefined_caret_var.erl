@@ -9,11 +9,11 @@ f(^X) ->
 
 %% Error: referring to an unknown variable in a match pattern
 g(X) ->
-    {foo, ^Q} = X.
+    {'foo', ^Q} = X.
 
 %% Error: referring to an unknown variable in a case clause pattern
 h(X) ->
     case X of
-        {foo, ^Q} -> ok;
+        {'foo', ^Q} -> ok;
         _ -> error
     end.

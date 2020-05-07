@@ -61,6 +61,6 @@ s(E) ->
         enum_mod01.possibly.some{X} ->
             [X]
     catch
-        throw: enum_mod01.possibly.some{thing} : Trace ->
-            {caught, Trace}
+        throw: enum_mod01.possibly.some{'thing'} : Trace ->
+            {'caught', Trace}
     end.

@@ -1,5 +1,5 @@
 -lang([erl2, st]).
--module('import_type_redef').
+-module(import_type_redef).
 
 -import_type(foo, [f/2]).
 

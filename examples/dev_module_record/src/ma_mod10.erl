@@ -32,15 +32,15 @@ test1_global(X) when X == #'ma_mod01:r1'{} ->
 test1_local(X) when X == #?m01:r1{} ->
     true.
 
-test2_global(X) when X == {record, #'ma_mod01:r1'{}} ->
+test2_global(X) when X == {'record', #'ma_mod01:r1'{}} ->
     true.
 
-test2_local(X) when X == {record, #?m01:r1{}} ->
+test2_local(X) when X == {'record', #?m01:r1{}} ->
     true.
 
 
-test3_global(X) when X == {record, #'ma_mod01:r1'{field1 = a}} ->
+test3_global(X) when X == {'record', #'ma_mod01:r1'{field1 = 'a'}} ->
     true.
 
-test3_local(X) when X == {record, #?m01:r1{field1 = a}} ->
+test3_local(X) when X == {record, #?m01:r1{field1 = 'a'}} ->
     true.

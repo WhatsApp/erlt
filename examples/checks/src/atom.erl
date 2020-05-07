@@ -6,4 +6,4 @@
 -spec mk_raw_atom() -> atom().
 mk_raw_atom() ->
     % Error: raw atoms are not allowed in st
-    atom.
+    'atom'.

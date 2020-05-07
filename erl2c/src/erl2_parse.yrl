@@ -45,7 +45,7 @@ fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings dot_atom
+atomic strings dot_atom any_atom
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -87,6 +87,10 @@ attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3').
 dot_atom -> atom : '$1'.
 dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
 dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
+
+%% a hack for records (particularly module records)
+any_atom -> atom : '$1'.
+any_atom -> qatom : setelement(1,'$1',atom).
 
 type_spec -> spec_fun type_sigs : {'$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
@@ -161,12 +165,12 @@ type -> '#' '{' '}'                       : {type, ?anno('$1'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1'), map, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1'), tuple, '$2'}.
-type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1'), record, [{qualified_record,'$2','$4'}]}.
-type -> '#' atom '{' '}'                  : {type, ?anno('$1'), record, ['$2']}.
+type -> '#' any_atom ':' any_atom '{' '}' : {type, ?anno('$1'), record, [{qualified_record,'$2','$4'}]}.
+type -> '#' any_atom '{' '}'              : {type, ?anno('$1'), record, ['$2']}.
 type ->
- '#' atom ':' atom '{' field_types '}'    : {type, ?anno('$1'),
+ '#' any_atom ':' any_atom '{' field_types '}' : {type, ?anno('$1'),
                                              record, [{qualified_record,'$2','$4'}|'$6']}.
-type -> '#' atom '{' field_types '}'      : {type, ?anno('$1'),
+type -> '#' any_atom '{' field_types '}'  : {type, ?anno('$1'),
                                              record, ['$2'|'$4']}.
 type -> binary_type                       : '$1'.
 type -> integer                           : '$1'.
@@ -351,13 +355,13 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$2'),'$1','$3'}.
 
-record_pat_expr -> '#' atom ':' atom '.' atom :
+record_pat_expr -> '#' any_atom ':' any_atom '.' atom :
 	{record_index,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
-record_pat_expr -> '#' atom '.' atom :
+record_pat_expr -> '#' any_atom '.' atom :
 	{record_index,?anno('$1'),element(3, '$2'),'$4'}.
-record_pat_expr -> '#' atom ':' atom record_tuple :
+record_pat_expr -> '#' any_atom ':' any_atom record_tuple :
 	{record,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
-record_pat_expr -> '#' atom record_tuple :
+record_pat_expr -> '#' any_atom record_tuple :
 	{record,?anno('$1'),element(3, '$2'),'$3'}.
 
 list -> '[' ']' : {nil,?anno('$1')}.
@@ -442,29 +446,29 @@ map_key -> expr : '$1'.
 %% N.B. Field names are returned as the complete object, even if they are
 %% always atoms for the moment, this might change in the future.
 
-record_expr -> '#' atom ':' atom '.' atom :
+record_expr -> '#' any_atom ':' any_atom '.' atom :
 	{record_index,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
-record_expr -> '#' atom '.' atom :
+record_expr -> '#' any_atom '.' atom :
 	{record_index,?anno('$1'),element(3, '$2'),'$4'}.
-record_expr -> '#' atom ':' atom record_tuple :
+record_expr -> '#' any_atom ':' any_atom record_tuple :
 	{record,?anno('$1'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
-record_expr -> '#' atom record_tuple :
+record_expr -> '#' any_atom record_tuple :
 	{record,?anno('$1'),element(3, '$2'),'$3'}.
-record_expr -> expr_max '#' atom ':' atom '.' atom :
+record_expr -> expr_max '#' any_atom ':' any_atom '.' atom :
 	{record_field,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
-record_expr -> expr_max '#' atom '.' atom :
+record_expr -> expr_max '#' any_atom '.' atom :
 	{record_field,?anno('$2'),'$1',element(3, '$3'),'$5'}.
-record_expr -> expr_max '#' atom ':' atom record_tuple :
+record_expr -> expr_max '#' any_atom ':' any_atom record_tuple :
 	{record,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
-record_expr -> expr_max '#' atom record_tuple :
+record_expr -> expr_max '#' any_atom record_tuple :
 	{record,?anno('$2'),'$1',element(3, '$3'),'$4'}.
-record_expr -> record_expr '#' atom ':' atom '.' atom :
+record_expr -> record_expr '#' any_atom ':' any_atom '.' atom :
 	{record_field,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
-record_expr -> record_expr '#' atom '.' atom :
+record_expr -> record_expr '#' any_atom '.' atom :
 	{record_field,?anno('$2'),'$1',element(3, '$3'),'$5'}.
-record_expr -> record_expr '#' atom ':' atom record_tuple :
+record_expr -> record_expr '#' any_atom ':' any_atom record_tuple :
 	{record,?anno('$2'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
-record_expr -> record_expr '#' atom record_tuple :
+record_expr -> record_expr '#' any_atom record_tuple :
 	{record,?anno('$2'),'$1',element(3, '$3'),'$4'}.
 
 record_tuple -> '{' '}' : [].

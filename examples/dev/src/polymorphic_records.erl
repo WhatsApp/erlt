@@ -22,8 +22,8 @@
 %% This is (correctly) is not allowed.
 %%-type someRec(R) :: #{ _:= _}.
 
--type rec2(A) :: #{ a := A }.
--type idRec(IdType) :: #{id := IdType}.
+-type rec2(A) :: #{ 'a' := A }.
+-type idRec(IdType) :: #{'id' := IdType}.
 
 %% This is (correctly) is not allowed.
 %%-type someRecWithId(IdType) :: #{ id := IdType, _ := _}.

@@ -19,7 +19,7 @@
 
 
 %% old style tagged tuple for comparison
--opaque maybe(T) :: {some, T} | none.
+-opaque maybe(T) :: {'some', T} | 'none'.
 -export_type([ maybe/1 ]).
 
 
@@ -38,11 +38,11 @@
 
 -spec f() -> maybe(any()).
 f() ->
-    none.
+    'none'.
 
 -spec g() -> maybe(boolean()).
 g() ->
-    {some, true}.
+    {'some', true}.
 
 
 -spec p() -> possibly(any()).

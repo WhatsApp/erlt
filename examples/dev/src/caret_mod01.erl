@@ -20,16 +20,16 @@
 f(X) ->
     Y = 42,
     case X of
-        ^Y -> {that, Y};
-        Z -> {this, Z}
+        ^Y -> {'that', Y};
+        Z -> {'this', Z}
     end.
 
 g(X) ->
     Y = 42,
     case X of
-        {foo, [^Y|Zs]} -> {that, Y, Zs};
-        {foo, [Z|Zs]} -> {this, Z, Zs};
-        Z -> {other, Z}
+        {'foo', [^Y|Zs]} -> {'that', Y, Zs};
+        {'foo', [Z|Zs]} -> {'this', Z, Zs};
+        Z -> {'other', Z}
     end.
 
 h(X) ->

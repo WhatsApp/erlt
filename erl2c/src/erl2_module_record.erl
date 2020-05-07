@@ -239,6 +239,7 @@ pattern({integer,Line,I},_Context) -> {integer,Line,I};
 pattern({char,Line,C},_Context) -> {char,Line,C};
 pattern({float,Line,F},_Context) -> {float,Line,F};
 pattern({atom,Line,A},_Context) -> {atom,Line,A};
+pattern({qatom,Line,A},_Context) -> {qatom,Line,A};
 pattern({string,Line,S},_Context) -> {string,Line,S};
 pattern({nil,Line},_Context) -> {nil,Line};
 pattern({cons,Line,H0,T0},Context) ->
@@ -362,6 +363,7 @@ gexpr({integer,Line,I},_Context) -> {integer,Line,I};
 gexpr({char,Line,C},_Context) -> {char,Line,C};
 gexpr({float,Line,F},_Context) -> {float,Line,F};
 gexpr({atom,Line,A},_Context) -> {atom,Line,A};
+gexpr({qatom,Line,A},_Context) -> {qatom,Line,A};
 gexpr({string,Line,S},_Context) -> {string,Line,S};
 gexpr({nil,Line},_Context) -> {nil,Line};
 gexpr({map,Line,Map0,Es0},Context) ->
@@ -468,6 +470,7 @@ expr({var,Line,V},_Context) -> {var,Line,V};
 expr({integer,Line,I},_Context) -> {integer,Line,I};
 expr({float,Line,F},_Context) -> {float,Line,F};
 expr({atom,Line,A},_Context) -> {atom,Line,A};
+expr({qatom,Line,A},_Context) -> {qatom,Line,A};
 expr({string,Line,S},_Context) -> {string,Line,S};
 expr({char,Line,C},_Context) -> {char,Line,C};
 expr({nil,Line},_Context) -> {nil,Line};
@@ -688,6 +691,8 @@ type({ann_type,Line,[{var,Lv,V},T]},Context) ->
     {ann_type,Line,[{var,Lv,V},T1]};
 type({atom,Line,A},_Context) ->
     {atom,Line,A};
+type({qatom,Line,A},_Context) ->
+    {qatom,Line,A};
 type({integer,Line,I},_Context) ->
     {integer,Line,I};
 type({op,Line,Op,T},Context) ->

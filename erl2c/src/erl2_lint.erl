@@ -29,7 +29,7 @@
 -export([module/1,module/2,module/3,format_error/1]).
 -export([exprs/2,exprs_opt/3,used_vars/2]). % Used from erl_eval.erl.
 -export([is_pattern_expr/1,is_guard_test/1,is_guard_test/2,is_guard_test/3]).
--export([is_guard_expr/1]).
+-export([is_guard_expr/1,is_predef_atom/1]).
 -export([bool_option/4,value_option/3,value_option/7]).
 
 -import(lists, [member/2,map/2,foldl/3,foldr/3,mapfoldl/3,all/2,reverse/1]).
@@ -205,6 +205,8 @@ format_error(invalid_call) ->
 format_error(invalid_record) ->
     "invalid record expression";
 
+format_error({unquoted_atom,A}) ->
+    io_lib:format("unknown symbol ~tw ", [A]);
 format_error({attribute,A}) ->
     io_lib:format("attribute ~tw after function definitions", [A]);
 format_error({missing_qlc_hrl,A}) ->
@@ -1666,7 +1668,8 @@ pattern({char,_Line,_C}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({integer,_Line,_I}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({float,_Line,_F}, _Vt, _Old, _Bvt, St) -> {[],[],St};
 pattern({atom,Line,A}, _Vt, _Old, _Bvt, St) ->
-    {[],[],keyword_warning(Line, A, St)};
+    St1 = check_unquoted_atom(Line, A, St),
+    {[],[],keyword_warning(Line, A, St1)};
 pattern({qatom,_Line,_A}, _Vt, _Old, _Bvt, St) ->
     {[],[],St};
 pattern({string,_Line,_S}, _Vt, _Old, _Bvt, St) -> {[],[],St};
@@ -1707,6 +1710,9 @@ pattern({op,_Line,'++',{cons,Li,{integer,_L2,_I},T},R}, Vt, Old, Bvt, St) ->
     pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Weird, but compatible!
 pattern({op,_Line,'++',{string,_Li,_S},R}, Vt, Old, Bvt, St) ->
     pattern(R, Vt, Old, Bvt, St);                   %String unimportant here
+pattern({op,_Line,'.',{atom,_,_},{atom,_,_}}, _Vt, _Old, _Bvt, St) ->
+    %% specifically allow dot-qualified atoms without quotes
+    {[], [], St};
 pattern({op,_Line,'.',E,{atom,_,_}}, Vt, _Old, _Bvt, St) ->
     %% we only allow the right hand side to be an atom: X.a, but not X.Y
     pattern(E, Vt, _Old, _Bvt, St);
@@ -2105,7 +2111,8 @@ gexpr({char,_Line,_C}, _Vt, St) -> {[],St};
 gexpr({integer,_Line,_I}, _Vt, St) -> {[],St};
 gexpr({float,_Line,_F}, _Vt, St) -> {[],St};
 gexpr({atom,Line,A}, _Vt, St) ->
-    {[],keyword_warning(Line, A, St)};
+    St1 = check_unquoted_atom(Line, A, St),
+    {[],keyword_warning(Line, A, St1)};
 gexpr({qatom,_Line,_A}, _Vt, St) ->
     {[],St};
 gexpr({string,_Line,_S}, _Vt, St) -> {[],St};
@@ -2198,6 +2205,9 @@ gexpr({op,_,'andalso',L,R}, Vt, St) ->
     gexpr_list([L,R], Vt, St);
 gexpr({op,_,'orelse',L,R}, Vt, St) ->
     gexpr_list([L,R], Vt, St);
+gexpr({op,_Line,'.',{atom,_,_},{atom,_,_}}, _Vt, St) ->
+    %% specifically allow dot-qualified atoms without quotes
+    {[], St};
 gexpr({op,_,'.',E,{atom,_,_}}, Vt, St) ->
     %% we only allow the right hand side to be an atom: X.a, but not X.Y
     gexpr(E, Vt, St);
@@ -2287,7 +2297,7 @@ is_gexpr({var,_L,_V}, _Info) -> true;
 is_gexpr({char,_L,_C}, _Info) -> true;
 is_gexpr({integer,_L,_I}, _Info) -> true;
 is_gexpr({float,_L,_F}, _Info) -> true;
-is_gexpr({atom,_L,_A}, _Info) -> true;
+%is_gexpr({atom,_L,_A}, _Info) -> true;
 is_gexpr({qatom,_L,_A}, _Info) -> true;
 is_gexpr({string,_L,_S}, _Info) -> true;
 is_gexpr({nil,_L}, _Info) -> true;
@@ -2381,7 +2391,8 @@ expr({char,_Line,_C}, _Vt, St) -> {[],St};
 expr({integer,_Line,_I}, _Vt, St) -> {[],St};
 expr({float,_Line,_F}, _Vt, St) -> {[],St};
 expr({atom,Line,A}, _Vt, St) ->
-    {[],keyword_warning(Line, A, St)};
+    St1 = check_unquoted_atom(Line, A, St),
+    {[],keyword_warning(Line, A, St1)};
 expr({qatom,_Line,_A}, _Vt, St) ->
     {[],St};
 expr({string,_Line,_S}, _Vt, St) -> {[],St};
@@ -2469,8 +2480,18 @@ expr({'fun',Line,Body}, Vt, St) ->
 	%% {function,M,F,A} when is_atom(M), is_atom(F), is_integer(A) ->
 	%%     %% Compatibility with pre-R15 abstract format.
 	%%     {[],St};
+        %% Ensure unquoted atoms allowed in function context
+	{function,{atom,Lm,M},{atom,Lf,F},A} ->
+            St1 = keyword_warning(Lm, M, keyword_warning(Lf, F, St)),
+	    expr(A, Vt, St1);
+	{function,{atom,Lm,M},F,A} ->
+            St1 = keyword_warning(Lm, M, St),
+	    expr_list([F,A], Vt, St1);
+	{function,M,{atom,Lf,F},A} ->
+            St1 = keyword_warning(Lf, F, St),
+	    expr_list([M,A], Vt, St1);
 	{function,M,F,A} ->
-	    %% New in R15.
+            %% New in R15.
 	    expr_list([M,F,A], Vt, St)
     end;
 expr({named_fun,_,'_',Cs}, Vt, St) ->
@@ -2498,6 +2519,15 @@ expr({call,Line,{remote,_Lr,{atom,_Lm,M},{atom,Lf,F}},As}, Vt, St0) ->
     St2 = check_remote_function(Line, M, F, As, St1),
     St3 = check_module_name(M, Line, St2),
     expr_list(As, Vt, St3);
+expr({call,Line,{remote,_Lr,{atom,Lm,M0},F},As}, Vt, St0) ->
+    %% ensure unquoted atoms allowed in module context
+    St1 = keyword_warning(Lm, M0, St0),
+    St2 = check_module_name(M0, Line, St1),
+    expr_list([F|As], Vt, St2);
+expr({call,_Line,{remote,_Lr,M,{atom,Lf,F0}},As}, Vt, St0) ->
+    %% ensure unquoted atoms allowed in function context
+    St1 = keyword_warning(Lf, F0, St0),
+    expr_list([M|As], Vt, St1);
 expr({call,Line,{remote,_Lr,M,F},As}, Vt, St0) ->
     St1 = keyword_warning(Line, M, St0),
     St2 = keyword_warning(Line, F, St1),
@@ -2604,6 +2634,9 @@ expr({op,Line,Op,L,R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
     {Evt2,St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op,Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3),St2};
+expr({op,_Line,'.',{atom,_,_},{atom,_,_}}, _Vt, St) ->
+    %% specifically allow dot-qualified atoms without quotes
+    {[], St};
 expr({op,_Line,'.',E,{atom,_,_}}, Vt, St) ->
     %% we only allow the right hand side to be an atom: X.a, but not X.Y
     expr(E, Vt, St);
@@ -3114,7 +3147,9 @@ check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]},
 			end, {SeenVars, St}, Args)
     end;
 check_type({integer, _L, _}, SeenVars, St) -> {SeenVars, St};
-check_type({atom, _L, _}, SeenVars, St) -> {SeenVars, St};
+check_type({atom, L, A}, SeenVars, St) ->
+    St1 = check_unquoted_atom(L, A, St),
+    {SeenVars, St1};
 check_type({qatom, _L, _}, SeenVars, St) -> {SeenVars, St};
 check_type({var, _L, '_'}, SeenVars, St) -> {SeenVars, St};
 check_type({var, L, Name}, SeenVars, St) ->
@@ -3125,6 +3160,9 @@ check_type({var, L, Name}, SeenVars, St) ->
 	    error -> dict:store(Name, {seen_once, L}, SeenVars)
 	end,
     {NewSeenVars, St};
+check_type({op, _L, '.', {atom,_,_}, {atom,_,_}}, SeenVars, St) ->
+    %% specifically allow dot-qualified atoms without quotes
+    {SeenVars, St};
 check_type({op, _L, '.', T, {atom, _, _}}, SeenVars, St) ->
     %% dot atom qualifier
     check_type(T, SeenVars, St);
@@ -4160,6 +4198,24 @@ test_overriden_by_local(Line, OldTest, Arity, St) ->
 	false ->
 	    St
     end.
+
+%% only pre-defined symbols are allowed to be used as unquoted atoms
+%% (should have a proper import-like mechanism for this later)
+check_unquoted_atom(Line, A, St) ->
+    case is_predef_atom(A) of
+        true -> St;
+        false -> add_error(Line, {unquoted_atom,A}, St)
+    end.
+
+is_predef_atom(true) -> true;
+is_predef_atom(false) -> true;
+is_predef_atom(ok) -> true;
+is_predef_atom(undefined) -> true;
+is_predef_atom(error) -> true;
+is_predef_atom(exit) -> true;
+is_predef_atom(throw) -> true;
+is_predef_atom(_) ->
+    false.
 
 %% keyword_warning(Line, Atom, State) -> State.
 %%  Add warning for atoms that will be reserved keywords in the future.

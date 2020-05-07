@@ -10,14 +10,14 @@ f(X) ->
 %% Error: caret-marked variables cannot be used in guard expressions
 g(X) ->
     case X of
-        {foo, Y} when Y =:= ^X -> ok;
+        {'foo', Y} when Y =:= ^X -> ok;
         _ -> error
     end.
 
 %% Error: caret prefix can only be used on variables
 h(X) ->
     case X of
-        {^foo, _} -> ok;
-        {foo, ^_} -> ok;
+        {^'foo', _} -> ok;
+        {'foo', ^_} -> ok;
         _ -> X + ^42
     end.

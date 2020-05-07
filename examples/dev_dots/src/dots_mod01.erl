@@ -17,7 +17,8 @@
 
 -export([f/0, g/0, p/1, q/1, r/1, s/1, t/2, u/2, v/1]).
 
--type foo() :: ab.bc.cd | de.ef.
+%% dots are not a generic atom concatenation - must quote these
+-type foo() :: 'ab.bc.cd' | 'de.ef'.
 
 %% types may use dots as qualifier, just like function calls
 -type bar() :: a.b(). % type b in module a
@@ -81,5 +82,5 @@ v(X) ->
     try lists:reverse(X) of
         {ok, abc.d.ef.g} -> ok
     catch
-        exit: foo.bar.baz : Trace -> {caught, Trace}
+        exit: foo.bar.baz : Trace -> {'caught', Trace}
     end.
