@@ -53,8 +53,8 @@ end.
 
 -spec funs() -> list(fun(() -> mod03:unit0())).
 funs() -> [
-  fun mod03:mk_unit/0,
-  fun mod04:mk_unit_remote_dot/0,
+  fun mod03.mk_unit/0,
+  fun mod04.mk_unit_remote_dot/0,
   fun mk_unit_remote_dot/0,
   fun () -> mod03.unit0.unit0{} end
 ].
