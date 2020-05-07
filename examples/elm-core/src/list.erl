@@ -106,17 +106,17 @@ any(_Pred, []) -> false.
 
 -spec maximum(list(A)) -> maybe(A).
 maximum([]) -> maybe.nothing{};
-maximum([H|T]) -> maybe.just{foldl(fun basics:max/2, H, T)}.
+maximum([H|T]) -> maybe.just{foldl(fun basics.max/2, H, T)}.
 
 -spec minimum(list(A)) -> maybe(A).
 minimum([]) -> maybe.nothing{};
-minimum([H|T]) -> maybe.just{foldl(fun basics:min/2, H, T)}.
+minimum([H|T]) -> maybe.just{foldl(fun basics.min/2, H, T)}.
 
 -spec sum(list(integer())) -> integer().
-sum(Ns) -> foldl(fun basics:add/2, 0, Ns).
+sum(Ns) -> foldl(fun basics.add/2, 0, Ns).
 
 -spec product(list(integer())) -> integer().
-product(Ns) -> foldl(fun basics:mul/2, 0, Ns).
+product(Ns) -> foldl(fun basics.mul/2, 0, Ns).
 
 %% COMBINE
 

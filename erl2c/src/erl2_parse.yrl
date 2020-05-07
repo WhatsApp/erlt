@@ -520,8 +520,13 @@ receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1'),'$2','$4','$5'}.
 
 
-fun_expr -> 'fun' atom '/' integer :
-	{'fun',?anno('$1'),{function,element(3, '$2'),element(3, '$4')}}.
+fun_expr -> 'fun' dot_atom '/' integer :
+        case '$2'of
+            {atom,_,_} ->
+                {'fun',?anno('$1'),{function,element(3, '$2'),element(3, '$4')}};
+            {op,_,'.',M,F} ->
+                {'fun',?anno('$1'),{function,M,F,'$4'}}
+        end.
 fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var :
 	{'fun',?anno('$1'),{function,'$2','$4','$6'}}.
 fun_expr -> 'fun' fun_clauses 'end' :
