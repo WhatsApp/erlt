@@ -57,8 +57,7 @@ val access_map'1 :
   (< get_id : 'tId
    ; set_id : 'tId -> 'rec_tv__14
    ; get_location : 'tLocation
-   ; set_location : 'tLocation -> 'rec_tv__14
-   ; .. >
+   ; set_location : 'tLocation -> 'rec_tv__14 >
    as
    'rec_tv__14) ->
   'tId * 'tLocation
@@ -182,8 +181,6 @@ val identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0
 val iodata_id'1 : Ffi.iodata'0 -> Ffi.iodata'0
 
 val iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0
-
-val map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2
 
 val none_id'1 : Ffi.none'0 -> Ffi.none'0
 

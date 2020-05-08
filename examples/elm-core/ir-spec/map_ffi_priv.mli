@@ -1,4 +1,4 @@
-type ('tK, 'tV) map'2 = ('tK, 'tV) Ffi.map'2
+type ('tK, 'tV) map'2 = 'tK * 'tV
 
 val empty'0 : unit -> ('t_K, 't_V) map'2
 

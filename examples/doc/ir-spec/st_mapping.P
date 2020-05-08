@@ -64,10 +64,6 @@
 
 -type no_return_alias() :: no_return().
 
--type map_alias(A, B) :: #{A => B}.
-
--type map_string_int() :: #{string() => integer()}.
-
 -type rec_with_int_id() :: #{id := integer()}.
 
 -type rec_with_generic_id(A) :: #{id := A}.
@@ -112,7 +108,7 @@ rec5(Rec) ->
 rec6(Rec) ->
     Rec#{year := 2046}.
 
--spec rec7(#{id := A, _ := _}) -> A.
+-spec rec7(#{id := A}) -> A.
 
 rec7(Rec) ->
     map_get(id, Rec).

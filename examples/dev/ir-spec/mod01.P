@@ -76,7 +76,6 @@
          identifier_id/1,
          iodata_id/1,
          iolist_id/1,
-         map_id/1,
          none_id/1,
          noreturn_id/1,
          number_id/1,
@@ -169,8 +168,7 @@ update_map3(M) ->
     B0 = map_get(a, M),
     M#{a := B0, b := A0}.
 
--spec access_map(#{id := Id, location := Location, _ := _}) ->
-                    {Id, Location}.
+-spec access_map(#{id := Id, location := Location}) -> {Id, Location}.
 
 access_map(M) ->
     {map_get(id, M), map_get(location, M)}.
@@ -508,11 +506,6 @@ iodata_id(A) ->
 
 iolist_id(A) ->
     A.
-
--spec map_id(#{A => B}) -> #{A => B}.
-
-map_id(M) ->
-    M.
 
 -spec none_id(none()) -> none().
 

@@ -86,8 +86,7 @@ let rec access_map'1 :
     (< get_id : 'tId
      ; set_id : 'tId -> 'rec_tv__6
      ; get_location : 'tLocation
-     ; set_location : 'tLocation -> 'rec_tv__6
-     ; .. >
+     ; set_location : 'tLocation -> 'rec_tv__6 >
      as
      'rec_tv__6) ->
     'tId * 'tLocation = function
@@ -259,9 +258,6 @@ let rec identifier_id'1 : Ffi.identifier'0 -> Ffi.identifier'0 = function
 let rec iodata_id'1 : Ffi.iodata'0 -> Ffi.iodata'0 = function v_A -> v_A
 
 let rec iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0 = function v_A -> v_A
-
-let rec map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2 = function
-  | v_M -> v_M
 
 let rec none_id'1 : Ffi.none'0 -> Ffi.none'0 = function v_A -> v_A
 

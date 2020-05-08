@@ -61,10 +61,6 @@ module St_mapping_priv : sig
 
   and no_return_alias'0 = Ffi.no_return'0
 
-  and ('tA, 'tB) map_alias'2 = ('tA, 'tB) Ffi.map'2
-
-  and map_string_int'0 = (string, int) Ffi.map'2
-
   and rec_with_int_id'0 =
     < get_id : int ; set_id : int -> 'rec_tv__5 > as 'rec_tv__5
 
@@ -99,7 +95,7 @@ module St_mapping_priv : sig
     (< get_year : int ; set_year : int -> 'rec_tv__3 > as 'rec_tv__3)
 
   val rec7'1 :
-    (< get_id : 'tA ; set_id : 'tA -> 'rec_tv__4 ; .. > as 'rec_tv__4) -> 'tA
+    (< get_id : 'tA ; set_id : 'tA -> 'rec_tv__4 > as 'rec_tv__4) -> 'tA
 end = struct
   type float_alias'0 = int
 
@@ -162,10 +158,6 @@ end = struct
   and timeout_alias'0 = Ffi.timeout'0
 
   and no_return_alias'0 = Ffi.no_return'0
-
-  and ('tA, 'tB) map_alias'2 = ('tA, 'tB) Ffi.map'2
-
-  and map_string_int'0 = (string, int) Ffi.map'2
 
   and rec_with_int_id'0 =
     < get_id : int ; set_id : int -> 'rec_tv__5 > as 'rec_tv__5
@@ -242,8 +234,8 @@ end = struct
         v_Rec#set_year 2046
 
   let rec rec7'1 :
-      (< get_id : 'tA ; set_id : 'tA -> 'rec_tv__4 ; .. > as 'rec_tv__4) -> 'tA
-      = function
+      (< get_id : 'tA ; set_id : 'tA -> 'rec_tv__4 > as 'rec_tv__4) -> 'tA =
+    function
     | v_Rec -> v_Rec#get_id
 
   let rec update_x'2 = function

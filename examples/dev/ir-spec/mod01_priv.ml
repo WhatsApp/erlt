@@ -58,8 +58,7 @@ module Mod01_priv : sig
     (< get_id : 'tId
      ; set_id : 'tId -> 'rec_tv__6
      ; get_location : 'tLocation
-     ; set_location : 'tLocation -> 'rec_tv__6
-     ; .. >
+     ; set_location : 'tLocation -> 'rec_tv__6 >
      as
      'rec_tv__6) ->
     'tId * 'tLocation
@@ -184,8 +183,6 @@ module Mod01_priv : sig
 
   val iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0
 
-  val map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2
-
   val none_id'1 : Ffi.none'0 -> Ffi.none'0
 
   val noreturn_id'1 : Ffi.no_return'0 -> Ffi.no_return'0
@@ -296,8 +293,7 @@ end = struct
       (< get_id : 'tId
        ; set_id : 'tId -> 'rec_tv__6
        ; get_location : 'tLocation
-       ; set_location : 'tLocation -> 'rec_tv__6
-       ; .. >
+       ; set_location : 'tLocation -> 'rec_tv__6 >
        as
        'rec_tv__6) ->
       'tId * 'tLocation = function
@@ -469,9 +465,6 @@ end = struct
   let rec iodata_id'1 : Ffi.iodata'0 -> Ffi.iodata'0 = function v_A -> v_A
 
   let rec iolist_id'1 : Ffi.iolist'0 -> Ffi.iolist'0 = function v_A -> v_A
-
-  let rec map_id'1 : ('tA, 'tB) Ffi.map'2 -> ('tA, 'tB) Ffi.map'2 = function
-    | v_M -> v_M
 
   let rec none_id'1 : Ffi.none'0 -> Ffi.none'0 = function v_A -> v_A
 

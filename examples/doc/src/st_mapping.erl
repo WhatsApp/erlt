@@ -56,8 +56,8 @@
 -type no_return_alias() :: no_return().
 
 %% opaque mapping of homogeneous maps
--type map_alias(A, B) :: #{A => B}.
--type map_string_int() :: #{string() => integer()}.
+%-type map_alias(A, B) :: #{A => B}.
+%-type map_string_int() :: #{string() => integer()}.
 
 %% mapping of polymorphic records
 -type rec_with_int_id() :: #{id := integer()}.
@@ -94,7 +94,7 @@ rec5(Rec) ->
 rec6(Rec) ->
     Rec#{year := 2046}.
 
--spec rec7(#{id := A, _ := _}) -> A.
+-spec rec7(#{id := A}) -> A.
 rec7(Rec) ->
     Rec.id.
 
