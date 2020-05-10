@@ -17,6 +17,7 @@
 package com.whatsapp
 
 package object sterlang {
+  type Env = Map[String, STypes.TypeSchema]
   @inline
   val S = Ast
 
