@@ -21,6 +21,25 @@ package object sterlang {
   @inline
   val S = Ast
 
+  case class Context(enumDefs: List[S.EnumDef],
+                     specs: List[S.Spec],
+                     aliases: List[S.TypeAlias],
+                     opaques: Set[S.TypeId],
+                     env: Env) {
+    def extend(program: S.Program): Context = {
+      val opaqueAliases = program.opaques.map { opaque =>
+        S.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.p)
+      }
+      Context(
+        enumDefs ++ program.enumDefs,
+        specs ++ program.specs,
+        aliases ++ program.typeAliases ++ opaqueAliases,
+        opaques,
+        env,
+      )
+    }
+  }
+
   case class ModuleApi(enumDefs: List[S.EnumDef],
                        aliases: List[S.TypeAlias],
                        specs: List[S.Spec],
