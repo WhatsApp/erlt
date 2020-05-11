@@ -1,0 +1,32 @@
+val mk_rgb/0: fun(() -> rgb())
+val mk_triple/1: fun((A) -> triple(A, A, A))
+val A: A
+val mk_none/0: fun(() -> option(B))
+val mk_unit/0: fun(() -> unit0())
+val mk_box/1: fun((C) -> boxed(C))
+val A: C
+val mk_left/1: fun((D) -> either(D, E))
+val A: D
+val mk_right/1: fun((F) -> either(G, F))
+val B: F
+val zero/2: fun((unit0(), H) -> H)
+val Val: H
+val unbox/1: fun((boxed(I)) -> I)
+val Boxed: boxed(I)
+val Elem: I
+val un_either/1: fun((either(J, J)) -> J)
+val Either: either(J, J)
+val Elem: J
+val Elem: J
+val un_pair/1: fun((pair(K, L)) -> {K, L})
+val Pair: pair(K, L)
+val A: K
+val B: L
+val first/1: fun((pair(M, N)) -> M)
+val F: M
+val second/1: fun((pair(O, P)) -> P)
+val S: P
+val call_this_mod/1: fun((pair(Q, R)) -> pair(Q, R))
+val P: pair(Q, R)
+val A: Q
+val B: R

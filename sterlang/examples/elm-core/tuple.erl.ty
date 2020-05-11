@@ -1,0 +1,10 @@
+-spec pair(A, B) -> {A, B}.
+-spec pair(A) -> fun((B) -> {A, B}).
+-spec first({A, B}) -> A.
+-spec second({A, B}) -> B.
+-spec map_first(fun((A) -> B), {A, C}) -> {B, C}.
+-spec map_first(fun((A) -> B)) -> fun(({A, C}) -> {B, C}).
+-spec map_second(fun((A) -> B), {C, A}) -> {C, B}.
+-spec map_second(fun((A) -> B)) -> fun(({C, A}) -> {C, B}).
+-spec map_both(fun((A) -> B), fun((C) -> D), {A, C}) -> {B, D}.
+-spec map_both(fun((A) -> B), fun((C) -> D)) -> fun(({A, C}) -> {B, D}).

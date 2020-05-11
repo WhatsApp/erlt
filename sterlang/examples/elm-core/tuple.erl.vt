@@ -1,0 +1,33 @@
+val pair/2: fun((A, B) -> {A, B})
+val A: A
+val B: B
+val pair/1: fun((C) -> fun((D) -> {C, D}))
+val A: C
+val B: D
+val first/1: fun(({E, F}) -> E)
+val A: E
+val second/1: fun(({G, H}) -> H)
+val B: H
+val map_first/2: fun((fun((I) -> J), {I, K}) -> {J, K})
+val F: fun((I) -> J)
+val A: I
+val B: K
+val map_first/1: fun((fun((L) -> M)) -> fun(({L, N}) -> {M, N}))
+val F: fun((L) -> M)
+val P: {L, N}
+val map_second/2: fun((fun((P) -> Q), {O, P}) -> {O, Q})
+val F: fun((P) -> Q)
+val A: O
+val B: P
+val map_second/1: fun((fun((R) -> S)) -> fun(({T, R}) -> {T, S}))
+val F: fun((R) -> S)
+val P: {T, R}
+val map_both/3: fun((fun((U) -> V), fun((W) -> X), {U, W}) -> {V, X})
+val Fa: fun((U) -> V)
+val Fb: fun((W) -> X)
+val A: U
+val B: W
+val map_both/2: fun((fun((Y) -> Z), fun((T_26) -> T_27)) -> fun(({Y, T_26}) -> {Z, T_27}))
+val Fa: fun((Y) -> Z)
+val Fb: fun((T_26) -> T_27)
+val P: {Y, T_26}

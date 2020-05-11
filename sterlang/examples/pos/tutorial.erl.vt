@@ -1,0 +1,150 @@
+val minimal/0: fun(() -> {})
+val X: integer()
+val Y: integer()
+val basic_values/0: fun(() -> {})
+val My_int: integer()
+val My_str: string()
+val Empty_record: ()
+val Unit: {}
+val Tuple1: {integer(), integer()}
+val Tuple2: {integer(), string()}
+val Int_list: list(integer())
+val My_profile_rec: #{ languages: list(string()), name: string() }
+val Location_rec: #{ city: string(), country: string() }
+val Bool1: boolean()
+val Bool2: boolean()
+val F_id: fun((A) -> A)
+val X: A
+val F_first: fun((C, B) -> C)
+val X1: C
+val Y1: B
+val F_second: fun((D, E) -> E)
+val X2: D
+val Y2: E
+val F_const: fun(() -> integer())
+val enums/0: fun(() -> {})
+val None: core:option(F)
+val SomeInt: core:option(integer())
+val SomeStr: core:option(string())
+val L1: list(core:option(integer()))
+val L2: list(core:option(string()))
+val id/1: fun((G) -> G)
+val X: G
+val mkSome/1: fun((H) -> core:option(H))
+val X: H
+val mkList/2: fun((I, I) -> list(I))
+val E1: I
+val E2: I
+val funs/0: fun(() -> {})
+val V1: core:option(integer())
+val V2: core:option(string())
+val pieces/0: fun(() -> {})
+val My_rec: #{ n: integer(), st: string(), z: list(J) }
+val NVal: integer()
+val N1: integer()
+val S1: string()
+val Z1: list(K)
+val N: integer()
+val St: string()
+val Z: list(L)
+val Rec1: #{ n: integer(), z: list(M) }
+val NVal: integer()
+val My_rec1: #{ n: integer(), st: string(), z: list(N) }
+val My_pair: {integer(), list(O)}
+val Elem1: integer()
+val Elem2: list(P)
+val list1/1: fun((list(Q)) -> list(Q))
+val L: list(Q)
+val list2/1: fun((list(R)) -> list(S))
+val L: list(R)
+val list3/1: fun((list(T)) -> {T, list(T)})
+val L: list(T)
+val H: T
+val T: list(T)
+val list4/1: fun((list(U)) -> {U, U, U})
+val L: list(U)
+val E1: U
+val E2: U
+val E3: U
+val map/2: fun((fun((V) -> W), list(V)) -> list(W))
+val F: fun((V) -> W)
+val Xs: list(V)
+val X1: V
+val Xs1: list(V)
+val getIds/1: fun((list(#{ id: X, A })) -> list(X))
+val Recs: list(#{ id: X, A })
+val X: #{ id: X, A }
+val global/2: fun((boolean(), Y) -> Y)
+val X: boolean()
+val V: Y
+val inside/1: fun((Z) -> Z)
+val Y: Z
+val T: fun((boolean(), T_26) -> T_26)
+val Local: fun((boolean(), T_27) -> T_27)
+val X: boolean()
+val V: T_27
+val inside1/0: fun(() -> fun((T_28) -> T_28))
+val T: fun((T_29) -> T_29)
+val X: T_29
+val inside2/0: fun(() -> fun((T_30) -> T_30))
+val T: fun((T_31) -> T_31)
+val Local: fun((T_32) -> T_32)
+val X: T_32
+val get_id/1: fun((#{ id: T_33, B }) -> T_33)
+val R: #{ id: T_33, B }
+val extract/1: fun((#{ id: T_34, C }) -> #{ id: T_34 })
+val Id: T_34
+val records_example/0: fun(() -> {})
+val Id1: integer()
+val Id2: string()
+val Rec1: #{ id: integer() }
+val Rec2: #{ id: integer(), key: integer() }
+val Rec_list: list(#{ id: integer() })
+val id_rec/1: fun((#{ D }) -> #{ D })
+val R: #{ D }
+val get_id1/1: fun((#{ id: T_35, E }) -> T_35)
+val Rec: #{ id: T_35, E }
+val IdVal: T_35
+val update_a_b/1: fun((#{ a: integer(), b: integer(), F }) -> #{ a: integer(), b: integer(), F })
+val R: #{ a: integer(), b: integer(), F }
+val swap_a_b/1: fun((#{ a: T_36, b: T_36, G }) -> #{ a: T_36, b: T_36, G })
+val R: #{ a: T_36, b: T_36, G }
+val id01/1: fun((T_37) -> T_37)
+val A: T_37
+val id02/1: fun((T_38) -> T_38)
+val A: T_38
+val id03/1: fun((T_39) -> T_39)
+val A: T_39
+val isDefined1/1: fun((my_option(T_40)) -> boolean())
+val Opt: my_option(T_40)
+val map1/2: fun((fun((T_41) -> T_42), my_list(T_41)) -> my_list(T_42))
+val F: fun((T_41) -> T_42)
+val Xs: my_list(T_41)
+val X1: T_41
+val Xs1: my_list(T_41)
+val to_bools/1: fun((my_list(my_option(T_43))) -> my_list(boolean()))
+val Xs: my_list(my_option(T_43))
+val onlySome/1: fun((my_list(my_option(T_44))) -> my_list(my_option(T_44)))
+val Xs: my_list(my_option(T_44))
+val X1: my_option(T_44)
+val Xs1: my_list(my_option(T_44))
+val A: T_44
+val dec_opt/1: fun((my_option(T_45)) -> integer())
+val Opt: my_option(T_45)
+val dec_opt2/1: fun((my_option(T_46)) -> list(T_46))
+val Opt: my_option(T_46)
+val V: T_46
+val dec_opt3/3: fun((my_option(fun((T_48) -> T_47)), T_48, T_48) -> list(T_47))
+val Opt: my_option(fun((T_48) -> T_47))
+val V1: T_48
+val V2: T_48
+val F: fun((T_48) -> T_47)
+val dec_opt4/3: fun((T_49, T_50, T_51) -> {T_49, T_50, T_51})
+val X: T_49
+val Y: T_50
+val Z: T_51
+val Id: fun((T_52) -> T_52)
+val X: T_52
+val OptId: my_option(fun((T_53) -> T_53))
+val Id1: fun((T_54) -> T_54)
+val Id2: fun((T_55) -> T_55)

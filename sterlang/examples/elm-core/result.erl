@@ -1,0 +1,86 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-lang([erl2, st]).
+-module(result).
+
+-export_type([result/2]).
+-export([with_default/2, with_default/1]).
+-export([map/2, map/1, map2/3, map2/1]).
+-export([and_then/2, and_then/1, map_error/2, map_error/1]).
+-export([to_maybe/1, from_maybe/2, from_maybe/1]).
+-export([is_ok/1]).
+
+-import_type(maybe, [maybe/1]).
+
+-enum result(Error, Value) :: ok{Value} | err{Error}.
+
+-spec with_default(A, result(_, A)) -> A.
+with_default(_Def, result.ok{A}) -> A;
+with_default(Def, result.err{_E}) -> Def.
+
+-spec with_default(A) -> fun((result(_, A)) -> A).
+with_default(Def) ->
+    fun(Res) -> with_default(Def, Res) end.
+
+-spec map(fun((A) -> B), result(X, A)) -> result(X, B).
+map(Func, result.ok{A}) -> result.ok{Func(A)};
+map(_Func, result.err{E}) -> result.err{E}.
+
+-spec map(fun((A) -> B)) -> fun((result(X, A)) -> result(X, B)).
+map(Func) ->
+    fun(Res) -> map(Func, Res) end.
+
+-spec map2(fun((A, B) -> C), result(X, A), result(X, B)) -> result(X, C).
+map2(_Func, result.err{X}, _) -> result.err{X};
+map2(_Func, result.ok{_}, result.err{X}) -> result.err{X};
+map2(Func, result.ok{A}, result.ok{B}) -> result.ok{Func(A, B)}.
+
+-spec map2(fun((A, B) -> C)) -> fun((result(X, A), result(X, B)) -> result(X, C)).
+map2(Func) ->
+    fun(ResA, ResB) -> map2(Func, ResA, ResB) end.
+
+-spec and_then(fun((A) -> result(X,B)), result(X,A)) -> result(X,B).
+and_then(Callback, result.ok{Value}) -> Callback(Value);
+and_then(_Callback, result.err{Msg}) -> result.err{Msg}.
+
+-spec and_then(fun((A) -> result(X,B))) -> fun((result(X,A)) -> result(X,B)).
+and_then(Callback) ->
+    fun(Res) -> and_then(Callback, Res) end.
+
+-spec map_error(fun((X) -> Y), result(X, A)) -> result(Y, A).
+map_error(_F, result.ok{V}) -> result.ok{V};
+map_error(F, result.err{E}) -> result.err{F(E)}.
+
+-spec map_error(fun((X) -> Y)) -> fun((result(X, A)) -> result(Y, A)).
+map_error(F) ->
+    fun(Res) -> map_error(F, Res) end.
+
+-spec to_maybe(result(_, A)) -> maybe(A).
+to_maybe(result.ok{V}) -> maybe.just{V};
+to_maybe(result.err{_}) -> maybe.nothing{}.
+
+-spec from_maybe(X, maybe(A)) -> result(X, A).
+from_maybe(_Err, maybe.just{V}) -> result.ok{V};
+from_maybe(Err, maybe.nothing{}) -> result.err{Err}.
+
+-spec from_maybe(X) -> fun((maybe(A)) -> result(X, A)).
+from_maybe(Err) ->
+    fun(Maybe) -> from_maybe(Err, Maybe) end.
+
+%% FOR INTERNAL USE ONLY (Original Elm comment)
+
+-spec is_ok(result(_, _)) -> boolean().
+is_ok(result.ok{_}) -> true;
+is_ok(result.err{_}) -> false.

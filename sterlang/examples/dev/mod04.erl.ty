@@ -1,0 +1,8 @@
+-spec mk_unit_remote_dot() -> mod03:unit0().
+-spec mk_left_remote_dot(A) -> mod03:either(A, B).
+-spec mk_right_remote_dot(A) -> mod03:either(B, A).
+-spec zero_remote_dot(mod03:unit0(), A) -> A.
+-spec zero_remote1_dot(mod03:unit0(), A) -> A.
+-spec un_pair_remote_dot(mod03:pair(A, B)) -> {A, B}.
+-spec funs() -> list(fun(() -> mod03:unit0())).
+-spec import1() -> mod03:unit0().

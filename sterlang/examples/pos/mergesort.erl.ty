@@ -1,0 +1,8 @@
+-spec split(list(A), list(A), list(A)) -> {list(A), list(A)}.
+-spec merge(fun((A, A) -> boolean()), list(A), list(A)) -> list(A).
+-spec sort(fun((A, A) -> boolean()), list(A)) -> list(A).
+-spec mergesort(fun((A, A) -> boolean()), list(A)) -> list(A).
+-spec loop(list(A), integer()) -> integer().
+-spec length(list(A)) -> integer().
+-spec lt(A, A) -> boolean().
+-spec main() -> list(A).

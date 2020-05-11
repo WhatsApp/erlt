@@ -1,0 +1,153 @@
+val add/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val add/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val sub/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val sub/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val mul/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val mul/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val idiv/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val idiv/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val eq/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val eq/1: fun((B) -> fun((B) -> boolean()))
+val X1: B
+val X2: B
+val neq/2: fun((C, C) -> boolean())
+val X1: C
+val X2: C
+val neq/1: fun((D) -> fun((D) -> boolean()))
+val X1: D
+val X2: D
+val lt/2: fun((E, E) -> boolean())
+val X1: E
+val X2: E
+val lt/1: fun((F) -> fun((F) -> boolean()))
+val X1: F
+val X2: F
+val gt/2: fun((G, G) -> boolean())
+val X1: G
+val X2: G
+val gt/1: fun((H) -> fun((H) -> boolean()))
+val X1: H
+val X2: H
+val le/2: fun((I, I) -> boolean())
+val X1: I
+val X2: I
+val le/1: fun((J) -> fun((J) -> boolean()))
+val X1: J
+val X2: J
+val ge/2: fun((K, K) -> boolean())
+val X1: K
+val X2: K
+val ge/1: fun((L) -> fun((L) -> boolean()))
+val X1: L
+val X2: L
+val min/2: fun((M, M) -> M)
+val X1: M
+val X2: M
+val min/1: fun((N) -> fun((N) -> N))
+val X1: N
+val X2: N
+val max/2: fun((O, O) -> O)
+val X1: O
+val X2: O
+val max/1: fun((P) -> fun((P) -> P))
+val X1: P
+val X2: P
+val compare/2: fun((Q, Q) -> order())
+val X1: Q
+val X2: Q
+val compare/1: fun((R) -> fun((R) -> order()))
+val X1: R
+val X2: R
+val not/1: fun((boolean()) -> boolean())
+val B: boolean()
+val and/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val and/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val or/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val or/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val xor/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val xor/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val mod_by/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val mod_by/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val remainder_by/2: fun((integer(), integer()) -> integer())
+val X1: integer()
+val X2: integer()
+val remainder_by/1: fun((integer()) -> fun((integer()) -> integer()))
+val X1: integer()
+val X2: integer()
+val negate/1: fun((integer()) -> integer())
+val X: integer()
+val abs/1: fun((integer()) -> integer())
+val X: integer()
+val clamp/3: fun((integer(), integer(), integer()) -> integer())
+val Low: integer()
+val High: integer()
+val Num: integer()
+val composeL/2: fun((fun((S) -> U), fun((T) -> S)) -> fun((T) -> U))
+val G: fun((S) -> U)
+val F: fun((T) -> S)
+val X: T
+val composeL/1: fun((fun((V) -> W)) -> fun((fun((X) -> V)) -> fun((X) -> W)))
+val G: fun((V) -> W)
+val F: fun((X) -> V)
+val composeR/2: fun((fun((Z) -> Y), fun((Y) -> T_26)) -> fun((Z) -> T_26))
+val F: fun((Z) -> Y)
+val G: fun((Y) -> T_26)
+val X: Z
+val composeR/1: fun((fun((T_27) -> T_28)) -> fun((fun((T_28) -> T_29)) -> fun((T_27) -> T_29)))
+val F: fun((T_27) -> T_28)
+val G: fun((T_28) -> T_29)
+val apR/2: fun((T_30, fun((T_30) -> T_31)) -> T_31)
+val X: T_30
+val F: fun((T_30) -> T_31)
+val apR/1: fun((T_32) -> fun((fun((T_32) -> T_33)) -> T_33))
+val X: T_32
+val F: fun((T_32) -> T_33)
+val apL/2: fun((fun((T_34) -> T_35), T_34) -> T_35)
+val F: fun((T_34) -> T_35)
+val X: T_34
+val apL/1: fun((fun((T_36) -> T_37)) -> fun((T_36) -> T_37))
+val F: fun((T_36) -> T_37)
+val X: T_36
+val identity/1: fun((T_38) -> T_38)
+val X: T_38
+val always/2: fun((T_40, T_39) -> T_40)
+val A: T_40
+val always/1: fun((T_41) -> fun((T_42) -> T_41))
+val A: T_41
+val X: T_42
+val never/1: fun((never()) -> T_43)
+val Nvr: never()

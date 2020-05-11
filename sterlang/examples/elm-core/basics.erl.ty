@@ -1,0 +1,52 @@
+-spec add(integer(), integer()) -> integer().
+-spec add(integer()) -> fun((integer()) -> integer()).
+-spec sub(integer(), integer()) -> integer().
+-spec sub(integer()) -> fun((integer()) -> integer()).
+-spec mul(integer(), integer()) -> integer().
+-spec mul(integer()) -> fun((integer()) -> integer()).
+-spec idiv(integer(), integer()) -> integer().
+-spec idiv(integer()) -> fun((integer()) -> integer()).
+-spec eq(A, A) -> boolean().
+-spec eq(A) -> fun((A) -> boolean()).
+-spec neq(A, A) -> boolean().
+-spec neq(A) -> fun((A) -> boolean()).
+-spec lt(A, A) -> boolean().
+-spec lt(A) -> fun((A) -> boolean()).
+-spec gt(A, A) -> boolean().
+-spec gt(A) -> fun((A) -> boolean()).
+-spec le(A, A) -> boolean().
+-spec le(A) -> fun((A) -> boolean()).
+-spec ge(A, A) -> boolean().
+-spec ge(A) -> fun((A) -> boolean()).
+-spec min(A, A) -> A.
+-spec min(A) -> fun((A) -> A).
+-spec max(A, A) -> A.
+-spec max(A) -> fun((A) -> A).
+-spec compare(A, A) -> order().
+-spec compare(A) -> fun((A) -> order()).
+-spec not(boolean()) -> boolean().
+-spec and(boolean(), boolean()) -> boolean().
+-spec and(boolean()) -> fun((boolean()) -> boolean()).
+-spec or(boolean(), boolean()) -> boolean().
+-spec or(boolean()) -> fun((boolean()) -> boolean()).
+-spec xor(boolean(), boolean()) -> boolean().
+-spec xor(boolean()) -> fun((boolean()) -> boolean()).
+-spec mod_by(integer(), integer()) -> integer().
+-spec mod_by(integer()) -> fun((integer()) -> integer()).
+-spec remainder_by(integer(), integer()) -> integer().
+-spec remainder_by(integer()) -> fun((integer()) -> integer()).
+-spec negate(integer()) -> integer().
+-spec abs(integer()) -> integer().
+-spec clamp(integer(), integer(), integer()) -> integer().
+-spec composeL(fun((A) -> B), fun((C) -> A)) -> fun((C) -> B).
+-spec composeL(fun((A) -> B)) -> fun((fun((C) -> A)) -> fun((C) -> B)).
+-spec composeR(fun((A) -> B), fun((B) -> C)) -> fun((A) -> C).
+-spec composeR(fun((A) -> B)) -> fun((fun((B) -> C)) -> fun((A) -> C)).
+-spec apR(A, fun((A) -> B)) -> B.
+-spec apR(A) -> fun((fun((A) -> B)) -> B).
+-spec apL(fun((A) -> B), A) -> B.
+-spec apL(fun((A) -> B)) -> fun((A) -> B).
+-spec identity(A) -> A.
+-spec always(A, B) -> A.
+-spec always(A) -> fun((B) -> A).
+-spec never(never()) -> A.

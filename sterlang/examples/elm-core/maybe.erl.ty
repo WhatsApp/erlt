@@ -1,0 +1,10 @@
+-spec with_default(A, maybe(A)) -> A.
+-spec with_default(A) -> fun((maybe(A)) -> A).
+-spec map(fun((A) -> B), maybe(A)) -> maybe(B).
+-spec map(fun((A) -> B)) -> fun((maybe(A)) -> maybe(B)).
+-spec map2(fun((A, B) -> C), maybe(A), maybe(B)) -> maybe(C).
+-spec map2(fun((A, B) -> C)) -> fun((maybe(A), maybe(B)) -> maybe(C)).
+-spec and_then(fun((A) -> maybe(B)), maybe(A)) -> maybe(B).
+-spec and_then(fun((A) -> maybe(B))) -> fun((maybe(A)) -> maybe(B)).
+-spec is_just(maybe(A)) -> boolean().
+-spec destruct(A, fun((B) -> A), maybe(B)) -> A.

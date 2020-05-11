@@ -1,0 +1,14 @@
+val mk_pair1/2: fun((A, A) -> {A, A})
+val X: A
+val Y: A
+val mk_pair2/2: fun((B, C) -> {B, C})
+val X: B
+val Y: C
+val mk_con/2: fun((E, D) -> p_con(E))
+val X: E
+val Y: D
+val de_con/1: fun((p_con(F)) -> {F, F})
+val X: {F, F}
+val loop/0: fun(() -> G)
+val mk_pair_any1/0: fun(() -> {H, I})
+val mk_pair_any2/0: fun(() -> {J, J})

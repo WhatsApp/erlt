@@ -1,0 +1,15 @@
+val f01/2: fun((A, A) -> A)
+val X: A
+val X: A
+val f02/1: fun(({B, B}) -> B)
+val X: B
+val X: B
+val f03/2: fun(({D, C}, {C, D}) -> D)
+val X: D
+val Y: C
+val Y: C
+val X: D
+val f04/1: fun((list(E)) -> list(E))
+val X: list(E)
+val Y: E
+val X: list(E)

@@ -1,0 +1,63 @@
+val empty/0: fun(() -> map_ffi:map(A, B))
+val get/2: fun((C, map_ffi:map(C, D)) -> maybe:maybe(D))
+val Key: C
+val Map: map_ffi:map(C, D)
+val member/2: fun((E, map_ffi:map(E, F)) -> boolean())
+val Key: E
+val Map: map_ffi:map(E, F)
+val size/1: fun((map_ffi:map(G, H)) -> integer())
+val Map: map_ffi:map(G, H)
+val is_empty/1: fun((map_ffi:map(I, J)) -> boolean())
+val Map: map_ffi:map(I, J)
+val insert/3: fun((K, L, map_ffi:map(K, L)) -> map_ffi:map(K, L))
+val Key: K
+val Value: L
+val Map: map_ffi:map(K, L)
+val remove/2: fun((M, map_ffi:map(M, N)) -> map_ffi:map(M, N))
+val Key: M
+val Map: map_ffi:map(M, N)
+val update/3: fun((O, fun((maybe:maybe(P)) -> maybe:maybe(P)), map_ffi:map(O, P)) -> map_ffi:map(O, P))
+val Key: O
+val Alter: fun((maybe:maybe(P)) -> maybe:maybe(P))
+val Map: map_ffi:map(O, P)
+val Value: P
+val singleton/2: fun((Q, R) -> map_ffi:map(Q, R))
+val Key: Q
+val Value: R
+val union/2: fun((map_ffi:map(S, T), map_ffi:map(S, T)) -> map_ffi:map(S, T))
+val Map1: map_ffi:map(S, T)
+val Map2: map_ffi:map(S, T)
+val intersect/2: fun((map_ffi:map(U, V), map_ffi:map(U, V)) -> map_ffi:map(U, V))
+val Map1: map_ffi:map(U, V)
+val Map2: map_ffi:map(U, V)
+val K: U
+val diff/2: fun((map_ffi:map(W, X), map_ffi:map(W, X)) -> map_ffi:map(W, X))
+val Map1: map_ffi:map(W, X)
+val Map2: map_ffi:map(W, X)
+val K: W
+val fold/3: fun((fun((Y, Z, T_26) -> T_26), T_26, map_ffi:map(Y, Z)) -> T_26)
+val F: fun((Y, Z, T_26) -> T_26)
+val Acc: T_26
+val Map: map_ffi:map(Y, Z)
+val map/2: fun((fun((T_27, T_28) -> T_29), map_ffi:map(T_27, T_28)) -> map_ffi:map(T_27, T_29))
+val F: fun((T_27, T_28) -> T_29)
+val Map: map_ffi:map(T_27, T_28)
+val filter/2: fun((fun((T_30, T_31) -> boolean()), map_ffi:map(T_30, T_31)) -> map_ffi:map(T_30, T_31))
+val F: fun((T_30, T_31) -> boolean())
+val Map: map_ffi:map(T_30, T_31)
+val partition/2: fun((fun((T_32, T_33) -> boolean()), map_ffi:map(T_32, T_33)) -> {map_ffi:map(T_32, T_33), map_ffi:map(T_32, T_33)})
+val F: fun((T_32, T_33) -> boolean())
+val Map: map_ffi:map(T_32, T_33)
+val Add: fun((T_32, T_33, {map_ffi:map(T_32, T_33), map_ffi:map(T_32, T_33)}) -> {map_ffi:map(T_32, T_33), map_ffi:map(T_32, T_33)})
+val K: T_32
+val V: T_33
+val D1: map_ffi:map(T_32, T_33)
+val D2: map_ffi:map(T_32, T_33)
+val keys/1: fun((map_ffi:map(T_34, T_35)) -> list(T_34))
+val Map: map_ffi:map(T_34, T_35)
+val values/1: fun((map_ffi:map(T_36, T_37)) -> list(T_37))
+val Map: map_ffi:map(T_36, T_37)
+val to_list/1: fun((map_ffi:map(T_38, T_39)) -> list({T_38, T_39}))
+val Map: map_ffi:map(T_38, T_39)
+val from_list/1: fun((list({T_40, T_41})) -> map_ffi:map(T_40, T_41))
+val List: list({T_40, T_41})

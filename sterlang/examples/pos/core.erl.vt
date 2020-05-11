@@ -1,0 +1,7 @@
+val getOrElse/2: fun((option(A), A) -> A)
+val Opt: option(A)
+val Alt: A
+val X: A
+val any/0: fun(() -> B)
+val test_any/0: fun(() -> {boolean(), C})
+val F: D
