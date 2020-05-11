@@ -1,0 +1,50 @@
+-file("plusplus_patterns.erl", 1).
+
+-module(plusplus_patterns).
+
+-export([standard/1,extended/1]).
+
+standard(X) ->
+    case X of
+        "FORM" ++ Rest ->
+            {form, Rest};
+        [$X, $Y, $Z | Rest] ->
+            {xyz, Rest};
+        [$A, $B | "C" ++ Rest] ->
+            {abc, Rest};
+        [$H, $E, $L, $O | "" ++ Rest] ->
+            {helo, Rest};
+        [65, 67, 75 | Rest] ->
+            {ack, Rest};
+        [78, 65, 75 | Rest] ->
+            {nak, Rest};
+        Rest ->
+            {nil, Rest};
+        _ ->
+            not_a_list
+    end.
+
+extended(X) ->
+    case X of
+        [A, 67, 75 | Rest] ->
+            {1, A, Rest};
+        [65, B, 75 | Rest] ->
+            {2, B, Rest};
+        [A, B, 75 | Rest] ->
+            {3, [A, B], Rest};
+        [_, A, 88, B | Rest] ->
+            {x3, [A, B], Rest};
+        [3.14, <<"HELO">>, fubar, 1, 2, 3 | Rest] ->
+            {const, Rest};
+        [{foo, A}, [{bar, B}, {baz, C}] | Rest] ->
+            {any, {A, B, C}, Rest};
+        [{a, A} = A0, {b, B} = B0 | Rest] ->
+            {alias, {A, A0}, {B, B0}, Rest};
+        [[{q, Q} = Tuple] = List | Rest] ->
+            {alias2, Q, Tuple, List, Rest};
+        _ ->
+            other
+    end.
+
+
+

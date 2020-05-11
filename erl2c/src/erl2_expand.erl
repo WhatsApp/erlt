@@ -241,6 +241,11 @@ pattern({match,Line,Pat1, Pat2}, St0) ->
     {TH,St1} = pattern(Pat2, St0),
     {TT,St2} = pattern(Pat1, St1),
     {{match,Line,TT,TH},St2};
+%% expand ++-patterns on lists before standard lint pass, to allow general LHS
+pattern({op,_,'++',{nil,_},R}, St) ->
+    pattern(R, St);
+pattern({op,_,'++',{cons,Li,H,T},R}, St) ->
+    pattern({cons,Li,H,{op,Li,'++',T,R}}, St);
 pattern({op,Line,Op,A0}, St0) ->
     {A,St1} = pattern(A0, St0),
     {{op,Line,Op,A},St1};

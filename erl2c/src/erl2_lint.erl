@@ -1699,10 +1699,13 @@ pattern({bin,_,Fs}, Vt, Old, Bvt, St) ->
     pattern_bin(Fs, Vt, Old, Bvt, St);
 pattern({op,_Line,'++',{nil,_},R}, Vt, Old, Bvt, St) ->
     pattern(R, Vt, Old, Bvt, St);
-pattern({op,_Line,'++',{cons,Li,{char,_L2,_C},T},R}, Vt, Old, Bvt, St) ->
-    pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Char unimportant here
-pattern({op,_Line,'++',{cons,Li,{integer,_L2,_I},T},R}, Vt, Old, Bvt, St) ->
-    pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Weird, but compatible!
+%% pattern({op,_Line,'++',{cons,Li,{char,_L2,_C},T},R}, Vt, Old, Bvt, St) ->
+%%     pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Char unimportant here
+%% pattern({op,_Line,'++',{cons,Li,{integer,_L2,_I},T},R}, Vt, Old, Bvt, St) ->
+%%     pattern({op,Li,'++',T,R}, Vt, Old, Bvt, St);    %Weird, but compatible!
+pattern({op,_Line,'++',{cons,Li,H,T},R}, Vt, Old, Bvt, St) ->
+    %% allow any elements in ++-patterns, not just characters
+    pattern_list([H,{op,Li,'++',T,R}], Vt, Old, Bvt, St);
 pattern({op,_Line,'++',{string,_Li,_S},R}, Vt, Old, Bvt, St) ->
     pattern(R, Vt, Old, Bvt, St);                   %String unimportant here
 pattern({op,_Line,'.',E,{atom,_,_}}, Vt, _Old, _Bvt, St) ->
