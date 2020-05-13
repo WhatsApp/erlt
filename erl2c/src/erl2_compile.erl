@@ -74,7 +74,8 @@
                   %    [erl2, dt], [erl2]  -- dynamically typed erl2
                   %    [erl2, st]          -- statically typed erl2
                   %    [erl2, ffi]         -- ffi erl2
-                  lang=[] :: [erl2 | st | dt | ffi]
+                  %    [erl2, specs]       -- specs for a module which is somewhere else
+                  lang=[] :: [erl2 | st | dt | ffi | specs]
 
 }).
 
@@ -591,8 +592,9 @@ get_deps_from_compile_item(Loc, Value, St) ->
 % ModuleDepType = behavior | parse_transform | core_transform | depends_on | type_checking
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
-    case filelib:is_regular(Erl) of
-        true ->
+    SpecsErl = filename:join(St#compile.dir, module_to_specs_erl(Mod)),
+    case {filelib:is_regular(Erl), filelib:is_regular(SpecsErl)} of
+        {true, _} ->
             % Mod's .erl is next to the original source .erl file, i.e. they
             % are in the same application. Make it depend on the .beam file
             % next to the original target .beam
@@ -603,7 +605,11 @@ resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
             Beam = shorten_filename(Beam0),
 
             {ModuleDepType, Beam};
-        false ->
+        {_, true} ->
+            Beam0 = filename:join(filename:dirname(St#compile.ofile), module_to_specs_beam(Mod)),
+            Beam = shorten_filename(Beam0),
+            {ModuleDepType, Beam};
+        _ ->
             % it has to be present somewhere for compilation to work
             case code:which(Mod) of
                 Path when is_list(Path) ->
@@ -621,9 +627,19 @@ resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
 module_to_erl(Mod) ->
     atom_to_list(Mod) ++ ".erl".
 
+module_to_specs_erl(Mod) ->
+    atom_to_list(Mod) ++ ".specs.erl".
 
 module_to_beam(Mod) ->
     atom_to_list(Mod) ++ ".beam".
+
+module_to_specs_beam(Mod) ->
+    atom_to_list(Mod) ++ ".specs.beam".
+
+
+%% "mod.specs" -> "mod"
+unspecs(Str) ->
+    string:slice(Str, 0, length(Str) - 6).
 
 
 fix_compile_options(Options) ->
@@ -640,7 +656,8 @@ compile_erl1_forms(Forms, St0) ->
     % appended env_compiler_options() above
     % Make the compiler return errors and warnings instead of printing them
     Opts0 = St0#compile.options -- [report_warnings, report_errors],
-    Ret = compile:noenv_forms(Forms, [return_errors, return_warnings,
+    Forms1 = case get_lang(St0) of specs -> [{attribute,L,module,M}||{attribute,L,module,M} <- Forms]; _ -> Forms end,
+    Ret = compile:noenv_forms(Forms1, [return_errors, return_warnings,
                                       {source, St0#compile.filename}
                                       | Opts0]),
 
@@ -967,7 +984,7 @@ erl2_expand(Code, St) ->
     end.
 
 erl2_lint(Code, St) ->
-    case is_lang_erl2(St) of
+    case lists:member(get_lang(St), [dt,st,ffi]) of
         true ->
             do_erl2_lint(Code, St);
         false ->
@@ -1100,6 +1117,15 @@ is_lang_ffi(St) ->
 is_lang_st(St) ->
     member(st, St#compile.lang).
 
+is_lang_specs(St) ->
+    member(specs, St#compile.lang).
+
+get_lang(St) ->
+    case length(St#compile.lang) of
+        0 -> erl1;
+        1 -> dt;
+        2 -> lists:nth(2, lists:usort(St#compile.lang))
+    end.
 
 collect_erl2_compile_deps(Forms, St0) ->
     case is_lang_erl2(St0) of
@@ -1175,7 +1201,7 @@ get_erl2_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
 
 
 erl2_typecheck(Code, St) ->
-    case {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St)} of
+    case {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)} of
         {true, true} ->
             do_erl2_typecheck(Code, St);
         {_, _} ->
@@ -1200,8 +1226,8 @@ generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
     % TODO: error handling
     ok = filelib:ensure_dir(Rootname),
 
-    case is_lang_ffi(St) of
-        true ->
+    case get_lang(St) of
+        ffi ->
             case erl2ocaml:erl2ocaml_ffi(Forms) of
                 {ok, PubMliCode, PrivMliCode} ->
                     ok = file:write_file(Rootname ++ ".mli", PubMliCode),
@@ -1209,12 +1235,19 @@ generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
                 Error = {error, _} ->
                     Error
             end;
-        false ->
+        st ->
             case erl2ocaml:erl2ocaml_st(Forms) of
                 {ok, MliCode, MlCode, PrivMlCode} ->
                     ok = file:write_file(Rootname ++ ".ml", MlCode),
                     ok = file:write_file(Rootname ++ ".mli", MliCode),
                     ok = file:write_file(Rootname ++ "_priv.ml", PrivMlCode);
+                Error = {error, _} ->
+                    Error
+            end;
+        specs ->
+            case erl2ocaml:erl2ocaml_specs(Forms) of
+                {ok, MliCode} ->
+                    ok = file:write_file(unspecs(Rootname) ++ ".mli", MliCode);
                 Error = {error, _} ->
                     Error
             end
@@ -1234,11 +1267,13 @@ call_ocaml_typechecker(OcamlDir, Basename, St) ->
     ok = ensure_ocaml_ffi(OcamlDir),
 
     FileArgs =
-        case is_lang_ffi(St) of
-            true ->
+        case get_lang(St) of
+            ffi ->
                 [Basename, ".mli", " ", Basename, "_priv.mli"];
-            false ->
-                [Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"]
+            st ->
+                [Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"];
+            specs ->
+                [unspecs(Basename), ".mli"]
         end,
 
     FmtCmd = lists:append(["ocamlformat --enable-outside-detected-project -i " | FileArgs]),
