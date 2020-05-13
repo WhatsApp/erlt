@@ -3339,6 +3339,8 @@ is_fa(_) -> false.
 
 check_module_name(M, Line, St) ->
     case erl2_parse:split_dotted(M) of
+        [_,"specs"|_] ->
+            check_module_name_1(M, Line, St);
         [_,_|_] ->
 
             add_error(Line, dotted_module_name, St);

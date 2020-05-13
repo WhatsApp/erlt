@@ -14,7 +14,7 @@
 
 -module(erl2ocaml).
 
--export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1, format_error/1, compiler_flags/0]).
+-export([erl2ocaml_ffi/1, erl2ocaml_st/1, main/1, ffi/0, st_deps/1, ffi_deps/1, format_error/1, compiler_flags/0, erl2ocaml_specs/1]).
 
 -type id() :: {atom(), arity()}.
 
@@ -118,6 +118,34 @@ do_erl2ocaml_ffi(Forms) ->
     PrivMliCode = iolist_to_binary(PrivInterfaceLines),
 
     {ok, PubMliCode, PrivMliCode}.
+
+erl2ocaml_specs(Forms) ->
+    try
+        do_erl2ocaml_specs(Forms)
+    catch
+        throw:{erl2ocaml_error, {Line, ErrorBody}} ->
+            {error, {Line, ErrorBody}}
+    end.
+
+do_erl2ocaml_specs(Forms) ->
+    erlang:put('rec_tv_gen', 1),
+    erlang:put('d_pat', 1),
+    Ctx = #context{
+        module = get_module(Forms),
+        export_types = get_export_types(Forms)
+    },
+    AllSpecs = get_specs(Forms),
+    PubOTypes =  [erl2ocaml_spec(S, Ctx) || S <- AllSpecs],
+    SpecLines = ["val " ++ N ++ " : " ++ T ++ "\n" || {N, T} <- PubOTypes],
+    TypeDefs = get_type_defs(Forms),
+
+    TypeDefLines = type_def_scc(TypeDefs, Ctx#context{mode = 'priv'}),
+
+    InterfaceLines = TypeDefLines ++ SpecLines,
+
+    MliCode = iolist_to_binary(InterfaceLines),
+    {ok, MliCode}.
+
 
 erl2ocaml_st(Forms) ->
     try

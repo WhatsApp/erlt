@@ -543,8 +543,9 @@ get_deps_from_compile_item(Loc, Value, St) ->
 % attr_type = behavior | parse_transform | core_transform
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
-    case filelib:is_regular(Erl) of
-        true ->
+    SpecsErl = filename:join(St#compile.dir, module_to_specs_erl(Mod)),
+    case {filelib:is_regular(Erl), filelib:is_regular(SpecsErl)} of
+        {true, _} ->
             % Mod's .erl is next to the original source .erl file, i.e. they
             % are in the same application. Make it depend on the .beam file
             % next to the original target .beam
@@ -555,7 +556,11 @@ resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
             Beam = shorten_filename(Beam0),
 
             {ModuleDepType, Beam};
-        false ->
+        {_, true} ->
+            Beam0 = filename:join(filename:dirname(St#compile.ofile), module_to_specs_beam(Mod)),
+            Beam = shorten_filename(Beam0),
+            {ModuleDepType, Beam};
+        _ ->
             % it has to be present somewhere for compilation to work
             case code:which(Mod) of
                 Path when is_list(Path) ->
@@ -573,10 +578,14 @@ resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
 module_to_erl(Mod) ->
     atom_to_list(Mod) ++ ".erl".
 
+module_to_specs_erl(Mod) ->
+    atom_to_list(Mod) ++ ".specs.erl".
 
 module_to_beam(Mod) ->
     atom_to_list(Mod) ++ ".beam".
 
+module_to_specs_beam(Mod) ->
+    atom_to_list(Mod) ++ ".specs.beam".
 
 
 compile_forms(Forms, St0) ->
