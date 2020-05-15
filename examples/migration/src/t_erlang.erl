@@ -36,16 +36,22 @@
 -export_type([port_or_pid/0]).
 -enum port_or_pid() :: port{port()} | pid{pid()}.
 
+-export_type([halt_status/0]).
+-enum halt_status() :: exit_code{integer()} | slogan{string()} | abort{}.
+
 -export([append_element0/2, append_element1/2, append_element2/2, append_element3/2]).
 
 -export([apply0/2, apply1/2, apply2/2, apply3/2]).
--export([binary_to_atom/2, binary_to_existing_atom/2]).
+-export([binary_to_atom/2, binary_to_existing_atom/2, binary_size/1, binary_to_binary/1]).
 
 -export([cancel_timer/1, cancel_timer/2]).
 
 -export([check_process_code/3]).
 -export([convert_time_unit/3]).
--export([demonitor/2, exit/2]).
+-export([demonitor/2, exit/2, get/1, halt/1]).
+
+-export([iolist_size/1, iolist_to_binary/1]).
+-export([link_pid/1, link_port/1]).
 
 -export([start_timer/3, start_timer/4]).
 
@@ -81,6 +87,9 @@ apply2(F, T) ->
 apply3(F, T) ->
     erlang:apply(F, erlang:tuple_to_list(T)).
 
+-spec binary_size(binary()) -> integer().
+binary_size(Binary) -> erlang:iolist_size(Binary).
+
 -spec binary_to_atom(binary(), encoding()) -> atom().
 binary_to_atom(Binary, encoding.latin1{}) ->
     erlang:binary_to_atom(Binary, 'latin1');
@@ -96,6 +105,9 @@ binary_to_existing_atom(Binary, encoding.unicode{}) ->
     erlang:binary_to_existing_atom(Binary, 'unicode');
 binary_to_existing_atom(Binary, encoding.utf8{}) ->
     erlang:binary_to_existing_atom(Binary, 'utf8').
+
+-spec binary_to_binary(iolist()) -> binary().
+binary_to_binary(IoList) -> erlang:iolist_to_binary(IoList).
 
 -spec cancel_timer(reference()) -> maybe(integer()).
 cancel_timer(TimerRef) ->
@@ -152,6 +164,30 @@ demonitor(MonitorRef, Options) ->
 -spec exit(port_or_pid(), term()) -> boolean().
 exit(port_or_pid.port{Port}, Reason) -> erlang:exit(Port, Reason);
 exit(port_or_pid.pid{Pid}, Reason) -> erlang:exit(Pid, Reason).
+
+-spec get(_K) -> maybe(_V).
+get(Key) ->
+    case erlang:get(Key) of
+        undefined -> maybe.nothing{};
+        V -> maybe.just{V}
+    end.
+
+-spec halt(halt_status()) -> _.
+halt(halt_status.exit_code{Exit}) -> erlang:halt(Exit);
+halt(halt_status.slogan{S}) -> erlang:halt(S);
+halt(halt_status.abort{}) -> erlang:halt(abort).
+
+-spec iolist_size(iolist()) -> integer().
+iolist_size(Item) -> erlang:iolist_size(Item).
+
+-spec iolist_to_binary(iolist()) -> binary().
+iolist_to_binary(IoList) -> erlang:iolist_to_binary(IoList).
+
+-spec link_pid(pid()) -> boolean().
+link_pid(Pid) -> erlang:link(Pid).
+
+-spec link_port(port()) -> boolean().
+link_port(Port) -> erlang:link(Port).
 
 -spec start_timer(integer(), timer_dst(), _Msg) -> reference().
 start_timer(Time, Dest, Msg) ->
