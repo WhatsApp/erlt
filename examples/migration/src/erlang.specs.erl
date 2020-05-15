@@ -36,6 +36,29 @@
 
 -deprecated([{cancel_timer/2, "see erlang2:cancel_timer/2"}]).
 
+-spec ceil(integer()) -> integer().
+
+-spec check_old_code(module()) -> boolean().
+-spec check_process_code(pid(), module()) -> boolean().
+
+-spec crc32(iodata()) -> integer().
+-spec crc32(integer(), iodata()) -> integer().
+
+-spec demonitor(reference()) -> boolean().
+-spec erase() -> [{term(), term()}].
+%% TODO - The original is term() | undefined for the result,
+%% but undefined is term().
+-spec erase(term()) -> term().
+
+%% It is the same as undefined in haskell or ???
+-spec error(term()) -> _.
+-spec error(term(), [term()]) -> _.
+
+-spec exit(term()) -> _.
+-spec external_size(term()) -> integer().
+
+-spec floor(number()) -> integer().
+
 -spec spawn(fun(() -> _)) -> pid().
 
 -deprecated([{start_timer/3, "see erlang2:start_timer/3"}]).
