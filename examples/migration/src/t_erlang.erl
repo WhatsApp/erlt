@@ -1,5 +1,5 @@
 -lang([erl2, ffi]).
--module(erlang2).
+-module(t_erlang).
 
 -export_type([encoding/0]).
 -enum encoding() :: latin1{} | unicode{} | utf8{}.
