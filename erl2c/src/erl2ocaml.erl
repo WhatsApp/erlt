@@ -46,6 +46,7 @@ ffi() ->
         "type reference'0\n",
         "type term'0\n",
         "type timeout'0\n",
+        "type arity'0 = int\n",
         "type module'0 = atom'0\n",
         "type node'0 = atom'0\n",
         "type no_return'0 = none'0\n",
@@ -667,6 +668,8 @@ type({type,Ln,iolist,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,iolist},[]]}, Ctx);
 type({type,Ln,module,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,module},[]]}, Ctx);
+type({type,Ln,arity,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,arity},[]]}, Ctx);
 type({type,Ln,neg_integer,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,neg_integer},[]]}, Ctx);
 type({type,Ln,node,[]}, Ctx) ->
