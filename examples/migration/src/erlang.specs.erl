@@ -46,8 +46,6 @@
 
 -spec demonitor(reference()) -> boolean().
 -spec erase() -> [{term(), term()}].
-%% TODO - The original is term() | undefined for the result,
-%% but undefined is term().
 -spec erase(term()) -> term().
 
 %% It is the same as undefined in haskell or ???
@@ -109,8 +107,43 @@
 -spec list_to_ref(string()) -> reference().
 -spec list_to_tuple([_]) -> _.
 
--spec spawn(fun(() -> _)) -> pid().
+-spec make_fun(module(), atom(), arity()) -> function().
+-spec make_ref() -> reference().
 
+-deprecated([{make_tuple/2, "ONLY in DT"}]).
+-spec make_tuple(arity(), _) -> tuple().
+-deprecated([{make_tuple/3, "ONLY in DT"}]).
+-spec make_tuple(arity(), _, _) -> tuple().
+
+-spec max(A, A) -> A.
+-deprecated([{md5/1, "see t_erlang:md5_iolist/1, t_erlang:md5_binary/1"}]).
+-spec md5(iodata()) -> binary().
+
+-spec min(A, A) -> A.
+-spec monotonic_time() -> integer().
+-spec nif_error(_) -> _.
+-spec node() -> node().
+-spec nodes() -> [node()].
+-spec now() -> {integer(), integer(), integer()}.
+-spec phash(_, integer()) -> integer().
+-spec phash2(_, integer()) -> integer().
+-spec phash2(_) -> integer().
+-spec processes() -> [pid()].
+-spec ref_to_list(reference()) -> string().
+-spec round(number()) -> integer().
+-spec set_cookie(node(), atom()) -> boolean().
+-deprecated([{size/1, "see t_erlang:size_tuple/1, t_erlang:size_binary/1"}]).
+-spec size(binary()) -> integer().
+
+-spec spawn(fun(() -> _)) -> pid().
 -deprecated([{start_timer/3, "see t_erlang:start_timer/3"}]).
 
 -deprecated([{start_timer/4, "see t_erlang:start_timer/4"}]).
+
+-spec time_offset() -> integer().
+-spec throw(_) -> _.
+-spec term_to_binary(_) -> binary().
+-spec time_offset() -> integer().
+-spec timestamp() -> {integer(), integer(), integer()}.
+-spec trunc(number()) -> integer().
+-spec unique_integer() -> integer().

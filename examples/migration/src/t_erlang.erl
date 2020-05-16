@@ -33,8 +33,8 @@
 -export_type([demonitor_option/0]).
 -enum demonitor_option() :: flush{} | info{}.
 
--export_type([port_or_pid/0]).
--enum port_or_pid() :: port{port()} | pid{pid()}.
+-export_type([pid_or_port/0]).
+-enum pid_or_port() :: pid{pid()} | port{port()}.
 
 -export_type([halt_status/0]).
 -enum halt_status() :: exit_code{integer()} | slogan{string()} | abort{}.
@@ -52,8 +52,9 @@
 
 -export([iolist_size/1, iolist_to_binary/1]).
 -export([link_pid/1, link_port/1]).
+-export([md5_iolist/1, md5_binary/1, monotonic_time/1, put/2, register/2]).
 
--export([start_timer/3, start_timer/4]).
+-export([start_timer/3, start_timer/4, system_time/1, whereis/1]).
 
 -spec append_element0({}, El) -> {El}.
 append_element0(Tuple, El) ->
@@ -161,9 +162,9 @@ demonitor(MonitorRef, Options) ->
     Options1 = lists:map(ConvertOpt, Options),
     erlang:demonitor(MonitorRef, Options1).
 
--spec exit(port_or_pid(), term()) -> boolean().
-exit(port_or_pid.port{Port}, Reason) -> erlang:exit(Port, Reason);
-exit(port_or_pid.pid{Pid}, Reason) -> erlang:exit(Pid, Reason).
+-spec exit(pid_or_port(), term()) -> boolean().
+exit(pid_or_port.port{Port}, Reason) -> erlang:exit(Port, Reason);
+exit(pid_or_port.pid{Pid}, Reason) -> erlang:exit(Pid, Reason).
 
 -spec get(_K) -> maybe(_V).
 get(Key) ->
@@ -189,6 +190,26 @@ link_pid(Pid) -> erlang:link(Pid).
 -spec link_port(port()) -> boolean().
 link_port(Port) -> erlang:link(Port).
 
+-spec md5_iolist(iolist()) -> binary().
+md5_iolist(IoList) -> erlang:md5(IoList).
+
+-spec md5_binary(binary()) -> binary().
+md5_binary(Binary) -> erlang:md5(Binary).
+
+-spec monotonic_time(time_unit()) -> integer().
+monotonic_time(TU) -> erlang:monotonic_time(unpack_time_unit(TU)).
+
+-spec put(_K, V) -> maybe(V).
+put(Key, Val) ->
+    case erlang:put(Key, Val) of
+        undefined -> maybe.nothing{};
+        OldVal -> maybe.just{OldVal}
+    end.
+
+-spec register(atom(), pid_or_port()) -> boolean().
+register(RegName, pid_or_port.pid{Pid}) -> erlang:register(RegName, Pid);
+register(RegName, pid_or_port.port{Port}) -> erlang:register(RegName, Port).
+
 -spec start_timer(integer(), timer_dst(), _Msg) -> reference().
 start_timer(Time, Dest, Msg) ->
     Dest1 =
@@ -208,3 +229,14 @@ start_timer(Time, Dest, Options, Msg) ->
             timer_dst.named{Atom} -> Atom
     end,
     erlang:start_timer(Time, Dest1, Msg, Options1).
+
+-spec system_time(time_unit()) -> integer().
+system_time(TU) -> erlang:system_time(unpack_time_unit(TU)).
+
+-spec whereis(atom()) -> maybe(pid_or_port()).
+whereis(RegName) ->
+    case erlang:whereis(RegName) of
+        undefined -> maybe.nothing{};
+        Pid when erlang:is_pid(Pid) -> maybe.just{pid_or_port.pid{Pid}};
+        Port when erlang:is_port(Port) -> maybe.just{pid_or_port.port{Port}}
+    end.
