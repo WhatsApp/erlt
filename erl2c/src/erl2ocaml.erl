@@ -47,6 +47,7 @@ ffi() ->
         "type reference'0\n",
         "type term'0\n",
         "type timeout'0\n",
+        "type tuple'0\n",
         "type arity'0 = int\n",
         "type module'0 = atom'0\n",
         "type node'0 = atom'0\n",
@@ -697,6 +698,8 @@ type({type,Ln,term,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,term},[]]}, Ctx);
 type({type,Ln,timeout,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,timeout},[]]}, Ctx);
+type({type,Ln,tuple,any}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,tuple},[]]}, Ctx);
 type({type,_Line,'fun',[{type,_,product,[A]},B]}, Ctx) ->
     T1 = "(" ++ type(A, Ctx) ++ ")",
     T2 = "(" ++ type(B, Ctx) ++ ")",

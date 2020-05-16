@@ -19,6 +19,7 @@ type pos_integer'0
 type reference'0
 type term'0
 type timeout'0
+type tuple'0
 type arity'0 = int
 type module'0 = atom'0
 type node'0 = atom'0
