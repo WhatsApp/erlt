@@ -35,6 +35,7 @@ ffi() ->
         "type identifier'0\n",
         "type iodata'0\n",
         "type iolist'0\n",
+        "type function'0\n",
         "type ('k, 'v) map'2\n",
         "type neg_integer'0\n",
         "type none'0\n",
@@ -656,6 +657,8 @@ type({type,Ln,atom,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,atom},[]]}, Ctx);
 type({type,Ln,binary,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,binary},[]]}, Ctx);
+type({type,Ln,function,[]}, Ctx) ->
+    type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,function},[]]}, Ctx);
 type({type,Ln,bitstring,[]}, Ctx) ->
     type({remote_type,Ln,[{atom,Ln,ffi},{atom,Ln,bitstring},[]]}, Ctx);
 type({type,Ln,byte,[]}, Ctx) ->

@@ -7,6 +7,7 @@ type byte'0
 type identifier'0
 type iodata'0
 type iolist'0
+type function'0
 type ('k, 'v) map'2
 type neg_integer'0
 type none'0
