@@ -14,7 +14,7 @@
 
 -module(analyzer).
 
--export([used_funs/1, exports/1]).
+-export([used_funs/1, exports/1, behaviours/1]).
 
 %% Returns a list of functions used in a given module.
 -spec used_funs(file:filename()) -> list(mfa()).
@@ -41,6 +41,13 @@ exports_aux(Forms) ->
     Exports = collect(Forms, fun pred/1, fun export/1),
     Exports1 = lists:append(Exports),
     lists:usort(Exports1).
+
+-spec behaviours(file:filename()) -> list(module()).
+behaviours(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Behaviors = [Behavior || {'attribute', _, 'behavior', Behavior} <- Forms],
+    Behaviours = [Behaviour || {'attribute', _, 'behaviour', Behaviour} <- Forms],
+    lists:usort(Behaviors ++ Behaviours).
 
 collect(Forms, Pred, Collect) ->
     do_collect(Forms, Pred, Collect, []).

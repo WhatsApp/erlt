@@ -53,6 +53,22 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getBehaviours(beamFilePath: String): Option[List[String]] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "behaviours", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        val behaviours = elems.collect {case EAtom(behaviour) => behaviour}
+        Some(behaviours)
+      case _ =>
+        println("not loaded")
+        None
+    }
+  }
+
   def close(): Unit = {
     connection.close()
   }

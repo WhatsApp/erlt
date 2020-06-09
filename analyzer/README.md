@@ -15,3 +15,4 @@ project.
 
 - `com.whatsapp.analyzer.OtpFunsUsage` - gathers data about which functions from
 OTP libs are used in the project.
+- `com.whatsapp.analyzer.Behaviours` - numbers about implemented behaviours.
