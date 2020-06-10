@@ -337,7 +337,7 @@ pattern({var, _Line, '_'}, _Ctx) ->
     "_";
 pattern({var, _Line, V}, _Ctx) ->
     "v_" ++ atom_to_list(V);
-pattern({match, _Line, P, {var, _Line, V}}, Ctx) ->
+pattern({match, _Line1, P, {var, _Line2, V}}, Ctx) ->
     "(" ++ pattern(P, Ctx) ++ " as " ++ "v_" ++ atom_to_list(V) ++ ")";
 pattern({match, Line, _, MP}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', MP, "complex match pattern"}}});
