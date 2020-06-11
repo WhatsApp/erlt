@@ -1,1 +1,1 @@
-bad_spec.erl:7: -lang([erl2, st]): Not supported syntax: {type,7,bounded_fun
+bad_spec.erl:7:18: -lang([erl2, st]): Not supported syntax: {type,

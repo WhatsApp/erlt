@@ -1,1 +1,1 @@
-undefined_enum.erl:7: enum bar undefined
+undefined_enum.erl:7:3: enum bar undefined

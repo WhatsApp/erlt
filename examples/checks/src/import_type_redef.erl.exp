@@ -1,1 +1,1 @@
-import_type_redef.erl:6: type f/2 already imported from foo
+import_type_redef.erl:6:2: type f/2 already imported from foo

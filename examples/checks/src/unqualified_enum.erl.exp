@@ -1,1 +1,1 @@
-unqualified_enum.erl:9: missing enum qualifier for constructor bar
+unqualified_enum.erl:9:3: missing enum qualifier for constructor bar
