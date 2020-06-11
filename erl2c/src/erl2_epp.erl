@@ -74,7 +74,8 @@
 	            :: #{name() => [{argspec(), [used()]}]},
               default_encoding = ?DEFAULT_ENCODING :: source_encoding(),
 	      pre_opened = false :: boolean(),
-	      fname = [] :: function_name_type()
+              scan_opts=[] :: erl_scan:options(), %Scanner options
+              fname = [] :: function_name_type()
 	     }).
 
 %% open(Options)
@@ -549,18 +550,20 @@ init_server(Pid, FileName, Options, St0) ->
     Ms0 = predef_macros(FileName),
     case user_predef(Pdm, Ms0) of
 	{ok,Ms1} ->
-	    #epp{file = File, location = AtLocation} = St0,
             DefEncoding = proplists:get_value(default_encoding, Options,
                                               ?DEFAULT_ENCODING),
-            Encoding = set_encoding(File, DefEncoding),
+            Encoding = set_encoding(St0#epp.file, DefEncoding),
             epp_reply(Pid, {ok,self(),Encoding}),
             %% ensure directory of current source file is
             %% first in path
             Path = [filename:dirname(FileName) |
                     proplists:get_value(includes, Options, [])],
+            ScanOpts = proplists:get_value(scan_opts, Options, []),
+            %% the default location is 1 for backwards compatibility, not {1,1}
+            AtLocation = proplists:get_value(location, Options, 1),
             St = St0#epp{delta=0, name=SourceName, name2=SourceName,
-			 path=Path, macs=Ms1,
-			 default_encoding=DefEncoding},
+			 path=Path, location=AtLocation, macs=Ms1,
+			 scan_opts=ScanOpts, default_encoding=DefEncoding},
             From = wait_request(St),
             Anno = erl_anno:new(AtLocation),
             enter_file_reply(From, file_name(SourceName), Anno,
@@ -755,9 +758,6 @@ leave_file(From, St) ->
     end.
 
 %% Modified version of io:scan_erl_form() which uses erl2_scan instead
-scan_erl_form(Io, Prompt, Pos0) ->
-    scan_erl_form(Io, Prompt, Pos0, []).
-
 scan_erl_form(Io, Prompt, Pos0, Options) ->
     io:request(Io, {get_until,unicode,Prompt,erl2_scan,tokens,[Pos0,Options]}).
 
@@ -766,7 +766,7 @@ scan_erl_form(Io, Prompt, Pos0, Options) ->
 %% scan_toks(Tokens, From, EppState)
 
 scan_toks(From, St) ->
-    case scan_erl_form(St#epp.file, '', St#epp.location) of
+    case scan_erl_form(St#epp.file, '', St#epp.location, St#epp.scan_opts) of
 	{ok,Toks,Cl} ->
 	    scan_toks(Toks, From, St#epp{location=Cl});
 	{error,E,Cl} ->
@@ -1262,7 +1262,7 @@ new_location(Ln, {Le,_}, {Lf,_}) ->
 %%  nested conditionals and repeated 'else's.
 
 skip_toks(From, St, [I|Sis]) ->
-    case scan_erl_form(St#epp.file, '', St#epp.location) of
+    case scan_erl_form(St#epp.file, '', St#epp.location, St#epp.scan_opts) of
 	{ok,[{'-',_Lh},{atom,_Li,ifdef}|_Toks],Cl} ->
 	    skip_toks(From, St#epp{location=Cl}, [ifdef,I|Sis]);
 	{ok,[{'-',_Lh},{atom,_Li,ifndef}|_Toks],Cl} ->
