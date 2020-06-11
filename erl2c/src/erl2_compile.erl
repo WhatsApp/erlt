@@ -1429,6 +1429,8 @@ report_warnings(#compile{options=Opts,warnings=Ws0}) ->
 	false -> ok
     end.
 
+format_message(F, P, [{Anno,Mod,E}|Es]) when is_list(Anno) ->
+    format_message(F, P, [{erl_anno:location(Anno),Mod,E}|Es]);
 format_message(F, P, [{none,Mod,E}|Es]) ->
     M = {none,io_lib:format("~ts: ~s~ts\n", [F,P,Mod:format_error(E)])},
     [M|format_message(F, P, Es)];
@@ -1440,15 +1442,12 @@ format_message(F, P, [{Line,Mod,E}|Es]) ->
     M = {{F,{Line,0}},io_lib:format("~ts:~w: ~s~ts\n",
                                 [F,Line,P,Mod:format_error(E)])},
     [M|format_message(F, P, Es)];
-format_message(F, P, [{Mod,E}|Es]) ->
-    %% Not documented and not expected to be used any more, but
-    %% keep a while just in case.
-    M = {none,io_lib:format("~ts: ~s~ts\n", [F,P,Mod:format_error(E)])},
-    [M|format_message(F, P, Es)];
 format_message(_, _, []) -> [].
 
 %% list_errors(File, ErrorDescriptors) -> ok
 
+list_errors(F, [{Anno,Mod,E}|Es]) when is_list(Anno) ->
+    list_errors(F, [{erl_anno:location(Anno),Mod,E}|Es]);
 list_errors(F, [{none,Mod,E}|Es]) ->
     io:fwrite("~ts: ~ts\n", [F,Mod:format_error(E)]),
     list_errors(F, Es);
@@ -1457,11 +1456,6 @@ list_errors(F, [{{Line,Column},Mod,E}|Es]) ->
     list_errors(F, Es);
 list_errors(F, [{Line,Mod,E}|Es]) ->
     io:fwrite("~ts:~w: ~ts\n", [F,Line,Mod:format_error(E)]),
-    list_errors(F, Es);
-list_errors(F, [{Mod,E}|Es]) ->
-    %% Not documented and not expected to be used any more, but
-    %% keep a while just in case.
-    io:fwrite("~ts: ~ts\n", [F,Mod:format_error(E)]),
     list_errors(F, Es);
 list_errors(_F, []) -> ok.
 
