@@ -522,7 +522,7 @@ expr({'fun',Line,Body},Context) ->
     end;
 expr({named_fun,Loc,Name,Cs},Context) ->
     {named_fun,Loc,Name,fun_clauses(Cs,Context)};
-expr({call,Line,{op,L1,'.',{atom,_,''},{op,L1,'.',M0,F0}},As0},Context) ->
+expr({call,Line,{op,_L,'.',{atom,_,''},{op,L1,'.',M0,F0}},As0},Context) ->
     %% '.'-prefixed call does not get namespace expanded
     expr({call,Line,{remote,L1,M0,F0},As0},Context);
 expr({call,Line,{op,L1,'.',M0,F0},As0},Context) ->
