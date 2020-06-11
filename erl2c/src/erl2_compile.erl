@@ -1028,6 +1028,8 @@ do_parse_module(DefEncoding, #compile{ifile=File,options=Opts,dir=Dir}=St, EppMo
                          {source_name, SourceName},
                          {macros,pre_defs(Opts)},
                          {default_encoding,DefEncoding},
+                         {location,{1,1}},
+                         {scan_opts,[text]},
                          extra]),
     case R of
 	{ok,Forms,Extra} ->
