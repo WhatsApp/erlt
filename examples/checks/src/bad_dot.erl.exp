@@ -1,1 +1,2 @@
-bad_dot.erl:9: illegal dot operator
+bad_dot.erl:6:2: spec for undefined function mk_raw_atom/0
+bad_dot.erl:9:6: illegal dot operator

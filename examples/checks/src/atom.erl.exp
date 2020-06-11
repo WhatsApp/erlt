@@ -1,1 +1,1 @@
-atom.erl:9: -lang([erl2, st]): Not supported syntax (atom)
+atom.erl:9:5: -lang([erl2, st]): Not supported syntax (atom): {atom,

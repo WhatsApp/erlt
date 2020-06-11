@@ -1,1 +1,1 @@
-dotted_module.erl:3: module names may not be dotted
+dotted_module.erl:3:2: module names may not be dotted

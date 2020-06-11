@@ -1,1 +1,1 @@
-undefined_constr.erl:9: enum foo has no constructor baz/0
+undefined_constr.erl:9:3: enum foo has no constructor baz/0
