@@ -38,30 +38,30 @@
 %% keeping only our added errors and warnings; the real linter will run later
 
 %% our added checks
-keep_error(dotted_module_name) -> true;
-keep_error(illegal_dot) -> true;
-keep_error(illegal_caret) -> true;
-keep_error(illegal_enum) -> true;
-keep_error({redefine_enum,_T,_C}) -> true;
-keep_error({unqualified_enum,_A}) -> true;
-keep_error({undefined_enum,_E}) -> true;
-keep_error({undefined_enum_constructor,_E,_A,_N}) -> true;
-keep_error({enum_constructor_wrong_arity,_E,_A,_N}) -> true;
-keep_error({redefine_import_type,{{_F,_A},_M}}) -> true;
-keep_error({unused_import_type,{{_F,_A},_M}}) -> true;
-keep_error({redefine_builtin_type_import,{_F,_A}}) -> true;
+keep_error(dotted_module_name, _Def) -> true;
+keep_error(illegal_dot, _Def) -> true;
+keep_error(illegal_caret, _Def) -> true;
+keep_error(illegal_enum, _Def) -> true;
+keep_error({redefine_enum,_T,_C}, _Def) -> true;
+keep_error({unqualified_enum,_A}, _Def) -> true;
+keep_error({undefined_enum,_E}, _Def) -> true;
+keep_error({undefined_enum_constructor,_E,_A,_N}, _Def) -> true;
+keep_error({enum_constructor_wrong_arity,_E,_A,_N}, _Def) -> true;
+keep_error({redefine_import_type,{{_F,_A},_M}}, _Def) -> true;
+keep_error({unused_import_type,{{_F,_A},_M}}, _Def) -> true;
+keep_error({redefine_builtin_type_import,{_F,_A}}, _Def) -> true;
 %% standard checks that need to trigger before erl2->erl1 or erl2->ocaml
 %% (possibly modified by us to be stricter)
-keep_error({redefine_type, {_T, _A}}) -> true;
-keep_error({undefined_type, {_T, _A}}) -> true;
-keep_error({unused_type, {_T, _A}}) -> true;
-keep_error({shadowed_var,_V,_In}) -> true;
-keep_error({exported_var,_V,{_What,_Where}}) -> true;
+keep_error({redefine_type, {_T, _A}}, _Def) -> true;
+keep_error({undefined_type, {_T, _A}}, _Def) -> true;
+keep_error({shadowed_var,_V,_In}, _Def) -> true;
+keep_error({exported_var,_V,{_What,_Where}}, _Def) -> true;
+%% warnings that we disable in the standard erl compiler because we do them here
+keep_error({unused_type, {_T, _A}}, _Def) -> true;
 %% if you want to always suppress a check, you can force it to false
-%keep_error({unbound_var,_V}) -> false;
-keep_error(_X) ->
-    %% check all other errors early for now
-    true.
+%keep_error({unbound_var,_V}, _Def) -> false;
+keep_error(_X, Def) ->
+    Def.
 
 
 %% bool_option(OnOpt, OffOpt, Default, Options) -> boolean().
@@ -673,21 +673,21 @@ is_warn_enabled(Type, #lint{enabled_warnings=Enabled}) ->
 %%  Pack errors and warnings properly and return ok | error.
 
 return_status(St) ->
-    Ws = pack_warnings(filter_errors(St#lint.warnings)),
-    case pack_errors(filter_errors(St#lint.errors)) of
+    Ws = pack_warnings(filter_errors(St#lint.warnings, false)),
+    case pack_errors(filter_errors(St#lint.errors, true)) of
         [] -> {ok,Ws};
         Es -> {error,Es,Ws}
     end.
 
 %% single filter function for errors and warnings
-filter_errors([ E={_File, {_Loc,erl2_lint,Err}} | Es]) ->
-    case keep_error(Err) of
-        true -> [E | filter_errors(Es)];
-        false -> filter_errors(Es)
+filter_errors([ E={_File, {_Loc,erl2_lint,Err}} | Es], Default) ->
+    case keep_error(Err, Default) of
+        true -> [E | filter_errors(Es, Default)];
+        false -> filter_errors(Es, Default)
     end;
-filter_errors([_X|Es]) ->
-    filter_errors(Es);
-filter_errors([]) ->
+filter_errors([_X|Es], Default) ->
+    filter_errors(Es, Default);
+filter_errors([], _Default) ->
     [].
 
 %% pack_errors([{File,ErrD}]) -> [{File,[ErrD]}].
