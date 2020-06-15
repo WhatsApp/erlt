@@ -993,7 +993,8 @@ erl2_lint(Code, St) ->
 
 
 do_erl2_lint(Code, St) ->
-    case erl2_lint:module(Code, St#compile.ifile, St#compile.options) of
+    Opts = [nowarn_unused_type | St#compile.options],
+    case erl2_lint:module(Code, St#compile.ifile, Opts) of
 	{ok,Ws} ->
 	    {ok,Code,St#compile{warnings=St#compile.warnings ++ Ws}};
 	{error,Es,Ws} ->
