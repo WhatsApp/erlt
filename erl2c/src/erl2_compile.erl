@@ -120,27 +120,6 @@ file(File, Options) ->
 do_file(File, Options0) ->
     %io:format("Options: ~tp\n", [Options0]),
 
-    % TODO: make sure that "ERL_COMPILER_OPTIONS" environment variable if
-    % defined, does not specify parse_transforms. Otherwise, we are risking
-    % running parse_transforms twice. Plus, we are going to be restricting how
-    % parse transforms can be specified anyway.
-    EnvCompilerOptions = compile:env_compiler_options(),
-    Options1 = Options0 ++ EnvCompilerOptions,
-    Options2 = fix_compile_options(Options1),
-
-    % TODO, XXX: derive makedep_output from it?
-    BuildDir =
-        case keyfind(build_dir, 1, Options0) of
-            {build_dir, Dir} -> Dir;
-            false ->
-                "build"
-        end,
-
-    St0 = #compile{
-        options=Options2,
-        build_dir=BuildDir
-    },
-
     BuildPhase =
         case keyfind(build_phase, 1, Options0) of
             {build_phase, Phase} -> Phase;
@@ -160,6 +139,13 @@ do_file(File, Options0) ->
                 compile
         end,
 
+    % TODO: make sure that "ERL_COMPILER_OPTIONS" environment variable if
+    % defined, does not specify parse_transforms. Otherwise, we are risking
+    % running parse_transforms twice. Plus, we are going to be restricting how
+    % parse transforms can be specified anyway.
+    EnvCompilerOptions = compile:env_compiler_options(),
+    Options = fix_compile_options(Options0 ++ EnvCompilerOptions, CompileMode),
+
     Passes =
         case CompileMode of
             makedep2 ->
@@ -167,7 +153,7 @@ do_file(File, Options0) ->
                 % allows to establish the order in which .erl files should be compiled
                 %
                 % this mode exists mainly for testing the new dependency scanner
-                TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options0) ],
+                TransformPasses = [ ?pass(transform_module) || member(makedep2_run_parse_transforms, Options) ],
                 [
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
@@ -244,8 +230,20 @@ do_file(File, Options0) ->
                     ?pass(maybe_save_binary)
                 ]
         end,
-    Passes1 = select_passes(Passes, St0#compile.options),
+    Passes1 = select_passes(Passes, Options),
 
+    % TODO, XXX: derive makedep_output from it?
+    BuildDir =
+        case keyfind(build_dir, 1, Options) of
+            {build_dir, Dir} -> Dir;
+            false ->
+                "build"
+        end,
+
+    St0 = #compile{
+        options=Options,
+        build_dir=BuildDir
+    },
     internal_comp(Passes1, _Code0 = unused, File, _Suffix = ".erl", St0).
 
 
@@ -642,13 +640,20 @@ unspecs(Str) ->
     string:slice(Str, 0, length(Str) - 6).
 
 
-fix_compile_options(Options) ->
+fix_compile_options(Options, CompileMode) ->
     %% forcing to use nowarn_unused_record,
     %% motivation: unfolding of -module_alias(m1, some_module) brings ALL the records from some_module
     %% as they were defined (textually) in the current module.
     %% If any of them is unused then erl_lint:check_unused_records will produce a warning,
     %% which can be bad in the settings when warnings are errors.
-    Options1 = lists:filter(fun (O) -> O =/= warn_unused_record orelse O =/= nowarn_unused_record end, Options),
+    Options1 = lists:filter(fun (warn_unused_record) -> false;
+                                (nowarn_unused_record) -> false;
+                                (report_warnings) ->
+                                    CompileMode =:= build_compile
+                                        orelse CompileMode =:= compile;
+                                (_) -> true
+                            end,
+                            Options),
     [nowarn_unused_record,no_error_module_mismatch|Options1].
 
 compile_erl1_forms(Forms, St0) ->
@@ -993,6 +998,8 @@ erl2_lint(Code, St) ->
 
 
 do_erl2_lint(Code, St) ->
+    %% suppress some warnings in standard compiler because we have already
+    %% warned about them in our custom lint pass.
     Opts = [nowarn_unused_type | St#compile.options],
     case erl2_lint:module(Code, St#compile.ifile, Opts) of
 	{ok,Ws} ->
