@@ -16,7 +16,17 @@
 
 package com.whatsapp.analyzer
 
+import java.nio.file.{Files, Paths}
+import scala.io.Source
+
 object CodeDirs {
+
+  /**
+   * The root of your rebar3 progect
+   */
+  val srcRoot: String =
+    sys.error("specify me")
+
   /**
    * A list of ebin directories of local OTP installation.
    * Something like:
@@ -59,4 +69,17 @@ object CodeDirs {
    */
   val thirdParty: List[String] =
     sys.error("populate the list")
+
+  def isGenerated(appName: String, moduleName: String): Boolean = {
+    val erlFile = s"$srcRoot/$appName/src/$moduleName.erl"
+
+    if (Files.exists(Paths.get(erlFile))) {
+      val src = Source.fromFile(erlFile)
+      val line = src.getLines.take(1).toList.head
+      src.close
+      line.contains("@generated")
+    } else {
+      false
+    }
+  }
 }
