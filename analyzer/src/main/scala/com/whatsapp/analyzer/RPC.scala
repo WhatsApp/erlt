@@ -69,6 +69,25 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getErrorHandling(beamFilePath: String): Option[(Int, Int)] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "error_handling", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case ETuple(List(
+            ETuple(List(EAtom("catches"), ELong(catches))),
+            ETuple(List(EAtom("tries"), ELong(tries))),
+            )) =>
+        val result = (catches.toInt, tries.toInt)
+        Some(result)
+      case _ =>
+        println("not loaded")
+        None
+    }
+  }
+
   def close(): Unit = {
     connection.close()
   }

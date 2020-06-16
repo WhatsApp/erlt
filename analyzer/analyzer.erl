@@ -14,7 +14,14 @@
 
 -module(analyzer).
 
--export([used_funs/1, exports/1, behaviours/1]).
+-export([
+    behaviours/1,
+    catches/1,
+    error_handling/1,
+    exports/1,
+    tries/1,
+    used_funs/1
+]).
 
 %% Returns a list of functions used in a given module.
 -spec used_funs(file:filename()) -> list(mfa()).
@@ -48,6 +55,32 @@ behaviours(BeamFile) ->
     Behaviors = [Behavior || {'attribute', _, 'behavior', Behavior} <- Forms],
     Behaviours = [Behaviour || {'attribute', _, 'behaviour', Behaviour} <- Forms],
     lists:usort(Behaviors ++ Behaviours).
+
+-spec error_handling(file:filename()) ->
+    {{'catches', integer()}, {'tries', integer()}}.
+error_handling(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Catches = erlang:length(catches_aux(Forms)),
+    Tries = erlang:length(tries_aux(Forms)),
+    {{'catches', Catches}, {'tries', Tries}}.
+
+-spec catches(file:filename()) -> list(erl_anno:anno()).
+catches(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    catches_aux(Forms).
+
+-spec catches_aux(list(erl_parse:abstract_form())) -> list(erl_anno:anno()).
+catches_aux(Forms) ->
+    collect(Forms, fun pred/1, fun catch_anno/1).
+
+-spec tries(file:filename()) -> list(erl_anno:anno()).
+tries(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    tries_aux(Forms).
+
+-spec tries_aux(list(erl_parse:abstract_form())) -> list(erl_anno:anno()).
+tries_aux(Forms) ->
+    collect(Forms, fun pred/1, fun try_anno/1).
 
 collect(Forms, Pred, Collect) ->
     do_collect(Forms, Pred, Collect, []).
@@ -85,6 +118,12 @@ export({attribute,_,export,Es}) ->
     Es;
 export(_) ->
     false.
+
+catch_anno({'catch', Anno, _}) -> Anno;
+catch_anno(_) -> false.
+
+try_anno({'try', Anno, _, _, _, _}) -> Anno;
+try_anno(_) -> false.
 
 pred(_) ->
     true.
