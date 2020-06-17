@@ -23,19 +23,19 @@ class TypePrinterUtil {
   private var frcounter = 0
   private var btCounter = 0
   private var brCounter = 0
-  
+
   def nextSchematicTypeName(): String = {
     val prefix = ""
     val n = btCounter
     btCounter = btCounter + 1
-    prefix + (if (n < 26)  ('A' + n).toChar.toString else "t_" + n)
+    prefix + (if (n < 26) ('A' + n).toChar.toString else "t_" + n)
   }
 
   def nextSchematicRowTypeName(): String = {
     val prefix = "'"
     val n = brCounter
     brCounter = brCounter + 1
-    prefix + (if (n < 26)  ('A' + n).toChar.toString else "t_" + n)
+    prefix + (if (n < 26) ('A' + n).toChar.toString else "t_" + n)
   }
 
   // free type

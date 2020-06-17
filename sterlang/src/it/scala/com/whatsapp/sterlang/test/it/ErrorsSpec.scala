@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
- package com.whatsapp.sterlang.test.it
+package com.whatsapp.sterlang.test.it
 
 class ErrorsSpec extends DirSpec {
   testDir("examples/neg")

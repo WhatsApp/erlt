@@ -24,27 +24,30 @@ object SCC {
   case class Edge(from: Vertex, to: Vertex)
   case class G(start: Vertex, vertices: List[Vertex], edges: List[Edge])
 
-  case class State(graph: G,
-                   count: Int,
-                   visited: Map[Vertex, Boolean],
-                   dfNumber: Map[Vertex, Int],
-                   lowlinks: Map[Vertex,Int],
-                   stack: List[Vertex],
-                   components: List[Component])
-
-  private def initial(g: G): State = State (
-    graph      = g,
-    count      = 1,
-    visited    = g.vertices.map((_,false)).toMap,
-    dfNumber   = Map(),
-    lowlinks   = Map(),
-    stack      = Nil,
-    components = Nil
+  case class State(
+      graph: G,
+      count: Int,
+      visited: Map[Vertex, Boolean],
+      dfNumber: Map[Vertex, Int],
+      lowlinks: Map[Vertex, Int],
+      stack: List[Vertex],
+      components: List[Component],
   )
+
+  private def initial(g: G): State =
+    State(
+      graph = g,
+      count = 1,
+      visited = g.vertices.map((_, false)).toMap,
+      dfNumber = Map(),
+      lowlinks = Map(),
+      stack = Nil,
+      components = Nil,
+    )
 
   def components(graph: G): List[Component] = {
     var state = search(graph.start, initial(graph))
-    while (state.visited.exists( _._2 == false)) {
+    while (state.visited.exists(_._2 == false)) {
       state.visited.find(_._2 == false).foreach { tuple =>
         val (vertex, _) = tuple
         state = search(vertex, state)
@@ -57,22 +60,22 @@ object SCC {
 
     val newState =
       state.copy(
-        visited  = state.visited.updated(vertex, true),
-        dfNumber = state.dfNumber.updated(vertex,state.count),
-        count    = state.count + 1,
+        visited = state.visited.updated(vertex, true),
+        dfNumber = state.dfNumber.updated(vertex, state.count),
+        count = state.count + 1,
         lowlinks = state.lowlinks.updated(vertex, state.count),
-        stack    = vertex :: state.stack,
+        stack = vertex :: state.stack,
       )
 
     def processVertex(st: State, w: Vertex): State = {
       if (!st.visited(w)) {
         val st1 = search(w, st)
-        val min = smallest(st1.lowlinks(w),st1.lowlinks(vertex))
-        st1.copy( lowlinks = st1.lowlinks.updated(vertex, min) )
+        val min = smallest(st1.lowlinks(w), st1.lowlinks(vertex))
+        st1.copy(lowlinks = st1.lowlinks.updated(vertex, min))
       } else {
-        if ( (st.dfNumber(w) < st.dfNumber(vertex)) && st.stack.contains(w) ) {
-          val min = smallest( st.dfNumber(w), st.lowlinks(vertex) )
-          st.copy( lowlinks = st.lowlinks.updated(vertex, min))
+        if ((st.dfNumber(w) < st.dfNumber(vertex)) && st.stack.contains(w)) {
+          val min = smallest(st.dfNumber(w), st.lowlinks(vertex))
+          st.copy(lowlinks = st.lowlinks.updated(vertex, min))
         } else st
       }
     }
@@ -82,7 +85,7 @@ object SCC {
 
     if (strslt.lowlinks(vertex) == strslt.dfNumber(vertex)) {
       val index = strslt.stack.indexOf(vertex)
-      val (comp,rest) = strslt.stack.splitAt( index + 1 )
+      val (comp, rest) = strslt.stack.splitAt(index + 1)
       strslt.copy(
         stack = rest,
         components = strslt.components :+ comp,

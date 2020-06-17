@@ -67,7 +67,7 @@ object SterlangTestUtil {
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
       false
     } catch {
-      case _:PositionedError => true
+      case _: PositionedError => true
     }
   }
 }
