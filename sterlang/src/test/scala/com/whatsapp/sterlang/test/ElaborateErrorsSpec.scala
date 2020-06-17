@@ -57,7 +57,7 @@ class ElaborateErrorsSpec extends org.scalatest.FunSpec {
           |id(X) -> X.
           |""".stripMargin
       val expected =
-        new SpecError(NP,"call_id/1", "fun((A) -> B)", "fun((A) -> A)")
+        new SpecError(NP, "call_id/1", "fun((A) -> B)", "fun((A) -> A)")
       testSpecError(input, expected)
     }
   }

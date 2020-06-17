@@ -75,7 +75,7 @@ class AstChecks(val context: Context) {
   private def collectParams(vars: List[TypeVar]): Set[TypeVar] = {
     var result = Set.empty[TypeVar]
     for (v <- vars) {
-      if(result(v)) {
+      if (result(v)) {
         throw new DuplicateTypeVar(v.p, v.name)
       }
       result = result + v
@@ -103,11 +103,13 @@ class AstChecks(val context: Context) {
   private def checkEnumDef(program: Program, enumDef: EnumDef): Unit = {
     checkUniqueCons(enumDef.cons)
     val bound = collectParams(enumDef.params)
-    val used = enumDef.cons.map { con =>
-      con.argTypes.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-    }.foldLeft(Set.empty[TypeVar])(_ ++ _)
+    val used = enumDef.cons
+      .map { con =>
+        con.argTypes.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+      }
+      .foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(enumDef.params, used)
-    enumDef.cons.foreach { con => con.argTypes.foreach(expandType(program, Set.empty))}
+    enumDef.cons.foreach { con => con.argTypes.foreach(expandType(program, Set.empty)) }
   }
 
   private def checkUniqueCons(cons: List[EnumCon]): Unit = {
@@ -120,67 +122,68 @@ class AstChecks(val context: Context) {
     }
   }
 
-  private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit = tp match {
-    case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
-      params.foreach(expandType(program, visited))
-    case UserType(name:LocalName, params) =>
-      program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size) match {
-        case Some(_) =>
-          params.foreach(expandType(program, visited))
-        case None =>
-          if (visited(name)) {
-            throw Cycle(name.name)
-          }
-          program.typeAliases.find(a => a.name == name.name && a.params.size == params.size) match {
-            case Some(alias) =>
-              expandType(program, visited + name)(alias.body)
-              params.foreach(expandType(program, visited))
-            case None =>
-              program.opaques.find(a => a.name == name.name && a.params.size == params.size) match {
-                case Some(opaque) =>
-                  expandType(program, visited + name)(opaque.body)
-                  params.foreach(expandType(program, visited))
-                case None =>
-                  throw new UnknownType(tp.p, name.stringId, params.size)
-              }
-          }
-      }
-    case UserType(name:RemoteName, params) =>
-      context.enumDefs.find(_.name == name.stringId) match {
-        case Some(_) =>
-          params.foreach(expandType(program, visited))
-        case None =>
-          context.aliases.find(a => a.name == name.stringId && a.params.size == params.size) match {
-            case Some(alias) =>
-              expandType(program, visited)(alias.body)
-              params.foreach(expandType(program, visited))
-            case None =>
-              throw new UnknownType(tp.p, name.stringId, params.size)
-          }
-      }
-    case _:TypeVar =>
+  private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
+    tp match {
+      case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
+        params.foreach(expandType(program, visited))
+      case UserType(name: LocalName, params) =>
+        program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size) match {
+          case Some(_) =>
+            params.foreach(expandType(program, visited))
+          case None =>
+            if (visited(name)) {
+              throw Cycle(name.name)
+            }
+            program.typeAliases.find(a => a.name == name.name && a.params.size == params.size) match {
+              case Some(alias) =>
+                expandType(program, visited + name)(alias.body)
+                params.foreach(expandType(program, visited))
+              case None =>
+                program.opaques.find(a => a.name == name.name && a.params.size == params.size) match {
+                  case Some(opaque) =>
+                    expandType(program, visited + name)(opaque.body)
+                    params.foreach(expandType(program, visited))
+                  case None =>
+                    throw new UnknownType(tp.p, name.stringId, params.size)
+                }
+            }
+        }
+      case UserType(name: RemoteName, params) =>
+        context.enumDefs.find(_.name == name.stringId) match {
+          case Some(_) =>
+            params.foreach(expandType(program, visited))
+          case None =>
+            context.aliases.find(a => a.name == name.stringId && a.params.size == params.size) match {
+              case Some(alias) =>
+                expandType(program, visited)(alias.body)
+                params.foreach(expandType(program, visited))
+              case None =>
+                throw new UnknownType(tp.p, name.stringId, params.size)
+            }
+        }
+      case _: TypeVar =>
       // OK
-    case WildTypeVar() =>
+      case WildTypeVar() =>
       // OK
-    case TupleType(params) =>
-      params.foreach(expandType(program, visited))
-    case RecordType(fields) =>
-      val types = fields.map(_.value)
-      types.foreach(expandType(program, visited))
-    case OpenRecordType(fields, rt) =>
-      val types = fields.map(_.value)
-      types.foreach(expandType(program, visited))
-      expandType(program, visited)(rt)
-    case FunType(argTypes, resType) =>
-      argTypes.foreach(expandType(program, visited))
-      expandType(program, visited)(resType)
-    case ListType(elemType) =>
-      expandType(program, visited)(elemType)
-  }
+      case TupleType(params) =>
+        params.foreach(expandType(program, visited))
+      case RecordType(fields) =>
+        val types = fields.map(_.value)
+        types.foreach(expandType(program, visited))
+      case OpenRecordType(fields, rt) =>
+        val types = fields.map(_.value)
+        types.foreach(expandType(program, visited))
+        expandType(program, visited)(rt)
+      case FunType(argTypes, resType) =>
+        argTypes.foreach(expandType(program, visited))
+        expandType(program, visited)(resType)
+      case ListType(elemType) =>
+        expandType(program, visited)(elemType)
+    }
 
   private def collectTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
     t match {
-      case t:TypeVar =>
+      case t: TypeVar =>
         if (!bound(t)) {
           throw new UnboundTypeVariable(t.p, t.name)
         }
@@ -196,7 +199,7 @@ class AstChecks(val context: Context) {
       case OpenRecordType(fields, _) =>
         sys.error("Unexpected to see it here")
       case FunType(args, res) =>
-        (res::args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
         collectTypeVars(bound)(elemType)
     }

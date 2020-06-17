@@ -40,41 +40,23 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
   }
 
   describe("Patterns") {
-    testPat(
-      "_",
-      WildPat()(NP))
+    testPat("_", WildPat()(NP))
 
-    testPat(
-      "X",
-      VarPat("X")(NP))
+    testPat("X", VarPat("X")(NP))
 
-    testPat(
-      "{}",
-      TuplePat(List())(NP))
+    testPat("{}", TuplePat(List())(NP))
 
-    testPat(
-      "({})",
-      TuplePat(List())(NP))
+    testPat("({})", TuplePat(List())(NP))
 
-    testPat(
-      "(X)",
-      VarPat("X")(NP))
+    testPat("(X)", VarPat("X")(NP))
 
-    testPat(
-      "{X, Y}",
-      TuplePat(List(VarPat("X")(NP), VarPat("Y")(NP)))(NP))
+    testPat("{X, Y}", TuplePat(List(VarPat("X")(NP), VarPat("Y")(NP)))(NP))
 
-    testPat(
-      "#{}",
-      RecordPat(List(), false)(NP))
+    testPat("#{}", RecordPat(List(), false)(NP))
 
-    testPat(
-      "#{...}",
-      RecordPat(List(), true)(NP))
+    testPat("#{...}", RecordPat(List(), true)(NP))
 
-    testPat(
-      "#{x = XVal}",
-      RecordPat(List(Field("x", VarPat("XVal")(NP))), false)(NP))
+    testPat("#{x = XVal}", RecordPat(List(Field("x", VarPat("XVal")(NP))), false)(NP))
 
     testPat(
       "#{x = XVal, y = YVal}",
@@ -83,75 +65,54 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
           Field("x", VarPat("XVal")(NP)),
           Field("y", VarPat("YVal")(NP)),
         ),
-        false)(NP))
+        false,
+      )(NP),
+    )
 
-    testPat(
-      "#{x = XVal, ...}",
-      RecordPat(List(Field("x",VarPat("XVal")(NP))), true)(NP))
+    testPat("#{x = XVal, ...}", RecordPat(List(Field("x", VarPat("XVal")(NP))), true)(NP))
 
     testPat(
       "#{x = XVal, ...} = MyRec",
-      AndPat(
-        RecordPat(List(Field("x",VarPat("XVal")(NP))), true)(NP),
-        VarPat("MyRec")(NP))(NP))
+      AndPat(RecordPat(List(Field("x", VarPat("XVal")(NP))), true)(NP), VarPat("MyRec")(NP))(NP),
+    )
   }
 
   describe("Expressions") {
-    testExp(
-      "true",
-      BoolExp(true)(NP))
+    testExp("true", BoolExp(true)(NP))
 
-    testExp(
-      "false",
-      BoolExp(false)(NP))
+    testExp("false", BoolExp(false)(NP))
 
-    testExp(
-      "42",
-      NumberExp(42)(NP))
+    testExp("42", NumberExp(42)(NP))
 
-    testExp(
-      """  "string"  """,
-      StringExp("string")(NP))
+    testExp("""  "string"  """, StringExp("string")(NP))
 
-    testExp(
-      "X",
-      VarExp(new LocalVarName("X"))(NP))
+    testExp("X", VarExp(new LocalVarName("X"))(NP))
 
-    testExp(
-      "(X)",
-      VarExp(new LocalVarName("X"))(NP))
+    testExp("(X)", VarExp(new LocalVarName("X"))(NP))
 
-    testExp(
-      "X.y",
-      SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP))
+    testExp("X.y", SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP))
 
-    testExp(
-      "(X.y).z",
-      SelExp(
-        SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP),
-        "z")(NP))
+    testExp("(X.y).z", SelExp(SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP), "z")(NP))
 
-    testExp(
-      "X.y.z",
-      SelExp(
-        SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP),
-        "z")(NP))
+    testExp("X.y.z", SelExp(SelExp(VarExp(new LocalVarName("X"))(NP), "y")(NP), "z")(NP))
 
-    testExp(
-      "X(Y)",
-      AppExp(VarExp(new LocalVarName("X"))(NP), List(VarExp(new LocalVarName("Y"))(NP)))(NP))
+    testExp("X(Y)", AppExp(VarExp(new LocalVarName("X"))(NP), List(VarExp(new LocalVarName("Y"))(NP)))(NP))
 
     testExp(
       "(X(Y))(Z)",
       AppExp(
         AppExp(VarExp(new LocalVarName("X"))(NP), List(VarExp(new LocalVarName("Y"))(NP)))(NP),
-        List(VarExp(new LocalVarName("Z"))(NP)))(NP))
+        List(VarExp(new LocalVarName("Z"))(NP)),
+      )(NP),
+    )
 
     testExp(
       "X(Y)(Z)",
       AppExp(
         AppExp(VarExp(new LocalVarName("X"))(NP), List(VarExp(new LocalVarName("Y"))(NP)))(NP),
-        List(VarExp(new LocalVarName("Z"))(NP)))(NP))
+        List(VarExp(new LocalVarName("Z"))(NP)),
+      )(NP),
+    )
 
 //  TODO: this is not parsed naively
 //    testExp(
@@ -162,32 +123,23 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
 
     testExp(
       "X(Y.z)",
-      AppExp(
-        VarExp(new LocalVarName("X"))(NP),
-        List(SelExp(VarExp(new LocalVarName("Y"))(NP), "z")(NP)))(NP))
+      AppExp(VarExp(new LocalVarName("X"))(NP), List(SelExp(VarExp(new LocalVarName("Y"))(NP), "z")(NP)))(NP),
+    )
 
-    testExp(
-      "#{}",
-      RecordExp(List())(NP))
+    testExp("#{}", RecordExp(List())(NP))
 
-    testExp(
-      "#{x => X}",
-      RecordExp(List(Field("x", VarExp(new LocalVarName("X"))(NP))))(NP))
+    testExp("#{x => X}", RecordExp(List(Field("x", VarExp(new LocalVarName("X"))(NP))))(NP))
 
-    testExp(
-      "#{x => 1, y => 2}",
-      RecordExp(List(
-        Field("x", NumberExp(1)(NP)),
-        Field("y" ,NumberExp(2)(NP))))(NP))
+    testExp("#{x => 1, y => 2}", RecordExp(List(Field("x", NumberExp(1)(NP)), Field("y", NumberExp(2)(NP))))(NP))
 
     testExp(
       "R #{x := 1}",
-      RecordUpdateExp(VarExp(new LocalVarName("R"))(NP), RecordExp(List(Field("x", NumberExp(1)(NP))))(NP))(NP)
+      RecordUpdateExp(VarExp(new LocalVarName("R"))(NP), RecordExp(List(Field("x", NumberExp(1)(NP))))(NP))(NP),
     )
 
     testExp(
       "if X then Y else Z",
-      IfExp(VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP), VarExp(new LocalVarName("Z"))(NP))(NP)
+      IfExp(VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP), VarExp(new LocalVarName("Z"))(NP))(NP),
     )
 
   }
@@ -195,109 +147,116 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
   describe("Operations") {
     testExp(
       "X orelse Y",
-      BinOpExp(BoolConnOp(Or), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(BoolConnOp(Or), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X andalso Y",
-      BinOpExp(BoolConnOp(And), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(BoolConnOp(And), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X == Y",
-      BinOpExp(Cmp(Eq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(Eq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X <= Y",
-      BinOpExp(Cmp(LtEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(LtEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X < Y",
-      BinOpExp(Cmp(Lt), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(Lt), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X >= Y",
-      BinOpExp(Cmp(GtEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(GtEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X > Y",
-      BinOpExp(Cmp(Gt), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(Gt), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X <> Y",
-      BinOpExp(Cmp(NEq),VarExp(new LocalVarName("X"))(NP),VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Cmp(NEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X + Y",
-      BinOpExp(Arith(Plus), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Arith(Plus), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X - Y",
-      BinOpExp(Arith(Minus), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Arith(Minus), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X * Y",
-      BinOpExp(Arith(Times), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Arith(Times), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "X / Y",
-      BinOpExp(Arith(Div),VarExp(new LocalVarName("X"))(NP),VarExp(new LocalVarName("Y"))(NP))(NP)
+      BinOpExp(Arith(Div), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "- Y",
-      UOpExp(UMinus, VarExp(new LocalVarName("Y"))(NP))(NP)
+      UOpExp(UMinus, VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "not Y",
-      UOpExp(UNot, VarExp(new LocalVarName("Y"))(NP))(NP)
+      UOpExp(UNot, VarExp(new LocalVarName("Y"))(NP))(NP),
     )
   }
 
   describe("Lists") {
     testExp(
       "[X | Y]",
-      ConsExp(VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP)
+      ConsExp(VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )
 
     testExp(
       "[X | [Y | Z]]",
-      ConsExp(VarExp(new LocalVarName("X"))(NP), ConsExp(VarExp(new LocalVarName("Y"))(NP), VarExp(new LocalVarName("Z"))(NP))(NP))(NP)
+      ConsExp(
+        VarExp(new LocalVarName("X"))(NP),
+        ConsExp(VarExp(new LocalVarName("Y"))(NP), VarExp(new LocalVarName("Z"))(NP))(NP),
+      )(NP),
     )
 
     testExp(
       "[]",
-      ListExp(List())(NP)
+      ListExp(List())(NP),
     )
 
     testExp(
       "[A]",
-      ListExp(List(VarExp(new LocalVarName("A"))(NP)))(NP)
+      ListExp(List(VarExp(new LocalVarName("A"))(NP)))(NP),
     )
   }
 
   describe("Enums") {
     testExp(
       "option.none{}",
-      EnumConExp(LocalName("option"), "none", List())(NP)
+      EnumConExp(LocalName("option"), "none", List())(NP),
     )
     testExp(
       "option.some{A}",
-      EnumConExp(LocalName("option"), "some", List(VarExp(new LocalVarName("A"))(NP)))(NP)
+      EnumConExp(LocalName("option"), "some", List(VarExp(new LocalVarName("A"))(NP)))(NP),
     )
     testExp(
       "pair.pair2{A, A}",
-      EnumConExp(LocalName("pair"), "pair2", List(VarExp(new LocalVarName("A"))(NP), VarExp(new LocalVarName("A"))(NP)))(NP)
+      EnumConExp(
+        LocalName("pair"),
+        "pair2",
+        List(VarExp(new LocalVarName("A"))(NP), VarExp(new LocalVarName("A"))(NP)),
+      )(NP),
     )
   }
 

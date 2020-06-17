@@ -24,7 +24,7 @@ import org.fusesource.jansi.Ansi
 import scala.collection.mutable
 
 object Main {
-  def ansi(s : String) : String =
+  def ansi(s: String): String =
     Ansi.ansi.render(s).toString
 
   def main(args: Array[String]): Unit = {
@@ -106,7 +106,7 @@ object Main {
       val name = spec.name.stringId
       val funType = spec.funType
       val sVars = SyntaxUtil.collectNamedTypeVars(funType)
-      val sub = sVars.map{v => v -> freshTypeVar(vars)}.toMap
+      val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
       val specType = expander.mkType(funType, sub)
       val schema = TU.generalize(0)(specType)
       name -> schema
@@ -151,9 +151,8 @@ object Main {
       case S.ST =>
         lines.mkString("\n")
       case S.FFI =>
-        lines.filter(l =>attributes.exists(l.startsWith)).mkString("\n")
+        lines.filter(l => attributes.exists(l.startsWith)).mkString("\n")
     }
-
 
   def getLang(lines: List[String]): Option[S.Lang] = {
     for (line <- lines) {

@@ -114,10 +114,11 @@ object Ast {
 
   sealed trait VarName {
     val stringId: String
-    override def equals(obj: Any): Boolean = obj match {
-      case vn: VarName => this.stringId == vn.stringId
-      case _ => false
-    }
+    override def equals(obj: Any): Boolean =
+      obj match {
+        case vn: VarName => this.stringId == vn.stringId
+        case _           => false
+      }
   }
   class LocalVarName(private val name: String) extends VarName {
     override val stringId: String = name
@@ -129,7 +130,7 @@ object Ast {
     override val stringId: String = s"$module:$name/$arity"
   }
 
-  sealed trait Type {val p: Pos.P}
+  sealed trait Type { val p: Pos.P }
   case class WildTypeVar()(val p: Pos.P) extends Type
   case class TypeVar(name: String)(val p: Pos.P) extends Type
   case class TupleType(params: List[Type])(val p: Pos.P) extends Type
@@ -147,7 +148,7 @@ object Ast {
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 
-  sealed trait Exp {val p: Pos.P}
+  sealed trait Exp { val p: Pos.P }
   case class BlockExpr(body: Body)(val p: Pos.P) extends Exp
   case class IfExp(exp1: Exp, exp2: Exp, exp3: Exp)(val p: Pos.P) extends Exp
   case class RecordUpdateExp(exp: Exp, delta: RecordExp)(val p: Pos.P) extends Exp
@@ -177,7 +178,7 @@ object Ast {
   case class Rule(pat: Pat, guard: Option[Exp], exp: Body)
   case class Clause(pats: List[Pat], guard: Option[Exp], exp: Body)
 
-  sealed trait Pat {val p: Pos.P}
+  sealed trait Pat { val p: Pos.P }
   case class WildPat()(val p: Pos.P) extends Pat
   case class VarPat(v: String)(val p: Pos.P) extends Pat
   case class TuplePat(pats: List[Pat])(val p: Pos.P) extends Pat
@@ -190,20 +191,22 @@ object Ast {
   case class NumberPat(n: Int)(val p: Pos.P) extends Pat
   case class StringPat(s: String)(val p: Pos.P) extends Pat
 
-  case class Program(lang: Lang,
-                     module: String,
-                     require: Require,
-                     enumDefs: List[EnumDef],
-                     typeAliases: List[TypeAlias],
-                     opaques: List[Opaque],
-                     specs: List[Spec],
-                     exports: Set[(String, Int)],
-                     imports: Map[LocalFunName, RemoteFunName],
-                     exportTypes: Set[(String, Int)],
-                     importTypes: Map[LocalFunName, RemoteFunName],
-                     funs: List[Fun]) {
+  case class Program(
+      lang: Lang,
+      module: String,
+      require: Require,
+      enumDefs: List[EnumDef],
+      typeAliases: List[TypeAlias],
+      opaques: List[Opaque],
+      specs: List[Spec],
+      exports: Set[(String, Int)],
+      imports: Map[LocalFunName, RemoteFunName],
+      exportTypes: Set[(String, Int)],
+      importTypes: Map[LocalFunName, RemoteFunName],
+      funs: List[Fun],
+  ) {
     val typeMap: Map[LocalName, RemoteName] =
-      importTypes.map{case (k, v) => LocalName(k.name) -> RemoteName(v.module, v.name)}
+      importTypes.map { case (k, v) => LocalName(k.name) -> RemoteName(v.module, v.name) }
   }
 
   // "High-level" program element
@@ -224,28 +227,34 @@ object Ast {
 
   case class RawProgram(elems: List[ProgramElem]) {
     def program: Program = {
-      val mods = elems.find{_.isInstanceOf[LangElem]}.get.asInstanceOf[LangElem].mods.toSet
+      val mods = elems.find { _.isInstanceOf[LangElem] }.get.asInstanceOf[LangElem].mods.toSet
       val lang: Lang =
         if (mods == Set("erl2", "st")) ST
         else if (mods == Set("erl2", "ffi")) FFI
         else sys.error("unexpected mode")
       Program(
         lang,
-        module = elems.find{_.isInstanceOf[ModuleElem]}.get.asInstanceOf[ModuleElem].module,
-        require = Require(elems.collect{case e: RequireElem => e.require}.flatMap(_.modules).distinct),
-        enumDefs = elems.collect{case e: EnumElem => e.enumDef},
-        typeAliases = elems.collect{case e: TypeAliasElem => e.typeAlias},
-        opaques = elems.collect{case e: OpaqueElem => e.opaque},
-        specs = elems.collect{case e: SpecElem => e.spec},
-        exports = elems.collect{case e: ExportElem => e.ids}.flatten.toSet,
-        imports = elems.collect{
-          case i: ImportElem => i.ids.map(id => id -> new RemoteFunName(i.module, id.name, id.arity))
-        }.flatten.toMap,
-        exportTypes = elems.collect{case e: ExportTypeElem => e.ids}.flatten.toSet,
-        importTypes = elems.collect{
-          case i: ImportTypeElem => i.ids.map(id => id -> new RemoteFunName(i.module, id.name, id.arity))
-        }.flatten.toMap,
-        funs = elems.collect{case e: FunElem => e.fun},
+        module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
+        require = Require(elems.collect { case e: RequireElem => e.require }.flatMap(_.modules).distinct),
+        enumDefs = elems.collect { case e: EnumElem => e.enumDef },
+        typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
+        opaques = elems.collect { case e: OpaqueElem => e.opaque },
+        specs = elems.collect { case e: SpecElem => e.spec },
+        exports = elems.collect { case e: ExportElem => e.ids }.flatten.toSet,
+        imports = elems
+          .collect {
+            case i: ImportElem => i.ids.map(id => id -> new RemoteFunName(i.module, id.name, id.arity))
+          }
+          .flatten
+          .toMap,
+        exportTypes = elems.collect { case e: ExportTypeElem => e.ids }.flatten.toSet,
+        importTypes = elems
+          .collect {
+            case i: ImportTypeElem => i.ids.map(id => id -> new RemoteFunName(i.module, id.name, id.arity))
+          }
+          .flatten
+          .toMap,
+        funs = elems.collect { case e: FunElem => e.fun },
       )
     }
   }

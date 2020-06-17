@@ -44,22 +44,28 @@ object Pos {
     }
 
     def prefix: String =
-      source.subSequence(
-        index(start.line - 1),
-        index(start.line - 1) + start.column - 1,
-      ).toString
+      source
+        .subSequence(
+          index(start.line - 1),
+          index(start.line - 1) + start.column - 1,
+        )
+        .toString
 
     def text: String =
-      source.subSequence(
-        index(start.line - 1) + start.column - 1,
-        index(end.line - 1) + end.column - 1,
-      ).toString
+      source
+        .subSequence(
+          index(start.line - 1) + start.column - 1,
+          index(end.line - 1) + end.column - 1,
+        )
+        .toString
 
     def suffix: String =
-      source.subSequence(
-        index(end.line - 1) + end.column - 1,
-        index(end.line)
-      ).toString
+      source
+        .subSequence(
+          index(end.line - 1) + end.column - 1,
+          index(end.line),
+        )
+        .toString
   }
 
   trait Pos {

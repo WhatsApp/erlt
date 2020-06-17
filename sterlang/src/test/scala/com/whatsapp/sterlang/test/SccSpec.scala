@@ -37,7 +37,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |-lang([erl2, st]).
         |-module(test).
         |""".stripMargin,
-      List()
+      List(),
     )
 
     testScc(
@@ -47,7 +47,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |even() -> odd().
         |odd() -> even().
         |""".stripMargin,
-      List(List("even/0", "odd/0"))
+      List(List("even/0", "odd/0")),
     )
 
     testScc(
@@ -57,7 +57,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |odd() -> even().
         |even() -> odd().
         |""".stripMargin,
-      List(List("odd/0", "even/0"))
+      List(List("odd/0", "even/0")),
     )
 
     testScc(
@@ -69,7 +69,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |even1() -> odd1().
         |even2() -> odd2().
         |""".stripMargin,
-      List(List("odd1/0", "even1/0"), List("odd2/0", "even2/0"))
+      List(List("odd1/0", "even1/0"), List("odd2/0", "even2/0")),
     )
 
     testScc(
@@ -81,7 +81,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |even1() -> odd1().
         |even2() -> odd2().
         |""".stripMargin,
-      List(List("odd2/0", "even2/0"), List("odd1/0", "even1/0"))
+      List(List("odd2/0", "even2/0"), List("odd1/0", "even1/0")),
     )
 
     testScc(
@@ -95,7 +95,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |even2() -> odd2().
         |main2() -> even2().
         |""".stripMargin,
-      List(List("odd2/0", "even2/0"), List("odd1/0", "even1/0"), List("main1/0"), List("main2/0"))
+      List(List("odd2/0", "even2/0"), List("odd1/0", "even1/0"), List("main1/0"), List("main2/0")),
     )
 
     testScc(
@@ -109,7 +109,7 @@ class SccSpec extends org.scalatest.FunSpec {
         |even2() -> odd2().
         |main1() -> even1().
         |""".stripMargin,
-      List(List("odd2/0", "even2/0"), List("main2/0"), List("odd1/0", "even1/0"), List("main1/0"))
+      List(List("odd2/0", "even2/0"), List("main2/0"), List("odd1/0", "even1/0"), List("main1/0")),
     )
   }
 }

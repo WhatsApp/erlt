@@ -21,11 +21,13 @@ package object sterlang {
   @inline
   val S = Ast
 
-  case class Context(enumDefs: List[S.EnumDef],
-                     specs: List[S.Spec],
-                     aliases: List[S.TypeAlias],
-                     opaques: Set[S.TypeId],
-                     env: Env) {
+  case class Context(
+      enumDefs: List[S.EnumDef],
+      specs: List[S.Spec],
+      aliases: List[S.TypeAlias],
+      opaques: Set[S.TypeId],
+      env: Env,
+  ) {
     def extend(program: S.Program): Context = {
       val opaqueAliases = program.opaques.map { opaque =>
         S.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.p)
@@ -40,10 +42,12 @@ package object sterlang {
     }
   }
 
-  case class ModuleApi(enumDefs: List[S.EnumDef],
-                       aliases: List[S.TypeAlias],
-                       specs: List[S.Spec],
-                       opaques: List[S.TypeId])
+  case class ModuleApi(
+      enumDefs: List[S.EnumDef],
+      aliases: List[S.TypeAlias],
+      specs: List[S.Spec],
+      opaques: List[S.TypeId],
+  )
 
   val nativeOpaques: Set[S.TypeId] =
     Set(
@@ -68,7 +72,6 @@ package object sterlang {
       S.TypeId(S.LocalName("timeout"), 0),
       S.TypeId(S.LocalName("node"), 0),
       S.TypeId(S.LocalName("no_return"), 0),
-
       S.TypeId(S.LocalName("integer"), 0),
       S.TypeId(S.LocalName("char"), 0),
       S.TypeId(S.LocalName("float"), 0),
