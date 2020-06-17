@@ -108,6 +108,14 @@ remote_fun({attribute,_,import,{Mod,Funs}}) ->
     [{Mod, F, A} || {F, A} <- Funs];
 remote_fun({call,_,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
     [{M,F, length(As)}];
+% we don't complicate the analysis and assume that there are no collisions
+% between BIFs and functions defined in a given module
+remote_fun({call, _, {atom, _, F}, As}) ->
+    A = length(As),
+    case erl_internal:bif(F, A) of
+        true -> [{erlang, F, A}];
+        false -> false
+    end;
 %% fn mod:f/n
 remote_fun({'fun',_,{function,{atom,_,Mod},{atom,_,F},{integer,_,A}}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
     [{Mod, F, A}];
