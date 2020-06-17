@@ -34,3 +34,5 @@ lazy val sterlang = (project in file("."))
   .settings(Defaults.itSettings)
   .settings(projectSetting)
   .settings(mainClass in assembly := Some("com.whatsapp.sterlang.Main"))
+
+inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
