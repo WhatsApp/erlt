@@ -68,8 +68,11 @@ object Pos {
         .toString
   }
 
-  trait Pos {
-    val p: Pos
+  /** An object that has a source location. */
+  trait HasSourceLocation {
+    val sourceLocation: P
   }
 
+  /** Attaches a source location to an arbitrary type. */
+  case class Located[+A](value: A)(val sourceLocation: P) extends HasSourceLocation
 }

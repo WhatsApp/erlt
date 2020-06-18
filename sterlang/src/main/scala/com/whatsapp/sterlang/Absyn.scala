@@ -16,56 +16,95 @@
 
 package com.whatsapp.sterlang
 
+import com.whatsapp.sterlang.Pos.HasSourceLocation
+import com.whatsapp.sterlang.Values.Value
+
 object Absyn {
   type Type = Types.Type
   type RowType = Types.RowType
   type BinOp = Ast.BinOp
   type UOp = Ast.UOp
 
+  /** A node in the intermediate language abstract syntax tree.
+    *
+    * The intermediate language is similar to the surface language,
+    * but every expression is annotated with its type.
+    */
+  trait Node extends HasSourceLocation
+
   case class Field[A](label: String, value: A)
 
-  sealed trait Exp
-  case class IfExp(exp1: Exp, exp2: Exp, exp3: Exp, tp: Type) extends Exp
-  case class RecordUpdateExp(exp: Exp, tp1: Type, fields: List[Field[Exp]], tp: Type) extends Exp
-  case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp, tp: Type) extends Exp
-  case class UOpExp(uOp: UOp, exp: Exp, tp: Type) extends Exp
-  case class AppExp(head: Exp, args: List[Exp], tp: Type) extends Exp
-  case class SelExp(exp: Exp, tp: Type, label: String, tp2: Type) extends Exp
-  case class BoolExp(bool: Boolean) extends Exp
-  case class NumberExp(n: Int) extends Exp
-  case class CharExp(c: String) extends Exp
-  case class StringExp(s: String) extends Exp
-  case object UnitExp extends Exp
-  case class VarExp(v: String, tp: Type) extends Exp
-  case class SeqExp(e1: Exp, e2: Exp) extends Exp
-  case class ListExp(elems: List[Exp], tp: Type) extends Exp
-  case class ConsExp(h: Exp, t: Exp, tp: Type) extends Exp
-  case class BlockExp(body: Body) extends Exp
-  case class RecordExp(fields: List[Field[Exp]], tp: Type) extends Exp
-  case class EnumConExp(enumName: String, conName: String, args: List[Exp], tp: Type) extends Exp
-  case class FnExp(clauses: List[Clause], typ: Type) extends Exp
-  case class NamedFnExp(name: String, clauses: List[Clause], typ: Type) extends Exp
-  case class TupleExp(elems: List[Exp], t: Type) extends Exp
-  case class CaseExp(selector: Exp, branches: List[Branch], tp: Type) extends Exp
+  sealed trait Exp extends Node {
 
-  case class ValDef(pat: TPat, exp: Exp, env: Env, depth: Int, vType: Type)
+    /** The type of the expression. */
+    val typ: Type
+  }
+
+  // TODO: variableName, enumName, conName etc. should all be classes and have a source location.
+
+  case class VarExp(name: String)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+
+  // Begin TODO: these can be elaborated to constructor applications
+  case class LiteralExp(value: Value)(val sourceLocation: Pos.P) extends Exp {
+    override val typ: Type = value.typ
+  }
+  case class TupleExp(elems: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class ListExp(elems: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  // End TODO
+
+  case class UOpExp(uOp: UOp, exp: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  // TODO: this can be unified with [CaseExp]
+  case class IfExp(exp1: Exp, exp2: Exp, exp3: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class CaseExp(selector: Exp, branches: List[Branch])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+
+  // TODO: is [[SeqExp]] significantly different than [[BlockExp]]?
+  case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class BlockExp(body: Body)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+
+  // TODO: can [FnExp] be unified with [NamedFnExp]?
+  case class FnExp(clauses: List[Clause])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class AppExp(head: Exp, args: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+
+  // TODO: should this have a RowType?
+  case class RecordExp(fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  // TODO: what's tp
+  case class SelExp(exp: Exp, tp: Type, label: String)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  // TODO: what's tp1
+  case class RecordUpdateExp(exp: Exp, tp1: Type, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
+      extends Exp
+
+  // TODO: how is ConsExp different from EnumConsExp?
+  case class ConsExp(h: Exp, t: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class EnumConExp(enumName: String, conName: String, args: List[Exp])(val typ: Type, val sourceLocation: Pos.P)
+      extends Exp
+
+  case class ValDef(pat: Pat, exp: Exp, env: Env, depth: Int, vType: Type)
   case class Body(prelude: List[ValDef], main: ValDef, tp: Type)
   case class Fun(f: String, clauses: List[Clause], fType: Type)
-  case class Clause(pats: List[TPat], body: Body)
+  case class Clause(pats: List[Pat], body: Body)
 
-  case class TPat(pat1: Pat, tp: Type)
-  sealed trait Pat
-  case object WildPat extends Pat
-  case class VarPat(v: String) extends Pat
-  case class BoolPat(v: Boolean) extends Pat
-  case class NumberPat(i: Int) extends Pat
-  case class StringPat(s: String) extends Pat
-  case class TuplePat(pats: List[TPat]) extends Pat
-  case class RecordPat(fields: List[Field[TPat]], open: Boolean) extends Pat
-  case class AndPat(p1: TPat, p2: TPat) extends Pat
-  case class EnumCtrPat(enumLabel: String, conLabel: String, pats: List[TPat]) extends Pat
-  case class ListPat(pats: List[TPat]) extends Pat
-  case class ConsPat(hPat: TPat, tPat: TPat) extends Pat
+  sealed trait Pat extends Node {
 
-  case class Branch(pat: TPat, body: Body)
+    /** The type of values this pattern can match. */
+    val typ: Type
+  }
+
+  case class WildPat()(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class VarPat(v: String)(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class AndPat(p1: Pat, p2: Pat)(val typ: Type, val sourceLocation: Pos.P) extends Pat
+
+  case class LiteralPat(value: Value)(val sourceLocation: Pos.P) extends Pat {
+    override val typ: Type = value.typ
+  }
+  case class TuplePat(pats: List[Pat])(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class ListPat(pats: List[Pat])(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class RecordPat(fields: List[Field[Pat]], open: Boolean)(val typ: Type, val sourceLocation: Pos.P) extends Pat
+
+  case class ConsPat(hPat: Pat, tPat: Pat)(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class EnumCtrPat(enumLabel: String, conLabel: String, pats: List[Pat])(val typ: Type, val sourceLocation: Pos.P)
+      extends Pat
+
+  case class Branch(pat: Pat, body: Body)
 }

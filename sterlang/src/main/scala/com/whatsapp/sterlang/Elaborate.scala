@@ -137,7 +137,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBlockExp(blockExp, ty, d, env)
     }
 
-  private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.TPat, Env, PEnv) = {
+  private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
     val ts =
       if (gen)
         TU.generalize(d)(t)
@@ -146,7 +146,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         ST.TypeSchema(0, List(), ST.PlainType(t))
 
     val (p1, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
-    (A.TPat(p1, t), env1, penv1)
+    (A.Pat(p1, t), env1, penv1)
   }
 
   private def elpat1(p: S.Pat, ts: ST.TypeSchema, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) =

@@ -83,31 +83,33 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printExp(exp)
     }
 
-  private def printTPat(tPat: A.TPat): Unit =
-    tPat.pat1 match {
-      case A.WildPat =>
+  private def printTPat(tPat: A.Pat): Unit =
+    tPat match {
+      case A.WildPat() =>
       // nothing
       case A.VarPat(v) =>
-        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(tPat.tp))
+        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(tPat.typ))
         val typeSchemaString = printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
         val pp = "val " + v + ": " + typeSchemaString
         output(pp)
-      case A.TuplePat(pats) =>
-        pats.foreach(printTPat)
-      case A.BoolPat(_) | A.NumberPat(_) | A.StringPat(_) =>
-      //
-      case A.RecordPat(fields, _) =>
-        fields.foreach { f => printTPat(f.value) }
       case A.AndPat(p1, p2) =>
         printTPat(p1)
         printTPat(p2)
-      case A.EnumCtrPat(_, _, pats) =>
+
+      case A.LiteralPat(_) =>
+      //
+      case A.TuplePat(pats) =>
         pats.foreach(printTPat)
       case A.ListPat(pats) =>
         pats.foreach(printTPat)
+      case A.RecordPat(fields, _) =>
+        fields.foreach { f => printTPat(f.value) }
+
       case A.ConsPat(hPat, tPat) =>
         printTPat(hPat)
         printTPat(tPat)
+      case A.EnumCtrPat(_, _, pats) =>
+        pats.foreach(printTPat)
     }
 
   private def printBody(body: A.Body): Unit = {
@@ -117,68 +119,68 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
 
   private def printExp(exp: A.Exp): Unit =
     exp match {
-      case A.IfExp(exp1, exp2, exp3, _) =>
+      case A.VarExp(_) =>
+      // Nothing
+
+      case A.LiteralExp(_) =>
+      // Nothing
+      case A.TupleExp(elems) =>
+        elems.foreach(printExp)
+      case A.ListExp(elems) =>
+        elems.foreach(printExp)
+
+      case A.UOpExp(_, exp) =>
+        printExp(exp)
+      case A.BinOpExp(_, exp1, exp2) =>
+        printExp(exp1)
+        printExp(exp2)
+
+      case A.IfExp(exp1, exp2, exp3) =>
         printExp(exp1)
         printExp(exp2)
         printExp(exp3)
-      case A.RecordUpdateExp(exp, _, fields, _) =>
-        printExp(exp)
-        fields.foreach(f => printExp(f.value))
-      case A.BinOpExp(binOp, exp1, exp2, tp) =>
-        printExp(exp1)
-        printExp(exp2)
-      case A.UOpExp(uOp, exp, tp) =>
-        printExp(exp)
-      case A.AppExp(head, args, tp) =>
-        printExp(head)
-        args.foreach(printExp)
-      case A.SelExp(exp, tp, label, tp2) =>
-        printExp(exp)
-      case A.BoolExp(bool) =>
-      // Nothing
-      case A.NumberExp(n) =>
-      // Nothing
-      case A.CharExp(n) =>
-      // Nothing
-      case A.StringExp(s) =>
-      // Nothing
-      case A.UnitExp =>
-      // Nothing
-      case A.VarExp(v, tp) =>
-      // Nothing
-      case A.SeqExp(e1, e2) =>
-        printExp(e1)
-        printExp(e2)
-      case A.ListExp(elems, tp) =>
-        elems.foreach(printExp)
-      case A.ConsExp(h, t, tp) =>
-        printExp(h)
-        printExp(t)
-      case A.RecordExp(fields, tp) =>
-        fields.foreach(f => printExp(f.value))
-      case A.EnumConExp(enumName, conName, exprs, tp) =>
-        exprs.foreach(printExp)
-      case A.FnExp(clauses, typ) =>
-        clauses.foreach { clause =>
-          clause.pats.foreach(printTPat)
-          printBody(clause.body)
-        }
-      case A.NamedFnExp(name, clauses, typ) =>
-        printTPat(A.TPat(A.VarPat(name), typ))
-        clauses.foreach { clause =>
-          clause.pats.foreach(printTPat)
-          printBody(clause.body)
-        }
-      case A.CaseExp(selector, branches, tp) =>
+      case A.CaseExp(selector, branches) =>
         printExp(selector)
         branches.foreach { branch =>
           printTPat(branch.pat)
           printBody(branch.body)
         }
-      case A.TupleExp(elems, t) =>
-        elems.foreach(printExp)
+
+      case A.SeqExp(e1, e2) =>
+        printExp(e1)
+        printExp(e2)
       case A.BlockExp(body) =>
         printBody(body)
+
+      case A.RecordExp(fields) =>
+        fields.foreach(f => printExp(f.value))
+      case A.SelExp(exp, _, _) =>
+        printExp(exp)
+      case A.RecordUpdateExp(exp, _, fields) =>
+        printExp(exp)
+        fields.foreach(f => printExp(f.value))
+
+      case A.FnExp(clauses) =>
+        clauses.foreach { clause =>
+          clause.pats.foreach(printTPat)
+          printBody(clause.body)
+        }
+      case A.NamedFnExp(name, clauses) =>
+        // TODO: the source location is wrong, but I don't think it matters.
+        printTPat(A.VarPat(name)(exp.typ, exp.sourceLocation))
+        clauses.foreach { clause =>
+          clause.pats.foreach(printTPat)
+          printBody(clause.body)
+        }
+      case A.AppExp(head, args) =>
+        printExp(head)
+        args.foreach(printExp)
+
+      case A.ConsExp(h, t) =>
+        printExp(h)
+        printExp(t)
+      case A.EnumConExp(_, _, exprs) =>
+        exprs.foreach(printExp)
     }
 
   private def output(pp: String): Unit = {
