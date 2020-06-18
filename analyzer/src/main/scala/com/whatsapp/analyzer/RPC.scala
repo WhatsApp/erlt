@@ -69,6 +69,24 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getBifClashes(beamFilePath: String): List[(String, String, Int)] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "bif_clashes", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect {
+          case ETuple(List(EAtom(module), EAtom(name), ELong(arity))) =>
+            (module, name, arity.toInt)
+        }
+      case _ =>
+        println("not loaded")
+        List.empty
+    }
+  }
+
   def getErrorHandling(beamFilePath: String): Option[(Int, Int)] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "error_handling", new OtpErlangList(new OtpErlangString(beamFilePath)))

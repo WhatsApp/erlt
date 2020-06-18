@@ -16,6 +16,7 @@
 
 -export([
     behaviours/1,
+    bif_clashes/1,
     catches/1,
     error_handling/1,
     exports/1,
@@ -63,6 +64,13 @@ error_handling(BeamFile) ->
     Catches = erlang:length(catches_aux(Forms)),
     Tries = erlang:length(tries_aux(Forms)),
     {{'catches', Catches}, {'tries', Tries}}.
+
+-spec bif_clashes(file:filename()) -> list(mfa()).
+bif_clashes(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    M = get_module(Forms),
+    Clashes = [{M, N, A} || {function, _Line, N, A, _Cs} <- Forms, erl_internal:bif(N, A)],
+    lists:usort(Clashes).
 
 -spec catches(file:filename()) -> list(erl_anno:anno()).
 catches(BeamFile) ->
