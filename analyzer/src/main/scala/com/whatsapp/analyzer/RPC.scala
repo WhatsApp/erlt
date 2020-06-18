@@ -102,6 +102,25 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getPrimitives(beamFilePath: String, primCategory: String): List[String] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC(
+      "analyzer",
+      "used_primitives",
+      new OtpErlangList(Array[OtpErlangObject](new OtpErlangString(beamFilePath), new OtpErlangAtom(primCategory))),
+    )
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect {case EString(s) => s }
+      case _ =>
+        println("not loaded")
+        List.empty
+    }
+  }
+
   def getErrorHandling(beamFilePath: String): Option[(Int, Int)] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "error_handling", new OtpErlangList(new OtpErlangString(beamFilePath)))

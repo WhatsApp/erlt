@@ -21,7 +21,8 @@
     exports/1,
     receives/1,
     tries/1,
-    used_funs/1
+    used_funs/1,
+    used_primitives/2
 ]).
 
 %% Returns a list of functions used in a given module.
@@ -37,6 +38,66 @@ used_funs_aux(Forms) ->
     Remotes1 = lists:append(Remotes),
     FilteredRemotes = [{M, F, A} || {M, F, A} <- Remotes1, M =/= Module],
     lists:usort(FilteredRemotes).
+
+-spec used_primitives(file:filename(), atom()) -> list(string()).
+used_primitives(BeamFile, PrimCategory) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Remotes = collect(Forms, fun pred/1, fun remote_fun/1),
+    Remotes1 = lists:append(Remotes),
+    Set = prim_set(PrimCategory),
+    Primitives =
+        [
+            atom_to_list(F) ++ "/" ++ integer_to_list(A)
+            || {erlang, F, A} <- Remotes1, lists:member({F, A}, Set)
+        ],
+    Primitives.
+
+prim_set(concurrency) ->
+    [
+        {cancel_timer, 1},
+        {cancel_timer, 2},
+        {check_process_code, 2},
+        {check_process_code, 3},
+        {demonitor, 1},
+        {demonitor, 2},
+        {disconnect_node, 1},
+        {halt, 0},
+        {halt, 1},
+        {halt, 2},
+        {is_process_alive, 1},
+        {link, 1},
+        {list_to_pid, 1},
+        {monitor, 2},
+        {node, 0},
+        {node, 1},
+        {nodes, 0},
+        {nodes, 1},
+        {process_flag, 2},
+        {process_flag, 3},
+        {process_info, 2},
+        {process_info, 3},
+        {processes, 0},
+        {register, 2},
+        {send, 2},
+        {send, 3},
+        {send_after, 3},
+        {send_after, 4},
+        {spawn, 1},
+        {spawn, 2},
+        {spawn, 3},
+        {spawn, 4},
+        {spawn_link, 1},
+        {spawn_link, 2},
+        {spawn_link, 3},
+        {spawn_link, 4},
+        {spawn_monitor, 1},
+        {spawn_monitor, 2},
+        {spawn_monitor, 3},
+        {spawn_monitor, 4},
+        {start_timer, 3},
+        {start_timer, 4},
+        {suspend_process, 2}
+    ].
 
 %% Returns a list of functions exported from a given module.
 -spec exports(file:filename()) -> list({atom, arity()}).
