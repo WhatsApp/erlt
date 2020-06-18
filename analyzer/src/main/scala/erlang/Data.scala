@@ -20,11 +20,12 @@ package erlang
 object Data {
   sealed trait EObject
   case class EAtom(atom: String) extends EObject {
-    def asBoolean(): Boolean = atom match {
-      case "true" => true
-      case "false" => false
-      case other => sys.error(s"$other is not boolean")
-    }
+    def asBoolean(): Boolean =
+      atom match {
+        case "true"  => true
+        case "false" => false
+        case other   => sys.error(s"$other is not boolean")
+      }
   }
   case class EBitStr(bin: Array[Byte], pad_bits: Int) extends EObject
   case class EDouble(d: Double) extends EObject

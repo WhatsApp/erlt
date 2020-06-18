@@ -51,8 +51,8 @@ object BifClashes {
 
     val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam"))
     val moduleNames = beamFiles.map(s => s.substring(0, s.length - 5)).sorted
-    moduleNames flatMap  { mn =>
-      rpc.getBifClashes(s"$dir/${mn}.beam") map {case (m, n, a) => Clash(m, n, a)}
+    moduleNames flatMap { mn =>
+      rpc.getBifClashes(s"$dir/${mn}.beam") map { case (m, n, a) => Clash(m, n, a) }
     }
   }
 }

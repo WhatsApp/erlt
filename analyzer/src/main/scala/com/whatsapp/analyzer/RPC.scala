@@ -29,7 +29,7 @@ class RPC(val connection: OtpConnection) {
 
     eObject match {
       case EList(elems, _) =>
-        val funs = elems.collect {case ETuple(List(EAtom(mod), EAtom(fun), ELong(arity))) => (mod, fun, arity.toInt)}
+        val funs = elems.collect { case ETuple(List(EAtom(mod), EAtom(fun), ELong(arity))) => (mod, fun, arity.toInt) }
         Some(funs)
       case _ =>
         println("not loaded")
@@ -45,7 +45,7 @@ class RPC(val connection: OtpConnection) {
 
     eObject match {
       case EList(elems, _) =>
-        val funs = elems.collect {case ETuple(List(EAtom(fun), ELong(arity))) => (fun, arity.toInt)}
+        val funs = elems.collect { case ETuple(List(EAtom(fun), ELong(arity))) => (fun, arity.toInt) }
         Some(funs)
       case _ =>
         println("not loaded")
@@ -61,7 +61,7 @@ class RPC(val connection: OtpConnection) {
 
     eObject match {
       case EList(elems, _) =>
-        val behaviours = elems.collect {case EAtom(behaviour) => behaviour}
+        val behaviours = elems.collect { case EAtom(behaviour) => behaviour }
         Some(behaviours)
       case _ =>
         println("not loaded")
@@ -114,7 +114,7 @@ class RPC(val connection: OtpConnection) {
 
     eObject match {
       case EList(elems, _) =>
-        elems.collect {case EString(s) => s }
+        elems.collect { case EString(s) => s }
       case _ =>
         println("not loaded")
         List.empty
@@ -132,7 +132,7 @@ class RPC(val connection: OtpConnection) {
 
     eObject match {
       case EList(elems, _) =>
-        elems.collect {case EString(s) if s.endsWith("ebin") => s }
+        elems.collect { case EString(s) if s.endsWith("ebin") => s }
       case _ =>
         sys.error(s"can not get otp dirs: $eObject")
     }
@@ -145,10 +145,12 @@ class RPC(val connection: OtpConnection) {
     val eObject = erlang.DataConvert.fromJava(received)
 
     eObject match {
-      case ETuple(List(
-            ETuple(List(EAtom("catches"), ELong(catches))),
-            ETuple(List(EAtom("tries"), ELong(tries))),
-            )) =>
+      case ETuple(
+            List(
+              ETuple(List(EAtom("catches"), ELong(catches))),
+              ETuple(List(EAtom("tries"), ELong(tries))),
+            )
+          ) =>
         val result = (catches.toInt, tries.toInt)
         Some(result)
       case _ =>

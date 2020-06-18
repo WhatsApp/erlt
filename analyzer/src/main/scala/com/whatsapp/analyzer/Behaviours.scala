@@ -50,7 +50,9 @@ object Behaviours {
     var modulesAcc = 0
     var modulesWithBehavioursAcc = 0
     val projectUsages = CodeDirs.projectEbinDirs.map(indexProjectDir(_, rpc))
-    for (AppInfo(libName, modules, modulesWithBehaviours, usage) <- projectUsages if !CodeDirs.thirdParty.contains(libName)) {
+    for (
+      AppInfo(libName, modules, modulesWithBehaviours, usage) <- projectUsages if !CodeDirs.thirdParty.contains(libName)
+    ) {
       modulesAcc = modulesAcc + modules
       modulesWithBehavioursAcc = modulesWithBehavioursAcc + modulesWithBehaviours
       for ((behaviour, count) <- usage)

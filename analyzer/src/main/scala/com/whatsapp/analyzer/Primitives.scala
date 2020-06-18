@@ -35,7 +35,7 @@ object Primitives {
 
     Console.println(s"all primitives: $totalCount")
     val allPrimitives: List[(String, Int)] =
-      usages1.flatMap(_.primitives).groupBy(identity).toList.map{case (p, ps) => (p, ps.size)}.sortBy(_._2).reverse
+      usages1.flatMap(_.primitives).groupBy(identity).toList.map { case (p, ps) => (p, ps.size) }.sortBy(_._2).reverse
 
     Console.println(s"modules with primitives: ${usages1.size}")
 

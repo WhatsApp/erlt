@@ -59,7 +59,7 @@ object ErrorHandling {
     Console.println(s"Tries (NonGen):   $totalTriesNonGen")
 
     val interestingModules = allModules.filterNot(mi => generated(mi.name) || mi.name.endsWith("_tests"))
-    val top10 = interestingModules.sortBy{ mi => mi.tries + mi.catches}.reverse.take(10)
+    val top10 = interestingModules.sortBy { mi => mi.tries + mi.catches }.reverse.take(10)
     for (moduleInfo <- top10) {
       Console.println(s"${moduleInfo.name} catches:${moduleInfo.catches} tries:${moduleInfo.tries}")
     }

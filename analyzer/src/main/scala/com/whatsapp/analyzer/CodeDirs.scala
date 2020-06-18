@@ -24,15 +24,15 @@ import scala.util.Using
 object CodeDirs {
 
   lazy val root: String =
-    Using.resource(Source.fromFile("root")) { _.getLines().toList.head}
+    Using.resource(Source.fromFile("root")) { _.getLines().toList.head }
 
   lazy val projectEbinDirs: List[String] = {
-    val rawPaths = Using.resource(Source.fromFile("paths")) { _.getLines().toList.head}
+    val rawPaths = Using.resource(Source.fromFile("paths")) { _.getLines().toList.head }
     rawPaths.split(" ").toList.distinct.sorted
   }
 
   lazy val thirdParty: List[String] = {
-    val rawPaths = Using.resource(Source.fromFile("third_party")) { _.getLines().toList.head}
+    val rawPaths = Using.resource(Source.fromFile("third_party")) { _.getLines().toList.head }
     rawPaths.split(" ").toList.distinct.sorted
   }
 
