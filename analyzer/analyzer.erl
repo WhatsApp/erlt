@@ -20,6 +20,7 @@
     catches/1,
     error_handling/1,
     exports/1,
+    receives/1,
     tries/1,
     used_funs/1
 ]).
@@ -81,6 +82,12 @@ catches(BeamFile) ->
 catches_aux(Forms) ->
     collect(Forms, fun pred/1, fun catch_anno/1).
 
+-spec receives(file:filename()) -> integer().
+receives(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Receives = collect(Forms, fun pred/1, fun receive_anno/1),
+    erlang:length(Receives).
+
 -spec tries(file:filename()) -> list(erl_anno:anno()).
 tries(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
@@ -133,6 +140,13 @@ remote_fun(_) ->
 export({attribute,_,export,Es}) ->
     Es;
 export(_) ->
+    false.
+
+receive_anno({'receive',Anno,_Cs0}) ->
+    Anno;
+receive_anno({'receive',Anno,_Cs0,_To0,_ToEs0}) ->
+    Anno;
+receive_anno(_) ->
     false.
 
 catch_anno({'catch', Anno, _}) -> Anno;
