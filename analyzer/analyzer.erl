@@ -11,7 +11,6 @@
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
-
 -module(analyzer).
 
 -export([
@@ -102,7 +101,7 @@ collect(Forms, Pred, Collect) ->
 
 do_collect([], _Pred, _Collect, Acc) ->
     Acc;
-do_collect([H|T], Pred, Collect, Acc) ->
+do_collect([H | T], Pred, Collect, Acc) ->
     Acc1 = do_collect(T, Pred, Collect, Acc),
     do_collect(H, Pred, Collect, Acc1);
 do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
@@ -111,7 +110,7 @@ do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
             Acc1 = do_collect(tuple_to_list(X), Pred, Collect, Acc),
             case Collect(X) of
                 false -> Acc1;
-                Delta -> [Delta|Acc1]
+                Delta -> [Delta | Acc1]
             end;
         false ->
             Acc
@@ -119,10 +118,10 @@ do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
 do_collect(_X, _Pred, _Collect, Acc) ->
     Acc.
 
-remote_fun({attribute,_,import,{Mod,Funs}}) ->
+remote_fun({attribute, _, import, {Mod, Funs}}) ->
     [{Mod, F, A} || {F, A} <- Funs];
-remote_fun({call,_,{remote,_Line,{atom,_,M},{atom,_,F}},As}) ->
-    [{M,F, length(As)}];
+remote_fun({call, _, {remote, _Line, {atom, _, M}, {atom, _, F}}, As}) ->
+    [{M, F, length(As)}];
 % we don't complicate the analysis and assume that there are no collisions
 % between BIFs and functions defined in a given module
 remote_fun({call, _, {atom, _, F}, As}) ->
@@ -132,19 +131,20 @@ remote_fun({call, _, {atom, _, F}, As}) ->
         false -> false
     end;
 %% fn mod:f/n
-remote_fun({'fun',_,{function,{atom,_,Mod},{atom,_,F},{integer,_,A}}}) when is_atom(Mod),is_atom(F),is_integer(A) ->
+remote_fun({'fun', _, {function, {atom, _, Mod}, {atom, _, F}, {integer, _, A}}})
+        when is_atom(Mod), is_atom(F), is_integer(A) ->
     [{Mod, F, A}];
 remote_fun(_) ->
     false.
 
-export({attribute,_,export,Es}) ->
+export({attribute, _, export, Es}) ->
     Es;
 export(_) ->
     false.
 
-receive_anno({'receive',Anno,_Cs0}) ->
+receive_anno({'receive', Anno, _Cs0}) ->
     Anno;
-receive_anno({'receive',Anno,_Cs0,_To0,_ToEs0}) ->
+receive_anno({'receive', Anno, _Cs0, _To0, _ToEs0}) ->
     Anno;
 receive_anno(_) ->
     false.
@@ -160,7 +160,7 @@ pred(_) ->
 
 -spec get_module(list(erl_parse:abstract_form())) -> module().
 get_module(Forms) ->
-    erlang:hd([M || {attribute,_,module,M} <- Forms]).
+    erlang:hd([M || {attribute, _, module, M} <- Forms]).
 
 -spec get_abstract_forms(file:filename()) -> {ok, [erl_parse:abstract_form()]} | {error}.
 get_abstract_forms(BeamFile) ->
