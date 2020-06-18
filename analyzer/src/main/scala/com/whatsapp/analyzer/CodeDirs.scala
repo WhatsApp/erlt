@@ -17,62 +17,27 @@
 package com.whatsapp.analyzer
 
 import java.nio.file.{Files, Paths}
+
 import scala.io.Source
+import scala.util.Using
 
 object CodeDirs {
 
-  /**
-   * The root of your rebar3 progect
-   */
-  val srcRoot: String =
-    sys.error("specify me")
+  lazy val root: String =
+    Using.resource(Source.fromFile("root")) { _.getLines().toList.head}
 
-  /**
-   * A list of ebin directories of local OTP installation.
-   * Something like:
-   * {{{
-   * val otpEbinDirs: List[String] = List(
-   *     "/usr/local/Cellar/erlang/22.3.4/lib/erlang/lib/asn1-5.0.12/ebin",
-   *     "/usr/local/Cellar/erlang/22.3.4/lib/erlang/lib/common_test-1.18.2/ebin",
-   *     ...
-   *  )
-   * }}}
-   */
-  val otpEbinDirs: List[String] =
-    sys.error("populate the list")
+  lazy val projectEbinDirs: List[String] = {
+    val rawPaths = Using.resource(Source.fromFile("paths")) { _.getLines().toList.head}
+    rawPaths.split(" ").toList.distinct.sorted
+  }
 
-  /**
-   * A list of ebin directories of an application being analyzed.
-   * The application should be build with debug info, so that abstract forms
-   * can be restored from beam files.
-   * Something like:
-   * {{{
-   * val projectEbinDirs: List[String] = List(
-   *     "/Users/batman/myapp/_build/test/lib/lib1/ebin",
-   *     "/Users/batman/myapp/_build/test/lib/lib2/ebin",
-   * }}}
-   */
-  val projectEbinDirs: List[String] =
-    sys.error("populate the list")
-
-  /**
-   * A list of names of third-party libs of an application being analyzed.
-   * These libs are generally excluded from analysis.
-   * Something like:
-   * {{{
-   * val thirdParty: List[String] = List(
-   *     "meck",
-   *     "yaws",
-   *     "proper",
-   *  )
-   * }}}
-   */
-  val thirdParty: List[String] =
-    sys.error("populate the list")
+  lazy val thirdParty: List[String] = {
+    val rawPaths = Using.resource(Source.fromFile("third_party")) { _.getLines().toList.head}
+    rawPaths.split(" ").toList.distinct.sorted
+  }
 
   def isGenerated(appName: String, moduleName: String): Boolean = {
-    val erlFile = s"$srcRoot/$appName/src/$moduleName.erl"
-
+    val erlFile = s"$root/$appName/src/$moduleName.erl"
     if (Files.exists(Paths.get(erlFile))) {
       val src = Source.fromFile(erlFile)
       val line = src.getLines.take(1).toList.head

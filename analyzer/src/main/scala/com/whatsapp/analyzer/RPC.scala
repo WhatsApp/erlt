@@ -121,6 +121,23 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getOtpEbinDirs(): List[String] = {
+    connection.sendRPC(
+      "code",
+      "get_path",
+      new OtpErlangList(),
+    )
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect {case EString(s) if s.endsWith("ebin") => s }
+      case _ =>
+        sys.error(s"can not get otp dirs: $eObject")
+    }
+  }
+
   def getErrorHandling(beamFilePath: String): Option[(Int, Int)] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "error_handling", new OtpErlangList(new OtpErlangString(beamFilePath)))

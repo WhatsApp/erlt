@@ -93,7 +93,8 @@ object OtpFunsUsage {
   }
 
   private def loadOtpApps(rpc: RPC): List[OtpApp] = {
-    CodeDirs.otpEbinDirs.map(loadOtpApp(_, rpc))
+    val otpEbinDirs = rpc.getOtpEbinDirs()
+    otpEbinDirs.map(loadOtpApp(_, rpc))
   }
 
   private def loadOtpApp(dir: String, rpc: RPC): OtpApp = {
