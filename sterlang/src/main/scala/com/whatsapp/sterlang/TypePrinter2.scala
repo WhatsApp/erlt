@@ -30,7 +30,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
   val printer = new TypePrinter(vars, new TypesUtil(vars))
 
   def printFunsTypeSchemes(funs: List[A.Fun], env: Env): Unit = {
-    funs.foreach { f => printTypeScheme(env, f.f) }
+    funs.foreach { f => printTypeScheme(env, f.name) }
   }
 
   private def printTypeScheme(env: Env, v: String): Unit = {
@@ -61,7 +61,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         output(pp)
 
         clauses.foreach { clause =>
-          clause.pats.foreach(printTPat)
+          clause.pats.foreach(printPat)
           printBody(clause.body)
         }
     }
@@ -79,37 +79,37 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
   private def printValDef(d: A.ValDef): Unit =
     d match {
       case A.ValDef(pat, exp, _, _, _) =>
-        printTPat(pat)
+        printPat(pat)
         printExp(exp)
     }
 
-  private def printTPat(tPat: A.Pat): Unit =
-    tPat match {
+  private def printPat(pat: A.Pat): Unit =
+    pat match {
       case A.WildPat() =>
       // nothing
       case A.VarPat(v) =>
-        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(tPat.typ))
+        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(pat.typ))
         val typeSchemaString = printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
         val pp = "val " + v + ": " + typeSchemaString
         output(pp)
       case A.AndPat(p1, p2) =>
-        printTPat(p1)
-        printTPat(p2)
+        printPat(p1)
+        printPat(p2)
 
       case A.LiteralPat(_) =>
       //
       case A.TuplePat(pats) =>
-        pats.foreach(printTPat)
+        pats.foreach(printPat)
       case A.ListPat(pats) =>
-        pats.foreach(printTPat)
+        pats.foreach(printPat)
       case A.RecordPat(fields, _) =>
-        fields.foreach { f => printTPat(f.value) }
+        fields.foreach { f => printPat(f.value) }
 
       case A.ConsPat(hPat, tPat) =>
-        printTPat(hPat)
-        printTPat(tPat)
-      case A.EnumCtrPat(_, _, pats) =>
-        pats.foreach(printTPat)
+        printPat(hPat)
+        printPat(tPat)
+      case A.EnumConstructorPat(_, _, pats) =>
+        pats.foreach(printPat)
     }
 
   private def printBody(body: A.Body): Unit = {
@@ -142,7 +142,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       case A.CaseExp(selector, branches) =>
         printExp(selector)
         branches.foreach { branch =>
-          printTPat(branch.pat)
+          printPat(branch.pat)
           printBody(branch.body)
         }
 
@@ -154,7 +154,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
 
       case A.RecordExp(fields) =>
         fields.foreach(f => printExp(f.value))
-      case A.SelExp(exp, _, _) =>
+      case A.RecordSelectionExp(exp, _, _) =>
         printExp(exp)
       case A.RecordUpdateExp(exp, _, fields) =>
         printExp(exp)
@@ -162,14 +162,14 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
 
       case A.FnExp(clauses) =>
         clauses.foreach { clause =>
-          clause.pats.foreach(printTPat)
+          clause.pats.foreach(printPat)
           printBody(clause.body)
         }
       case A.NamedFnExp(name, clauses) =>
         // TODO: the source location is wrong, but I don't think it matters.
-        printTPat(A.VarPat(name)(exp.typ, exp.sourceLocation))
+        printPat(A.VarPat(name)(exp.typ, exp.sourceLocation))
         clauses.foreach { clause =>
-          clause.pats.foreach(printTPat)
+          clause.pats.foreach(printPat)
           printBody(clause.body)
         }
       case A.AppExp(head, args) =>
@@ -179,7 +179,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       case A.ConsExp(h, t) =>
         printExp(h)
         printExp(t)
-      case A.EnumConExp(_, _, exprs) =>
+      case A.EnumConstructorExp(_, _, exprs) =>
         exprs.foreach(printExp)
     }
 

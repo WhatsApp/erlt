@@ -67,7 +67,7 @@ object SyntaxUtil {
 
       case A.ConsPat(hPat, tPat) =>
         collectPatVars2(hPat) ++ collectPatVars2(tPat)
-      case A.EnumCtrPat(_, _, tPats) =>
+      case A.EnumConstructorPat(_, _, tPats) =>
         tPats.flatMap(collectPatVars2)
     }
 
