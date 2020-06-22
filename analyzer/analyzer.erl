@@ -20,6 +20,7 @@
     dynamic_calls/1,
     error_handling/1,
     exports/1,
+    functions/1,
     receives/1,
     tries/1,
     used_funs/1,
@@ -133,6 +134,14 @@ behaviours(BeamFile) ->
     Behaviors = [Behavior || {'attribute', _, 'behavior', Behavior} <- Forms],
     Behaviours = [Behaviour || {'attribute', _, 'behaviour', Behaviour} <- Forms],
     lists:usort(Behaviors ++ Behaviours).
+
+%% the count of all functions in a module
+-spec functions(file:filename()) -> integer().
+functions(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Functions = [{Name, Arity} || {function, _Line, Name, Arity, _Clauses} <- Forms],
+    Count = erlang:length(Functions),
+    Count.
 
 -spec error_handling(file:filename()) ->
     {{'catches', integer()}, {'tries', integer()}}.
