@@ -30,18 +30,19 @@ object Behaviours {
         rpc.close()
       }
 
-    val behaviours = data.usage.keys.toList.sorted
-    Console.println("ALL")
-    for (behaviour <- behaviours) {
-      Console.println(s"$behaviour ${data.usage(behaviour)}")
-    }
-
     Console.println(s"Modules:    ${data.modules}")
     Console.println(s"Behaviours: ${data.modulesWithBehaviours}")
     Console.println("Top10")
     val top10 = data.usage.toList.sortBy(_._2).reverse.take(10)
     for ((behaviour, count) <- top10) {
       Console.println(s"$behaviour $count")
+    }
+
+    val behaviours = data.usage.keys.toList.sorted
+    Console.println()
+    Console.println("ALL")
+    for (behaviour <- behaviours) {
+      Console.println(s"$behaviour ${data.usage(behaviour)}")
     }
   }
 

@@ -39,10 +39,14 @@ object Primitives {
 
     Console.println(s"modules with primitives: ${usages1.size}")
 
+    Console.println()
+    Console.println("Primitives:")
     for ((primitive, count) <- allPrimitives) {
       Console.println(s"$primitive: $count")
     }
 
+    Console.println()
+    Console.println("Primitives per module:")
     for (usage <- usages1) {
       Console.println(s"${usage.module}: ${usage.primitives.mkString(",")}")
     }

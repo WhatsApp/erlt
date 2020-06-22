@@ -80,6 +80,7 @@ prim_set(concurrency) ->
         {process_info, 3},
         {processes, 0},
         {register, 2},
+        {self, 0},
         {send, 2},
         {send, 3},
         {send_after, 3},
