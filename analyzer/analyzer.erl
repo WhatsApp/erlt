@@ -98,6 +98,13 @@ prim_set(concurrency) ->
         {start_timer, 3},
         {start_timer, 4},
         {suspend_process, 2}
+    ];
+prim_set(dynamic) ->
+    [
+        {apply, 2},
+        {apply, 3},
+        {is_function, 1},
+        {is_function, 2}
     ].
 
 -spec dynamic_calls(file:filename()) -> list(string()).
