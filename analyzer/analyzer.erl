@@ -17,6 +17,7 @@
     behaviours/1,
     bif_clashes/1,
     catches/1,
+    dynamic_calls/1,
     error_handling/1,
     exports/1,
     receives/1,
@@ -99,6 +100,14 @@ prim_set(concurrency) ->
         {suspend_process, 2}
     ].
 
+-spec dynamic_calls(file:filename()) -> list(string()).
+dynamic_calls(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    DCalls = collect(Forms, fun pred/1, fun dynamic_call/1),
+    DCalls1 = lists:append(DCalls),
+    DCalls12 = lists:map(fun dynamic_call_to_str/1, DCalls1),
+    DCalls12.
+
 %% Returns a list of functions exported from a given module.
 -spec exports(file:filename()) -> list({atom, arity()}).
 exports(BeamFile) ->
@@ -178,6 +187,22 @@ do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
     end;
 do_collect(_X, _Pred, _Collect, Acc) ->
     Acc.
+
+dynamic_call({call, _, {remote, _Line, {var, _, M}, {atom, _, F}}, As}) ->
+    [{M, F, length(As)}];
+dynamic_call({call, _, {remote, _Line, {atom, _, M}, {var, _, F}}, As}) ->
+    [{M, F, length(As)}];
+dynamic_call({call, _, {remote, _Line, {var, _, M}, {var, _, F}}, As}) ->
+    [{M, F, length(As)}];
+dynamic_call({call, _, {var, _, F}, As}) ->
+    [{F, length(As)}];
+dynamic_call(_) ->
+    false.
+
+dynamic_call_to_str({M, F, A}) ->
+    atom_to_list(M) ++ ":" ++ atom_to_list(F) ++ "/" ++ integer_to_list(A);
+dynamic_call_to_str({F, A}) ->
+    atom_to_list(F) ++ "/" ++ integer_to_list(A).
 
 remote_fun({attribute, _, import, {Mod, Funs}}) ->
     [{Mod, F, A} || {F, A} <- Funs];

@@ -121,6 +121,25 @@ class RPC(val connection: OtpConnection) {
     }
   }
 
+  def getDynamicCalls(beamFilePath: String): List[String] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC(
+      "analyzer",
+      "dynamic_calls",
+      new OtpErlangList(new OtpErlangString(beamFilePath)),
+    )
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect { case EString(s) => s }
+      case _ =>
+        println("not loaded")
+        List.empty
+    }
+  }
+
   def getOtpEbinDirs(): List[String] = {
     connection.sendRPC(
       "code",
