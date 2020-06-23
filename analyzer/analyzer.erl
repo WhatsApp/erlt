@@ -20,6 +20,7 @@
     dynamic_calls/1,
     error_handling/1,
     exports/1,
+    forms/1,
     functions/1,
     receives/1,
     tries/1,
@@ -40,6 +41,11 @@ used_funs_aux(Forms) ->
     Remotes1 = lists:append(Remotes),
     FilteredRemotes = [{M, F, A} || {M, F, A} <- Remotes1, M =/= Module],
     lists:usort(FilteredRemotes).
+
+-spec forms(file:filename()) -> [erl_parse:abstract_form()].
+forms(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Forms.
 
 -spec used_primitives(file:filename(), atom()) -> list(string()).
 used_primitives(BeamFile, PrimCategory) ->

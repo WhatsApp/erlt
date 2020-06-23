@@ -8,7 +8,7 @@ project.
 1. Modify `com.whatsapp.analyzer.CodeDirs` to reflect the setting of your 
    project.
 2. Setup analyzer Erlang backend: 
-   `erlc analyzer.erl; erl -sname analyzer@localhost -pa .`
+   `erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .`
 3. Run an analysis from sbt (`runMain {analysisClass}`)
 
 ## Implemented analyses

@@ -21,6 +21,12 @@ import erlang.Data._
 
 class RPC(val connection: OtpConnection) {
 
+  def getForms(beamFilePath: String): EObject = {
+    connection.sendRPC("analyzer", "forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    erlang.DataConvert.fromJava(received)
+  }
+
   def getUsedFuns(beamFilePath: String): Option[List[(String, String, Int)]] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "used_funs", new OtpErlangList(new OtpErlangString(beamFilePath)))
