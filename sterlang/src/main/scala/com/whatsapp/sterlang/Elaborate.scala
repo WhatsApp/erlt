@@ -44,7 +44,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     } catch {
       case Circularity | RowCircularity =>
         throw new InfiniteTypeError(pos, required, found)
-      case te: UnifyError =>
+      case _: UnifyError =>
         throw new TypeMismatchError(pos, required, found)
     }
   }
@@ -55,7 +55,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val sccNames = SyntaxUtil.buildSCC(funs)
     val sccFuns = sccNames.map(_.map(fMap))
     val (sccFuns1, env) = elabSccFuns(sccFuns)
-    val afMap = sccFuns1.flatten.map { f => f.f -> f }.toMap
+    val afMap = sccFuns1.flatten.map { f => f.name -> f }.toMap
     val afuns2 = names.map(afMap)
     (afuns2, env)
   }
@@ -80,7 +80,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       val t = freshTypeVar(d1)
       val body1 = elab(valBody, t, d1, envAcc)
       val (pat1, env1, _) =
-        elpat(valPat, t, d1, envAcc, Set.empty, true)
+        elpat(valPat, t, d1, envAcc, Set.empty, gen = true)
       envAcc = env1
       A.ValDef(pat1, body1, envAcc, d1, t)
     }
@@ -88,7 +88,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.ValDef(valPat, valBody) = main
     val body1 = elab(valBody, ty, d1, envAcc)
     val (pat1, env1, _) =
-      elpat(valPat, ty, d1, envAcc, Set.empty, true)
+      elpat(valPat, ty, d1, envAcc, Set.empty, gen = true)
     val def1 = A.ValDef(pat1, body1, env1, d1, ty)
     A.Body(defs1, def1, ty)
   }
@@ -137,7 +137,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBlockExp(blockExp, ty, d, env)
     }
 
-  private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.TPat, Env, PEnv) = {
+  private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
     val ts =
       if (gen)
         TU.generalize(d)(t)
@@ -146,7 +146,23 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         ST.TypeSchema(0, List(), ST.PlainType(t))
 
     val (p1, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
-    (A.TPat(p1, t), env1, penv1)
+
+    // Attach type annotation to the pattern
+    assert(p1.isInstanceOf[A.LiteralPat] || p1.typ == null)
+    val p2 = p1 match {
+      case p: A.WildPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.VarPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.AndPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.LiteralPat         => p
+      case p: A.TuplePat           => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.ListPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.RecordPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.ConsPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.EnumConstructorPat => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+    }
+    assert(p2.typ != null)
+
+    (p2, env1, penv1)
   }
 
   private def elpat1(p: S.Pat, ts: ST.TypeSchema, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) =
@@ -178,35 +194,39 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabBinOpExp(exp: S.BinOpExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.BinOpExp(op: S.BinOp, e1: S.Exp, e2: S.Exp) = exp
 
-    op match {
-      case op @ S.BoolConnOp(_) =>
-        unify(exp.p, ty, MT.BoolType)
-        A.BinOpExp(op, elab(e1, MT.BoolType, d, env), elab(e2, MT.BoolType, d, env), ty)
-      case op @ S.Cmp(_) =>
-        unify(exp.p, ty, MT.BoolType)
-        val operandType = freshTypeVar(d)
-        A.BinOpExp(op, elab(e1, operandType, d, env), elab(e2, operandType, d, env), ty)
-      case op @ S.ListOp(_) =>
-        val elemType = freshTypeVar(d)
-        val listType = MT.ListType(elemType)
-        unify(exp.p, ty, listType)
-        A.BinOpExp(op, elab(e1, listType, d, env), elab(e2, listType, d, env), ty)
-      case op @ S.Arith(_) =>
-        unify(exp.p, ty, MT.IntType)
-        A.BinOpExp(op, elab(e1, MT.IntType, d, env), elab(e2, MT.IntType, d, env), ty)
-    }
+    val (e1Elaborated, e2Elaborated) =
+      op match {
+        case S.BoolConnOp(_) =>
+          unify(exp.p, ty, MT.BoolType)
+          (elab(e1, MT.BoolType, d, env), elab(e2, MT.BoolType, d, env))
+        case S.Cmp(_) =>
+          unify(exp.p, ty, MT.BoolType)
+          val operandType = freshTypeVar(d)
+          (elab(e1, operandType, d, env), elab(e2, operandType, d, env))
+        case S.ListOp(_) =>
+          val elemType = freshTypeVar(d)
+          val listType = MT.ListType(elemType)
+          unify(exp.p, ty, listType)
+          (elab(e1, listType, d, env), elab(e2, listType, d, env))
+        case S.Arith(_) =>
+          unify(exp.p, ty, MT.IntType)
+          (elab(e1, MT.IntType, d, env), elab(e2, MT.IntType, d, env))
+      }
+
+    A.BinOpExp(op, e1Elaborated, e2Elaborated)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabUOpExp(exp: S.UOpExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.UOpExp(op: S.UOp, e1: S.Exp) = exp
-    op match {
+    val e1Elaborated = op match {
       case S.UMinus | S.UPlus | S.BNot =>
         unify(exp.p, ty, MT.IntType)
-        A.UOpExp(op, elab(e1, MT.IntType, d, env), ty)
-      case op @ S.UNot =>
+        elab(e1, MT.IntType, d, env)
+      case S.UNot =>
         unify(exp.p, ty, MT.BoolType)
-        A.UOpExp(op, elab(e1, MT.BoolType, d, env), ty)
+        elab(e1, MT.BoolType, d, env)
     }
+    A.UOpExp(op, e1Elaborated)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -217,7 +237,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val exp2 = elab(e3, resType, d, env)
     unify(exp.p, ty, resType)
 
-    A.IfExp(elab(e1, MT.BoolType, d, env), exp1, exp2, ty)
+    A.IfExp(elab(e1, MT.BoolType, d, env), exp1, exp2)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabCaseExp(exp: S.CaseExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -228,7 +248,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val resType = freshTypeVar(d)
 
     val branches = for (S.Rule(pat, optGuard, body) <- eRules) yield {
-      val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, true)
+      val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = true)
       for (guard <- optGuard) {
         elab(guard, MT.BoolType, d, env1)
       }
@@ -237,7 +257,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     unify(exp.p, ty, resType)
-    A.CaseExp(selector1, branches, ty)
+    A.CaseExp(selector1, branches)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabRecordUpdateExp(exp: S.RecordUpdateExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -262,7 +282,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rec1 = elab(rec, recType, d, env)
 
     unify(exp.p, ty, recType)
-    A.RecordUpdateExp(rec1, recType, fields1, ty)
+    A.RecordUpdateExp(rec1, recType, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabAppExp(exp: S.AppExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -274,7 +294,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val args1 = (args zip argTypes).map { case (e, t) => elab(e, t, d, env) }
 
     unify(exp.p, ty, resType)
-    A.AppExp(exp1, args1, ty)
+    A.AppExp(exp1, args1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabSelExp(exp: S.SelExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -286,35 +306,35 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val record1 = elab(record, recordType, d, env)
 
     unify(exp.p, ty, fieldType)
-    A.SelExp(record1, recordType, label, ty)
+    A.RecordSelectionExp(record1, recordType, label)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabBoolExp(exp: S.BoolExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.BoolExp(b) = exp
 
     unify(exp.p, ty, MT.BoolType)
-    A.BoolExp(b)
+    A.LiteralExp(Values.BooleanValue(b))(sourceLocation = exp.p)
   }
 
   private def elabNumberExp(exp: S.NumberExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.NumberExp(n) = exp
 
     unify(exp.p, ty, MT.IntType)
-    A.NumberExp(n)
+    A.LiteralExp(Values.IntegerValue(n))(sourceLocation = exp.p)
   }
 
   private def elabCharExp(exp: S.CharExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.CharExp(n) = exp
 
     unify(exp.p, ty, MT.CharType)
-    A.CharExp(n)
+    A.LiteralExp(Values.CharValue(n))(sourceLocation = exp.p)
   }
 
   private def elabStringExp(exp: S.StringExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.StringExp(s) = exp
 
     unify(exp.p, ty, MT.StringType)
-    A.StringExp(s)
+    A.LiteralExp(Values.StringValue(s))(sourceLocation = exp.p)
   }
 
   private def elabVarExp(exp: S.VarExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -327,7 +347,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
         unify(exp.p, ty, t)
 
-        A.VarExp(nv.stringId, t)
+        A.VarExp(nv.stringId)(typ = t, sourceLocation = exp.p)
       case None =>
         throw new UnboundVar(exp.p, nv.stringId)
     }
@@ -351,7 +371,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val recordType = MT.RecordType(fieldTypes.foldRight(baseType)(T.RowFieldType))
 
     unify(exp.p, ty, recordType)
-    A.RecordExp(fields1, ty)
+    A.RecordExp(fields1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabTupleExp(exp: S.TupleExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -361,7 +381,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val elems1 = (elems zip elemTypes).map { case (e, t) => elab(e, t, d, env) }
 
     unify(exp.p, ty, MT.TupleType(elemTypes))
-    A.TupleExp(elems1, ty)
+    A.TupleExp(elems1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabFnExp(exp: S.FnExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -371,7 +391,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val clauses1 = elabClauses(clauses, fnType, d, env)
 
     unify(exp.p, ty, fnType)
-    A.FnExp(clauses1, ty)
+    A.FnExp(clauses1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabClauses(clauses: List[S.Clause], ty: T.Type, d: T.Depth, env: Env): List[A.Clause] = {
@@ -386,7 +406,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       var envAcc = env
       var penvAcc: PEnv = Set.empty
       val pats1 = for { (pat, pt) <- pats.zip(patTypes) } yield {
-        val (p1, env1, penv1) = elpat(pat, pt, d, envAcc, penvAcc, false)
+        val (p1, env1, penv1) = elpat(pat, pt, d, envAcc, penvAcc, gen = false)
         envAcc = env1
         penvAcc = penv1
         p1
@@ -402,12 +422,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabNamedFnExp(exp: S.NamedFnExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.NamedFnExp(name, clauses) = exp
     val funClause = (name.stringId, clauses)
-    val (List(fun1), env1) = elabFuns(List(funClause), d, env)
+    val (List(fun1: A.Fun), env1) = elabFuns(List(funClause), d, env)
     val tScheme = env1(name.stringId)
     val t = TU.instantiate(d, tScheme)
 
     unify(exp.p, ty, t)
-    A.NamedFnExp(name.stringId, fun1.clauses, fun1.fType)
+    A.NamedFnExp(name.stringId, fun1.clauses)(typ = fun1.typ, sourceLocation = exp.p)
   }
 
   private def elabListExp(exp: S.ListExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -417,7 +437,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val elems1 = elems.map(elab(_, elemType, d, env))
 
     unify(exp.p, ty, MT.ListType(elemType))
-    A.ListExp(elems1, ty)
+    A.ListExp(elems1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabConsExp(exp: S.ConsExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -429,7 +449,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t1 = elab(t, listType, d, env)
 
     unify(exp.p, ty, listType)
-    A.ConsExp(h1, t1, ty)
+    A.ConsExp(h1, t1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabEnumConExp(exp: S.EnumConExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -461,12 +481,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     unify(exp.p, ty, eNamedType)
-    A.EnumConExp(eName.stringId, cName, args1, ty)
+    A.EnumConstructorExp(eName.stringId, cName, args1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabBlockExp(exp: S.BlockExpr, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val body1 = elabBody(exp.body, ty, d, env)
-    A.BlockExp(body1)
+    A.BlockExp(body1)(sourceLocation = exp.p)
   }
 
   private def createTypeSchema(d: T.Depth)(fun: (String, List[S.Clause])): ST.TypeSchema = {
@@ -506,7 +526,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     // checking that provided specs are correct
     funs1.zip(funSchemas1).foreach {
       case (aFun, s) =>
-        checkSpec(aFun.f, s, d)
+        checkSpec(aFun.name, s, d)
     }
 
     // the resulting env contains generalized (polymorphic) types
@@ -523,7 +543,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
     val S.WildPat() = p
-    (A.WildPat, env, penv)
+
+    (A.WildPat()(typ = null, sourceLocation = p.p), env, penv)
   }
 
   private def elabVarPat(
@@ -535,13 +556,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
     val S.VarPat(v) = p
+
     if (penv(v)) {
       val t1 = TU.instantiate(d, env(v))
       val t2 = TU.instantiate(d, ts)
       unify(p.p, t1, t2)
-      (A.VarPat(v), env, penv)
+      (A.VarPat(v)(typ = null, sourceLocation = p.p), env, penv)
     } else {
-      (A.VarPat(v), env + (v -> ts), penv + v)
+      (A.VarPat(v)(typ = null, sourceLocation = p.p), env + (v -> ts), penv + v)
     }
   }
 
@@ -559,7 +581,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val (pp1, env1, penv1) = elpat(p1, t, d, env, penv, gen)
     val (pp2, env2, penv2) = elpat(p2, t, d, env1, penv1, gen)
 
-    (A.AndPat(pp1, pp2), env2, penv2)
+    (A.AndPat(pp1, pp2)(typ = null, sourceLocation = p.p), env2, penv2)
   }
 
   private def elabTuplePat(
@@ -585,7 +607,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penvAcc = penv1
       p1
     }
-    (A.TuplePat(pats1), envAcc, penvAcc)
+    (A.TuplePat(pats1)(null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabBoolPat(
@@ -599,7 +621,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.BoolPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.p, t, MT.BoolType)
-    (A.BoolPat(b), env, penv)
+    (A.LiteralPat(Values.BooleanValue(b))(sourceLocation = p.p), env, penv)
   }
 
   private def elabNumberPat(
@@ -613,7 +635,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.NumberPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.p, t, MT.IntType)
-    (A.NumberPat(b), env, penv)
+    (A.LiteralPat(Values.IntegerValue(b))(sourceLocation = p.p), env, penv)
   }
 
   private def elabStringPat(
@@ -627,7 +649,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.StringPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.p, t, MT.StringType)
-    (A.StringPat(b), env, penv)
+    (A.LiteralPat(Values.StringValue(b))(sourceLocation = p.p), env, penv)
   }
 
   private def elabListPat(
@@ -653,7 +675,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (A.ListPat(pats1), envAcc, penvAcc)
+    (A.ListPat(pats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabConsPat(
@@ -672,7 +694,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val (hPat1, env1, penv1) = elpat(hPat, elemType, d, env, penv, gen)
     val (tPat1, env2, penv2) = elpat(tPat, MT.ListType(elemType), d, env1, penv1, gen)
-    (A.ConsPat(hPat1, tPat1), env2, penv2)
+    (A.ConsPat(hPat1, tPat1)(typ = null, sourceLocation = p.p), env2, penv2)
   }
 
   private def elabRecordPat(
@@ -710,7 +732,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(l, p1)
     }
 
-    (A.RecordPat(fields, open), envAcc, penvAcc)
+    (A.RecordPat(fields, open)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(
@@ -727,8 +749,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t = TU.instantiate(d, ts)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
-      case Some(d) => d
-      case None    => throw new UnknownEnum(p.p, nName.stringId)
+      case Some(definition) => definition
+      case None             => throw new UnknownEnum(p.p, nName.stringId)
     }
     val sub = enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val typeConParams = enumDef.params.map(p => sub(p.name))
@@ -752,7 +774,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (A.EnumCtrPat(nName.stringId, cName, argPats1), envAcc, penvAcc)
+    (A.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---

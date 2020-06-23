@@ -49,28 +49,26 @@ object SyntaxUtil {
 
   def collectPatVars2(pat: A.Pat): List[String] =
     pat match {
-      case A.WildPat =>
+      case A.WildPat() =>
         List.empty
       case A.VarPat(v) =>
         List(v)
-      case A.TuplePat(tPats) =>
-        tPats.map(_.pat1).flatMap(collectPatVars2)
-      case A.BoolPat(_) =>
-        List.empty
-      case A.NumberPat(_) =>
-        List.empty
-      case A.StringPat(_) =>
-        List.empty
-      case A.RecordPat(fields, _) =>
-        fields.map(_.value.pat1).flatMap(collectPatVars2)
       case A.AndPat(p1, p2) =>
-        collectPatVars2(p1.pat1) ++ collectPatVars2(p2.pat1)
-      case A.EnumCtrPat(_, _, tPats) =>
-        tPats.map(_.pat1).flatMap(collectPatVars2)
+        collectPatVars2(p1) ++ collectPatVars2(p2)
+
+      case A.LiteralPat(_) =>
+        List.empty
+      case A.TuplePat(tPats) =>
+        tPats.flatMap(collectPatVars2)
       case A.ListPat(tPats) =>
-        tPats.map(_.pat1).flatMap(collectPatVars2)
+        tPats.flatMap(collectPatVars2)
+      case A.RecordPat(fields, _) =>
+        fields.map(_.value).flatMap(collectPatVars2)
+
       case A.ConsPat(hPat, tPat) =>
-        collectPatVars2(hPat.pat1) ++ collectPatVars2(tPat.pat1)
+        collectPatVars2(hPat) ++ collectPatVars2(tPat)
+      case A.EnumConstructorPat(_, _, tPats) =>
+        tPats.flatMap(collectPatVars2)
     }
 
   def collectNamedTypeVars(t: S.Type): List[String] =
