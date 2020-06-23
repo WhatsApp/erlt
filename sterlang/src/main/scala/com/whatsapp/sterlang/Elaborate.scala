@@ -145,23 +145,32 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         // dummy type scheme
         ST.TypeSchema(0, List(), ST.PlainType(t))
 
-    elpat1(p, ts, t, d, env, penv, gen)
+    val (p1, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
+
+    // Attach type annotation to the pattern
+    assert(p1.isInstanceOf[A.LiteralPat] || p1.typ == null)
+    val p2 = p1 match {
+      case p: A.WildPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.VarPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.AndPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.LiteralPat         => p
+      case p: A.TuplePat           => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.ListPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.RecordPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.ConsPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.EnumConstructorPat => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+    }
+    assert(p2.typ != null)
+
+    (p2, env1, penv1)
   }
 
-  private def elpat1(
-      p: S.Pat,
-      ts: ST.TypeSchema,
-      typ: T.Type,
-      d: T.Depth,
-      env: Env,
-      penv: PEnv,
-      gen: Boolean,
-  ): (A.Pat, Env, PEnv) =
+  private def elpat1(p: S.Pat, ts: ST.TypeSchema, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) =
     p match {
       case wildPat: S.WildPat =>
         elabWildPat(wildPat, ts, d, env, penv, gen)
       case varPat: S.VarPat =>
-        elabVarPat(varPat, ts, typ, d, env, penv, gen)
+        elabVarPat(varPat, ts, d, env, penv, gen)
       case andPat: S.AndPat =>
         elabAndPat(andPat, ts, d, env, penv, gen)
       case tuplePat: S.TuplePat =>
@@ -534,15 +543,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
     val S.WildPat() = p
-    val t = TU.instantiate(d, ts)
 
-    (A.WildPat()(typ = t, sourceLocation = p.p), env, penv)
+    (A.WildPat()(typ = null, sourceLocation = p.p), env, penv)
   }
 
   private def elabVarPat(
       p: S.VarPat,
       ts: ST.TypeSchema,
-      typ: T.Type,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -554,12 +561,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       val t1 = TU.instantiate(d, env(v))
       val t2 = TU.instantiate(d, ts)
       unify(p.p, t1, t2)
-      (A.VarPat(v)(typ = t2, sourceLocation = p.p), env, penv)
+      (A.VarPat(v)(typ = null, sourceLocation = p.p), env, penv)
     } else {
-      // Note: although `typ` should equal `TU.instantiate(d, ts)`, some integration tests pick different variable
-      // names which causes them to fail.
-      // TODO: investigate root cause and remove `typ` as an argument.
-      (A.VarPat(v)(typ = typ, sourceLocation = p.p), env + (v -> ts), penv + v)
+      (A.VarPat(v)(typ = null, sourceLocation = p.p), env + (v -> ts), penv + v)
     }
   }
 
@@ -577,7 +581,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val (pp1, env1, penv1) = elpat(p1, t, d, env, penv, gen)
     val (pp2, env2, penv2) = elpat(p2, t, d, env1, penv1, gen)
 
-    (A.AndPat(pp1, pp2)(typ = t, sourceLocation = p.p), env2, penv2)
+    (A.AndPat(pp1, pp2)(typ = null, sourceLocation = p.p), env2, penv2)
   }
 
   private def elabTuplePat(
@@ -603,7 +607,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penvAcc = penv1
       p1
     }
-    (A.TuplePat(pats1)(typ = t, sourceLocation = p.p), envAcc, penvAcc)
+    (A.TuplePat(pats1)(null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabBoolPat(
@@ -671,7 +675,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (A.ListPat(pats1)(typ = t, sourceLocation = p.p), envAcc, penvAcc)
+    (A.ListPat(pats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabConsPat(
@@ -690,7 +694,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val (hPat1, env1, penv1) = elpat(hPat, elemType, d, env, penv, gen)
     val (tPat1, env2, penv2) = elpat(tPat, MT.ListType(elemType), d, env1, penv1, gen)
-    (A.ConsPat(hPat1, tPat1)(typ = t, sourceLocation = p.p), env2, penv2)
+    (A.ConsPat(hPat1, tPat1)(typ = null, sourceLocation = p.p), env2, penv2)
   }
 
   private def elabRecordPat(
@@ -728,7 +732,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(l, p1)
     }
 
-    (A.RecordPat(fields, open)(typ = t, sourceLocation = p.p), envAcc, penvAcc)
+    (A.RecordPat(fields, open)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(
@@ -770,7 +774,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (A.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = t, sourceLocation = p.p), envAcc, penvAcc)
+    (A.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---
