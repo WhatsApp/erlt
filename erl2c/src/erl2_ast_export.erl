@@ -16,21 +16,21 @@
 
 -export([from_abstract/1, file/1]).
 
--type line() :: integer().
--type line_and_col() :: {integer(), integer()}.
--type location() :: line() | line_and_col().
+%% (counting starts at 1; a zero column or line indicates an unknown position)
+-type location() :: {Line::integer(), Column::integer()}.
+
 -type extra() :: [   {'user', [term()]}
                    | {'anno', term()}
                    | {pre_comm, [comment()]}
                    | {post_comm, [comment()]}
                  ].
 
--type tree() :: {tree, StartLoc::location(), EndLoc::location(), extra(),
+-type tree() :: {node, StartLoc::location(), EndLoc::location(), extra(),
                  NodeType::atom(), groups()}
               | {leaf, StartLoc::location(), EndLoc::location(), extra(),
                  NodeType::atom(), Value :: term()}.
--type groups() :: {subtrees()}.
--type subtrees() :: {tree()}.
+-type groups() :: [subtrees()].
+-type subtrees() :: [tree()].
 
 -type comment() :: {Text::binary(), padding()}.
 -type padding() :: 'none' | integer().
@@ -61,10 +61,10 @@ file(Filename) ->
 from_abstract(Tree) ->
     %% "pos" is actually a generic annotation these days
     Anno0 = erl_syntax:get_pos(Tree),
-    StartLoc = erl_anno:location(Anno0),
+    StartLoc = location(erl_anno:location(Anno0)),
     EndLoc = case erl2_parse:get_end_location(Anno0) of
                  undefined -> StartLoc;
-                 L2 -> L2
+                 L2 -> location(L2)
              end,
     Extras =
         [
@@ -107,13 +107,16 @@ from_abstract(Tree) ->
                                tuple_type -> [] % 'tuple()' type - no payload;
                            end
                    end,
-            {leaf, StartLoc, EndLoc, Extra, Type, Data};
+            if Type =:= tuple; Type =:= map_expr ->
+                    %% special case mapping empty tuples/maps to node, not leaf
+                    {node, Type, StartLoc, EndLoc, Extra, Data};
+               true ->
+                    {leaf, Type, StartLoc, EndLoc, Extra, Data}
+            end;
         false ->
-            Subtrees = [list_to_tuple([from_abstract(Subtree)
-                                       || Subtree <- Group])
+            Subtrees = [[from_abstract(Subtree) || Subtree <- Group]
                         || Group <- erl_syntax:subtrees(Tree)],
-            {tree, StartLoc, EndLoc, Extra, Type,
-             list_to_tuple(Subtrees)}
+            {node, Type, StartLoc, EndLoc, Extra, Subtrees}
     end.
 
 comment_data(Cs) ->
@@ -127,3 +130,8 @@ filter_anno([_Other | As]) ->
     filter_anno(As);
 filter_anno(_Other) ->
     [].
+
+
+%% ensure uniform location representation
+location(Line) when is_integer(Line) -> {Line, 0};
+location({Line,Col}=Loc) when is_integer(Line), is_integer(Col) -> Loc.
