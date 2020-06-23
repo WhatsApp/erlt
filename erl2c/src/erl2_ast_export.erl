@@ -27,7 +27,7 @@
 
 -type tree() :: {tree, StartLoc::location(), EndLoc::location(), extra(),
                  NodeType::atom(), groups()}
-              | {literal, StartLoc::location(), EndLoc::location(), extra(),
+              | {leaf, StartLoc::location(), EndLoc::location(), extra(),
                  NodeType::atom(), Value :: term()}.
 -type groups() :: {subtrees()}.
 -type subtrees() :: {tree()}.
@@ -90,10 +90,24 @@ from_abstract(Tree) ->
     Extra = lists:append(Extras),  % flatten one level
 
     Type = erl_syntax:type(Tree),
-    case erl_syntax:is_literal(Tree) of
+    case erl_syntax:is_leaf(Tree) of
         true ->
-            {literal, StartLoc, EndLoc, Extra, Type,
-             erl_syntax:concrete(Tree)};
+            Data = case erl_syntax:is_literal(Tree) of
+                       true -> erl_syntax:concrete(Tree);
+                       false ->
+                           case Type of
+                               variable -> erl_syntax:variable_name(Tree);
+                               operator -> erl_syntax:operator_name(Tree);
+                               underscore -> '_';
+                               comment -> erl_syntax:comment_text(Tree);
+                               eof_marker -> [];  % no payload
+                               fun_type -> [];  % 'fun()' type - no payload
+                               map_expr -> [];  % empty map - no payload
+                               tuple -> [];     % unit tuple - no payload
+                               tuple_type -> [] % 'tuple()' type - no payload;
+                           end
+                   end,
+            {leaf, StartLoc, EndLoc, Extra, Type, Data};
         false ->
             Subtrees = [list_to_tuple([from_abstract(Subtree)
                                        || Subtree <- Group])
