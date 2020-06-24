@@ -668,6 +668,7 @@ Erlang code.
 -export([type_inop_prec/1,type_preop_prec/1]).
 -export([map_anno/2, fold_anno/3, mapfold_anno/3,
          new_anno/1, anno_to_term/1, anno_from_term/1]).
+-export([get_end_location/1]).
 
 %% The following directive is needed for (significantly) faster compilation
 %% of the generated .erl file by the HiPE compiler.  Please do not remove.

@@ -1,2 +1,2 @@
 erl2_compile: warnings being treated as errors
-import_type_unused.erl:5:2 imported type foo:t/0 is unused
+import_type_unused.erl:5:2: imported type foo:t/0 is unused

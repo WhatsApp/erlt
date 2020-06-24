@@ -503,7 +503,9 @@ format_mna({M, N, A}) when is_integer(A) ->
 format_where(L) when is_integer(L) ->
     io_lib:format("(line ~p)", [L]);
 format_where({L,C}) when is_integer(L), is_integer(C) ->
-    io_lib:format("(line ~p, column ~p)", [L, C]).
+    io_lib:format("(line ~p, column ~p)", [L, C]);
+format_where(Anno) when is_list(Anno) ->
+    format_where(erl_anno:location(Anno)).
 
 %% Local functions that are somehow automatically generated.
 
@@ -729,7 +731,12 @@ add_lint_warning(W, File, St) ->
     St#lint{warnings=[{File,W}|St#lint.warnings]}.
 
 loc(Anno, St) ->
-    Location = erl_anno:location(Anno),
+    Location0 = erl_anno:location(Anno),
+    Location = case erl2_parse:get_end_location(Anno) of
+                   undefined -> Location0;
+                   EndLoc -> [{location, Location0},
+                              {end_location, EndLoc}]
+               end,
     case erl_anno:file(Anno) of
         undefined -> {St#lint.file,Location};
         File -> {File,Location}
