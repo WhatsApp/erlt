@@ -20,7 +20,7 @@ main([Erl2File]) ->
     ExpOutputFile = Erl2File ++ ".exp",
     {ok, ExpOutput} =  file:read_file(ExpOutputFile),
     ExpOutPutStr = binary_to_list(ExpOutput),
-    {ExitCode, ActualOutPut} = eunit_lib:command(Erl2cBin ++ " " ++ Erl2File),
+    {ExitCode, ActualOutPut} = eunit_lib:command(Erl2cBin ++ " +brief " ++ Erl2File),
     case ExitCode of
         0 ->
             io:format("`erl2c ~s` has not failed", [Erl2File]),

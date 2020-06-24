@@ -1414,8 +1414,8 @@ write_binary(Name, Bin, St) ->
 report_errors(#compile{options=Opts,errors=Errors}) ->
     case member(report_errors, Opts) of
 	true ->
-	    foreach(fun ({{F,_L},Eds}) -> list_errors(F, Eds);
-			({F,Eds}) -> list_errors(F, Eds) end,
+	    foreach(fun ({{F,_L},Eds}) -> list_errors(F, Eds, Opts);
+			({F,Eds}) -> list_errors(F, Eds, Opts) end,
 		    Errors);
 	false -> ok
     end.
@@ -1429,44 +1429,53 @@ report_warnings(#compile{options=Opts,warnings=Ws0}) ->
     ReportWerror = Werror andalso member(report_errors, Opts),
     case member(report_warnings, Opts) orelse ReportWerror of
 	true ->
-	    Ws1 = flatmap(fun({{F,_L},Eds}) -> format_message(F, P, Eds);
-			     ({F,Eds}) -> format_message(F, P, Eds) end,
+	    Ws1 = flatmap(fun({{F,_L},Eds}) -> format_message(F, P, Eds, Opts);
+			     ({F,Eds}) -> format_message(F, P, Eds, Opts) end,
 			  Ws0),
 	    Ws = lists:sort(Ws1),
 	    foreach(fun({_,Str}) -> io:put_chars(Str) end, Ws);
 	false -> ok
     end.
 
-format_message(F, P, [{Anno,Mod,E}|Es]) when is_list(Anno) ->
-    format_message(F, P, [{erl_anno:location(Anno),Mod,E}|Es]);
-format_message(F, P, [{none,Mod,E}|Es]) ->
+format_message(F, P, [{none,Mod,E}|Es], Opts) ->
     M = {none,io_lib:format("~ts: ~s~ts\n", [F,P,Mod:format_error(E)])},
-    [M|format_message(F, P, Es)];
-format_message(F, P, [{{Line,Column}=Loc,Mod,E}|Es]) ->
-    M = {{F,Loc},io_lib:format("~ts:~w:~w ~s~ts\n",
-                                [F,Line,Column,P,Mod:format_error(E)])},
-    [M|format_message(F, P, Es)];
-format_message(F, P, [{Line,Mod,E}|Es]) ->
-    M = {{F,{Line,0}},io_lib:format("~ts:~w: ~s~ts\n",
-                                [F,Line,P,Mod:format_error(E)])},
-    [M|format_message(F, P, Es)];
-format_message(_, _, []) -> [].
+    [M|format_message(F, P, Es, Opts)];
+format_message(F, P, [{Loc,Mod,E}|Es], Opts) ->
+    StartLoc = erl_anno:location(Loc),
+    EndLoc = case erl2_parse:get_end_location(Loc) of
+                 undefined -> StartLoc;
+                 Loc2 -> Loc2
+             end,
+    Src = quote_source(F, StartLoc, EndLoc, Opts),
+    Msg = io_lib:format("~ts:~ts: ~s~ts\n~ts",
+                        [F,fmt_pos(StartLoc),P,Mod:format_error(E),Src]),
+    Pos = if is_integer(StartLoc) -> {StartLoc,0};
+             true -> StartLoc
+          end,
+    [{{F,Pos},Msg}|format_message(F, P, Es, Opts)];
+format_message(_, _, [], _Opts) -> [].
 
-%% list_errors(File, ErrorDescriptors) -> ok
+%% list_errors(File, ErrorDescriptors, Opts) -> ok
 
-list_errors(F, [{Anno,Mod,E}|Es]) when is_list(Anno) ->
-    list_errors(F, [{erl_anno:location(Anno),Mod,E}|Es]);
-list_errors(F, [{none,Mod,E}|Es]) ->
+list_errors(F, [{none,Mod,E}|Es], Opts) ->
     io:fwrite("~ts: ~ts\n", [F,Mod:format_error(E)]),
-    list_errors(F, Es);
-list_errors(F, [{{Line,Column},Mod,E}|Es]) ->
-    io:fwrite("~ts:~w:~w: ~ts\n", [F,Line,Column,Mod:format_error(E)]),
-    list_errors(F, Es);
-list_errors(F, [{Line,Mod,E}|Es]) ->
-    io:fwrite("~ts:~w: ~ts\n", [F,Line,Mod:format_error(E)]),
-    list_errors(F, Es);
-list_errors(_F, []) -> ok.
+    list_errors(F, Es, Opts);
+list_errors(F, [{Loc,Mod,E}|Es], Opts) ->
+    StartLoc = erl_anno:location(Loc),
+    EndLoc = case erl2_parse:get_end_location(Loc) of
+                 undefined -> StartLoc;
+                 Loc2 -> Loc2
+             end,
+    Src = quote_source(F, StartLoc, EndLoc, Opts),
+    io:fwrite("~ts:~ts: ~ts\n~ts",
+              [F,fmt_pos(StartLoc),Mod:format_error(E),Src]),
+    list_errors(F, Es, Opts);
+list_errors(_F, [], _Opts) -> ok.
 
+fmt_pos({Line,Col}) ->
+    io_lib:format("~w:~w",[Line,Col]);
+fmt_pos(Line) ->
+    io_lib:format("~w",[Line]).
 
 erlfile(".", Base, Suffix) ->
     Base ++ Suffix;
@@ -1487,6 +1496,133 @@ objfile(Base, St) ->
 
 tmpfile(Ofile) ->
     reverse([$#|tl(reverse(Ofile))]).
+
+quote_source(File, StartLoc, EndLoc, Opts) ->
+    case proplists:get_bool(brief, Opts) of
+        true -> "";
+        false -> quote_source_1(File, StartLoc, EndLoc)
+    end.
+
+quote_source_1(File, Line, Loc2) when is_integer(Line) ->
+    quote_source_1(File, {Line, 1}, Loc2);
+quote_source_1(File, Loc1, Line) when is_integer(Line) ->
+    quote_source_1(File, Loc1, {Line, -1});
+quote_source_1(File, {StartLine, StartCol}, {EndLine, EndCol}) ->
+    case file:read_file(File) of
+        {ok, Bin} ->
+            Ctx = if StartLine =:= EndLine -> 0;
+                     true -> 1
+                  end,
+            case seek_line(Bin, 1, StartLine-Ctx) of
+                {ok, Bin1} ->
+                    quote_source_2(Bin1, StartLine, StartCol, EndLine, EndCol, Ctx);
+                error ->
+                    ""
+            end;
+        {error,_} ->
+            ""
+    end.
+
+quote_source_2(Bin, StartLine, StartCol, EndLine, EndCol, Ctx) ->
+    case take_lines(Bin, StartLine-Ctx, EndLine+Ctx) of
+        [] -> "";
+        Lines ->
+            Lines1 = case length(Lines) =< (4+Ctx) of
+                         true -> Lines;
+                         false ->
+                             %% before = context + start line + following line
+                             %% after = end line + context
+                             %% (total lines: 3 + 1 + context)
+                             Before = lists:sublist(Lines, 2+Ctx),
+                             After = lists:reverse(
+                                       lists:sublist(lists:reverse(Lines), 1+Ctx)),
+                             Before ++ [{0,"..."}] ++ After
+                     end,
+            Lines2 = decorate(Lines1,StartLine, StartCol, EndLine, EndCol),
+            [[fmt_line(L, Text) || {L, Text} <- Lines2], $\n]
+    end.
+
+line_prefix() ->
+    "% ".
+
+fmt_line(L, Text) ->
+    io_lib:format("~ts~4.ts| ~ts\n", [line_prefix(), line_to_txt(L), Text]).
+
+line_to_txt(0) -> "";
+line_to_txt(L) -> integer_to_list(L).
+
+decorate([{Line, _Text}=L|Ls], StartLine, StartCol, EndLine, EndCol)
+  when Line =:= StartLine, EndLine =:= StartLine ->
+    %% start and end on same line
+    S = underline(StartCol,EndCol),
+    decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
+decorate([{Line, Text}=L|Ls], StartLine, StartCol, EndLine, EndCol)
+  when Line =:= StartLine ->
+    %% start with end on separate line
+    S = underline(StartCol,string:length(Text)+1),
+    decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
+%% decorate([{Line, _Text}=L|Ls], StartLine, StartCol, EndLine, EndCol)
+%%   when Line =:= EndLine ->
+%%     S = underline(EndCol,EndCol),  % just mark end
+%%     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
+decorate([{_Line, _Text}=L|Ls], StartLine, StartCol, EndLine, EndCol) ->
+    [L | decorate(Ls, StartLine, StartCol, EndLine, EndCol)];
+decorate([], _StartLine, _StartCol, _EndLine, _EndCol) ->
+    [].
+
+%% don't produce empty decoration lines
+decorate("", L, Ls, StartLine, StartCol, EndLine, EndCol) ->
+    [L | decorate(Ls, StartLine, StartCol, EndLine, EndCol)];
+decorate(Text, L, Ls, StartLine, StartCol, EndLine, EndCol) ->
+    [L, {0,Text} | decorate(Ls, StartLine, StartCol, EndLine, EndCol)].
+
+
+%% End typically points to the first position after the actual region.
+%% If End = Start, we adjust it to Start+1 to mark at least one character
+%% TODO: colorization option
+underline(Start, End) when End < Start->
+    "";  % no underlining at all if end column is unknown
+underline(Start, Start) ->
+    underline(Start, Start+1);
+underline(Start, End) ->
+    underline(1, Start, End).
+
+underline(N, Start, End) when N < Start ->
+    [$\s | underline(N+1, Start, End)];
+underline(N, _Start, End) ->
+    underline_1(N, End).
+
+underline_1(N, End) when N < End ->
+    [$^ | underline_1(N+1, End)];
+underline_1(_N, _End) ->
+    "".
+
+seek_line(Bin, L, L) -> {ok, Bin};
+seek_line(<<$\n, Rest/binary>>, N, L) ->
+    seek_line(Rest, N+1, L);
+seek_line(<<$\r, $\n, Rest/binary>>, N, L) ->
+    seek_line(Rest, N+1, L);
+seek_line(<<_, Rest/binary>>, N, L) ->
+    seek_line(Rest, N, L);
+seek_line(<<>>, _, _) ->
+    error.
+
+take_lines(<<>>, _Here, _To) -> [];
+take_lines(Bin, Here, To) when Here =< To ->
+    {Line, Rest} = take_line(Bin, <<>>),
+    [{Here, Line} | take_lines(Rest, Here+1, To)];
+take_lines(_Bin, _Here, _To) ->
+    [].
+
+take_line(<<$\n, Rest/binary>>, Ack) ->
+    {Ack, Rest};
+take_line(<<$\r, $\n, Rest/binary>>, Ack) ->
+    {Ack, Rest};
+take_line(<<B, Rest/binary>>, Ack) ->
+    take_line(Rest, <<Ack/binary, B>>);
+take_line(<<>>, Ack) ->
+    {Ack, <<>>}.
+
 
 %% pre_defs(Options)
 %% inc_paths(Options)
