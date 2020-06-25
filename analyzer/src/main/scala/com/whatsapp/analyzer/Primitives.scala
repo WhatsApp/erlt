@@ -16,19 +16,15 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object Primitives {
 
   case class Usage(module: String, primitives: List[String])
 
   def main(args: Array[String]): Unit = {
     val primCategory = args(0)
-    val rpc = RPC.connect()
-    val usages =
-      try {
-        loadData(rpc, primCategory)
-      } finally {
-        rpc.close()
-      }
+    val usages = Using.resource(RPC.connect())(loadData(primCategory))
 
     val usages1 = usages.filter(_.primitives.nonEmpty).sortBy(_.primitives.length).reverse
     val totalCount = usages1.map(_.primitives.length).sum
@@ -52,7 +48,7 @@ object Primitives {
     }
   }
 
-  private def loadData(rpc: RPC, primCategory: String): List[Usage] = {
+  private def loadData(primCategory: String)(rpc: RPC): List[Usage] = {
     CodeDirs.projectEbinDirs.flatMap(indexProjectDir(_, rpc, primCategory))
   }
 

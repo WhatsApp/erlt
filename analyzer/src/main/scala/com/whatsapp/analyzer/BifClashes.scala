@@ -16,18 +16,14 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object BifClashes {
 
   case class Clash(module: String, name: String, arity: Int)
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val data =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val data = Using.resource(RPC.connect())(loadData)
 
     Console.println(s"Clashes: ${data.size}")
     for (clash <- data) {

@@ -16,6 +16,8 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object HighLevelStats {
 
   case class AppInfo(name: String, modules: List[ModuleInfo])
@@ -23,13 +25,7 @@ object HighLevelStats {
   case class AppInfoStat(name: String, allMods: Int, genMods: Int, allFuns: Int, genFuns: Int)
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val data =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val data = Using.resource(RPC.connect())(loadData)
 
     val allModules = data.flatMap(_.modules)
     val nonGenModules = allModules.filterNot(_.generated)

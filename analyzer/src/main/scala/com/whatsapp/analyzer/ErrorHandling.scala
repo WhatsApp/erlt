@@ -16,19 +16,15 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object ErrorHandling {
   case class ModuleInfo(name: String, catches: Int, tries: Int, generated: Boolean)
   case class AppInfo(name: String, modules: List[ModuleInfo])
   case class Total(catches: Int, tries: Int)
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val appInfos =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val appInfos = Using.resource(RPC.connect())(loadData)
 
     var totalCatches = 0
     var totalCatchesNonGen = 0

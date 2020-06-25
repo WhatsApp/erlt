@@ -16,18 +16,14 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object DynamicCalls {
 
   case class Usage(module: String, calls: List[String], generated: Boolean)
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val usages =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val usages = Using.resource(RPC.connect())(loadData)
 
     val allUsages = usages.filter(_.calls.nonEmpty).sortBy(_.calls.length).reverse
     val allCount = allUsages.map(_.calls.length).sum

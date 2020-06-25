@@ -16,19 +16,15 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object Behaviours {
 
   case class AppInfo(name: String, modules: Int, modulesWithBehaviours: Int, usage: Map[String, Int])
   case class InfoAcc(modules: Int, modulesWithBehaviours: Int, usage: Map[String, Int])
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val data =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val data = Using.resource(RPC.connect())(loadData)
 
     Console.println(s"Modules:    ${data.modules}")
     Console.println(s"Behaviours: ${data.modulesWithBehaviours}")

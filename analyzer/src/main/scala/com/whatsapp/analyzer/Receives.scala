@@ -16,18 +16,14 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object Receives {
 
   case class Receives(module: String, count: Int)
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    val data =
-      try {
-        loadData(rpc)
-      } finally {
-        rpc.close()
-      }
+    val data = Using.resource(RPC.connect())(loadData)
 
     val data1 = data.filter(_.count > 0).sortBy(_.count).reverse
     val totalCount = data1.map(_.count).sum

@@ -16,6 +16,8 @@
 
 package com.whatsapp.analyzer
 
+import scala.util.Using
+
 object OtpFunsUsage {
 
   case class OtpApp(name: String, modules: List[OtpModuleInfo])
@@ -27,12 +29,9 @@ object OtpFunsUsage {
   case class ModuleInfo(name: String, usedFuns: List[Fun])
 
   def main(args: Array[String]): Unit = {
-    val rpc = RPC.connect()
-    try {
+    Using.resource(RPC.connect()) { rpc =>
       val apps = loadOtpApps(rpc)
       analyze(rpc, apps)
-    } finally {
-      rpc.close()
     }
   }
 

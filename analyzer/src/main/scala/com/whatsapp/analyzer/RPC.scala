@@ -19,7 +19,7 @@ package com.whatsapp.analyzer
 import com.ericsson.otp.erlang._
 import erlang.Data._
 
-class RPC(val connection: OtpConnection) {
+class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def getForms(beamFilePath: String): EObject = {
     connection.sendRPC("analyzer", "forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
