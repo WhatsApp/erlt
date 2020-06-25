@@ -1,0 +1,3 @@
+val equals_generic/2: fun((A, A) -> boolean())
+val X: A
+val X: A

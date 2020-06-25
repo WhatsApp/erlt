@@ -1,0 +1,2 @@
+-spec equals(integer(), integer()) -> boolean().
+-spec equals_generic(A, A) -> boolean().
