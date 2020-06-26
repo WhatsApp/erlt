@@ -24,20 +24,30 @@ object ErrorHandling {
   case class Total(catches: Int, tries: Int)
 
   def main(args: Array[String]): Unit = {
-    val appInfos = Using.resource(RPC.connect())(loadData)
+    val (projectInfos, otpInfos) = Using.resource(RPC.connect()) { rpc =>
+      (loadProjectData(rpc), loadOtpData(rpc))
+    }
 
+    println(">>Project")
+    printStats(projectInfos)
+
+    println(">>OTP")
+    printStats(otpInfos)
+  }
+
+  private def printStats(infos: List[AppInfo]): Unit = {
     var totalCatches = 0
     var totalCatchesNonGen = 0
     var totalTries = 0
     var totalTriesNonGen = 0
 
-    val allModules = appInfos.flatMap(_.modules)
+    val allModules = infos.flatMap(_.modules)
     // some generated stuff is duplicated (or not cleaned up?)
     val generated: Set[String] =
       allModules.filter(_.generated).map(_.name).toSet
 
     for {
-      AppInfo(_, modules) <- appInfos
+      AppInfo(_, modules) <- infos
       moduleInfo <- modules
     } {
       totalCatches = totalCatches + moduleInfo.catches
@@ -61,12 +71,17 @@ object ErrorHandling {
     }
   }
 
-  private def loadData(rpc: RPC): List[AppInfo] = {
-    val appInfos = CodeDirs.projectEbinDirs.map(indexProjectDir(_, rpc))
+  private def loadProjectData(rpc: RPC): List[AppInfo] = {
+    val appInfos = CodeDirs.projectEbinDirs.map(indexDir(_, rpc))
     appInfos.filterNot(ai => CodeDirs.thirdParty.contains(ai.name))
   }
 
-  private def indexProjectDir(dir: String, rpc: RPC): AppInfo = {
+  private def loadOtpData(rpc: RPC): List[AppInfo] = {
+    val otpEbinDirs = rpc.getOtpEbinDirs()
+    otpEbinDirs.map(indexDir(_, rpc))
+  }
+
+  private def indexDir(dir: String, rpc: RPC): AppInfo = {
     println(s"Starting $dir")
     val start = dir.lastIndexOf("/lib/")
     val end = dir.lastIndexOf('/')
