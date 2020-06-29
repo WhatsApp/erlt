@@ -3,10 +3,8 @@ package com.whatsapp.sterlang.patterns
 import com.whatsapp.sterlang.errors.MissingPatternsWarning
 import com.whatsapp.sterlang.errors.UselessPatternWarning
 import com.whatsapp.sterlang.{Absyn, Context, Values}
-import sun.security.ec.point.ProjectivePoint.Mutable
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 /** Generates warnings for missing and redundant clauses in pattern matching.
   *

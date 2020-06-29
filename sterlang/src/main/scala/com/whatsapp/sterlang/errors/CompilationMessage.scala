@@ -31,7 +31,7 @@ object CompilationMessage {
         val title = s"-- ${category.toUpperCase()} -"
         val source = " " + this.source
         val paddingLength = (LINE_WIDTH - title.length - source.length).min(0)
-        val padding = "-".repeat(paddingLength)
+        val padding = "-" * paddingLength
         title + padding + source
       }
 
