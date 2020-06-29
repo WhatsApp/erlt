@@ -207,6 +207,7 @@ class PatternChecker(private val context: Context) {
         case (_: Pattern.Wildcard) :: tail            => Some(PatternMatrix.Vector(tail))
         case (_: Pattern.Record) :: _                 => ???
         case (_: Pattern.ConstructorApplication) :: _ => None
+        case Nil                                      => throw new IllegalArgumentException()
       }
     )
     PatternMatrix.Matrix(newRows)
