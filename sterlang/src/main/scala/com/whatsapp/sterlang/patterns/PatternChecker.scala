@@ -4,8 +4,6 @@ import com.whatsapp.sterlang.errors.MissingPatternsWarning
 import com.whatsapp.sterlang.errors.UselessPatternWarning
 import com.whatsapp.sterlang.{Absyn, Context, Values}
 
-import scala.collection.mutable
-
 /** Generates warnings for missing and redundant clauses in pattern matching.
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
