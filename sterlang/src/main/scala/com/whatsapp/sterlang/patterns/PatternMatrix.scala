@@ -7,10 +7,7 @@ import java.util.NoSuchElementException
 private[patterns] object PatternMatrix {
 
   /** A one dimensional array of patterns. */
-  // TODO: just make this an alias...
-  case class Vector(elements: List[Pattern.Pat]) {
-    def length: Int = elements.length
-  }
+  type Vector = List[Pattern.Pat]
 
   /** A two dimensional grid of patterns. */
   case class Matrix(rows: List[Vector]) {
@@ -28,10 +25,6 @@ private[patterns] object PatternMatrix {
   }
 
   object Empty {
-    private val emptyMatrix = Matrix(rows = Nil)
-
-    def apply(): Matrix = emptyMatrix
-
     def unapply(matrix: Matrix): Boolean =
       matrix.rows match {
         case Nil => true
@@ -41,34 +34,19 @@ private[patterns] object PatternMatrix {
 
   object AddColumn {
 
-    /** Add a column in front of the matrix. */
-    def apply(first: Vector, rest: Matrix): Matrix = {
-      assert(first.length == rest.rows.length)
-
-      def vectorCons(t: (Pattern.Pat, Vector)): Vector = Vector(t._1 :: t._2.elements)
-
-      def newRows: List[Vector] = first.elements.zip(rest.rows).map(vectorCons)
-      Matrix(rows = newRows)
-    }
-
     /** Strip the first column in the matrix. */
     def unapply(matrix: Matrix): Option[(Vector, Matrix)] = {
-      try {
-        val firstColumn = Vector(matrix.rows.map(_.elements.head))
-        val rest = Matrix(matrix.rows.map(row => Vector(row.elements.tail)))
-        Some(firstColumn, rest)
-      } catch {
-        case _: NoSuchElementException =>
-          None
+      if (matrix.height == 0 || matrix.width == 0) {
+        None
+      } else {
+        val firstColumn = matrix.rows.map(_.head)
+        val rest = Matrix(matrix.rows.map(_.tail))
+        Some((firstColumn, rest))
       }
     }
   }
 
   object AddRow {
-
-    /** Add a row before the matrix. */
-    def apply(first: Vector, rest: Matrix): Matrix =
-      Matrix(first :: rest.rows)
 
     /** Strip the first row in matrix. */
     def unapply(matrix: Matrix): Option[(Vector, Matrix)] =

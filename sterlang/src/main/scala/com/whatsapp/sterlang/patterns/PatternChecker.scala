@@ -37,7 +37,7 @@ class PatternChecker(private val context: Context) {
     for (clause <- clauses) {
       // TODO: check for nonlinear patterns
 
-      val simple = PatternMatrix.Vector(clause.pats.map(Pattern.simplify))
+      val simple = clause.pats.map(Pattern.simplify)
 
       // FIXME: constructing the matrix here takes linear time
       if (!isUseful(PatternMatrix.Matrix(previousRows.toList), simple)) {
@@ -47,9 +47,7 @@ class PatternChecker(private val context: Context) {
     }
 
     /** The pattern row that will match any value. */
-    val any = PatternMatrix.Vector(
-      clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
-    )
+    val any = clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
 
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows.toList), any)) {
@@ -65,23 +63,23 @@ class PatternChecker(private val context: Context) {
   private def isUseful(matrix: PatternMatrix.Matrix, clause: PatternMatrix.Vector): Boolean = {
     require(matrix.height == 0 || matrix.width == clause.length)
 
-    (matrix, clause.elements) match {
+    (matrix, clause) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
       case (PatternMatrix.AddColumn(col1, _), (_: Pattern.Wildcard) :: ps) => {
         val constructors: Map[Pattern.Constructor, Pattern.ConstructorApplication] =
-          col1.elements.collect { case x: Pattern.ConstructorApplication => x.constructor -> x }.toMap
+          col1.collect { case x: Pattern.ConstructorApplication => x.constructor -> x }.toMap
 
         if (isCompleteSignature(constructors.keySet)) {
           constructors.exists {
             case (_, constructor) => isUseful(specialize(matrix, constructor), specializeRow(clause, constructor).get)
           }
         } else {
-          isUseful(defaultMatrix(matrix), PatternMatrix.Vector(ps))
+          isUseful(defaultMatrix(matrix), ps)
         }
       }
       case (_, (p: Pattern.ConstructorApplication) :: ps) =>
-        isUseful(specialize(matrix, p), PatternMatrix.Vector(p.arguments ++ ps))
+        isUseful(specialize(matrix, p), p.arguments ++ ps)
     }
   }
 
@@ -101,28 +99,25 @@ class PatternChecker(private val context: Context) {
       row: PatternMatrix.Vector,
       pattern: Pattern.ConstructorApplication,
   ): Option[PatternMatrix.Vector] =
-    row.elements match {
+    row match {
       case (first @ Pattern.Wildcard()) :: rest => {
         val newPatterns =
           pattern.arguments.map(arg => Pattern.Wildcard()(typ = arg.typ, sourceLocation = first.sourceLocation))
-        Some(PatternMatrix.Vector(newPatterns ++ rest))
+        Some(newPatterns ++ rest)
       }
       case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == pattern.constructor =>
-        Some(PatternMatrix.Vector(arguments1 ++ rest))
+        Some(arguments1 ++ rest)
       case _ =>
         None
     }
 
   /** Corresponds to the D function in the paper. */
   private def defaultMatrix(matrix: PatternMatrix.Matrix): PatternMatrix.Matrix = {
-    val newRows = matrix.rows.flatMap(row =>
-      row.elements match {
-        case (_: Pattern.Wildcard) :: tail            => Some(PatternMatrix.Vector(tail))
-        case (_: Pattern.ConstructorApplication) :: _ => None
-        case Nil                                      => throw new IllegalArgumentException()
-      }
-    )
-    PatternMatrix.Matrix(newRows)
+    require(matrix.width > 0)
+
+    PatternMatrix.Matrix(matrix.rows.collect {
+      case (_: Pattern.Wildcard) :: tail => tail
+    })
   }
 
   /** Returns true if the given set of constructors is all the constructors of the (inferred) data type. */
