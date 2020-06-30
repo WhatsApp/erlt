@@ -31,16 +31,14 @@ class PatternChecker(private val context: Context) {
   private def checkClauses(clauses: List[A.Clause]): Unit = {
     require(clauses.nonEmpty)
 
-    /** The pattern row that will match any value. */
-    val any = PatternMatrix.Vector(
-      clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
-    )
-
     val previousRows: mutable.ListBuffer[PatternMatrix.Vector] = mutable.ListBuffer()
 
     // Check for redundancy
     for (clause <- clauses) {
-      val simple = simplifyClause(clause.pats)
+      // TODO: check for nonlinear patterns
+
+      val simple = PatternMatrix.Vector(clause.pats.map(Pattern.simplify))
+
       // FIXME: constructing the matrix here takes linear time
       if (!isUseful(PatternMatrix.Matrix(previousRows.toList), simple)) {
         throw new UselessPatternWarning()
@@ -48,78 +46,15 @@ class PatternChecker(private val context: Context) {
       previousRows += simple
     }
 
+    /** The pattern row that will match any value. */
+    val any = PatternMatrix.Vector(
+      clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
+    )
+
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows.toList), any)) {
       throw new MissingPatternsWarning()
     }
-  }
-
-  /** Converts a surface syntax clause to our simpler representation. */
-  private def simplifyClause(clause: List[A.Pat]): PatternMatrix.Vector = {
-    // Using the same variable multiple times in a clause introduces equality constraints.
-    // We currently do not (cannot) reason about equality constraints.
-    // This is used to detect such patterns.
-    val seenVariables: mutable.Set[String] = mutable.Set()
-
-    def simplifyPattern(pattern: A.Pat): Pattern.Pat =
-      pattern match {
-        case A.WildPat() =>
-          Pattern.Wildcard()(typ = pattern.typ, sourceLocation = pattern.sourceLocation)
-
-        case A.VarPat(name) => {
-          assert(!seenVariables.contains(name))
-          seenVariables.add(name)
-
-          // Variable names are irrelevant for our purposes
-          Pattern.Wildcard()(typ = pattern.typ, sourceLocation = pattern.sourceLocation)
-        }
-
-        case A.AndPat(p1, p2) =>
-          (simplifyPattern(p1), simplifyPattern(p2)) match {
-            case (_: A.WildPat, p2Simple) => p2Simple
-            case (p1Simple, _: A.WildPat) => p1Simple
-            case _                        =>
-              // For now, we only reason about "and" patterns that are used to name the overall value.
-              // For example, `{5, Y} = Z` is OK, whereas `{X, "string"} = {5, Y}` isn't.
-              ???
-          }
-
-        case A.LiteralPat(value) =>
-          Pattern.ConstructorApplication(Pattern.Literal(value), Nil)(
-            typ = value.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
-
-        case A.TuplePat(elements) =>
-          Pattern.ConstructorApplication(Pattern.Tuple(elements.length), elements.map(simplifyPattern))(
-            typ = pattern.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
-
-        case A.RecordPat(fields, open) => ???
-
-        case A.ListPat(Nil) =>
-          Pattern.ConstructorApplication(Pattern.EmptyList, Nil)(
-            typ = pattern.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
-
-        case A.ListPat(head :: tail) => ???
-
-        case A.ConsPat(head, tail) =>
-          Pattern.ConstructorApplication(Pattern.Cons, List(simplifyPattern(head), simplifyPattern(tail)))(
-            typ = pattern.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
-
-        case A.EnumConstructorPat(enum, constructor, arguments) =>
-          Pattern.ConstructorApplication(Pattern.EnumConstructor(enum, constructor), arguments.map(simplifyPattern))(
-            typ = pattern.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
-      }
-
-    PatternMatrix.Vector(clause.map(simplifyPattern))
   }
 
   /** Returns true if the clause is useful with respect to the pattern matrix.
@@ -153,7 +88,7 @@ class PatternChecker(private val context: Context) {
   /** Extract clauses in the matrix that are relevant for checking the given pattern.
     *
     * Corresponds to the S function in the paper.
-    * */
+    */
   private def specialize(
       matrix: PatternMatrix.Matrix,
       pattern: Pattern.ConstructorApplication,
