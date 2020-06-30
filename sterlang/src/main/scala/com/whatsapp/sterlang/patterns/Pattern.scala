@@ -15,8 +15,6 @@ private[patterns] object Pattern {
 
   case class Wildcard()(val typ: Type, val sourceLocation: Pos.P) extends Pat
 
-  case class Record(fields: List[Absyn.Field[Pat]], open: Boolean)(val typ: Type, val sourceLocation: Pos.P) extends Pat
-
   case class ConstructorApplication(constructor: Constructor, arguments: List[Pat])(
       val typ: Type,
       val sourceLocation: Pos.P,

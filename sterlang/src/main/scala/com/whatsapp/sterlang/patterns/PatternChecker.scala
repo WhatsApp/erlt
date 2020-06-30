@@ -38,22 +38,14 @@ class PatternChecker(private val context: Context) {
 
     val previousRows: mutable.ListBuffer[PatternMatrix.Vector] = mutable.ListBuffer()
 
-    // Check for redundant patterns
+    // Check for redundancy
     for (clause <- clauses) {
-      try {
-        val simple = simplifyClause(clause.pats)
-        // FIXME: constructing the matrix here takes linear time
-        if (!isUseful(PatternMatrix.Matrix(previousRows.toList), simple)) {
-          throw new UselessPatternWarning()
-        }
-        previousRows += simple
-      } catch {
-        case _: IgnoreClause =>
-          // If pattern simplification fails, we under approximate and report a clause as useless if all clauses are.
-          if (!isUseful(PatternMatrix.Matrix(previousRows.toList), any)) {
-            throw new UselessPatternWarning()
-          }
+      val simple = simplifyClause(clause.pats)
+      // FIXME: constructing the matrix here takes linear time
+      if (!isUseful(PatternMatrix.Matrix(previousRows.toList), simple)) {
+        throw new UselessPatternWarning()
       }
+      previousRows += simple
     }
 
     // Check for exhaustiveness
@@ -62,14 +54,11 @@ class PatternChecker(private val context: Context) {
     }
   }
 
-  /** An exception used to signal that a clause should be ignored while checking exhaustiveness. */
-  private class IgnoreClause() extends Exception()
-
   /** Converts a surface syntax clause to our simpler representation. */
   private def simplifyClause(clause: List[A.Pat]): PatternMatrix.Vector = {
     // Using the same variable multiple times in a clause introduces equality constraints.
-    // We currently do not (cannot) reason about equality constraints, so such patterns,
-    // also called nonlinear patterns, are ignored.
+    // We currently do not (cannot) reason about equality constraints.
+    // This is used to detect such patterns.
     val seenVariables: mutable.Set[String] = mutable.Set()
 
     def simplifyPattern(pattern: A.Pat): Pattern.Pat =
@@ -78,11 +67,7 @@ class PatternChecker(private val context: Context) {
           Pattern.Wildcard()(typ = pattern.typ, sourceLocation = pattern.sourceLocation)
 
         case A.VarPat(name) => {
-          if (seenVariables.contains(name)) {
-
-            /** This is a nonlinear pattern which we do not reason about. See [[seenVariables]]. */
-            throw new IgnoreClause()
-          }
+          assert(!seenVariables.contains(name))
           seenVariables.add(name)
 
           // Variable names are irrelevant for our purposes
@@ -94,10 +79,9 @@ class PatternChecker(private val context: Context) {
             case (_: A.WildPat, p2Simple) => p2Simple
             case (p1Simple, _: A.WildPat) => p1Simple
             case _                        =>
-              /** For now, we only reason about "and" patterns that are used to name the overall value.
-                * For example, {{{{5, Y} = Z}}} is OK, whereas {{{{X, "string"} = {5, Y}}}} isn't.
-                */
-              throw new IgnoreClause()
+              // For now, we only reason about "and" patterns that are used to name the overall value.
+              // For example, `{5, Y} = Z` is OK, whereas `{X, "string"} = {5, Y}` isn't.
+              ???
           }
 
         case A.LiteralPat(value) =>
@@ -112,11 +96,7 @@ class PatternChecker(private val context: Context) {
             sourceLocation = pattern.sourceLocation,
           )
 
-        case A.RecordPat(fields, open) =>
-          Pattern.Record(fields.map(f => A.Field(f.label, simplifyPattern(f.value))), open)(
-            typ = pattern.typ,
-            sourceLocation = pattern.sourceLocation,
-          )
+        case A.RecordPat(fields, open) => ???
 
         case A.ListPat(Nil) =>
           Pattern.ConstructorApplication(Pattern.EmptyList, Nil)(
@@ -149,6 +129,7 @@ class PatternChecker(private val context: Context) {
     */
   private def isUseful(matrix: PatternMatrix.Matrix, clause: PatternMatrix.Vector): Boolean = {
     require(matrix.height == 0 || matrix.width == clause.length)
+
     (matrix, clause.elements) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
@@ -164,7 +145,6 @@ class PatternChecker(private val context: Context) {
           isUseful(defaultMatrix(matrix), PatternMatrix.Vector(ps))
         }
       }
-      case (_, (_: Pattern.Record) :: _) => ???
       case (_, (p: Pattern.ConstructorApplication) :: ps) =>
         isUseful(specialize(matrix, p), PatternMatrix.Vector(p.arguments ++ ps))
     }
@@ -203,7 +183,6 @@ class PatternChecker(private val context: Context) {
     val newRows = matrix.rows.flatMap(row =>
       row.elements match {
         case (_: Pattern.Wildcard) :: tail            => Some(PatternMatrix.Vector(tail))
-        case (_: Pattern.Record) :: _                 => ???
         case (_: Pattern.ConstructorApplication) :: _ => None
         case Nil                                      => throw new IllegalArgumentException()
       }
@@ -228,8 +207,7 @@ class PatternChecker(private val context: Context) {
 
     if (constructors.isEmpty)
       false
-    else {
+    else
       numberOfConstructors(constructors.head) == constructors.size
-    }
   }
 }

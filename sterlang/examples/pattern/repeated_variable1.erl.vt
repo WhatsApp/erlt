@@ -1,3 +1,0 @@
-val equals/2: fun((integer(), integer()) -> boolean())
-val X: integer()
-val X: integer()
