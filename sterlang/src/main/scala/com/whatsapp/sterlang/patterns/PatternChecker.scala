@@ -31,26 +31,27 @@ class PatternChecker(private val context: Context) {
   private def checkClauses(clauses: List[A.Clause]): Unit = {
     require(clauses.nonEmpty)
 
-    val previousRows: mutable.ListBuffer[PatternMatrix.Vector] = mutable.ListBuffer()
+    var previousRows: List[PatternMatrix.Vector] = List()
 
     // Check for redundancy
     for (clause <- clauses) {
       // TODO: check for nonlinear patterns
 
-      val simple = clause.pats.map(Pattern.simplify)
+      val simpleClause = clause.pats.map(Pattern.simplify)
 
-      // FIXME: constructing the matrix here takes linear time
-      if (!isUseful(PatternMatrix.Matrix(previousRows.toList), simple)) {
+      if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         throw new UselessPatternWarning()
       }
-      previousRows += simple
+
+      // FIXME: this takes linear time
+      previousRows = previousRows.appended(simpleClause)
     }
 
     /** The pattern row that will match any value. */
     val any = clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
 
     // Check for exhaustiveness
-    if (isUseful(PatternMatrix.Matrix(previousRows.toList), any)) {
+    if (isUseful(PatternMatrix.Matrix(previousRows), any)) {
       throw new MissingPatternsWarning()
     }
   }
