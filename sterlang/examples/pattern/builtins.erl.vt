@@ -1,0 +1,3 @@
+val test1/1: fun((boolean()) -> {})
+val test2/1: fun((integer()) -> {})
+val test3/1: fun((string()) -> {})

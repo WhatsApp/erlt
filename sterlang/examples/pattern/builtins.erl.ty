@@ -1,0 +1,3 @@
+-spec test1(boolean()) -> {}.
+-spec test2(integer()) -> {}.
+-spec test3(string()) -> {}.
