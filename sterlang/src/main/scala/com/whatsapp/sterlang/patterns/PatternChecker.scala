@@ -16,6 +16,7 @@
 
 package com.whatsapp.sterlang.patterns
 
+import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang.{Absyn, Context, Pos, Values}
 
@@ -27,15 +28,29 @@ class PatternChecker(private val context: Context) {
   private val A = Absyn
 
   def check(functions: List[A.Fun]): Unit = {
-    functions.foreach(checkFunction)
+    functions.foreach(checkNode)
   }
 
-  def checkFunction(function: A.Fun): Unit = {
-    // Check function definition
-    checkClauses(function, function.clauses)
+  def checkNode(node: A.Node): Unit = {
+    // Check this node
+    node match {
+      case node: A.Fun =>
+        checkClauses(node, node.clauses.map(_.pats))
+      case node: A.FnExp =>
+        checkClauses(node, node.clauses.map(_.pats))
+      case node: A.NamedFnExp =>
+        checkClauses(node, node.clauses.map(_.pats))
+      case node: A.CaseExp =>
+        checkClauses(node, node.branches.map(b => List(b.pat)))
+      case node: ValDef =>
+        checkClauses(node, List(List(node.pat)))
+      case _ => // nothing to check
+    }
 
-    // Check expressions in the body
-    // TODO: check expressions in the body
+    // Recursively check all children nodes
+    if (!node.isInstanceOf[A.Pat]) { // No need to recurse into patterns
+      A.children(node).foreach(checkNode)
+    }
   }
 
   /** Check clauses for exhaustiveness and redundancy.
@@ -43,7 +58,7 @@ class PatternChecker(private val context: Context) {
     * @throws MissingPatternsWarning if the clauses are inexhaustive
     * @throws UselessPatternWarning if there is a clause that can never match
     */
-  private def checkClauses(node: HasSourceLocation, clauses: List[A.Clause]): Unit = {
+  private def checkClauses(node: HasSourceLocation, clauses: List[List[A.Pat]]): Unit = {
     require(clauses.nonEmpty)
 
     var previousRows: List[PatternMatrix.Vector] = List()
@@ -52,12 +67,12 @@ class PatternChecker(private val context: Context) {
     for (clause <- clauses) {
       // TODO: check for nonlinear patterns
 
-      val simpleClause = clause.pats.map(Pattern.simplify)
+      val simpleClause = clause.map(Pattern.simplify)
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         val location =
-          if (clause.pats.isEmpty) Pos.NP
-          else Pos.merge(clause.pats.head.sourceLocation, clause.pats.last.sourceLocation)
+          if (clause.isEmpty) Pos.NP
+          else Pos.merge(clause.head.sourceLocation, clause.last.sourceLocation)
         throw new UselessPatternWarning(location)
       }
 
@@ -66,7 +81,7 @@ class PatternChecker(private val context: Context) {
     }
 
     /** The pattern row that will match any value. */
-    val any = clauses.head.pats.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
+    val any = clauses.head.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
 
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows), any)) {

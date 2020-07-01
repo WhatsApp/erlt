@@ -19,6 +19,8 @@ package com.whatsapp.sterlang
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang.Values.Value
 
+import scala.collection.mutable.ListBuffer
+
 object Absyn {
   type Type = Types.Type
   type RowType = Types.RowType
@@ -30,7 +32,7 @@ object Absyn {
     * The intermediate language is similar to the surface language,
     * but every expression is annotated with its type.
     */
-  trait Node extends HasSourceLocation
+  trait Node extends HasSourceLocation with Product
 
   case class Field[A](label: String, value: A)
 
@@ -121,4 +123,31 @@ object Absyn {
       val typ: Type,
       val sourceLocation: Pos.P,
   ) extends Pat
+
+  /** Returns an iterator over all immediate children nodes. This is empty for leaf nodes. */
+  def children(node: Node): Iterator[Node] = {
+    val pending = ListBuffer[Any](node.productIterator)
+    val result = ListBuffer[Node]()
+
+    while (pending.nonEmpty) {
+      val n = pending.remove(0)
+      n match {
+        case n: Node =>
+          result.append(n)
+        case c: IterableOnce[_] =>
+          pending.prependAll(c)
+        case c: Field[_] =>
+          pending.prepend(c.value)
+        case c: Clause =>
+          pending.prepend(c.body)
+          pending.prependAll(c.pats)
+        case c: Branch =>
+          pending.prepend(c.body)
+          pending.prepend(c.pat)
+        case _ => // ignore
+      }
+    }
+
+    result.iterator
+  }
 }

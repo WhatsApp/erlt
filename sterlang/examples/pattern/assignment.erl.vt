@@ -1,0 +1,5 @@
+val test1/0: fun(() -> {})
+val X: {}
+val test2/0: fun(() -> {})
+val X: {}
+val test3/0: fun(() -> {})
