@@ -1,7 +1,6 @@
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.errors.MissingPatternsWarning
-import com.whatsapp.sterlang.errors.UselessPatternWarning
+import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang.{Absyn, Context, Values}
 
 /** Generates warnings for missing and redundant clauses in pattern matching.

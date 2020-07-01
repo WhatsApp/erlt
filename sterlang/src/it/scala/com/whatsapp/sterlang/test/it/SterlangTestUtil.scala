@@ -19,7 +19,6 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.errors.CompilationMessage
 import com.whatsapp.sterlang.patterns.PatternChecker
 
 object SterlangTestUtil {
@@ -75,8 +74,7 @@ object SterlangTestUtil {
       new PatternChecker(context).check(annotatedFunctions)
       false
     } catch {
-      case _: CompilationMessage.Message => true
-      case _: PositionedError            => true // TODO: merge this error type into the above
+      case _: PositionedError => true
     }
   }
 }
