@@ -13,11 +13,9 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('wildcard-enum1').
+-module(redundant_tuple1).
 -export([test1/1]).
 
--enum ab() :: a{} | b{}.
-
--spec test1(ab()) -> {}.
-test1(ab.a{}) -> {};
+-spec test1({boolean(), boolean()}) -> {}.
+test1({_, _}) -> {};
 test1(_) -> {}.

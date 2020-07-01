@@ -13,11 +13,11 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('wildcard-enum3').
+-module(inexhaustive_enum1).
 -export([test1/2]).
 
 -enum ab() :: a{} | b{}.
 
 -spec test1(ab(), ab()) -> {}.
 test1(ab.a{}, _) -> {};
-test1(ab.b{}, _) -> {}.
+test1(_, ab.a{}) -> {}.

@@ -13,8 +13,12 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('empty-clause').
--export([test1/0]).
+-module(redundant_enum0).
+-export([test1/1]).
 
--spec test1() -> {}.
-test1() -> {}.
+-enum ab() :: a{} | b{}.
+
+-spec test1(ab()) -> {}.
+test1(ab.a{}) -> {};
+test1(ab.b{}) -> {};
+test1(ab.a{}) -> {}.

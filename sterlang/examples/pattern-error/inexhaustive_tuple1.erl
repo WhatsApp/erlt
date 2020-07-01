@@ -13,10 +13,11 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('inexhaustive-enum0').
--export([test1/1]).
+-module(inexhaustive_tuple1).
+-export([test1/2]).
 
 -enum ab() :: a{} | b{}.
 
--spec test1(ab()) -> {}.
-test1(ab.a{}) -> {}.
+-spec test1({ab(), ab()}) -> {}.
+test1({ab.a{}, _}) -> {};
+test1({_, ab.a{}}) -> {}.

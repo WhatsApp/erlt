@@ -13,11 +13,9 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('inexhaustive-tuple1').
--export([test1/2]).
+-module(redundant_tuple0).
+-export([test1/1]).
 
--enum ab() :: a{} | b{}.
-
--spec test1({ab(), ab()}) -> {}.
-test1({ab.a{}, _}) -> {};
-test1({_, ab.a{}}) -> {}.
+-spec test1({boolean(), boolean()}) -> {}.
+test1(_) -> {};
+test1(_) -> {}.

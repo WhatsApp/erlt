@@ -13,9 +13,11 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module('redundant-tuple1').
+-module(redundant_enum2).
 -export([test1/1]).
 
--spec test1({boolean(), boolean()}) -> {}.
-test1({_, _}) -> {};
+-enum ab() :: a{} | b{}.
+
+-spec test1(ab()) -> {}.
+test1(_) -> {};
 test1(_) -> {}.
