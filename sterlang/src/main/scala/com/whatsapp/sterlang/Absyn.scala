@@ -85,9 +85,16 @@ object Absyn {
       val sourceLocation: Pos.P,
   ) extends Exp
 
-  case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type)
-  case class Body(prelude: List[ValDef], main: ValDef, typ: Type)
-  case class Fun(name: String, clauses: List[Clause], typ: Type)
+  case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type) extends Node {
+    override val sourceLocation: Pos.P = Pos.merge(pat.sourceLocation, value.sourceLocation)
+  }
+  case class Body(prelude: List[ValDef], main: ValDef, typ: Type) extends Node {
+    override val sourceLocation: Pos.P = {
+      val start = if (prelude.isEmpty) main else prelude.head
+      Pos.merge(start.sourceLocation, main.sourceLocation)
+    }
+  }
+  case class Fun(name: String, clauses: List[Clause], typ: Type)(val sourceLocation: Pos.P) extends Node
   case class Clause(pats: List[Pat], body: Body)
 
   case class Branch(pat: Pat, body: Body)

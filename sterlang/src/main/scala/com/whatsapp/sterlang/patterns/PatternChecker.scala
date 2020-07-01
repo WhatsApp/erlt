@@ -16,7 +16,8 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.{Absyn, Context, Values}
+import com.whatsapp.sterlang.Pos.HasSourceLocation
+import com.whatsapp.sterlang.{Absyn, Context, Pos, Values}
 
 /** Generates warnings for missing and redundant clauses in pattern matching.
   *
@@ -25,13 +26,15 @@ import com.whatsapp.sterlang.{Absyn, Context, Values}
 class PatternChecker(private val context: Context) {
   private val A = Absyn
 
-  // TODO: what should be the interface to this module
   def check(functions: List[A.Fun]): Unit = {
     functions.foreach(checkFunction)
   }
 
   def checkFunction(function: A.Fun): Unit = {
-    checkClauses(function.clauses)
+    // Check function definition
+    checkClauses(function, function.clauses)
+
+    // Check expressions in the body
     // TODO: check expressions in the body
   }
 
@@ -40,7 +43,7 @@ class PatternChecker(private val context: Context) {
     * @throws MissingPatternsWarning if the clauses are inexhaustive
     * @throws UselessPatternWarning if there is a clause that can never match
     */
-  private def checkClauses(clauses: List[A.Clause]): Unit = {
+  private def checkClauses(node: HasSourceLocation, clauses: List[A.Clause]): Unit = {
     require(clauses.nonEmpty)
 
     var previousRows: List[PatternMatrix.Vector] = List()
@@ -52,7 +55,12 @@ class PatternChecker(private val context: Context) {
       val simpleClause = clause.pats.map(Pattern.simplify)
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
-        throw new UselessPatternWarning()
+        object Location extends HasSourceLocation {
+          override val sourceLocation: Pos.P =
+            if (clause.pats.isEmpty) Pos.NP
+            else Pos.merge(clause.pats.head.sourceLocation, clause.pats.last.sourceLocation)
+        }
+        throw new UselessPatternWarning(Location)
       }
 
       // FIXME: this takes linear time
@@ -64,7 +72,7 @@ class PatternChecker(private val context: Context) {
 
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows), any)) {
-      throw new MissingPatternsWarning()
+      throw new MissingPatternsWarning(node)
     }
   }
 
@@ -79,7 +87,7 @@ class PatternChecker(private val context: Context) {
     (matrix, clause) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
-      case (PatternMatrix.AddColumn(col1, _), (_: Pattern.Wildcard) :: ps) => {
+      case (PatternMatrix.AddColumn(col1, _), (_: Pattern.Wildcard) :: ps) =>
         val constructors: Map[Pattern.Constructor, Pattern.ConstructorApplication] =
           col1.collect { case x: Pattern.ConstructorApplication => x.constructor -> x }.toMap
 
@@ -90,7 +98,6 @@ class PatternChecker(private val context: Context) {
         } else {
           isUseful(defaultMatrix(matrix), ps)
         }
-      }
       case (_, (p: Pattern.ConstructorApplication) :: ps) =>
         isUseful(specialize(matrix, p), p.arguments ++ ps)
     }
@@ -113,11 +120,10 @@ class PatternChecker(private val context: Context) {
       pattern: Pattern.ConstructorApplication,
   ): Option[PatternMatrix.Vector] =
     row match {
-      case (first @ Pattern.Wildcard()) :: rest => {
+      case (first @ Pattern.Wildcard()) :: rest =>
         val newPatterns =
           pattern.arguments.map(arg => Pattern.Wildcard()(typ = arg.typ, sourceLocation = first.sourceLocation))
         Some(newPatterns ++ rest)
-      }
       case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == pattern.constructor =>
         Some(arguments1 ++ rest)
       case _ =>

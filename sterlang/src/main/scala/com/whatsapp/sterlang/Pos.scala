@@ -68,6 +68,21 @@ object Pos {
         .toString
   }
 
+  /** Combines two ranges to create a range that spans both. */
+  def merge(pos1: P, pos2: P): P =
+    (pos1, pos2) match {
+      case (NP, _)              => pos2
+      case (_, NP)              => pos1
+      case (pos1: SP, pos2: SP) => merge(pos1, pos2)
+    }
+
+  /** Combines two ranges to create a range that spans both. */
+  def merge(pos1: SP, pos2: SP): SP = {
+    val start = if (pos1.start < pos2.start) pos1.start else pos2.start
+    val end = if (pos1.end < pos2.end) pos2.end else pos1.end
+    SP(start, end)
+  }
+
   /** An object that has a source location. */
   trait HasSourceLocation {
     val sourceLocation: P
