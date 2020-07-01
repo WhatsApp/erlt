@@ -13,25 +13,8 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(builtins).
--export([test1/1, test2/1, test3/1, test4/1, test5/1]).
+-module('empty-clause').
+-export([test1/0]).
 
--spec test1(boolean()) -> {}.
-test1(true) -> {};
-test1(false) -> {}.
-
--spec test2(integer()) -> {}.
-test2(0) -> {};
-test2(1) -> {};
-test2(_) -> {}.
-
--spec test3(string()) -> {}.
-test3("1") -> {};
-test3("2") -> {};
-test3(_) -> {}.
-
--spec test4({}) -> {}.
-test4({}) -> {}.
-
--spec test5({}) -> {}.
-test5(_) -> {}.
+-spec test1() -> {}.
+test1() -> {}.
