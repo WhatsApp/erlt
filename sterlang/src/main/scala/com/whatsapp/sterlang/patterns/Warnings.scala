@@ -16,15 +16,14 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.Pos.HasSourceLocation
-import com.whatsapp.sterlang.PositionedError
+import com.whatsapp.sterlang.{Pos, PositionedError}
 
 sealed trait PatternWarning
 
-final class MissingPatternsWarning(node: HasSourceLocation)
-    extends PositionedError(pos = node.sourceLocation, title = "Missing Patterns", description = None)
+final class MissingPatternsWarning(node: Pos.P)
+    extends PositionedError(pos = node, title = "Missing Patterns", description = None)
     with PatternWarning
 
-final class UselessPatternWarning(clause: HasSourceLocation)
-    extends PositionedError(pos = clause.sourceLocation, title = "Useless Pattern", description = None)
+final class UselessPatternWarning(clause: Pos.P)
+    extends PositionedError(pos = clause, title = "Useless Pattern", description = None)
     with PatternWarning

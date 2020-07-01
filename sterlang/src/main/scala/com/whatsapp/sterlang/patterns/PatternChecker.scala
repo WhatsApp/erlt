@@ -55,12 +55,10 @@ class PatternChecker(private val context: Context) {
       val simpleClause = clause.pats.map(Pattern.simplify)
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
-        object Location extends HasSourceLocation {
-          override val sourceLocation: Pos.P =
-            if (clause.pats.isEmpty) Pos.NP
-            else Pos.merge(clause.pats.head.sourceLocation, clause.pats.last.sourceLocation)
-        }
-        throw new UselessPatternWarning(Location)
+        val location =
+          if (clause.pats.isEmpty) Pos.NP
+          else Pos.merge(clause.pats.head.sourceLocation, clause.pats.last.sourceLocation)
+        throw new UselessPatternWarning(location)
       }
 
       // FIXME: this takes linear time
@@ -72,7 +70,7 @@ class PatternChecker(private val context: Context) {
 
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows), any)) {
-      throw new MissingPatternsWarning(node)
+      throw new MissingPatternsWarning(node.sourceLocation)
     }
   }
 
