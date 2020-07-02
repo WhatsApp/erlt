@@ -207,19 +207,19 @@ pattern({cons,Line,H,T}, St0) ->
 pattern({tuple,Line,Ps}, St0) ->
     {TPs,St1} = pattern_list(Ps, St0),
     {{tuple,Line,TPs},St1};
-pattern({enum,Line,{op,L0,'.',{atom,L,E}=E0,{atom,_,_}=A0}=C0,Es0}, St0) ->
+pattern({enum,Line,{atom,L,E}=E0,{atom,_,_}=A0,Es0}, St0) ->
     {Es1,St1} = expr_list(Es0, St0),
-    C1 = case imported_type(E, St0) of
+    E1 = case imported_type(E, St0) of
              {yes,Module,_Arity} ->
                  %% note: the arity is that of the data type, not the constructor
-                 {op,L0,'.',{op,L0,'.',{atom,L,Module},E0},A0};
+                 {remote,L,{atom,L,Module},E0};
              _ ->
-                 C0
+                 E0
          end,
-    {{enum,Line,C1,Es1},St1};
-pattern({enum,Line,C,Ps}, St0) ->
-    {[TC|TPs],St1} = pattern_list([C|Ps], St0),
-    {{enum,Line,TC,TPs},St1};
+    {{enum,Line,E1,A0,Es1},St1};
+pattern({enum,Line,E,C,Ps}, St0) ->
+    {[TE,TC|TPs],St1} = pattern_list([E,C|Ps], St0),
+    {{enum,Line,TE,TC,TPs},St1};
 pattern({map,Line,Ps}, St0) ->
     {TPs,St1} = pattern_list(Ps, St0),
     {{map,Line,TPs},St1};
@@ -247,7 +247,11 @@ pattern({op,Line,Op,A0}, St0) ->
 pattern({op,Line,Op,L0,R0}, St0) ->
     {L,St1} = pattern(L0, St0),
     {R,St2} = pattern(R0, St1),
-    {{op,Line,Op,L,R},St2}.
+    {{op,Line,Op,L,R},St2};
+pattern({remote,Line,L0,R0}, St0) ->
+    {L,St1} = pattern(L0, St0),
+    {R,St2} = pattern(R0, St1),
+    {{remote,Line,L,R},St2}.
 
 pattern_list([P0 | Ps0], St0) ->
     {P,St1} = pattern(P0, St0),
@@ -394,19 +398,19 @@ expr({bc,Line,E0,Qs0}, St0) ->
 expr({tuple,Line,Es0}, St0) ->
     {Es1,St1} = expr_list(Es0, St0),
     {{tuple,Line,Es1},St1};
-expr({enum,Line,{op,L0,'.',{atom,L,E}=E0,{atom,_,_}=A0}=C0,Es0}, St0) ->
+expr({enum,Line,{atom,L,E}=E0,{atom,_,_}=A0,Es0}, St0) ->
     {Es1,St1} = expr_list(Es0, St0),
-    C1 = case imported_type(E, St0) of
+    E1 = case imported_type(E, St0) of
              {yes,Module,_Arity} ->
                  %% note: the arity is that of the data type, not the constructor
-                 {op,L0,'.',{op,L0,'.',{atom,L,Module},E0},A0};
+                 {remote,L,{atom,L,Module},E0};
              _ ->
-                 C0
+                 E0
          end,
-    {{enum,Line,C1,Es1},St1};
-expr({enum,Line,C0,Es0}, St0) ->
-    {[C1|Es1],St1} = expr_list([C0|Es0], St0),
-    {{enum,Line,C1,Es1},St1};
+    {{enum,Line,E1,A0,Es1},St1};
+expr({enum,Line,E0,C0,Es0}, St0) ->
+    {[E1,C1|Es1],St1} = expr_list([E0,C0|Es0], St0),
+    {{enum,Line,E1,C1,Es1},St1};
 expr({map,Line,Es0}, St0) ->
     {Es1,St1} = expr_list(Es0, St0),
     {{map,Line,Es1},St1};
@@ -545,7 +549,11 @@ expr({op,Line,Op,L0,R0}, St0) when Op =:= 'andalso';
 expr({op,Line,Op,L0,R0}, St0) ->
     {L,St1} = expr(L0, St0),
     {R,St2} = expr(R0, St1),
-    {{op,Line,Op,L,R},St2}.
+    {{op,Line,Op,L,R},St2};
+expr({remote,Line,L0,R0}, St0) ->
+    {L,St1} = expr(L0, St0),
+    {R,St2} = expr(R0, St1),
+    {{remote,Line,L,R},St2}.
 
 expr_list([E0 | Es0], St0) ->
     {E,St1} = expr(E0, St0),

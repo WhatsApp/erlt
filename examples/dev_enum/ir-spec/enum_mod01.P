@@ -49,7 +49,7 @@ r(E) ->
         {969696, enum_mod01, possibly, none} ->
             [];
         {969696, enum_mod01, possibly, some, X}
-            when X =:= {969696, possibly, none} ->
+            when X =:= {969696, enum_mod01, possibly, none} ->
             [];
         {969696, enum_mod01, possibly, some, X} ->
             [X]

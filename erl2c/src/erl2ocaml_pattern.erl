@@ -53,19 +53,17 @@ dedup_pattern1({float, Line, F}, Env) ->
     {{float, Line, F}, Env};
 dedup_pattern1({atom, Line, A}, Env) ->
     {{atom, Line, A}, Env};
-dedup_pattern1({enum, L1, {op, L2, '.', {atom, L3, Enum}, {atom, L4, Ctr}}, Args}, Env) ->
+dedup_pattern1({enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args}, Env) ->
     {Args1, Env1} = dedup_patterns1(Args, Env),
-    {{enum, L1, {op, L2, '.', {atom, L3, Enum}, {atom, L4, Ctr}}, Args1}, Env1};
+    {{enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args1}, Env1};
 dedup_pattern1(
-    {enum, L1,
-        {op, L2, '.', {op, L3, '.', {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}},
-        Args},
+    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
+     Args},
     Env
 ) ->
     {Args1, Env1} = dedup_patterns1(Args, Env),
-    {{enum, L1,
-        {op, L2, '.', {op, L3, '.', {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}},
-        Args1}, Env1};
+    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
+      Args1}, Env1};
 dedup_pattern1({string, Line, S}, Env) ->
     {{string, Line, S}, Env};
 dedup_pattern1({nil, Line}, Env) ->
@@ -122,21 +120,19 @@ destruct_pattern1({float, Line, F}, Env) ->
 destruct_pattern1({atom, Line, A}, Env) ->
     {{atom, Line, A}, Env};
 destruct_pattern1(
-    {enum, L1, {op, L2, '.', {atom, L3, Enum}, {atom, L4, Ctr}}, Args},
+    {enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args},
     Env
 ) ->
     {Args1, Env1} = destruct_patterns1(Args, Env),
-    {{enum, L1, {op, L2, '.', {atom, L3, Enum}, {atom, L4, Ctr}}, Args1}, Env1};
+    {{enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args1}, Env1};
 destruct_pattern1(
-    {enum, L1,
-        {op, L2, '.', {op, L3, '.', {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}},
-        Args},
+    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
+     Args},
     Env
 ) ->
     {Args1, Env1} = destruct_patterns1(Args, Env),
-    {{enum, L1,
-        {op, L2, '.', {op, L3, '.', {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}},
-        Args1}, Env1};
+    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
+      Args1}, Env1};
 destruct_pattern1({string, Line, S}, Env) ->
     {{string, Line, S}, Env};
 destruct_pattern1({nil, Line}, Env) ->
