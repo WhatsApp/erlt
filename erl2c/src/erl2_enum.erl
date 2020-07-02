@@ -44,7 +44,7 @@ init_context(Forms) ->
        enums = init_enums(Enums, #{})
     }.
 
-init_enums([{N,{type,_,enum,[{atom,_,C}|_]},_Vs}|Es],Map) ->
+init_enums([{N,{type,_,enum,{atom,_,C},_},_Vs}|Es],Map) ->
     init_enums(Es, add_enum(C, N, Map));
 init_enums([{N,{type,_,union,Cs},_Vs}|Es],Map) ->
     Map1 = lists:foldl(fun (C, M) -> add_enum(C, N, M) end,
@@ -61,7 +61,7 @@ add_enum(C, E, Map) ->
             #{C => [E]}
     end.
 
-constrs([{type,_,enum,[{atom,_,C}|_]}|Cs]) ->
+constrs([{type,_,enum,{atom,_,C},_}|Cs]) ->
     [C|constrs(Cs)];
 constrs([]) ->
     [].
@@ -227,28 +227,20 @@ pattern({cons,Line,H0,T0},Context) ->
 pattern({tuple,Line,Ps0},Context) ->
     Ps1 = pattern_list(Ps0,Context),
     {tuple,Line,Ps1};
-pattern({enum,Line,{op,_L,'.',_,_}=Op,Ps0},Context) ->
-    case erl2_parse:balance_dotted(Op) of
-        {op,_,'.',{op,_,'.',M0,E0},A0} ->
-            %% remote enum reference Mod.Enum.Constructor{...}
-            M1 = pattern(M0,Context),
-            E1 = pattern(E0,Context),
-            A1 = pattern(A0,Context),
-            Ps1 = pattern_list(Ps0,Context),
-            {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Ps1]};
-        {op,_,'.',E0,A0} ->
-            %% local qualified enum reference Enum.Constructor{...}
-            M = {atom, Line, Context#context.module},
-            E1 = pattern(E0,Context),
-            A1 = pattern(A0,Context),
-            Ps1 = pattern_list(Ps0,Context),
-            {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ps1]}
-    end;
-pattern({enum,Line,A0,Ps0},Context) ->
-    M = {atom, Line, Context#context.module},
+pattern({enum,Line,{remote,_L,M0,E0},A0,Ps0},Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = pattern(M0,Context),
+    E1 = pattern(E0,Context),
     A1 = pattern(A0,Context),
     Ps1 = pattern_list(Ps0,Context),
-    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, A1 | Ps1]};
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Ps1]};
+pattern({enum,Line,E0,A0,Ps0},Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = pattern(E0,Context),
+    A1 = pattern(A0,Context),
+    Ps1 = pattern_list(Ps0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ps1]};
 pattern({map,Line,Ps0},Context) ->
     Ps1 = pattern_list(Ps0,Context),
     {map,Line,Ps1};
@@ -381,16 +373,13 @@ gexpr({cons,Line,H0,T0},Context) ->
 gexpr({tuple,Line,Es0},Context) ->
     Es1 = gexpr_list(Es0,Context),
     {tuple,Line,Es1};
-gexpr({enum,Line,{op,_L,'.',M0,A0},Es0},Context) ->
-    M1 = gexpr(M0,Context),
-    A1 = gexpr(A0,Context),
-    Es1 = gexpr_list(Es0,Context),
-    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, A1 | Es1]};
-gexpr({enum,Line,A0,Es0},Context) ->
+gexpr({enum,Line,E0,A0,Es0},Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
     M = {atom, Line, Context#context.module},
+    E1 = gexpr(E0,Context),
     A1 = gexpr(A0,Context),
     Es1 = gexpr_list(Es0,Context),
-    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, A1 | Es1]};
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Es1]};
 gexpr({record_index,Line,Name,Field0},Context) ->
     Field1 = gexpr(Field0,Context),
     {record_index,Line,Name,Field1};
@@ -493,28 +482,20 @@ expr({bc,Line,E0,Qs0},Context) ->
 expr({tuple,Line,Es0},Context) ->
     Es1 = expr_list(Es0,Context),
     {tuple,Line,Es1};
-expr({enum,Line,{op,_L,'.',_,A0}=Op,Es0},Context) ->
-    case erl2_parse:balance_dotted(Op) of
-        {op,_,'.',{op,_,'.',M0,E0},A0} ->
-            %% remote enum reference Mod.Enum.Constructor{...}
-            M1 = expr(M0,Context),
-            E1 = expr(E0,Context),
-            A1 = expr(A0,Context),
-            Es1 = expr_list(Es0,Context),
-            {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Es1]};
-        {op,_,'.',E0,A0} ->
-            %% local qualified enum reference Enum.Constructor{...}
-            M = {atom, Line, Context#context.module},
-            E1 = expr(E0,Context),
-            A1 = expr(A0,Context),
-            Es1 = expr_list(Es0,Context),
-            {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Es1]}
-    end;
-expr({enum,Line,A0,Es0},Context) ->
-    M = {atom, Line, Context#context.module},
+expr({enum,Line,{remote,_L,M0,E0},A0,Es0},Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = expr(M0,Context),
+    E1 = expr(E0,Context),
     A1 = expr(A0,Context),
     Es1 = expr_list(Es0,Context),
-    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, A1 | Es1]};
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Es1]};
+expr({enum,Line,E0,A0,Es0},Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = expr(E0,Context),
+    A1 = expr(A0,Context),
+    Es1 = expr_list(Es0,Context),
+    {tuple,Line,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Es1]};
 expr({map,Line,Map0,Es0},Context) ->
     [Map1|Es1] = exprs([Map0|Es0],Context),
     {map,Line,Map1,Es1};
@@ -753,24 +734,21 @@ type({type,Line,tuple,any},_Context) ->
 type({type,Line,tuple,Ts},Context) ->
     Ts1 = type_list(Ts,Context),
     {type,Line,tuple,Ts1};
-type({type,Line,enum,[{op,_L,'.',_,_}=Op|Ts0]},Context) ->
-    case erl2_parse:balance_dotted(Op) of
-        {op,_,'.',{op,_,'.',M0,E0},A0} ->
-            %% remote enum reference Mod.Enum.Constructor{...}
-            M1 = type(M0,Context),
-            E1 = type(E0,Context),
-            A1 = type(A0,Context),
-            Ts1 = type_list(Ts0,Context),
-            {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Ts1]};
-        {op,_,'.',E0,A0} ->
-            %% local qualified enum reference Enum.Constructor{...}
-            M = {atom, Line, Context#context.module},
-            E1 = type(E0,Context),
-            A1 = type(A0,Context),
-            Ts1 = type_list(Ts0,Context),
-            {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ts1]}
-    end;
-type({type,Line,enum,[{atom,_,_}=A|Ts]},Context) ->
+type({type,Line,enum,{remote,_,M0,E0},A0,Ts0},Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = type(M0,Context),
+    E1 = type(E0,Context),
+    A1 = type(A0,Context),
+    Ts1 = type_list(Ts0,Context),
+    {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M1, E1, A1 | Ts1]};
+type({type,Line,enum,E0,A0,Ts0},Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = type(E0,Context),
+    A1 = type(A0,Context),
+    Ts1 = type_list(Ts0,Context),
+    {type,Line,tuple,[{integer,Line,?ENUM_COOKIE}, M, E1, A1 | Ts1]};
+type({type,Line,enum,{atom,_,_}=A,Ts},Context) ->
     A1 = type(A,Context),
     Ts1 = type_list(Ts,Context),
     %% unqualified use can only happen in an enum def, so the

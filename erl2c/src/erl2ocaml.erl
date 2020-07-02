@@ -353,22 +353,20 @@ pattern({atom, _Line, false}, _Ctx) ->
     "false";
 pattern({atom, Line, Atom}, _Ctx) ->
     throw({erl2ocaml_error, {Line, {'not_supported_syntax', Atom, "atom in pattern"}}});
-pattern({enum, _, {op, _, '.', {atom, _, Enum}, {atom, _, Ctr}}, []}, _Ctx) ->
+pattern({enum, _, {atom, _, Enum}, {atom, _, Ctr}, []}, _Ctx) ->
     enum_ctr_name(Enum, Ctr);
 pattern(
-    {enum, _,
-        {op, _, '.', {op, _, '.', {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}}, []},
+    {enum, _, {remote, _, {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}, []},
     Ctx
 ) ->
     enum_ctr_name(Mod, Enum, Ctr, Ctx);
-pattern({enum, _, {op, _, '.', {atom, _, Enum}, {atom, _, Ctr}}, Args}, Ctx) ->
+pattern({enum, _, {atom, _, Enum}, {atom, _, Ctr}, Args}, Ctx) ->
     enum_ctr_name(Enum, Ctr) ++
         "(" ++
         binary_to_list(iolist_to_binary(interleave(false, ", ", patterns(Args, Ctx)))) ++
         ")";
 pattern(
-    {enum, _, {op, _, '.', {op, _, '.', {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}},
-        Args},
+    {enum, _, {remote, _, {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}, Args},
     Ctx
 ) ->
     enum_ctr_name(Mod, Enum, Ctr, Ctx) ++
@@ -551,15 +549,14 @@ expr({op, Line, '--', L, R}, Ctx) ->
     [{"("}, {"Ffi.list_diff'2"}, expr({tuple1, Line, [L, R]}, Ctx), {")"}];
 expr({op, _Line, Op, L, R}, Ctx) ->
     [{"("}, expr(L, Ctx), {")"}, {bop(Op)}, {"("}, expr(R, Ctx), {")"}];
-expr({enum, _, {op, _, '.', {atom, _, Enum}, {atom, _, Ctr}}, []}, _Ctx) ->
+expr({enum, _, {atom, _, Enum}, {atom, _, Ctr}, []}, _Ctx) ->
     {enum_ctr_name(Enum, Ctr)};
 expr(
-    {enum, _,
-        {op, _, '.', {op, _, '.', {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}}, []},
+    {enum, _, {remote, _, {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}, []},
     Ctx
 ) ->
     {enum_ctr_name(Mod, Enum, Ctr, Ctx)};
-expr({enum, _, {op, _, '.', {atom, _, Enum}, {atom, _, Ctr}}, Args}, Ctx) ->
+expr({enum, _, {atom, _, Enum}, {atom, _, Ctr}, Args}, Ctx) ->
     [
         {enum_ctr_name(Enum, Ctr)},
         {"("},
@@ -567,8 +564,7 @@ expr({enum, _, {op, _, '.', {atom, _, Enum}, {atom, _, Ctr}}, Args}, Ctx) ->
         {")"}
     ];
 expr(
-    {enum, _, {op, _, '.', {op, _, '.', {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}},
-        Args},
+    {enum, _, {remote, _, {atom, _, Mod}, {atom, _, Enum}}, {atom, _, Ctr}, Args},
     Ctx
 ) ->
     [
@@ -722,9 +718,9 @@ enum_ctr_defs(EnumN, {type, _Ln, union, CtrDefs}, Ctx) ->
 enum_ctr_defs(EnumN, CtrDef, Ctx) ->
     enum_ctr_def(EnumN, CtrDef, Ctx).
 
-enum_ctr_def(EnumN, {type, _, enum, [{atom, _, CtrN}]}, _Ctx) ->
+enum_ctr_def(EnumN, {type, _, enum, {atom, _, CtrN}, []}, _Ctx) ->
     enum_ctr_name(EnumN, CtrN);
-enum_ctr_def(EnumN, {type, _, enum, [{atom, _, CtrN} | Ts]}, Ctx) ->
+enum_ctr_def(EnumN, {type, _, enum, {atom, _, CtrN}, Ts}, Ctx) ->
     enum_ctr_name(EnumN, CtrN) ++
         " of " ++
         interleave(false, " * ", ["(" ++ type(T, Ctx) ++ ")" || T <- Ts]).
@@ -1117,9 +1113,7 @@ remote({remote_type, _Ln, [{atom, Ln, Mod} | _]}) ->
     {Ln, Mod};
 %% remote enum ctr
 remote(
-    {enum, _,
-        {op, _, '.', {op, _, '.', {atom, Ln, Mod}, {atom, _, _Enum}}, {atom, _, _Ctr}},
-        _Args}
+    {enum, _, {remote, _, {atom, Ln, Mod}, {atom, _, _Enum}}, {atom, _, _Ctr}, _Args}
 ) ->
     {Ln, Mod};
 %% fn mod:f/n

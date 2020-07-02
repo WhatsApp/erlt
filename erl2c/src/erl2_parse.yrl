@@ -340,8 +340,8 @@ pat_expr_max -> binary : '$1'.
 pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
-enum_pat_expr -> pat_expr_800 '{' '}' : {enum,?anno('$1','$2'),'$1',[]}.
-enum_pat_expr -> pat_expr_800 '{' pat_exprs '}' : {enum,?anno('$1','$4'),'$1','$3'}.
+enum_pat_expr -> pat_expr_800 '{' '}' : build_enum('$1',[],?anno('$1','$3')).
+enum_pat_expr -> pat_expr_800 '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),'$2'}.
@@ -409,8 +409,8 @@ tuple -> '{' '}' : {tuple,?anno('$1','$2'),[]}.
 tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 
 %% This is called from expr_700
-enum_expr -> expr_800 '{' '}' : {enum,?anno('$1','$2'),'$1',[]}.
-enum_expr -> expr_800 '{' exprs '}' : {enum,?anno('$1','$4'),'$1','$3'}.
+enum_expr -> expr_800 '{' '}' : build_enum('$1',[],?anno('$1','$3')).
+enum_expr -> expr_800 '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),'$2'}.
@@ -1292,12 +1292,17 @@ build_bin_type([], Int) ->
 build_bin_type([{var, Aa, _}|_], _) ->
     ret_err(Aa, "Bad binary type").
 
-build_enum_type({op, A, '.', {op, A2, '.', M, E}, N}, Types) ->
-    {type, A, enum, [{op, A, '.', {op, A2, '.', fold_dots(M), E}, N} | Types]};
-build_enum_type({op, A, '.', E, N}, Types) ->
-    {type, A, enum, [{op, A, '.', E, N} | Types]};
-build_enum_type({atom, A, N}, Types) ->
-    {type, A, enum, [{atom, A, N} | Types]}.
+build_enum_type(Name, Types) ->
+    case erl2_parse:balance_dotted(Name) of
+        {op, A, '.', {op, A2, '.', M, E}, N} ->
+            {type, A, enum, {remote, A2, fold_dots(M), E}, N, Types};
+        {op, A, '.', E, N} ->
+            {type, A, enum, E, N, Types};
+        {atom, A, _}=N ->
+            {type, A, enum, N, Types};
+        Other ->
+            ret_err(?anno(Other), "bad enum type")
+    end.
 
 build_type({op, A, '.', M, N}, Types) ->
     {remote_type, A, [fold_dots(M), N, Types]};
@@ -1462,6 +1467,20 @@ check_clauses(Cs, Name, Arity) ->
 
 build_try(Try,Es,Scs,{Ccs,As,End}) ->
     {'try',?anno(Try,End),Es,Scs,Ccs,As}.
+
+build_enum(Name,Elements,Anno) ->
+    case erl2_parse:balance_dotted(Name) of
+        {op,_,'.',{op,ModAnno,'.',Mod,Enum},Ctr} ->
+            %% remote enum reference Mod.Enum.Constructor{...}
+            {enum,Anno,{remote,ModAnno,Mod,Enum},Ctr,Elements};
+        {op,_,'.',Enum,Ctr} ->
+            %% local qualified enum reference Enum.Constructor{...}
+            {enum,Anno,Enum,Ctr,Elements};
+        {atom,_,_} ->
+            ret_err(Anno, "constructor missing enum qualifier");
+        _Other ->
+            ret_err(Anno, "bad enum")
+    end.
 
 -spec ret_err(_, _) -> no_return().
 ret_err(Anno, S) ->
