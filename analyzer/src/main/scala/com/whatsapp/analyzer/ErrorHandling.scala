@@ -19,7 +19,7 @@ package com.whatsapp.analyzer
 import scala.util.Using
 
 object ErrorHandling {
-  case class ModuleInfo(name: String, catches: Int, tries: Int, generated: Boolean)
+  case class ModuleInfo(name: String, catches: Int, tries: List[Int], generated: Boolean)
   case class AppInfo(name: String, modules: List[ModuleInfo])
   case class Total(catches: Int, tries: Int)
 
@@ -41,6 +41,12 @@ object ErrorHandling {
     var totalTries = 0
     var totalTriesNonGen = 0
 
+    var totalTryCatchClauses = 0
+    var totalTryCatchClausesNonGen = 0
+
+    var mostBranchyTry = 0
+    var mostBranchyModule: String = null
+
     val allModules = infos.flatMap(_.modules)
     // some generated stuff is duplicated (or not cleaned up?)
     val generated: Set[String] =
@@ -51,24 +57,44 @@ object ErrorHandling {
       moduleInfo <- modules
     } {
       totalCatches = totalCatches + moduleInfo.catches
-      totalTries = totalTries + moduleInfo.tries
+      totalTries = totalTries + moduleInfo.tries.length
+      totalTryCatchClauses = totalTryCatchClauses + moduleInfo.tries.sum
+
+      val maxB =
+        if (moduleInfo.tries.isEmpty) 0 else moduleInfo.tries.max
+      if (maxB > mostBranchyTry) {
+        mostBranchyModule = moduleInfo.name
+        mostBranchyTry = maxB
+      }
+
       if (!moduleInfo.generated) {
         totalCatchesNonGen = totalCatches + moduleInfo.catches
-        totalTriesNonGen = totalTriesNonGen + moduleInfo.tries
+        totalTriesNonGen = totalTriesNonGen + moduleInfo.tries.length
+        totalTryCatchClausesNonGen = totalTryCatchClausesNonGen + moduleInfo.tries.sum
       }
     }
 
-    Console.println(s"Catches: $totalCatches")
-    Console.println(s"Tries:   $totalTries")
+    Console.println(s"Catches:             $totalCatches")
+    Console.println(s"Tries:               $totalTries")
+    Console.println(s"TriesCatchClauses:   $totalTryCatchClauses")
+    Console.println(s"MostBranchy:         $mostBranchyModule ($mostBranchyTry)")
 
-    Console.println(s"Catches (NonGen): $totalCatchesNonGen")
-    Console.println(s"Tries (NonGen):   $totalTriesNonGen")
+    Console.println(s"Catches (NonGen):             $totalCatchesNonGen")
+    Console.println(s"Tries (NonGen):               $totalTriesNonGen")
+    Console.println(s"TriesCatchClauses (NonGen):   $totalTryCatchClausesNonGen")
 
     val interestingModules = allModules.filterNot(mi => generated(mi.name) || mi.name.endsWith("_tests"))
-    val top10 = interestingModules.sortBy { mi => mi.tries + mi.catches }.reverse.take(10)
+    val top10 = interestingModules.sortBy { mi => mi.tries.length + mi.catches }.reverse.take(10)
     for (moduleInfo <- top10) {
       Console.println(s"${moduleInfo.name} catches:${moduleInfo.catches} tries:${moduleInfo.tries}")
     }
+    val branchInfo =
+      interestingModules.map { mi => (mi.name, mi.tries.maxOption.getOrElse(0)) }.filter(_._2 > 1).sortBy(_._2).reverse
+    Console.println("BRANCHY>>>")
+    for ((m, bs) <- branchInfo) {
+      Console.println(s"$m   $bs")
+    }
+    Console.println("-----------")
   }
 
   private def loadProjectData(rpc: RPC): List[AppInfo] = {

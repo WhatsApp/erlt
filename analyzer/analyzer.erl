@@ -19,6 +19,7 @@
     catches/1,
     dynamic_calls/1,
     error_handling/1,
+    error_handling_verbose/1,
     exports/1,
     forms/1,
     functions/1,
@@ -150,12 +151,20 @@ functions(BeamFile) ->
     Count = erlang:length(Functions),
     Count.
 
+-type try_info() :: {NumberOfCatches :: integer()}.
+
 -spec error_handling(file:filename()) ->
-    {{'catches', integer()}, {'tries', integer()}}.
+    {{'catches', integer()}, {'tries', list(try_info())}}.
 error_handling(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     Catches = erlang:length(catches_aux(Forms)),
-    Tries = erlang:length(tries_aux(Forms)),
+    Tries = tries_aux(Forms),
+    {{'catches', Catches}, {'tries', Tries}}.
+
+error_handling_verbose(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Catches = erlang:length(catches_aux(Forms)),
+    Tries = tries_aux_verbose(Forms),
     {{'catches', Catches}, {'tries', Tries}}.
 
 -spec bif_clashes(file:filename()) -> list(mfa()).
@@ -185,9 +194,12 @@ tries(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     tries_aux(Forms).
 
--spec tries_aux(list(erl_parse:abstract_form())) -> list(erl_anno:anno()).
+-spec tries_aux(list(erl_parse:abstract_form())) -> list(try_info()).
 tries_aux(Forms) ->
-    collect(Forms, fun pred/1, fun try_anno/1).
+    collect(Forms, fun pred/1, fun try_info/1).
+
+tries_aux_verbose(Forms) ->
+    collect(Forms, fun pred/1, fun try_info_verbose/1).
 
 collect(Forms, Pred, Collect) ->
     do_collect(Forms, Pred, Collect, []).
@@ -261,8 +273,16 @@ receive_anno(_) ->
 catch_anno({'catch', Anno, _}) -> Anno;
 catch_anno(_) -> false.
 
-try_anno({'try', Anno, _, _, _, _}) -> Anno;
-try_anno(_) -> false.
+try_info({'try', _, _, _, CatchSeq, _}) -> {erlang:length(CatchSeq)};
+try_info(_) -> false.
+
+try_info_verbose({'try', Line, _, _, CatchSeq, _}) ->
+    {Line, erlang:length(CatchSeq), lists:map(fun clause_head/1, CatchSeq)};
+try_info_verbose(_) ->
+    false.
+
+clause_head({clause, _Line, Pat, Guard, _Body}) ->
+    {Pat, Guard}.
 
 pred(_) ->
     true.

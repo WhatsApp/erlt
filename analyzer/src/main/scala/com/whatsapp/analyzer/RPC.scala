@@ -178,7 +178,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
-  def getErrorHandling(beamFilePath: String): Option[(Int, Int)] = {
+  def getErrorHandling(beamFilePath: String): Option[(Int, List[Int])] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "error_handling", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
@@ -188,10 +188,11 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
       case ETuple(
             List(
               ETuple(List(EAtom("catches"), ELong(catches))),
-              ETuple(List(EAtom("tries"), ELong(tries))),
+              ETuple(List(EAtom("tries"), EList(rawTries, _))),
             )
           ) =>
-        val result = (catches.toInt, tries.toInt)
+        val tries = rawTries.map { case ETuple(List(ELong(catchClauses))) => catchClauses.toInt }
+        val result = (catches.toInt, tries)
         Some(result)
       case _ =>
         println("not loaded")
