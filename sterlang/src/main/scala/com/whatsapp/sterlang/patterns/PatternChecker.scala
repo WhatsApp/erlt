@@ -81,7 +81,7 @@ class PatternChecker(private val context: Context) {
     }
 
     /** The pattern row that will match any value. */
-    val any = clauses.head.map(p => Pattern.Wildcard()(typ = p.typ, sourceLocation = p.sourceLocation))
+    val any = clauses.head.map(_ => Pattern.Wildcard)
 
     // Check for exhaustiveness
     if (isUseful(PatternMatrix.Matrix(previousRows), any)) {
@@ -100,19 +100,20 @@ class PatternChecker(private val context: Context) {
     (matrix, clause) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
-      case (PatternMatrix.AddColumn(col1, _), (_: Pattern.Wildcard) :: ps) =>
-        val constructors: Map[Pattern.Constructor, Pattern.ConstructorApplication] =
-          col1.collect { case x: Pattern.ConstructorApplication => x.constructor -> x }.toMap
+      case (PatternMatrix.AddColumn(col1, _), Pattern.Wildcard :: ps) =>
+        val constructors: Set[Pattern.Constructor] = col1.collect {
+          case x: Pattern.ConstructorApplication => x.constructor
+        }.toSet
 
-        if (isCompleteSignature(constructors.keySet)) {
-          constructors.exists {
-            case (_, constructor) => isUseful(specialize(matrix, constructor), specializeRow(clause, constructor).get)
+        if (isCompleteSignature(constructors)) {
+          constructors.exists { constructor =>
+            isUseful(specialize(matrix, constructor), specializeRow(clause, constructor).get)
           }
         } else {
           isUseful(defaultMatrix(matrix), ps)
         }
       case (_, (p: Pattern.ConstructorApplication) :: ps) =>
-        isUseful(specialize(matrix, p), p.arguments ++ ps)
+        isUseful(specialize(matrix, p.constructor), p.arguments ++ ps)
     }
   }
 
@@ -120,24 +121,16 @@ class PatternChecker(private val context: Context) {
     *
     * Corresponds to the S function in the paper.
     */
-  private def specialize(
-      matrix: PatternMatrix.Matrix,
-      pattern: Pattern.ConstructorApplication,
-  ): PatternMatrix.Matrix = {
-    PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, pattern)))
+  private def specialize(matrix: PatternMatrix.Matrix, constructor: Pattern.Constructor): PatternMatrix.Matrix = {
+    PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, constructor)))
   }
 
   /** Like [[specialize]] but specialized to a single row. */
-  private def specializeRow(
-      row: PatternMatrix.Vector,
-      pattern: Pattern.ConstructorApplication,
-  ): Option[PatternMatrix.Vector] =
+  private def specializeRow(row: PatternMatrix.Vector, constructor: Pattern.Constructor): Option[PatternMatrix.Vector] =
     row match {
-      case (first @ Pattern.Wildcard()) :: rest =>
-        val newPatterns =
-          pattern.arguments.map(arg => Pattern.Wildcard()(typ = arg.typ, sourceLocation = first.sourceLocation))
-        Some(newPatterns ++ rest)
-      case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == pattern.constructor =>
+      case Pattern.Wildcard :: rest =>
+        Some(List.fill(arity(constructor))(Pattern.Wildcard) ++ rest)
+      case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == constructor =>
         Some(arguments1 ++ rest)
       case _ =>
         None
@@ -148,7 +141,7 @@ class PatternChecker(private val context: Context) {
     require(matrix.width > 0)
 
     PatternMatrix.Matrix(matrix.rows.collect {
-      case (_: Pattern.Wildcard) :: tail => tail
+      case Pattern.Wildcard :: tail => tail
     })
   }
 
@@ -172,4 +165,16 @@ class PatternChecker(private val context: Context) {
     else
       numberOfConstructors(constructors.head) == constructors.size
   }
+
+  /** Returns the number of arguments the given constructor takes. */
+  private def arity(constructor: Pattern.Constructor): Int =
+    constructor match {
+      case _: Pattern.Literal   => 0
+      case Pattern.Tuple(arity) => arity
+      case Pattern.EmptyList    => 0
+      case Pattern.Cons         => 2
+      case Pattern.EnumConstructor(enum, constructorName) =>
+        val enumDef = context.enumDefs.find(_.name == enum).get
+        enumDef.cons.find(_.name == constructorName).get.argTypes.length
+    }
 }
