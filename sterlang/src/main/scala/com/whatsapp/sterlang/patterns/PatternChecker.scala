@@ -42,9 +42,8 @@ class PatternChecker(private val context: Context) {
         checkClauses(node, node.clauses.map(_.pats))
       case node: A.CaseExp =>
         checkClauses(node, node.branches.map(b => List(b.pat)))
-      case node: ValDef =>
-        checkClauses(node, List(List(node.pat)))
-      case _ => // nothing to check
+      case _: ValDef => // ignore
+      case _         => // nothing to check
     }
 
     // Recursively check all children nodes
