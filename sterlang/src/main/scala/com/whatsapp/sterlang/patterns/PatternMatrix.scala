@@ -22,6 +22,9 @@ private[patterns] object PatternMatrix {
   /** A one dimensional array of patterns. */
   type Vector = List[Pattern.Pat]
 
+  /** Returns a pattern vector of the given length containing wildcards. */
+  def wildcards(length: Int): Vector = List.fill(length)(Pattern.Wildcard)
+
   /** A two dimensional grid of patterns. */
   case class Matrix(rows: List[Vector]) {
     require(rows.forall(row => row.length == rows.head.length))

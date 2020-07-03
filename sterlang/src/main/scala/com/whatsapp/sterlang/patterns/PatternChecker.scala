@@ -16,6 +16,8 @@
 
 package com.whatsapp.sterlang.patterns
 
+import java.util.NoSuchElementException
+
 import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang.{Absyn, Context, Pos, Values}
@@ -75,16 +77,14 @@ class PatternChecker(private val context: Context) {
         throw new UselessPatternWarning(location)
       }
 
-      // FIXME: this takes linear time
       previousRows = previousRows.appended(simpleClause)
     }
 
-    /** The pattern row that will match any value. */
-    val any = clauses.head.map(_ => Pattern.Wildcard)
-
     // Check for exhaustiveness
-    if (isUseful(PatternMatrix.Matrix(previousRows), any)) {
-      throw new MissingPatternsWarning(node.sourceLocation)
+    missingClause(PatternMatrix.Matrix(previousRows), clauses.head.length) match {
+      case None => // exhaustive
+      case Some(clause) =>
+        throw new MissingPatternsWarning(node.sourceLocation, clause)
     }
   }
 
@@ -100,11 +100,9 @@ class PatternChecker(private val context: Context) {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
       case (PatternMatrix.AddColumn(col1, _), Pattern.Wildcard :: ps) =>
-        val constructors: Set[Pattern.Constructor] = col1.collect {
-          case x: Pattern.ConstructorApplication => x.constructor
-        }.toSet
+        val constructors = col1.collect { case x: Pattern.ConstructorApplication => x.constructor }.toSet
 
-        if (isCompleteSignature(constructors)) {
+        if (missingConstructors(constructors) == MissingNone) {
           constructors.exists { constructor =>
             isUseful(specialize(matrix, constructor), specializeRow(clause, constructor).get)
           }
@@ -116,7 +114,35 @@ class PatternChecker(private val context: Context) {
     }
   }
 
-  /** Extract clauses in the matrix that are relevant for checking the given pattern.
+  /** Returns a pattern vector that matches (some of the) values not matched by the matrix.
+    * Returns [[None]] if the matrix matches all possible values.
+    *
+    * This is used to generate example clauses to help people debug inexhaustive match errors.
+    */
+  private def missingClause(matrix: PatternMatrix.Matrix, width: Int): Option[PatternMatrix.Vector] =
+    (matrix, width) match {
+      case (PatternMatrix.Empty(), _) => Some(PatternMatrix.wildcards(width))
+      case (_, 0)                     => None
+      case (PatternMatrix.AddColumn(col, _), _) =>
+        val constructors = col.collect { case x: Pattern.ConstructorApplication => x.constructor }.toSet
+
+        missingConstructors(constructors) match {
+          case MissingNone =>
+            def tryConstructor(c: Pattern.Constructor) = {
+              val constructorArity = arity(c)
+              missingClause(specialize(matrix, c), constructorArity + width - 1)
+                .map(ps => Pattern.ConstructorApplication(c, ps.take(constructorArity)) :: ps.drop(constructorArity))
+            }
+            constructors.to(LazyList).flatMap(tryConstructor).headOption
+          case MissingAtLeast(constructor) =>
+            missingClause(defaultMatrix(matrix), width - 1)
+              .map(ps => Pattern.ConstructorApplication(constructor, PatternMatrix.wildcards(arity(constructor))) :: ps)
+          case MissingAll =>
+            missingClause(defaultMatrix(matrix), width - 1).map(ps => Pattern.Wildcard :: ps)
+        }
+    }
+
+  /** Specializes the pattern matrix to the case where the first pattern matches the given constructor.
     *
     * Corresponds to the S function in the paper.
     */
@@ -124,11 +150,11 @@ class PatternChecker(private val context: Context) {
     PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, constructor)))
   }
 
-  /** Like [[specialize]] but specialized to a single row. */
+  /** Like [[specialize]] but takes a single row. */
   private def specializeRow(row: PatternMatrix.Vector, constructor: Pattern.Constructor): Option[PatternMatrix.Vector] =
     row match {
       case Pattern.Wildcard :: rest =>
-        Some(List.fill(arity(constructor))(Pattern.Wildcard) ++ rest)
+        Some(PatternMatrix.wildcards(arity(constructor)) ++ rest)
       case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == constructor =>
         Some(arguments1 ++ rest)
       case _ =>
@@ -144,26 +170,50 @@ class PatternChecker(private val context: Context) {
     })
   }
 
-  /** Returns true if the given set of constructors is all the constructors of the (inferred) data type. */
-  private def isCompleteSignature(constructors: Set[Pattern.Constructor]): Boolean = {
+  /** Used as the result type of [[missingConstructors]]. */
+  private trait MissingConstructors
 
-    /** Total number of constructors the type of the constructor has. */
-    // TODO: this function should live somewhere else...
-    def numberOfConstructors(constructor: Pattern.Constructor) =
-      constructor match {
-        case Pattern.Literal(Values.UnitValue)       => 1
-        case Pattern.Literal(_: Values.BooleanValue) => 2
-        case Pattern.Literal(_)                      => Int.MaxValue // TODO: this catch-all case is janky
-        case Pattern.Tuple(_)                        => 1
-        case Pattern.EmptyList | Pattern.Cons        => 2
-        case Pattern.EnumConstructor(enum, _)        => context.enumDefs.find(_.name == enum).get.cons.length
-      }
+  /** No missing constructors. */
+  private case object MissingNone extends MissingConstructors
 
-    if (constructors.isEmpty)
-      false
-    else
-      numberOfConstructors(constructors.head) == constructors.size
-  }
+  /** At least the specified constructor is missing. There may be others. */
+  private case class MissingAtLeast(constructor: Pattern.Constructor) extends MissingConstructors
+
+  /** All constructors are missing, or the data type has (effectively) infinitely many constructors. */
+  private case object MissingAll extends MissingConstructors
+
+  /** Returns a pattern describing the set of constructors missing from the given set. */
+  private def missingConstructors(presentConstructors: Set[Pattern.Constructor]): MissingConstructors =
+    try {
+      val all = allConstructors(presentConstructors.head).get
+      val missing = all.diff(presentConstructors)
+      if (missing.isEmpty) MissingNone else MissingAtLeast(missing.head)
+    } catch {
+      // May be thrown by [[head]] or [[get]]. Result is the same either way.
+      case _: NoSuchElementException => MissingAll
+    }
+
+  /** Returns the set of all constructors of a data type, or [[None]] if this set is (effectively) infinite.
+    *
+    * The data type is specified by giving one of its constructors. This works because each constructor can belong
+    * to only one data type.
+    */
+  private def allConstructors(constructor: Pattern.Constructor): Option[Set[Pattern.Constructor]] =
+    constructor match {
+      case Pattern.Literal(Values.UnitValue) =>
+        Some(Set(constructor))
+      case Pattern.Literal(_: Values.BooleanValue) =>
+        Some(Set(true, false).map(b => Pattern.Literal(Values.BooleanValue(b))))
+      case Pattern.Literal(_: Values.IntegerValue) => None
+      case Pattern.Literal(_: Values.CharValue)    => None
+      case Pattern.Literal(_: Values.StringValue)  => None
+      case Pattern.Tuple(_)                        => Some(Set(constructor))
+      case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
+      case Pattern.EnumConstructor(enum, _) =>
+        val enumDef = context.enumDefs.find(_.name == enum).get
+        val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
+        Some(constructors.toSet)
+    }
 
   /** Returns the number of arguments the given constructor takes. */
   private def arity(constructor: Pattern.Constructor): Int =

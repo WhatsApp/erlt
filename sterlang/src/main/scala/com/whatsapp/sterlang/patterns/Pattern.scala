@@ -16,8 +16,8 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.Absyn
 import com.whatsapp.sterlang.Values.Value
+import com.whatsapp.sterlang.{Absyn, Values}
 
 /** Provides a simplified pattern syntax used during exhaustiveness checking. */
 private[patterns] object Pattern {
@@ -33,6 +33,26 @@ private[patterns] object Pattern {
   case object EmptyList extends Constructor
   case object Cons extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
+
+  def show(p: Pat): String = {
+    def tuple(arguments: List[Pat]): String =
+      arguments.map(show).mkString(start = "{", sep = ", ", end = "}")
+
+    p match {
+      case Wildcard                                                         => "_"
+      case ConstructorApplication(Literal(Values.UnitValue), Nil)           => tuple(Nil)
+      case ConstructorApplication(Literal(Values.BooleanValue(value)), Nil) => value.toString
+      case ConstructorApplication(Literal(_), Nil)                          => throw new IllegalArgumentException()
+      case ConstructorApplication(Tuple(_), arguments)                      => tuple(arguments)
+      case ConstructorApplication(EmptyList, Nil)                           => "[]"
+      case ConstructorApplication(Cons, head :: tail :: Nil)                =>
+        // TODO: improve syntax
+        s"[${show(head)} | ${show(tail)}]"
+      case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
+        s"$enum.$constructor${tuple(arguments)}"
+      case _ => throw new IllegalArgumentException()
+    }
+  }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
   def simplify(pattern: Absyn.Pat): Pat =
