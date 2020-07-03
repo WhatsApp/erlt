@@ -1242,11 +1242,13 @@ erl2_typecheck(Code, St) ->
     end.
 
 do_erl2_typecheck(Code, St) ->
+    Code1 = normalize_for_typecheck(Code),
     OcamlDir = filename:join(St#compile.build_dir, "ocaml"),
     Basename = filename:rootname(filename:basename(St#compile.ofile)),
-    case generate_ocaml_code(OcamlDir, Basename, Code, St) of
+    case generate_ocaml_code(OcamlDir, Basename, Code1, St) of
         ok ->
             call_ocaml_typechecker(OcamlDir, Basename, St),
+            % return unmodified code
             {ok, Code, St};
         {error, {Line, ErrorBody}} ->
             StError = {St#compile.ifile, [{Line, erl2ocaml, ErrorBody}]},
@@ -1514,6 +1516,11 @@ format_message(_, _, [], _Opts) ->
 list_errors(F, [{none, Mod, E} | Es], Opts) ->
     io:fwrite("~ts: ~ts\n", [F, Mod:format_error(E)]),
     list_errors(F, Es, Opts);
+list_errors(F, [{{{_, _} = StartLoc, {_, _} = EndLoc}, Mod, E} | Es], Opts) ->
+    %% this is the location format used in the type analysis pass
+    Src = quote_source(F, StartLoc, EndLoc, Opts),
+    io:fwrite("~ts:~ts: ~ts\n~ts", [F, fmt_pos(StartLoc), Mod:format_error(E), Src]),
+    list_errors(F, Es, Opts);
 list_errors(F, [{Loc, Mod, E} | Es], Opts) ->
     StartLoc = erl_anno:location(Loc),
     EndLoc =
@@ -1521,9 +1528,7 @@ list_errors(F, [{Loc, Mod, E} | Es], Opts) ->
             undefined -> StartLoc;
             Loc2 -> Loc2
         end,
-    Src = quote_source(F, StartLoc, EndLoc, Opts),
-    io:fwrite("~ts:~ts: ~ts\n~ts", [F, fmt_pos(StartLoc), Mod:format_error(E), Src]),
-    list_errors(F, Es, Opts);
+    list_errors(F, [{{StartLoc, EndLoc}, Mod, E} | Es], Opts);
 list_errors(_F, [], _Opts) ->
     ok.
 
@@ -1762,3 +1767,31 @@ restore_expand_module([F | Fs]) ->
     [F | restore_expand_module(Fs)];
 restore_expand_module([]) ->
     [].
+
+%% Turn annotation fields into a uniform format for export to the type checker
+normalize_for_typecheck(Forms) ->
+    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms].
+
+%% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
+normalize_loc(Line) when is_integer(Line) ->
+    % only start line known
+    {{Line, 0}, {Line, 0}};
+normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
+    % only start position known
+    {Loc, Loc};
+normalize_loc(As) when is_list(As) ->
+    Start = loc(erl_anno:location(As)),
+    case erl2_parse:get_end_location(As) of
+        undefined -> {Start, Start};
+        End -> {Start, loc(End)}
+    end;
+normalize_loc(_Other) ->
+    % unknown position
+    {{0, 0}, {0, 0}}.
+
+loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
+    Loc;
+loc(Line) when is_integer(Line) ->
+    {Line, 0};
+loc(_Other) ->
+    {0, 0}.
