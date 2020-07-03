@@ -46,8 +46,26 @@ private[patterns] object Pattern {
       case ConstructorApplication(Tuple(_), arguments)                      => tuple(arguments)
       case ConstructorApplication(EmptyList, Nil)                           => "[]"
       case ConstructorApplication(Cons, head :: tail :: Nil)                =>
-        // TODO: improve syntax
-        s"[${show(head)} | ${show(tail)}]"
+        // Logic for displaying multi element lists nicely, e.g., [E1, E2, E3 | T].
+        val result = new StringBuilder("[")
+        result ++= show(head)
+
+        def processTail(tail: Pat): Unit =
+          tail match {
+            case ConstructorApplication(EmptyList, Nil) =>
+              result += ']'
+            case ConstructorApplication(Cons, h :: t :: Nil) =>
+              result ++= ", "
+              result ++= show(h)
+              processTail(t)
+            case _ =>
+              result ++= " | "
+              result ++= show(tail)
+              result += ']'
+          }
+
+        processTail(tail)
+        result.toString()
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
       case _ => throw new IllegalArgumentException()
