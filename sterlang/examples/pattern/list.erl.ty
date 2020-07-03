@@ -1,0 +1,4 @@
+-spec test1(list(boolean())) -> {}.
+-spec test2(list(boolean())) -> {}.
+-spec test3(list(boolean())) -> {}.
+-spec test4(list(boolean())) -> {}.
