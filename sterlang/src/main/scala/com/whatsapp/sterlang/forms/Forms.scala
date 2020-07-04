@@ -1,0 +1,58 @@
+/*
+ * Copyright (c) Facebook, Inc. and its affiliates.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.whatsapp.sterlang.forms
+
+import com.whatsapp.sterlang.etf.ETerm
+
+import com.whatsapp.sterlang.forms.Types._
+import com.whatsapp.sterlang.forms.Exprs._
+
+object Forms {
+  // name/arity
+  type IdWithArity = (String, Int)
+
+  sealed trait TypeAttr
+  case object Enum extends TypeAttr
+  case object Type extends TypeAttr
+  case object Opaque extends TypeAttr
+
+  sealed trait SpecAttr
+  case object Spec extends SpecAttr
+  case object Callback extends SpecAttr
+
+  sealed trait Form
+
+  case class Lang(mods: List[String]) extends Form
+  case class Module(name: String) extends Form
+  case class Behaviour(name: String) extends Form
+  case class Export(ids: List[IdWithArity]) extends Form
+  case class Import(module: String, ids: List[IdWithArity]) extends Form
+  case class ExportType(ids: List[IdWithArity]) extends Form
+  case class ImportType(module: String, ids: List[IdWithArity]) extends Form
+  case class Compile(options: ETerm) extends Form
+  case class File(file: String) extends Form
+  case class RecordDecl(name: String, fields: List[RecordFieldDecl]) extends Form
+  case class TypeDecl(typeAttr: TypeAttr, typeName: String, params: List[String], abstractType: Type) extends Form
+  case class FunctionSpec(specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
+  case class FunctionDecl(name: String, arity: Int, clauses: List[Clause]) extends Form
+  case class Require(modules: List[String]) extends Form
+  case object EOF extends Form
+
+  sealed trait RecordFieldDecl
+  case class RecordFieldUntyped(name: String) extends RecordFieldDecl
+  case class RecordFieldTyped(name: String, tp: Type) extends RecordFieldDecl
+}
