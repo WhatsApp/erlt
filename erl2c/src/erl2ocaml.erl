@@ -11,6 +11,7 @@
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
+
 -module(erl2ocaml).
 
 -export([
@@ -499,8 +500,9 @@ expr(E = {'fun', Line, Body}, Ctx) ->
         {function, F, A} when is_atom(F), is_integer(A) ->
             Fn = atom_to_list(F) ++ "'" ++ integer_to_list(A),
             [{Fn}];
-        {function, {atom, _, M}, {atom, _, F}, {integer, _, A}}
-                when is_atom(M), is_atom(F), is_integer(A) ->
+        {function, {atom, _, M}, {atom, _, F}, {integer, _, A}} when
+            is_atom(M), is_atom(F), is_integer(A)
+        ->
             FQFn = "(" ++ remote_fun(M, F, A, Ctx) ++ ")",
             {FQFn};
         {function, _M, _F, _A} ->
@@ -623,8 +625,9 @@ init_assoc({map_field_assoc, _Line, {atom, _ALine, A}, V}, Ctx) ->
         [expr(V, Ctx)],
         {"method get_" ++ A1 ++ " = val_" ++ A1},
         {"method set_" ++
-            A1 ++
-            " new_val_" ++ A1 ++ " = {< " ++ "val_" ++ A1 ++ " =  new_val_" ++ A1 ++ " >}"}
+                A1 ++
+                " new_val_" ++
+                A1 ++ " = {< " ++ "val_" ++ A1 ++ " =  new_val_" ++ A1 ++ " >}"}
     ];
 init_assoc({map_field_assoc, Line, E, _V}, _Ctx) ->
     throw(
@@ -849,8 +852,9 @@ type({user_type, _, N, Ts = []}, _Ctx) ->
 type({user_type, _, N, Ts}, Ctx) ->
     Ts1 = lists:map(fun (T) -> "(" ++ type(T, Ctx) ++ ")" end, Ts),
     "(" ++ interleave(false, " , ", Ts1) ++ ") " ++ type_name(N, Ts);
-type({remote_type, Line, [{atom, _, M}, {atom, _, N}, Ts]}, Ctx)
-        when M == Ctx#context.module ->
+type({remote_type, Line, [{atom, _, M}, {atom, _, N}, Ts]}, Ctx) when
+    M == Ctx#context.module
+->
     type({user_type, Line, N, Ts}, Ctx);
 type({remote_type, _, [{atom, _, M}, {atom, _, N}, Ts = []]}, _Ctx) ->
     first_upper(atom_to_list(M)) ++ "." ++ type_name(N, Ts);
@@ -1036,8 +1040,8 @@ get_calls_from_expr({call, _, {atom, _, Fn}, FnArgs}) ->
     [
         {Fn, length(FnArgs)}
         | lists:concat(
-              lists:map(fun get_calls_from_expr/1, FnArgs)
-          )
+            lists:map(fun get_calls_from_expr/1, FnArgs)
+        )
     ];
 get_calls_from_expr({'fun', _, {function, Fn, Arity}}) ->
     [{Fn, Arity}];
@@ -1117,8 +1121,9 @@ remote(
 ) ->
     {Ln, Mod};
 %% fn mod:f/n
-remote({'fun', _Ln, {function, {atom, Ln, Mod}, {atom, _, F}, {integer, _, A}}})
-        when is_atom(Mod), is_atom(F), is_integer(A) ->
+remote({'fun', _Ln, {function, {atom, Ln, Mod}, {atom, _, F}, {integer, _, A}}}) when
+    is_atom(Mod), is_atom(F), is_integer(A)
+->
     {Ln, Mod};
 remote(_Form) ->
     false.

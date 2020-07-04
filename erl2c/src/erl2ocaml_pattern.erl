@@ -11,6 +11,7 @@
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
+
 -module(erl2ocaml_pattern).
 
 -export([dedup_pattern/1, dedup_patterns/1, destruct_pattern/1, destruct_patterns/1]).
@@ -57,13 +58,12 @@ dedup_pattern1({enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args}, Env) ->
     {Args1, Env1} = dedup_patterns1(Args, Env),
     {{enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args1}, Env1};
 dedup_pattern1(
-    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
-     Args},
+    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}, Args},
     Env
 ) ->
     {Args1, Env1} = dedup_patterns1(Args, Env),
-    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
-      Args1}, Env1};
+    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}, Args1},
+        Env1};
 dedup_pattern1({string, Line, S}, Env) ->
     {{string, Line, S}, Env};
 dedup_pattern1({nil, Line}, Env) ->
@@ -126,13 +126,12 @@ destruct_pattern1(
     {Args1, Env1} = destruct_patterns1(Args, Env),
     {{enum, L1, {atom, L3, Enum}, {atom, L4, Ctr}, Args1}, Env1};
 destruct_pattern1(
-    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
-     Args},
+    {enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}, Args},
     Env
 ) ->
     {Args1, Env1} = destruct_patterns1(Args, Env),
-    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr},
-      Args1}, Env1};
+    {{enum, L1, {remote, L2, {atom, L4, Mod}, {atom, L5, Enum}}, {atom, L6, Ctr}, Args1},
+        Env1};
 destruct_pattern1({string, Line, S}, Env) ->
     {{string, Line, S}, Env};
 destruct_pattern1({nil, Line}, Env) ->
