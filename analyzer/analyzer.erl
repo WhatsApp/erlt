@@ -252,8 +252,9 @@ remote_fun({call, _, {atom, _, F}, As}) ->
         false -> false
     end;
 %% fn mod:f/n
-remote_fun({'fun', _, {function, {atom, _, Mod}, {atom, _, F}, {integer, _, A}}})
-        when is_atom(Mod), is_atom(F), is_integer(A) ->
+remote_fun({'fun', _, {function, {atom, _, Mod}, {atom, _, F}, {integer, _, A}}}) when
+    is_atom(Mod), is_atom(F), is_integer(A)
+->
     [{Mod, F, A}];
 remote_fun(_) ->
     false.
