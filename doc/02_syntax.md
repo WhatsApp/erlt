@@ -21,7 +21,7 @@ with constructs for *enums*, and "*dot access operator*" for maps.
 **Enums**: See the [enums](04_enums.md) document.
 
 **Dot access operator**: a syntactic sugar for invoking `erlang:map_get(K, M)`
-when K is an atom. So, in DT the following two lines are equivalent:
+when K is an atom literal. So, in DT the following two lines are equivalent:
 
 ```erlang
 % Classic Erlang
