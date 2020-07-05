@@ -19,6 +19,7 @@ package com.whatsapp.sterlang
 import java.io.File
 import java.nio.file.Paths
 
+import com.whatsapp.sterlang.patterns.PatternChecker
 import org.fusesource.jansi.Ansi
 
 import scala.collection.mutable
@@ -55,18 +56,31 @@ object Main {
       new AstChecks(context).check(program)
       val elaborate = new Elaborate(vars, context, program)
       val (annFuns, env) = elaborate.elaborateFuns(program.funs)
+
+      // Check patterns and print warnings, if any.
+      if (options.contains("--check-patterns")) {
+        val warnings = new PatternChecker(context).warnings(annFuns)
+        warnings.foreach(printError)
+      }
+
       Console.println(ansi(s"@|bold,green OK|@"))
       TypePrinter2(vars, None).printFunsTypeSchemes(annFuns, env)
     } catch {
-      case PositionedError(pos: Pos.SP, title, description) =>
-        val cTitle = ansi(s"@|bold,red $title at ${pos.start}|@")
-        val cQuote = ansi(s"${pos.prefix}@|magenta,bold ${pos.text}|@${pos.suffix}")
-        Console.println(cTitle)
-        Console.println(cQuote)
-        description.foreach(Console.println)
-        Console.println()
+      case error: PositionedError =>
+        printError(error)
         sys.exit(2)
     }
+  }
+
+  private def printError(error: PositionedError): Unit = {
+    val PositionedError(pos: Pos.SP, title, description) = error
+
+    val cTitle = ansi(s"@|bold,red $title at ${pos.start}|@")
+    val cQuote = ansi(s"${pos.prefix}@|magenta,bold ${pos.text}|@${pos.suffix}")
+    Console.println(cTitle)
+    Console.println(cQuote)
+    description.foreach(Console.println)
+    Console.println()
   }
 
   private def freshTypeVar(vars: Vars): Types.Type =
