@@ -22,44 +22,66 @@ import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang.{Absyn, Context, Pos, Values}
 
+import scala.collection.mutable.ListBuffer
+
 /** Generates warnings for missing and redundant clauses in pattern matching.
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
-  * */
+  */
 class PatternChecker(private val context: Context) {
   private val A = Absyn
 
-  def check(functions: List[A.Fun]): Unit = {
-    functions.foreach(checkNode)
+  /** Returns a list of all pattern matching related issues in the given functions and their subexpressions. */
+  def warnings(functions: List[A.Fun]): List[PatternWarning] = {
+    val warnings = ListBuffer[PatternWarning]()
+    functions.foreach(f => checkNode(f, warnings))
+    warnings.toList
   }
 
-  def checkNode(node: A.Node): Unit = {
+  /** Throws the first warning returned by [[warnings]], if any.
+    *
+    * @throws PatternWarning if {{{warning(functions)}}} is not empty.
+    */
+  def check(functions: List[A.Fun]): Unit = {
+    warnings(functions) match {
+      case Nil        => // no warnings
+      case first :: _ => throw first
+    }
+  }
+
+  private def checkNode(node: A.Node, warnings: ListBuffer[PatternWarning]): Unit = {
     // Check this node
     node match {
       case node: A.Fun =>
-        checkClauses(node, node.clauses.map(_.pats))
+        checkClauses(node, node.clauses.map(_.pats), warnings)
       case node: A.FnExp =>
-        checkClauses(node, node.clauses.map(_.pats))
+        checkClauses(node, node.clauses.map(_.pats), warnings)
       case node: A.NamedFnExp =>
-        checkClauses(node, node.clauses.map(_.pats))
+        checkClauses(node, node.clauses.map(_.pats), warnings)
       case node: A.CaseExp =>
-        checkClauses(node, node.branches.map(b => List(b.pat)))
+        checkClauses(node, node.branches.map(b => List(b.pat)), warnings)
       case _: ValDef => // ignore
       case _         => // nothing to check
     }
 
     // Recursively check all children nodes
     if (!node.isInstanceOf[A.Pat]) { // No need to recurse into patterns
-      A.children(node).foreach(checkNode)
+      A.children(node).foreach(child => checkNode(child, warnings))
     }
   }
 
   /** Check clauses for exhaustiveness and redundancy.
     *
+    * @param node The pattern matching construct being checked.
+    * @param warnings The list to append warnings to.
     * @throws MissingPatternsWarning if the clauses are inexhaustive
     * @throws UselessPatternWarning if there is a clause that can never match
     */
-  private def checkClauses(node: HasSourceLocation, clauses: List[List[A.Pat]]): Unit = {
+  private def checkClauses(
+      node: HasSourceLocation,
+      clauses: List[List[A.Pat]],
+      warnings: ListBuffer[PatternWarning],
+  ): Unit = {
     require(clauses.nonEmpty)
 
     var previousRows: List[PatternMatrix.Vector] = List()
@@ -74,7 +96,7 @@ class PatternChecker(private val context: Context) {
         val location =
           if (clause.isEmpty) Pos.NP
           else Pos.merge(clause.head.sourceLocation, clause.last.sourceLocation)
-        throw new UselessPatternWarning(location)
+        warnings += new UselessPatternWarning(location)
       }
 
       previousRows = previousRows.appended(simpleClause)
@@ -84,7 +106,7 @@ class PatternChecker(private val context: Context) {
     missingClause(PatternMatrix.Matrix(previousRows), clauses.head.length) match {
       case None => // exhaustive
       case Some(clause) =>
-        throw new MissingPatternsWarning(node.sourceLocation, clause)
+        warnings += new MissingPatternsWarning(node.sourceLocation, clause)
     }
   }
 

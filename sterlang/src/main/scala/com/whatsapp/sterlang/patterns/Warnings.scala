@@ -18,7 +18,7 @@ package com.whatsapp.sterlang.patterns
 
 import com.whatsapp.sterlang.{Pos, PositionedError}
 
-sealed trait PatternWarning
+sealed trait PatternWarning extends PositionedError
 
 final class MissingPatternsWarning(node: Pos.P, exampleClause: PatternMatrix.Vector)
     extends PositionedError(
