@@ -661,456 +661,460 @@ Header
 
 Erlang code.
 
--export([parse_form/1,parse_exprs/1,parse_term/1]).
--export([normalise/1,abstract/1,tokens/1,tokens/2]).
--export([abstract/2,dotted_name/1,balance_dotted/1,fold_dots/1]).
--export([inop_prec/1,preop_prec/1,func_prec/0,max_prec/0]).
--export([type_inop_prec/1,type_preop_prec/1]).
--export([map_anno/2, fold_anno/3, mapfold_anno/3,
-         new_anno/1, anno_to_term/1, anno_from_term/1]).
+-export([parse_form/1, parse_exprs/1, parse_term/1]).
+-export([normalise/1, abstract/1, tokens/1, tokens/2]).
+-export([abstract/2, dotted_name/1, balance_dotted/1, fold_dots/1]).
+-export([inop_prec/1, preop_prec/1, func_prec/0, max_prec/0]).
+-export([type_inop_prec/1, type_preop_prec/1]).
+-export([
+    map_anno/2,
+    fold_anno/3,
+    mapfold_anno/3,
+    new_anno/1,
+    anno_to_term/1,
+    anno_from_term/1
+]).
+
 -export([get_end_location/1]).
 
 %% The following directive is needed for (significantly) faster compilation
 %% of the generated .erl file by the HiPE compiler.  Please do not remove.
--compile([{hipe,[{regalloc,linear_scan}]}]).
+-compile([{hipe, [{regalloc, linear_scan}]}]).
 
--export_type([abstract_clause/0, abstract_expr/0, abstract_form/0,
-              abstract_type/0, form_info/0, error_info/0]).
+-export_type([
+    abstract_clause/0,
+    abstract_expr/0,
+    abstract_form/0,
+    abstract_type/0,
+    form_info/0,
+    error_info/0
+]).
+
 %% The following types are exported because they are used by syntax_tools
 -export_type([af_binelement/1, af_generator/0, af_remote_function/0]).
 
 %% stuff for dotted names
--export([concat_dotted/1, is_valid_dotted/1, is_dotted/1,
-	 split_dotted/1, dotted_last/1, dotted_butlast/1,
-         dotted_striplast/1]).
+-export([
+    concat_dotted/1,
+    is_valid_dotted/1,
+    is_dotted/1,
+    split_dotted/1,
+    dotted_last/1,
+    dotted_butlast/1,
+    dotted_striplast/1
+]).
+
 -type dotted_name() :: atom() | string().
+
 -export_type([dotted_name/0]).
 
 %% Removed functions
--removed([{set_line,2,"use erl_anno:set_line/2"},
-          {get_attributes,1,"erl_anno:{column,line,location,text}/1 instead"},
-          {get_attribute,2,"erl_anno:{column,line,location,text}/1 instead"}]).
+-removed([
+    {set_line, 2, "use erl_anno:set_line/2"},
+    {get_attributes, 1, "erl_anno:{column,line,location,text}/1 instead"},
+    {get_attribute, 2, "erl_anno:{column,line,location,text}/1 instead"}
+]).
 
 %% Start of Abstract Format
 
 -type anno() :: erl_anno:anno().
-
--type abstract_form() :: af_module()
-                       | af_behavior()
-                       | af_behaviour()
-                       | af_export()
-                       | af_import()
-                       | af_import_type()
-                       | af_export_type()
-                       | af_compile()
-                       | af_file()
-                       | af_record_decl()
-                       | af_type_decl()
-                       | af_function_spec()
-                       | af_wild_attribute()
-                       | af_function_decl().
+-type abstract_form() ::
+    af_module() |
+    af_behavior() |
+    af_behaviour() |
+    af_export() |
+    af_import() |
+    af_import_type() |
+    af_export_type() |
+    af_compile() |
+    af_file() |
+    af_record_decl() |
+    af_type_decl() |
+    af_function_spec() |
+    af_wild_attribute() |
+    af_function_decl().
 
 -type af_module() :: {'attribute', anno(), 'module', module()}.
-
 -type af_behavior() :: {'attribute', anno(), 'behavior', behaviour()}.
-
 -type af_behaviour() :: {'attribute', anno(), 'behaviour', behaviour()}.
-
 -type behaviour() :: atom().
-
 -type af_export() :: {'attribute', anno(), 'export', af_fa_list()}.
-
 -type af_import() :: {'attribute', anno(), 'import', {module(), af_fa_list()}}.
-
 -type af_fa_list() :: [{function_name(), arity()}].
-
 -type af_import_type() :: {'attribute', anno(), 'import_type', {module(), af_ta_list()}}.
-
 -type af_export_type() :: {'attribute', anno(), 'export_type', af_ta_list()}.
-
 -type af_ta_list() :: [{type_name(), arity()}].
-
 -type af_compile() :: {'attribute', anno(), 'compile', any()}.
-
 -type af_file() :: {'attribute', anno(), 'file', {string(), anno()}}.
-
 -type af_record_decl() ::
-        {'attribute', anno(), 'record', {record_name(), [af_field_decl()]}}.
+    {'attribute', anno(), 'record', {record_name(), [af_field_decl()]}}.
 
 -type af_field_decl() :: af_typed_field() | af_field().
-
 -type af_typed_field() ::
-        {'typed_record_field', af_field(), abstract_type()}.
+    {'typed_record_field', af_field(), abstract_type()}.
 
--type af_field() :: {'record_field', anno(), af_field_name()}
-                  | {'record_field', anno(), af_field_name(), abstract_expr()}.
+-type af_field() ::
+    {'record_field', anno(), af_field_name()} |
+    {'record_field', anno(), af_field_name(), abstract_expr()}.
 
--type af_type_decl() :: {'attribute', anno(), type_attr(),
-                         {type_name(), abstract_type(), [af_variable()]}}.
+-type af_type_decl() ::
+    {'attribute', anno(), type_attr(), {type_name(), abstract_type(), [af_variable()]}}.
 
 -type type_attr() :: 'opaque' | 'type' | 'enum'.
-
--type af_function_spec() :: {'attribute', anno(), spec_attr(),
-                             {{function_name(), arity()},
-                              af_function_type_list()}}
-                          | {'attribute', anno(), 'spec',
-                             {{module(), function_name(), arity()},
-                              af_function_type_list()}}.
+-type af_function_spec() ::
+    {'attribute', anno(), spec_attr(),
+        {{function_name(), arity()}, af_function_type_list()}} |
+    {'attribute', anno(), 'spec',
+        {{module(), function_name(), arity()}, af_function_type_list()}}.
 
 -type spec_attr() :: 'callback' | 'spec'.
-
 -type af_wild_attribute() :: {'attribute', anno(), atom(), any()}.
-
 -type af_function_decl() ::
-        {'function', anno(), function_name(), arity(), af_clause_seq()}.
+    {'function', anno(), function_name(), arity(), af_clause_seq()}.
 
--type abstract_expr() :: af_literal()
-                       | af_match(abstract_expr())
-                       | af_variable()
-                       | af_tuple(abstract_expr())
-                       | af_nil()
-                       | af_cons(abstract_expr())
-                       | af_bin(abstract_expr())
-                       | af_binary_op(abstract_expr())
-                       | af_unary_op(abstract_expr())
-                       | af_record_creation(abstract_expr())
-                       | af_record_update(abstract_expr())
-                       | af_record_index()
-                       | af_record_field_access(abstract_expr())
-                       | af_map_creation(abstract_expr())
-                       | af_map_update(abstract_expr())
-                       | af_catch()
-                       | af_local_call()
-                       | af_remote_call()
-                       | af_list_comprehension()
-                       | af_binary_comprehension()
-                       | af_block()
-                       | af_if()
-                       | af_case()
-                       | af_try()
-                       | af_receive()
-                       | af_local_fun()
-                       | af_remote_fun()
-                       | af_fun()
-                       | af_named_fun().
+-type abstract_expr() ::
+    af_literal() |
+    af_match(abstract_expr()) |
+    af_variable() |
+    af_tuple(abstract_expr()) |
+    af_nil() |
+    af_cons(abstract_expr()) |
+    af_bin(abstract_expr()) |
+    af_binary_op(abstract_expr()) |
+    af_unary_op(abstract_expr()) |
+    af_record_creation(abstract_expr()) |
+    af_record_update(abstract_expr()) |
+    af_record_index() |
+    af_record_field_access(abstract_expr()) |
+    af_map_creation(abstract_expr()) |
+    af_map_update(abstract_expr()) |
+    af_catch() |
+    af_local_call() |
+    af_remote_call() |
+    af_list_comprehension() |
+    af_binary_comprehension() |
+    af_block() |
+    af_if() |
+    af_case() |
+    af_try() |
+    af_receive() |
+    af_local_fun() |
+    af_remote_fun() |
+    af_fun() |
+    af_named_fun().
 
--type af_record_update(T) :: {'record',
-                              anno(),
-                              abstract_expr(),
-                              record_name(),
-                              [af_record_field(T)]}.
+-type af_record_update(T) ::
+    {'record', anno(), abstract_expr(), record_name(), [af_record_field(T)]}.
 
 -type af_catch() :: {'catch', anno(), abstract_expr()}.
-
 -type af_local_call() :: {'call', anno(), af_local_function(), af_args()}.
-
 -type af_remote_call() :: {'call', anno(), af_remote_function(), af_args()}.
-
 -type af_args() :: [abstract_expr()].
-
 -type af_local_function() :: abstract_expr().
-
 -type af_remote_function() ::
-        {'remote', anno(), abstract_expr(), abstract_expr()}.
+    {'remote', anno(), abstract_expr(), abstract_expr()}.
 
 -type af_list_comprehension() ::
-        {'lc', anno(), af_template(), af_qualifier_seq()}.
+    {'lc', anno(), af_template(), af_qualifier_seq()}.
 
 -type af_binary_comprehension() ::
-        {'bc', anno(), af_template(), af_qualifier_seq()}.
+    {'bc', anno(), af_template(), af_qualifier_seq()}.
 
 -type af_template() :: abstract_expr().
-
 -type af_qualifier_seq() :: [af_qualifier(), ...].
-
 -type af_qualifier() :: af_generator() | af_filter().
-
--type af_generator() :: {'generate', anno(), af_pattern(), abstract_expr()}
-                      | {'b_generate', anno(), af_pattern(), abstract_expr()}.
+-type af_generator() ::
+    {'generate', anno(), af_pattern(), abstract_expr()} |
+    {'b_generate', anno(), af_pattern(), abstract_expr()}.
 
 -type af_filter() :: abstract_expr().
-
 -type af_block() :: {'block', anno(), af_body()}.
-
 -type af_if() :: {'if', anno(), af_clause_seq()}.
-
 -type af_case() :: {'case', anno(), abstract_expr(), af_clause_seq()}.
-
--type af_try() :: {'try',
-                   anno(),
-                   af_body(),
-                   af_clause_seq() | [],
-                   af_clause_seq() | [],
-                   af_body() | []}.
+-type af_try() ::
+    {'try', anno(), af_body(), af_clause_seq() | [], af_clause_seq() | [], af_body() | []}.
 
 -type af_clause_seq() :: [af_clause(), ...].
-
 -type af_receive() ::
-        {'receive', anno(), af_clause_seq()}
-      | {'receive', anno(), af_clause_seq(), abstract_expr(), af_body()}.
+    {'receive', anno(), af_clause_seq()} |
+    {'receive', anno(), af_clause_seq(), abstract_expr(), af_body()}.
 
 -type af_local_fun() ::
-        {'fun', anno(), {'function', function_name(), arity()}}.
+    {'fun', anno(), {'function', function_name(), arity()}}.
 
 -type af_remote_fun() ::
-        {'fun', anno(), {'function', module(), function_name(), arity()}}
-      | {'fun', anno(), {'function',
-                         af_atom() | af_variable(),
-                         af_atom() | af_variable(),
-                         af_integer() | af_variable()}}.
+    {'fun', anno(), {'function', module(), function_name(), arity()}} |
+    {'fun', anno(),
+        {'function', af_atom() | af_variable(), af_atom() | af_variable(),
+            af_integer() | af_variable()}}.
 
 -type af_fun() :: {'fun', anno(), {'clauses', af_clause_seq()}}.
-
 -type af_named_fun() :: {'named_fun', anno(), fun_name(), af_clause_seq()}.
-
 -type fun_name() :: atom().
-
 -type abstract_clause() :: af_clause().
-
 -type af_clause() ::
-        {'clause', anno(), [af_pattern()], af_guard_seq(), af_body()}.
+    {'clause', anno(), [af_pattern()], af_guard_seq(), af_body()}.
 
 -type af_body() :: [abstract_expr(), ...].
-
 -type af_guard_seq() :: [af_guard()].
-
 -type af_guard() :: [af_guard_test(), ...].
-
--type af_guard_test() :: af_literal()
-                       | af_variable()
-                       | af_tuple(af_guard_test())
-                       | af_nil()
-                       | af_cons(af_guard_test())
-                       | af_bin(af_guard_test())
-                       | af_binary_op(af_guard_test())
-                       | af_unary_op(af_guard_test())
-                       | af_record_creation(af_guard_test())
-                       | af_record_index()
-                       | af_record_field_access(af_guard_test())
-                       | af_map_creation(af_guard_test())
-                       | af_map_update(af_guard_test())
-                       | af_guard_call()
-                       | af_remote_guard_call().
+-type af_guard_test() ::
+    af_literal() |
+    af_variable() |
+    af_tuple(af_guard_test()) |
+    af_nil() |
+    af_cons(af_guard_test()) |
+    af_bin(af_guard_test()) |
+    af_binary_op(af_guard_test()) |
+    af_unary_op(af_guard_test()) |
+    af_record_creation(af_guard_test()) |
+    af_record_index() |
+    af_record_field_access(af_guard_test()) |
+    af_map_creation(af_guard_test()) |
+    af_map_update(af_guard_test()) |
+    af_guard_call() |
+    af_remote_guard_call().
 
 -type af_record_field_access(T) ::
-        {'record_field', anno(), T, record_name(), af_field_name()}.
+    {'record_field', anno(), T, record_name(), af_field_name()}.
 
 -type af_map_creation(T) :: {'map', anno(), [af_assoc(T)]}.
-
 -type af_map_update(T) :: {'map', anno(), T, [af_assoc(T)]}.
-
--type af_assoc(T) :: {'map_field_assoc', anno(), T, T}
-                   | af_assoc_exact(T).
+-type af_assoc(T) ::
+    {'map_field_assoc', anno(), T, T} |
+    af_assoc_exact(T).
 
 -type af_assoc_exact(T) :: {'map_field_exact', anno(), T, T}.
-
 -type af_guard_call() :: {'call', anno(), af_atom(), [af_guard_test()]}.
-
 -type af_remote_guard_call() ::
-        {'call', anno(),
-         {'remote', anno(), af_lit_atom('erlang'), af_atom()},
-         [af_guard_test()]}.
+    {'call', anno(), {'remote', anno(), af_lit_atom('erlang'), af_atom()}, [
+        af_guard_test()
+    ]}.
 
--type af_pattern() :: af_literal()
-                    | af_match(af_pattern())
-                    | af_variable()
-                    | af_tuple(af_pattern())
-                    | af_nil()
-                    | af_cons(af_pattern())
-                    | af_bin(af_pattern())
-                    | af_binary_op(af_pattern())
-                    | af_unary_op(af_pattern())
-                    | af_record_creation(af_pattern())
-                    | af_record_index()
-                    | af_map_pattern().
+-type af_pattern() ::
+    af_literal() |
+    af_match(af_pattern()) |
+    af_variable() |
+    af_tuple(af_pattern()) |
+    af_nil() |
+    af_cons(af_pattern()) |
+    af_bin(af_pattern()) |
+    af_binary_op(af_pattern()) |
+    af_unary_op(af_pattern()) |
+    af_record_creation(af_pattern()) |
+    af_record_index() |
+    af_map_pattern().
 
 -type af_record_index() ::
-        {'record_index', anno(), record_name(), af_field_name()}.
+    {'record_index', anno(), record_name(), af_field_name()}.
 
 -type af_record_creation(T) ::
-        {'record', anno(), record_name(), [af_record_field(T)]}.
+    {'record', anno(), record_name(), [af_record_field(T)]}.
 
 -type af_record_field(T) :: {'record_field', anno(), af_field_name(), T}.
-
 -type af_map_pattern() ::
-        {'map', anno(), [af_assoc_exact(af_pattern())]}.
+    {'map', anno(), [af_assoc_exact(af_pattern())]}.
 
--type abstract_type() :: af_annotated_type()
-                       | af_atom()
-                       | af_bitstring_type()
-                       | af_empty_list_type()
-                       | af_fun_type()
-                       | af_integer_range_type()
-                       | af_map_type()
-                       | af_predefined_type()
-                       | af_record_type()
-                       | af_remote_type()
-                       | af_singleton_integer_type()
-                       | af_tuple_type()
-                       | af_type_union()
-                       | af_type_variable()
-                       | af_user_defined_type().
+-type abstract_type() ::
+    af_annotated_type() |
+    af_atom() |
+    af_bitstring_type() |
+    af_empty_list_type() |
+    af_fun_type() |
+    af_integer_range_type() |
+    af_map_type() |
+    af_predefined_type() |
+    af_record_type() |
+    af_remote_type() |
+    af_singleton_integer_type() |
+    af_tuple_type() |
+    af_type_union() |
+    af_type_variable() |
+    af_user_defined_type().
 
 -type af_annotated_type() ::
-        {'ann_type', anno(), [af_anno() | abstract_type()]}. % [Var, Type]
+    % [Var, Type]
+    {'ann_type', anno(), [af_anno() | abstract_type()]}.
 
 -type af_anno() :: af_variable().
-
 -type af_bitstring_type() ::
-        {'type', anno(), 'binary', [af_singleton_integer_type()]}.
+    {'type', anno(), 'binary', [af_singleton_integer_type()]}.
 
 -type af_empty_list_type() :: {'type', anno(), 'nil', []}.
-
--type af_fun_type() :: {'type', anno(), 'fun', []}
-                     | {'type', anno(), 'fun', [{'type', anno(), 'any'} |
-                                                abstract_type()]}
-                     | af_function_type().
+-type af_fun_type() ::
+    {'type', anno(), 'fun', []} |
+    {'type', anno(), 'fun', [
+        {'type', anno(), 'any'} |
+        abstract_type()
+    ]} |
+    af_function_type().
 
 -type af_integer_range_type() ::
-        {'type', anno(), 'range', [af_singleton_integer_type()]}.
+    {'type', anno(), 'range', [af_singleton_integer_type()]}.
 
--type af_map_type() :: {'type', anno(), 'map', 'any'}
-                     | {'type', anno(), 'map', [af_assoc_type()]}.
+-type af_map_type() ::
+    {'type', anno(), 'map', 'any'} |
+    {'type', anno(), 'map', [af_assoc_type()]}.
 
 -type af_assoc_type() ::
-        {'type', anno(), 'map_field_assoc', [abstract_type()]}
-      | {'type', anno(), 'map_field_exact', [abstract_type()]}.
+    {'type', anno(), 'map_field_assoc', [abstract_type()]} |
+    {'type', anno(), 'map_field_exact', [abstract_type()]}.
 
 -type af_predefined_type() ::
-        {'type', anno(), type_name(),  [abstract_type()]}.
+    {'type', anno(), type_name(), [abstract_type()]}.
 
 -type af_record_type() ::
-        {'type', anno(), 'record', [(Name :: af_atom()) % [Name, T1, ... Tk]
-                                    | af_record_field_type()]}.
+    % [Name, T1, ... Tk]
+    {'type', anno(), 'record', [
+        (Name :: af_atom()) |
+        af_record_field_type()
+    ]}.
 
 -type af_record_field_type() ::
-        {'type', anno(), 'field_type', [(Name :: af_atom()) |
-                                        abstract_type()]}. % [Name, Type]
+    {'type', anno(), 'field_type', [
+        (Name :: af_atom()) |
+        % [Name, Type]
+        abstract_type()
+    ]}.
 
 -type af_remote_type() ::
-        {'remote_type', anno(), [(Module :: af_atom()) |
-                                 (TypeName :: af_atom()) |
-                                 [abstract_type()]]}. % [Module, Name, [T]]
+    {'remote_type', anno(), [
+        (Module :: af_atom()) |
+        (TypeName :: af_atom()) |
+        % [Module, Name, [T]]
+        [abstract_type()]
+    ]}.
 
--type af_tuple_type() :: {'type', anno(), 'tuple', 'any'}
-                       | {'type', anno(), 'tuple', [abstract_type()]}.
+-type af_tuple_type() ::
+    {'type', anno(), 'tuple', 'any'} |
+    {'type', anno(), 'tuple', [abstract_type()]}.
 
 -type af_type_union() ::
-        {'type', anno(), 'union', [abstract_type(), ...]}. % at least two
+    % at least two
+    {'type', anno(), 'union', [abstract_type(), ...]}.
 
--type af_type_variable() :: {'var', anno(), atom()}. % except '_'
-
+% except '_'
+-type af_type_variable() :: {'var', anno(), atom()}.
 -type af_user_defined_type() ::
-        {'user_type', anno(), type_name(),  [abstract_type()]}.
+    {'user_type', anno(), type_name(), [abstract_type()]}.
 
--type af_function_type_list() :: [af_constrained_function_type() |
-                                  af_function_type(), ...].
+-type af_function_type_list() :: [
+    af_constrained_function_type() |
+    af_function_type(),
+    ...
+].
 
 -type af_constrained_function_type() ::
-        {'type', anno(), 'bounded_fun', [af_function_type() | % [Ft, Fc]
-                                         af_function_constraint()]}.
+    % [Ft, Fc]
+    {'type', anno(), 'bounded_fun', [
+        af_function_type() |
+        af_function_constraint()
+    ]}.
 
 -type af_function_type() ::
-        {'type', anno(), 'fun',
-         [{'type', anno(), 'product', [abstract_type()]} | abstract_type()]}.
+    {'type', anno(), 'fun', [
+        {'type', anno(), 'product', [abstract_type()]} | abstract_type()
+    ]}.
 
 -type af_function_constraint() :: [af_constraint(), ...].
+-type af_constraint() ::
+    {'type', anno(), 'constraint', [
+        af_lit_atom('is_subtype') |
+        % [IsSubtype, [V, T]]
+        [af_type_variable() | abstract_type()]
+    ]}.
 
--type af_constraint() :: {'type', anno(), 'constraint',
-                          [af_lit_atom('is_subtype') |
-                           [af_type_variable() | abstract_type()]]}. % [IsSubtype, [V, T]]
+-type af_singleton_integer_type() ::
+    af_integer() |
+    af_character() |
+    af_unary_op(af_singleton_integer_type()) |
+    af_binary_op(af_singleton_integer_type()).
 
--type af_singleton_integer_type() :: af_integer()
-                                   | af_character()
-                                   | af_unary_op(af_singleton_integer_type())
-                                   | af_binary_op(af_singleton_integer_type()).
-
--type af_literal() :: af_atom()
-                    | af_character()
-                    | af_float()
-                    | af_integer()
-                    | af_string().
+-type af_literal() ::
+    af_atom() |
+    af_character() |
+    af_float() |
+    af_integer() |
+    af_string().
 
 -type af_atom() :: af_lit_atom(atom()).
-
 -type af_lit_atom(A) :: {'atom', anno(), A}.
-
 -type af_character() :: {'char', anno(), char()}.
-
 -type af_float() :: {'float', anno(), float()}.
-
 -type af_integer() :: {'integer', anno(), non_neg_integer()}.
-
 -type af_string() :: {'string', anno(), string()}.
-
 -type af_match(T) :: {'match', anno(), af_pattern(), T}.
-
--type af_variable() :: {'var', anno(), atom()}. % | af_anon_variable()
-
+% | af_anon_variable()
+-type af_variable() :: {'var', anno(), atom()}.
 %-type af_anon_variable() :: {'var', anno(), '_'}.
 
 -type af_tuple(T) :: {'tuple', anno(), [T]}.
-
 -type af_nil() :: {'nil', anno()}.
-
 -type af_cons(T) :: {'cons', anno(), T, T}.
-
 -type af_bin(T) :: {'bin', anno(), [af_binelement(T)]}.
-
--type af_binelement(T) :: {'bin_element',
-                           anno(),
-                           T,
-                           af_binelement_size(),
-                           type_specifier_list()}.
+-type af_binelement(T) ::
+    {'bin_element', anno(), T, af_binelement_size(), type_specifier_list()}.
 
 -type af_binelement_size() :: 'default' | abstract_expr().
-
 -type af_binary_op(T) :: {'op', anno(), binary_op(), T, T}.
-
--type binary_op() :: '/' | '*' | 'div' | 'rem' | 'band' | 'and' | '+' | '-'
-                   | 'bor' | 'bxor' | 'bsl' | 'bsr' | 'or' | 'xor' | '++'
-                   | '--' | '==' | '/=' | '=<' | '<'  | '>=' | '>' | '=:='
-                   | '=/='.
+-type binary_op() ::
+    '/' |
+    '*' |
+    'div' |
+    'rem' |
+    'band' |
+    'and' |
+    '+' |
+    '-' |
+    'bor' |
+    'bxor' |
+    'bsl' |
+    'bsr' |
+    'or' |
+    'xor' |
+    '++' |
+    '--' |
+    '==' |
+    '/=' |
+    '=<' |
+    '<' |
+    '>=' |
+    '>' |
+    '=:=' |
+    '=/='.
 
 -type af_unary_op(T) :: {'op', anno(), unary_op(), T}.
-
 -type unary_op() :: '+' | '-' | 'bnot' | 'not' | '^'.
-
 %% See also lib/stdlib/{src/erl_bits.erl,include/erl_bits.hrl}.
 -type type_specifier_list() :: 'default' | [type_specifier(), ...].
+-type type_specifier() ::
+    type() |
+    signedness() |
+    endianness() |
+    unit().
 
--type type_specifier() :: type()
-                        | signedness()
-                        | endianness()
-                        | unit().
-
--type type() :: 'integer'
-              | 'float'
-              | 'binary'
-              | 'bytes'
-              | 'bitstring'
-              | 'bits'
-              | 'utf8'
-              | 'utf16'
-              | 'utf32'.
+-type type() ::
+    'integer' |
+    'float' |
+    'binary' |
+    'bytes' |
+    'bitstring' |
+    'bits' |
+    'utf8' |
+    'utf16' |
+    'utf32'.
 
 -type signedness() :: 'signed' | 'unsigned'.
-
 -type endianness() :: 'big' | 'little' | 'native'.
-
 -type unit() :: {'unit', 1..256}.
-
 -type record_name() :: atom().
-
 -type af_field_name() :: af_atom().
-
 -type function_name() :: atom().
-
 -type type_name() :: atom().
-
--type form_info() :: {'eof', erl_anno:line()}
-                   | {'error', erl2_scan:error_info() | error_info()}
-                   | {'warning', erl2_scan:error_info() | error_info()}.
+-type form_info() ::
+    {'eof', erl_anno:line()} |
+    {'error', erl2_scan:error_info() | error_info()} |
+    {'warning', erl2_scan:error_info() | error_info()}.
 
 %% End of Abstract Format
 
@@ -1122,33 +1126,34 @@ Erlang code.
 %% mkop(Op, Arg) -> {op,Anno,Op,Arg}.
 %% mkop(Left, Op, Right) -> {op,Anno,Op,Left,Right}.
 
--define(mkop2(L, OpAnno, R),
-        begin
-            {__Op,__Anno} = OpAnno,
-            {op,__Anno,__Op,L,R}
-        end).
+-define(mkop2(L, OpAnno, R), begin
+    {__Op, __Anno} = OpAnno,
+    {op, __Anno, __Op, L, R}
+end).
 
--define(mkop1(OpAnno, A),
-        begin
-            {__Op,__Anno} = OpAnno,
-            {op,__Anno,__Op,A}
-        end).
+-define(mkop1(OpAnno, A), begin
+    {__Op, __Anno} = OpAnno,
+    {op, __Anno, __Op, A}
+end).
 
 %% keep track of annotation info in tokens
 -define(anno(Tup), element(2, Tup)).
-
--define(anno(First, Last), anno(First,Last)).
-
+-define(anno(First, Last), anno(First, Last)).
 -define(set_anno(Tup, Anno), setelement(2, Tup, Anno)).
 
 %-define(DEBUG, true).
 
 -ifdef(DEBUG).
+
 %% Assumes that erl_anno has been compiled with DEBUG=true.
 -define(ANNO_CHECK(Tokens),
-        [] = [T || T <- Tokens, not is_list(element(2, T))]).
+    [] = [T || T <- Tokens, not is_list(element(2, T))]
+).
+
 -else.
+
 -define(ANNO_CHECK(Tokens), ok).
+
 -endif.
 
 %% Entry points compatible to old erl_parse.
@@ -1156,15 +1161,13 @@ Erlang code.
 %% entry points working.
 
 -spec parse_form(Tokens) -> {ok, AbsForm} | {error, ErrorInfo} when
-      Tokens :: [token()],
-      AbsForm :: abstract_form(),
-      ErrorInfo :: error_info().
-parse_form([{'-',A1},{atom,A2,spec}|Tokens]) ->
-    NewTokens = [{'-',A1},{'spec',A2}|Tokens],
+    Tokens :: [token()], AbsForm :: abstract_form(), ErrorInfo :: error_info().
+parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
+    NewTokens = [{'-', A1}, {'spec', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
-parse_form([{'-',A1},{atom,A2,callback}|Tokens]) ->
-    NewTokens = [{'-',A1},{'callback',A2}|Tokens],
+parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
+    NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form(Tokens) ->
@@ -1172,98 +1175,116 @@ parse_form(Tokens) ->
     parse(Tokens).
 
 -spec parse_exprs(Tokens) -> {ok, ExprList} | {error, ErrorInfo} when
-      Tokens :: [token()],
-      ExprList :: [abstract_expr()],
-      ErrorInfo :: error_info().
+    Tokens :: [token()], ExprList :: [abstract_expr()], ErrorInfo :: error_info().
 parse_exprs(Tokens) ->
     ?ANNO_CHECK(Tokens),
     A = erl_anno:new(0),
-    case parse([{atom,A,f},{'(',A},{')',A},{'->',A}|Tokens]) of
-	{ok,{function,_Lf,f,0,[{clause,_Lc,[],[],Exprs}]}} ->
-	    {ok,Exprs};
-	{error,_} = Err -> Err
+    case parse([{atom, A, f}, {'(', A}, {')', A}, {'->', A} | Tokens]) of
+        {ok, {function, _Lf, f, 0, [{clause, _Lc, [], [], Exprs}]}} ->
+            {ok, Exprs};
+        {error, _} = Err ->
+            Err
     end.
 
 -spec parse_term(Tokens) -> {ok, Term} | {error, ErrorInfo} when
-      Tokens :: [token()],
-      Term :: term(),
-      ErrorInfo :: error_info().
+    Tokens :: [token()], Term :: term(), ErrorInfo :: error_info().
 parse_term(Tokens) ->
     ?ANNO_CHECK(Tokens),
     A = erl_anno:new(0),
-    case parse([{atom,A,f},{'(',A},{')',A},{'->',A}|Tokens]) of
-	{ok,{function,_Af,f,0,[{clause,_Ac,[],[],[Expr]}]}} ->
-	    try normalise(Expr) of
-		Term -> {ok,Term}
-	    catch
-		_:_R -> {error,{location(?anno(Expr)),?MODULE,"bad term"}}
-	    end;
-	{ok,{function,_Af,f,A,[{clause,_Ac,[],[],[_E1,E2|_Es]}]}} ->
-	    {error,{location(?anno(E2)),?MODULE,"bad term"}};
-	{error,_} = Err -> Err
+    case parse([{atom, A, f}, {'(', A}, {')', A}, {'->', A} | Tokens]) of
+        {ok, {function, _Af, f, 0, [{clause, _Ac, [], [], [Expr]}]}} ->
+            try normalise(Expr) of
+                Term -> {ok, Term}
+            catch
+                _:_R -> {error, {location(?anno(Expr)), ?MODULE, "bad term"}}
+            end;
+        {ok, {function, _Af, f, A, [{clause, _Ac, [], [], [_E1, E2 | _Es]}]}} ->
+            {error, {location(?anno(E2)), ?MODULE, "bad term"}};
+        {error, _} = Err ->
+            Err
     end.
 
--type attributes() :: 'export' | 'file' | 'import' | 'import_type' | 'module'
-		    | 'opaque' | 'record' | 'type' | 'enum'.
+-type attributes() ::
+    'export' |
+    'file' |
+    'import' |
+    'import_type' |
+    'module' |
+    'opaque' | 'record' | 'type' | 'enum'.
 
-build_typed_attribute({atom,Aa,record},
-		      {typed_record, {atom,_An,RecordName}, RecTuple}) ->
-    {attribute,Aa,record,{RecordName,record_tuple(RecTuple)}};
-build_typed_attribute({atom,Aa,record},
-		      {typed_record, {remote,_,{atom,MRa,Name1},{atom,_,Name2}}, RecTuple}) ->
-    {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
-build_typed_attribute({atom,Aa,Attr},
-                      {type_def, {call,_,{atom,_,TypeName},Args}, Type})
-  when Attr =:= 'type' ; Attr =:= 'opaque' ; Attr =:= 'enum' ->
-    lists:foreach(fun({var, A, '_'}) -> ret_err(A, "bad type variable");
-                     (_)             -> ok
-                  end, Args),
-    case lists:all(fun({var, _, _}) -> true;
-                      (_)           -> false
-                   end, Args) of
-        true -> {attribute,Aa,Attr,{TypeName,Type,Args}};
+build_typed_attribute(
+    {atom, Aa, record},
+    {typed_record, {atom, _An, RecordName}, RecTuple}
+) ->
+    {attribute, Aa, record, {RecordName, record_tuple(RecTuple)}};
+build_typed_attribute(
+    {atom, Aa, record},
+    {typed_record, {remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple}
+) ->
+    {attribute, Aa, record, {{module_record, MRa, Name1, Name2}, record_tuple(RecTuple)}};
+build_typed_attribute(
+    {atom, Aa, Attr},
+    {type_def, {call, _, {atom, _, TypeName}, Args}, Type}
+) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
+    lists:foreach(
+        fun
+            ({var, A, '_'}) -> ret_err(A, "bad type variable");
+            (_) -> ok
+        end,
+        Args
+    ),
+    case
+        lists:all(
+            fun
+                ({var, _, _}) -> true;
+                (_) -> false
+            end,
+            Args
+        )
+    of
+        true -> {attribute, Aa, Attr, {TypeName, Type, Args}};
         false -> error_bad_decl(Aa, Attr)
     end;
-build_typed_attribute({atom,Aa,Attr},_) ->
+build_typed_attribute({atom, Aa, Attr}, _) ->
     case Attr of
         record -> error_bad_decl(Aa, record);
-        type   -> error_bad_decl(Aa, type);
-	opaque -> error_bad_decl(Aa, opaque);
-	enum   -> error_bad_decl(Aa, enum);
-        _      -> ret_err(Aa, "bad attribute")
+        type -> error_bad_decl(Aa, type);
+        opaque -> error_bad_decl(Aa, opaque);
+        enum -> error_bad_decl(Aa, enum);
+        _ -> ret_err(Aa, "bad attribute")
     end.
 
-build_type_spec({Kind,Aa}, {SpecFun, TypeSpecs})
-  when Kind =:= spec ; Kind =:= callback ->
+build_type_spec({Kind, Aa}, {SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
-	case SpecFun of
-	    {atom, _, Fun} ->
-		{Fun, find_arity_from_specs(TypeSpecs)};
-	    {{atom, _, Mod}, {atom, _, Fun}} ->
-		{Mod, Fun, find_arity_from_specs(TypeSpecs)}
+        case SpecFun of
+            {atom, _, Fun} ->
+                {Fun, find_arity_from_specs(TypeSpecs)};
+            {{atom, _, Mod}, {atom, _, Fun}} ->
+                {Mod, Fun, find_arity_from_specs(TypeSpecs)}
         end,
-    {attribute,Aa,Kind,{NewSpecFun, TypeSpecs}}.
+    {attribute, Aa, Kind, {NewSpecFun, TypeSpecs}}.
 
-find_arity_from_specs([Spec|_]) ->
+find_arity_from_specs([Spec | _]) ->
     %% Use the first spec to find the arity. If all are not the same,
     %% erl_lint will find this.
-    Fun = case Spec of
-	      {type, _, bounded_fun, [F, _]} -> F;
-	      {type, _, 'fun', _} = F -> F
-	  end,
-    {type, _, 'fun', [{type, _, product, Args},_]} = Fun,
+    Fun =
+        case Spec of
+            {type, _, bounded_fun, [F, _]} -> F;
+            {type, _, 'fun', _} = F -> F
+        end,
+    {type, _, 'fun', [{type, _, product, Args}, _]} = Fun,
     length(Args).
 
 %% The 'is_subtype(V, T)' syntax is not supported as of Erlang/OTP
 %% 19.0, but is kept for backward compatibility.
-build_compat_constraint({atom, _, is_subtype}, [{var, _, _}=LHS, Type]) ->
+build_compat_constraint({atom, _, is_subtype}, [{var, _, _} = LHS, Type]) ->
     build_constraint(LHS, Type);
 build_compat_constraint({atom, _, is_subtype}, [LHS, _Type]) ->
     ret_err(?anno(LHS), "bad type variable");
 build_compat_constraint({atom, A, Atom}, _Types) ->
     ret_err(A, io_lib:format("unsupported constraint ~tw", [Atom])).
 
-build_constraint({atom, _, is_subtype}, [{var, _, _}=LHS, Type]) ->
+build_constraint({atom, _, is_subtype}, [{var, _, _} = LHS, Type]) ->
     build_constraint(LHS, Type);
 build_constraint({atom, A, Atom}, _Foo) ->
     ret_err(A, io_lib:format("unsupported constraint ~tw", [Atom]));
@@ -1274,7 +1295,7 @@ build_constraint(LHS, Type) ->
     {type, ?anno(LHS), constraint, [IsSubType, [LHS, Type]]}.
 
 lift_unions(T1, {type, _Aa, union, List}) ->
-    {type, ?anno(T1), union, [T1|List]};
+    {type, ?anno(T1), union, [T1 | List]};
 lift_unions(T1, T2) ->
     {type, ?anno(T1), union, [T1, T2]}.
 
@@ -1285,11 +1306,11 @@ build_gen_type({atom, Aa, map}) ->
 build_gen_type(Name) ->
     build_type(Name, []).
 
-build_bin_type([{var, _, '_'}|Left], Int) ->
+build_bin_type([{var, _, '_'} | Left], Int) ->
     build_bin_type(Left, Int);
 build_bin_type([], Int) ->
     Int;
-build_bin_type([{var, Aa, _}|_], _) ->
+build_bin_type([{var, Aa, _} | _], _) ->
     ret_err(Aa, "Bad binary type").
 
 build_enum_type(Name, Types) ->
@@ -1298,7 +1319,7 @@ build_enum_type(Name, Types) ->
             {type, A, enum, {remote, A2, fold_dots(M), E}, N, Types};
         {op, A, '.', E, N} ->
             {type, A, enum, E, N, Types};
-        {atom, A, _}=N ->
+        {atom, A, _} = N ->
             {type, A, enum, N, Types};
         Other ->
             ret_err(?anno(Other), "bad enum type")
@@ -1329,112 +1350,123 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
-build_attribute({atom,Aa,module}, [{op,_Am,'.',_L,_R}=M]) ->
-    build_attribute({atom,Aa,module}, [fold_dots(M)]);
-build_attribute({atom,Aa,module}, Val) ->
+build_attribute({atom, Aa, module}, [{op, _Am, '.', _L, _R} = M]) ->
+    build_attribute({atom, Aa, module}, [fold_dots(M)]);
+build_attribute({atom, Aa, module}, Val) ->
     case Val of
-	[{atom,_Am,Module}] ->
-	    {attribute,Aa,module,Module};
-	[{atom,_Am,Module},ExpList] ->
-	    {attribute,Aa,module,{Module,var_list(ExpList)}};
-	_Other ->
-	    error_bad_decl(Aa, module)
+        [{atom, _Am, Module}] ->
+            {attribute, Aa, module, Module};
+        [{atom, _Am, Module}, ExpList] ->
+            {attribute, Aa, module, {Module, var_list(ExpList)}};
+        _Other ->
+            error_bad_decl(Aa, module)
     end;
-build_attribute({atom,Aa,export}, Val) ->
+build_attribute({atom, Aa, export}, Val) ->
     case Val of
-	[ExpList] ->
-	    {attribute,Aa,export,farity_list(ExpList)};
-	_Other -> error_bad_decl(Aa, export)
+        [ExpList] ->
+            {attribute, Aa, export, farity_list(ExpList)};
+        _Other ->
+            error_bad_decl(Aa, export)
     end;
-build_attribute({atom,Aa,import}, Val) ->
+build_attribute({atom, Aa, import}, Val) ->
     case Val of
-	[{atom,_Am,Mod},ImpList] ->
-	    {attribute,Aa,import,{Mod,farity_list(ImpList)}};
-	_Other -> error_bad_decl(Aa, import)
+        [{atom, _Am, Mod}, ImpList] ->
+            {attribute, Aa, import, {Mod, farity_list(ImpList)}};
+        _Other ->
+            error_bad_decl(Aa, import)
     end;
-build_attribute({atom,Aa,import_type}, Val) ->
+build_attribute({atom, Aa, import_type}, Val) ->
     case Val of
-	[{atom,_Am,Mod},ImpList] ->
-	    {attribute,Aa,import_type,{Mod,farity_list(ImpList)}};
-	_Other -> error_bad_decl(Aa, import_type)
+        [{atom, _Am, Mod}, ImpList] ->
+            {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
+        _Other ->
+            error_bad_decl(Aa, import_type)
     end;
-build_attribute({atom,Aa,record}, Val) ->
+build_attribute({atom, Aa, record}, Val) ->
     case Val of
-	[{atom,_An,Record},RecTuple] ->
-	    {attribute,Aa,record,{Record,record_tuple(RecTuple)}};
-	[{remote,_,{atom,MRa,Name1},{atom,_,Name2}},RecTuple] ->
-        {attribute,Aa,record,{{module_record,MRa,Name1,Name2},record_tuple(RecTuple)}};
-	_Other -> error_bad_decl(Aa, record)
+        [{atom, _An, Record}, RecTuple] ->
+            {attribute, Aa, record, {Record, record_tuple(RecTuple)}};
+        [{remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple] ->
+            {attribute, Aa, record,
+                {{module_record, MRa, Name1, Name2}, record_tuple(RecTuple)}};
+        _Other ->
+            error_bad_decl(Aa, record)
     end;
-build_attribute({atom,Aa,file}, Val) ->
+build_attribute({atom, Aa, file}, Val) ->
     case Val of
-	[{string,_An,Name},{integer,_Al,Line}] ->
-	    {attribute,Aa,file,{Name,Line}};
-	_Other -> error_bad_decl(Aa, file)
+        [{string, _An, Name}, {integer, _Al, Line}] ->
+            {attribute, Aa, file, {Name, Line}};
+        _Other ->
+            error_bad_decl(Aa, file)
     end;
-build_attribute({atom,Aa,Attr}, Val) ->
+build_attribute({atom, Aa, Attr}, Val) ->
     case Val of
-	[Expr0] ->
-	    Expr = attribute_farity(Expr0),
-	    {attribute,Aa,Attr,term(Expr)};
-	_Other -> ret_err(Aa, "bad attribute")
+        [Expr0] ->
+            Expr = attribute_farity(Expr0),
+            {attribute, Aa, Attr, term(Expr)};
+        _Other ->
+            ret_err(Aa, "bad attribute")
     end.
 
-var_list({cons,_Ac,{var,_,V},Tail}) ->
-    [V|var_list(Tail)];
-var_list({nil,_An}) -> [];
+var_list({cons, _Ac, {var, _, V}, Tail}) ->
+    [V | var_list(Tail)];
+var_list({nil, _An}) ->
+    [];
 var_list(Other) ->
     ret_err(?anno(Other), "bad variable list").
 
-attribute_farity({cons,A,H,T}) ->
-    {cons,A,attribute_farity(H),attribute_farity(T)};
-attribute_farity({tuple,A,Args0}) ->
+attribute_farity({cons, A, H, T}) ->
+    {cons, A, attribute_farity(H), attribute_farity(T)};
+attribute_farity({tuple, A, Args0}) ->
     Args = attribute_farity_list(Args0),
-    {tuple,A,Args};
-attribute_farity({map,A,Args0}) ->
+    {tuple, A, Args};
+attribute_farity({map, A, Args0}) ->
     Args = attribute_farity_map(Args0),
-    {map,A,Args};
-attribute_farity({op,A,'/',{atom,_,_}=Name,{integer,_,_}=Arity}) ->
-    {tuple,A,[Name,Arity]};
-attribute_farity(Other) -> Other.
+    {map, A, Args};
+attribute_farity({op, A, '/', {atom, _, _} = Name, {integer, _, _} = Arity}) ->
+    {tuple, A, [Name, Arity]};
+attribute_farity(Other) ->
+    Other.
 
 attribute_farity_list(Args) ->
     [attribute_farity(A) || A <- Args].
 
 %% It is not meaningful to have farity keys.
 attribute_farity_map(Args) ->
-    [{Op,A,K,attribute_farity(V)} || {Op,A,K,V} <- Args].
+    [{Op, A, K, attribute_farity(V)} || {Op, A, K, V} <- Args].
 
 -spec error_bad_decl(erl_anno:anno(), attributes()) -> no_return().
-
 error_bad_decl(Anno, S) ->
     ret_err(Anno, io_lib:format("bad ~tw declaration", [S])).
 
-farity_list({cons,_Ac,{op,_Ao,'/',{atom,_Aa,A},{integer,_Ai,I}},Tail}) ->
-    [{A,I}|farity_list(Tail)];
-farity_list({nil,_An}) -> [];
+farity_list({cons, _Ac, {op, _Ao, '/', {atom, _Aa, A}, {integer, _Ai, I}}, Tail}) ->
+    [{A, I} | farity_list(Tail)];
+farity_list({nil, _An}) ->
+    [];
 farity_list(Other) ->
     ret_err(?anno(Other), "bad function arity").
 
-record_tuple({tuple,_At,Fields}) ->
+record_tuple({tuple, _At, Fields}) ->
     record_fields(Fields);
 record_tuple(Other) ->
     ret_err(?anno(Other), "bad record declaration").
 
-record_fields([{atom,Aa,A}|Fields]) ->
-    [{record_field,Aa,{atom,Aa,A}}|record_fields(Fields)];
-record_fields([{match,_Am,{atom,Aa,A},Expr}|Fields]) ->
-    [{record_field,Aa,{atom,Aa,A},Expr}|record_fields(Fields)];
-record_fields([{typed,Expr,TypeInfo}|Fields]) ->
+record_fields([{atom, Aa, A} | Fields]) ->
+    [{record_field, Aa, {atom, Aa, A}} | record_fields(Fields)];
+record_fields([{match, _Am, {atom, Aa, A}, Expr} | Fields]) ->
+    [{record_field, Aa, {atom, Aa, A}, Expr} | record_fields(Fields)];
+record_fields([{typed, Expr, TypeInfo} | Fields]) ->
     [Field] = record_fields([Expr]),
-    [{typed_record_field,Field,TypeInfo}|record_fields(Fields)];
-record_fields([Other|_Fields]) ->
+    [{typed_record_field, Field, TypeInfo} | record_fields(Fields)];
+record_fields([Other | _Fields]) ->
     ret_err(?anno(Other), "bad record field");
-record_fields([]) -> [].
+record_fields([]) ->
+    [].
 
 term(Expr) ->
     try normalise(Expr)
-    catch _:_R -> ret_err(?anno(Expr), "bad attribute")
+    catch
+        _:_R -> ret_err(?anno(Expr), "bad attribute")
     end.
 
 %% build_function([Clause]) -> {function,Anno,Name,Arity,[Clause]}
@@ -1442,7 +1474,7 @@ term(Expr) ->
 build_function(Cs) ->
     Name = element(3, hd(Cs)),
     Arity = length(element(4, hd(Cs))),
-    {function,?anno(hd(Cs),Cs),Name,Arity,check_clauses(Cs, Name, Arity)}.
+    {function, ?anno(hd(Cs), Cs), Name, Arity, check_clauses(Cs, Name, Arity)}.
 
 %% build_fun(Anno, [Clause]) -> {'fun',Anno,{clauses,[Clause]}}.
 
@@ -1452,31 +1484,34 @@ build_fun(Anno, Cs) ->
     CheckedCs = check_clauses(Cs, Name, Arity),
     case Name of
         'fun' ->
-            {'fun',Anno,{clauses,CheckedCs}};
+            {'fun', Anno, {clauses, CheckedCs}};
         Name ->
-            {named_fun,Anno,Name,CheckedCs}
+            {named_fun, Anno, Name, CheckedCs}
     end.
 
 check_clauses(Cs, Name, Arity) ->
-    [case C of
-         {clause,A,N,As,G,B} when N =:= Name, length(As) =:= Arity ->
-             {clause,A,As,G,B};
-         {clause,A,_N,_As,_G,_B} ->
-             ret_err(A, "head mismatch")
-     end || C <- Cs].
+    [
+        case C of
+            {clause, A, N, As, G, B} when N =:= Name, length(As) =:= Arity ->
+                {clause, A, As, G, B};
+            {clause, A, _N, _As, _G, _B} ->
+                ret_err(A, "head mismatch")
+        end
+        || C <- Cs
+    ].
 
-build_try(Try,Es,Scs,{Ccs,As,End}) ->
-    {'try',?anno(Try,End),Es,Scs,Ccs,As}.
+build_try(Try, Es, Scs, {Ccs, As, End}) ->
+    {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
 
-build_enum(Name,Elements,Anno) ->
+build_enum(Name, Elements, Anno) ->
     case erl2_parse:balance_dotted(Name) of
-        {op,_,'.',{op,ModAnno,'.',Mod,Enum},Ctr} ->
+        {op, _, '.', {op, ModAnno, '.', Mod, Enum}, Ctr} ->
             %% remote enum reference Mod.Enum.Constructor{...}
-            {enum,Anno,{remote,ModAnno,Mod,Enum},Ctr,Elements};
-        {op,_,'.',Enum,Ctr} ->
+            {enum, Anno, {remote, ModAnno, Mod, Enum}, Ctr, Elements};
+        {op, _, '.', Enum, Ctr} ->
             %% local qualified enum reference Enum.Constructor{...}
-            {enum,Anno,Enum,Ctr,Elements};
-        {atom,_,_} ->
+            {enum, Anno, Enum, Ctr, Elements};
+        {atom, _, _} ->
             ret_err(Anno, "constructor missing enum qualifier");
         _Other ->
             ret_err(Anno, "bad enum")
@@ -1491,58 +1526,82 @@ location(Anno) ->
 
 %%  Convert between the abstract form of a term and a term.
 
--spec normalise(AbsTerm) -> Data when
-      AbsTerm :: abstract_expr(),
-      Data :: term().
-normalise({char,_,C}) -> C;
-normalise({integer,_,I}) -> I;
-normalise({float,_,F}) -> F;
-normalise({atom,_,A}) -> A;
-normalise({string,_,S}) -> S;
-normalise({nil,_}) -> [];
-normalise({bin,_,Fs}) ->
+-spec normalise(AbsTerm) -> Data when AbsTerm :: abstract_expr(), Data :: term().
+normalise({char, _, C}) ->
+    C;
+normalise({integer, _, I}) ->
+    I;
+normalise({float, _, F}) ->
+    F;
+normalise({atom, _, A}) ->
+    A;
+normalise({string, _, S}) ->
+    S;
+normalise({nil, _}) ->
+    [];
+normalise({bin, _, Fs}) ->
     {value, B, _} =
-	eval_bits:expr_grp(Fs, [],
-			   fun(E, _) ->
-				   {value, normalise(E), []}
-			   end, [], true),
+        eval_bits:expr_grp(
+            Fs,
+            [],
+            fun (E, _) ->
+                {value, normalise(E), []}
+            end,
+            [],
+            true
+        ),
     B;
-normalise({cons,_,Head,Tail}) ->
-    [normalise(Head)|normalise(Tail)];
-normalise({tuple,_,Args}) ->
+normalise({cons, _, Head, Tail}) ->
+    [normalise(Head) | normalise(Tail)];
+normalise({tuple, _, Args}) ->
     list_to_tuple(normalise_list(Args));
-normalise({map,_,Pairs}=M) ->
-    maps:from_list(lists:map(fun
-		%% only allow '=>'
-		({map_field_assoc,_,K,V}) -> {normalise(K),normalise(V)};
-		(_) -> erlang:error({badarg,M})
-	    end, Pairs));
-normalise({'fun',_,{function,{atom,_,M},{atom,_,F},{integer,_,A}}}) ->
+normalise({map, _, Pairs} = M) ->
+    maps:from_list(
+        lists:map(
+            fun
+                %% only allow '=>'
+                ({map_field_assoc, _, K, V}) ->
+                    {normalise(K), normalise(V)};
+                (_) ->
+                    erlang:error({badarg, M})
+            end,
+            Pairs
+        )
+    );
+normalise({'fun', _, {function, {atom, _, M}, {atom, _, F}, {integer, _, A}}}) ->
     fun M:F/A;
 %% Dotted atom
-normalise({op,_,'.',_,_}=D) ->
+normalise({op, _, '.', _, _} = D) ->
     case dotted_name(D) of
-        error -> erlang:error({badarg,D});
+        error -> erlang:error({badarg, D});
         As -> list_to_atom(concat_dotted(As))
     end;
 %% Special case for unary +/-.
-normalise({op,_,'+',{char,_,I}}) -> I;
-normalise({op,_,'+',{integer,_,I}}) -> I;
-normalise({op,_,'+',{float,_,F}}) -> F;
-normalise({op,_,'-',{char,_,I}}) -> -I;		%Weird, but compatible!
-normalise({op,_,'-',{integer,_,I}}) -> -I;
-normalise({op,_,'-',{float,_,F}}) -> -F;
-normalise(X) -> erlang:error({badarg, X}).
+normalise({op, _, '+', {char, _, I}}) ->
+    I;
+normalise({op, _, '+', {integer, _, I}}) ->
+    I;
+normalise({op, _, '+', {float, _, F}}) ->
+    F;
+%Weird, but compatible!
+normalise({op, _, '-', {char, _, I}}) ->
+    -I;
+normalise({op, _, '-', {integer, _, I}}) ->
+    -I;
+normalise({op, _, '-', {float, _, F}}) ->
+    -F;
+normalise(X) ->
+    erlang:error({badarg, X}).
 
-normalise_list([H|T]) ->
-    [normalise(H)|normalise_list(T)];
+normalise_list([H | T]) ->
+    [normalise(H) | normalise_list(T)];
 normalise_list([]) ->
     [].
 
 fold_dots(A) ->
     case dotted_name(A) of
         error -> A;
-        As -> {atom,?anno(A),list_to_atom(concat_dotted(As))}
+        As -> {atom, ?anno(A), list_to_atom(concat_dotted(As))}
     end.
 
 dotted_name(Name) ->
@@ -1562,17 +1621,15 @@ dotted_name(_, _, _) ->
 %% X.(p.(q.r)) -> (X.((p.q).r) -> (X.(p.q)).r) -> ((X.p).q).r)
 balance_dotted({op, L1, '.', E1, E2}) ->
     case balance_dotted(E2) of
-        {op,L2,'.',E21,{atom,_,_}=E22} ->
-            {op,L2,'.',balance_dotted({op,L1,'.',E1,E21}),E22};
+        {op, L2, '.', E21, {atom, _, _} = E22} ->
+            {op, L2, '.', balance_dotted({op, L1, '.', E1, E21}), E22};
         NewE2 ->
-            {op,L1,'.',balance_dotted(E1),NewE2}
+            {op, L1, '.', balance_dotted(E1), NewE2}
     end;
 balance_dotted(E) ->
     E.
 
--spec abstract(Data) -> AbsTerm when
-      Data :: term(),
-      AbsTerm :: abstract_expr().
+-spec abstract(Data) -> AbsTerm when Data :: term(), AbsTerm :: abstract_expr().
 abstract(T) ->
     Anno = erl_anno:new(0),
     abstract(T, Anno, enc_func(erl2_epp:default_encoding())).
@@ -1581,49 +1638,53 @@ abstract(T) ->
 
 %%% abstract/2 takes line and encoding options
 -spec abstract(Data, Options) -> AbsTerm when
-      Data :: term(),
-      Options :: Line | [Option],
-      Option :: {line, Line} | {encoding, Encoding},
-      Encoding :: 'latin1' | 'unicode' | 'utf8' | 'none' | encoding_func(),
-      Line :: erl_anno:line(),
-      AbsTerm :: abstract_expr().
-
+    Data :: term(),
+    Options :: Line | [Option],
+    Option :: {line, Line} | {encoding, Encoding},
+    Encoding :: 'latin1' | 'unicode' | 'utf8' | 'none' | encoding_func(),
+    Line :: erl_anno:line(),
+    AbsTerm :: abstract_expr().
 abstract(T, Line) when is_integer(Line) ->
     Anno = erl_anno:new(Line),
     abstract(T, Anno, enc_func(erl2_epp:default_encoding()));
 abstract(T, Options) when is_list(Options) ->
     Line = proplists:get_value(line, Options, 0),
-    Encoding = proplists:get_value(encoding, Options,erl2_epp:default_encoding()),
+    Encoding = proplists:get_value(encoding, Options, erl2_epp:default_encoding()),
     EncFunc = enc_func(Encoding),
     Anno = erl_anno:new(Line),
     abstract(T, Anno, EncFunc).
 
 -define(UNICODE(C),
-         (C < 16#D800 orelse
-          C > 16#DFFF andalso C < 16#FFFE orelse
-          C > 16#FFFF andalso C =< 16#10FFFF)).
+    (C < 16#D800 orelse
+        C > 16#DFFF andalso C < 16#FFFE orelse
+        C > 16#FFFF andalso C =< 16#10FFFF)
+).
 
-enc_func(latin1) -> fun(C) -> C < 256 end;
-enc_func(unicode) -> fun(C) -> ?UNICODE(C) end;
-enc_func(utf8) -> fun(C) -> ?UNICODE(C) end;
+enc_func(latin1) -> fun (C) -> C < 256 end;
+enc_func(unicode) -> fun (C) -> ?UNICODE(C) end;
+enc_func(utf8) -> fun (C) -> ?UNICODE(C) end;
 enc_func(none) -> none;
 enc_func(Fun) when is_function(Fun, 1) -> Fun;
 enc_func(Term) -> erlang:error({badarg, Term}).
 
-abstract(T, A, _E) when is_integer(T) -> {integer,A,T};
-abstract(T, A, _E) when is_float(T) -> {float,A,T};
-abstract(T, A, _E) when is_atom(T) -> {atom,A,T};
-abstract([], A, _E) -> {nil,A};
+abstract(T, A, _E) when is_integer(T) ->
+    {integer, A, T};
+abstract(T, A, _E) when is_float(T) ->
+    {float, A, T};
+abstract(T, A, _E) when is_atom(T) ->
+    {atom, A, T};
+abstract([], A, _E) ->
+    {nil, A};
 abstract(B, A, _E) when is_bitstring(B) ->
     {bin, A, [abstract_byte(Byte, A) || Byte <- bitstring_to_list(B)]};
-abstract([H|T], A, none=E) ->
-    {cons,A,abstract(H, A, E),abstract(T, A, E)};
+abstract([H | T], A, none = E) ->
+    {cons, A, abstract(H, A, E), abstract(T, A, E)};
 abstract(List, A, E) when is_list(List) ->
     abstract_list(List, [], A, E);
 abstract(Tuple, A, E) when is_tuple(Tuple) ->
-    {tuple,A,abstract_tuple_list(tuple_to_list(Tuple), A, E)};
+    {tuple, A, abstract_tuple_list(tuple_to_list(Tuple), A, E)};
 abstract(Map, A, E) when is_map(Map) ->
-    {map,A,abstract_map_fields(maps:to_list(Map),A,E)};
+    {map, A, abstract_map_fields(maps:to_list(Map), A, E)};
 abstract(Fun, A, E) when is_function(Fun) ->
     case erlang:fun_info(Fun, type) of
         {type, external} ->
@@ -1631,18 +1692,16 @@ abstract(Fun, A, E) when is_function(Fun) ->
             {module, M} = lists:keyfind(module, 1, Info),
             {name, F} = lists:keyfind(name, 1, Info),
             {arity, Arity} = lists:keyfind(arity, 1, Info),
-            {'fun', A, {function,
-                        abstract(M, A, E),
-                        abstract(F, A, E),
-                        abstract(Arity, A, E)}}
+            {'fun', A,
+                {function, abstract(M, A, E), abstract(F, A, E), abstract(Arity, A, E)}}
     end.
 
-abstract_list([H|T], String, A, E) ->
+abstract_list([H | T], String, A, E) ->
     case is_integer(H) andalso H >= 0 andalso E(H) of
         true ->
-            abstract_list(T, [H|String], A, E);
+            abstract_list(T, [H | String], A, E);
         false ->
-            AbstrList = {cons,A,abstract(H, A, E),abstract(T, A, E)},
+            AbstrList = {cons, A, abstract(H, A, E), abstract(T, A, E)},
             not_string(String, AbstrList, A, E)
     end;
 abstract_list([], String, A, _E) ->
@@ -1650,18 +1709,18 @@ abstract_list([], String, A, _E) ->
 abstract_list(T, String, A, E) ->
     not_string(String, abstract(T, A, E), A, E).
 
-not_string([C|T], Result, A, E) ->
+not_string([C | T], Result, A, E) ->
     not_string(T, {cons, A, {integer, A, C}, Result}, A, E);
 not_string([], Result, _A, _E) ->
     Result.
 
-abstract_tuple_list([H|T], A, E) ->
-    [abstract(H, A, E)|abstract_tuple_list(T, A, E)];
+abstract_tuple_list([H | T], A, E) ->
+    [abstract(H, A, E) | abstract_tuple_list(T, A, E)];
 abstract_tuple_list([], _A, _E) ->
     [].
 
-abstract_map_fields(Fs,A,E) ->
-    [{map_field_assoc,A,abstract(K,A,E),abstract(V,A,E)}||{K,V}<-Fs].
+abstract_map_fields(Fs, A, E) ->
+    [{map_field_assoc, A, abstract(K, A, E), abstract(V, A, E)} || {K, V} <- Fs].
 
 abstract_byte(Byte, A) when is_integer(Byte) ->
     {bin_element, A, {integer, A, Byte}, default, default};
@@ -1672,220 +1731,213 @@ abstract_byte(Bits, A) ->
 
 %%  Generate a list of tokens representing the abstract term.
 
--spec tokens(AbsTerm) -> Tokens when
-      AbsTerm :: abstract_expr(),
-      Tokens :: [token()].
+-spec tokens(AbsTerm) -> Tokens when AbsTerm :: abstract_expr(), Tokens :: [token()].
 tokens(Abs) ->
     tokens(Abs, []).
 
 -spec tokens(AbsTerm, MoreTokens) -> Tokens when
-      AbsTerm :: abstract_expr(),
-      MoreTokens :: [token()],
-      Tokens :: [token()].
-tokens({char,A,C}, More) -> [{char,A,C}|More];
-tokens({integer,A,N}, More) -> [{integer,A,N}|More];
-tokens({float,A,F}, More) -> [{float,A,F}|More];
-tokens({atom,Aa,A}, More) -> [{atom,Aa,A}|More];
-tokens({var,A,V}, More) -> [{var,A,V}|More];
-tokens({string,A,S}, More) -> [{string,A,S}|More];
-tokens({nil,A}, More) -> [{'[',A},{']',A}|More];
-tokens({cons,A,Head,Tail}, More) ->
-    [{'[',A}|tokens(Head, tokens_tail(Tail, More))];
-tokens({tuple,A,[]}, More) ->
-    [{'{',A},{'}',A}|More];
-tokens({tuple,A,[E|Es]}, More) ->
-    [{'{',A}|tokens(E, tokens_tuple(Es, ?anno(E), More))].
+    AbsTerm :: abstract_expr(), MoreTokens :: [token()], Tokens :: [token()].
+tokens({char, A, C}, More) ->
+    [{char, A, C} | More];
+tokens({integer, A, N}, More) ->
+    [{integer, A, N} | More];
+tokens({float, A, F}, More) ->
+    [{float, A, F} | More];
+tokens({atom, Aa, A}, More) ->
+    [{atom, Aa, A} | More];
+tokens({var, A, V}, More) ->
+    [{var, A, V} | More];
+tokens({string, A, S}, More) ->
+    [{string, A, S} | More];
+tokens({nil, A}, More) ->
+    [{'[', A}, {']', A} | More];
+tokens({cons, A, Head, Tail}, More) ->
+    [{'[', A} | tokens(Head, tokens_tail(Tail, More))];
+tokens({tuple, A, []}, More) ->
+    [{'{', A}, {'}', A} | More];
+tokens({tuple, A, [E | Es]}, More) ->
+    [{'{', A} | tokens(E, tokens_tuple(Es, ?anno(E), More))].
 
-tokens_tail({cons,A,Head,Tail}, More) ->
-    [{',',A}|tokens(Head, tokens_tail(Tail, More))];
-tokens_tail({nil,A}, More) ->
-    [{']',A}|More];
+tokens_tail({cons, A, Head, Tail}, More) ->
+    [{',', A} | tokens(Head, tokens_tail(Tail, More))];
+tokens_tail({nil, A}, More) ->
+    [{']', A} | More];
 tokens_tail(Other, More) ->
     A = ?anno(Other),
-    [{'|',A}|tokens(Other, [{']',A}|More])].
+    [{'|', A} | tokens(Other, [{']', A} | More])].
 
-tokens_tuple([E|Es], Anno, More) ->
-    [{',',Anno}|tokens(E, tokens_tuple(Es, ?anno(E), More))];
+tokens_tuple([E | Es], Anno, More) ->
+    [{',', Anno} | tokens(E, tokens_tuple(Es, ?anno(E), More))];
 tokens_tuple([], Anno, More) ->
-    [{'}',Anno}|More].
+    [{'}', Anno} | More].
 
 %% Give the relative precedences of operators.
 
-inop_prec('=') -> {150,100,100};
-inop_prec('!') -> {150,100,100};
-inop_prec('orelse') -> {160,150,150};
-inop_prec('andalso') -> {200,160,160};
-inop_prec('==') -> {300,200,300};
-inop_prec('/=') -> {300,200,300};
-inop_prec('=<') -> {300,200,300};
-inop_prec('<') -> {300,200,300};
-inop_prec('>=') -> {300,200,300};
-inop_prec('>') -> {300,200,300};
-inop_prec('=:=') -> {300,200,300};
-inop_prec('=/=') -> {300,200,300};
-inop_prec('++') -> {400,300,300};
-inop_prec('--') -> {400,300,300};
-inop_prec('+') -> {400,400,500};
-inop_prec('-') -> {400,400,500};
-inop_prec('bor') -> {400,400,500};
-inop_prec('bxor') -> {400,400,500};
-inop_prec('bsl') -> {400,400,500};
-inop_prec('bsr') -> {400,400,500};
-inop_prec('or') -> {400,400,500};
-inop_prec('xor') -> {400,400,500};
-inop_prec('*') -> {500,500,600};
-inop_prec('/') -> {500,500,600};
-inop_prec('div') -> {500,500,600};
-inop_prec('rem') -> {500,500,600};
-inop_prec('band') -> {500,500,600};
-inop_prec('and') -> {500,500,600};
-inop_prec('#') -> {800,700,800};
-inop_prec(':') -> {900,800,900};
-inop_prec('.') -> {900,900,1000}.
+inop_prec('=') -> {150, 100, 100};
+inop_prec('!') -> {150, 100, 100};
+inop_prec('orelse') -> {160, 150, 150};
+inop_prec('andalso') -> {200, 160, 160};
+inop_prec('==') -> {300, 200, 300};
+inop_prec('/=') -> {300, 200, 300};
+inop_prec('=<') -> {300, 200, 300};
+inop_prec('<') -> {300, 200, 300};
+inop_prec('>=') -> {300, 200, 300};
+inop_prec('>') -> {300, 200, 300};
+inop_prec('=:=') -> {300, 200, 300};
+inop_prec('=/=') -> {300, 200, 300};
+inop_prec('++') -> {400, 300, 300};
+inop_prec('--') -> {400, 300, 300};
+inop_prec('+') -> {400, 400, 500};
+inop_prec('-') -> {400, 400, 500};
+inop_prec('bor') -> {400, 400, 500};
+inop_prec('bxor') -> {400, 400, 500};
+inop_prec('bsl') -> {400, 400, 500};
+inop_prec('bsr') -> {400, 400, 500};
+inop_prec('or') -> {400, 400, 500};
+inop_prec('xor') -> {400, 400, 500};
+inop_prec('*') -> {500, 500, 600};
+inop_prec('/') -> {500, 500, 600};
+inop_prec('div') -> {500, 500, 600};
+inop_prec('rem') -> {500, 500, 600};
+inop_prec('band') -> {500, 500, 600};
+inop_prec('and') -> {500, 500, 600};
+inop_prec('#') -> {800, 700, 800};
+inop_prec(':') -> {900, 800, 900};
+inop_prec('.') -> {900, 900, 1000}.
 
 -type pre_op() :: 'catch' | '+' | '-' | 'bnot' | 'not' | '#' | '^'.
 
 -spec preop_prec(pre_op()) -> {prec(), prec()}.
+preop_prec('catch') -> {0, 100};
+preop_prec('+') -> {600, 700};
+preop_prec('-') -> {600, 700};
+preop_prec('bnot') -> {600, 700};
+preop_prec('not') -> {600, 700};
+preop_prec('^') -> {600, 700};
+preop_prec('#') -> {700, 800}.
 
-preop_prec('catch') -> {0,100};
-preop_prec('+') -> {600,700};
-preop_prec('-') -> {600,700};
-preop_prec('bnot') -> {600,700};
-preop_prec('not') -> {600,700};
-preop_prec('^') -> {600,700};
-preop_prec('#') -> {700,800}.
-
--spec func_prec() -> {prec(),prec()}.
-
-func_prec() -> {800,700}.
+-spec func_prec() -> {prec(), prec()}.
+func_prec() -> {800, 700}.
 
 -spec max_prec() -> prec().
-
 max_prec() -> 1000.
 
 -type prec() :: non_neg_integer().
-
--type type_inop() :: '::' | '|' | '..' | '+' | '-' | 'bor' | 'bxor'
-                   | 'bsl' | 'bsr' | '*' | '/' | 'div' | 'rem' | 'band'.
+-type type_inop() ::
+    '::' |
+    '|' |
+    '..' |
+    '+' |
+    '-' |
+    'bor' |
+    'bxor' |
+    'bsl' | 'bsr' | '*' | '/' | 'div' | 'rem' | 'band'.
 
 -type type_preop() :: '+' | '-' | 'bnot' | '#' | '^'.
 
 -spec type_inop_prec(type_inop()) -> {prec(), prec(), prec()}.
-
-type_inop_prec('=') -> {150,100,100};
-type_inop_prec('::') -> {150,150,160};
-type_inop_prec('|') -> {180,170,170};
-type_inop_prec('..') -> {300,200,300};
-type_inop_prec('+') -> {400,400,500};
-type_inop_prec('-') -> {400,400,500};
-type_inop_prec('bor') -> {400,400,500};
-type_inop_prec('bxor') -> {400,400,500};
-type_inop_prec('bsl') -> {400,400,500};
-type_inop_prec('bsr') -> {400,400,500};
-type_inop_prec('*') -> {500,500,600};
-type_inop_prec('/') -> {500,500,600};
-type_inop_prec('div') -> {500,500,600};
-type_inop_prec('rem') -> {500,500,600};
-type_inop_prec('band') -> {500,500,600};
-type_inop_prec('#') -> {800,700,800}.
+type_inop_prec('=') -> {150, 100, 100};
+type_inop_prec('::') -> {150, 150, 160};
+type_inop_prec('|') -> {180, 170, 170};
+type_inop_prec('..') -> {300, 200, 300};
+type_inop_prec('+') -> {400, 400, 500};
+type_inop_prec('-') -> {400, 400, 500};
+type_inop_prec('bor') -> {400, 400, 500};
+type_inop_prec('bxor') -> {400, 400, 500};
+type_inop_prec('bsl') -> {400, 400, 500};
+type_inop_prec('bsr') -> {400, 400, 500};
+type_inop_prec('*') -> {500, 500, 600};
+type_inop_prec('/') -> {500, 500, 600};
+type_inop_prec('div') -> {500, 500, 600};
+type_inop_prec('rem') -> {500, 500, 600};
+type_inop_prec('band') -> {500, 500, 600};
+type_inop_prec('#') -> {800, 700, 800}.
 
 -spec type_preop_prec(type_preop()) -> {prec(), prec()}.
+type_preop_prec('+') -> {600, 700};
+type_preop_prec('-') -> {600, 700};
+type_preop_prec('bnot') -> {600, 700};
+type_preop_prec('^') -> {600, 700};
+type_preop_prec('#') -> {700, 800}.
 
-type_preop_prec('+') -> {600,700};
-type_preop_prec('-') -> {600,700};
-type_preop_prec('bnot') -> {600,700};
-type_preop_prec('^') -> {600,700};
-type_preop_prec('#') -> {700,800}.
-
--type erl2_parse_tree() :: abstract_clause()
-                        | abstract_expr()
-                        | abstract_form()
-                        | abstract_type().
+-type erl2_parse_tree() ::
+    abstract_clause() |
+    abstract_expr() |
+    abstract_form() |
+    abstract_type().
 
 -spec map_anno(Fun, Abstr) -> NewAbstr when
-      Fun :: fun((Anno) -> NewAnno),
-      Anno :: erl_anno:anno(),
-      NewAnno :: erl_anno:anno(),
-      Abstr :: erl2_parse_tree() | form_info(),
-      NewAbstr :: erl2_parse_tree() | form_info().
-
+    Fun :: fun((Anno) -> NewAnno),
+    Anno :: erl_anno:anno(),
+    NewAnno :: erl_anno:anno(),
+    Abstr :: erl2_parse_tree() | form_info(),
+    NewAbstr :: erl2_parse_tree() | form_info().
 map_anno(F0, Abstr) ->
-    F = fun(A, Acc) -> {F0(A), Acc} end,
+    F = fun (A, Acc) -> {F0(A), Acc} end,
     {NewAbstr, []} = modify_anno1(Abstr, [], F),
     NewAbstr.
 
 -spec fold_anno(Fun, Acc0, Abstr) -> Acc1 when
-      Fun :: fun((Anno, AccIn) -> AccOut),
-      Anno :: erl_anno:anno(),
-      Acc0 :: term(),
-      Acc1 :: term(),
-      AccIn :: term(),
-      AccOut :: term(),
-      Abstr :: erl2_parse_tree() | form_info().
-
+    Fun :: fun((Anno, AccIn) -> AccOut),
+    Anno :: erl_anno:anno(),
+    Acc0 :: term(),
+    Acc1 :: term(),
+    AccIn :: term(),
+    AccOut :: term(),
+    Abstr :: erl2_parse_tree() | form_info().
 fold_anno(F0, Acc0, Abstr) ->
-    F = fun(A, Acc) -> {A, F0(A, Acc)} end,
+    F = fun (A, Acc) -> {A, F0(A, Acc)} end,
     {_, NewAcc} = modify_anno1(Abstr, Acc0, F),
     NewAcc.
 
 -spec mapfold_anno(Fun, Acc0, Abstr) -> {NewAbstr, Acc1} when
-      Fun :: fun((Anno, AccIn) -> {NewAnno, AccOut}),
-      Anno :: erl_anno:anno(),
-      NewAnno :: erl_anno:anno(),
-      Acc0 :: term(),
-      Acc1 :: term(),
-      AccIn :: term(),
-      AccOut :: term(),
-      Abstr :: erl2_parse_tree() | form_info(),
-      NewAbstr :: erl2_parse_tree() | form_info().
-
+    Fun :: fun((Anno, AccIn) -> {NewAnno, AccOut}),
+    Anno :: erl_anno:anno(),
+    NewAnno :: erl_anno:anno(),
+    Acc0 :: term(),
+    Acc1 :: term(),
+    AccIn :: term(),
+    AccOut :: term(),
+    Abstr :: erl2_parse_tree() | form_info(),
+    NewAbstr :: erl2_parse_tree() | form_info().
 mapfold_anno(F, Acc0, Abstr) ->
     modify_anno1(Abstr, Acc0, F).
 
--spec new_anno(Term) -> Abstr when
-      Term :: term(),
-      Abstr :: erl2_parse_tree() | form_info().
-
+-spec new_anno(Term) -> Abstr when Term :: term(), Abstr :: erl2_parse_tree() | form_info().
 new_anno(Term) ->
-    F = fun(L, Acc) -> {erl_anno:new(L), Acc} end,
+    F = fun (L, Acc) -> {erl_anno:new(L), Acc} end,
     {NewAbstr, []} = modify_anno1(Term, [], F),
     NewAbstr.
 
--spec anno_to_term(Abstr) -> term() when
-      Abstr :: erl2_parse_tree() | form_info().
-
+-spec anno_to_term(Abstr) -> term() when Abstr :: erl2_parse_tree() | form_info().
 anno_to_term(Abstract) ->
-    F = fun(Anno, Acc) -> {erl_anno:to_term(Anno), Acc} end,
+    F = fun (Anno, Acc) -> {erl_anno:to_term(Anno), Acc} end,
     {NewAbstract, []} = modify_anno1(Abstract, [], F),
     NewAbstract.
 
--spec anno_from_term(Term) -> erl2_parse_tree() | form_info() when
-      Term :: term().
-
+-spec anno_from_term(Term) -> erl2_parse_tree() | form_info() when Term :: term().
 anno_from_term(Term) ->
-    F = fun(T, Acc) -> {erl_anno:from_term(T), Acc} end,
+    F = fun (T, Acc) -> {erl_anno:from_term(T), Acc} end,
     {NewTerm, []} = modify_anno1(Term, [], F),
     NewTerm.
 
 %% make it easier to combine annotations when the second
 %% argument may be a list of nodes (possibly empty)
 anno(Left, []) -> ?anno(Left);
-anno(Left, [_|_]=Right) ->
-    merge_anno(?anno(Left), ?anno(lists:last(Right)));
-anno(Left, Right) ->
-    merge_anno(?anno(Left), ?anno(Right)).
+anno(Left, [_ | _] = Right) -> merge_anno(?anno(Left), ?anno(lists:last(Right)));
+anno(Left, Right) -> merge_anno(?anno(Left), ?anno(Right)).
 
 merge_anno(Left, Right) ->
     New = filter_anno(Left),
     LeftLoc = erl_anno:location(New),
     case get_end_location(Right) of
-        LeftLoc -> New;
+        LeftLoc ->
+            New;
         undefined ->
             case erl_anno:location(Right) of
                 LeftLoc -> New;
                 undefined -> New;
-                RightLoc ->
-                    [{end_location, RightLoc} | ensure_anno_list(New)]
+                RightLoc -> [{end_location, RightLoc} | ensure_anno_list(New)]
             end;
         RightLoc ->
             [{end_location, RightLoc} | ensure_anno_list(New)]
@@ -1893,22 +1945,23 @@ merge_anno(Left, Right) ->
 
 ensure_anno_list(L) when is_integer(L) ->
     [{location, L}];
-ensure_anno_list({L,C}=Loc) when is_integer(L), is_integer(C) ->
+ensure_anno_list({L, C} = Loc) when is_integer(L), is_integer(C) ->
     [{location, Loc}];
 ensure_anno_list(L) when is_list(L) ->
     L.
 
 %% keep annotations to be propagated to parent
-filter_anno([{location,_}=A|As]) ->
-    [A|filter_anno(As)];
-filter_anno([{file,_}=A|As]) ->
-    [A|filter_anno(As)];
-filter_anno([_|As]) ->
+filter_anno([{location, _} = A | As]) ->
+    [A | filter_anno(As)];
+filter_anno([{file, _} = A | As]) ->
+    [A | filter_anno(As)];
+filter_anno([_ | As]) ->
     filter_anno(As);
 filter_anno([]) ->
     [];
 filter_anno(Pos) ->
-    Pos.  % Line or {Line,Col}
+    % Line or {Line,Col}
+    Pos.
 
 get_end_location(Anno) when is_list(Anno) ->
     %% use existing end_location annotation if present
@@ -1922,88 +1975,90 @@ get_end_location(Anno) ->
     erl_anno:end_location(Anno).
 
 %% Forms.
-modify_anno1({function,F,A}, Ac, _Mf) ->
-    {{function,F,A},Ac};
-modify_anno1({function,M,F,A}, Ac, Mf) ->
-    {M1,Ac1} = modify_anno1(M, Ac, Mf),
-    {F1,Ac2} = modify_anno1(F, Ac1, Mf),
-    {A1,Ac3} = modify_anno1(A, Ac2, Mf),
-    {{function,M1,F1,A1},Ac3};
-modify_anno1({attribute,A,record,{Name,Fields}}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {Fields1,Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute,A1,record,{Name,Fields1}},Ac2};
-modify_anno1({attribute,A,spec,{Fun,Types}}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {Types1,Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute,A1,spec,{Fun,Types1}},Ac2};
-modify_anno1({attribute,A,callback,{Fun,Types}}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {Types1,Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute,A1,callback,{Fun,Types1}},Ac2};
-modify_anno1({attribute,A,type,{TypeName,TypeDef,Args}}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {TypeDef1,Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1,Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute,A1,type,{TypeName,TypeDef1,Args1}},Ac3};
-modify_anno1({attribute,A,opaque,{TypeName,TypeDef,Args}}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {TypeDef1,Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1,Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute,A1,opaque,{TypeName,TypeDef1,Args1}},Ac3};
-modify_anno1({attribute,A,Attr,Val}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {{attribute,A1,Attr,Val},Ac1};
-modify_anno1({warning,W}, Ac, _Mf) ->
-    {{warning,W},Ac};
-modify_anno1({error,W}, Ac, _Mf) ->
-    {{error,W},Ac};
-modify_anno1({eof,L}, Ac, _Mf) ->
-    {{eof,L},Ac};
+modify_anno1({function, F, A}, Ac, _Mf) ->
+    {{function, F, A}, Ac};
+modify_anno1({function, M, F, A}, Ac, Mf) ->
+    {M1, Ac1} = modify_anno1(M, Ac, Mf),
+    {F1, Ac2} = modify_anno1(F, Ac1, Mf),
+    {A1, Ac3} = modify_anno1(A, Ac2, Mf),
+    {{function, M1, F1, A1}, Ac3};
+modify_anno1({attribute, A, record, {Name, Fields}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
+    {{attribute, A1, record, {Name, Fields1}}, Ac2};
+modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
+    {{attribute, A1, spec, {Fun, Types1}}, Ac2};
+modify_anno1({attribute, A, callback, {Fun, Types}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
+    {{attribute, A1, callback, {Fun, Types1}}, Ac2};
+modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
+    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
+    {{attribute, A1, type, {TypeName, TypeDef1, Args1}}, Ac3};
+modify_anno1({attribute, A, opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
+    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
+    {{attribute, A1, opaque, {TypeName, TypeDef1, Args1}}, Ac3};
+modify_anno1({attribute, A, Attr, Val}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {{attribute, A1, Attr, Val}, Ac1};
+modify_anno1({warning, W}, Ac, _Mf) ->
+    {{warning, W}, Ac};
+modify_anno1({error, W}, Ac, _Mf) ->
+    {{error, W}, Ac};
+modify_anno1({eof, L}, Ac, _Mf) ->
+    {{eof, L}, Ac};
 %% Expressions.
-modify_anno1({clauses,Cs}, Ac, Mf) ->
-    {Cs1,Ac1} = modify_anno1(Cs, Ac, Mf),
-    {{clauses,Cs1},Ac1};
-modify_anno1({typed_record_field,Field,Type}, Ac, Mf) ->
-    {Field1,Ac1} = modify_anno1(Field, Ac, Mf),
-    {Type1,Ac2} = modify_anno1(Type, Ac1, Mf),
-    {{typed_record_field,Field1,Type1},Ac2};
-modify_anno1({Tag,A}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {{Tag,A1},Ac1};
-modify_anno1({Tag,A,E1}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {E11,Ac2} = modify_anno1(E1, Ac1, Mf),
-    {{Tag,A1,E11},Ac2};
-modify_anno1({Tag,A,E1,E2}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {E11,Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21,Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{Tag,A1,E11,E21},Ac3};
-modify_anno1({bin_element,A,E1,E2,TSL}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {E11,Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21,Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{bin_element,A1,E11,E21, TSL},Ac3};
-modify_anno1({Tag,A,E1,E2,E3}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {E11,Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21,Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31,Ac4} = modify_anno1(E3, Ac3, Mf),
-    {{Tag,A1,E11,E21,E31},Ac4};
-modify_anno1({Tag,A,E1,E2,E3,E4}, Ac, Mf) ->
-    {A1,Ac1} = Mf(A, Ac),
-    {E11,Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21,Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31,Ac4} = modify_anno1(E3, Ac3, Mf),
-    {E41,Ac5} = modify_anno1(E4, Ac4, Mf),
-    {{Tag,A1,E11,E21,E31,E41},Ac5};
-modify_anno1([H|T], Ac, Mf) ->
-    {H1,Ac1} = modify_anno1(H, Ac, Mf),
-    {T1,Ac2} = modify_anno1(T, Ac1, Mf),
-    {[H1|T1],Ac2};
-modify_anno1([], Ac, _Mf) -> {[],Ac};
-modify_anno1(E, Ac, _Mf) when not is_tuple(E), not is_list(E) -> {E,Ac}.
+modify_anno1({clauses, Cs}, Ac, Mf) ->
+    {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
+    {{clauses, Cs1}, Ac1};
+modify_anno1({typed_record_field, Field, Type}, Ac, Mf) ->
+    {Field1, Ac1} = modify_anno1(Field, Ac, Mf),
+    {Type1, Ac2} = modify_anno1(Type, Ac1, Mf),
+    {{typed_record_field, Field1, Type1}, Ac2};
+modify_anno1({Tag, A}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {{Tag, A1}, Ac1};
+modify_anno1({Tag, A, E1}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
+    {{Tag, A1, E11}, Ac2};
+modify_anno1({Tag, A, E1, E2}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
+    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
+    {{Tag, A1, E11, E21}, Ac3};
+modify_anno1({bin_element, A, E1, E2, TSL}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
+    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
+    {{bin_element, A1, E11, E21, TSL}, Ac3};
+modify_anno1({Tag, A, E1, E2, E3}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
+    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
+    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
+    {{Tag, A1, E11, E21, E31}, Ac4};
+modify_anno1({Tag, A, E1, E2, E3, E4}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
+    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
+    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
+    {E41, Ac5} = modify_anno1(E4, Ac4, Mf),
+    {{Tag, A1, E11, E21, E31, E41}, Ac5};
+modify_anno1([H | T], Ac, Mf) ->
+    {H1, Ac1} = modify_anno1(H, Ac, Mf),
+    {T1, Ac2} = modify_anno1(T, Ac1, Mf),
+    {[H1 | T1], Ac2};
+modify_anno1([], Ac, _Mf) ->
+    {[], Ac};
+modify_anno1(E, Ac, _Mf) when not is_tuple(E), not is_list(E) ->
+    {E, Ac}.
 
 %% support functions for dotted names (move elsewhere later)
 
@@ -2074,11 +2129,9 @@ is_dotted(Name) ->
     is_dotted_1(Name).
 
 is_dotted_1([$. | _]) -> true;
-is_dotted_1([_ | T]) ->
-    is_dotted_1(T);
+is_dotted_1([_ | T]) -> is_dotted_1(T);
 is_dotted_1([]) -> false;
-is_dotted_1(_) ->
-    erlang:error(badarg).
+is_dotted_1(_) -> erlang:error(badarg).
 
 -spec dotted_last(dotted_name()) -> string().
 dotted_last(Name) ->
