@@ -18,10 +18,8 @@
 -compile(export_all).
 -compile(nowarn_export_all).
 
-
 shell_command(Command) ->
     shell_command(Command, _ExtraSettings = []).
-
 
 % run shell command and handle its output one line at a time by either:
 %
@@ -36,20 +34,26 @@ shell_command(Command, ExtraSettings_0) ->
             false ->
                 {ExtraSettings_0, _Acc = []};
             true ->
-                NewExtraSettings_ = [{line, 4096} | proplists:delete(mirror_line_output, ExtraSettings_0)],
+                NewExtraSettings_ = [
+                    {line, 4096}
+                    | proplists:delete(mirror_line_output, ExtraSettings_0)
+                ],
                 {NewExtraSettings_, _Acc = 'undefined'}
         end,
     Port = open_spawn_port(Command, ExtraSettings),
     read_port_output(Port, _CurrentLine = <<>>, Acc).
 
-
 open_spawn_port(Command, ExtraSettings) ->
-    PortSettings = [
-        binary, stream, use_stdio, stderr_to_stdout, exit_status
-    ] ++ ExtraSettings,
+    PortSettings =
+        [
+            binary,
+            stream,
+            use_stdio,
+            stderr_to_stdout,
+            exit_status
+        ] ++ ExtraSettings,
 
     _Port = open_port({spawn, Command}, PortSettings).
-
 
 read_port_output(Port, CurrentLine, Acc) ->
     receive
@@ -61,12 +65,11 @@ read_port_output(Port, CurrentLine, Acc) ->
             NewCurrentLine = <<CurrentLine/binary, LineSegment/binary>>,
             read_port_output(Port, NewCurrentLine, Acc);
         {Port, {data, Data}} ->
-            read_port_output(Port, CurrentLine, [Data|Acc]);
+            read_port_output(Port, CurrentLine, [Data | Acc]);
         {Port, {exit_status, N}} ->
             Res = return_port_output_acc(CurrentLine, Acc),
             {N, Res}
     end.
-
 
 update_port_output_acc(Line, Acc) ->
     case Acc of
@@ -76,9 +79,8 @@ update_port_output_acc(Line, Acc) ->
             Acc;
         _ ->
             % collect port output
-            [Line|Acc]
+            [Line | Acc]
     end.
-
 
 return_port_output_acc(CurrentLine, Acc) ->
     case Acc of

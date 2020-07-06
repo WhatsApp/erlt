@@ -46,24 +46,27 @@
 -export([parse_transform/2]).
 
 -type const_names() :: ordsets:ordset(atom()).
--type form()        :: erl_parse:abstract_form().
+-type form() :: erl_parse:abstract_form().
 
 %-define(DEBUG, 1).
 
 -ifdef(DEBUG).
+
 -compile(export_all).
+
 -define(PRINT(Fmt, Args), io:format(standard_error, Fmt "~n", Args)).
 -define(PRINT(Fmt), ?PRINT(Fmt, [])).
+
 -else.
+
 -define(PRINT(Fmt, Args), ok).
 -define(PRINT(Fmt), ok).
--endif.
 
+-endif.
 
 parse_transform(Forms, _Options) ->
     ?PRINT("erlbuild_pt_util: start"),
     rewrite(Forms).
-
 
 % "Abstract Format" chapter from ERTS User Guide:
 % http://www.erlang.org/doc/apps/erts/absform.html
@@ -77,23 +80,19 @@ rewrite(Forms) ->
     % rewriting a const function.
     ExpandedForms = erl_expand_records:module(Forms, []),
     Forms2 = lists:zip(Forms, ExpandedForms),
-    rewrite(Forms2, _Consts=ordsets:new(), _Accu = []).
+    rewrite(Forms2, _Consts = ordsets:new(), _Accu = []).
 
 -spec rewrite([{form(), form()}], const_names(), [form()]) -> [form()].
-
-rewrite([{F, E}|T], Consts, Accu) ->
+rewrite([{F, E} | T], Consts, Accu) ->
     {NewForm, NewConsts} = rewrite_maybe_const_form(F, E, Consts),
     rewrite(T, NewConsts, [NewForm | Accu]);
-
-rewrite([], Consts=[_|_], _Accu) ->
+rewrite([], Consts = [_ | _], _Accu) ->
     % end of input when we haven't seen one or more consts
     MissingFuns = [list_to_atom(lists:concat([N, "/0"])) || N <- Consts],
     exit({missing_const_funs, MissingFuns});
-
 rewrite([], [], Accu) ->
     % end of input
     lists:reverse(Accu).
-
 
 -spec rewrite_maybe_const_form(form(), form(), const_names()) -> {form(), const_names()}.
 %% rewrite a single form that might add or remove a const name
@@ -104,19 +103,21 @@ rewrite_maybe_const_form({attribute, _LINE, const, Names} = Form, _ExpandedForm,
     end;
 % Here we are actually rewriting a const function, so we substitute the record-expanded form that we zipped together
 % earlier, into rewrite_const_thunk().
-rewrite_maybe_const_form(Form,
-   {function, LINE, Name, 0, [{clause, _, [], [], Exprs}]} = _ExpandedForm, Consts) ->
+rewrite_maybe_const_form(
+    Form,
+    {function, LINE, Name, 0, [{clause, _, [], [], Exprs}]} = _ExpandedForm,
+    Consts
+) ->
     case ordsets:is_element(Name, Consts) of
         true ->
-            {rewrite_const_thunk(LINE, {Name, Exprs}),
-             ordsets:del_element(Name, Consts)};
+            {rewrite_const_thunk(LINE, {Name, Exprs}), ordsets:del_element(Name, Consts)};
         false ->
             {rewrite_form(Form), Consts}
     end;
-rewrite_maybe_const_form(Form, _ExpandedForm, Consts) -> {rewrite_form(Form), Consts}.
+rewrite_maybe_const_form(Form, _ExpandedForm, Consts) ->
+    {rewrite_form(Form), Consts}.
 
 rewrite_form(Form) -> Form.
-
 
 %% Convert a name and list of expressions into a zero-ary function returning
 %% the precompiled value of the expressions.
@@ -125,42 +126,45 @@ rewrite_form(Form) -> Form.
 rewrite_const_thunk(LINE, {Name, Exprs}) ->
     {value, Term, _} = limited_eval(Exprs),
     Expr = term_to_ast(LINE, Term),
-    {function, LINE, Name, _Arity = 0,
-     [{clause, LINE, _Args = [], _Guards = [], [Expr]}]}.
+    {function, LINE, Name, _Arity = 0, [{clause, LINE, _Args = [], _Guards = [], [Expr]}]}.
 
-
-term_to_ast(LINE, X) when is_atom(X) -> {atom, LINE, X};
-term_to_ast(LINE, X) when is_integer(X) -> {integer, LINE, X};
-term_to_ast(LINE, X) when is_float(X) -> {float, LINE, X};
+term_to_ast(LINE, X) when is_atom(X) ->
+    {atom, LINE, X};
+term_to_ast(LINE, X) when is_integer(X) ->
+    {integer, LINE, X};
+term_to_ast(LINE, X) when is_float(X) ->
+    {float, LINE, X};
 term_to_ast(LINE, T) when is_tuple(T) ->
     {tuple, LINE, [term_to_ast(LINE, X) || X <- tuple_to_list(T)]};
-term_to_ast(LINE, []) -> {nil, LINE};
-term_to_ast(LINE, L = [H|T]) when is_list(L) ->
+term_to_ast(LINE, []) ->
+    {nil, LINE};
+term_to_ast(LINE, L = [H | T]) when is_list(L) ->
     {cons, LINE, term_to_ast(LINE, H), term_to_ast(LINE, T)};
 term_to_ast(LINE, M) when is_map(M) ->
-    Folded = maps:fold(fun(K, V, Acc) ->
-                               [{map_field_assoc, LINE, term_to_ast(LINE, K), term_to_ast(LINE, V)} | Acc]
-                       end,
-                       [],
-                       M),
+    Folded = maps:fold(
+        fun (K, V, Acc) ->
+            [{map_field_assoc, LINE, term_to_ast(LINE, K), term_to_ast(LINE, V)} | Acc]
+        end,
+        [],
+        M
+    ),
     {map, LINE, Folded};
 term_to_ast(LINE, B) when is_binary(B) ->
     BinElements = [
         {bin_element, LINE, {integer, LINE, X}, default, default}
-        ||
-        X <- binary_to_list(B)
+        || X <- binary_to_list(B)
     ],
     {bin, LINE, BinElements}.
-
 
 %% Find the value of a sequence of expressions, limiting the functions that may
 %% be called to known-safe (side-effect-free) functions.
 limited_eval(Exprs) ->
     erl_eval:exprs(
-      Exprs,
-      _Bindings=[],
-      _LocalHandler=none,
-      _NonLocalHandler={value, fun limited_apply/2}).
+        Exprs,
+        _Bindings = [],
+        _LocalHandler = none,
+        _NonLocalHandler = {value, fun limited_apply/2}
+    ).
 
 %% Apply a known-safe function to a list of args, or exit abruptly if
 %% the function is not known-safe.
