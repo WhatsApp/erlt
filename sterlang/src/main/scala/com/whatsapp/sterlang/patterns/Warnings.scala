@@ -14,11 +14,20 @@
  * limitations under the License.
  */
 
-package com.whatsapp.sterlang.test.it
+package com.whatsapp.sterlang.patterns
 
-class ExamplesSpec extends DirSpec {
-  testDir("examples/pos")
-  testDir("examples/elm-core")
-  testDir("examples/dev")
-  testDir("examples/pattern")
-}
+import com.whatsapp.sterlang.{Pos, PositionedError}
+
+sealed trait PatternWarning extends PositionedError
+
+final class MissingPatternsWarning(node: Pos.P, exampleClause: PatternMatrix.Vector)
+    extends PositionedError(
+      pos = node,
+      title = "Missing Patterns",
+      description = Some(s"missing: ${exampleClause.map(Pattern.show).mkString(sep = ", ")}"),
+    )
+    with PatternWarning
+
+final class UselessPatternWarning(clause: Pos.P)
+    extends PositionedError(pos = clause, title = "Useless Pattern", description = None)
+    with PatternWarning

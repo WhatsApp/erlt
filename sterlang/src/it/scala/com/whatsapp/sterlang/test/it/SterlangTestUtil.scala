@@ -19,6 +19,7 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.patterns.PatternChecker
 
 object SterlangTestUtil {
   import java.io.{BufferedWriter, FileWriter, StringWriter}
@@ -54,6 +55,11 @@ object SterlangTestUtil {
       w.write(sw.toString)
       w.close()
     }
+
+    // Check pattern matching
+    // TODO: apply to all files when ready.
+    if (file.getParent == "examples/pattern")
+      new PatternChecker(context).check(annDefs)
   }
 
   def processIllTyped(path: String): Boolean = {
@@ -64,7 +70,8 @@ object SterlangTestUtil {
       val vars = new Vars()
       val context = Main.loadContext(file, program, vars).extend(program)
       new AstChecks(context).check(program)
-      new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      new PatternChecker(context).check(annotatedFunctions)
       false
     } catch {
       case _: PositionedError => true

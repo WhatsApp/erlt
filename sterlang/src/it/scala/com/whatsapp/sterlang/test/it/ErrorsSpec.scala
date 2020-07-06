@@ -19,6 +19,7 @@ package com.whatsapp.sterlang.test.it
 class ErrorsSpec extends DirSpec {
   testDir("examples/neg")
   testDir("examples/err")
+  testDir("examples/pattern-error")
 
   override def testFile(f: String): Unit = {
     if (f.endsWith("core.erl")) {

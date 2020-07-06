@@ -28,6 +28,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private type PEnv = Set[String]
 
+  private case class Function(name: String, clauses: List[S.Clause])(val sourceLocation: Pos.P)
+
   private def freshTypeVar(d: T.Depth): T.Type =
     T.VarType(vars.tVar(T.Open(d)))
 
@@ -63,7 +65,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabSccFuns(sccFuns: List[List[S.Fun]]): (List[List[A.Fun]], Env) = {
     var envAcc = context.env
     val sccFuns1 = for ((funs, d) <- sccFuns.zipWithIndex) yield {
-      val funClauses = funs.map(f => (f.name.stringId, f.clauses))
+      val funClauses = funs.map(f => Function(f.name.stringId, f.clauses)(sourceLocation = f.p))
       val (funs1, env1) = elabFuns(funClauses, d, envAcc)
       envAcc = env1
       funs1
@@ -421,7 +423,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabNamedFnExp(exp: S.NamedFnExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.NamedFnExp(name, clauses) = exp
-    val funClause = (name.stringId, clauses)
+    val funClause = Function(name.stringId, clauses)(sourceLocation = exp.p)
     val (List(fun1: A.Fun), env1) = elabFuns(List(funClause), d, env)
     val tScheme = env1(name.stringId)
     val t = TU.instantiate(d, tScheme)
@@ -489,10 +491,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     A.BlockExp(body1)(sourceLocation = exp.p)
   }
 
-  private def createTypeSchema(d: T.Depth)(fun: (String, List[S.Clause])): ST.TypeSchema = {
+  private def createTypeSchema(d: T.Depth)(fun: Function): ST.TypeSchema = {
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
     def freshSType(): ST.Type = ST.PlainType(freshTypeVar(d))
-    val sFunType = context.specs.find(_.name.stringId == fun._1) match {
+    val sFunType = context.specs.find(_.name.stringId == fun.name) match {
       case Some(spec) =>
         val specFType = spec.funType
         val sVars = SyntaxUtil.collectNamedTypeVars(specFType)
@@ -500,23 +502,23 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         val sType = expander.mkSType(specFType, sub)
         expander.expandSType(sType)
       case None =>
-        val arity = fun._2.head.pats.size
+        val arity = fun.clauses.head.pats.size
         ST.SFunType((1 to arity).map(_ => freshSType()).toList, freshSType())
     }
     ST.TypeSchema(0, Nil, sFunType)
   }
 
-  private def elabFuns(funs: List[(String, List[S.Clause])], d: T.Depth, env: Env): (List[A.Fun], Env) = {
-    val fNames = funs.map(_._1)
+  private def elabFuns(funs: List[Function], d: T.Depth, env: Env): (List[A.Fun], Env) = {
+    val fNames = funs.map(_.name)
 
     val funSchemas: List[ST.TypeSchema] = funs.map(createTypeSchema(d))
     val envWithFuns = (fNames zip funSchemas).foldLeft(env)(_ + _)
     val funTypes = funSchemas.map(TU.instantiate(d, _))
 
     val funs1: List[A.Fun] = (funs zip funTypes).map {
-      case ((name, clauses), funType) =>
-        val clauses1 = elabClauses(clauses, funType, d, envWithFuns)
-        A.Fun(name, clauses1, funType)
+      case (fun, funType) =>
+        val clauses1 = elabClauses(fun.clauses, funType, d, envWithFuns)
+        A.Fun(fun.name, clauses1, funType)(fun.sourceLocation)
     }
 
     // now the elaborated types are generalized back for future use

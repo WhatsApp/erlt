@@ -6,6 +6,7 @@ object Values {
 
   /** The result of evaluating an expression. */
   sealed trait Value {
+
     /** The type of the value. */
     def typ: ConType
   }

@@ -1,0 +1,7 @@
+-spec test1({boolean()}) -> {}.
+-spec test2({boolean()}) -> {}.
+-spec test3({boolean()}) -> {}.
+-spec test4({boolean()}) -> {}.
+-spec test5({boolean()}) -> {}.
+-spec test6({boolean(), boolean()}) -> {}.
+-spec test7({boolean(), boolean()}) -> {}.
