@@ -132,7 +132,12 @@ forms([{attribute, L, type, {TypeName, TypeDef0, Args}} | Fs], St0) ->
     Attr = {attribute, L, type, {TypeName, TypeDef, Args}},
     {Fs1, St2} = forms(Fs, St1),
     {[Attr | Fs1], St2};
-forms([{attribute, L, spec, {Fun, Types}} | Fs], St) ->
+forms([{attribute,L,enum,{EnumName,EnumTypeDef0,Args}} | Fs], St0) ->
+    {EnumTypeDef, St1} = type(EnumTypeDef0, St0),
+    Attr = {attribute,L,enum,{EnumName,EnumTypeDef,Args}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
+forms([{attribute,L,spec,{Fun,Types}} | Fs], St) ->
     {Types1, St1} = type_list(Types, St),
     Attr = {attribute, L, spec, {Fun, Types1}},
     {Fs1, St2} = forms(Fs, St1),
@@ -628,7 +633,7 @@ strict_record_access(E0, St0) ->
     St1 = St0#exprec{strict_ra = [], checked_ra = NC},
     expr(E1, St1).
 
-%% Make it look nice (?) when compiled with the 'E' flag 
+%% Make it look nice (?) when compiled with the 'E' flag
 %% ('and'/2 is left recursive).
 conj([], _E) ->
     empty;
@@ -939,7 +944,7 @@ record_upd_fs([], _, St) ->
     {[], [], St}.
 
 %% record_setel(Record, RecordName, [RecDefField], [Update])
-%%  Build a nested chain of setelement calls to build the 
+%%  Build a nested chain of setelement calls to build the
 %%  updated record tuple.
 
 record_setel(R, Name, Fs, Us0) ->
