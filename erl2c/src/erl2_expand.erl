@@ -132,12 +132,12 @@ forms([{attribute, L, type, {TypeName, TypeDef0, Args}} | Fs], St0) ->
     Attr = {attribute, L, type, {TypeName, TypeDef, Args}},
     {Fs1, St2} = forms(Fs, St1),
     {[Attr | Fs1], St2};
-forms([{attribute,L,enum,{EnumName,EnumTypeDef0,Args}} | Fs], St0) ->
+forms([{attribute, L, enum, {EnumName, EnumTypeDef0, Args}} | Fs], St0) ->
     {EnumTypeDef, St1} = type(EnumTypeDef0, St0),
-    Attr = {attribute,L,enum,{EnumName,EnumTypeDef,Args}},
+    Attr = {attribute, L, enum, {EnumName, EnumTypeDef, Args}},
     {Fs1, St2} = forms(Fs, St1),
     {[Attr | Fs1], St2};
-forms([{attribute,L,spec,{Fun,Types}} | Fs], St) ->
+forms([{attribute, L, spec, {Fun, Types}} | Fs], St) ->
     {Types1, St1} = type_list(Types, St),
     Attr = {attribute, L, spec, {Fun, Types1}},
     {Fs1, St2} = forms(Fs, St1),
