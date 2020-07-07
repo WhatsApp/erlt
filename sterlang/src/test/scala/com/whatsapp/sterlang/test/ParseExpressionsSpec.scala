@@ -56,10 +56,10 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
 
     testPat("#{...}", RecordPat(List(), true)(NP))
 
-    testPat("#{x = XVal}", RecordPat(List(Field("x", VarPat("XVal")(NP))), false)(NP))
+    testPat("#{x := XVal}", RecordPat(List(Field("x", VarPat("XVal")(NP))), false)(NP))
 
     testPat(
-      "#{x = XVal, y = YVal}",
+      "#{x := XVal, y := YVal}",
       RecordPat(
         List(
           Field("x", VarPat("XVal")(NP)),
@@ -69,10 +69,10 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
       )(NP),
     )
 
-    testPat("#{x = XVal, ...}", RecordPat(List(Field("x", VarPat("XVal")(NP))), true)(NP))
+    testPat("#{x := XVal, ...}", RecordPat(List(Field("x", VarPat("XVal")(NP))), true)(NP))
 
     testPat(
-      "#{x = XVal, ...} = MyRec",
+      "#{x := XVal, ...} = MyRec",
       AndPat(RecordPat(List(Field("x", VarPat("XVal")(NP))), true)(NP), VarPat("MyRec")(NP))(NP),
     )
   }

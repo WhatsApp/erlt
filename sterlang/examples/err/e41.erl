@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e41).
 foo() ->
-    case #{x => true, y => false} of #{x = false} -> 1 end.
+    case #{x => true, y => false} of #{x := false} -> 1 end.

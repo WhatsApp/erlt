@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e57).
 % Duplicate fields in record pattern
-f(#{x = XVal, x = YVal}) -> {XVal, YVal}.
+f(#{x := XVal, x := YVal}) -> {XVal, YVal}.

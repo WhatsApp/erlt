@@ -215,7 +215,7 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
       (success(List.empty) ~ (ellipsisPat ?))) ^^ { case a ~ b => new ~(a, b.isDefined) }
 
   lazy val fieldPat: Parser[S.Field[S.Pat]] =
-    ((label <~ "=") ~ pat) ^^ S.Field[S.Pat]
+    ((label <~ ":=") ~ pat) ^^ S.Field[S.Pat]
 
   // --------- EXPRESSIONS: FUNS, VALS, CLAUSES ----------
   lazy val fun: PackratParser[S.Fun] =

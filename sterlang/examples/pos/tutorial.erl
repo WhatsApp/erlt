@@ -64,10 +64,10 @@ funs() ->
 pieces() ->
     My_rec = #{n => 1, st => "", z => []},
     NVal = My_rec.n,
-    #{n = N1, st = S1, z = Z1} = My_rec,
-    #{n = N, st = St, z = Z} = My_rec,
+    #{n := N1, st := S1, z := Z1} = My_rec,
+    #{n := N, st := St, z := Z} = My_rec,
     Rec1 = #{n => N, z => Z},
-    #{n = NVal, ... } = My_rec,
+    #{n := NVal, ... } = My_rec,
     % transforming record:
     My_rec1 = My_rec #{n := 2},
     My_pair = {1, []},
@@ -119,7 +119,7 @@ get_id(R) ->
 
 % So, what to do if we want to process "heterogeneous" records together?
 % Explicitly cast/restrict them!
-extract(#{id = Id, ...}) -> #{id => Id}.
+extract(#{id := Id, ...}) -> #{id => Id}.
 
 records_example() ->
     % polymorphism - get_id is polymorphic
@@ -142,7 +142,7 @@ id_rec(R) ->
     R.
 
 get_id1(Rec) ->
-    #{id = IdVal, ...} = Rec,
+    #{id := IdVal, ...} = Rec,
     IdVal.
 
 update_a_b(R) ->

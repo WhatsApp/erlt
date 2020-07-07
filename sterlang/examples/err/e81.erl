@@ -18,5 +18,5 @@
 %% Record is closed
 -spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
 access_map(M) ->
-    #{id = X, location = L} = M,
+    #{id := X, location := L} = M,
     M.

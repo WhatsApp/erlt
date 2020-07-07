@@ -109,7 +109,7 @@ apply_add_id(Add_id, Rec) ->
 add_id_empty_rec(#{}) ->
     #{id => "ID"}.
 
-add_id_rec_f(#{f = X}) ->
+add_id_rec_f(#{f := X}) ->
     #{f => X, id => "ID"}.
 
 

@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e42).
 foo(Rec) ->
-    case Rec of #{x = false} -> 1; #{y = true} -> 2 end.
+    case Rec of #{x := false} -> 1; #{y := true} -> 2 end.
