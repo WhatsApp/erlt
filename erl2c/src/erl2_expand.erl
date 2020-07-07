@@ -179,6 +179,9 @@ type({type, _L, _Tag, any} = T, St) ->
 type({type, L, Tag, Args}, St) ->
     {Args1, St1} = type_list(Args, St),
     {{type, L, Tag, Args1}, St1};
+type({type, L, enum, Constructor, Args}, St) ->
+    {Args1, St1} = type_list(Args, St),
+    {{type, L, enum, Constructor, Args1}, St1};
 type({type, _, any} = T, St) ->
     {T, St};
 type({op, L, Op, T1, T2}, St) ->
