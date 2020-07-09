@@ -118,7 +118,8 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   lazy val funType: PackratParser[S.FunType] =
     pos((("fun" ~ "(") ~> typeArgs) ~ ("->" ~> tp <~ ")") ^^ { case params ~ res => S.FunType(params, res)(_) })
   lazy val listType: PackratParser[S.ListType] =
-    pos("[" ~> tp <~ "]" ^^ { elemTp => S.ListType(elemTp)(_) })
+    pos("[" ~> tp <~ "]" ^^ { elemTp => S.ListType(elemTp)(_) }) |
+      pos(((lident ^? { case "list" => "list" }) ~ "(") ~> tp <~ ")" ^^ { elemTp => S.ListType(elemTp)(_) })
   lazy val userType: PackratParser[S.UserType] =
     pos(typeName ~ typeArgs ^^ { case n ~ args => S.UserType(n, args)(_) })
 
