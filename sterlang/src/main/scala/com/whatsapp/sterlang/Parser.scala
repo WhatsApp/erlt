@@ -326,7 +326,9 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
     lident
 
   private lazy val program: PackratParser[S.Program] =
-    (progElem *) ^^ S.RawProgram ^^ (_.program)
+    rawProgram ^^ (_.program)
+  private lazy val rawProgram: PackratParser[S.RawProgram] =
+    (progElem *) ^^ S.RawProgram
   private lazy val enumElem: PackratParser[S.EnumElem] =
     enumDef ^^ S.EnumElem
   private lazy val requireElem: PackratParser[S.RequireElem] =
@@ -382,6 +384,8 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
     phrase(enumDefs)(new lexical.Scanner(s))
   def parseProgram(s: String): ParseResult[S.Program] =
     phrase(program)(new lexical.Scanner(s))
+  def parseRawProgram(s: String): ParseResult[S.RawProgram] =
+    phrase(rawProgram)(new lexical.Scanner(s))
 
   type Res[A] = ParseResult[A]
   def patFromString(input: String): Res[S.Pat] =
@@ -392,6 +396,8 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
     parseEnumDefs(input)
   def programFromString(input: String): Res[S.Program] =
     parseProgram(input)
+  def rawProgramFromString(input: String): Res[S.RawProgram] =
+    parseRawProgram(input)
   def typeFromString(input: String): Res[S.Type] =
     parseType(input)
   def specTypeFromString(input: String): Res[S.Spec] =
