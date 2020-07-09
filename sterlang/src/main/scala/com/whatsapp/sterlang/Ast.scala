@@ -119,6 +119,7 @@ object Ast {
         case vn: VarName => this.stringId == vn.stringId
         case _           => false
       }
+    override def toString: String = stringId
   }
   class LocalVarName(private val name: String) extends VarName {
     override val stringId: String = name
