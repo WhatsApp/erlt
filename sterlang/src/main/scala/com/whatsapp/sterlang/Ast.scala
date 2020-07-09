@@ -211,7 +211,7 @@ object Ast {
 
   // "High-level" program element
   sealed trait ProgramElem
-  case class RequireElem(require: Require) extends ProgramElem
+  case class RequireElem(modules: List[String]) extends ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
   case class LangElem(mods: List[String]) extends ProgramElem
@@ -235,7 +235,7 @@ object Ast {
       Program(
         lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
-        require = Require(elems.collect { case e: RequireElem => e.require }.flatMap(_.modules).distinct),
+        require = Require(elems.collect { case e: RequireElem => e.modules }.flatten.distinct),
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
         opaques = elems.collect { case e: OpaqueElem => e.opaque },

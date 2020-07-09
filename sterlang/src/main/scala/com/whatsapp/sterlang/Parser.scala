@@ -330,7 +330,7 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   private lazy val enumElem: PackratParser[S.EnumElem] =
     enumDef ^^ S.EnumElem
   private lazy val requireElem: PackratParser[S.RequireElem] =
-    (attr("depends_on") ~ "(" ~ "[") ~> repsep(lident, ",") <~ ("]" ~ ")" ~ ".") ^^ S.Require ^^ S.RequireElem
+    (attr("depends_on") ~ "(" ~ "[") ~> repsep(lident, ",") <~ ("]" ~ ")" ~ ".") ^^ S.RequireElem
   private lazy val compileElem: PackratParser[S.CompileElem] =
     (attr("compile") ~ "(" ~ "[") ~> repsep(lident, ",") <~ ("]" ~ ")" ~ ".") ^^ S.CompileElem
   private def attr(s: String) =
