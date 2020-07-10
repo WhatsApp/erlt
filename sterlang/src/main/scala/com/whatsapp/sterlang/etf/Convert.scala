@@ -112,9 +112,9 @@ object Convert {
           case Exprs.StringLiteral(str) =>
             Ast.StringPat(str.getOrElse("???"))(Pos.NP)
         }
-      case Patterns.MatchPattern(pat, arg) =>
-        ???
       case Patterns.TuplePattern(elems) =>
+        Ast.TuplePat(elems.map(convertPattern))(Pos.NP)
+      case Patterns.MatchPattern(pat, arg) =>
         ???
       case Patterns.NilPattern =>
         Ast.ListPat(List())(Pos.NP)
@@ -162,7 +162,7 @@ object Convert {
             Ast.StringExp("???")(Pos.NP)
         }
       case Exprs.Tuple(elems) =>
-        ???
+        Ast.TupleExp(elems.map(convertExpr))(Pos.NP)
       case Exprs.Match(pat, arg) =>
         ???
       case Exprs.Nil =>
