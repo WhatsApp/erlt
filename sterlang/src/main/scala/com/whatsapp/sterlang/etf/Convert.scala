@@ -232,9 +232,9 @@ object Convert {
       case Exprs.RemoteFunDynamic(module, funName, arity) =>
         ???
       case Exprs.Fun(clauses) =>
-        ???
+        Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
       case Exprs.NamedFun(funName, clauses) =>
-        ???
+        Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
     }
 
   private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
