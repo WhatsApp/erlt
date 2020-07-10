@@ -17,8 +17,7 @@
 package com.whatsapp.sterlang.etf
 
 import com.whatsapp.sterlang.{Ast, Pos}
-import com.whatsapp.sterlang.forms.Forms
-import com.whatsapp.sterlang.forms.Types
+import com.whatsapp.sterlang.forms.{Forms, Exprs, Types, Patterns}
 
 object Convert {
   def convert(form: Forms.Form): Option[Ast.ProgramElem] =
@@ -68,11 +67,128 @@ object Convert {
             sys.error(s"Unexpected spec: $form")
         }
       case Forms.FunctionDecl(name, arity, clauses) =>
-        // TODO
-        None
+        val funName = new Ast.LocalFunName(name, arity)
+        val fun = Ast.Fun(funName, clauses.map(convertClause))(Pos.NP)
+        Some(Ast.FunElem(fun))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
           Forms.FunctionSpec(Forms.Callback, _, _) =>
         None
+    }
+
+  private def convertClause(clause: Exprs.Clause): Ast.Clause =
+    Ast.Clause(clause.pats.map(convertPattern), List(), convertBody(clause.body))
+
+  private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
+    Ast.Body(exprs.init.map(convertValDef), convertValDef(exprs.last))
+
+  private def convertValDef(expr: Exprs.Expr): Ast.ValDef =
+    expr match {
+      case Exprs.Match(p, e) =>
+        Ast.ValDef(convertPattern(p), convertExpr(e))
+      case e =>
+        Ast.ValDef(Ast.WildPat()(Pos.NP), convertExpr(e))
+    }
+
+  private def convertPattern(p: Patterns.Pattern): Ast.Pat =
+    p match {
+      case Patterns.VariablePattern(name) =>
+        Ast.VarPat(name)(Pos.NP)
+      case Patterns.LiteralPattern(literal) =>
+        ???
+      case Patterns.MatchPattern(pat, arg) =>
+        ???
+      case Patterns.TuplePattern(elems) =>
+        ???
+      case Patterns.NilPattern =>
+        ???
+      case Patterns.ConsPattern(hd, tl) =>
+        ???
+      case Patterns.BinPattern(elems) =>
+        ???
+      case Patterns.BinOpPattern(op, pat1, pat2) =>
+        ???
+      case Patterns.UnOpPattern(op, pat1) =>
+        ???
+      case Patterns.RecordPattern(recordName, fields) =>
+        ???
+      case Patterns.RecordIndexPattern(recordName, fieldName) =>
+        ???
+      case Patterns.MapPattern(assocs) =>
+        ???
+      case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
+        ???
+      case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
+        ???
+    }
+
+  private def convertExpr(e: Exprs.Expr): Ast.Exp =
+    e match {
+      case Exprs.Variable(name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
+      case literal: Exprs.Literal =>
+        ???
+      case Exprs.Match(pat, arg) =>
+        ???
+      case Exprs.Tuple(elems) =>
+        ???
+      case Exprs.Nil =>
+        ???
+      case Exprs.Cons(hd, tl) =>
+        ???
+      case Exprs.Bin(elems) =>
+        ???
+      case Exprs.BinaryOp(op, exp1, exp2) =>
+        ???
+      case Exprs.UnaryOp(op, exp1) =>
+        ???
+      case Exprs.RecordCreate(recordName, fields) =>
+        ???
+      case Exprs.RecordUpdate(exp1, recordName, fields) =>
+        ???
+      case Exprs.RecordIndex(recordName, fieldName) =>
+        ???
+      case Exprs.RecordFieldAccess(exp, recordName, fieldName) =>
+        ???
+      case Exprs.MapCreate(entries) =>
+        ???
+      case Exprs.MapUpdate(exp, entries) =>
+        ???
+      case Exprs.Catch(exp) =>
+        ???
+      case Exprs.LocalCall(fun, args) =>
+        ???
+      case Exprs.RemoteCall(module, fun, args) =>
+        ???
+      case Exprs.LocalEnumCtr(enum, ctr, args) =>
+        ???
+      case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
+        ???
+      case Exprs.ListComprehension(template, qualifiers) =>
+        ???
+      case Exprs.BinaryComprehension(template, qualifiers) =>
+        ???
+      case Exprs.Block(exprs) =>
+        ???
+      case Exprs.If(clauses) =>
+        ???
+      case Exprs.Case(expr, clauses) =>
+        ???
+      case Exprs.Try(body, clauses, catchClauses, after) =>
+        ???
+      case Exprs.Receive(clauses) =>
+        ???
+      case Exprs.ReceiveWithTimeout(cl, timeout, default) =>
+        ???
+      case Exprs.LocalFun(funName, arity) =>
+        ???
+      case Exprs.RemoteFun(module, funName, arity) =>
+        ???
+      case Exprs.RemoteFunDynamic(module, funName, arity) =>
+        ???
+      case Exprs.Fun(clauses) =>
+        ???
+      case Exprs.NamedFun(funName, clauses) =>
+        ???
     }
 
   private def convertType(tp: Types.Type): Ast.Type =
