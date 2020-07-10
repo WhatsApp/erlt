@@ -117,9 +117,9 @@ object Convert {
       case Patterns.TuplePattern(elems) =>
         ???
       case Patterns.NilPattern =>
-        ???
+        Ast.ListPat(List())(Pos.NP)
       case Patterns.ConsPattern(hd, tl) =>
-        ???
+        Ast.ConsPat(convertPattern(hd), convertPattern(tl))(Pos.NP)
       case Patterns.BinPattern(elems) =>
         ???
       case Patterns.BinOpPattern(op, pat1, pat2) =>
@@ -166,9 +166,9 @@ object Convert {
       case Exprs.Match(pat, arg) =>
         ???
       case Exprs.Nil =>
-        ???
+        Ast.ListExp(List())(Pos.NP)
       case Exprs.Cons(hd, tl) =>
-        ???
+        Ast.ConsExp(convertExpr(hd), convertExpr(tl))(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
