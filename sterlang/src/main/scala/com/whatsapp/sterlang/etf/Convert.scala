@@ -91,6 +91,8 @@ object Convert {
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
     p match {
+      case Patterns.VariablePattern("_") =>
+        Ast.WildPat()(Pos.NP)
       case Patterns.VariablePattern(name) =>
         Ast.VarPat(name)(Pos.NP)
       case Patterns.LiteralPattern(literal) =>
