@@ -91,6 +91,8 @@ object Convert {
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
     p match {
+      case Patterns.MatchPattern(p1, p2) =>
+        Ast.AndPat(convertPattern(p1), convertPattern(p2))(Pos.NP)
       case Patterns.VariablePattern("_") =>
         Ast.WildPat()(Pos.NP)
       case Patterns.VariablePattern(name) =>
@@ -114,8 +116,6 @@ object Convert {
         }
       case Patterns.TuplePattern(elems) =>
         Ast.TuplePat(elems.map(convertPattern))(Pos.NP)
-      case Patterns.MatchPattern(pat, arg) =>
-        ???
       case Patterns.NilPattern =>
         Ast.ListPat(List())(Pos.NP)
       case Patterns.ConsPattern(hd, tl) =>
@@ -140,6 +140,8 @@ object Convert {
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
     e match {
+      case Exprs.Match(_, _) =>
+        sys.error(s"such matches are not supported: $e")
       case Exprs.Variable(name) =>
         Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
       case literal: Exprs.Literal =>
@@ -163,8 +165,6 @@ object Convert {
         }
       case Exprs.Tuple(elems) =>
         Ast.TupleExp(elems.map(convertExpr))(Pos.NP)
-      case Exprs.Match(pat, arg) =>
-        ???
       case Exprs.Nil =>
         Ast.ListExp(List())(Pos.NP)
       case Exprs.Cons(hd, tl) =>
