@@ -173,6 +173,8 @@ object Convert {
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
+      case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(field)) =>
+        Ast.SelExp(convertExpr(exp), field)(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
