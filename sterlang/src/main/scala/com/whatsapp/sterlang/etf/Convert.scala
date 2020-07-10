@@ -179,6 +179,8 @@ object Convert {
         Ast.RecordExp(entries.map(assocCreateToFieldExp))(Pos.NP)
       case Exprs.MapUpdate(exp, entries) =>
         Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(Pos.NP)
+      case Exprs.Block(exprs) =>
+        Ast.BlockExpr(convertBody(exprs))(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
@@ -202,8 +204,6 @@ object Convert {
       case Exprs.ListComprehension(template, qualifiers) =>
         ???
       case Exprs.BinaryComprehension(template, qualifiers) =>
-        ???
-      case Exprs.Block(exprs) =>
         ???
       case Exprs.If(clauses) =>
         ???
