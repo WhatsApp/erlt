@@ -68,15 +68,21 @@ object Convert {
         }
       case Forms.FunctionDecl(name, arity, clauses) =>
         val funName = new Ast.LocalFunName(name, arity)
-        val fun = Ast.Fun(funName, clauses.map(convertClause))(Pos.NP)
+        val fun = Ast.Fun(funName, clauses.map(convertFunClause))(Pos.NP)
         Some(Ast.FunElem(fun))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
           Forms.FunctionSpec(Forms.Callback, _, _) =>
         None
     }
 
-  private def convertClause(clause: Exprs.Clause): Ast.Clause =
+  private def convertFunClause(clause: Exprs.Clause): Ast.Clause =
     Ast.Clause(clause.pats.map(convertPattern), List(), convertBody(clause.body))
+
+  private def convertCaseClause(clause: Exprs.Clause): Ast.Rule =
+    clause.pats match {
+      case List(pat) => Ast.Rule(convertPattern(pat), List(), convertBody(clause.body))
+      case _         => sys.error(s"unexpected clause: $clause")
+    }
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
     Ast.Body(exprs.init.map(convertValDef), convertValDef(exprs.last))
@@ -181,6 +187,8 @@ object Convert {
         Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(Pos.NP)
       case Exprs.Block(exprs) =>
         Ast.BlockExpr(convertBody(exprs))(Pos.NP)
+      case Exprs.Case(expr, clauses) =>
+        Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
@@ -206,8 +214,6 @@ object Convert {
       case Exprs.BinaryComprehension(template, qualifiers) =>
         ???
       case Exprs.If(clauses) =>
-        ???
-      case Exprs.Case(expr, clauses) =>
         ???
       case Exprs.Try(body, clauses, catchClauses, after) =>
         ???
