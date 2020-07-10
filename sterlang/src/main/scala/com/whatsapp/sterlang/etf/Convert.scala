@@ -120,6 +120,10 @@ object Convert {
         Ast.ListPat(List())(Pos.NP)
       case Patterns.ConsPattern(hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(Pos.NP)
+      case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(Pos.NP)
+      case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(Pos.NP)
       case Patterns.BinPattern(elems) =>
         ???
       case Patterns.BinOpPattern(op, pat1, pat2) =>
@@ -131,10 +135,6 @@ object Convert {
       case Patterns.RecordIndexPattern(recordName, fieldName) =>
         ???
       case Patterns.MapPattern(assocs) =>
-        ???
-      case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
-        ???
-      case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
         ???
     }
 
@@ -169,6 +169,10 @@ object Convert {
         Ast.ListExp(List())(Pos.NP)
       case Exprs.Cons(hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(Pos.NP)
+      case Exprs.LocalEnumCtr(enum, ctr, args) =>
+        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
+      case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
@@ -192,10 +196,6 @@ object Convert {
       case Exprs.LocalCall(fun, args) =>
         ???
       case Exprs.RemoteCall(module, fun, args) =>
-        ???
-      case Exprs.LocalEnumCtr(enum, ctr, args) =>
-        ???
-      case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
         ???
       case Exprs.ListComprehension(template, qualifiers) =>
         ???
