@@ -225,12 +225,12 @@ object Convert {
         ???
       case Exprs.ReceiveWithTimeout(cl, timeout, default) =>
         ???
-      case Exprs.LocalFun(funName, arity) =>
-        ???
-      case Exprs.RemoteFun(module, funName, arity) =>
-        ???
-      case Exprs.RemoteFunDynamic(module, funName, arity) =>
-        ???
+      case Exprs.LocalFun(f, arity) =>
+        Ast.VarExp(new Ast.LocalFunName(f, arity))(Pos.NP)
+      case Exprs.RemoteFun(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), Exprs.IntLiteral(arity)) =>
+        Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(Pos.NP)
+      case Exprs.RemoteFun(_, _, _) =>
+        sys.error(s"not supported: $e")
       case Exprs.Fun(clauses) =>
         Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
       case Exprs.NamedFun(funName, clauses) =>
