@@ -20,6 +20,9 @@ main(["-erl", Filename, "-etf", EtfFileName]) ->
     CodeETF = erlang:term_to_binary(Forms),
     ok = filelib:ensure_dir(EtfFileName),
     ok = file:write_file(EtfFileName, CodeETF);
-main(["-ast", Filename]) ->
+main(["-ast1", File]) ->
+    {ok, Forms} = epp:parse_file(File, []),
+    io:format("Forms:\n~p\n", [Forms]);
+main(["-ast2", Filename]) ->
     {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
     io:format("Forms:\n~p\n", [Forms]).
