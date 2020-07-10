@@ -31,9 +31,7 @@ object Exprs {
   case class CharLiteral(ch: Char) extends Literal
   case class FloatLiteral(fl: Double) extends Literal
   case class IntLiteral(i: Int) extends Literal
-  case class StringLiteral(str: String) extends Literal
-  // TODO - clarify
-  case class StringListLiteral() extends Literal
+  case class StringLiteral(str: Option[String]) extends Literal
 
   case class Match(pat: Pattern, arg: Expr) extends Expr
   case class Variable(name: String) extends Expr

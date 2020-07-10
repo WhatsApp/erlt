@@ -96,7 +96,22 @@ object Convert {
       case Patterns.VariablePattern(name) =>
         Ast.VarPat(name)(Pos.NP)
       case Patterns.LiteralPattern(literal) =>
-        ???
+        literal match {
+          case Exprs.AtomLiteral("true") =>
+            Ast.BoolPat(true)(Pos.NP)
+          case Exprs.AtomLiteral("false") =>
+            Ast.BoolPat(false)(Pos.NP)
+          case Exprs.AtomLiteral(_) =>
+            sys.error(s"atoms are not supported in ST: $p")
+          case Exprs.CharLiteral(ch) =>
+            sys.error("chars in patterns are not supported yet")
+          case Exprs.FloatLiteral(fl) =>
+            Ast.NumberPat(fl.intValue())(Pos.NP)
+          case Exprs.IntLiteral(i) =>
+            Ast.NumberPat(i)(Pos.NP)
+          case Exprs.StringLiteral(str) =>
+            Ast.StringPat(str.getOrElse("???"))(Pos.NP)
+        }
       case Patterns.MatchPattern(pat, arg) =>
         ???
       case Patterns.TuplePattern(elems) =>
@@ -128,10 +143,27 @@ object Convert {
       case Exprs.Variable(name) =>
         Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
       case literal: Exprs.Literal =>
+        literal match {
+          case Exprs.AtomLiteral("true") =>
+            Ast.BoolExp(true)(Pos.NP)
+          case Exprs.AtomLiteral("false") =>
+            Ast.BoolExp(false)(Pos.NP)
+          case Exprs.AtomLiteral(_) =>
+            sys.error(s"atoms are not supported in ST: $e")
+          case Exprs.CharLiteral(ch) =>
+            Ast.CharExp(ch.toString)(Pos.NP)
+          case Exprs.FloatLiteral(fl) =>
+            Ast.NumberExp(fl.intValue())(Pos.NP)
+          case Exprs.IntLiteral(i) =>
+            Ast.NumberExp(i)(Pos.NP)
+          case Exprs.StringLiteral(Some(str)) =>
+            Ast.StringExp(str)(Pos.NP)
+          case Exprs.StringLiteral(None) =>
+            Ast.StringExp("???")(Pos.NP)
+        }
+      case Exprs.Tuple(elems) =>
         ???
       case Exprs.Match(pat, arg) =>
-        ???
-      case Exprs.Tuple(elems) =>
         ???
       case Exprs.Nil =>
         ???
