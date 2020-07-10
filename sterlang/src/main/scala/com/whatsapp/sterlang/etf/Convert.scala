@@ -189,6 +189,14 @@ object Convert {
         Ast.BlockExpr(convertBody(exprs))(Pos.NP)
       case Exprs.Case(expr, clauses) =>
         Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(Pos.NP)
+      case Exprs.LocalCall(Exprs.AtomLiteral(f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(Pos.NP), args.map(convertExpr))(Pos.NP)
+      case Exprs.LocalCall(head, args) =>
+        Ast.AppExp(convertExpr(head), args.map(convertExpr))(Pos.NP)
+      case Exprs.RemoteCall(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(Pos.NP), args.map(convertExpr))(Pos.NP)
+      case Exprs.RemoteCall(module, fun, args) =>
+        ???
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
@@ -204,10 +212,6 @@ object Convert {
       case Exprs.RecordFieldAccess(exp, recordName, fieldName) =>
         ???
       case Exprs.Catch(exp) =>
-        ???
-      case Exprs.LocalCall(fun, args) =>
-        ???
-      case Exprs.RemoteCall(module, fun, args) =>
         ???
       case Exprs.ListComprehension(template, qualifiers) =>
         ???
