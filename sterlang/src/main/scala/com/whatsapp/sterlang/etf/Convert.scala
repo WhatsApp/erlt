@@ -175,6 +175,10 @@ object Convert {
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(field)) =>
         Ast.SelExp(convertExpr(exp), field)(Pos.NP)
+      case Exprs.MapCreate(entries) =>
+        Ast.RecordExp(entries.map(assocCreateToFieldExp))(Pos.NP)
+      case Exprs.MapUpdate(exp, entries) =>
+        Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(Pos.NP)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.BinaryOp(op, exp1, exp2) =>
@@ -188,10 +192,6 @@ object Convert {
       case Exprs.RecordIndex(recordName, fieldName) =>
         ???
       case Exprs.RecordFieldAccess(exp, recordName, fieldName) =>
-        ???
-      case Exprs.MapCreate(entries) =>
-        ???
-      case Exprs.MapUpdate(exp, entries) =>
         ???
       case Exprs.Catch(exp) =>
         ???
@@ -225,6 +225,22 @@ object Convert {
         ???
       case Exprs.NamedFun(funName, clauses) =>
         ???
+    }
+
+  private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
+    assoc match {
+      case Exprs.OptAssoc(Exprs.AtomLiteral(label), e) =>
+        Ast.Field(label, convertExpr(e))
+      case other =>
+        sys.error(s"incorrect assoc: $other")
+    }
+
+  private def assocUpdateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
+    assoc match {
+      case Exprs.AssocExact(Exprs.AtomLiteral(label), e) =>
+        Ast.Field(label, convertExpr(e))
+      case other =>
+        sys.error(s"incorrect assoc: $other")
     }
 
   private def convertType(tp: Types.Type): Ast.Type =
