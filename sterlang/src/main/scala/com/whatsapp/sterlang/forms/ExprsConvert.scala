@@ -37,8 +37,8 @@ object ExprsConvert {
         Variable(sp(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(eExps))) =>
         Tuple(sp(anno), eExps.map(convertExp))
-      case ETuple(List(EAtom("nil"), _anno)) =>
-        Nil
+      case ETuple(List(EAtom("nil"), anno)) =>
+        Nil(sp(anno))
       case ETuple(List(EAtom("cons"), _anno, eExp1, eExp2)) =>
         val hd = convertExp(eExp1)
         val tl = convertExp(eExp2)

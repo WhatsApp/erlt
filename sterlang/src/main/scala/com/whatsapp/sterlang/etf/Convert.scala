@@ -241,8 +241,8 @@ object Convert {
         }
       case Exprs.Tuple(p, elems) =>
         Ast.TupleExp(elems.map(convertExpr))(p)
-      case Exprs.Nil =>
-        Ast.ListExp(List())(Pos.NP)
+      case Exprs.Nil(p) =>
+        Ast.ListExp(List())(p)
       case Exprs.Cons(hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(Pos.NP)
       case Exprs.LocalEnumCtr(enum, ctr, args) =>
