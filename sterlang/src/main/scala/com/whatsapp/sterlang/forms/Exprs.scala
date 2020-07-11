@@ -40,7 +40,7 @@ object Exprs {
   case class Nil(p: Pos.SP) extends Expr
   case class Cons(p: Pos.SP, hd: Expr, tl: Expr) extends Expr
   case class Bin(elems: List[BinElement]) extends Expr
-  case class BinaryOp(op: String, exp1: Expr, exp2: Expr) extends Expr
+  case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(op: String, exp1: Expr) extends Expr
   case class RecordCreate(recordName: String, fields: List[RecordField]) extends Expr
   case class RecordUpdate(exp1: Expr, recordName: String, fields: List[RecordField]) extends Expr

@@ -46,8 +46,8 @@ object ExprsConvert {
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertBinElement)
         Bin(binElements)
-      case ETuple(List(EAtom("op"), _anno, EAtom(op), eExp1, eExp2)) =>
-        BinaryOp(op, convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1, eExp2)) =>
+        BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(EAtom("op"), _anno, EAtom(op), eExp1)) =>
         UnaryOp(op, convertExp(eExp1))
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldExps))) =>

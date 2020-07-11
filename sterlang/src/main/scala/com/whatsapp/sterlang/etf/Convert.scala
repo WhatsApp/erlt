@@ -280,11 +280,11 @@ object Convert {
           case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(Pos.NP)
           case None      => sys.error(s"not supported unOp ($op) in: $e")
         }
-      case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(_, field)) =>
-        Ast.SelExp(convertExpr(exp), field)(Pos.NP)
-      case Exprs.BinaryOp(op, exp1, exp2) =>
+      case Exprs.BinaryOp(p, ".", exp, Exprs.AtomLiteral(_, field)) =>
+        Ast.SelExp(convertExpr(exp), field)(p)
+      case Exprs.BinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(Pos.NP)
+          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $e")
         }
       case Exprs.ListComprehension(template, qualifiers) =>
