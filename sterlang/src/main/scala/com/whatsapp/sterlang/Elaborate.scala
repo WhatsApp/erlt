@@ -54,7 +54,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   def elaborateFuns(funs: List[S.Fun]): (List[Absyn.Fun], Env) = {
     val names = funs.map(_.name.stringId)
     val fMap = funs.map { f => f.name.stringId -> f }.toMap
-    val sccNames = SyntaxUtil.buildSCC(funs)
+    val sccNames = SyntaxUtil.buildSCC(funs, program.module)
     val sccFuns = sccNames.map(_.map(fMap))
     val (sccFuns1, env) = elabSccFuns(sccFuns)
     val afMap = sccFuns1.flatten.map { f => f.name -> f }.toMap

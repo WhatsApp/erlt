@@ -92,37 +92,43 @@ object SyntaxUtil {
     }
 
   @scala.annotation.tailrec
-  private def freeVars(defs: List[S.ValDef], valDef: S.ValDef, env: Set[String], acc: Set[String]): Set[String] =
+  private def freeVars(
+      defs: List[S.ValDef],
+      valDef: S.ValDef,
+      env: Set[String],
+      acc: Set[String],
+      module: String,
+  ): Set[String] =
     defs match {
       case Nil =>
-        val thisFreeVars = freeVars(valDef.exp) -- env
+        val thisFreeVars = freeVars(valDef.exp, module) -- env
         acc ++ thisFreeVars
       case S.ValDef(pat, exp) :: defs1 =>
-        val thisFreeVars = freeVars(exp) -- env
+        val thisFreeVars = freeVars(exp, module) -- env
         val deltaEnv = collectPatVars(pat)
         val env1 = env ++ deltaEnv
         val acc1 = acc ++ thisFreeVars
-        freeVars(defs1, valDef, env1, acc1)
+        freeVars(defs1, valDef, env1, acc1, module)
     }
 
-  private def freeVars(body: S.Body): Set[String] = {
-    freeVars(body.prelude, body.main, Set.empty, Set.empty)
+  private def freeVars(body: S.Body, module: String): Set[String] = {
+    freeVars(body.prelude, body.main, Set.empty, Set.empty, module)
   }
 
-  def freeVars(expr: S.Exp): Set[String] =
+  private def freeVars(expr: S.Exp, m: String): Set[String] =
     expr match {
       case S.IfExp(exp1, exp2, exp3) =>
-        freeVars(exp1) ++ freeVars(exp2) ++ freeVars(exp3)
+        freeVars(exp1, m) ++ freeVars(exp2, m) ++ freeVars(exp3, m)
       case S.RecordUpdateExp(exp, delta) =>
-        freeVars(exp) ++ freeVars(delta)
+        freeVars(exp, m) ++ freeVars(delta, m)
       case S.BinOpExp(binOp, exp1, exp2) =>
-        freeVars(exp1) ++ freeVars(exp2)
+        freeVars(exp1, m) ++ freeVars(exp2, m)
       case S.UOpExp(uOp, exp) =>
-        freeVars(exp)
+        freeVars(exp, m)
       case S.AppExp(head, args) =>
-        freeVars(head) ++ args.flatMap(freeVars)
+        freeVars(head, m) ++ args.flatMap(freeVars(_, m))
       case S.SelExp(exp, label) =>
-        freeVars(exp)
+        freeVars(exp, m)
       case S.BoolExp(bool) =>
         Set.empty
       case S.NumberExp(n) =>
@@ -135,31 +141,34 @@ object SyntaxUtil {
         Set(localVar.stringId)
       case S.VarExp(localFun: S.LocalFunName) =>
         Set(localFun.stringId)
-      case S.VarExp(_: S.RemoteFunName) =>
-        Set.empty
+      case S.VarExp(remote: S.RemoteFunName) =>
+        if (remote.module == m)
+          Set(new S.LocalFunName(remote.name, remote.arity).stringId)
+        else
+          Set.empty
       case S.RecordExp(fields) =>
-        fields.flatMap(f => freeVars(f.value)).toSet
+        fields.flatMap(f => freeVars(f.value, m)).toSet
       case S.TupleExp(elems) =>
-        elems.flatMap(freeVars).toSet
+        elems.flatMap(freeVars(_, m)).toSet
       case S.EnumConExp(enumName, dataCon, args) =>
-        args.flatMap(freeVars).toSet
+        args.flatMap(freeVars(_, m)).toSet
       case S.ListExp(elems) =>
-        elems.flatMap(freeVars).toSet
+        elems.flatMap(freeVars(_, m)).toSet
       case S.ConsExp(h, t) =>
-        freeVars(h) ++ freeVars(t)
+        freeVars(h, m) ++ freeVars(t, m)
       case S.CaseExp(selector, rules) =>
         val rulesVars = rules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
-          val bodyVars = freeVars(rule.exp)
+          val bodyVars = freeVars(rule.exp, m)
           bodyVars -- patVars
         }
-        val selectorVars = freeVars(selector)
+        val selectorVars = freeVars(selector, m)
         selectorVars ++ rulesVars
       case S.FnExp(clauses) =>
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
-            val bodyVars = freeVars(clause.exp)
+            val bodyVars = freeVars(clause.exp, m)
             bodyVars -- argVars
           }
           .reduce(_ ++ _)
@@ -167,25 +176,25 @@ object SyntaxUtil {
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
-            val bodyVars = freeVars(clause.exp)
+            val bodyVars = freeVars(clause.exp, m)
             bodyVars -- argVars
           }
           .reduce(_ ++ _) - varName.stringId
       case S.BlockExpr(body) =>
-        freeVars(body)
+        freeVars(body, m)
     }
 
-  def funFreeVars(fun: S.Fun): Set[String] = {
+  private def funFreeVars(fun: S.Fun, module: String): Set[String] = {
     fun.clauses
       .map { clause =>
         val funPatVars = clause.pats.flatMap(collectPatVars)
-        val bodyVars = freeVars(clause.exp)
+        val bodyVars = freeVars(clause.exp, module)
         bodyVars -- funPatVars
       }
       .reduce(_ ++ _)
   }
 
-  def buildSCC(funs: List[S.Fun]): List[List[String]] = {
+  def buildSCC(funs: List[S.Fun], module: String): List[List[String]] = {
     if (funs.isEmpty) {
       return List()
     }
@@ -196,7 +205,7 @@ object SyntaxUtil {
 
     val vertices = names.map(SCC.Vertex)
     val nameToUsedVars: Map[String, Set[String]] =
-      funs.map { f => (f.name.stringId, funFreeVars(f).filter(names.contains)) }.toMap
+      funs.map { f => (f.name.stringId, funFreeVars(f, module).filter(names.contains)) }.toMap
 
     val edges = funs.flatMap { fun =>
       val funVertex = SCC.Vertex(fun.name.stringId)

@@ -26,7 +26,7 @@ class SccSpec extends org.scalatest.FunSpec {
         fail(res.toString)
       }
       val rawProgram = res.get
-      val sccs = SyntaxUtil.buildSCC(rawProgram.funs)
+      val sccs = SyntaxUtil.buildSCC(rawProgram.funs, rawProgram.module)
       assert(sccs === expSccs)
     }
   }
@@ -110,6 +110,26 @@ class SccSpec extends org.scalatest.FunSpec {
         |main1() -> even1().
         |""".stripMargin,
       List(List("odd2/0", "even2/0"), List("main2/0"), List("odd1/0", "even1/0"), List("main1/0")),
+    )
+
+    testScc(
+      """
+        |-lang([erl2, st]).
+        |-module(test).
+        |main() -> test:foo1().
+        |foo1() -> 1.
+        |""".stripMargin,
+      List(List("foo1/0"), List("main/0")),
+    )
+
+    testScc(
+      """
+        |-lang([erl2, st]).
+        |-module(test).
+        |main() -> fun test:foo2/0.
+        |foo2() -> 1.
+        |""".stripMargin,
+      List(List("foo2/0"), List("main/0")),
     )
   }
 }
