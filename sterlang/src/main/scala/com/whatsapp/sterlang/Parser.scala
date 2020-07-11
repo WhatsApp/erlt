@@ -94,7 +94,10 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   private def pos[T](p: => Parser[Pos.P => T]): Parser[T] =
     Parser { in1 =>
       p(in1) match {
-        case Success(t, in2)    => Success(t(Pos.SP(in1.pos, in2.pos)), in2)
+        case Success(t, in2) =>
+          val pos1 = Pos.Loc(in1.pos.line, in1.pos.column)
+          val pos2 = Pos.Loc(in2.pos.line, in2.pos.column)
+          Success(t(Pos.SP(pos1, pos2)), in2)
         case Error(msg, next)   => Error(msg, next)
         case Failure(msg, next) => Failure(msg, next)
       }

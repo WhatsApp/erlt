@@ -28,7 +28,7 @@ object SterlangTestUtil {
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val file = new File(path)
-    val rawProgram = Main.loadProgram(file, print = false)
+    val (_, rawProgram) = Main.loadProgram(file, print = false)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val context = Main.loadContext(file, program, vars).extend(program)
@@ -64,7 +64,7 @@ object SterlangTestUtil {
 
   def processIllTyped(path: String): Boolean = {
     val file = new File(path)
-    val rawProgram = Main.loadProgram(file, print = false)
+    val (_, rawProgram) = Main.loadProgram(file, print = false)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()

@@ -47,7 +47,7 @@ object Main {
 
   def processFile(options: Set[String])(file: File): Unit = {
     Console.println(ansi(s"@|bold ${file.getAbsolutePath}|@"))
-    val rawProgram = loadProgram(file, false)
+    val (text, rawProgram) = loadProgram(file, false)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val depContext = loadContext(file, program, vars)
@@ -60,23 +60,24 @@ object Main {
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
         val warnings = new PatternChecker(context).warnings(annFuns)
-        warnings.foreach(printError)
+        warnings.foreach(printError(text, _))
       }
 
       Console.println(ansi(s"@|bold,green OK|@"))
       TypePrinter2(vars, None).printFunsTypeSchemes(annFuns, env)
     } catch {
       case error: PositionedError =>
-        printError(error)
+        printError(text, error)
         sys.exit(2)
     }
   }
 
-  private def printError(error: PositionedError): Unit = {
+  private def printError(text: String, error: PositionedError): Unit = {
     val PositionedError(pos: Pos.SP, title, description) = error
+    val ranger = Pos.Ranger(text, pos.start, pos.end)
 
     val cTitle = ansi(s"@|bold,red $title at ${pos.start}|@")
-    val cQuote = ansi(s"${pos.prefix}@|magenta,bold ${pos.text}|@${pos.suffix}")
+    val cQuote = ansi(s"${ranger.prefix}@|magenta,bold ${ranger.text}|@${ranger.suffix}")
     Console.println(cTitle)
     Console.println(cQuote)
     description.foreach(Console.println)
@@ -100,7 +101,7 @@ object Main {
       val module = queue.dequeue()
       val file = dir.resolve(module + ".erl").toFile
       if (file.exists()) {
-        val rawProgram = loadProgram(file, false)
+        val (_, rawProgram) = loadProgram(file, false)
         val program = SyntaxUtil.normalizeTypes(rawProgram)
         api = SyntaxUtil.moduleApi(module, program) :: api
         val moduleDeps = SyntaxUtil.getDeps(program)
@@ -128,7 +129,7 @@ object Main {
     Context(enumDefs, List.empty, aliases, opaques, env)
   }
 
-  def loadProgram(file: File, print: Boolean): S.Program = {
+  def loadProgram(file: File, print: Boolean): (String, S.Program) = {
     val source = scala.io.Source.fromFile(file.getPath)
     val lines = source.getLines().toList
     val dialect = getLang(lines)
@@ -146,7 +147,7 @@ object Main {
     if (!progResult.successful) {
       sys.error(progResult.toString)
     }
-    progResult.get
+    (content, progResult.get)
   }
 
   val attributes = List(

@@ -16,23 +16,20 @@
 
 package com.whatsapp.sterlang
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.parsing.input.{OffsetPosition, Position}
-
 object Pos {
+  case class Loc(line: Int, column: Int) {
+    def <(that: Loc): Boolean = this.line < that.line || this.line == that.line && this.column < that.column
+  }
 
   // Position
   sealed trait P
-
   // No position
   case object NP extends P
-
   // Some position
-  case class SP(start: Position, end: Position) extends P {
+  case class SP(start: Loc, end: Loc) extends P
 
-    private lazy val source: java.lang.CharSequence =
-      start.asInstanceOf[OffsetPosition].source
-
+  case class Ranger(source: String, start: Loc, end: Loc) {
+    import scala.collection.mutable.ArrayBuffer
     // An index that contains all line starts, including the first line, and eof
     private lazy val index: Array[Int] = {
       var lineStarts = new ArrayBuffer[Int]
@@ -42,30 +39,21 @@ object Pos {
       lineStarts += source.length
       lineStarts.toArray
     }
-
     def prefix: String =
-      source
-        .subSequence(
-          index(start.line - 1),
-          index(start.line - 1) + start.column - 1,
-        )
-        .toString
-
+      source.substring(
+        index(start.line - 1),
+        index(start.line - 1) + start.column - 1,
+      )
     def text: String =
-      source
-        .subSequence(
-          index(start.line - 1) + start.column - 1,
-          index(end.line - 1) + end.column - 1,
-        )
-        .toString
-
+      source.substring(
+        index(start.line - 1) + start.column - 1,
+        index(end.line - 1) + end.column - 1,
+      )
     def suffix: String =
-      source
-        .subSequence(
-          index(end.line - 1) + end.column - 1,
-          index(end.line),
-        )
-        .toString
+      source.substring(
+        index(end.line - 1) + end.column - 1,
+        index(end.line),
+      )
   }
 
   /** Combines two ranges to create a range that spans both. */
@@ -73,11 +61,11 @@ object Pos {
     (pos1, pos2) match {
       case (NP, _)              => pos2
       case (_, NP)              => pos1
-      case (pos1: SP, pos2: SP) => merge(pos1, pos2)
+      case (pos1: SP, pos2: SP) => mergeSP(pos1, pos2)
     }
 
   /** Combines two ranges to create a range that spans both. */
-  def merge(pos1: SP, pos2: SP): SP = {
+  private def mergeSP(pos1: SP, pos2: SP): SP = {
     val start = if (pos1.start < pos2.start) pos1.start else pos2.start
     val end = if (pos1.end < pos2.end) pos2.end else pos1.end
     SP(start, end)
@@ -87,7 +75,4 @@ object Pos {
   trait HasSourceLocation {
     val sourceLocation: P
   }
-
-  /** Attaches a source location to an arbitrary type. */
-  case class Located[+A](value: A)(val sourceLocation: P) extends HasSourceLocation
 }
