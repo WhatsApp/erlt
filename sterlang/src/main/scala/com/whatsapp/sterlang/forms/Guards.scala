@@ -17,27 +17,31 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.etf.ETerm
-import com.whatsapp.sterlang.forms.Exprs._
 
 object Guards {
-  case class Guard(tests: List[Test])
-  sealed class Test
-  case class TestLiteral(literal: Literal) extends Test
-  case class TestVariable(variable: String) extends Test
-  case class TestTuple(elems: List[Test]) extends Test
-  case object TestNil extends Test
-  case class TestCons(hd: Test, tl: Test) extends Test
-  case class TestBin(elems: List[TestBinElement]) extends Test
-  case class TestBinaryOp(op: String, test1: Test, test2: Test) extends Test
-  case class TestUnaryOp(op: String, test1: Test) extends Test
-  case class TestRecordCreation(recordName: String, fields: List[RecordFieldTest]) extends Test
-  case class TestRecordIndex(recordName: String, fieldName: String) extends Test
-  case class TestRecordFieldAccess(test: Test, recordName: String, fieldName: String) extends Test
-  case class TestMapCreate(entries: List[Assoc]) extends Test
-  case class TestMapUpdate(exp: Expr, entries: List[Assoc]) extends Test
-  case class TestCall(funName: String, args: List[Test]) extends Test
+  case class Guard(elems: List[GExpr])
+  sealed trait GExpr
+  case class GLiteral(literal: Exprs.Literal) extends GExpr
+  case class GVariable(variable: String) extends GExpr
+  case class GTuple(elems: List[GExpr]) extends GExpr
+  case object GNil extends GExpr
+  case class GCons(hd: GExpr, tl: GExpr) extends GExpr
+  case class GBin(elems: List[GBinElement]) extends GExpr
+  case class GBinaryOp(op: String, test1: GExpr, test2: GExpr) extends GExpr
+  case class GUnaryOp(op: String, test1: GExpr) extends GExpr
+  case class GRecordCreate(recordName: String, fields: List[GRecordField]) extends GExpr
+  case class GRecordIndex(recordName: String, fieldName: String) extends GExpr
+  case class GRecordFieldAccess(test: GExpr, recordName: String, fieldName: String) extends GExpr
+  case class GMapCreate(entries: List[GAssoc]) extends GExpr
+  case class GMapUpdate(exp: GExpr, entries: List[GAssoc]) extends GExpr
   // calling erlang:funName
-  case class TestGuardErlangCall(funName: String, args: List[Test]) extends Test
-  case class TestBinElement(test: Test, size: ETerm, typeSpecifiers: TypeSpecifiers)
-  case class RecordFieldTest(fieldName: String, test: Test)
+  case class GCall(funName: String, args: List[GExpr]) extends GExpr
+  case class GBinElement(test: GExpr, size: ETerm, typeSpecifiers: Exprs.TypeSpecifiers)
+  case class GRecordField(fieldName: String, test: GExpr)
+
+  sealed trait GAssoc
+  // X := Y - mandatory association
+  case class GAssocExact(k: GExpr, v: GExpr) extends GAssoc
+  // X => Y - optional association
+  case class GAssocOpt(k: GExpr, v: GExpr) extends GAssoc
 }
