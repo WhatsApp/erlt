@@ -32,8 +32,8 @@ object GuardsConvert {
 
   def convertGExpr(term: ETerm): GExpr =
     term match {
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        GVariable(name)
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        GVariable(sp(anno), name)
       case ETuple(List(EAtom("tuple"), _anno, EList(eTests))) =>
         GTuple(eTests.map(convertGExpr))
       case ETuple(List(EAtom("nil"), _anno)) =>

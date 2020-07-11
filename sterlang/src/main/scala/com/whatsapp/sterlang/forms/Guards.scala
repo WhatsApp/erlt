@@ -16,13 +16,14 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf.ETerm
 
 object Guards {
   case class Guard(elems: List[GExpr])
   sealed trait GExpr
   case class GLiteral(literal: Exprs.Literal) extends GExpr
-  case class GVariable(variable: String) extends GExpr
+  case class GVariable(p: Pos.SP, variable: String) extends GExpr
   case class GTuple(elems: List[GExpr]) extends GExpr
   case object GNil extends GExpr
   case class GCons(hd: GExpr, tl: GExpr) extends GExpr

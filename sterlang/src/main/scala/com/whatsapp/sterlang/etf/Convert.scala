@@ -108,8 +108,8 @@ object Convert {
           case Exprs.StringLiteral(p, None) =>
             Ast.StringExp("???")(p)
         }
-      case Guards.GVariable(name) =>
-        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
+      case Guards.GVariable(p, name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(p)
       case Guards.GTuple(elems) =>
         Ast.TupleExp(elems.map(convertGExpr))(Pos.NP)
       case Guards.GNil =>
