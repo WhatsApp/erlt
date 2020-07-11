@@ -239,8 +239,8 @@ object Convert {
           case Exprs.StringLiteral(p, None) =>
             Ast.StringExp("???")(p)
         }
-      case Exprs.Tuple(elems) =>
-        Ast.TupleExp(elems.map(convertExpr))(Pos.NP)
+      case Exprs.Tuple(p, elems) =>
+        Ast.TupleExp(elems.map(convertExpr))(p)
       case Exprs.Nil =>
         Ast.ListExp(List())(Pos.NP)
       case Exprs.Cons(hd, tl) =>
