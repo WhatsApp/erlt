@@ -60,8 +60,8 @@ object ExprsConvert {
       case ETuple(List(EAtom("record_field"), _anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordFieldAccess(convertExp(eExp), recordName, fieldName)
-      case ETuple(List(EAtom("map"), _anno, EList(eAssocs))) =>
-        MapCreate(eAssocs.map(convertAssoc))
+      case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
+        MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), _anno, eExp, EList(eAssocs))) =>
         MapUpdate(convertExp(eExp), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("catch"), _anno, eExp)) =>

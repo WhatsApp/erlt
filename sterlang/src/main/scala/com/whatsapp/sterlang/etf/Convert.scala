@@ -249,8 +249,8 @@ object Convert {
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
-      case Exprs.MapCreate(entries) =>
-        Ast.RecordExp(entries.map(assocCreateToFieldExp))(Pos.NP)
+      case Exprs.MapCreate(p, entries) =>
+        Ast.RecordExp(entries.map(assocCreateToFieldExp))(p)
       case Exprs.MapUpdate(exp, entries) =>
         Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(Pos.NP)
       case Exprs.Block(exprs) =>
