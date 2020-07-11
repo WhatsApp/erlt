@@ -261,9 +261,9 @@ object Convert {
         Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p2), args.map(convertExpr))(p1)
       case Exprs.LocalCall(p, head, args) =>
         Ast.AppExp(convertExpr(head), args.map(convertExpr))(p)
-      case Exprs.RemoteCall(Exprs.AtomLiteral(p1, m), Exprs.AtomLiteral(p2, f), args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(p1 ! p2), args.map(convertExpr))(Pos.NP)
-      case Exprs.RemoteCall(_, _, _) =>
+      case Exprs.RemoteCall(p1, Exprs.AtomLiteral(p2, m), Exprs.AtomLiteral(p3, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(p2 ! p3), args.map(convertExpr))(p1)
+      case Exprs.RemoteCall(_, _, _, _) =>
         sys.error(s"not supported remote call: $e")
       case Exprs.LocalFun(f, arity) =>
         Ast.VarExp(new Ast.LocalFunName(f, arity))(Pos.NP)
