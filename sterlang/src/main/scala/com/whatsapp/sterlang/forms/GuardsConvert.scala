@@ -38,10 +38,10 @@ object GuardsConvert {
         GTuple(sp(anno), eTests.map(convertGExpr))
       case ETuple(List(EAtom("nil"), anno)) =>
         GNil(sp(anno))
-      case ETuple(List(EAtom("cons"), _anno, eTest1, eTest2)) =>
+      case ETuple(List(EAtom("cons"), anno, eTest1, eTest2)) =>
         val hd = convertGExpr(eTest1)
         val tl = convertGExpr(eTest2)
-        GCons(hd, tl)
+        GCons(sp(anno), hd, tl)
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertGBinElement)
         GBin(binElements)

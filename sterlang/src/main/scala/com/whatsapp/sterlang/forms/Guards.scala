@@ -26,7 +26,7 @@ object Guards {
   case class GVariable(p: Pos.SP, variable: String) extends GExpr
   case class GTuple(p: Pos.SP, elems: List[GExpr]) extends GExpr
   case class GNil(p: Pos.SP) extends GExpr
-  case class GCons(hd: GExpr, tl: GExpr) extends GExpr
+  case class GCons(p: Pos.SP, hd: GExpr, tl: GExpr) extends GExpr
   case class GBin(elems: List[GBinElement]) extends GExpr
   case class GBinaryOp(op: String, test1: GExpr, test2: GExpr) extends GExpr
   case class GUnaryOp(op: String, test1: GExpr) extends GExpr

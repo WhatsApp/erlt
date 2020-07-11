@@ -114,8 +114,8 @@ object Convert {
         Ast.TupleExp(elems.map(convertGExpr))(p)
       case Guards.GNil(p) =>
         Ast.ListExp(List())(p)
-      case Guards.GCons(hd, tl) =>
-        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(Pos.NP)
+      case Guards.GCons(p, hd, tl) =>
+        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
       case Guards.GMapCreate(entries) =>
         Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(Pos.NP)
       case Guards.GMapUpdate(exp, entries) =>
