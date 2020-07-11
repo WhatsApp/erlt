@@ -73,13 +73,13 @@ object GuardsConvert {
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
               EList(eArgs),
             )
           ) =>
-        GLocalEnumCtr(enum, ctr, eArgs.map(convertGExpr))
+        GLocalEnumCtr(sp(anno), enum, ctr, eArgs.map(convertGExpr))
       case ETuple(
             List(
               EAtom("enum"),
