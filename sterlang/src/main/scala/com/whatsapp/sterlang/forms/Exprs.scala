@@ -57,7 +57,7 @@ object Exprs {
   case class BinaryComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
   case class If(clauses: List[Clause]) extends Expr
-  case class Case(expr: Expr, clauses: List[Clause]) extends Expr
+  case class Case(p: Pos.SP, expr: Expr, clauses: List[Clause]) extends Expr
   case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr

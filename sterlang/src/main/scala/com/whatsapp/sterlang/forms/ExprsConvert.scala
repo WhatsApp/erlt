@@ -108,8 +108,8 @@ object ExprsConvert {
         Block(sp(anno), eExps.map(convertExp))
       case ETuple(List(EAtom("if"), _anno, EList(eClauses))) =>
         If(eClauses.map(convertClause))
-      case ETuple(List(EAtom("case"), _anno, eExp, EList(eClauses))) =>
-        Case(convertExp(eExp), eClauses.map(convertClause))
+      case ETuple(List(EAtom("case"), anno, eExp, EList(eClauses))) =>
+        Case(sp(anno), convertExp(eExp), eClauses.map(convertClause))
       case ETuple(
             List(
               EAtom("try"),
