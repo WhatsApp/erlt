@@ -132,10 +132,10 @@ object ExprsConvert {
       case ETuple(List(EAtom("receive"), _anno, EList(eClauses), eTimeout, EList(defaults))) =>
         ReceiveWithTimeout(eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))
 
-      case ETuple(List(EAtom("fun"), _anno, eFunction)) =>
+      case ETuple(List(EAtom("fun"), anno, eFunction)) =>
         eFunction match {
           case ETuple(List(EAtom("function"), EAtom(name), ELong(arity))) =>
-            LocalFun(name, arity.intValue)
+            LocalFun(sp(anno), name, arity.intValue)
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
             RemoteFun(convertExp(eModule), convertExp(eName), convertExp(eArity))
           case ETuple(List(EAtom("clauses"), EList(eClauses))) =>

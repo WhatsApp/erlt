@@ -61,7 +61,7 @@ object Exprs {
   case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
-  case class LocalFun(funName: String, arity: Int) extends Expr
+  case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr
   case class RemoteFun(module: Expr, funName: Expr, arity: Expr) extends Expr
   case class Fun(clauses: List[Clause]) extends Expr
   case class NamedFun(funName: String, clauses: List[Clause]) extends Expr
