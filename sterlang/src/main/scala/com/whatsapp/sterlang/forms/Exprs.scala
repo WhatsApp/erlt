@@ -51,7 +51,7 @@ object Exprs {
   case class Catch(exp: Expr) extends Expr
   case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(p: Pos.SP, module: Expr, fun: Expr, args: List[Expr]) extends Expr
-  case class LocalEnumCtr(enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class LocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[Expr]) extends Expr
   case class RemoteEnumCtr(module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
   case class ListComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr

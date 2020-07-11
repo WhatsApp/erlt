@@ -76,13 +76,13 @@ object ExprsConvert {
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtr(enum, ctr, eArgs.map(convertExp))
+        LocalEnumCtr(sp(anno), enum, ctr, eArgs.map(convertExp))
       case ETuple(
             List(
               EAtom("enum"),
