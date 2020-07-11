@@ -190,8 +190,8 @@ object Convert {
         Ast.ListPat(List())(p)
       case Patterns.ConsPattern(p, hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
-      case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(Pos.NP)
+      case Patterns.LocalEnumCtrPattern(p, enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
       case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(Pos.NP)
       case Patterns.MapPattern(assocs) =>

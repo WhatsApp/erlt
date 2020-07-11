@@ -34,7 +34,7 @@ object Patterns {
   case class RecordPattern(recordName: String, fields: List[RecordFieldPattern]) extends Pattern
   case class RecordIndexPattern(recordName: String, fieldName: String) extends Pattern
   case class MapPattern(assocs: List[(Pattern, Pattern)]) extends Pattern
-  case class LocalEnumCtrPattern(enum: String, ctr: String, args: List[Pattern]) extends Pattern
+  case class LocalEnumCtrPattern(p: Pos.SP, enum: String, ctr: String, args: List[Pattern]) extends Pattern
   case class RemoteEnumCtrPattern(module: String, enum: String, ctr: String, args: List[Pattern]) extends Pattern
 
   // additional classes for patterns
