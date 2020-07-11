@@ -36,8 +36,8 @@ object GuardsConvert {
         GVariable(sp(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(eTests))) =>
         GTuple(sp(anno), eTests.map(convertGExpr))
-      case ETuple(List(EAtom("nil"), _anno)) =>
-        GNil
+      case ETuple(List(EAtom("nil"), anno)) =>
+        GNil(sp(anno))
       case ETuple(List(EAtom("cons"), _anno, eTest1, eTest2)) =>
         val hd = convertGExpr(eTest1)
         val tl = convertGExpr(eTest2)

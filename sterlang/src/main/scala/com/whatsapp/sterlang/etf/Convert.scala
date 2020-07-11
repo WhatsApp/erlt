@@ -112,8 +112,8 @@ object Convert {
         Ast.VarExp(new Ast.LocalVarName(name))(p)
       case Guards.GTuple(p, elems) =>
         Ast.TupleExp(elems.map(convertGExpr))(p)
-      case Guards.GNil =>
-        Ast.ListExp(List())(Pos.NP)
+      case Guards.GNil(p) =>
+        Ast.ListExp(List())(p)
       case Guards.GCons(hd, tl) =>
         Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(Pos.NP)
       case Guards.GMapCreate(entries) =>
