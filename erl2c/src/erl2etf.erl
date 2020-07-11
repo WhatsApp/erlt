@@ -17,7 +17,8 @@
 
 main(["-erl", Filename, "-etf", EtfFileName]) ->
     {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
-    CodeETF = erlang:term_to_binary(Forms),
+    Forms1 = erl2_compile:normalize_for_typecheck(Forms),
+    CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(EtfFileName),
     ok = file:write_file(EtfFileName, CodeETF);
 main(["-ast1", File]) ->
@@ -25,4 +26,5 @@ main(["-ast1", File]) ->
     io:format("Forms:\n~p\n", [Forms]);
 main(["-ast2", Filename]) ->
     {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
-    io:format("Forms:\n~p\n", [Forms]).
+    Forms1 = erl2_compile:normalize_for_typecheck(Forms),
+    io:format("Forms:\n~p\n", [Forms1]).
