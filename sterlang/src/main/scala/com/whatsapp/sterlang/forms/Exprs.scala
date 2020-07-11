@@ -55,7 +55,7 @@ object Exprs {
   case class RemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
   case class ListComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
-  case class Block(exprs: List[Expr]) extends Expr
+  case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
   case class If(clauses: List[Clause]) extends Expr
   case class Case(expr: Expr, clauses: List[Clause]) extends Expr
   case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr

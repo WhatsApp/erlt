@@ -253,8 +253,8 @@ object Convert {
         Ast.RecordExp(entries.map(assocCreateToFieldExp))(p)
       case Exprs.MapUpdate(p, exp, entries) =>
         Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(p)
-      case Exprs.Block(exprs) =>
-        Ast.BlockExpr(convertBody(exprs))(Pos.NP)
+      case Exprs.Block(p, exprs) =>
+        Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(expr, clauses) =>
         Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(Pos.NP)
       case Exprs.LocalCall(p1, Exprs.AtomLiteral(p2, f), args) =>

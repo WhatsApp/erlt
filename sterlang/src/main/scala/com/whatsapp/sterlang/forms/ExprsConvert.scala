@@ -104,8 +104,8 @@ object ExprsConvert {
         ListComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), _anno, eTemplate, EList(eQualifiers))) =>
         BinaryComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))
-      case ETuple(List(EAtom("block"), _anno, EList(eExps))) =>
-        Block(eExps.map(convertExp))
+      case ETuple(List(EAtom("block"), anno, EList(eExps))) =>
+        Block(sp(anno), eExps.map(convertExp))
       case ETuple(List(EAtom("if"), _anno, EList(eClauses))) =>
         If(eClauses.map(convertClause))
       case ETuple(List(EAtom("case"), _anno, eExp, EList(eClauses))) =>
