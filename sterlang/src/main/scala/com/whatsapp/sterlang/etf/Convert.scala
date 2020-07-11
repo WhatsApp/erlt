@@ -185,8 +185,6 @@ object Convert {
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
-      case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(field)) =>
-        Ast.SelExp(convertExpr(exp), field)(Pos.NP)
       case Exprs.MapCreate(entries) =>
         Ast.RecordExp(entries.map(assocCreateToFieldExp))(Pos.NP)
       case Exprs.MapUpdate(exp, entries) =>
@@ -216,10 +214,15 @@ object Convert {
       case Exprs.UnaryOp(op, exp1) =>
         Ast.unOps.get(op) match {
           case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(Pos.NP)
-          case None => sys.error(s"not supported unOp ($op) in: $e")
+          case None      => sys.error(s"not supported unOp ($op) in: $e")
         }
+      case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(field)) =>
+        Ast.SelExp(convertExpr(exp), field)(Pos.NP)
       case Exprs.BinaryOp(op, exp1, exp2) =>
-        ???
+        Ast.binOps.get(op) match {
+          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(Pos.NP)
+          case None        => sys.error(s"not supported binOp ($op) in: $e")
+        }
       case Exprs.ListComprehension(template, qualifiers) =>
         ???
       case Exprs.Bin(elems) =>
