@@ -142,8 +142,8 @@ object ExprsConvert {
             Fun(sp(anno), eClauses.map(convertClause))
         }
 
-      case ETuple(List(EAtom("named_fun"), _anno, EAtom(fName), EList(eClauses))) =>
-        NamedFun(fName, eClauses.map(convertClause))
+      case ETuple(List(EAtom("named_fun"), anno, EAtom(fName), EList(eClauses))) =>
+        NamedFun(sp(anno), fName, eClauses.map(convertClause))
       case _ =>
         maybeLiteral(term) match {
           case Some(exp) => exp

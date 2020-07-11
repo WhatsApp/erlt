@@ -64,7 +64,7 @@ object Exprs {
   case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr
   case class RemoteFun(p: Pos.SP, module: Expr, funName: Expr, arity: Expr) extends Expr
   case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
-  case class NamedFun(funName: String, clauses: List[Clause]) extends Expr
+  case class NamedFun(p: Pos.SP, funName: String, clauses: List[Clause]) extends Expr
 
   // TODO - proper size
   case class BinElement(expr: Expr, size: ETerm, typeSpecifiers: TypeSpecifiers)
