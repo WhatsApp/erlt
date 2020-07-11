@@ -201,13 +201,28 @@ object Convert {
         Ast.AppExp(convertExpr(head), args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteCall(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(Pos.NP), args.map(convertExpr))(Pos.NP)
-      case Exprs.RemoteCall(module, fun, args) =>
-        ???
-      case Exprs.Bin(elems) =>
-        ???
+      case Exprs.RemoteCall(_, _, _) =>
+        sys.error(s"not supported remote call: $e")
+      case Exprs.LocalFun(f, arity) =>
+        Ast.VarExp(new Ast.LocalFunName(f, arity))(Pos.NP)
+      case Exprs.RemoteFun(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), Exprs.IntLiteral(arity)) =>
+        Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(Pos.NP)
+      case Exprs.RemoteFun(_, _, _) =>
+        sys.error(s"not supported: $e")
+      case Exprs.Fun(clauses) =>
+        Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
+      case Exprs.NamedFun(funName, clauses) =>
+        Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
+      case Exprs.UnaryOp(op, exp1) =>
+        Ast.unOps.get(op) match {
+          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(Pos.NP)
+          case None => sys.error(s"not supported unOp ($op) in: $e")
+        }
       case Exprs.BinaryOp(op, exp1, exp2) =>
         ???
-      case Exprs.UnaryOp(op, exp1) =>
+      case Exprs.ListComprehension(template, qualifiers) =>
+        ???
+      case Exprs.Bin(elems) =>
         ???
       case Exprs.RecordCreate(recordName, fields) =>
         ???
@@ -219,8 +234,6 @@ object Convert {
         ???
       case Exprs.Catch(exp) =>
         ???
-      case Exprs.ListComprehension(template, qualifiers) =>
-        ???
       case Exprs.BinaryComprehension(template, qualifiers) =>
         ???
       case Exprs.If(clauses) =>
@@ -231,16 +244,6 @@ object Convert {
         ???
       case Exprs.ReceiveWithTimeout(cl, timeout, default) =>
         ???
-      case Exprs.LocalFun(f, arity) =>
-        Ast.VarExp(new Ast.LocalFunName(f, arity))(Pos.NP)
-      case Exprs.RemoteFun(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), Exprs.IntLiteral(arity)) =>
-        Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(Pos.NP)
-      case Exprs.RemoteFun(_, _, _) =>
-        sys.error(s"not supported: $e")
-      case Exprs.Fun(clauses) =>
-        Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
-      case Exprs.NamedFun(funName, clauses) =>
-        Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
     }
 
   private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
