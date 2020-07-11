@@ -62,8 +62,8 @@ object ExprsConvert {
         RecordFieldAccess(convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
-      case ETuple(List(EAtom("map"), _anno, eExp, EList(eAssocs))) =>
-        MapUpdate(convertExp(eExp), eAssocs.map(convertAssoc))
+      case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
+        MapUpdate(sp(anno), convertExp(eExp), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("catch"), _anno, eExp)) =>
         Catch(convertExp(eExp))
       case ETuple(List(EAtom("call"), _anno, eExp, EList(eArgs))) =>

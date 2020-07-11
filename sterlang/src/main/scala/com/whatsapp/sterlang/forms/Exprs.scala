@@ -47,7 +47,7 @@ object Exprs {
   case class RecordIndex(recordName: String, fieldName: String) extends Expr
   case class RecordFieldAccess(exp: Expr, recordName: String, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
-  case class MapUpdate(exp: Expr, entries: List[Assoc]) extends Expr
+  case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
   case class Catch(exp: Expr) extends Expr
   case class LocalCall(fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(module: Expr, fun: Expr, args: List[Expr]) extends Expr
