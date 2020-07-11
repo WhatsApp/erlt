@@ -31,9 +31,7 @@ object Exprs {
   case class CharLiteral(ch: Char) extends Literal
   case class FloatLiteral(fl: Double) extends Literal
   case class IntLiteral(i: Int) extends Literal
-  case class StringLiteral(str: String) extends Literal
-  // TODO - clarify
-  case class StringListLiteral() extends Literal
+  case class StringLiteral(str: Option[String]) extends Literal
 
   case class Match(pat: Pattern, arg: Expr) extends Expr
   case class Variable(name: String) extends Expr
@@ -63,10 +61,7 @@ object Exprs {
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
   case class LocalFun(funName: String, arity: Int) extends Expr
-  // Static
-  case class RemoteFun(module: String, funName: String, arity: Int) extends Expr
-  // Dynamic - TODO
-  case class RemoteFunDynamic(module: ETerm, funName: ETerm, arity: ETerm) extends Expr
+  case class RemoteFun(module: Expr, funName: Expr, arity: Expr) extends Expr
   case class Fun(clauses: List[Clause]) extends Expr
   case class NamedFun(funName: String, clauses: List[Clause]) extends Expr
 

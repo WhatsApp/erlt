@@ -136,15 +136,8 @@ object ExprsConvert {
         eFunction match {
           case ETuple(List(EAtom("function"), EAtom(name), ELong(arity))) =>
             LocalFun(name, arity.intValue)
-          case ETuple(List(EAtom("function"), EAtom(module), EAtom(name), ELong(arity))) =>
-            RemoteFun(module, name, arity.intValue)
-          // TODO
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
-//        val Some(AF_LiteralAtom(module)) = maybeLiteral(moduleLit)
-//        val Some(AF_LiteralAtom(name)) = maybeLiteral(nameLit)
-//        val Some(AF_LiteralInteger(arity)) = maybeLiteral(arityLit)
-            RemoteFunDynamic(eModule, eName, eArity)
-
+            RemoteFun(convertExp(eModule), convertExp(eName), convertExp(eArity))
           case ETuple(List(EAtom("clauses"), EList(eClauses))) =>
             Fun(eClauses.map(convertClause))
         }
@@ -170,11 +163,11 @@ object ExprsConvert {
       case ETuple(List(EAtom("integer"), _anno, ELong(value))) =>
         Some(IntLiteral(value.intValue))
       case ETuple(List(EAtom("string"), _anno, EString(value))) =>
-        Some(StringLiteral(value))
+        Some(StringLiteral(Some(value)))
       case ETuple(List(EAtom("string"), _anno, EList(List()))) =>
-        Some(StringLiteral(""))
+        Some(StringLiteral(Some("")))
       case ETuple(List(EAtom("string"), _anno, EList(_))) =>
-        Some(StringListLiteral())
+        Some(StringLiteral(None))
       case _ => None
     }
 
