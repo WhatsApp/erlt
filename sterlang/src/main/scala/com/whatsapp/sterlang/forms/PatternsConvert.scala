@@ -32,8 +32,8 @@ object PatternsConvert {
         TuplePattern(sp(anno), ePats.map(convertPat))
       case ETuple(List(EAtom("nil"), anno)) =>
         NilPattern(sp(anno))
-      case ETuple(List(EAtom("cons"), _anno, ePat1, ePat2)) =>
-        ConsPattern(convertPat(ePat1), convertPat(ePat2))
+      case ETuple(List(EAtom("cons"), anno, ePat1, ePat2)) =>
+        ConsPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertPatternBinElement)
         BinPattern(binElements)
