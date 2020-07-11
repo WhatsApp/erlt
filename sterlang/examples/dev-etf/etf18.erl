@@ -2,7 +2,9 @@
 
 -module(etf18).
 
--export([guard1/2, guard2/3, guard3/2, guard4/1, guard5/1]).
+-export([guard1/2, guard2/3, guard3/2, guard4/1, guard5/1, guard6/1, guard7/1]).
+
+-enum int_box() :: box{integer()}.
 
 -spec guard1(integer(), integer()) -> boolean().
 guard1(X, Y) when X == 1, Y == 1; X =/= Y ->
@@ -28,3 +30,7 @@ guard3(X, Y) when X.id == Y -> true.
 guard4(X) when X#{id := 1} == #{id => 1} -> true.
 
 guard5(T) when erlang:length(T) > 0; T == []; T == [2 | []] -> true.
+
+guard6(B) when B < int_box.box{1} -> true.
+
+guard7(MB) when MB =/= maybe.maybe.none{} -> true.

@@ -36,6 +36,8 @@ object Guards {
   case class GMapUpdate(exp: GExpr, entries: List[GAssoc]) extends GExpr
   // calling erlang:funName
   case class GCall(funName: String, args: List[GExpr]) extends GExpr
+  case class GLocalEnumCtr(enum: String, ctr: String, args: List[GExpr]) extends GExpr
+  case class GRemoteEnumCtr(module: String, enum: String, ctr: String, args: List[GExpr]) extends GExpr
   case class GBinElement(test: GExpr, size: ETerm, typeSpecifiers: Exprs.TypeSpecifiers)
   case class GRecordField(fieldName: String, test: GExpr)
 

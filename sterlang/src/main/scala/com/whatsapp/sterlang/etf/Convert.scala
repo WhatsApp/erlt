@@ -134,6 +134,10 @@ object Convert {
           case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(Pos.NP)
           case None      => sys.error(s"not supported unOp ($op) in: $gExpr")
         }
+      case Guards.GLocalEnumCtr(enum, ctr, args) =>
+        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(Pos.NP)
+      case Guards.GRemoteEnumCtr(module, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(Pos.NP)
       case Guards.GBin(elems) =>
         ???
       case Guards.GRecordCreate(recordName, fields) =>

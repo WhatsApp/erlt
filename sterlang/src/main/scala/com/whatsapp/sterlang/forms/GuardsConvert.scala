@@ -70,6 +70,33 @@ object GuardsConvert {
       case ETuple(List(EAtom("call"), _anno, eFun, EList(eTests))) =>
         val Some(AtomLiteral(funName)) = ExprsConvert.maybeLiteral(eFun)
         GCall(funName, eTests.map(convertGExpr))
+      case ETuple(
+            List(
+              EAtom("enum"),
+              _anno,
+              ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
+              ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
+              EList(eArgs),
+            )
+          ) =>
+        GLocalEnumCtr(enum, ctr, eArgs.map(convertGExpr))
+      case ETuple(
+            List(
+              EAtom("enum"),
+              _anno,
+              ETuple(
+                List(
+                  EAtom("remote"),
+                  _,
+                  ETuple(List(EAtom("atom"), _anno1, EAtom(module))),
+                  ETuple(List(EAtom("atom"), _anno2, EAtom(enum))),
+                )
+              ),
+              ETuple(List(EAtom("atom"), _anno3, EAtom(ctr))),
+              EList(eArgs),
+            )
+          ) =>
+        GRemoteEnumCtr(module, enum, ctr, eArgs.map(convertGExpr))
       case _ =>
         ExprsConvert.maybeLiteral(term) match {
           case Some(literal) =>
