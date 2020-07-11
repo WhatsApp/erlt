@@ -184,8 +184,8 @@ object Convert {
           case Exprs.StringLiteral(p, str) =>
             Ast.StringPat(str.getOrElse("???"))(p)
         }
-      case Patterns.TuplePattern(elems) =>
-        Ast.TuplePat(elems.map(convertPattern))(Pos.NP)
+      case Patterns.TuplePattern(p, elems) =>
+        Ast.TuplePat(elems.map(convertPattern))(p)
       case Patterns.NilPattern =>
         Ast.ListPat(List())(Pos.NP)
       case Patterns.ConsPattern(hd, tl) =>
