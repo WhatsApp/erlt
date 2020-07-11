@@ -83,7 +83,7 @@ object GuardsConvert {
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(
                 List(
                   EAtom("remote"),
@@ -96,7 +96,7 @@ object GuardsConvert {
               EList(eArgs),
             )
           ) =>
-        GRemoteEnumCtr(module, enum, ctr, eArgs.map(convertGExpr))
+        GRemoteEnumCtr(sp(anno), module, enum, ctr, eArgs.map(convertGExpr))
       case _ =>
         ExprsConvert.maybeLiteral(term) match {
           case Some(literal) =>

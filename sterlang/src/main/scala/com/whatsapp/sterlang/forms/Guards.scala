@@ -38,7 +38,7 @@ object Guards {
   // calling erlang:funName
   case class GCall(funName: String, args: List[GExpr]) extends GExpr
   case class GLocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[GExpr]) extends GExpr
-  case class GRemoteEnumCtr(module: String, enum: String, ctr: String, args: List[GExpr]) extends GExpr
+  case class GRemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[GExpr]) extends GExpr
   case class GBinElement(test: GExpr, size: ETerm, typeSpecifiers: Exprs.TypeSpecifiers)
   case class GRecordField(fieldName: String, test: GExpr)
 
