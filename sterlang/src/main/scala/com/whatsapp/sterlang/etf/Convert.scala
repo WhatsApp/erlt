@@ -130,6 +130,14 @@ object Convert {
         Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(Pos.NP)
       case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(Pos.NP)
+      case Patterns.MapPattern(assocs) =>
+        val pats = assocs map {
+          case (Patterns.LiteralPattern(Exprs.AtomLiteral(label)), p) =>
+            Ast.Field[Ast.Pat](label, convertPattern(p))
+          case other =>
+            sys.error(s"wrong pattern assoc: $other")
+        }
+        Ast.RecordPat(pats, false)(Pos.NP)
       case Patterns.BinPattern(elems) =>
         ???
       case Patterns.BinOpPattern(op, pat1, pat2) =>
@@ -139,8 +147,6 @@ object Convert {
       case Patterns.RecordPattern(recordName, fields) =>
         ???
       case Patterns.RecordIndexPattern(recordName, fieldName) =>
-        ???
-      case Patterns.MapPattern(assocs) =>
         ???
     }
 
