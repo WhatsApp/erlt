@@ -180,8 +180,9 @@ object Ast {
   case class Fun(name: LocalFunName, clauses: List[Clause])(val p: Pos.P)
 
   case class Field[A](label: String, value: A)
-  case class Rule(pat: Pat, guard: Option[Exp], exp: Body)
-  case class Clause(pats: List[Pat], guard: Option[Exp], exp: Body)
+  case class Rule(pat: Pat, guards: List[Guard], exp: Body)
+  case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
+  case class Guard(exprs: List[Exp])
 
   sealed trait Pat { val p: Pos.P }
   case class WildPat()(val p: Pos.P) extends Pat

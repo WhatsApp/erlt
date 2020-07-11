@@ -249,10 +249,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val selector1 = elab(selector, t, d, env)
     val resType = freshTypeVar(d)
 
-    val branches = for (S.Rule(pat, optGuard, body) <- eRules) yield {
+    val branches = for (S.Rule(pat, guards, body) <- eRules) yield {
       val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = true)
-      for (guard <- optGuard) {
-        elab(guard, MT.BoolType, d, env1)
+      for (guard <- guards) {
+        for (guardExp <- guard.exprs) {
+          elab(guardExp, MT.BoolType, d, env1)
+        }
       }
       val body1 = elabBody(body, resType, d + 1, env1)
       A.Branch(pat1, body1)
@@ -404,7 +406,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val fnType = MT.FunType(patTypes, bodyType)
     U.unify(fnType, ty)
 
-    for (S.Clause(pats, optGuard, body) <- clauses) yield {
+    for (S.Clause(pats, guards, body) <- clauses) yield {
       var envAcc = env
       var penvAcc: PEnv = Set.empty
       val pats1 = for { (pat, pt) <- pats.zip(patTypes) } yield {
@@ -413,8 +415,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         penvAcc = penv1
         p1
       }
-      for (guard <- optGuard) {
-        elab(guard, MT.BoolType, d, envAcc)
+      for (guard <- guards) {
+        for (guardExp <- guard.exprs) {
+          elab(guardExp, MT.BoolType, d, envAcc)
+        }
       }
       val body1 = elabBody(body, bodyType, d + 1, envAcc)
       A.Clause(pats1, body1)

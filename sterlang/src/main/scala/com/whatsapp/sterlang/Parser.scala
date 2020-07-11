@@ -233,15 +233,15 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   lazy val body: PackratParser[S.Body] =
     rep(valDef <~ ",") ~ valDef ^^ S.Body
   lazy val clause: PackratParser[S.Clause] =
-    ("(" ~> repsep(pat, ",") <~ ")") ~ (("when" ~> guardExp) ?) ~ ("->" ~> body) ^^ S.Clause
+    ("(" ~> repsep(pat, ",") <~ ")") ~ guards ~ ("->" ~> body) ^^ S.Clause
 
   // --------- EXPRESSIONS: FUNS, VALS, CLAUSES ----------
   lazy val exp: PackratParser[S.Exp] =
     ifExp | caseExp | recordUpdateExp | binOpExp | fnExp | namedFnExp | enumConExp | appExp
-  lazy val guardElem: PackratParser[S.Exp] =
-    pos(exp ~ ("," ~> guardElem) ^^ { case e1 ~ e2 => S.BinOpExp(S.BoolConnOp(S.And), e1, e2)(_) }) | exp
-  lazy val guardExp: PackratParser[S.Exp] =
-    pos(guardElem ~ (";" ~> guardElem) ^^ { case e1 ~ e2 => S.BinOpExp(S.BoolConnOp(S.Or), e1, e2)(_) }) | guardElem
+  lazy val guardElem: PackratParser[S.Guard] =
+    rep1sep(exp, ",") ^^ S.Guard
+  lazy val guards: PackratParser[List[S.Guard]] =
+    (("when" ~> rep1sep(guardElem, ";")) ?) ^^ { _.getOrElse(List()) }
   private lazy val ifExp: PackratParser[S.Exp] =
     pos(("if" ~> exp) ~ ("then" ~> exp) ~ ("else" ~> exp) ^^ {
       case e1 ~ e2 ~ e3 => S.IfExp(e1, e2, e3)(_)
@@ -321,7 +321,7 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
     ((label <~ ":=") ~ exp) ^^ S.Field[S.Exp]
 
   lazy val rule: PackratParser[S.Rule] =
-    pat ~ (("when" ~> guardExp) ?) ~ ("->" ~> body) ^^ S.Rule
+    pat ~ guards ~ ("->" ~> body) ^^ S.Rule
 
   lazy val label: PackratParser[String] =
     lident

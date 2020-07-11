@@ -397,7 +397,7 @@ object SyntaxUtil {
     clause.pats.foreach {
       result ++= getDepPat(_)
     }
-    clause.guard.foreach {
+    clause.guards.flatMap(_.exprs).foreach {
       result ++= getDepExp(_)
     }
     result ++= getDepBody(clause.exp)
@@ -486,7 +486,8 @@ object SyntaxUtil {
         val rulesDeps = rules.flatMap { rule =>
           val patDeps = getDepPat(rule.pat)
           val bodyDeps = getDepBody(rule.exp)
-          bodyDeps ++ patDeps
+          val guardDeps = rule.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ patDeps ++ guardDeps
         }
         val selectorDeps = getDepExp(selector)
         selectorDeps ++ rulesDeps

@@ -69,7 +69,7 @@ class ParseProgSpec extends org.scalatest.FunSpec {
               List(
                 Clause(
                   List(VarPat("X")(NP)),
-                  None,
+                  List(),
                   Body(List(), ValDef(WildPat()(NP), VarExp(new LocalVarName("X"))(NP))),
                 )
               ),
