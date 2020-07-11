@@ -33,8 +33,8 @@ object ExprsConvert {
     term match {
       case ETuple(List(EAtom("match"), _anno, ePat1, eExp)) =>
         Match(PatternsConvert.convertPat(ePat1), convertExp(eExp))
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        Variable(name)
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        Variable(sp(anno), name)
       case ETuple(List(EAtom("tuple"), _anno, EList(eExps))) =>
         Tuple(eExps.map(convertExp))
       case ETuple(List(EAtom("nil"), _anno)) =>

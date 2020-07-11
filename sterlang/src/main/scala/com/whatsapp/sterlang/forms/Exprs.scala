@@ -35,7 +35,7 @@ object Exprs {
   case class StringLiteral(p: Pos.SP, str: Option[String]) extends Literal
 
   case class Match(pat: Pattern, arg: Expr) extends Expr
-  case class Variable(name: String) extends Expr
+  case class Variable(p: Pos.SP, name: String) extends Expr
   case class Tuple(elems: List[Expr]) extends Expr
   case object Nil extends Expr
   case class Cons(hd: Expr, tl: Expr) extends Expr

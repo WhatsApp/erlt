@@ -218,8 +218,8 @@ object Convert {
     e match {
       case Exprs.Match(_, _) =>
         sys.error(s"such matches are not supported: $e")
-      case Exprs.Variable(name) =>
-        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
+      case Exprs.Variable(p, name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(p)
       case literal: Exprs.Literal =>
         literal match {
           case Exprs.AtomLiteral(p, "true") =>
