@@ -62,14 +62,14 @@ object GuardsConvert {
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
         GMapUpdate(sp(anno), convertGExpr(eExp), eAssocs.map(convertGAssoc))
       case ETuple(
-            List(EAtom("call"), _anno, ETuple(List(EAtom("remote"), _anno1, erlang, eFun)), EList(eTests))
+            List(EAtom("call"), anno, ETuple(List(EAtom("remote"), _anno1, erlang, eFun)), EList(eTests))
           ) =>
-        val Some(AtomLiteral(_, "erlang")) = ExprsConvert.maybeLiteral(erlang)
-        val Some(AtomLiteral(_, funName)) = ExprsConvert.maybeLiteral(eFun)
-        GCall(funName, eTests.map(convertGExpr))
-      case ETuple(List(EAtom("call"), _anno, eFun, EList(eTests))) =>
-        val Some(AtomLiteral(_, funName)) = ExprsConvert.maybeLiteral(eFun)
-        GCall(funName, eTests.map(convertGExpr))
+        val Some(AtomLiteral(p1, "erlang")) = ExprsConvert.maybeLiteral(erlang)
+        val Some(AtomLiteral(p2, funName)) = ExprsConvert.maybeLiteral(eFun)
+        GCall(sp(anno), (p1 ! p2, funName), eTests.map(convertGExpr))
+      case ETuple(List(EAtom("call"), anno, eFun, EList(eTests))) =>
+        val Some(AtomLiteral(p1, funName)) = ExprsConvert.maybeLiteral(eFun)
+        GCall(sp(anno), (p1, funName), eTests.map(convertGExpr))
       case ETuple(
             List(
               EAtom("enum"),

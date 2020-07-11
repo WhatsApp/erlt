@@ -123,8 +123,8 @@ object Convert {
         val recExp = convertGExpr(exp)
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
         Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
-      case Guards.GCall(f, args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(Pos.NP), args.map(convertGExpr))(Pos.NP)
+      case Guards.GCall(p, (fp, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(fp), args.map(convertGExpr))(p)
       case Guards.GBinaryOp(p, ".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>
         Ast.SelExp(convertGExpr(exp), field)(p)
       case Guards.GBinaryOp(p, op, exp1, exp2) =>
