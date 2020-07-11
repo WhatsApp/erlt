@@ -48,8 +48,8 @@ object ExprsConvert {
         Bin(binElements)
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1, eExp2)) =>
         BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
-      case ETuple(List(EAtom("op"), _anno, EAtom(op), eExp1)) =>
-        UnaryOp(op, convertExp(eExp1))
+      case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
+        UnaryOp(sp(anno), op, convertExp(eExp1))
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldExps))) =>
         RecordCreate(recordName, eRecordFieldExps.map(convertRecordField))
       case ETuple(List(EAtom("record"), _anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>

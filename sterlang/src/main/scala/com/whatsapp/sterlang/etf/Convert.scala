@@ -275,9 +275,9 @@ object Convert {
         Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
       case Exprs.NamedFun(funName, clauses) =>
         Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
-      case Exprs.UnaryOp(op, exp1) =>
+      case Exprs.UnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(Pos.NP)
+          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(p)
           case None      => sys.error(s"not supported unOp ($op) in: $e")
         }
       case Exprs.BinaryOp(p, ".", exp, Exprs.AtomLiteral(_, field)) =>
