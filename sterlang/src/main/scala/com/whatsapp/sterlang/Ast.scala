@@ -63,6 +63,8 @@ object Ast {
     Map("not" -> UNot, "bnot" -> BNot)
   val unOps2: Map[String, UOp] =
     Map("-" -> UMinus, "+" -> UPlus)
+  val unOps: Map[String, UOp] =
+    unOps1 ++ unOps2
   val binOps1: Map[String, BinOp] =
     Map(
       "orelse" -> BoolConnOp(Or),
@@ -97,6 +99,8 @@ object Ast {
       "++" -> ListOp(`++`),
       "--" -> ListOp(`--`),
     )
+  val binOps: Map[String, BinOp] =
+    binOps1 ++ binOps2
 
   sealed trait Lang
   case object ST extends Lang
