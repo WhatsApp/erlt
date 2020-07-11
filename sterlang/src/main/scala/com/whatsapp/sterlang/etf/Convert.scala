@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.etf
 
 import com.whatsapp.sterlang.{Ast, Pos}
-import com.whatsapp.sterlang.forms.{Forms, Exprs, Types, Patterns}
+import com.whatsapp.sterlang.forms.{Exprs, Forms, Guards, Patterns, Types}
 
 object Convert {
   def convert(form: Forms.Form): Option[Ast.ProgramElem] =
@@ -76,12 +76,72 @@ object Convert {
     }
 
   private def convertFunClause(clause: Exprs.Clause): Ast.Clause =
-    Ast.Clause(clause.pats.map(convertPattern), List(), convertBody(clause.body))
+    Ast.Clause(clause.pats.map(convertPattern), clause.guards.map(convertGuard), convertBody(clause.body))
 
   private def convertCaseClause(clause: Exprs.Clause): Ast.Rule =
     clause.pats match {
-      case List(pat) => Ast.Rule(convertPattern(pat), List(), convertBody(clause.body))
+      case List(pat) => Ast.Rule(convertPattern(pat), clause.guards.map(convertGuard), convertBody(clause.body))
       case _         => sys.error(s"unexpected clause: $clause")
+    }
+
+  private def convertGuard(guard: Guards.Guard): Ast.Guard =
+    Ast.Guard(guard.elems.map(convertGExpr))
+
+  private def convertGExpr(gExpr: Guards.GExpr): Ast.Exp =
+    gExpr match {
+      case Guards.GLiteral(literal) =>
+        literal match {
+          case Exprs.AtomLiteral("true") =>
+            Ast.BoolExp(true)(Pos.NP)
+          case Exprs.AtomLiteral("false") =>
+            Ast.BoolExp(false)(Pos.NP)
+          case Exprs.AtomLiteral(_) =>
+            sys.error(s"atoms are not supported in ST: $gExpr")
+          case Exprs.CharLiteral(ch) =>
+            Ast.CharExp(ch.toString)(Pos.NP)
+          case Exprs.FloatLiteral(fl) =>
+            Ast.NumberExp(fl.intValue())(Pos.NP)
+          case Exprs.IntLiteral(i) =>
+            Ast.NumberExp(i)(Pos.NP)
+          case Exprs.StringLiteral(Some(str)) =>
+            Ast.StringExp(str)(Pos.NP)
+          case Exprs.StringLiteral(None) =>
+            Ast.StringExp("???")(Pos.NP)
+        }
+      case Guards.GVariable(name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
+      case Guards.GTuple(elems) =>
+        Ast.TupleExp(elems.map(convertGExpr))(Pos.NP)
+      case Guards.GNil =>
+        Ast.ListExp(List())(Pos.NP)
+      case Guards.GCons(hd, tl) =>
+        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(Pos.NP)
+      case Guards.GMapCreate(entries) =>
+        Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(Pos.NP)
+      case Guards.GMapUpdate(exp, entries) =>
+        Ast.RecordUpdateExp(convertGExpr(exp), Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(Pos.NP))(Pos.NP)
+      case Guards.GCall(f, args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(Pos.NP), args.map(convertGExpr))(Pos.NP)
+      case Guards.GBinaryOp(".", exp, Guards.GLiteral(Exprs.AtomLiteral(field))) =>
+        Ast.SelExp(convertGExpr(exp), field)(Pos.NP)
+      case Guards.GBinaryOp(op, exp1, exp2) =>
+        Ast.binOps.get(op) match {
+          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(Pos.NP)
+          case None        => sys.error(s"not supported binOp ($op) in: $gExpr")
+        }
+      case Guards.GUnaryOp(op, exp1) =>
+        Ast.unOps.get(op) match {
+          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(Pos.NP)
+          case None      => sys.error(s"not supported unOp ($op) in: $gExpr")
+        }
+      case Guards.GBin(elems) =>
+        ???
+      case Guards.GRecordCreate(recordName, fields) =>
+        ???
+      case Guards.GRecordIndex(recordName, fieldName) =>
+        ???
+      case Guards.GRecordFieldAccess(test, recordName, fieldName) =>
+        ???
     }
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
@@ -261,6 +321,22 @@ object Convert {
     assoc match {
       case Exprs.AssocExact(Exprs.AtomLiteral(label), e) =>
         Ast.Field(label, convertExpr(e))
+      case other =>
+        sys.error(s"incorrect assoc: $other")
+    }
+
+  private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
+    assoc match {
+      case Guards.GAssocOpt(Guards.GLiteral(Exprs.AtomLiteral(label)), e) =>
+        Ast.Field(label, convertGExpr(e))
+      case other =>
+        sys.error(s"incorrect assoc: $other")
+    }
+
+  private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
+    assoc match {
+      case Guards.GAssocExact(Guards.GLiteral(Exprs.AtomLiteral(label)), e) =>
+        Ast.Field(label, convertGExpr(e))
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
