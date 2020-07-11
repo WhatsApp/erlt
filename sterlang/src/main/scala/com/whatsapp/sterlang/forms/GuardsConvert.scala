@@ -45,8 +45,8 @@ object GuardsConvert {
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertGBinElement)
         GBin(binElements)
-      case ETuple(List(EAtom("op"), _anno, EAtom(op), eTest1, eTest2)) =>
-        GBinaryOp(op, convertGExpr(eTest1), convertGExpr(eTest2))
+      case ETuple(List(EAtom("op"), anno, EAtom(op), eTest1, eTest2)) =>
+        GBinaryOp(sp(anno), op, convertGExpr(eTest1), convertGExpr(eTest2))
       case ETuple(List(EAtom("op"), _anno, EAtom(op), eTest1)) =>
         GUnaryOp(op, convertGExpr(eTest1))
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldTests))) =>

@@ -125,11 +125,11 @@ object Convert {
         Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
       case Guards.GCall(f, args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(Pos.NP), args.map(convertGExpr))(Pos.NP)
-      case Guards.GBinaryOp(".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>
-        Ast.SelExp(convertGExpr(exp), field)(Pos.NP)
-      case Guards.GBinaryOp(op, exp1, exp2) =>
+      case Guards.GBinaryOp(p, ".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>
+        Ast.SelExp(convertGExpr(exp), field)(p)
+      case Guards.GBinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(Pos.NP)
+          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $gExpr")
         }
       case Guards.GUnaryOp(op, exp1) =>

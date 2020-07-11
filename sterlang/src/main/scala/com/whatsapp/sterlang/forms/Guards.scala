@@ -28,7 +28,7 @@ object Guards {
   case class GNil(p: Pos.SP) extends GExpr
   case class GCons(p: Pos.SP, hd: GExpr, tl: GExpr) extends GExpr
   case class GBin(elems: List[GBinElement]) extends GExpr
-  case class GBinaryOp(op: String, test1: GExpr, test2: GExpr) extends GExpr
+  case class GBinaryOp(p: Pos.SP, op: String, test1: GExpr, test2: GExpr) extends GExpr
   case class GUnaryOp(op: String, test1: GExpr) extends GExpr
   case class GRecordCreate(recordName: String, fields: List[GRecordField]) extends GExpr
   case class GRecordIndex(recordName: String, fieldName: String) extends GExpr
