@@ -139,7 +139,7 @@ object ExprsConvert {
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
             RemoteFun(sp(anno), convertExp(eModule), convertExp(eName), convertExp(eArity))
           case ETuple(List(EAtom("clauses"), EList(eClauses))) =>
-            Fun(eClauses.map(convertClause))
+            Fun(sp(anno), eClauses.map(convertClause))
         }
 
       case ETuple(List(EAtom("named_fun"), _anno, EAtom(fName), EList(eClauses))) =>

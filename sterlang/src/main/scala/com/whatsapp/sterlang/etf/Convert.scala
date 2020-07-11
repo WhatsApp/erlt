@@ -274,8 +274,8 @@ object Convert {
         Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(p)
       case Exprs.RemoteFun(_, _, _, _) =>
         sys.error(s"not supported: $e")
-      case Exprs.Fun(clauses) =>
-        Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
+      case Exprs.Fun(p, clauses) =>
+        Ast.FnExp(clauses.map(convertFunClause))(p)
       case Exprs.NamedFun(funName, clauses) =>
         Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
       case Exprs.UnaryOp(p, op, exp1) =>
