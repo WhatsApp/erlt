@@ -243,8 +243,8 @@ object Convert {
         Ast.TupleExp(elems.map(convertExpr))(p)
       case Exprs.Nil(p) =>
         Ast.ListExp(List())(p)
-      case Exprs.Cons(hd, tl) =>
-        Ast.ConsExp(convertExpr(hd), convertExpr(tl))(Pos.NP)
+      case Exprs.Cons(p, hd, tl) =>
+        Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
       case Exprs.LocalEnumCtr(enum, ctr, args) =>
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>

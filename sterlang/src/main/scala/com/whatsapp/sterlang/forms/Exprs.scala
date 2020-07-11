@@ -38,7 +38,7 @@ object Exprs {
   case class Variable(p: Pos.SP, name: String) extends Expr
   case class Tuple(p: Pos.SP, elems: List[Expr]) extends Expr
   case class Nil(p: Pos.SP) extends Expr
-  case class Cons(hd: Expr, tl: Expr) extends Expr
+  case class Cons(p: Pos.SP, hd: Expr, tl: Expr) extends Expr
   case class Bin(elems: List[BinElement]) extends Expr
   case class BinaryOp(op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(op: String, exp1: Expr) extends Expr

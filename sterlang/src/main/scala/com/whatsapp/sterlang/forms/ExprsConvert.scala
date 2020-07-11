@@ -39,10 +39,10 @@ object ExprsConvert {
         Tuple(sp(anno), eExps.map(convertExp))
       case ETuple(List(EAtom("nil"), anno)) =>
         Nil(sp(anno))
-      case ETuple(List(EAtom("cons"), _anno, eExp1, eExp2)) =>
+      case ETuple(List(EAtom("cons"), anno, eExp1, eExp2)) =>
         val hd = convertExp(eExp1)
         val tl = convertExp(eExp2)
-        Cons(hd, tl)
+        Cons(sp(anno), hd, tl)
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertBinElement)
         Bin(binElements)
