@@ -26,7 +26,7 @@ object Patterns {
   case class MatchPattern(pat: Pattern, arg: Pattern) extends Pattern
   case class VariablePattern(p: Pos.SP, name: String) extends Pattern
   case class TuplePattern(p: Pos.SP, elems: List[Pattern]) extends Pattern
-  case object NilPattern extends Pattern
+  case class NilPattern(p: Pos.SP) extends Pattern
   case class ConsPattern(hd: Pattern, tl: Pattern) extends Pattern
   case class BinPattern(elems: List[BinElementPattern]) extends Pattern
   case class BinOpPattern(op: String, pat1: Pattern, pat2: Pattern) extends Pattern

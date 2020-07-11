@@ -186,8 +186,8 @@ object Convert {
         }
       case Patterns.TuplePattern(p, elems) =>
         Ast.TuplePat(elems.map(convertPattern))(p)
-      case Patterns.NilPattern =>
-        Ast.ListPat(List())(Pos.NP)
+      case Patterns.NilPattern(p) =>
+        Ast.ListPat(List())(p)
       case Patterns.ConsPattern(hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(Pos.NP)
       case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
