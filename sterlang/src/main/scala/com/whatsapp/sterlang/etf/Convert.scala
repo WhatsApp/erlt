@@ -257,10 +257,10 @@ object Convert {
         Ast.BlockExpr(convertBody(exprs))(Pos.NP)
       case Exprs.Case(expr, clauses) =>
         Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(Pos.NP)
-      case Exprs.LocalCall(Exprs.AtomLiteral(p, f), args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p), args.map(convertExpr))(Pos.NP)
-      case Exprs.LocalCall(head, args) =>
-        Ast.AppExp(convertExpr(head), args.map(convertExpr))(Pos.NP)
+      case Exprs.LocalCall(p1, Exprs.AtomLiteral(p2, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p2), args.map(convertExpr))(p1)
+      case Exprs.LocalCall(p, head, args) =>
+        Ast.AppExp(convertExpr(head), args.map(convertExpr))(p)
       case Exprs.RemoteCall(Exprs.AtomLiteral(p1, m), Exprs.AtomLiteral(p2, f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(p1 ! p2), args.map(convertExpr))(Pos.NP)
       case Exprs.RemoteCall(_, _, _) =>

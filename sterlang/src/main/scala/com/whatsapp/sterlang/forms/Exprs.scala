@@ -49,7 +49,7 @@ object Exprs {
   case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
   case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
   case class Catch(exp: Expr) extends Expr
-  case class LocalCall(fun: Expr, args: List[Expr]) extends Expr
+  case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(module: Expr, fun: Expr, args: List[Expr]) extends Expr
   case class LocalEnumCtr(enum: String, ctr: String, args: List[Expr]) extends Expr
   case class RemoteEnumCtr(module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
