@@ -44,7 +44,7 @@ object PatternsConvert {
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
         RecordPattern(recordName, eRecordFieldPatterns.map(convertRecordFieldPattern))
       case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordIndexPattern(recordName, fieldName)
       case ETuple(List(EAtom("map"), _anno, EList(eAssocs))) =>
         MapPattern(eAssocs.map(convertAssocExact))
@@ -93,7 +93,7 @@ object PatternsConvert {
   def convertRecordFieldPattern(term: ETerm): RecordFieldPattern =
     term match {
       case ETuple(List(EAtom("record_field"), _anno, eName, ePat)) =>
-        val Some(AtomLiteral(name)) = ExprsConvert.maybeLiteral(eName)
+        val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
         RecordFieldPattern(name, convertPat(ePat))
     }
 

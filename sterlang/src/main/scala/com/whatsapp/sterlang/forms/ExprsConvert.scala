@@ -55,10 +55,10 @@ object ExprsConvert {
       case ETuple(List(EAtom("record"), _anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
         RecordUpdate(convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))
       case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordIndex(recordName, fieldName)
       case ETuple(List(EAtom("record_field"), _anno, eExp, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordFieldAccess(convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), _anno, EList(eAssocs))) =>
         MapCreate(eAssocs.map(convertAssoc))
@@ -154,20 +154,20 @@ object ExprsConvert {
 
   def maybeLiteral(term: ETerm): Option[Literal] =
     term match {
-      case ETuple(List(EAtom("atom"), _anno, EAtom(value))) =>
-        Some(AtomLiteral(value))
-      case ETuple(List(EAtom("char"), _anno, ELong(value))) =>
-        Some(CharLiteral(value.charValue))
-      case ETuple(List(EAtom("float"), _anno, EDouble(value))) =>
-        Some(FloatLiteral(value))
-      case ETuple(List(EAtom("integer"), _anno, ELong(value))) =>
-        Some(IntLiteral(value.intValue))
-      case ETuple(List(EAtom("string"), _anno, EString(value))) =>
-        Some(StringLiteral(Some(value)))
-      case ETuple(List(EAtom("string"), _anno, EList(List()))) =>
-        Some(StringLiteral(Some("")))
-      case ETuple(List(EAtom("string"), _anno, EList(_))) =>
-        Some(StringLiteral(None))
+      case ETuple(List(EAtom("atom"), anno, EAtom(value))) =>
+        Some(AtomLiteral(sp(anno), value))
+      case ETuple(List(EAtom("char"), anno, ELong(value))) =>
+        Some(CharLiteral(sp(anno), value.charValue))
+      case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
+        Some(FloatLiteral(sp(anno), value))
+      case ETuple(List(EAtom("integer"), anno, ELong(value))) =>
+        Some(IntLiteral(sp(anno), value.intValue))
+      case ETuple(List(EAtom("string"), anno, EString(value))) =>
+        Some(StringLiteral(sp(anno), Some(value)))
+      case ETuple(List(EAtom("string"), anno, EList(List()))) =>
+        Some(StringLiteral(sp(anno), Some("")))
+      case ETuple(List(EAtom("string"), anno, EList(_))) =>
+        Some(StringLiteral(sp(anno), None))
       case _ => None
     }
 

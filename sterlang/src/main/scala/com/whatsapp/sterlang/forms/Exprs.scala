@@ -16,6 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf.ETerm
 import com.whatsapp.sterlang.forms.Patterns._
 import com.whatsapp.sterlang.forms.Guards._
@@ -27,11 +28,11 @@ object Exprs {
   sealed trait Expr
 
   sealed trait Literal extends Expr
-  case class AtomLiteral(atom: String) extends Literal
-  case class CharLiteral(ch: Char) extends Literal
-  case class FloatLiteral(fl: Double) extends Literal
-  case class IntLiteral(i: Int) extends Literal
-  case class StringLiteral(str: Option[String]) extends Literal
+  case class AtomLiteral(p: Pos.SP, atom: String) extends Literal
+  case class CharLiteral(p: Pos.SP, ch: Char) extends Literal
+  case class FloatLiteral(p: Pos.SP, fl: Double) extends Literal
+  case class IntLiteral(p: Pos.SP, i: Int) extends Literal
+  case class StringLiteral(p: Pos.SP, str: Option[String]) extends Literal
 
   case class Match(pat: Pattern, arg: Expr) extends Expr
   case class Variable(name: String) extends Expr

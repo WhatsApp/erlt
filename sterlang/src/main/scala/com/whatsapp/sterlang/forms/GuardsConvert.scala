@@ -52,10 +52,10 @@ object GuardsConvert {
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldTests))) =>
         GRecordCreate(recordName, eRecordFieldTests.map(convertGRecordField))
       case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         GRecordIndex(recordName, fieldName)
       case ETuple(List(EAtom("record_field"), _anno, eTest, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         GRecordFieldAccess(convertGExpr(eTest), recordName, fieldName)
       case ETuple(List(EAtom("map"), _anno, EList(eAssocs))) =>
         GMapCreate(eAssocs.map(convertGAssoc))
@@ -64,11 +64,11 @@ object GuardsConvert {
       case ETuple(
             List(EAtom("call"), _anno, ETuple(List(EAtom("remote"), _anno1, erlang, eFun)), EList(eTests))
           ) =>
-        val Some(AtomLiteral("erlang")) = ExprsConvert.maybeLiteral(erlang)
-        val Some(AtomLiteral(funName)) = ExprsConvert.maybeLiteral(eFun)
+        val Some(AtomLiteral(_, "erlang")) = ExprsConvert.maybeLiteral(erlang)
+        val Some(AtomLiteral(_, funName)) = ExprsConvert.maybeLiteral(eFun)
         GCall(funName, eTests.map(convertGExpr))
       case ETuple(List(EAtom("call"), _anno, eFun, EList(eTests))) =>
-        val Some(AtomLiteral(funName)) = ExprsConvert.maybeLiteral(eFun)
+        val Some(AtomLiteral(_, funName)) = ExprsConvert.maybeLiteral(eFun)
         GCall(funName, eTests.map(convertGExpr))
       case ETuple(
             List(
@@ -123,7 +123,7 @@ object GuardsConvert {
   def convertGRecordField(term: ETerm): GRecordField =
     term match {
       case ETuple(List(EAtom("record_field"), _anno, eName, ePat)) =>
-        val Some(AtomLiteral(name)) = ExprsConvert.maybeLiteral(eName)
+        val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
         GRecordField(name, convertGExpr(ePat))
     }
 }
