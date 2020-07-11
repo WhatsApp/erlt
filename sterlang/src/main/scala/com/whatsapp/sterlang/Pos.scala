@@ -26,7 +26,9 @@ object Pos {
   // No position
   case object NP extends P
   // Some position
-  case class SP(start: Loc, end: Loc) extends P
+  case class SP(start: Loc, end: Loc) extends P {
+    def !(other: SP): SP = mergeSP(this, other)
+  }
 
   case class Ranger(source: String, start: Loc, end: Loc) {
     import scala.collection.mutable.ArrayBuffer
