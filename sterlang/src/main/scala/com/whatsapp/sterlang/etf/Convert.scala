@@ -118,8 +118,11 @@ object Convert {
         Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
       case Guards.GMapCreate(p, entries) =>
         Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(p)
-      case Guards.GMapUpdate(exp, entries) =>
-        Ast.RecordUpdateExp(convertGExpr(exp), Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(Pos.NP))(Pos.NP)
+      case Guards.GMapUpdate(p, exp, entries) =>
+        // this is not present in Erlang. Approximating
+        val recExp = convertGExpr(exp)
+        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
       case Guards.GCall(f, args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(Pos.NP), args.map(convertGExpr))(Pos.NP)
       case Guards.GBinaryOp(".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>

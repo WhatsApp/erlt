@@ -59,8 +59,8 @@ object GuardsConvert {
         GRecordFieldAccess(convertGExpr(eTest), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         GMapCreate(sp(anno), eAssocs.map(convertGAssoc))
-      case ETuple(List(EAtom("map"), _anno, eExp, EList(eAssocs))) =>
-        GMapUpdate(convertGExpr(eExp), eAssocs.map(convertGAssoc))
+      case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
+        GMapUpdate(sp(anno), convertGExpr(eExp), eAssocs.map(convertGAssoc))
       case ETuple(
             List(EAtom("call"), _anno, ETuple(List(EAtom("remote"), _anno1, erlang, eFun)), EList(eTests))
           ) =>
