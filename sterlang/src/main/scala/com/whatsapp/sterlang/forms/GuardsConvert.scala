@@ -34,8 +34,8 @@ object GuardsConvert {
     term match {
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         GVariable(sp(anno), name)
-      case ETuple(List(EAtom("tuple"), _anno, EList(eTests))) =>
-        GTuple(eTests.map(convertGExpr))
+      case ETuple(List(EAtom("tuple"), anno, EList(eTests))) =>
+        GTuple(sp(anno), eTests.map(convertGExpr))
       case ETuple(List(EAtom("nil"), _anno)) =>
         GNil
       case ETuple(List(EAtom("cons"), _anno, eTest1, eTest2)) =>

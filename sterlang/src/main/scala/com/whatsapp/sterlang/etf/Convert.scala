@@ -110,8 +110,8 @@ object Convert {
         }
       case Guards.GVariable(p, name) =>
         Ast.VarExp(new Ast.LocalVarName(name))(p)
-      case Guards.GTuple(elems) =>
-        Ast.TupleExp(elems.map(convertGExpr))(Pos.NP)
+      case Guards.GTuple(p, elems) =>
+        Ast.TupleExp(elems.map(convertGExpr))(p)
       case Guards.GNil =>
         Ast.ListExp(List())(Pos.NP)
       case Guards.GCons(hd, tl) =>
