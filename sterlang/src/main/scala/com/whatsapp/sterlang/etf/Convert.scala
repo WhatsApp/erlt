@@ -163,10 +163,10 @@ object Convert {
     p match {
       case Patterns.MatchPattern(p1, p2) =>
         Ast.AndPat(convertPattern(p1), convertPattern(p2))(Pos.NP)
-      case Patterns.VariablePattern("_") =>
-        Ast.WildPat()(Pos.NP)
-      case Patterns.VariablePattern(name) =>
-        Ast.VarPat(name)(Pos.NP)
+      case Patterns.VariablePattern(p, "_") =>
+        Ast.WildPat()(p)
+      case Patterns.VariablePattern(p, name) =>
+        Ast.VarPat(name)(p)
       case Patterns.LiteralPattern(literal) =>
         literal match {
           case Exprs.AtomLiteral(p, "true") =>

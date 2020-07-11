@@ -16,6 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf.ETerm
 import com.whatsapp.sterlang.forms.Exprs._
 
@@ -23,7 +24,7 @@ object Patterns {
   sealed trait Pattern
   case class LiteralPattern(literal: Literal) extends Pattern
   case class MatchPattern(pat: Pattern, arg: Pattern) extends Pattern
-  case class VariablePattern(name: String) extends Pattern
+  case class VariablePattern(p: Pos.SP, name: String) extends Pattern
   case class TuplePattern(elems: List[Pattern]) extends Pattern
   case object NilPattern extends Pattern
   case class ConsPattern(hd: Pattern, tl: Pattern) extends Pattern

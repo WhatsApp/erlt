@@ -26,8 +26,8 @@ object PatternsConvert {
     term match {
       case ETuple(List(EAtom("match"), _anno, ePat1, ePat2)) =>
         MatchPattern(convertPat(ePat1), convertPat(ePat2))
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        VariablePattern(name)
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        VariablePattern(sp(anno), name)
       case ETuple(List(EAtom("tuple"), _anno, EList(ePats))) =>
         TuplePattern(ePats.map(convertPat))
       case ETuple(List(EAtom("nil"), _anno)) =>
