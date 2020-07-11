@@ -192,8 +192,8 @@ object Convert {
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
       case Patterns.LocalEnumCtrPattern(p, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
-      case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(Pos.NP)
+      case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
       case Patterns.MapPattern(assocs) =>
         val pats = assocs map {
           case (Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)), pat) =>

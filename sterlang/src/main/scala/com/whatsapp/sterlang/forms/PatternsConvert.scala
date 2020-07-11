@@ -61,7 +61,7 @@ object PatternsConvert {
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(
                 List(
                   EAtom("remote"),
@@ -74,7 +74,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtrPattern(module, enum, ctr, eArgs.map(convertPat))
+        RemoteEnumCtrPattern(sp(anno), module, enum, ctr, eArgs.map(convertPat))
       case _ =>
         ExprsConvert.maybeLiteral(term) match {
           case Some(literal) =>
