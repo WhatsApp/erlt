@@ -132,9 +132,9 @@ object Convert {
           case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $gExpr")
         }
-      case Guards.GUnaryOp(op, exp1) =>
+      case Guards.GUnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(Pos.NP)
+          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(p)
           case None      => sys.error(s"not supported unOp ($op) in: $gExpr")
         }
       case Guards.GLocalEnumCtr(enum, ctr, args) =>
