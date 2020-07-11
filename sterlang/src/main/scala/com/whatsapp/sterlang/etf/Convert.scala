@@ -161,8 +161,8 @@ object Convert {
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
     p match {
-      case Patterns.MatchPattern(p1, p2) =>
-        Ast.AndPat(convertPattern(p1), convertPattern(p2))(Pos.NP)
+      case Patterns.MatchPattern(p, p1, p2) =>
+        Ast.AndPat(convertPattern(p1), convertPattern(p2))(p)
       case Patterns.VariablePattern(p, "_") =>
         Ast.WildPat()(p)
       case Patterns.VariablePattern(p, name) =>

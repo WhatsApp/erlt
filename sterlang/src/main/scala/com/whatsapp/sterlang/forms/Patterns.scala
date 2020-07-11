@@ -23,7 +23,7 @@ import com.whatsapp.sterlang.forms.Exprs._
 object Patterns {
   sealed trait Pattern
   case class LiteralPattern(literal: Literal) extends Pattern
-  case class MatchPattern(pat: Pattern, arg: Pattern) extends Pattern
+  case class MatchPattern(p: Pos.SP, pat: Pattern, arg: Pattern) extends Pattern
   case class VariablePattern(p: Pos.SP, name: String) extends Pattern
   case class TuplePattern(p: Pos.SP, elems: List[Pattern]) extends Pattern
   case class NilPattern(p: Pos.SP) extends Pattern

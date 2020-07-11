@@ -24,8 +24,8 @@ import com.whatsapp.sterlang.forms.Patterns._
 object PatternsConvert {
   def convertPat(term: ETerm): Pattern =
     term match {
-      case ETuple(List(EAtom("match"), _anno, ePat1, ePat2)) =>
-        MatchPattern(convertPat(ePat1), convertPat(ePat2))
+      case ETuple(List(EAtom("match"), anno, ePat1, ePat2)) =>
+        MatchPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         VariablePattern(sp(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(ePats))) =>
