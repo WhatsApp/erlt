@@ -252,7 +252,10 @@ object Convert {
       case Exprs.MapCreate(p, entries) =>
         Ast.RecordExp(entries.map(assocCreateToFieldExp))(p)
       case Exprs.MapUpdate(p, exp, entries) =>
-        Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(p)
+        val recExp = convertExpr(exp)
+        // this is not present in Erlang. Approximating
+        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(assocUpdateToFieldExp))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(expr, clauses) =>
