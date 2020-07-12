@@ -2004,6 +2004,11 @@ modify_anno1({attribute, A, opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
     {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
     {{attribute, A1, opaque, {TypeName, TypeDef1, Args1}}, Ac3};
+modify_anno1({attribute, A, enum, {TypeName, TypeDef, Args}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
+    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
+    {{attribute, A1, enum, {TypeName, TypeDef1, Args1}}, Ac3};
 modify_anno1({attribute, A, Attr, Val}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {{attribute, A1, Attr, Val}, Ac1};
