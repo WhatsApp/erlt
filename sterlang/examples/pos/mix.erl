@@ -119,7 +119,7 @@ rec_tricky() ->
     {}.
 
 even(I) -> (I == 0) orelse odd(I - 1).
-odd(I) -> (I <> 0) andalso even(I - 1).
+odd(I) -> (I =/= 0) andalso even(I - 1).
 
 loop({}) ->
     Foo = fun (X) -> X.a end,

@@ -199,7 +199,7 @@ dec_opt2(Opt) ->
 
 dec_opt3(Opt, V1, V2) ->
     my_option.some{F} = Opt,
-    [F(V1), F(V2)].
+    [F(V1) | [F(V2)]].
 
 dec_opt4(X, Y, Z) ->
     Id = fun (X) -> X end,

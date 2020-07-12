@@ -176,11 +176,6 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
     )
 
     testExp(
-      "X <> Y",
-      BinOpExp(Cmp(NEq), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
-    )
-
-    testExp(
       "X + Y",
       BinOpExp(Arith(Plus), VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP))(NP),
     )

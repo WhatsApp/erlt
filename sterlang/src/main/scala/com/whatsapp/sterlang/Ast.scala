@@ -86,7 +86,6 @@ object Ast {
       "*" -> Arith(Times),
       "-" -> Arith(Minus),
       "+" -> Arith(Plus),
-      "<>" -> Cmp(NEq),
       "=/=" -> Cmp(NEq),
       "/=" -> Cmp(NEq),
       "==" -> Cmp(Eq),
