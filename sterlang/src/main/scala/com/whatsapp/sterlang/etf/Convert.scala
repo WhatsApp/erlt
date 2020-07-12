@@ -56,12 +56,12 @@ object Convert {
             val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(Pos.NP)
             Some(Ast.OpaqueElem(opaque))
         }
-      case Forms.FunctionSpec(Forms.Spec, (name, arity), types) =>
+      case Forms.FunctionSpec(specP, Forms.Spec, (name, arity), types) =>
         types match {
           case List(Types.FunctionType(p, params, res)) =>
             val funType = Ast.FunType(params.map(convertType), convertType(res))(p)
             val funName = new Ast.LocalFunName(name, arity)
-            val spec = Ast.Spec(funName, funType)(Pos.NP)
+            val spec = Ast.Spec(funName, funType)(specP)
             Some(Ast.SpecElem(spec))
           case other =>
             sys.error(s"Unexpected spec: $form")
@@ -71,7 +71,7 @@ object Convert {
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(Pos.NP)
         Some(Ast.FunElem(fun))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
-          Forms.FunctionSpec(Forms.Callback, _, _) =>
+          Forms.FunctionSpec(_, Forms.Callback, _, _) =>
         None
     }
 

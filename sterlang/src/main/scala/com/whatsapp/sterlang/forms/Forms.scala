@@ -16,8 +16,8 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf.ETerm
-
 import com.whatsapp.sterlang.forms.Types._
 import com.whatsapp.sterlang.forms.Exprs._
 
@@ -47,7 +47,7 @@ object Forms {
   case class File(file: String) extends Form
   case class RecordDecl(name: String, fields: List[RecordFieldDecl]) extends Form
   case class TypeDecl(typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type) extends Form
-  case class FunctionSpec(specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
+  case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
   case class FunctionDecl(name: String, arity: Int, clauses: List[Clause]) extends Form
   case class Require(modules: List[String]) extends Form
   case object EOF extends Form

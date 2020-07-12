@@ -105,7 +105,7 @@ object FormsConvert {
       case ETuple(
             List(
               EAtom("attribute"),
-              _anno,
+              anno,
               EAtom(attr @ ("spec" | "callback")),
               ETuple(List(eFunId, EList(eTypeList))),
             )
@@ -116,7 +116,7 @@ object FormsConvert {
         }
         val funId = convertSpecFunId(eFunId)
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
-        FunctionSpec(specAttr, funId, typeList)
+        FunctionSpec(sp(anno), specAttr, funId, typeList)
       // af_function_decl
       case ETuple(List(EAtom("function"), _anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
