@@ -58,8 +58,6 @@ object Absyn {
   case class UOpExp(operator: UOp, argument: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class BinOpExp(operator: BinOp, argument1: Exp, argument2: Exp)(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
-  // TODO: this can be unified with [CaseExp]
-  case class IfExp(guard: Exp, thenBranch: Exp, elseBranch: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class CaseExp(selector: Exp, branches: List[Branch])(val typ: Type, val sourceLocation: Pos.P) extends Exp
 
   // TODO: is [[SeqExp]] significantly different than [[BlockExp]]?

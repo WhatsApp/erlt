@@ -16,4 +16,7 @@
 -module(e08).
 foo(B, R) ->
     % circularity
-    if B then R.x else R.
+    case B of
+        true -> R.x;
+        false -> R
+    end.

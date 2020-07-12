@@ -135,10 +135,6 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printExp(exp1)
         printExp(exp2)
 
-      case A.IfExp(exp1, exp2, exp3) =>
-        printExp(exp1)
-        printExp(exp2)
-        printExp(exp3)
       case A.CaseExp(selector, branches) =>
         printExp(selector)
         branches.foreach { branch =>

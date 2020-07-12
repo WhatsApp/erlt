@@ -2,6 +2,7 @@
 -module(n04).
 %% even simpler example of row circularity
 foo(B, R) ->
-    if B
-    then #{ self => R }
-    else R.
+    case B of
+        true -> #{ self => R };
+        false -> R
+    end.

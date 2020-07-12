@@ -155,7 +155,6 @@ object Ast {
 
   sealed trait Exp { val p: Pos.P }
   case class BlockExpr(body: Body)(val p: Pos.P) extends Exp
-  case class IfExp(exp1: Exp, exp2: Exp, exp3: Exp)(val p: Pos.P) extends Exp
   case class RecordUpdateExp(exp: Exp, delta: RecordExp)(val p: Pos.P) extends Exp
   case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val p: Pos.P) extends Exp
   case class UOpExp(uOp: UOp, exp: Exp)(val p: Pos.P) extends Exp
