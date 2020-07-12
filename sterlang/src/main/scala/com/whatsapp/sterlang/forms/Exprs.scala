@@ -16,6 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf.ETerm
 import com.whatsapp.sterlang.forms.Patterns._
 import com.whatsapp.sterlang.forms.Guards._
@@ -27,43 +28,43 @@ object Exprs {
   sealed trait Expr
 
   sealed trait Literal extends Expr
-  case class AtomLiteral(atom: String) extends Literal
-  case class CharLiteral(ch: Char) extends Literal
-  case class FloatLiteral(fl: Double) extends Literal
-  case class IntLiteral(i: Int) extends Literal
-  case class StringLiteral(str: Option[String]) extends Literal
+  case class AtomLiteral(p: Pos.SP, atom: String) extends Literal
+  case class CharLiteral(p: Pos.SP, ch: Char) extends Literal
+  case class FloatLiteral(p: Pos.SP, fl: Double) extends Literal
+  case class IntLiteral(p: Pos.SP, i: Int) extends Literal
+  case class StringLiteral(p: Pos.SP, str: Option[String]) extends Literal
 
   case class Match(pat: Pattern, arg: Expr) extends Expr
-  case class Variable(name: String) extends Expr
-  case class Tuple(elems: List[Expr]) extends Expr
-  case object Nil extends Expr
-  case class Cons(hd: Expr, tl: Expr) extends Expr
+  case class Variable(p: Pos.SP, name: String) extends Expr
+  case class Tuple(p: Pos.SP, elems: List[Expr]) extends Expr
+  case class Nil(p: Pos.SP) extends Expr
+  case class Cons(p: Pos.SP, hd: Expr, tl: Expr) extends Expr
   case class Bin(elems: List[BinElement]) extends Expr
-  case class BinaryOp(op: String, exp1: Expr, exp2: Expr) extends Expr
-  case class UnaryOp(op: String, exp1: Expr) extends Expr
+  case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
+  case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
   case class RecordCreate(recordName: String, fields: List[RecordField]) extends Expr
   case class RecordUpdate(exp1: Expr, recordName: String, fields: List[RecordField]) extends Expr
   case class RecordIndex(recordName: String, fieldName: String) extends Expr
   case class RecordFieldAccess(exp: Expr, recordName: String, fieldName: String) extends Expr
-  case class MapCreate(entries: List[Assoc]) extends Expr
-  case class MapUpdate(exp: Expr, entries: List[Assoc]) extends Expr
+  case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
+  case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
   case class Catch(exp: Expr) extends Expr
-  case class LocalCall(fun: Expr, args: List[Expr]) extends Expr
-  case class RemoteCall(module: Expr, fun: Expr, args: List[Expr]) extends Expr
-  case class LocalEnumCtr(enum: String, ctr: String, args: List[Expr]) extends Expr
-  case class RemoteEnumCtr(module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
+  case class RemoteCall(p: Pos.SP, module: Expr, fun: Expr, args: List[Expr]) extends Expr
+  case class LocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class RemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
   case class ListComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
-  case class Block(exprs: List[Expr]) extends Expr
+  case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
   case class If(clauses: List[Clause]) extends Expr
-  case class Case(expr: Expr, clauses: List[Clause]) extends Expr
+  case class Case(p: Pos.SP, expr: Expr, clauses: List[Clause]) extends Expr
   case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
-  case class LocalFun(funName: String, arity: Int) extends Expr
-  case class RemoteFun(module: Expr, funName: Expr, arity: Expr) extends Expr
-  case class Fun(clauses: List[Clause]) extends Expr
-  case class NamedFun(funName: String, clauses: List[Clause]) extends Expr
+  case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr
+  case class RemoteFun(p: Pos.SP, module: Expr, funName: Expr, arity: Expr) extends Expr
+  case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
+  case class NamedFun(p: Pos.SP, funName: String, clauses: List[Clause]) extends Expr
 
   // TODO - proper size
   case class BinElement(expr: Expr, size: ETerm, typeSpecifiers: TypeSpecifiers)

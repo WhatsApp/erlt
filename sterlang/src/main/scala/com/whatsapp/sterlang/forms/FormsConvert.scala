@@ -17,7 +17,6 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.etf._
-
 import com.whatsapp.sterlang.forms.Forms._
 
 object FormsConvert {
@@ -84,7 +83,7 @@ object FormsConvert {
       case ETuple(
             List(
               EAtom("attribute"),
-              _anno,
+              anno,
               EAtom(attr @ ("type" | "opaque" | "enum")),
               ETuple(List(EAtom(typeName), absType, EList(vars))),
             )
@@ -95,8 +94,8 @@ object FormsConvert {
           case "enum"   => Enum
         }
         val abstractType = TypesConvert.convertType(absType)
-        val params = vars.map(convertVar)
-        TypeDecl(typeAttr, typeName, params, abstractType)
+        val params = vars.map(TypesConvert.convertVar)
+        TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
             List(EAtom("attribute"), _anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
@@ -106,7 +105,7 @@ object FormsConvert {
       case ETuple(
             List(
               EAtom("attribute"),
-              _anno,
+              anno,
               EAtom(attr @ ("spec" | "callback")),
               ETuple(List(eFunId, EList(eTypeList))),
             )
@@ -117,21 +116,15 @@ object FormsConvert {
         }
         val funId = convertSpecFunId(eFunId)
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
-        FunctionSpec(specAttr, funId, typeList)
+        FunctionSpec(sp(anno), specAttr, funId, typeList)
       // af_function_decl
-      case ETuple(List(EAtom("function"), _anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
+      case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
-        FunctionDecl(name, arity.intValue, clauses)
+        FunctionDecl(sp(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
       case _ =>
         sys.error(s"unexpected term: $term")
-    }
-
-  def convertVar(term: ETerm): String =
-    term match {
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        name
     }
 
   def convertIdWithArity(term: ETerm): IdWithArity =

@@ -24,16 +24,16 @@ import com.whatsapp.sterlang.forms.Patterns._
 object PatternsConvert {
   def convertPat(term: ETerm): Pattern =
     term match {
-      case ETuple(List(EAtom("match"), _anno, ePat1, ePat2)) =>
-        MatchPattern(convertPat(ePat1), convertPat(ePat2))
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        VariablePattern(name)
-      case ETuple(List(EAtom("tuple"), _anno, EList(ePats))) =>
-        TuplePattern(ePats.map(convertPat))
-      case ETuple(List(EAtom("nil"), _anno)) =>
-        NilPattern
-      case ETuple(List(EAtom("cons"), _anno, ePat1, ePat2)) =>
-        ConsPattern(convertPat(ePat1), convertPat(ePat2))
+      case ETuple(List(EAtom("match"), anno, ePat1, ePat2)) =>
+        MatchPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        VariablePattern(sp(anno), name)
+      case ETuple(List(EAtom("tuple"), anno, EList(ePats))) =>
+        TuplePattern(sp(anno), ePats.map(convertPat))
+      case ETuple(List(EAtom("nil"), anno)) =>
+        NilPattern(sp(anno))
+      case ETuple(List(EAtom("cons"), anno, ePat1, ePat2)) =>
+        ConsPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertPatternBinElement)
         BinPattern(binElements)
@@ -44,24 +44,24 @@ object PatternsConvert {
       case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
         RecordPattern(recordName, eRecordFieldPatterns.map(convertRecordFieldPattern))
       case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordIndexPattern(recordName, fieldName)
-      case ETuple(List(EAtom("map"), _anno, EList(eAssocs))) =>
-        MapPattern(eAssocs.map(convertAssocExact))
+      case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
+        MapPattern(sp(anno), eAssocs.map(convertAssocExact))
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtrPattern(enum, ctr, eArgs.map(convertPat))
+        LocalEnumCtrPattern(sp(anno), enum, ctr, eArgs.map(convertPat))
       case ETuple(
             List(
               EAtom("enum"),
-              _anno,
+              anno,
               ETuple(
                 List(
                   EAtom("remote"),
@@ -74,7 +74,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtrPattern(module, enum, ctr, eArgs.map(convertPat))
+        RemoteEnumCtrPattern(sp(anno), module, enum, ctr, eArgs.map(convertPat))
       case _ =>
         ExprsConvert.maybeLiteral(term) match {
           case Some(literal) =>
@@ -93,7 +93,7 @@ object PatternsConvert {
   def convertRecordFieldPattern(term: ETerm): RecordFieldPattern =
     term match {
       case ETuple(List(EAtom("record_field"), _anno, eName, ePat)) =>
-        val Some(AtomLiteral(name)) = ExprsConvert.maybeLiteral(eName)
+        val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
         RecordFieldPattern(name, convertPat(ePat))
     }
 

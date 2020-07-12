@@ -24,19 +24,18 @@ object TypesConvert {
     term match {
       // af_annotated_type
       case ETuple(List(EAtom("ann_type"), _anno, EList(List(af_anno, tp)))) =>
-        AnnotatedType(FormsConvert.convertVar(af_anno), convertType(tp))
+        AnnotatedType(convertVar(af_anno), convertType(tp))
       // af_atom
       case ETuple(List(EAtom("atom"), _anno, EAtom(atomVal))) =>
         AtomType(atomVal)
       // af_bitstring_type
-      case ETuple(List(EAtom("type"), _anno, EAtom("binary"), EList(eTypes))) =>
+      case ETuple(List(EAtom("type"), anno, EAtom("binary"), EList(eTypes))) =>
         val types = eTypes.map(convertType)
         val intTypes: List[SingletonIntegerType] = types.map {
           case intType: SingletonIntegerType => intType
           case other                         => sys.error(s"cannot parse: $other")
         }
-        val result = BitstringType(intTypes)
-        result
+        BitstringType(sp(anno), intTypes)
       // af_empty_list_type
       case ETuple(List(EAtom("type"), _anno, EAtom("nil"), EList(List()))) =>
         EmptyListType
@@ -46,13 +45,13 @@ object TypesConvert {
       case ETuple(
             List(
               EAtom("type"),
-              _anno,
+              anno,
               EAtom("enum"),
               ETuple(List(EAtom("atom"), _anno1, EAtom(ctrName))),
               EList(args),
             )
           ) =>
-        EnumCtr(ctrName, args.map(convertType))
+        EnumCtr(sp(anno), ctrName, args.map(convertType))
       // af_fun_type
       case ETuple(
             List(
@@ -67,12 +66,12 @@ object TypesConvert {
       case ETuple(
             List(
               EAtom("type"),
-              _anno,
+              anno,
               EAtom("fun"),
               EList(List(ETuple(List(EAtom("type"), _anno1, EAtom("product"), EList(args))), resultType)),
             )
           ) =>
-        FunctionType(args.map(convertType), convertType(resultType))
+        FunctionType(sp(anno), args.map(convertType), convertType(resultType))
       // af_integer_range_type
       case ETuple(List(EAtom("type"), _anno, EAtom("range"), EList(List(eType1, eType2)))) =>
         val type1 = convertType(eType1)
@@ -84,14 +83,15 @@ object TypesConvert {
       case ETuple(List(EAtom("type"), _anno, EAtom("map"), EAtom("any"))) =>
         AnyMap
       // af_map_type
-      case ETuple(List(EAtom("type"), _anno, EAtom("map"), EList(assocTypes))) =>
-        AssocMap(assocTypes.map(convertAssocType))
+      case ETuple(List(EAtom("type"), anno, EAtom("map"), EList(assocTypes))) =>
+        AssocMap(sp(anno), assocTypes.map(convertAssocType))
       // af_record_type
       case ETuple(List(EAtom("type"), _anno, EAtom("record"), EList(recordNameLit :: eFieldTypes))) =>
         RecordType(FormsConvert.convertAtomLit(recordNameLit), eFieldTypes.map(convertRecordFieldType))
       // af_remote_type
-      case ETuple(List(EAtom("remote_type"), _anno, EList(List(moduleLit, typeNameLit, EList(args))))) =>
+      case ETuple(List(EAtom("remote_type"), anno, EList(List(moduleLit, typeNameLit, EList(args))))) =>
         RemoteType(
+          sp(anno),
           FormsConvert.convertAtomLit(moduleLit),
           FormsConvert.convertAtomLit(typeNameLit),
           args.map(convertType),
@@ -112,25 +112,31 @@ object TypesConvert {
         val intType2 = type2.asInstanceOf[SingletonIntegerType]
         BinaryOpIntegerType(op, intType1, intType2)
       // af_tuple_type
-      case ETuple(List(EAtom("type"), _anno, EAtom("tuple"), EAtom("any"))) =>
-        TupleTypeAny
-      case ETuple(List(EAtom("type"), _anno, EAtom("tuple"), EList(types))) =>
-        TupleTypeTyped(types.map(convertType))
+      case ETuple(List(EAtom("type"), anno, EAtom("tuple"), EAtom("any"))) =>
+        TupleTypeAny(sp(anno))
+      case ETuple(List(EAtom("type"), anno, EAtom("tuple"), EList(types))) =>
+        TupleTypeTyped(sp(anno), types.map(convertType))
       // af_type_union
       case ETuple(List(EAtom("type"), _anno, EAtom("union"), EList(types))) =>
         UnionType(types.map(convertType))
       // af_type_variable
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        TypeVariable(name)
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        TypeVariable(sp(anno), name)
       // af_user_defined_type
-      case ETuple(List(EAtom("user_type"), _anno, EAtom(name), EList(params))) =>
-        UserType(name, params.map(convertType))
+      case ETuple(List(EAtom("user_type"), anno, EAtom(name), EList(params))) =>
+        UserType(sp(anno), name, params.map(convertType))
       //  af_predefined_type -- should be matched very last!!!
-      case ETuple(List(EAtom("type"), _anno, EAtom(name), EList(types))) =>
+      case ETuple(List(EAtom("type"), anno, EAtom(name), EList(types))) =>
         assert(predefinedTypes(name), s"bad name: $name")
-        PredefinedType(name, types.map(convertType))
+        PredefinedType(sp(anno), name, types.map(convertType))
       case _ =>
         sys.error(s"unexpected term for type: $term")
+    }
+
+  def convertVar(term: ETerm): Types.TypeVariable =
+    term match {
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        Types.TypeVariable(sp(anno), name)
     }
 
   def convertAssocType(term: ETerm): AssocType =
@@ -153,13 +159,12 @@ object TypesConvert {
       case ETuple(
             List(
               EAtom("type"),
-              _anno,
+              anno,
               EAtom("fun"),
               EList(List(ETuple(List(EAtom("type"), _anno1, EAtom("product"), EList(args))), resultType)),
             )
           ) =>
-        FunctionType(args.map(convertType), convertType(resultType))
-
+        FunctionType(sp(anno), args.map(convertType), convertType(resultType))
     }
 
   def convertFunSpecType(term: ETerm): FunSpecType =
@@ -168,12 +173,12 @@ object TypesConvert {
       case ETuple(
             List(
               EAtom("type"),
-              _anno,
+              anno,
               EAtom("fun"),
               EList(List(ETuple(List(EAtom("type"), _anno1, EAtom("product"), EList(args))), resultType)),
             )
           ) =>
-        FunctionType(args.map(convertType), convertType(resultType))
+        FunctionType(sp(anno), args.map(convertType), convertType(resultType))
       case ETuple(
             List(EAtom("type"), _anno, EAtom("bounded_fun"), EList(List(eFunType, EList(constraints))))
           ) =>
@@ -185,7 +190,7 @@ object TypesConvert {
       case ETuple(
             List(EAtom("type"), _anno, EAtom("constraint"), EList(List(isSubtypeLit, EList(List(eVar, t)))))
           ) =>
-        val v = FormsConvert.convertVar(eVar)
+        val v = convertVar(eVar)
         val "is_subtype" = FormsConvert.convertAtomLit(isSubtypeLit)
         val tp = convertType(t)
         Constraint(v, tp)

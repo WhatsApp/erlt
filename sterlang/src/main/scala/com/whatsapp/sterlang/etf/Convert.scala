@@ -36,8 +36,8 @@ object Convert {
         Some(Ast.ExportTypeElem(ids))
       case Forms.ImportType(module, ids) =>
         Some(Ast.ImportTypeElem(module, ids.map { case (name, arity) => new Ast.LocalFunName(name, arity) }))
-      case Forms.TypeDecl(typeAttr, typeName, params, body) =>
-        val typeParams = params.map(Ast.TypeVar(_)(Pos.NP))
+      case Forms.TypeDecl(p, typeAttr, typeName, params, body) =>
+        val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         typeAttr match {
           case Forms.Enum =>
             val enumCons =
@@ -47,31 +47,31 @@ object Convert {
                 case single =>
                   List(enumCon(single))
               }
-            val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(Pos.NP)
+            val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(p)
             Some(Ast.EnumElem(enumDef))
           case Forms.Type =>
-            val typeAlias = Ast.TypeAlias(typeName, typeParams, convertType(body))(Pos.NP)
+            val typeAlias = Ast.TypeAlias(typeName, typeParams, convertType(body))(p)
             Some(Ast.TypeAliasElem(typeAlias))
           case Forms.Opaque =>
-            val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(Pos.NP)
+            val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(p)
             Some(Ast.OpaqueElem(opaque))
         }
-      case Forms.FunctionSpec(Forms.Spec, (name, arity), types) =>
+      case Forms.FunctionSpec(specP, Forms.Spec, (name, arity), types) =>
         types match {
-          case List(Types.FunctionType(params, res)) =>
-            val funType = Ast.FunType(params.map(convertType), convertType(res))(Pos.NP)
+          case List(Types.FunctionType(p, params, res)) =>
+            val funType = Ast.FunType(params.map(convertType), convertType(res))(p)
             val funName = new Ast.LocalFunName(name, arity)
-            val spec = Ast.Spec(funName, funType)(Pos.NP)
+            val spec = Ast.Spec(funName, funType)(specP)
             Some(Ast.SpecElem(spec))
           case other =>
             sys.error(s"Unexpected spec: $form")
         }
-      case Forms.FunctionDecl(name, arity, clauses) =>
+      case Forms.FunctionDecl(p, name, arity, clauses) =>
         val funName = new Ast.LocalFunName(name, arity)
-        val fun = Ast.Fun(funName, clauses.map(convertFunClause))(Pos.NP)
+        val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
-          Forms.FunctionSpec(Forms.Callback, _, _) =>
+          Forms.FunctionSpec(_, Forms.Callback, _, _) =>
         None
     }
 
@@ -91,53 +91,56 @@ object Convert {
     gExpr match {
       case Guards.GLiteral(literal) =>
         literal match {
-          case Exprs.AtomLiteral("true") =>
-            Ast.BoolExp(true)(Pos.NP)
-          case Exprs.AtomLiteral("false") =>
-            Ast.BoolExp(false)(Pos.NP)
-          case Exprs.AtomLiteral(_) =>
+          case Exprs.AtomLiteral(p, "true") =>
+            Ast.BoolExp(true)(p)
+          case Exprs.AtomLiteral(p, "false") =>
+            Ast.BoolExp(false)(p)
+          case Exprs.AtomLiteral(_, _) =>
             sys.error(s"atoms are not supported in ST: $gExpr")
-          case Exprs.CharLiteral(ch) =>
-            Ast.CharExp(ch.toString)(Pos.NP)
-          case Exprs.FloatLiteral(fl) =>
-            Ast.NumberExp(fl.intValue())(Pos.NP)
-          case Exprs.IntLiteral(i) =>
-            Ast.NumberExp(i)(Pos.NP)
-          case Exprs.StringLiteral(Some(str)) =>
-            Ast.StringExp(str)(Pos.NP)
-          case Exprs.StringLiteral(None) =>
-            Ast.StringExp("???")(Pos.NP)
+          case Exprs.CharLiteral(p, ch) =>
+            Ast.CharExp(ch.toString)(p)
+          case Exprs.FloatLiteral(p, fl) =>
+            Ast.NumberExp(fl.intValue())(p)
+          case Exprs.IntLiteral(p, i) =>
+            Ast.NumberExp(i)(p)
+          case Exprs.StringLiteral(p, Some(str)) =>
+            Ast.StringExp(str)(p)
+          case Exprs.StringLiteral(p, None) =>
+            Ast.StringExp("???")(p)
         }
-      case Guards.GVariable(name) =>
-        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
-      case Guards.GTuple(elems) =>
-        Ast.TupleExp(elems.map(convertGExpr))(Pos.NP)
-      case Guards.GNil =>
-        Ast.ListExp(List())(Pos.NP)
-      case Guards.GCons(hd, tl) =>
-        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(Pos.NP)
-      case Guards.GMapCreate(entries) =>
-        Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(Pos.NP)
-      case Guards.GMapUpdate(exp, entries) =>
-        Ast.RecordUpdateExp(convertGExpr(exp), Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(Pos.NP))(Pos.NP)
-      case Guards.GCall(f, args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(Pos.NP), args.map(convertGExpr))(Pos.NP)
-      case Guards.GBinaryOp(".", exp, Guards.GLiteral(Exprs.AtomLiteral(field))) =>
-        Ast.SelExp(convertGExpr(exp), field)(Pos.NP)
-      case Guards.GBinaryOp(op, exp1, exp2) =>
+      case Guards.GVariable(p, name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(p)
+      case Guards.GTuple(p, elems) =>
+        Ast.TupleExp(elems.map(convertGExpr))(p)
+      case Guards.GNil(p) =>
+        Ast.ListExp(List())(p)
+      case Guards.GCons(p, hd, tl) =>
+        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
+      case Guards.GMapCreate(p, entries) =>
+        Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(p)
+      case Guards.GMapUpdate(p, exp, entries) =>
+        // this is not present in Erlang. Approximating
+        val recExp = convertGExpr(exp)
+        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
+      case Guards.GCall(p, (fp, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(fp), args.map(convertGExpr))(p)
+      case Guards.GBinaryOp(p, ".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>
+        Ast.SelExp(convertGExpr(exp), field)(p)
+      case Guards.GBinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(Pos.NP)
+          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $gExpr")
         }
-      case Guards.GUnaryOp(op, exp1) =>
+      case Guards.GUnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(Pos.NP)
+          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(p)
           case None      => sys.error(s"not supported unOp ($op) in: $gExpr")
         }
-      case Guards.GLocalEnumCtr(enum, ctr, args) =>
-        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(Pos.NP)
-      case Guards.GRemoteEnumCtr(module, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(Pos.NP)
+      case Guards.GLocalEnumCtr(p, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(p)
+      case Guards.GRemoteEnumCtr(p, module, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
       case Guards.GBin(elems) =>
         ???
       case Guards.GRecordCreate(recordName, fields) =>
@@ -156,52 +159,53 @@ object Convert {
       case Exprs.Match(p, e) =>
         Ast.ValDef(convertPattern(p), convertExpr(e))
       case e =>
-        Ast.ValDef(Ast.WildPat()(Pos.NP), convertExpr(e))
+        val exp = convertExpr(e)
+        Ast.ValDef(Ast.WildPat()(exp.p), exp)
     }
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
     p match {
-      case Patterns.MatchPattern(p1, p2) =>
-        Ast.AndPat(convertPattern(p1), convertPattern(p2))(Pos.NP)
-      case Patterns.VariablePattern("_") =>
-        Ast.WildPat()(Pos.NP)
-      case Patterns.VariablePattern(name) =>
-        Ast.VarPat(name)(Pos.NP)
+      case Patterns.MatchPattern(p, p1, p2) =>
+        Ast.AndPat(convertPattern(p1), convertPattern(p2))(p)
+      case Patterns.VariablePattern(p, "_") =>
+        Ast.WildPat()(p)
+      case Patterns.VariablePattern(p, name) =>
+        Ast.VarPat(name)(p)
       case Patterns.LiteralPattern(literal) =>
         literal match {
-          case Exprs.AtomLiteral("true") =>
-            Ast.BoolPat(true)(Pos.NP)
-          case Exprs.AtomLiteral("false") =>
-            Ast.BoolPat(false)(Pos.NP)
-          case Exprs.AtomLiteral(_) =>
+          case Exprs.AtomLiteral(p, "true") =>
+            Ast.BoolPat(true)(p)
+          case Exprs.AtomLiteral(p, "false") =>
+            Ast.BoolPat(false)(p)
+          case Exprs.AtomLiteral(_, _) =>
             sys.error(s"atoms are not supported in ST: $p")
-          case Exprs.CharLiteral(ch) =>
+          case Exprs.CharLiteral(_, ch) =>
             sys.error("chars in patterns are not supported yet")
-          case Exprs.FloatLiteral(fl) =>
-            Ast.NumberPat(fl.intValue())(Pos.NP)
-          case Exprs.IntLiteral(i) =>
-            Ast.NumberPat(i)(Pos.NP)
-          case Exprs.StringLiteral(str) =>
-            Ast.StringPat(str.getOrElse("???"))(Pos.NP)
+          case Exprs.FloatLiteral(p, fl) =>
+            Ast.NumberPat(fl.intValue())(p)
+          case Exprs.IntLiteral(p, i) =>
+            Ast.NumberPat(i)(p)
+          case Exprs.StringLiteral(p, str) =>
+            Ast.StringPat(str.getOrElse("???"))(p)
         }
-      case Patterns.TuplePattern(elems) =>
-        Ast.TuplePat(elems.map(convertPattern))(Pos.NP)
-      case Patterns.NilPattern =>
-        Ast.ListPat(List())(Pos.NP)
-      case Patterns.ConsPattern(hd, tl) =>
-        Ast.ConsPat(convertPattern(hd), convertPattern(tl))(Pos.NP)
-      case Patterns.LocalEnumCtrPattern(enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(Pos.NP)
-      case Patterns.RemoteEnumCtrPattern(module, enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(Pos.NP)
-      case Patterns.MapPattern(assocs) =>
+      case Patterns.TuplePattern(p, elems) =>
+        Ast.TuplePat(elems.map(convertPattern))(p)
+      case Patterns.NilPattern(p) =>
+        Ast.ListPat(List())(p)
+      case Patterns.ConsPattern(p, hd, tl) =>
+        Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
+      case Patterns.LocalEnumCtrPattern(p, enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
+      case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
+        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
+      case Patterns.MapPattern(p, assocs) =>
         val pats = assocs map {
-          case (Patterns.LiteralPattern(Exprs.AtomLiteral(label)), p) =>
-            Ast.Field[Ast.Pat](label, convertPattern(p))
+          case (Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)), pat) =>
+            Ast.Field[Ast.Pat](label, convertPattern(pat))
           case other =>
             sys.error(s"wrong pattern assoc: $other")
         }
-        Ast.RecordPat(pats, false)(Pos.NP)
+        Ast.RecordPat(pats, false)(p)
       case Patterns.BinPattern(elems) =>
         ???
       case Patterns.BinOpPattern(op, pat1, pat2) =>
@@ -218,73 +222,76 @@ object Convert {
     e match {
       case Exprs.Match(_, _) =>
         sys.error(s"such matches are not supported: $e")
-      case Exprs.Variable(name) =>
-        Ast.VarExp(new Ast.LocalVarName(name))(Pos.NP)
+      case Exprs.Variable(p, name) =>
+        Ast.VarExp(new Ast.LocalVarName(name))(p)
       case literal: Exprs.Literal =>
         literal match {
-          case Exprs.AtomLiteral("true") =>
-            Ast.BoolExp(true)(Pos.NP)
-          case Exprs.AtomLiteral("false") =>
-            Ast.BoolExp(false)(Pos.NP)
-          case Exprs.AtomLiteral(_) =>
+          case Exprs.AtomLiteral(p, "true") =>
+            Ast.BoolExp(true)(p)
+          case Exprs.AtomLiteral(p, "false") =>
+            Ast.BoolExp(false)(p)
+          case Exprs.AtomLiteral(_, _) =>
             sys.error(s"atoms are not supported in ST: $e")
-          case Exprs.CharLiteral(ch) =>
-            Ast.CharExp(ch.toString)(Pos.NP)
-          case Exprs.FloatLiteral(fl) =>
-            Ast.NumberExp(fl.intValue())(Pos.NP)
-          case Exprs.IntLiteral(i) =>
-            Ast.NumberExp(i)(Pos.NP)
-          case Exprs.StringLiteral(Some(str)) =>
-            Ast.StringExp(str)(Pos.NP)
-          case Exprs.StringLiteral(None) =>
-            Ast.StringExp("???")(Pos.NP)
+          case Exprs.CharLiteral(p, ch) =>
+            Ast.CharExp(ch.toString)(p)
+          case Exprs.FloatLiteral(p, fl) =>
+            Ast.NumberExp(fl.intValue())(p)
+          case Exprs.IntLiteral(p, i) =>
+            Ast.NumberExp(i)(p)
+          case Exprs.StringLiteral(p, Some(str)) =>
+            Ast.StringExp(str)(p)
+          case Exprs.StringLiteral(p, None) =>
+            Ast.StringExp("???")(p)
         }
-      case Exprs.Tuple(elems) =>
-        Ast.TupleExp(elems.map(convertExpr))(Pos.NP)
-      case Exprs.Nil =>
-        Ast.ListExp(List())(Pos.NP)
-      case Exprs.Cons(hd, tl) =>
-        Ast.ConsExp(convertExpr(hd), convertExpr(tl))(Pos.NP)
-      case Exprs.LocalEnumCtr(enum, ctr, args) =>
-        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(Pos.NP)
-      case Exprs.RemoteEnumCtr(module, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(Pos.NP)
-      case Exprs.MapCreate(entries) =>
-        Ast.RecordExp(entries.map(assocCreateToFieldExp))(Pos.NP)
-      case Exprs.MapUpdate(exp, entries) =>
-        Ast.RecordUpdateExp(convertExpr(exp), Ast.RecordExp(entries.map(assocUpdateToFieldExp))(Pos.NP))(Pos.NP)
-      case Exprs.Block(exprs) =>
-        Ast.BlockExpr(convertBody(exprs))(Pos.NP)
-      case Exprs.Case(expr, clauses) =>
-        Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(Pos.NP)
-      case Exprs.LocalCall(Exprs.AtomLiteral(f), args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(Pos.NP), args.map(convertExpr))(Pos.NP)
-      case Exprs.LocalCall(head, args) =>
-        Ast.AppExp(convertExpr(head), args.map(convertExpr))(Pos.NP)
-      case Exprs.RemoteCall(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(Pos.NP), args.map(convertExpr))(Pos.NP)
-      case Exprs.RemoteCall(_, _, _) =>
+      case Exprs.Tuple(p, elems) =>
+        Ast.TupleExp(elems.map(convertExpr))(p)
+      case Exprs.Nil(p) =>
+        Ast.ListExp(List())(p)
+      case Exprs.Cons(p, hd, tl) =>
+        Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
+      case Exprs.LocalEnumCtr(p, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(p)
+      case Exprs.RemoteEnumCtr(p, module, enum, ctr, args) =>
+        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
+      case Exprs.MapCreate(p, entries) =>
+        Ast.RecordExp(entries.map(assocCreateToFieldExp))(p)
+      case Exprs.MapUpdate(p, exp, entries) =>
+        val recExp = convertExpr(exp)
+        // this is not present in Erlang. Approximating
+        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(assocUpdateToFieldExp))(updateRange))(p)
+      case Exprs.Block(p, exprs) =>
+        Ast.BlockExpr(convertBody(exprs))(p)
+      case Exprs.Case(p, expr, clauses) =>
+        Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(p)
+      case Exprs.LocalCall(p1, Exprs.AtomLiteral(p2, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p2), args.map(convertExpr))(p1)
+      case Exprs.LocalCall(p, head, args) =>
+        Ast.AppExp(convertExpr(head), args.map(convertExpr))(p)
+      case Exprs.RemoteCall(p1, Exprs.AtomLiteral(p2, m), Exprs.AtomLiteral(p3, f), args) =>
+        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(p2 ! p3), args.map(convertExpr))(p1)
+      case Exprs.RemoteCall(_, _, _, _) =>
         sys.error(s"not supported remote call: $e")
-      case Exprs.LocalFun(f, arity) =>
-        Ast.VarExp(new Ast.LocalFunName(f, arity))(Pos.NP)
-      case Exprs.RemoteFun(Exprs.AtomLiteral(m), Exprs.AtomLiteral(f), Exprs.IntLiteral(arity)) =>
-        Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(Pos.NP)
-      case Exprs.RemoteFun(_, _, _) =>
+      case Exprs.LocalFun(p, f, arity) =>
+        Ast.VarExp(new Ast.LocalFunName(f, arity))(p)
+      case Exprs.RemoteFun(p, Exprs.AtomLiteral(_, m), Exprs.AtomLiteral(_, f), Exprs.IntLiteral(_, arity)) =>
+        Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(p)
+      case Exprs.RemoteFun(_, _, _, _) =>
         sys.error(s"not supported: $e")
-      case Exprs.Fun(clauses) =>
-        Ast.FnExp(clauses.map(convertFunClause))(Pos.NP)
-      case Exprs.NamedFun(funName, clauses) =>
-        Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(Pos.NP)
-      case Exprs.UnaryOp(op, exp1) =>
+      case Exprs.Fun(p, clauses) =>
+        Ast.FnExp(clauses.map(convertFunClause))(p)
+      case Exprs.NamedFun(p, funName, clauses) =>
+        Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(p)
+      case Exprs.UnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(Pos.NP)
+          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(p)
           case None      => sys.error(s"not supported unOp ($op) in: $e")
         }
-      case Exprs.BinaryOp(".", exp, Exprs.AtomLiteral(field)) =>
-        Ast.SelExp(convertExpr(exp), field)(Pos.NP)
-      case Exprs.BinaryOp(op, exp1, exp2) =>
+      case Exprs.BinaryOp(p, ".", exp, Exprs.AtomLiteral(_, field)) =>
+        Ast.SelExp(convertExpr(exp), field)(p)
+      case Exprs.BinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(Pos.NP)
+          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $e")
         }
       case Exprs.ListComprehension(template, qualifiers) =>
@@ -315,7 +322,7 @@ object Convert {
 
   private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Exprs.OptAssoc(Exprs.AtomLiteral(label), e) =>
+      case Exprs.OptAssoc(Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))
       case other =>
         sys.error(s"incorrect assoc: $other")
@@ -323,7 +330,7 @@ object Convert {
 
   private def assocUpdateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Exprs.AssocExact(Exprs.AtomLiteral(label), e) =>
+      case Exprs.AssocExact(Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))
       case other =>
         sys.error(s"incorrect assoc: $other")
@@ -331,7 +338,7 @@ object Convert {
 
   private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocOpt(Guards.GLiteral(Exprs.AtomLiteral(label)), e) =>
+      case Guards.GAssocOpt(Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))
       case other =>
         sys.error(s"incorrect assoc: $other")
@@ -339,7 +346,7 @@ object Convert {
 
   private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocExact(Guards.GLiteral(Exprs.AtomLiteral(label)), e) =>
+      case Guards.GAssocExact(Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))
       case other =>
         sys.error(s"incorrect assoc: $other")
@@ -349,57 +356,52 @@ object Convert {
     tp match {
       case Types.AnnotatedType(_, tp) =>
         convertType(tp)
-      case Types.BitstringType(List()) =>
-        Ast.UserType(Ast.LocalName("binary"), List())(Pos.NP)
-      case Types.BitstringType(_) =>
+      case Types.BitstringType(p, List()) =>
+        Ast.UserType(Ast.LocalName("binary"), List())(p)
+      case Types.BitstringType(_, _) =>
         sys.error(s"Not supported (yet) binary type: $tp")
-      case Types.FunctionType(args, result) =>
-        Ast.FunType(args.map(convertType), convertType(result))(Pos.NP)
-      case Types.AssocMap(List()) =>
-        sys.error(s"erroneous type: $tp")
-      case Types.AssocMap(assocs) =>
-        convertAssocs(assocs)
-      case Types.PredefinedType("list", List(elemType)) =>
-        Ast.ListType(convertType(elemType))(Pos.NP)
-      case Types.PredefinedType(name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(Pos.NP)
-      case Types.RemoteType(module, typeName, params) =>
-        Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(Pos.NP)
-      case Types.TupleTypeTyped(elems) =>
-        Ast.TupleType(elems.map(convertType))(Pos.NP)
-      case Types.TypeVariable("_") =>
-        Ast.WildTypeVar()(Pos.NP)
-      case Types.TypeVariable(v) =>
-        Ast.TypeVar(v)(Pos.NP)
-      case Types.UserType(name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(Pos.NP)
-      case Types.AtomType(_) | Types.EmptyListType | Types.EnumCtr(_, _) | Types.FunTypeAny | Types.FunTypeAnyArgs(_) |
-          Types.IntegerRangeType(_, _) | Types.AnyMap | Types.RecordType(_, _) | Types.TupleTypeAny |
-          Types.UnionType(_) | (_: Types.SingletonIntegerType) =>
+      case Types.FunctionType(p, args, result) =>
+        Ast.FunType(args.map(convertType), convertType(result))(p)
+      case Types.AssocMap(p, assocs) =>
+        assocs match {
+          case List() =>
+            Ast.RecordType(List())(p)
+          case List(Types.MapFieldOpt(List(k, v))) =>
+            Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(p)
+          case _ =>
+            assocs.last match {
+              case Types.MapFieldExact(List(Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_"))) =>
+                Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(p1 ! p2))(p)
+              case _ =>
+                Ast.RecordType(assocs.map(convertAssoc))(p)
+            }
+        }
+      case Types.PredefinedType(p, "list", List(elemType)) =>
+        Ast.ListType(convertType(elemType))(p)
+      case Types.PredefinedType(p, name, params) =>
+        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+      case Types.RemoteType(p, module, typeName, params) =>
+        Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(p)
+      case Types.TupleTypeTyped(p, elems) =>
+        Ast.TupleType(elems.map(convertType))(p)
+      case Types.TypeVariable(p, "_") =>
+        Ast.WildTypeVar()(p)
+      case Types.TypeVariable(p, v) =>
+        Ast.TypeVar(v)(p)
+      case Types.UserType(p, name, params) =>
+        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+      case Types.AtomType(_) | Types.EmptyListType | Types.EnumCtr(_, _, _) | Types.FunTypeAny |
+          Types.FunTypeAnyArgs(_) | Types.IntegerRangeType(_, _) | Types.AnyMap | Types.RecordType(_, _) |
+          Types.TupleTypeAny(_) | Types.UnionType(_) | (_: Types.SingletonIntegerType) =>
         sys.error(s"erroneous type: $tp")
     }
 
   private def enumCon(tp: Types.Type): Ast.EnumCon =
     tp match {
-      case Types.EnumCtr(name, params) =>
-        Ast.EnumCon(name, params.map(convertType))(Pos.NP)
+      case Types.EnumCtr(p, name, params) =>
+        Ast.EnumCon(name, params.map(convertType))(p)
       case other =>
         sys.error(s"Expected an enum ctr but got: $other")
-    }
-
-  private def convertAssocs(assocs: List[Types.AssocType]): Ast.Type =
-    assocs match {
-      case List() =>
-        sys.error(s"unexpected assocs: $assocs")
-      case List(Types.MapFieldOpt(List(k, v))) =>
-        Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(Pos.NP)
-      case _ =>
-        assocs.last match {
-          case Types.MapFieldExact(List(Types.TypeVariable("_"), Types.TypeVariable("_"))) =>
-            Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(Pos.NP))(Pos.NP)
-          case _ =>
-            Ast.RecordType(assocs.map(convertAssoc))(Pos.NP)
-        }
     }
 
   private def convertAssoc(assoc: Types.AssocType): Ast.Field[Ast.Type] =

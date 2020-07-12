@@ -73,7 +73,7 @@ object Main {
     }
   }
 
-  private def printError(text: String, error: PositionedError): Unit = {
+  def printError(text: String, error: PositionedError): Unit = {
     val PositionedError(pos: Pos.SP, title, description) = error
     val ranger = Pos.Ranger(text, pos.start, pos.end)
 
