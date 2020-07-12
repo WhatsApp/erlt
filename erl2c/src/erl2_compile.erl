@@ -1781,9 +1781,13 @@ normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
     {Loc, Loc};
 normalize_loc(As) when is_list(As) ->
     Start = loc(erl_anno:location(As)),
-    case erl2_parse:get_end_location(As) of
-        undefined -> {Start, Start};
-        End -> {Start, loc(End)}
+    End = case erl2_parse:get_end_location(As) of
+        undefined -> Start;
+        Loc -> loc(Loc)
+    end,
+    case lists:member(open_rec, As) of
+        true -> {Start, End, open_rec};
+        false -> {Start, End}
     end;
 normalize_loc(_Other) ->
     % unknown position
