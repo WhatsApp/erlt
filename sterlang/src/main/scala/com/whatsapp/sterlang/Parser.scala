@@ -199,7 +199,8 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   lazy val tuplePat: PackratParser[S.TuplePat] =
     pos("{" ~> repsep(pat, ",") <~ "}" ^^ { elems => S.TuplePat(elems)(_) })
   lazy val recordPat: PackratParser[S.RecordPat] =
-    pos(("#" ~ "{") ~> rowPat <~ "}" ^^ { case rows ~ open => S.RecordPat(rows, open)(_) })
+    pos(("#" ~ "#" ~ "{") ~> rowPat <~ "}" ^^ { rows => S.RecordPat(rows, true)(_) }) |
+      pos(("#" ~ "{") ~> rowPat <~ "}" ^^ { rows => S.RecordPat(rows, false)(_) })
   lazy val enumCtrPat: PackratParser[S.EnumCtrPat] =
     pos(enumCtr ~ repsep(pat, ",") <~ "}" ^^ { case en ~ dc ~ pats => S.EnumCtrPat(en, dc, pats)(_) })
   lazy val listPat: PackratParser[S.ListPat] =
@@ -214,9 +215,8 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
   lazy val ellipsisPat: PackratParser[String] =
     "..." ^^^ "..."
 
-  lazy val rowPat: PackratParser[List[S.Field[S.Pat]] ~ Boolean] =
-    ((rep1sep(fieldPat, ",") ~ (("," ~> ellipsisPat) ?)) |
-      (success(List.empty) ~ (ellipsisPat ?))) ^^ { case a ~ b => new ~(a, b.isDefined) }
+  lazy val rowPat: PackratParser[List[S.Field[S.Pat]]] =
+    repsep(fieldPat, ",")
 
   lazy val fieldPat: Parser[S.Field[S.Pat]] =
     ((label <~ ":=") ~ pat) ^^ S.Field[S.Pat]

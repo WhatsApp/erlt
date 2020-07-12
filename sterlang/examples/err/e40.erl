@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e40).
 foo() ->
-    case true of #{...} -> 1 end.
+    case true of ##{} -> 1 end.
