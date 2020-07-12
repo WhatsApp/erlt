@@ -198,14 +198,14 @@ object Convert {
         Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
       case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
-      case Patterns.MapPattern(p, assocs) =>
+      case Patterns.MapPattern(p, open, assocs) =>
         val pats = assocs map {
           case (Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)), pat) =>
             Ast.Field[Ast.Pat](label, convertPattern(pat))
           case other =>
             sys.error(s"wrong pattern assoc: $other")
         }
-        Ast.RecordPat(pats, false)(p)
+        Ast.RecordPat(pats, open)(p)
       case Patterns.BinPattern(elems) =>
         ???
       case Patterns.BinOpPattern(op, pat1, pat2) =>
