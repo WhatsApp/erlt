@@ -25,13 +25,14 @@ object SterlangTestUtil {
   import java.io.{BufferedWriter, FileWriter, StringWriter}
 
   val generateOut = false
+  val etfParser = false
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = false)
+    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = etfParser)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(file, program, vars, etfParser = false).extend(program)
+    val context = Main.loadContext(file, program, vars, etfParser = etfParser).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
@@ -64,11 +65,11 @@ object SterlangTestUtil {
 
   def processIllTyped(path: String): Boolean = {
     val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = false)
+    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = etfParser)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Main.loadContext(file, program, vars, etfParser = false).extend(program)
+      val context = Main.loadContext(file, program, vars, etfParser = etfParser).extend(program)
       new AstChecks(context).check(program)
       val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
       new PatternChecker(context).check(annotatedFunctions)
