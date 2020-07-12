@@ -159,7 +159,8 @@ object Convert {
       case Exprs.Match(p, e) =>
         Ast.ValDef(convertPattern(p), convertExpr(e))
       case e =>
-        Ast.ValDef(Ast.WildPat()(Pos.NP), convertExpr(e))
+        val exp = convertExpr(e)
+        Ast.ValDef(Ast.WildPat()(exp.p), exp)
     }
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
