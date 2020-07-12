@@ -36,7 +36,7 @@ object Convert {
         Some(Ast.ExportTypeElem(ids))
       case Forms.ImportType(module, ids) =>
         Some(Ast.ImportTypeElem(module, ids.map { case (name, arity) => new Ast.LocalFunName(name, arity) }))
-      case Forms.TypeDecl(typeAttr, typeName, params, body) =>
+      case Forms.TypeDecl(p, typeAttr, typeName, params, body) =>
         val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         typeAttr match {
           case Forms.Enum =>
@@ -47,13 +47,13 @@ object Convert {
                 case single =>
                   List(enumCon(single))
               }
-            val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(Pos.NP)
+            val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(p)
             Some(Ast.EnumElem(enumDef))
           case Forms.Type =>
-            val typeAlias = Ast.TypeAlias(typeName, typeParams, convertType(body))(Pos.NP)
+            val typeAlias = Ast.TypeAlias(typeName, typeParams, convertType(body))(p)
             Some(Ast.TypeAliasElem(typeAlias))
           case Forms.Opaque =>
-            val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(Pos.NP)
+            val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(p)
             Some(Ast.OpaqueElem(opaque))
         }
       case Forms.FunctionSpec(specP, Forms.Spec, (name, arity), types) =>

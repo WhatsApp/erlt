@@ -46,7 +46,8 @@ object Forms {
   case class Compile(options: ETerm) extends Form
   case class File(file: String) extends Form
   case class RecordDecl(name: String, fields: List[RecordFieldDecl]) extends Form
-  case class TypeDecl(typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type) extends Form
+  case class TypeDecl(p: Pos.SP, typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type)
+      extends Form
   case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
   case class FunctionDecl(p: Pos.SP, name: String, arity: Int, clauses: List[Clause]) extends Form
   case class Require(modules: List[String]) extends Form

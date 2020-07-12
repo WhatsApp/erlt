@@ -83,7 +83,7 @@ object FormsConvert {
       case ETuple(
             List(
               EAtom("attribute"),
-              _anno,
+              anno,
               EAtom(attr @ ("type" | "opaque" | "enum")),
               ETuple(List(EAtom(typeName), absType, EList(vars))),
             )
@@ -95,7 +95,7 @@ object FormsConvert {
         }
         val abstractType = TypesConvert.convertType(absType)
         val params = vars.map(TypesConvert.convertVar)
-        TypeDecl(typeAttr, typeName, params, abstractType)
+        TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
             List(EAtom("attribute"), _anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
