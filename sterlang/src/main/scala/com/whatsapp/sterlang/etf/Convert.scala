@@ -58,8 +58,8 @@ object Convert {
         }
       case Forms.FunctionSpec(Forms.Spec, (name, arity), types) =>
         types match {
-          case List(Types.FunctionType(params, res)) =>
-            val funType = Ast.FunType(params.map(convertType), convertType(res))(Pos.NP)
+          case List(Types.FunctionType(p, params, res)) =>
+            val funType = Ast.FunType(params.map(convertType), convertType(res))(p)
             val funName = new Ast.LocalFunName(name, arity)
             val spec = Ast.Spec(funName, funType)(Pos.NP)
             Some(Ast.SpecElem(spec))
@@ -355,57 +355,52 @@ object Convert {
     tp match {
       case Types.AnnotatedType(_, tp) =>
         convertType(tp)
-      case Types.BitstringType(List()) =>
-        Ast.UserType(Ast.LocalName("binary"), List())(Pos.NP)
-      case Types.BitstringType(_) =>
+      case Types.BitstringType(p, List()) =>
+        Ast.UserType(Ast.LocalName("binary"), List())(p)
+      case Types.BitstringType(_, _) =>
         sys.error(s"Not supported (yet) binary type: $tp")
-      case Types.FunctionType(args, result) =>
-        Ast.FunType(args.map(convertType), convertType(result))(Pos.NP)
-      case Types.AssocMap(List()) =>
-        sys.error(s"erroneous type: $tp")
-      case Types.AssocMap(assocs) =>
-        convertAssocs(assocs)
-      case Types.PredefinedType("list", List(elemType)) =>
-        Ast.ListType(convertType(elemType))(Pos.NP)
-      case Types.PredefinedType(name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(Pos.NP)
-      case Types.RemoteType(module, typeName, params) =>
-        Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(Pos.NP)
-      case Types.TupleTypeTyped(elems) =>
-        Ast.TupleType(elems.map(convertType))(Pos.NP)
-      case Types.TypeVariable("_") =>
-        Ast.WildTypeVar()(Pos.NP)
-      case Types.TypeVariable(v) =>
-        Ast.TypeVar(v)(Pos.NP)
-      case Types.UserType(name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(Pos.NP)
-      case Types.AtomType(_) | Types.EmptyListType | Types.EnumCtr(_, _) | Types.FunTypeAny | Types.FunTypeAnyArgs(_) |
-          Types.IntegerRangeType(_, _) | Types.AnyMap | Types.RecordType(_, _) | Types.TupleTypeAny |
-          Types.UnionType(_) | (_: Types.SingletonIntegerType) =>
+      case Types.FunctionType(p, args, result) =>
+        Ast.FunType(args.map(convertType), convertType(result))(p)
+      case Types.AssocMap(p, assocs) =>
+        assocs match {
+          case List() =>
+            Ast.RecordType(List())(p)
+          case List(Types.MapFieldOpt(List(k, v))) =>
+            Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(p)
+          case _ =>
+            assocs.last match {
+              case Types.MapFieldExact(List(Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_"))) =>
+                Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(p1 ! p2))(p)
+              case _ =>
+                Ast.RecordType(assocs.map(convertAssoc))(p)
+            }
+        }
+      case Types.PredefinedType(p, "list", List(elemType)) =>
+        Ast.ListType(convertType(elemType))(p)
+      case Types.PredefinedType(p, name, params) =>
+        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+      case Types.RemoteType(p, module, typeName, params) =>
+        Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(p)
+      case Types.TupleTypeTyped(p, elems) =>
+        Ast.TupleType(elems.map(convertType))(p)
+      case Types.TypeVariable(p, "_") =>
+        Ast.WildTypeVar()(p)
+      case Types.TypeVariable(p, v) =>
+        Ast.TypeVar(v)(p)
+      case Types.UserType(p, name, params) =>
+        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+      case Types.AtomType(_) | Types.EmptyListType | Types.EnumCtr(_, _, _) | Types.FunTypeAny |
+          Types.FunTypeAnyArgs(_) | Types.IntegerRangeType(_, _) | Types.AnyMap | Types.RecordType(_, _) |
+          Types.TupleTypeAny(_) | Types.UnionType(_) | (_: Types.SingletonIntegerType) =>
         sys.error(s"erroneous type: $tp")
     }
 
   private def enumCon(tp: Types.Type): Ast.EnumCon =
     tp match {
-      case Types.EnumCtr(name, params) =>
-        Ast.EnumCon(name, params.map(convertType))(Pos.NP)
+      case Types.EnumCtr(p, name, params) =>
+        Ast.EnumCon(name, params.map(convertType))(p)
       case other =>
         sys.error(s"Expected an enum ctr but got: $other")
-    }
-
-  private def convertAssocs(assocs: List[Types.AssocType]): Ast.Type =
-    assocs match {
-      case List() =>
-        sys.error(s"unexpected assocs: $assocs")
-      case List(Types.MapFieldOpt(List(k, v))) =>
-        Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(Pos.NP)
-      case _ =>
-        assocs.last match {
-          case Types.MapFieldExact(List(Types.TypeVariable("_"), Types.TypeVariable("_"))) =>
-            Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(Pos.NP))(Pos.NP)
-          case _ =>
-            Ast.RecordType(assocs.map(convertAssoc))(Pos.NP)
-        }
     }
 
   private def convertAssoc(assoc: Types.AssocType): Ast.Field[Ast.Type] =
