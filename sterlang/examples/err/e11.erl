@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e11).
 foo(X) ->
-    X andalso (if true then 1 else 2).
+    X andalso (case true of true -> 1; false -> 2 end).

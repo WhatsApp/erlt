@@ -137,11 +137,6 @@ class ParseExpressionsSpec extends org.scalatest.FunSpec {
       RecordUpdateExp(VarExp(new LocalVarName("R"))(NP), RecordExp(List(Field("x", NumberExp(1)(NP))))(NP))(NP),
     )
 
-    testExp(
-      "if X then Y else Z",
-      IfExp(VarExp(new LocalVarName("X"))(NP), VarExp(new LocalVarName("Y"))(NP), VarExp(new LocalVarName("Z"))(NP))(NP),
-    )
-
   }
 
   describe("Operations") {

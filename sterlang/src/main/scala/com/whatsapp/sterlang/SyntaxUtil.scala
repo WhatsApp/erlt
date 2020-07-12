@@ -117,8 +117,6 @@ object SyntaxUtil {
 
   private def freeVars(expr: S.Exp, m: String): Set[String] =
     expr match {
-      case S.IfExp(exp1, exp2, exp3) =>
-        freeVars(exp1, m) ++ freeVars(exp2, m) ++ freeVars(exp3, m)
       case S.RecordUpdateExp(exp, delta) =>
         freeVars(exp, m) ++ freeVars(delta, m)
       case S.BinOpExp(binOp, exp1, exp2) =>
@@ -449,8 +447,6 @@ object SyntaxUtil {
 
   private def getDepExp(expr: S.Exp): Set[String] =
     expr match {
-      case S.IfExp(exp1, exp2, exp3) =>
-        getDepExp(exp1) ++ getDepExp(exp2) ++ getDepExp(exp3)
       case S.RecordUpdateExp(exp, delta) =>
         getDepExp(exp) ++ getDepExp(delta)
       case S.BinOpExp(binOp, exp1, exp2) =>

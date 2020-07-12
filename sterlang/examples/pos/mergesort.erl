@@ -34,9 +34,10 @@ merge(Lt, L1, L2) ->
                 [] ->
                     L1;
                 [H2 | T2] ->
-                    if Lt(H1, H2)
-                    then [H1 | merge(Lt, T1, L2)]
-                    else [H2 | merge(Lt, L1, T2)]
+                    case Lt(H1, H2) of
+                        true -> [H1 | merge(Lt, T1, L2)];
+                        false -> [H2 | merge(Lt, L1, T2)]
+                    end
             end
     end.
 

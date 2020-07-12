@@ -97,8 +97,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elab(exp: S.Exp, ty: T.Type, d: T.Depth, env: Env): A.Exp =
     exp match {
-      case ifExp: S.IfExp =>
-        elabIfExp(ifExp, ty, d, env)
       case caseExp: S.CaseExp =>
         elabCaseExp(caseExp, ty, d, env)
       case recordUpdateExp: S.RecordUpdateExp =>
@@ -229,17 +227,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elab(e1, MT.BoolType, d, env)
     }
     A.UOpExp(op, e1Elaborated)(typ = ty, sourceLocation = exp.p)
-  }
-
-  private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
-    val S.IfExp(e1, e2, e3) = exp
-
-    val resType = freshTypeVar(d)
-    val exp1 = elab(e2, resType, d, env)
-    val exp2 = elab(e3, resType, d, env)
-    unify(exp.p, ty, resType)
-
-    A.IfExp(elab(e1, MT.BoolType, d, env), exp1, exp2)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabCaseExp(exp: S.CaseExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

@@ -57,9 +57,6 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
       "fun",
       "case",
       "of",
-      "if",
-      "then",
-      "else",
     ) ++ S.unOps1.keys ++ S.binOps1.keys
   lexical.delimiters ++=
     Seq(
@@ -240,15 +237,11 @@ object Parser extends StandardTokenParsers with PackratParsers with ImplicitConv
 
   // --------- EXPRESSIONS: FUNS, VALS, CLAUSES ----------
   lazy val exp: PackratParser[S.Exp] =
-    ifExp | caseExp | recordUpdateExp | binOpExp | fnExp | namedFnExp | enumConExp | appExp
+    caseExp | recordUpdateExp | binOpExp | fnExp | namedFnExp | enumConExp | appExp
   lazy val guardElem: PackratParser[S.Guard] =
     rep1sep(exp, ",") ^^ S.Guard
   lazy val guards: PackratParser[List[S.Guard]] =
     (("when" ~> rep1sep(guardElem, ";")) ?) ^^ { _.getOrElse(List()) }
-  private lazy val ifExp: PackratParser[S.Exp] =
-    pos(("if" ~> exp) ~ ("then" ~> exp) ~ ("else" ~> exp) ^^ {
-      case e1 ~ e2 ~ e3 => S.IfExp(e1, e2, e3)(_)
-    })
   private lazy val fnExp: PackratParser[S.Exp] =
     pos("fun" ~> rep1sep(clause, ";") <~ "end" ^^ { cs => S.FnExp(cs)(_) })
   private lazy val namedFnExp: PackratParser[S.Exp] =

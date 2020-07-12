@@ -100,10 +100,10 @@ getIds(Recs) ->
     map(fun (X) -> X.id end, Recs).
 
 %% named local funs
-global(X, V) -> if X then V else global(true, V).
+global(X, V) -> case X of true -> V; false -> global(true, V) end.
 
 inside(Y) ->
-    T = fun Local(X, V) -> if X then V else Local(true, V) end,
+    T = fun Local(X, V) -> case X of true -> V; false -> Local(true, V) end end,
     T(true, Y).
 
 inside1() ->
