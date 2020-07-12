@@ -17,7 +17,6 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.etf._
-
 import com.whatsapp.sterlang.forms.Forms._
 
 object FormsConvert {
@@ -95,7 +94,7 @@ object FormsConvert {
           case "enum"   => Enum
         }
         val abstractType = TypesConvert.convertType(absType)
-        val params = vars.map(convertVar)
+        val params = vars.map(TypesConvert.convertVar)
         TypeDecl(typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
@@ -126,12 +125,6 @@ object FormsConvert {
         EOF
       case _ =>
         sys.error(s"unexpected term: $term")
-    }
-
-  def convertVar(term: ETerm): String =
-    term match {
-      case ETuple(List(EAtom("var"), _anno, EAtom(name))) =>
-        name
     }
 
   def convertIdWithArity(term: ETerm): IdWithArity =

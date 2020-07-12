@@ -24,7 +24,7 @@ object TypesConvert {
     term match {
       // af_annotated_type
       case ETuple(List(EAtom("ann_type"), _anno, EList(List(af_anno, tp)))) =>
-        AnnotatedType(FormsConvert.convertVar(af_anno), convertType(tp))
+        AnnotatedType(convertVar(af_anno), convertType(tp))
       // af_atom
       case ETuple(List(EAtom("atom"), _anno, EAtom(atomVal))) =>
         AtomType(atomVal)
@@ -133,6 +133,12 @@ object TypesConvert {
         sys.error(s"unexpected term for type: $term")
     }
 
+  def convertVar(term: ETerm): Types.TypeVariable =
+    term match {
+      case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
+        Types.TypeVariable(sp(anno), name)
+    }
+
   def convertAssocType(term: ETerm): AssocType =
     term match {
       // map_field_assoc
@@ -184,7 +190,7 @@ object TypesConvert {
       case ETuple(
             List(EAtom("type"), _anno, EAtom("constraint"), EList(List(isSubtypeLit, EList(List(eVar, t)))))
           ) =>
-        val v = FormsConvert.convertVar(eVar)
+        val v = convertVar(eVar)
         val "is_subtype" = FormsConvert.convertAtomLit(isSubtypeLit)
         val tp = convertType(t)
         Constraint(v, tp)

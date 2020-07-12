@@ -22,7 +22,7 @@ object Types {
 
   sealed trait Type
   // For use cases like spec id(Input :: atom()) -> atom.
-  case class AnnotatedType(anno: String, tp: Type) extends Type
+  case class AnnotatedType(tv: TypeVariable, tp: Type) extends Type
   case class AtomType(atom: String) extends Type
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class BitstringType(p: Pos.SP, types: List[SingletonIntegerType]) extends Type
@@ -71,7 +71,7 @@ object Types {
 
   sealed trait FunSpecType
   case class AF_ContrainedFunctionType(functionType: FunctionType, constraints: List[Constraint]) extends FunSpecType
-  case class Constraint(tVar: String, tp: Type)
+  case class Constraint(tVar: TypeVariable, tp: Type)
 
   val predefinedTypes = Set(
     "any",

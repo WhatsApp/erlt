@@ -37,7 +37,7 @@ object Convert {
       case Forms.ImportType(module, ids) =>
         Some(Ast.ImportTypeElem(module, ids.map { case (name, arity) => new Ast.LocalFunName(name, arity) }))
       case Forms.TypeDecl(typeAttr, typeName, params, body) =>
-        val typeParams = params.map(Ast.TypeVar(_)(Pos.NP))
+        val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         typeAttr match {
           case Forms.Enum =>
             val enumCons =
