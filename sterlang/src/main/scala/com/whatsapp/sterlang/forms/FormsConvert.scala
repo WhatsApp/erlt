@@ -118,9 +118,9 @@ object FormsConvert {
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
         FunctionSpec(sp(anno), specAttr, funId, typeList)
       // af_function_decl
-      case ETuple(List(EAtom("function"), _anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
+      case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
-        FunctionDecl(name, arity.intValue, clauses)
+        FunctionDecl(sp(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
       case _ =>

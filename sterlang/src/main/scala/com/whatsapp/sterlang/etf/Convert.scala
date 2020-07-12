@@ -66,9 +66,9 @@ object Convert {
           case other =>
             sys.error(s"Unexpected spec: $form")
         }
-      case Forms.FunctionDecl(name, arity, clauses) =>
+      case Forms.FunctionDecl(p, name, arity, clauses) =>
         val funName = new Ast.LocalFunName(name, arity)
-        val fun = Ast.Fun(funName, clauses.map(convertFunClause))(Pos.NP)
+        val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) =>
