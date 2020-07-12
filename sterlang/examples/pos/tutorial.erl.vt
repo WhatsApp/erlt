@@ -134,11 +134,11 @@ val Opt: my_option(T_45)
 val dec_opt2/1: fun((my_option(T_46)) -> list(T_46))
 val Opt: my_option(T_46)
 val V: T_46
-val dec_opt3/3: fun((my_option(fun((T_48) -> T_47)), T_48, T_48) -> list(T_47))
-val Opt: my_option(fun((T_48) -> T_47))
-val V1: T_48
-val V2: T_48
-val F: fun((T_48) -> T_47)
+val dec_opt3/3: fun((my_option(fun((T_47) -> T_48)), T_47, T_47) -> list(T_48))
+val Opt: my_option(fun((T_47) -> T_48))
+val V1: T_47
+val V2: T_47
+val F: fun((T_47) -> T_48)
 val dec_opt4/3: fun((T_49, T_50, T_51) -> {T_49, T_50, T_51})
 val X: T_49
 val Y: T_50
