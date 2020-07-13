@@ -42,6 +42,13 @@ package object etf {
     Ast.RawProgram(elems)
   }
 
+  def rawProgramFromString(text: String): Ast.RawProgram = {
+    val etf = etfFromString(text)
+    val forms = FormsConvert.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convert)
+    Ast.RawProgram(elems)
+  }
+
   def etfFromFile(path: String): ETerm = {
     val etfPath =
       if (path.endsWith(".etf")) {
@@ -54,6 +61,14 @@ package object etf {
         tmp
       }
     readEtf(etfPath)
+  }
+
+  private def etfFromString(text: String): ETerm = {
+    val tmpErl = Files.createTempFile("etf_reader", ".erl")
+    Files.write(tmpErl, text.getBytes)
+    val tmpEtf = Files.createTempFile("etf_reader", ".etf")
+    s"./erl2etf -erl $tmpErl -etf $tmpEtf".!!
+    readEtf(tmpEtf)
   }
 
   private def readEtf(etfPath: Path): ETerm = {
