@@ -1,1 +1,0 @@
-atom.erl:9:5: -lang([erl2, st]): Not supported syntax (atom): {atom,{{9,5},{9,9}},atom}
