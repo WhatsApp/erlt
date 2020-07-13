@@ -24,11 +24,7 @@ class ElaborateSpec extends org.scalatest.FunSpec {
   val S = Ast
 
   def testTyping(input: String, expOutput: String): Unit = {
-    val res = Parser.programFromString(input)
-    if (!res.successful) {
-      fail(res.toString)
-    }
-    val prog = res.get
+    val prog = etf.programFromString(input)
     val sw = new StringWriter()
     val vars = new Vars()
     val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
@@ -40,11 +36,7 @@ class ElaborateSpec extends org.scalatest.FunSpec {
   }
 
   def testTypeError(input: String): Unit = {
-    val res = Parser.programFromString(input)
-    if (!res.successful) {
-      fail(res.toString)
-    }
-    val prog = res.get
+    val prog = etf.programFromString(input)
     val sw = new StringWriter()
     try {
       val vars = new Vars()

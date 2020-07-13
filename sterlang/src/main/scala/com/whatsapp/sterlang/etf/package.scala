@@ -35,11 +35,18 @@ package object etf {
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
 
-  def rawProgramFromFile(path: String): Ast.RawProgram = {
+  def programFromFile(path: String): Ast.Program = {
     val etf = etfFromFile(path)
     val forms = FormsConvert.fromEtf(etf)
     val elems = forms.flatMap(Convert.convert)
-    Ast.RawProgram(elems)
+    Ast.RawProgram(elems).program
+  }
+
+  def programFromString(text: String): Ast.Program = {
+    val etf = etfFromString(text)
+    val forms = FormsConvert.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convert)
+    Ast.RawProgram(elems).program
   }
 
   def etfFromFile(path: String): ETerm = {
@@ -54,6 +61,14 @@ package object etf {
         tmp
       }
     readEtf(etfPath)
+  }
+
+  private def etfFromString(text: String): ETerm = {
+    val tmpErl = Files.createTempFile("etf_reader", ".erl")
+    Files.write(tmpErl, text.getBytes)
+    val tmpEtf = Files.createTempFile("etf_reader", ".etf")
+    s"./erl2etf -erl $tmpErl -etf $tmpEtf".!!
+    readEtf(tmpEtf)
   }
 
   private def readEtf(etfPath: Path): ETerm = {

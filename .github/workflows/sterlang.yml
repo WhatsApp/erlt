@@ -15,5 +15,7 @@ jobs:
         java-version: 1.8
     - name: Erlang version
       run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+    - name: make erl2c
+      run:  make -C erl2c/src
     - name: Run tests
       run: cd sterlang; sbt test it:test

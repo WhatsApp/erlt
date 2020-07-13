@@ -17,16 +17,13 @@
 package com.whatsapp.sterlang.test
 
 import com.whatsapp.sterlang.Ast._
-import com.whatsapp.sterlang.Parser
 import com.whatsapp.sterlang.Pos.NP
+import com.whatsapp.sterlang.etf
 
 class ParseProgSpec extends org.scalatest.FunSpec {
-  def testProg(input: String, prog: Program): Unit = {
-    val res = Parser.programFromString(input)
-    if (!res.successful) {
-      fail(res.toString)
-    }
-    assert(res.get === prog)
+  def testProg(input: String, expProg: Program): Unit = {
+    val prog = etf.programFromString(input)
+    assert(prog === expProg)
   }
 
   describe("Programs with all elements") {

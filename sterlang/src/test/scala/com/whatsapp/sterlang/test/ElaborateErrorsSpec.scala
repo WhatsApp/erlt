@@ -24,11 +24,7 @@ import com.whatsapp.sterlang._
 class ElaborateErrorsSpec extends org.scalatest.FunSpec {
 
   def testSpecError(input: String, expected: SpecError): Unit = {
-    val res = Parser.programFromString(input)
-    if (!res.successful) {
-      fail(res.toString)
-    }
-    val prog = res.get
+    val prog = etf.programFromString(input)
     val sw = new StringWriter()
     try {
       val vars = new Vars()
