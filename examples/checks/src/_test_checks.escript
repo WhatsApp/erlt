@@ -16,11 +16,13 @@
 
 
 main([Erl2File]) ->
-    Erl2cBin = "../../../erl2c/bin/erl2c",
+    {ok, Cwd} = file:get_cwd(),
+    BinDir = filename:dirname(filename:dirname(filename:dirname(Cwd))),
+    Erl2c = filename:join(BinDir, "erl2c/bin/erl2c"),
     ExpOutputFile = Erl2File ++ ".exp",
     {ok, ExpOutput} =  file:read_file(ExpOutputFile),
     ExpOutPutStr = binary_to_list(ExpOutput),
-    {ExitCode, ActualOutPut} = eunit_lib:command(Erl2cBin ++ " +brief " ++ Erl2File),
+    {ExitCode, ActualOutPut} = eunit_lib:command(Erl2c ++ " +brief " ++ Erl2File),
     case ExitCode of
         0 ->
             io:format("`erl2c ~s` has not failed", [Erl2File]),
