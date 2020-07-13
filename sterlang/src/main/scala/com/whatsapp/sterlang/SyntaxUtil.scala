@@ -375,6 +375,7 @@ object SyntaxUtil {
     program.funs.foreach {
       result ++= getDepFun(_)
     }
+    result -= program.module
     result
   }
 
