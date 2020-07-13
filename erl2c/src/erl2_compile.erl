@@ -694,8 +694,8 @@ maybe_save_binary(Code, St) ->
             {ok, none, St}
     end.
 
-format_error({ocaml_typechecker, ExitCode, Output}) ->
-    io_lib:format("ocaml exited with error code ~w: ~n~s~n", [ExitCode, Output]);
+format_error({sterlang, ExitCode, Output}) ->
+    io_lib:format("sterlang exited with error code ~w: ~n~s~n", [ExitCode, Output]);
 format_error({module_dependency, type_checking, Mod}) ->
     io_lib:format("can't find ~s.beam", [Mod]);
 format_error({module_dependency, ModuleDepType, Mod}) ->
@@ -1185,8 +1185,8 @@ do_collect_erl2_compile_deps(Forms, St0) ->
 get_erl2_typed_deps(Forms, St0) ->
     RawDeps =
         case {is_lang_st(St0), is_lang_ffi(St0)} of
-            {true, _} -> erl2ocaml:st_deps(Forms);
-            {_, true} -> erl2ocaml:ffi_deps(Forms);
+            {true, _} -> erl2_deps:st_deps(Forms);
+            {_, true} -> erl2_deps:ffi_deps(Forms);
             {_, _} -> []
         end,
     F = St0#compile.ifile,
@@ -1236,85 +1236,21 @@ erl2_typecheck(Code, St) ->
         {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)}
     of
         {true, true} ->
-            do_erl2_typecheck(Code, St);
+            run_sterlang(Code, St),
+            {ok, Code, St};
         {_, _} ->
             {ok, Code, St}
     end.
 
-do_erl2_typecheck(Code, St) ->
-    Code1 = normalize_for_typecheck(Code),
-    OcamlDir = filename:join(St#compile.build_dir, "ocaml"),
-    Basename = filename:rootname(filename:basename(St#compile.ofile)),
-    case generate_ocaml_code(OcamlDir, Basename, Code1, St) of
-        ok ->
-            call_ocaml_typechecker(OcamlDir, Basename, St),
-            % return unmodified code
-            {ok, Code, St};
-        {error, {Line, ErrorBody}} ->
-            StError = {St#compile.ifile, [{Line, erl2ocaml, ErrorBody}]},
-            {error, St#compile{errors = [StError | St#compile.errors]}}
-    end.
-
-generate_ocaml_code(OcamlDir, Basename, Forms, St) ->
-    Rootname = filename:join(OcamlDir, Basename),
-    % TODO: error handling
-    ok = filelib:ensure_dir(Rootname),
-
-    case get_lang(St) of
-        ffi ->
-            case erl2ocaml:erl2ocaml_ffi(Forms) of
-                {ok, PubMliCode, PrivMliCode} ->
-                    ok = file:write_file(Rootname ++ ".mli", PubMliCode),
-                    ok = file:write_file(Rootname ++ "_priv.mli", PrivMliCode);
-                Error = {error, _} ->
-                    Error
-            end;
-        st ->
-            case erl2ocaml:erl2ocaml_st(Forms) of
-                {ok, MliCode, MlCode, PrivMlCode} ->
-                    ok = file:write_file(Rootname ++ ".ml", MlCode),
-                    ok = file:write_file(Rootname ++ ".mli", MliCode),
-                    ok = file:write_file(Rootname ++ "_priv.ml", PrivMlCode);
-                Error = {error, _} ->
-                    Error
-            end;
-        specs ->
-            case erl2ocaml:erl2ocaml_specs(Forms) of
-                {ok, MliCode} ->
-                    ok = file:write_file(unspecs(Rootname) ++ ".mli", MliCode);
-                Error = {error, _} ->
-                    Error
-            end
-    end.
-
-ensure_ocaml_ffi(OcamlDir) ->
-    FfiName = filename:join(OcamlDir, "ffi.mli"),
-    case filelib:is_regular(FfiName) of
-        true ->
-            ok;
-        false ->
-            ok = file:write_file(FfiName, erl2ocaml:ffi()),
-            {0, _} = eunit_lib:command("ocamlc -c ffi.mli", OcamlDir),
-            ok
-    end.
-
-call_ocaml_typechecker(OcamlDir, Basename, St) ->
-    ok = ensure_ocaml_ffi(OcamlDir),
-
-    FileArgs =
-        case get_lang(St) of
-            ffi ->
-                [Basename, ".mli", " ", Basename, "_priv.mli"];
-            st ->
-                [Basename, ".mli", " ", Basename, ".ml", " ", Basename, "_priv.ml"];
-            specs ->
-                [unspecs(Basename), ".mli"]
-        end,
-
-    FmtCmd = lists:append(["ocamlformat --enable-outside-detected-project -i " | FileArgs]),
-    CheckCmd = lists:append(["ocamlc  -c ", erl2ocaml:compiler_flags(), FileArgs]),
-    {0, _} = eunit_lib:command(FmtCmd, OcamlDir),
-    {ExitCode, Output} = eunit_lib:command(CheckCmd, OcamlDir),
+run_sterlang(_Code, St) ->
+    %% TODO: Code1 = normalize_for_typecheck(Code),
+    %% TODO: serialize ...
+    Erl2c = escript:script_name(),
+    BinDir = filename:dirname(Erl2c),
+    SterlangJar = filename:join(BinDir, "sterlang.jar"),
+    IFile = filename:absname(St#compile.ifile),
+    CheckCmd = lists:append(["java", " ", "-jar", " ", SterlangJar, " ", IFile]),
+    {ExitCode, Output} = eunit_lib:command(CheckCmd, BinDir),
     case ExitCode of
         0 ->
             % TODO: check for warnings
@@ -1323,7 +1259,7 @@ call_ocaml_typechecker(OcamlDir, Basename, St) ->
             ErrorFile = St#compile.filename,
             Error =
                 {ErrorFile, [
-                    {_ErrorLine = 1, ?MODULE, {ocaml_typechecker, ExitCode, Output}}
+                    {_ErrorLine = 1, ?MODULE, {sterlang, ExitCode, Output}}
                 ]},
 
             % NOTE: the error thrown here will be caught by internal_comp() -> Run0

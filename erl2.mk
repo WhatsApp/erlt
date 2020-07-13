@@ -35,21 +35,13 @@ include $(ROOT)/common.mk
 IR_DIR = $(BUILD_DIR)/ir
 IR_SPEC_DIR = ../ir-spec
 
-MLS := $(sort $(wildcard $(BUILD_DIR)/ocaml/*.ml) $(wildcard $(BUILD_DIR)/ocaml/*.mli))
-
-copy-ocaml:
-	rm -f $(IR_DIR)/*.mli
-	rm -f $(IR_DIR)/*.ml
-	mkdir -p $(IR_DIR)
-	$(foreach ml, $(MLS), cp $(ml) $(IR_DIR)/$(notdir $(ml));)
-
 p:
 	rm -f $(IR_DIR)/*.P
 	mkdir -p $(IR_DIR)
 	# xxx_lexer.erl and xxx_parser.erl are non-hermetic generated stuff, so filtering them out
 	$(foreach erl, $(filter-out %_lexer.erl %_parser.erl ,$(ERLS)), $(ERLBUILD_ERLC) -P -o $(IR_DIR) --build-dir $(BUILD_DIR) $(erl);)
 
-ir: copy-ocaml p
+ir: p
 
 test-ir: ir
 	diff -r $(IR_DIR) $(IR_SPEC_DIR)
@@ -58,4 +50,4 @@ update-ir-spec: ir
 	rm -rf $(IR_SPEC_DIR)
 	cp -r $(IR_DIR) $(IR_SPEC_DIR)
 
-.PHONY: copy-ocaml p ir test-ir update-ir-spec
+.PHONY: p ir test-ir update-ir-spec
