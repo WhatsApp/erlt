@@ -135,7 +135,7 @@ object Main {
     val lines = source.getLines().toList
     if (etfParser) {
       val content = lines.mkString("\n")
-      val program = etf.rawProgramFromFile(file.getPath).program
+      val program = etf.programFromFile(file.getPath)
       (content, program)
     } else {
       val dialect = getLang(lines)
