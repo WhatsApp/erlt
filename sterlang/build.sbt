@@ -21,7 +21,6 @@ lazy val projectSetting = Seq(
   description := "Statically Typed Erlang",
   version := "0.1-SNAPSHOT",
   scalacOptions ++= Seq("-deprecation", "-feature"),
-  libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2",
   libraryDependencies += "org.fusesource.jansi" % "jansi" % "1.18",
   libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test,it",
