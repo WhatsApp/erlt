@@ -15,12 +15,9 @@
 -lang([erl2, st]).
 -module(match).
 
--export([f1/0, f2/0, f4/0, f5/2, f6/2, f7/2, f8/2, f9/2, f10/0, f11/1, f12/1, f13/2, f14/1]).
+-export([f1/0, f2/0, f6/2, f7/2, f8/2, f9/2, f10/0, f11/1, f12/1, f13/2, f14/1]).
 
 id(X) -> X.
-
-%% Testing erl2ocaml for cases when `Pat = Exp` (match expr)
-%% should be interpreted as an expression.
 
 -spec f1() -> {integer(), integer()}.
 f1() ->
@@ -37,18 +34,6 @@ f3(X, T) ->
         2 -> _Y = 3;
         _ -> Z = T, _Y = Z
     end.
-
--spec f4() -> integer().
-f4() ->
-    f3(_Y = 1, 4),
-    f3(2 = 1, 3 = 4),
-    id([1, 2] = [3, 4]),
-    0.
-
--spec f5({A, B}, {A, B}) -> boolean().
-f5(P1, P2) ->
-    ({_X1, _Y1} = P1) == ({_X2, _Y2} = P2).
-
 
 %% Testing erl2ocaml for patterns in clauses with repeated variables.
 

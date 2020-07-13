@@ -3,10 +3,6 @@ module Match_priv : sig
 
   val f2'0 : unit -> int
 
-  val f4'0 : unit -> int
-
-  val f5'2 : ('tA * 'tB) * ('tA * 'tB) -> bool
-
   val f6'2 : 'tA * 'tA -> 'tA * 'tA
 
   val f7'2 : 'tA * 'tA -> 'tA * 'tA
@@ -51,35 +47,6 @@ end = struct
             let v_Z = v_T in
             let v__Y = v_Z in
             v__Y )
-
-  let rec f4'0 : unit -> int = function
-    | () ->
-        let _ =
-          f3'2
-            (let v__Y = 1 in
-             (v__Y, 4))
-        in
-        let _ =
-          f3'2
-            (let 2 = 1 in
-             ( 2,
-               let 3 = 4 in
-               3 ))
-        in
-        let _ =
-          id'1
-            (let [ 1; 2 ] = [ 3; 4 ] in
-             [ 1; 2 ])
-        in
-        0
-
-  let rec f5'2 : ('tA * 'tB) * ('tA * 'tB) -> bool = function
-    | v_P1, v_P2 ->
-        (let v__X1, v__Y1 = v_P1 in
-         (v__X1, v__Y1))
-        =
-        let v__X2, v__Y2 = v_P2 in
-        (v__X2, v__Y2)
 
   let rec f6'2 : 'tA * 'tA -> 'tA * 'tA = function
     | v_X, v__p'X1 when v__p'X1 = v_X -> (v_X, v_X)

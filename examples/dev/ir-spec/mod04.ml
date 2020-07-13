@@ -25,7 +25,4 @@ let rec funs'0 : unit -> (unit -> Mod03.unit0'0) list = function
         (function () -> Mod03.Unit0'Unit0);
       ]
 
-let rec remote_dot2'0 : unit -> Mod03.unit0'0 = function
-  | () -> Mod03.mk_unit'0 ()
-
 let rec import1'0 : unit -> Mod03.unit0'0 = function () -> Mod03.mk_unit'0 ()

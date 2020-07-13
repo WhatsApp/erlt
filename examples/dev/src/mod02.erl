@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(mod02).
 
--export([odd/1, id/1, id_caller/1, id_rec/1, even/1, mod01call/1, list_to_string/1, int_to_string/1, mk_unit/0]).
+-export([odd/1, id/1, id_caller/1, id_rec/1, even/1, mod01call/1, mk_unit/0]).
 
 -spec odd(integer()) -> boolean().
 odd(X) ->
@@ -42,18 +42,6 @@ even(X) ->
 -spec mod01call(X) -> X.
 mod01call(X) ->
     mod01:mod01F(X).
-
--spec list_to_string([_]) -> string().
-list_to_string([]) ->
-    ffi:to_string([]);
-list_to_string(X) ->
-    ffi:to_string(X).
-
--spec int_to_string(integer()) -> string().
-int_to_string(0) ->
-    ffi:to_string(0);
-int_to_string(N) ->
-    ffi:to_string(N).
 
 -spec mk_unit() -> integer().
 mk_unit() -> 1.
