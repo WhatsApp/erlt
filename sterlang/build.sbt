@@ -19,7 +19,6 @@ lazy val projectSetting = Seq(
   organization := "whatsapp",
   name := "sterlang",
   description := "Statically Typed Erlang",
-  version := "0.1-SNAPSHOT",
   scalacOptions ++= Seq("-deprecation", "-feature"),
   libraryDependencies += "org.fusesource.jansi" % "jansi" % "1.18",
   libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
@@ -32,6 +31,9 @@ lazy val sterlang = (project in file("."))
   .configs(IntegrationTest)
   .settings(Defaults.itSettings)
   .settings(projectSetting)
-  .settings(mainClass in assembly := Some("com.whatsapp.sterlang.Main"))
+  .settings(
+    mainClass in assembly := Some("com.whatsapp.sterlang.Main"),
+    assemblyJarName in assembly := "sterlang.jar",
+  )
 
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
