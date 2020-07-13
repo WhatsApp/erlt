@@ -29,10 +29,10 @@ object SterlangTestUtil {
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = etfParser)
+    val (_, rawProgram) = Main.loadProgram(file)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(file, program, vars, etfParser = etfParser).extend(program)
+    val context = Main.loadContext(file, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
@@ -65,11 +65,11 @@ object SterlangTestUtil {
 
   def processIllTyped(path: String): Boolean = {
     val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file, print = false, etfParser = etfParser)
+    val (_, rawProgram) = Main.loadProgram(file)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Main.loadContext(file, program, vars, etfParser = etfParser).extend(program)
+      val context = Main.loadContext(file, program, vars).extend(program)
       new AstChecks(context).check(program)
       val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
       new PatternChecker(context).check(annotatedFunctions)

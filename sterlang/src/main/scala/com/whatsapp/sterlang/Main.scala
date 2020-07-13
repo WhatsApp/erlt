@@ -47,11 +47,10 @@ object Main {
 
   def processFile(options: Set[String])(file: File): Unit = {
     Console.println(ansi(s"@|bold ${file.getAbsolutePath}|@"))
-    val etfParser = options.contains("--etf")
-    val (text, rawProgram) = loadProgram(file, print = false, etfParser = etfParser)
+    val (text, rawProgram) = loadProgram(file)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val depContext = loadContext(file, program, vars, etfParser)
+    val depContext = loadContext(file, program, vars)
     val context = depContext.extend(program)
     try {
       new AstChecks(context).check(program)
@@ -90,7 +89,7 @@ object Main {
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
-  def loadContext(mainFile: File, program: S.Program, vars: Vars, etfParser: Boolean): Context = {
+  def loadContext(mainFile: File, program: S.Program, vars: Vars): Context = {
     val dir = Paths.get(mainFile.getAbsolutePath).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
@@ -102,7 +101,7 @@ object Main {
       val module = queue.dequeue()
       val file = dir.resolve(module + ".erl").toFile
       if (file.exists()) {
-        val (_, rawProgram) = loadProgram(file, false, etfParser)
+        val (_, rawProgram) = loadProgram(file)
         val program = SyntaxUtil.normalizeTypes(rawProgram)
         api = SyntaxUtil.moduleApi(module, program) :: api
         val moduleDeps = SyntaxUtil.getDeps(program)
@@ -130,31 +129,12 @@ object Main {
     Context(enumDefs, List.empty, aliases, opaques, env)
   }
 
-  def loadProgram(file: File, print: Boolean, etfParser: Boolean): (String, S.Program) = {
+  def loadProgram(file: File): (String, S.Program) = {
     val source = scala.io.Source.fromFile(file.getPath)
     val lines = source.getLines().toList
-    if (etfParser) {
-      val content = lines.mkString("\n")
-      val program = etf.programFromFile(file.getPath)
-      (content, program)
-    } else {
-      val dialect = getLang(lines)
-      if (dialect.isEmpty) {
-        sys.error(s"No erl2 dialect at ${file.getAbsolutePath}")
-      }
-      val content = getContentForDialect(dialect.get, lines)
-      source.close()
-      if (print) {
-        Console.println(ansi(s"@|bold ===============|@"))
-        Console.println(ansi(s"@|bold ${file.getPath}|@"))
-        println(content)
-      }
-      val progResult = Parser.programFromString(content)
-      if (!progResult.successful) {
-        sys.error(progResult.toString)
-      }
-      (content, progResult.get)
-    }
+    val content = lines.mkString("\n")
+    val program = etf.programFromFile(file.getPath)
+    (content, program)
   }
 
   val attributes = List(
