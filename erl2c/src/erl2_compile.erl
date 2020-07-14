@@ -1253,20 +1253,32 @@ run_sterlang(St) ->
 
     Erl2c = escript:script_name(),
     BinDir = filename:dirname(Erl2c),
+    SterlangNative = filename:join(BinDir, "sterlang"),
     SterlangJar = filename:join(BinDir, "sterlang.jar"),
     IFile = filename:absname(St#compile.ifile),
     CheckCmd =
-        lists:append([
-            "java",
-            " ",
-            "-jar",
-            " ",
-            SterlangJar,
-            " ",
-            IFile,
-            " ",
-            filename:absname(EtfFile)
-        ]),
+        case filelib:is_regular(SterlangNative) of
+            true ->
+                lists:append([
+                    SterlangNative,
+                    " ",
+                    IFile,
+                    " ",
+                    filename:absname(EtfFile)
+                ]);
+            false ->
+                lists:append([
+                    "java",
+                    " ",
+                    "-jar",
+                    " ",
+                    SterlangJar,
+                    " ",
+                    IFile,
+                    " ",
+                    filename:absname(EtfFile)
+                ])
+        end,
     % io:format("Running: ~p~n", [CheckCmd]),
     {ExitCode, Output} = eunit_lib:command(CheckCmd, BinDir),
     case ExitCode of

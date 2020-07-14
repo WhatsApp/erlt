@@ -69,9 +69,6 @@ object Main {
         val warnings = new PatternChecker(context).warnings(annFuns)
         warnings.foreach(printError(text, _))
       }
-
-      Console.println(ansi(s"@|bold,green OK|@"))
-      TypePrinter2(vars, None).printFunsTypeSchemes(annFuns, env)
     } catch {
       case error: PositionedError =>
         printError(text, error)
