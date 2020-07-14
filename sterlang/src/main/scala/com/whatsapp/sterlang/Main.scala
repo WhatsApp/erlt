@@ -94,7 +94,7 @@ object Main {
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
     val queue = mutable.Queue.empty[String]
-    SyntaxUtil.getDeps(program).foreach(queue.enqueue(_))
+    SyntaxUtil.getDeps(program).foreach(queue.enqueue)
     var api = List.empty[ModuleApi]
 
     while (queue.nonEmpty) {
@@ -106,7 +106,7 @@ object Main {
         api = SyntaxUtil.moduleApi(module, program) :: api
         val moduleDeps = SyntaxUtil.getDeps(program)
         loaded += module
-        moduleDeps.filterNot(loaded).foreach(queue.enqueue(_))
+        moduleDeps.filterNot(loaded).foreach(queue.enqueue)
       } else {
         Console.println(s"Warning: cannot load module $module")
       }
@@ -135,37 +135,5 @@ object Main {
     val content = lines.mkString("\n")
     val program = etf.programFromFile(file.getPath)
     (content, program)
-  }
-
-  val attributes = List(
-    "-lang",
-    "-module",
-    "-spec",
-    "-type",
-    "-opaque",
-    "-import",
-    "-export",
-    "-depends_on",
-  )
-
-  def getContentForDialect(dialect: S.Lang, lines: List[String]): String =
-    dialect match {
-      case S.ST =>
-        lines.mkString("\n")
-      case S.FFI =>
-        lines.filter(l => attributes.exists(l.startsWith)).mkString("\n")
-    }
-
-  def getLang(lines: List[String]): Option[S.Lang] = {
-    for (line <- lines) {
-      if (line.startsWith("-lang")) {
-        if (line.contains("ffi")) {
-          return Some(S.FFI)
-        } else if (line.contains("st")) {
-          return Some(S.ST)
-        }
-      }
-    }
-    None
   }
 }
