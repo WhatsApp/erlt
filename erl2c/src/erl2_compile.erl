@@ -82,7 +82,8 @@
     %    [erl2, st]          -- statically typed erl2
     %    [erl2, ffi]         -- ffi erl2
     %    [erl2, specs]       -- specs for a module which is somewhere else
-    lang = [] :: [erl2 | st | dt | ffi | specs]
+    lang = [] :: [erl2 | st | dt | ffi | specs],
+    original_forms
 }).
 
 -define(pass(P), {P, fun P/2}).
@@ -973,7 +974,7 @@ parse_module(_Code, St0, EppMod) ->
         {ok, Fs0, St1} ->
             % extract indicator of Erlang language flavor
             {Lang, Fs1} = parse_lang(Fs0),
-            {ok, Fs1, St1#compile{lang = Lang}};
+            {ok, Fs1, St1#compile{lang = Lang, original_forms = Fs0}};
         {error, _} = Ret ->
             Ret;
         {invalid_unicode, File, Line} ->
@@ -1236,20 +1237,37 @@ erl2_typecheck(Code, St) ->
         {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)}
     of
         {true, true} ->
-            run_sterlang(Code, St),
+            run_sterlang(St),
             {ok, Code, St};
         {_, _} ->
             {ok, Code, St}
     end.
 
-run_sterlang(_Code, St) ->
-    %% TODO: Code1 = normalize_for_typecheck(Code),
-    %% TODO: serialize ...
+run_sterlang(St) ->
+    SterlangDir = filename:join(St#compile.build_dir, "sterlang"),
+    EtfFile = filename:join(SterlangDir, St#compile.filename ++ ".etf"),
+    ok = filelib:ensure_dir(EtfFile),
+    Code1 = normalize_for_typecheck(St#compile.original_forms, is_lang_ffi(St)),
+    CodeETF = erlang:term_to_binary(Code1),
+    ok = file:write_file(EtfFile, CodeETF),
+
     Erl2c = escript:script_name(),
     BinDir = filename:dirname(Erl2c),
     SterlangJar = filename:join(BinDir, "sterlang.jar"),
     IFile = filename:absname(St#compile.ifile),
-    CheckCmd = lists:append(["java", " ", "-jar", " ", SterlangJar, " ", IFile]),
+    CheckCmd =
+        lists:append([
+            "java",
+            " ",
+            "-jar",
+            " ",
+            SterlangJar,
+            " ",
+            IFile,
+            " ",
+            filename:absname(EtfFile)
+        ]),
+    % io:format("Running: ~p~n", [CheckCmd]),
     {ExitCode, Output} = eunit_lib:command(CheckCmd, BinDir),
     case ExitCode of
         0 ->
@@ -1704,9 +1722,17 @@ restore_expand_module([F | Fs]) ->
 restore_expand_module([]) ->
     [].
 
+is_fun_form({function, _, _, _, _}) -> true;
+is_fun_form(_) -> false.
+
 %% Turn annotation fields into a uniform format for export to the type checker
-normalize_for_typecheck(Forms) ->
-    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms].
+normalize_for_typecheck(Forms, Ffi) ->
+    Forms1 =
+        case Ffi of
+            false -> Forms;
+            true -> [F || F <- Forms, not is_fun_form(F)]
+        end,
+    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(Line) when is_integer(Line) ->
@@ -1717,10 +1743,11 @@ normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
     {Loc, Loc};
 normalize_loc(As) when is_list(As) ->
     Start = loc(erl_anno:location(As)),
-    End = case erl2_parse:get_end_location(As) of
-        undefined -> Start;
-        Loc -> loc(Loc)
-    end,
+    End =
+        case erl2_parse:get_end_location(As) of
+            undefined -> Start;
+            Loc -> loc(Loc)
+        end,
     case lists:member(open_rec, As) of
         true -> {Start, End, open_rec};
         false -> {Start, End}
