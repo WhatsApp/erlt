@@ -19,13 +19,8 @@ main(["-erl", Filename, "-etf", EtfFileName]) ->
     {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
     {Lang, _} = erl2_compile:parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
-    Forms1 =
-        case Ffi of
-            false -> Forms;
-            true -> [F || F <- Forms, not is_fun_form(F)]
-        end,
-    Forms2 = erl2_compile:normalize_for_typecheck(Forms1),
-    CodeETF = erlang:term_to_binary(Forms2),
+    Forms1 = erl2_compile:normalize_for_typecheck(Forms, Ffi),
+    CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(EtfFileName),
     ok = file:write_file(EtfFileName, CodeETF);
 main(["-ast1", File]) ->
@@ -35,13 +30,5 @@ main(["-ast2", Filename]) ->
     {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
     {Lang, _} = erl2_compile:parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
-    Forms1 =
-        case Ffi of
-            false -> Forms;
-            true -> [F || F <- Forms, not is_fun_form(F)]
-        end,
-    Forms2 = erl2_compile:normalize_for_typecheck(Forms1),
-    io:format("Forms:\n~p\n", [Forms2]).
-
-is_fun_form({function, _, _, _, _}) -> true;
-is_fun_form(_) -> false.
+    Forms1 = erl2_compile:normalize_for_typecheck(Forms, Ffi),
+    io:format("Forms:\n~p\n", [Forms1]).
