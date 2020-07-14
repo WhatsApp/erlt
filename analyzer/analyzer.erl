@@ -24,6 +24,7 @@
     forms/1,
     functions/1,
     receives/1,
+    nonlinear_patterns/1,
     tries/1,
     used_funs/1,
     used_primitives/2
@@ -188,6 +189,26 @@ receives(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     Receives = collect(Forms, fun pred/1, fun receive_anno/1),
     erlang:length(Receives).
+
+-spec nonlinear_patterns(file:filename()) -> list(mfa()).
+nonlinear_patterns(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Nonlinear = [{N, A} || {function, _Line, N, A, Clauses} <- Forms, lists:any(fun is_nonlinear/1, Clauses)],
+    lists:usort(Nonlinear).
+
+is_nonlinear({clause, _LINE, Patterns, _Guards, _Body}) ->
+    CollectVariables =
+        fun
+            ({var, _Line, '_'})  -> false;
+            ({var, _Line, Name}) -> Name;
+            (_)                  -> false
+        end,
+    Variables = collect(Patterns, fun pred/1, CollectVariables),
+    has_duplicates(Variables).
+
+-spec has_duplicates(list()) -> boolean().
+has_duplicates(L) ->
+    erlang:length(L) /= erlang:length(lists:usort(L)).
 
 -spec tries(file:filename()) -> list(erl_anno:anno()).
 tries(BeamFile) ->

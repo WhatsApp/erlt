@@ -36,6 +36,18 @@ object CodeDirs {
     rawPaths.split(" ").toList.distinct.sorted
   }
 
+  /** Paths in [[projectEbinDirs]] minus those that belong to [[thirdParty]] libraries. */
+  lazy val firstPartyEbinDirs: List[String] =
+    projectEbinDirs.filter(d => !thirdParty.contains(libraryName(d)))
+
+  /** Returns the app or library name given the directory name. */
+  def libraryName(dir: String): String =
+    dir match {
+      case libraryNameRegex(name) => name
+    }
+
+  private val libraryNameRegex = "/lib/(.*)/".r.unanchored
+
   def isGenerated(appName: String, moduleName: String): Boolean = {
     val erlFile = s"$root/$appName/src/$moduleName.erl"
     if (Files.exists(Paths.get(erlFile))) {
