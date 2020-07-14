@@ -14,36 +14,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: set environment variables
-        run: |
-          echo "::set-env name=CACHE_BIN::$GITHUB_WORKSPACE/.cache/bin"
-          echo "::set-env name=PATH::$GITHUB_WORKSPACE/.cache/bin:$PATH"
-          echo "::set-env name=OPAMROOT::$GITHUB_WORKSPACE/.cache/.opam"
-      - name: Cache Opam
-        id: cache-opam
-        uses: actions/cache@v1
-        with:
-          path: .cache
-          key: opam_ocaml.4.10.0_ocamlformat.0.14.1
-      - name: install opam
-        if: steps.cache-opam.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p $CACHE_BIN
-          cd $CACHE_BIN
-          wget https://github.com/ocaml/opam/releases/download/2.0.6/opam-2.0.6-x86_64-linux
-          mv opam-2.0.6-x86_64-linux opam
-          chmod +x opam
-      - name: install opam stuff
-        if: steps.cache-opam.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get install bubblewrap
-          opam init -c 4.10.0
-          eval $(opam env)
-          opam install ocamlformat.0.14.1 -y
-          ocamlc --version
-          ocamlformat --version
-      - name: opam_env
-        run:  echo "::set-env name=PATH::$GITHUB_WORKSPACE/.cache/.opam/4.10.0/bin/:$PATH"
       - name: Erlang version
         run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: make project
