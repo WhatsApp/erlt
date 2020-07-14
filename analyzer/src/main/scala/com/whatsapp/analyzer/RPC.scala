@@ -108,17 +108,17 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
-  def getNonlinearPatterns(beamFilePath: String): List[(String, Int)] = {
+  def getFunctionsWithNonlinearClauses(beamFilePath: String): List[(String, Int, Boolean)] = {
     System.err.println("loading " + beamFilePath)
-    connection.sendRPC("analyzer", "nonlinear_patterns", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    connection.sendRPC("analyzer", "functions_with_nonlinear_clauses", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
     eObject match {
       case EList(elems, _) =>
         elems.collect {
-          case ETuple(List(EAtom(name), ELong(arity))) =>
-            (name, arity.toInt)
+          case ETuple(List(EAtom(name), ELong(arity), hasCatchAll@EAtom(_))) =>
+            (name, arity.toInt, hasCatchAll.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")

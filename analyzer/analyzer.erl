@@ -24,7 +24,7 @@
     forms/1,
     functions/1,
     receives/1,
-    nonlinear_patterns/1,
+    functions_with_nonlinear_clauses/1,
     tries/1,
     used_funs/1,
     used_primitives/2
@@ -190,13 +190,15 @@ receives(BeamFile) ->
     Receives = collect(Forms, fun pred/1, fun receive_anno/1),
     erlang:length(Receives).
 
--spec nonlinear_patterns(file:filename()) -> list(mfa()).
-nonlinear_patterns(BeamFile) ->
+-spec functions_with_nonlinear_clauses(file:filename()) -> list(mfa()).
+functions_with_nonlinear_clauses(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
-    Nonlinear = [{N, A} || {function, _Line, N, A, Clauses} <- Forms, lists:any(fun is_nonlinear/1, Clauses)],
+    HasNonlinear = fun(Clauses) -> not lists:all(fun is_linear_clause/1, Clauses) end,
+    HasCatchAll = fun(Clauses) -> lists:any(fun is_catch_all_clause/1, Clauses) end,
+    Nonlinear = [{N, A, HasCatchAll(Clauses)} || {function, _Line, N, A, Clauses} <- Forms, HasNonlinear(Clauses)],
     lists:usort(Nonlinear).
 
-is_nonlinear({clause, _LINE, Patterns, _Guards, _Body}) ->
+is_linear_clause({clause, _LINE, Patterns, _Guards, _Body}) ->
     CollectVariables =
         fun
             ({var, _Line, '_'})  -> false;
@@ -204,7 +206,18 @@ is_nonlinear({clause, _LINE, Patterns, _Guards, _Body}) ->
             (_)                  -> false
         end,
     Variables = collect(Patterns, fun pred/1, CollectVariables),
-    has_duplicates(Variables).
+    not has_duplicates(Variables).
+
+%% @doc Returns true if the clause matches all values.
+is_catch_all_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
+    (Guards == []) and is_linear_clause(Clause) and lists:all(fun is_catch_all_pattern/1, Patterns).
+
+is_catch_all_pattern({var, _LINE, _Name}) ->
+    true;
+is_catch_all_pattern({tuple, _LINE, Elements}) ->
+    lists:all(fun is_catch_all_pattern/1, Elements);
+is_catch_all_pattern(_) ->
+    false.
 
 -spec has_duplicates(list()) -> boolean().
 has_duplicates(L) ->

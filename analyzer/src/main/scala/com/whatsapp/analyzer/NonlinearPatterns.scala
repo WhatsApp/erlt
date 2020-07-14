@@ -19,28 +19,47 @@ package com.whatsapp.analyzer
 import scala.util.Using
 
 object NonlinearPatterns {
+  private val indentation = "    "
 
-  case class NonlinearPattern(module: String, function: String, arity: Int)
+  case class FunctionWithNonlinearClause(module: String, function: String, arity: Int, hasCatchAll: Boolean)
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)
 
-    Console.println(s"Nonlinear Patterns: ${data.size}")
-    for (pattern <- data) {
-      Console.println(s"${pattern.module}:${pattern.function}/${pattern.arity}")
+    val withCatchAll = data.filter(_.hasCatchAll)
+    val withoutCatchAll = data.filter(!_.hasCatchAll)
+
+    Console.println(s"Functions with nonlinear clauses: ${data.size}")
+    Console.println(s"${indentation}those with a catch all:    ${withCatchAll.size}")
+    Console.println(s"${indentation}those without a catch all: ${withoutCatchAll.size}")
+
+    Console.println()
+
+    Console.println("Functions with nonlinear clauses (with a catch all):")
+    for (pattern <- withCatchAll) {
+      Console.println(s"$indentation${pattern.module}:${pattern.function}/${pattern.arity}")
+    }
+
+    Console.println()
+
+    Console.println("Functions with nonlinear clauses (without a catch all):")
+    for (pattern <- withoutCatchAll) {
+      Console.println(s"$indentation${pattern.module}:${pattern.function}/${pattern.arity}")
     }
   }
 
-  private def loadData(rpc: RPC): List[NonlinearPattern] = {
+  private def loadData(rpc: RPC): List[FunctionWithNonlinearClause] = {
     CodeDirs.firstPartyEbinDirs.flatMap(indexProjectDir(_, rpc))
   }
 
-  private def indexProjectDir(dir: String, rpc: RPC): List[NonlinearPattern] = {
+  private def indexProjectDir(dir: String, rpc: RPC): List[FunctionWithNonlinearClause] = {
     val dirFile = new java.io.File(dir)
     val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam"))
     val moduleNames = beamFiles.map(s =>  s.substring(0, s.length - ".beam".length)).sorted
     moduleNames flatMap { m =>
-      rpc.getNonlinearPatterns(s"$dir/$m.beam") map { case (f, a) => NonlinearPattern(m, f, a) }
+      rpc.getFunctionsWithNonlinearClauses(s"$dir/$m.beam") map {
+        case (f, a, catchAll) => FunctionWithNonlinearClause(m, f, a, catchAll)
+      }
     }
   }
 }
