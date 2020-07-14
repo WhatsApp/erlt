@@ -28,11 +28,10 @@ object SterlangTestUtil {
   val etfParser = true
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
-    val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file)
+    val (rawProgram) = Main.loadProgram(path)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(file, program, vars).extend(program)
+    val context = Main.loadContext(path, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
@@ -59,17 +58,16 @@ object SterlangTestUtil {
 
     // Check pattern matching
     // TODO: apply to all files when ready.
-    if (file.getParent == "examples/pattern")
+    if (new File(path).getParent == "examples/pattern")
       new PatternChecker(context).check(annDefs)
   }
 
   def processIllTyped(path: String): Boolean = {
-    val file = new File(path)
-    val (_, rawProgram) = Main.loadProgram(file)
+    val rawProgram = Main.loadProgram(path)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Main.loadContext(file, program, vars).extend(program)
+      val context = Main.loadContext(path, program, vars).extend(program)
       new AstChecks(context).check(program)
       val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
       new PatternChecker(context).check(annotatedFunctions)

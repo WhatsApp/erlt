@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang
 
 import java.io.File
-import java.nio.file.Paths
+import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang.patterns.PatternChecker
 import org.fusesource.jansi.Ansi
@@ -30,28 +30,35 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
-    val realArgs = args.filter(a => !a.startsWith("-"))
-    process(options, realArgs(0))
+    val files = args.filter(a => !a.startsWith("-"))
+    process(options, files.toList)
   }
 
-  def process(options: Set[String], path: String): Unit = {
-    val file = new File(path)
-    assert(file.exists())
-    if (file.isDirectory) {
-      val files = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl"))
-      files.sortBy(_.getPath).foreach(processFile(options))
-    } else {
-      processFile(options)(file)
+  private def process(options: Set[String], files: List[String]): Unit = {
+    files match {
+      case List(p) =>
+        val file = new File(p)
+        assert(file.exists())
+        if (file.isDirectory) {
+          val files: Array[File] = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl"))
+          files.sortBy(_.getPath).foreach(f => processFile(options, f.getPath, None))
+        } else {
+          processFile(options, p, None)
+        }
+      case List(erlFile, etfFile) =>
+        processFile(options, erlFile, Some(etfFile))
     }
   }
 
-  def processFile(options: Set[String])(file: File): Unit = {
-    Console.println(ansi(s"@|bold ${file.getAbsolutePath}|@"))
-    val (text, rawProgram) = loadProgram(file)
+  private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
+    Console.println(ansi(s"@|bold ${erlFile}|@"))
+    val mainFile = etfFile.getOrElse(erlFile)
+    val rawProgram = loadProgram(mainFile)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val depContext = loadContext(file, program, vars)
+    val depContext = loadContext(mainFile, program, vars)
     val context = depContext.extend(program)
+    val text = new String(Files.readAllBytes(Paths.get(erlFile)))
     try {
       new AstChecks(context).check(program)
       val elaborate = new Elaborate(vars, context, program)
@@ -72,7 +79,7 @@ object Main {
     }
   }
 
-  def printError(text: String, error: PositionedError): Unit = {
+  private def printError(text: String, error: PositionedError): Unit = {
     val PositionedError(pos: Pos.SP, title, description) = error
     val ranger = Pos.Ranger(text, pos.start, pos.end)
 
@@ -89,8 +96,9 @@ object Main {
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
-  def loadContext(mainFile: File, program: S.Program, vars: Vars): Context = {
-    val dir = Paths.get(mainFile.getAbsolutePath).getParent
+  def loadContext(mainFile: String, program: S.Program, vars: Vars): Context = {
+    val ext = mainFile.takeRight(4)
+    val dir = Paths.get(mainFile).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
     val queue = mutable.Queue.empty[String]
@@ -99,9 +107,9 @@ object Main {
 
     while (queue.nonEmpty) {
       val module = queue.dequeue()
-      val file = dir.resolve(module + ".erl").toFile
+      val file = dir.resolve(module + ext).toFile
       if (file.exists()) {
-        val (_, rawProgram) = loadProgram(file)
+        val rawProgram = loadProgram(file.getPath)
         val program = SyntaxUtil.normalizeTypes(rawProgram)
         api = SyntaxUtil.moduleApi(module, program) :: api
         val moduleDeps = SyntaxUtil.getDeps(program)
@@ -129,11 +137,7 @@ object Main {
     Context(enumDefs, List.empty, aliases, opaques, env)
   }
 
-  def loadProgram(file: File): (String, S.Program) = {
-    val source = scala.io.Source.fromFile(file.getPath)
-    val lines = source.getLines().toList
-    val content = lines.mkString("\n")
-    val program = etf.programFromFile(file.getPath)
-    (content, program)
+  def loadProgram(file: String): S.Program = {
+    etf.programFromFile(file)
   }
 }
