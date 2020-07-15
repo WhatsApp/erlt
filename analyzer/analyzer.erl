@@ -250,6 +250,14 @@ is_sub_pattern({cons, _Line1, P_h1, P_t1}, {cons, _Line2, P_h2, P_t2}) ->
     is_sub_pattern(P_h1, P_h2) and is_sub_pattern(P_t1, P_t2);
 is_sub_pattern({nil, _Line1}, {nil, _Line2}) ->
     true;
+is_sub_pattern({record, _Line1, Name, Fields_1}, {record, _Line2, Name, Fields_2}) ->
+    SimplifyField = fun({record_field, _Line, Field, Pat}) -> {erl_parse:normalise(Field), Pat} end,
+    LookupField =
+        fun(Field, Record) -> proplists:get_value(Field, Record, {var, undefined, '_'}) end,
+
+    SimpleFields_1 = lists:map(SimplifyField, Fields_1),
+    SimpleFields_2 = lists:map(SimplifyField, Fields_2),
+    lists:all(fun({Field2, Pat2}) -> is_sub_pattern(LookupField(Field2, SimpleFields_1), Pat2) end, SimpleFields_2);
 is_sub_pattern({tuple, _Line1, Elements_1}, {tuple, _Line2, Elements_2}) when length(Elements_1) =:= length(Elements_2) ->
     all2(fun is_sub_pattern/2, Elements_1, Elements_2);
 is_sub_pattern(_, _) ->
