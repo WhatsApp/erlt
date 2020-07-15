@@ -21,7 +21,13 @@ import scala.util.Using
 object NonlinearPatterns {
   private val indentation = "    "
 
-  case class FunctionWithNonlinearClause(module: String, function: String, arity: Int, hasWildcardCatchAll: Boolean, hasCatchAll: Boolean)
+  case class FunctionWithNonlinearClause(
+      module: String,
+      function: String,
+      arity: Int,
+      hasWildcardCatchAll: Boolean,
+      hasCatchAll: Boolean,
+  )
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)

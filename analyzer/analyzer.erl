@@ -25,6 +25,7 @@
     functions/1,
     receives/1,
     functions_with_nonlinear_clauses/1,
+    compound_patterns/1,
     tries/1,
     used_funs/1,
     used_primitives/2
@@ -201,13 +202,27 @@ functions_with_nonlinear_clauses(BeamFile) ->
             {function, _Line, N, A, Clauses} <- Forms, HasNonlinear(Clauses)],
     lists:usort(Nonlinear).
 
+-spec compound_patterns(file:filename()) -> list(mfa()).
+compound_patterns(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    CollectClause =
+        fun
+            ({clause, _Line, Patterns, _Guards, _Body}) -> Patterns;
+            (_) -> false
+        end,
+    Clauses = collect(Forms, fun pred/1, CollectClause),
+    CompoundPatterns =
+        [{Line, is_rename_only_compound_pattern(Pat)} ||
+            {match, Line, _, _} = Pat <- collect(Clauses, fun pred/1, fun(X) -> X end)],
+    lists:sort(CompoundPatterns).
+
 %% @doc Returns true if all variables in the clause are unique.
 is_linear_clause({clause, _LINE, Patterns, _Guards, _Body}) ->
     CollectVariables =
         fun
             ({var, _Line2, '_'}) -> false;
             ({var, _Line2, Name}) -> Name;
-            (_)                  -> false
+            (_) -> false
         end,
     Variables = collect(Patterns, fun pred/1, CollectVariables),
     not has_duplicates(Variables).
@@ -233,10 +248,15 @@ is_catch_all_pattern(_) ->
 is_wildcard_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
     IsWildCard =
         fun
-            ({var, _LINE, _Name}) -> true;
+            ({var, _LINE2, _Name}) -> true;
             (_) -> false
         end,
     (Guards == []) and is_linear_clause(Clause) and lists:all(IsWildCard, Patterns).
+
+%% @doc Returns true if the compound pattern simply names the overall value, and does no complex matching.
+is_rename_only_compound_pattern({match, _LINE, {var, _, _}, _}) -> true;
+is_rename_only_compound_pattern({match, _LINE, _, {var, _, _}}) -> true;
+is_rename_only_compound_pattern({match, _LINE, _, _}) -> false.
 
 
 -spec has_duplicates(list()) -> boolean().

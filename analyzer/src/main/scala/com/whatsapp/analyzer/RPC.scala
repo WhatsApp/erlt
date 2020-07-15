@@ -112,7 +112,11 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def getFunctionsWithNonlinearClauses(beamFilePath: String): List[NonlinearPatterns.FunctionWithNonlinearClause] = {
     System.err.println("loading " + beamFilePath)
-    connection.sendRPC("analyzer", "functions_with_nonlinear_clauses", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    connection.sendRPC(
+      "analyzer",
+      "functions_with_nonlinear_clauses",
+      new OtpErlangList(new OtpErlangString(beamFilePath)),
+    )
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
@@ -121,8 +125,34 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     eObject match {
       case EList(elems, _) =>
         elems.collect {
-          case ETuple(List(EAtom(function), ELong(arity), hasWildcardCatchAll@EAtom(_), hasCatchAll@EAtom(_))) =>
-            NonlinearPatterns.FunctionWithNonlinearClause(module, function, arity.toInt, hasWildcardCatchAll.asBoolean(), hasCatchAll.asBoolean())
+          case ETuple(List(EAtom(function), ELong(arity), hasWildcardCatchAll: EAtom, hasCatchAll: EAtom)) =>
+            NonlinearPatterns.FunctionWithNonlinearClause(
+              module,
+              function,
+              arity.toInt,
+              hasWildcardCatchAll.asBoolean(),
+              hasCatchAll.asBoolean(),
+            )
+        }
+      case _ =>
+        System.err.println("not loaded")
+        List.empty
+    }
+  }
+
+  def getAndPatterns(beamFilePath: String): List[AndPatterns.AndPattern] = {
+    System.err.println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "compound_patterns", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    val module = new File(beamFilePath).getName.split("""\.""")(0)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect {
+          case ETuple(List(ELong(line), isRenameOnly: EAtom)) =>
+            AndPatterns.AndPattern(module, line.toInt, isRenameOnly.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")
