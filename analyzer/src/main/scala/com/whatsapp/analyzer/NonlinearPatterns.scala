@@ -21,31 +21,37 @@ import scala.util.Using
 object NonlinearPatterns {
   private val indentation = "    "
 
-  case class FunctionWithNonlinearClause(module: String, function: String, arity: Int, hasCatchAll: Boolean)
+  case class FunctionWithNonlinearClause(module: String, function: String, arity: Int, hasWildcardCatchAll: Boolean, hasCatchAll: Boolean)
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)
 
-    val withCatchAll = data.filter(_.hasCatchAll)
+    val withWildcardCatchAll = data.filter(_.hasWildcardCatchAll)
+    val withComplexCatchAll = data.filter(c => c.hasCatchAll && !c.hasWildcardCatchAll)
     val withoutCatchAll = data.filter(!_.hasCatchAll)
 
     Console.println(s"Functions with nonlinear clauses: ${data.size}")
-    Console.println(s"${indentation}those with a catch all:    ${withCatchAll.size}")
-    Console.println(s"${indentation}those without a catch all: ${withoutCatchAll.size}")
+    Console.println(s"${indentation}those with a wildcard catch all: ${withWildcardCatchAll.size}")
+    Console.println(s"${indentation}those with a complex catch all:  ${withComplexCatchAll.size}")
+    Console.println(s"${indentation}those without a catch all:       ${withoutCatchAll.size}")
 
     Console.println()
 
-    Console.println("Functions with nonlinear clauses (with a catch all):")
-    for (pattern <- withCatchAll) {
-      Console.println(s"$indentation${pattern.module}:${pattern.function}/${pattern.arity}")
-    }
+    def printFunction(f: FunctionWithNonlinearClause): Unit =
+      Console.println(s"$indentation${f.module}:${f.function}/${f.arity}")
+
+    Console.println("Functions with nonlinear clauses (with a wildcard catch all):")
+    withWildcardCatchAll.foreach(printFunction)
+
+    Console.println()
+
+    Console.println("Functions with nonlinear clauses (with a complex catch all):")
+    withComplexCatchAll.foreach(printFunction)
 
     Console.println()
 
     Console.println("Functions with nonlinear clauses (without a catch all):")
-    for (pattern <- withoutCatchAll) {
-      Console.println(s"$indentation${pattern.module}:${pattern.function}/${pattern.arity}")
-    }
+    withoutCatchAll.foreach(printFunction)
   }
 
   private def loadData(rpc: RPC): List[FunctionWithNonlinearClause] = {
@@ -54,12 +60,7 @@ object NonlinearPatterns {
 
   private def indexProjectDir(dir: String, rpc: RPC): List[FunctionWithNonlinearClause] = {
     val dirFile = new java.io.File(dir)
-    val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam"))
-    val moduleNames = beamFiles.map(s =>  s.substring(0, s.length - ".beam".length)).sorted
-    moduleNames flatMap { m =>
-      rpc.getFunctionsWithNonlinearClauses(s"$dir/$m.beam") map {
-        case (f, a, catchAll) => FunctionWithNonlinearClause(m, f, a, catchAll)
-      }
-    }
+    val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam")).sorted
+    beamFiles flatMap { f => rpc.getFunctionsWithNonlinearClauses(s"$dir/$f") }
   }
 }

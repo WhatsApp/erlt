@@ -16,6 +16,8 @@
 
 package com.whatsapp.analyzer
 
+import java.io.File
+
 import com.ericsson.otp.erlang._
 import erlang.Data._
 
@@ -108,17 +110,19 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
-  def getFunctionsWithNonlinearClauses(beamFilePath: String): List[(String, Int, Boolean)] = {
+  def getFunctionsWithNonlinearClauses(beamFilePath: String): List[NonlinearPatterns.FunctionWithNonlinearClause] = {
     System.err.println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "functions_with_nonlinear_clauses", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
+    val module = new File(beamFilePath).getName.split("""\.""")(0)
+
     eObject match {
       case EList(elems, _) =>
         elems.collect {
-          case ETuple(List(EAtom(name), ELong(arity), hasCatchAll@EAtom(_))) =>
-            (name, arity.toInt, hasCatchAll.asBoolean())
+          case ETuple(List(EAtom(function), ELong(arity), hasWildcardCatchAll@EAtom(_), hasCatchAll@EAtom(_))) =>
+            NonlinearPatterns.FunctionWithNonlinearClause(module, function, arity.toInt, hasWildcardCatchAll.asBoolean(), hasCatchAll.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")

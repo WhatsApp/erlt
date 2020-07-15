@@ -195,29 +195,49 @@ functions_with_nonlinear_clauses(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     HasNonlinear = fun(Clauses) -> not lists:all(fun is_linear_clause/1, Clauses) end,
     HasCatchAll = fun(Clauses) -> lists:any(fun is_catch_all_clause/1, Clauses) end,
-    Nonlinear = [{N, A, HasCatchAll(Clauses)} || {function, _Line, N, A, Clauses} <- Forms, HasNonlinear(Clauses)],
+    HasWildCardCatchAll = fun(Clauses) -> lists:any(fun is_wildcard_clause/1, Clauses) end,
+    Nonlinear =
+        [{N, A, HasWildCardCatchAll(Clauses), HasCatchAll(Clauses)} ||
+            {function, _Line, N, A, Clauses} <- Forms, HasNonlinear(Clauses)],
     lists:usort(Nonlinear).
 
+%% @doc Returns true if all variables in the clause are unique.
 is_linear_clause({clause, _LINE, Patterns, _Guards, _Body}) ->
     CollectVariables =
         fun
-            ({var, _Line, '_'})  -> false;
-            ({var, _Line, Name}) -> Name;
+            ({var, _Line2, '_'}) -> false;
+            ({var, _Line2, Name}) -> Name;
             (_)                  -> false
         end,
     Variables = collect(Patterns, fun pred/1, CollectVariables),
     not has_duplicates(Variables).
 
-%% @doc Returns true if the clause matches all values.
+%% @doc Returns true if the clause will match any value.
 is_catch_all_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
     (Guards == []) and is_linear_clause(Clause) and lists:all(fun is_catch_all_pattern/1, Patterns).
 
+%% @doc Returns true if the pattern will match any value.
 is_catch_all_pattern({var, _LINE, _Name}) ->
     true;
+is_catch_all_pattern({match, _LINE, Pattern1, Pattern2}) ->
+    is_catch_all_pattern(Pattern1) and is_catch_all_pattern(Pattern2);
 is_catch_all_pattern({tuple, _LINE, Elements}) ->
     lists:all(fun is_catch_all_pattern/1, Elements);
+is_catch_all_pattern({record, _LINE, _Name, Fields}) ->
+    lists:all(fun({record_field, _LINE2, _FieldName, Pattern}) -> is_catch_all_pattern(Pattern) end, Fields);
 is_catch_all_pattern(_) ->
     false.
+
+%% @doc Returns true if all patterns in the clause are wildcards.
+%% This is a more restricted version of `is_catch_all_clause`.
+is_wildcard_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
+    IsWildCard =
+        fun
+            ({var, _LINE, _Name}) -> true;
+            (_) -> false
+        end,
+    (Guards == []) and is_linear_clause(Clause) and lists:all(IsWildCard, Patterns).
+
 
 -spec has_duplicates(list()) -> boolean().
 has_duplicates(L) ->
