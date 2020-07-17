@@ -206,8 +206,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case S.ListOp(_) =>
           val elemType = freshTypeVar(d)
           val listType = MT.ListType(elemType)
+          val res1 = elab(e1, listType, d, env)
+          val res2 = elab(e2, listType, d, env)
           unify(exp.p, ty, listType)
-          (elab(e1, listType, d, env), elab(e2, listType, d, env))
+          (res1, res2)
         case S.Arith(_) =>
           unify(exp.p, ty, MT.IntType)
           (elab(e1, MT.IntType, d, env), elab(e2, MT.IntType, d, env))
