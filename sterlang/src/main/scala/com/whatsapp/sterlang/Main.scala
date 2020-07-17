@@ -69,6 +69,8 @@ object Main {
         val warnings = new PatternChecker(context).warnings(annFuns)
         warnings.foreach(printError(text, _))
       }
+
+      SyntaxUtil.checkPublicSpecs(program)
     } catch {
       case error: PositionedError =>
         printError(text, error)
