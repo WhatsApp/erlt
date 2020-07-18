@@ -177,6 +177,17 @@ object SyntaxUtil {
         ifClauses.flatMap { ifClause =>
           freeVars(ifClause.exp, m)
         }.toSet
+      case S.Comprehension(elem, qualifiers) =>
+        var vars: Set[String] = Set.empty
+        var patVars: Set[String] = Set.empty
+        qualifiers.foreach {
+          case S.Filter(exp) =>
+            vars ++= (freeVars(exp, m) -- patVars)
+          case S.Generator(pat, exp) =>
+            vars ++= (freeVars(exp, m) -- patVars)
+            patVars ++= collectPatVars(pat)
+        }
+        freeVars(elem, m) -- patVars
       case S.FnExp(clauses) =>
         clauses
           .map { clause =>
@@ -518,6 +529,15 @@ object SyntaxUtil {
           val guardDeps = ifClause.guards.flatMap(_.exprs).flatMap(getDepExp)
           bodyDeps ++ guardDeps
         }.toSet
+      case S.Comprehension(elem, qualifiers) =>
+        val elemDeps = getDepExp(elem)
+        val qualifierDeps = qualifiers.flatMap {
+          case S.Filter(exp) =>
+            getDepExp(exp)
+          case S.Generator(pat, exp) =>
+            getDepPat(pat) ++ getDepExp(exp)
+        }
+        elemDeps ++ qualifierDeps
       case S.FnExp(clauses) =>
         clauses.map(getDepClause).reduce(_ ++ _)
       case S.NamedFnExp(varName, clauses) =>

@@ -299,8 +299,15 @@ object Convert {
           case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(p)
           case None        => sys.error(s"not supported binOp ($op) in: $e")
         }
-      case Exprs.ListComprehension(template, qualifiers) =>
-        ???
+      case Exprs.ListComprehension(p, template, qualifiers) =>
+        Ast.Comprehension(
+          convertExpr(template),
+          qualifiers.map {
+            case Exprs.Filter(e)       => Ast.Filter(convertExpr(e))
+            case Exprs.LGenerate(p, e) => Ast.Generator(convertPattern(p), convertExpr(e))
+            case Exprs.BGenerate(_, _) => ???
+          },
+        )(p)
       case Exprs.Bin(elems) =>
         ???
       case Exprs.RecordCreate(recordName, fields) =>
