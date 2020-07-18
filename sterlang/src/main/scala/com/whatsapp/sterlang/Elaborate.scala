@@ -99,6 +99,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     exp match {
       case caseExp: S.CaseExp =>
         elabCaseExp(caseExp, ty, d, env)
+      case ifExp: S.IfExp =>
+        elabIfExp(ifExp, ty, d, env)
       case recordUpdateExp: S.RecordUpdateExp =>
         elabRecordUpdateExp(recordUpdateExp, ty, d, env)
       case binOpExp: S.BinOpExp =>
@@ -251,6 +253,23 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, resType)
     A.CaseExp(selector1, branches)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val ifClauses = exp.ifClauses
+
+    val resType = freshTypeVar(d)
+    val bodies = for (S.IfClause(guards, body) <- ifClauses) yield {
+      for (guard <- guards) {
+        for (guardExp <- guard.exprs) {
+          elab(guardExp, MT.BoolType, d, env)
+        }
+      }
+      elabBody(body, resType, d, env)
+    }
+
+    unify(exp.p, ty, resType)
+    A.IfExp(bodies)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabRecordUpdateExp(exp: S.RecordUpdateExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

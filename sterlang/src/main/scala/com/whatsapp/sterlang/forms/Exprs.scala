@@ -24,6 +24,7 @@ import com.whatsapp.sterlang.forms.Guards._
 object Exprs {
 
   case class Clause(pats: List[Pattern], guards: List[Guard], body: List[Expr])
+  case class IfClause(guards: List[Guard], body: List[Expr])
 
   sealed trait Expr
 
@@ -56,8 +57,8 @@ object Exprs {
   case class ListComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
-  case class If(clauses: List[Clause]) extends Expr
   case class Case(p: Pos.SP, expr: Expr, clauses: List[Clause]) extends Expr
+  case class If(p: Pos.SP, clauses: List[IfClause]) extends Expr
   case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr

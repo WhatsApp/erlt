@@ -29,6 +29,14 @@ object ExprsConvert {
         Clause(pats, guards, exps)
     }
 
+  def convertIfClause(term: ETerm): IfClause =
+    term match {
+      case ETuple(List(EAtom("clause"), _anno, EList(List()), EList(eGuards), EList(eExps))) =>
+        val guards = eGuards.map(GuardsConvert.convertGuard)
+        val exps = eExps.map(convertExp)
+        IfClause(guards, exps)
+    }
+
   def convertExp(term: ETerm): Expr =
     term match {
       case ETuple(List(EAtom("match"), _anno, ePat1, eExp)) =>
@@ -106,8 +114,8 @@ object ExprsConvert {
         BinaryComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("block"), anno, EList(eExps))) =>
         Block(sp(anno), eExps.map(convertExp))
-      case ETuple(List(EAtom("if"), _anno, EList(eClauses))) =>
-        If(eClauses.map(convertClause))
+      case ETuple(List(EAtom("if"), anno, EList(eClauses))) =>
+        If(sp(anno), eClauses.map(convertIfClause))
       case ETuple(List(EAtom("case"), anno, eExp, EList(eClauses))) =>
         Case(sp(anno), convertExp(eExp), eClauses.map(convertClause))
       case ETuple(
