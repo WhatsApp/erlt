@@ -142,6 +142,9 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           printBody(branch.body)
         }
 
+      case A.IfExp(bodies) =>
+        bodies.foreach(printBody)
+
       case A.SeqExp(e1, e2) =>
         printExp(e1)
         printExp(e2)

@@ -170,6 +170,7 @@ object Ast {
   case class ListExp(elems: List[Exp])(val p: Pos.P) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val p: Pos.P) extends Exp
   case class CaseExp(selector: Exp, rules: List[Rule])(val p: Pos.P) extends Exp
+  case class IfExp(ifClauses: List[IfClause])(val p: Pos.P) extends Exp
   case class NamedFnExp(name: LocalVarName, clauses: List[Clause])(val p: Pos.P) extends Exp
   case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
 
@@ -180,6 +181,7 @@ object Ast {
   case class Field[A](label: String, value: A)
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
+  case class IfClause(guards: List[Guard], exp: Body)
   case class Guard(exprs: List[Exp])
 
   sealed trait Pat { val p: Pos.P }

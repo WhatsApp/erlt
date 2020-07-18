@@ -84,6 +84,9 @@ object Convert {
       case _         => sys.error(s"unexpected clause: $clause")
     }
 
+  private def convertIfClause(ifClause: Exprs.IfClause): Ast.IfClause =
+    Ast.IfClause(ifClause.guards.map(convertGuard), convertBody(ifClause.body))
+
   private def convertGuard(guard: Guards.Guard): Ast.Guard =
     Ast.Guard(guard.elems.map(convertGExpr))
 
@@ -264,6 +267,8 @@ object Convert {
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>
         Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(p)
+      case Exprs.If(p, ifClauses) =>
+        Ast.IfExp(ifClauses.map(convertIfClause))(p)
       case Exprs.LocalCall(p1, Exprs.AtomLiteral(p2, f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p2), args.map(convertExpr))(p1)
       case Exprs.LocalCall(p, head, args) =>
@@ -309,8 +314,6 @@ object Convert {
       case Exprs.Catch(exp) =>
         ???
       case Exprs.BinaryComprehension(template, qualifiers) =>
-        ???
-      case Exprs.If(clauses) =>
         ???
       case Exprs.Try(body, clauses, catchClauses, after) =>
         ???

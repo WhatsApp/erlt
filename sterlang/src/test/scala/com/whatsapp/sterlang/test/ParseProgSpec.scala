@@ -40,6 +40,7 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
           |-type boxAlias2(A) :: box2(A).
           |-spec box_id(boxAlias(A)) -> boxAlias(A).
           |box_id(X) -> X.
+          |test(X) -> if X -> true; true -> false end.
           |""".stripMargin,
         Program(
           require = Require(List("mod1", "mod2")),
@@ -70,7 +71,34 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
                   Body(List(), ValDef(WildPat()(NP), VarExp(new LocalVarName("X"))(NP))),
                 )
               ),
-            )(NP)
+            )(NP),
+            Fun(
+              new LocalFunName("test", 1),
+              List(
+                Clause(
+                  List(VarPat("X")(NP)),
+                  List(),
+                  Body(
+                    List(),
+                    ValDef(
+                      WildPat()(NP),
+                      IfExp(
+                        List(
+                          IfClause(
+                            List(Guard(List(VarExp(new LocalVarName("X"))(NP)))),
+                            Body(List(), ValDef(WildPat()(NP), BoolExp(true)(NP))),
+                          ),
+                          IfClause(
+                            List(Guard(List(BoolExp(true)(NP)))),
+                            Body(List(), ValDef(WildPat()(NP), BoolExp(false)(NP))),
+                          ),
+                        )
+                      )(NP),
+                    ),
+                  ),
+                )
+              ),
+            )(NP),
           ),
           opaques = List.empty,
           exports = Set.empty,

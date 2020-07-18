@@ -59,6 +59,7 @@ object Absyn {
   case class BinOpExp(operator: BinOp, argument1: Exp, argument2: Exp)(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
   case class CaseExp(selector: Exp, branches: List[Branch])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class IfExp(bodies: List[Body])(val typ: Type, val sourceLocation: Pos.P) extends Exp
 
   // TODO: is [[SeqExp]] significantly different than [[BlockExp]]?
   case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp

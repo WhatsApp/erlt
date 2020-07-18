@@ -173,6 +173,10 @@ object SyntaxUtil {
         }
         val selectorVars = freeVars(selector, m)
         selectorVars ++ rulesVars
+      case S.IfExp(ifClauses) =>
+        ifClauses.flatMap { ifClause =>
+          freeVars(ifClause.exp, m)
+        }.toSet
       case S.FnExp(clauses) =>
         clauses
           .map { clause =>
@@ -508,6 +512,12 @@ object SyntaxUtil {
         }
         val selectorDeps = getDepExp(selector)
         selectorDeps ++ rulesDeps
+      case S.IfExp(ifClauses) =>
+        ifClauses.flatMap { ifClause =>
+          val bodyDeps = getDepBody(ifClause.exp)
+          val guardDeps = ifClause.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ guardDeps
+        }.toSet
       case S.FnExp(clauses) =>
         clauses.map(getDepClause).reduce(_ ++ _)
       case S.NamedFnExp(varName, clauses) =>
