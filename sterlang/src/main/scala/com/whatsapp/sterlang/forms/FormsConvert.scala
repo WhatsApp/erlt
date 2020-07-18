@@ -123,6 +123,8 @@ object FormsConvert {
         FunctionDecl(sp(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
+      case ETuple(List(EAtom("attribute"), anno, EAtom(attrName), attrValue)) =>
+        WildAttribute(sp(anno), attrName)
       case _ =>
         sys.error(s"unexpected term: $term")
     }

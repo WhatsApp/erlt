@@ -52,6 +52,7 @@ object Forms {
   case class FunctionDecl(p: Pos.SP, name: String, arity: Int, clauses: List[Clause]) extends Form
   case class Require(modules: List[String]) extends Form
   case object EOF extends Form
+  case class WildAttribute(p: Pos.SP, name: String) extends Form
 
   sealed trait RecordFieldDecl
   case class RecordFieldUntyped(name: String) extends RecordFieldDecl
