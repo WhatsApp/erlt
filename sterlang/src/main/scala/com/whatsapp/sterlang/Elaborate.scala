@@ -101,6 +101,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabCaseExp(caseExp, ty, d, env)
       case ifExp: S.IfExp =>
         elabIfExp(ifExp, ty, d, env)
+      case comprehension: S.Comprehension =>
+        elabComprehension(comprehension, ty, d, env)
       case recordUpdateExp: S.RecordUpdateExp =>
         elabRecordUpdateExp(recordUpdateExp, ty, d, env)
       case binOpExp: S.BinOpExp =>
@@ -270,6 +272,32 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, resType)
     A.IfExp(bodies)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabComprehension(exp: S.Comprehension, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.Comprehension(template, qualifiers) = exp
+    var envAcc = env
+    var depth = d
+
+    val qualifiers1: List[A.Qualifier] = qualifiers.map {
+      case S.Filter(exp) =>
+        A.Filter(elab(exp, MT.BoolType, depth, envAcc))
+      case S.Generator(pat, gExp) =>
+        val elemType = freshTypeVar(depth)
+        val gExp1 = elab(gExp, MT.ListType(elemType), depth, envAcc)
+        val (pat1, env1, _) = elpat(pat, elemType, d, envAcc, Set.empty, gen = true)
+        envAcc = env1
+        depth += 1
+        A.Generator(pat1, gExp1)
+    }
+
+    val elemType = freshTypeVar(depth)
+    val resType = MT.ListType(elemType)
+    val template1 = elab(template, elemType, depth, envAcc)
+
+    unify(exp.p, ty, resType)
+
+    A.Comprehension(template1, qualifiers1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabRecordUpdateExp(exp: S.RecordUpdateExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

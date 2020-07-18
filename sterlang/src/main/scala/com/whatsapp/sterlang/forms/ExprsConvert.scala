@@ -108,8 +108,8 @@ object ExprsConvert {
             )
           ) =>
         RemoteEnumCtr(sp(anno), module, enum, ctr, eArgs.map(convertExp))
-      case ETuple(List(EAtom("lc"), _anno, eTemplate, EList(eQualifiers))) =>
-        ListComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))
+      case ETuple(List(EAtom("lc"), anno, eTemplate, EList(eQualifiers))) =>
+        ListComprehension(sp(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), _anno, eTemplate, EList(eQualifiers))) =>
         BinaryComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("block"), anno, EList(eExps))) =>

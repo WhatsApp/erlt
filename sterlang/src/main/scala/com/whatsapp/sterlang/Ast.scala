@@ -173,6 +173,7 @@ object Ast {
   case class IfExp(ifClauses: List[IfClause])(val p: Pos.P) extends Exp
   case class NamedFnExp(name: LocalVarName, clauses: List[Clause])(val p: Pos.P) extends Exp
   case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
+  case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
   case class ValDef(pat: Pat, exp: Exp)
@@ -183,6 +184,9 @@ object Ast {
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)
   case class Guard(exprs: List[Exp])
+  sealed trait Qualifier
+  case class Filter(exp: Exp) extends Qualifier
+  case class Generator(pat: Pat, exp: Exp) extends Qualifier
 
   sealed trait Pat { val p: Pos.P }
   case class WildPat()(val p: Pos.P) extends Pat
