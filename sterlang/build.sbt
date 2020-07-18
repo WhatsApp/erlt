@@ -15,7 +15,7 @@
  */
 
 lazy val projectSetting = Seq(
-  scalaVersion := "2.13.2",
+  scalaVersion := "2.13.3",
   organization := "whatsapp",
   name := "sterlang",
   description := "Statically Typed Erlang",
