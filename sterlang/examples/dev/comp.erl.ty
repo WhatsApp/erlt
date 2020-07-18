@@ -1,0 +1,7 @@
+-spec map(fun((A) -> B), list(A)) -> list(B).
+-spec filter(fun((A) -> boolean()), list(A)) -> list(A).
+-spec strange_perm(fun((A, B) -> boolean()), list(A), list(B)) -> list({A, B}).
+-spec sort(list(A)) -> list(A).
+-spec sort(list(A), fun((A, A) -> boolean())) -> list(A).
+-spec append(list(list(A))) -> list(A).
+-spec flat_map(fun((A) -> list(B)), list(A)) -> list(B).
