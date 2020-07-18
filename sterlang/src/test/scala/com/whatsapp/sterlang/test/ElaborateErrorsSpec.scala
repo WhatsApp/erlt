@@ -21,7 +21,7 @@ import java.io.StringWriter
 import com.whatsapp.sterlang.Pos.NP
 import com.whatsapp.sterlang._
 
-class ElaborateErrorsSpec extends org.scalatest.FunSpec {
+class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def testSpecError(input: String, expected: SpecError): Unit = {
     val prog = etf.programFromString(input)

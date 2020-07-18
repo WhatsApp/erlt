@@ -22,7 +22,7 @@ lazy val projectSetting = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature"),
   libraryDependencies += "org.fusesource.jansi" % "jansi" % "1.18",
   libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % "test,it",
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test,it",
   Test / testOptions += Tests.Argument("-oD"),
   IntegrationTest / testOptions += Tests.Argument("-oD"),
 )

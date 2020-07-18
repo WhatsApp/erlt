@@ -20,7 +20,7 @@ import java.io.StringWriter
 
 import com.whatsapp.sterlang.{Ast, _}
 
-class ElaborateSpec extends org.scalatest.FunSpec {
+class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   val S = Ast
 
   def testTyping(input: String, expOutput: String): Unit = {

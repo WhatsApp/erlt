@@ -18,7 +18,7 @@ package com.whatsapp.sterlang.test.it
 
 import com.whatsapp.sterlang.TypePrinter2.{TypeSchemes, Types}
 
-abstract class DirSpec extends org.scalatest.FunSpec {
+abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
   import java.io.File
 
   def testDir(dir: String): Unit = {

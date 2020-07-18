@@ -20,7 +20,7 @@ import com.whatsapp.sterlang.Ast._
 import com.whatsapp.sterlang.Pos.NP
 import com.whatsapp.sterlang.etf
 
-class ParseProgSpec extends org.scalatest.FunSpec {
+class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
   def testProg(input: String, expProg: Program): Unit = {
     val prog = etf.programFromString(input)
     assert(prog === expProg)
