@@ -53,3 +53,5 @@ class DuplicateType(pos: Pos.P, name: String) extends PositionedError(pos, s"Dup
 class DuplicateFun(pos: Pos.P, name: String) extends PositionedError(pos, s"Duplicate fun: $name", None)
 class UnSpecedExportedFun(pos: Pos.P, name: String)
     extends PositionedError(pos, s"Fun: $name is exported, but lacks a spec", None)
+
+case class ParseError(loc: Pos.Loc) extends Exception(s"Parse error at ${loc.line}:${loc.column}")

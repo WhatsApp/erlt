@@ -16,6 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
+import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.etf._
 import com.whatsapp.sterlang.forms.Forms._
 
@@ -125,6 +126,8 @@ object FormsConvert {
         EOF
       case ETuple(List(EAtom("attribute"), anno, EAtom(attrName), attrValue)) =>
         WildAttribute(sp(anno), attrName)
+      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
+        Error(Pos.Loc(line.toInt, column.toInt))
       case _ =>
         sys.error(s"unexpected term: $term")
     }

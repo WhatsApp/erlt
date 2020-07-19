@@ -53,6 +53,7 @@ object Forms {
   case class Require(modules: List[String]) extends Form
   case object EOF extends Form
   case class WildAttribute(p: Pos.SP, name: String) extends Form
+  case class Error(loc: Pos.Loc) extends Form
 
   sealed trait RecordFieldDecl
   case class RecordFieldUntyped(name: String) extends RecordFieldDecl

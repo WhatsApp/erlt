@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.etf
 
-import com.whatsapp.sterlang.{Ast, Pos}
+import com.whatsapp.sterlang.{Ast, ParseError, Pos}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Guards, Patterns, Types}
 
 object Convert {
@@ -73,6 +73,8 @@ object Convert {
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
         None
+      case Forms.Error(loc) =>
+        throw ParseError(loc)
     }
 
   private def convertFunClause(clause: Exprs.Clause): Ast.Clause =
