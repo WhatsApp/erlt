@@ -24,12 +24,16 @@
     forms/1,
     functions/1,
     receives/1,
-    functions_with_nonlinear_clauses/1,
+    pattern_matching_constructs/1,
+    nonlinear_clauses/1,
+    guarded_clauses/1,
     compound_patterns/1,
     tries/1,
     used_funs/1,
     used_primitives/2
 ]).
+
+-include_lib("stdlib/include/assert.hrl").
 
 %% Returns a list of functions used in a given module.
 -spec used_funs(file:filename()) -> list(mfa()).
@@ -191,16 +195,52 @@ receives(BeamFile) ->
     Receives = collect(Forms, fun pred/1, fun receive_anno/1),
     erlang:length(Receives).
 
--spec functions_with_nonlinear_clauses(file:filename()) -> list(mfa()).
-functions_with_nonlinear_clauses(BeamFile) ->
+-type pattern() :: any().
+-type clause() :: {clause, non_neg_integer(), list(pattern()), list(), any()}.
+-type clauses() :: list(clause()).
+
+-spec pattern_matching_constructs(file:filename()) -> {integer(), integer()}.
+pattern_matching_constructs(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
-    HasNonlinear = fun(Clauses) -> not lists:all(fun is_linear_clause/1, Clauses) end,
-    HasCatchAll = fun(Clauses) -> lists:any(fun is_catch_all_clause/1, Clauses) end,
-    HasWildCardCatchAll = fun(Clauses) -> lists:any(fun is_wildcard_clause/1, Clauses) end,
-    Nonlinear =
-        [{N, A, HasWildCardCatchAll(Clauses), HasCatchAll(Clauses)} ||
-            {function, _Line, N, A, Clauses} <- Forms, HasNonlinear(Clauses)],
-    lists:usort(Nonlinear).
+    PatternMatches = pattern_matches(Forms),
+    {length(PatternMatches), lists:sum(lists:map(fun length/1, PatternMatches))}.
+
+-spec nonlinear_clauses(file:filename()) -> list(mfa()).
+nonlinear_clauses(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    NonlinearClauses =
+        [{Line, is_clause_covered(Clause, Clauses)} ||
+            Clauses <- pattern_matches(Forms),
+            {clause, Line, _Patterns, _Guard, _Body} = Clause <- Clauses,
+            not is_linear_clause(Clause)
+        ],
+    lists:usort(NonlinearClauses).
+
+guarded_clauses(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    HasGuard = fun({clause, _Line, _Patterns, Guards, _Body}) -> Guards /= [] end,
+    GuardedClauses =
+        [{Line, is_clause_covered(Clause, Clauses)} ||
+            Clauses <- pattern_matches(Forms),
+            {clause, Line, _Patterns, _Guard, _Body} = Clause <- Clauses,
+            HasGuard(Clause)
+        ],
+    lists:usort(GuardedClauses).
+
+-spec pattern_matches(list()) -> clauses().
+%% @doc Returns a list of all pattern matching constructs in the input.
+pattern_matches(Forms) ->
+    Collect =
+        fun
+            ({function, _Line, _Name, _Arity, Clauses}) -> Clauses;
+            ({'fun', _Line, {clauses, Clauses}}) -> Clauses;
+            ({named_fun, _Line, _Name, Clauses}) -> Clauses;
+            ({'case', _Line, _Exp, Clauses}) -> Clauses;
+            (_) -> false
+        end,
+    PatternMatches = collect(Forms, fun pred/1, Collect),
+    [?assertMatch({clause, _Line, _Patterns, _Guards, _Body}, Clause) || Clause <- lists:flatten(PatternMatches)],
+    PatternMatches.
 
 -spec compound_patterns(file:filename()) -> list(mfa()).
 compound_patterns(BeamFile) ->
@@ -216,8 +256,9 @@ compound_patterns(BeamFile) ->
             {match, Line, _, _} = Pat <- collect(Clauses, fun pred/1, fun(X) -> X end)],
     lists:sort(CompoundPatterns).
 
+-spec is_linear_clause(clause()) -> boolean().
 %% @doc Returns true if all variables in the clause are unique.
-is_linear_clause({clause, _LINE, Patterns, _Guards, _Body}) ->
+is_linear_clause({clause, _Line, Patterns, _Guards, _Body}) ->
     CollectVariables =
         fun
             ({var, _Line2, '_'}) -> false;
@@ -227,37 +268,48 @@ is_linear_clause({clause, _LINE, Patterns, _Guards, _Body}) ->
     Variables = collect(Patterns, fun pred/1, CollectVariables),
     not has_duplicates(Variables).
 
-%% @doc Returns true if the clause will match any value.
-is_catch_all_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
-    (Guards == []) and is_linear_clause(Clause) and lists:all(fun is_catch_all_pattern/1, Patterns).
+-spec is_clause_covered(clause(), clauses()) -> boolean().
+%% @doc Returns true if some clause in `Clauses` matches all values matched by Clause.
+is_clause_covered(Clause, Clauses) ->
+    lists:any(fun(Clause2) -> is_sub_clause(Clause, Clause2) end, Clauses).
 
-%% @doc Returns true if the pattern will match any value.
-is_catch_all_pattern({var, _LINE, _Name}) ->
+-spec is_sub_clause(clause(), clause()) -> boolean().
+%% @doc Returns true if the second clause matches all values matched by the first clause.
+is_sub_clause({clause, _Line1, Patterns1, _Guards1, _Body1}, {clause, _Line2, Patterns2, Guards2, _Body2} = Clause2) ->
+    (Guards2 =:= []) and is_linear_clause(Clause2) and all2(fun is_sub_pattern/2, Patterns1, Patterns2).
+
+-spec is_sub_pattern(pattern(), pattern()) -> boolean().
+%% @doc Returns true if the second pattern matches all values matched by the first pattern.
+is_sub_pattern(_, {var, _, _}) ->
     true;
-is_catch_all_pattern({match, _LINE, Pattern1, Pattern2}) ->
-    is_catch_all_pattern(Pattern1) and is_catch_all_pattern(Pattern2);
-is_catch_all_pattern({tuple, _LINE, Elements}) ->
-    lists:all(fun is_catch_all_pattern/1, Elements);
-is_catch_all_pattern({record, _LINE, _Name, Fields}) ->
-    lists:all(fun({record_field, _LINE2, _FieldName, Pattern}) -> is_catch_all_pattern(Pattern) end, Fields);
-is_catch_all_pattern(_) ->
-    false.
+is_sub_pattern({match, _Line1, P_1, P_2}, P) ->
+    is_sub_pattern(P_1, P) or is_sub_pattern(P_2, P);
+is_sub_pattern({cons, _Line1, P_h1, P_t1}, {cons, _Line2, P_h2, P_t2}) ->
+    is_sub_pattern(P_h1, P_h2) and is_sub_pattern(P_t1, P_t2);
+is_sub_pattern({nil, _Line1}, {nil, _Line2}) ->
+    true;
+is_sub_pattern({record, _Line1, Name, Fields_1}, {record, _Line2, Name, Fields_2}) ->
+    SimplifyField = fun({record_field, _Line, Field, Pat}) -> {erl_parse:normalise(Field), Pat} end,
+    LookupField =
+        fun(Field, Record) -> proplists:get_value(Field, Record, {var, undefined, '_'}) end,
 
-%% @doc Returns true if all patterns in the clause are wildcards.
-%% This is a more restricted version of `is_catch_all_clause`.
-is_wildcard_clause({clause, _LINE, Patterns, Guards, _Body} = Clause) ->
-    IsWildCard =
-        fun
-            ({var, _LINE2, _Name}) -> true;
-            (_) -> false
-        end,
-    (Guards == []) and is_linear_clause(Clause) and lists:all(IsWildCard, Patterns).
+    SimpleFields_1 = lists:map(SimplifyField, Fields_1),
+    SimpleFields_2 = lists:map(SimplifyField, Fields_2),
+    lists:all(fun({Field2, Pat2}) -> is_sub_pattern(LookupField(Field2, SimpleFields_1), Pat2) end, SimpleFields_2);
+is_sub_pattern({tuple, _Line1, Elements_1}, {tuple, _Line2, Elements_2}) when length(Elements_1) =:= length(Elements_2) ->
+    all2(fun is_sub_pattern/2, Elements_1, Elements_2);
+is_sub_pattern(_, _) ->
+    false.
 
 %% @doc Returns true if the compound pattern simply names the overall value, and does no complex matching.
 is_rename_only_compound_pattern({match, _LINE, {var, _, _}, _}) -> true;
 is_rename_only_compound_pattern({match, _LINE, _, {var, _, _}}) -> true;
 is_rename_only_compound_pattern({match, _LINE, _, _}) -> false.
 
+%% @doc Like `lists:all`, but with a two argument predicate.
+-spec all2(fun((A, B) -> boolean()), list(A), list(B)) -> boolean().
+all2(Pred, L1, L2) ->
+    lists:all(fun({A, B}) -> Pred(A, B) end, lists:zip(L1, L2)).
 
 -spec has_duplicates(list()) -> boolean().
 has_duplicates(L) ->
