@@ -24,6 +24,7 @@
     forms/1,
     functions/1,
     receives/1,
+    pattern_matching_constructs/1,
     nonlinear_clauses/1,
     guarded_clauses/1,
     compound_patterns/1,
@@ -197,6 +198,12 @@ receives(BeamFile) ->
 -type pattern() :: any().
 -type clause() :: {clause, non_neg_integer(), list(pattern()), list(), any()}.
 -type clauses() :: list(clause()).
+
+-spec pattern_matching_constructs(file:filename()) -> {integer(), integer()}.
+pattern_matching_constructs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    PatternMatches = pattern_matches(Forms),
+    {length(PatternMatches), lists:sum(lists:map(fun length/1, PatternMatches))}.
 
 -spec nonlinear_clauses(file:filename()) -> list(mfa()).
 nonlinear_clauses(BeamFile) ->

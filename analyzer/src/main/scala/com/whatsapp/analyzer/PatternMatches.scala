@@ -18,42 +18,29 @@ package com.whatsapp.analyzer
 
 import scala.util.Using
 
-object GuardedClauses {
-  private val indentation = "    "
-
-  case class GuardedClause(module: String, line: Int, isCovered: Boolean)
+object PatternMatches {
+  case class PatternMatches(module: String, matches: Int, clauses: Int)
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)
 
-    val covered = data.filter(_.isCovered)
-    val uncovered = data.filter(!_.isCovered)
-
-    Console.println(s"Clauses with guards: ${data.size}")
-    Console.println(s"${indentation}those covered by later clauses:   ${covered.size}")
-    Console.println(s"${indentation}those uncovered by later clauses: ${uncovered.size}")
+    Console.println(s"Total number of pattern matching constructs: ${data.map(_.matches).sum}")
+    Console.println(s"Total number of clauses: ${data.map(_.clauses).sum}")
 
     Console.println()
 
-    Console.println("Covered guarded clauses:")
-    covered.foreach(print)
-
-    Console.println()
-
-    Console.println("Uncovered guarded clauses:")
-    uncovered.foreach(print)
+    data.foreach { module =>
+      Console.println(s"${module.module} matches: ${module.matches}, clauses: ${module.clauses}")
+    }
   }
 
-  private def print(clause: GuardedClause): Unit =
-    Console.println(s"$indentation${clause.module}:${clause.line}")
-
-  private def loadData(rpc: RPC): List[GuardedClause] = {
+  private def loadData(rpc: RPC): List[PatternMatches] = {
     CodeDirs.firstPartyEbinDirs.flatMap(indexProjectDir(_, rpc))
   }
 
-  private def indexProjectDir(dir: String, rpc: RPC): List[GuardedClause] = {
+  private def indexProjectDir(dir: String, rpc: RPC): List[PatternMatches] = {
     val dirFile = new java.io.File(dir)
     val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam")).sorted
-    beamFiles flatMap { f => rpc.getGuardedClauses(s"$dir/$f") }
+    beamFiles map { f => rpc.getPatternMatches(s"$dir/$f") }
   }
 }

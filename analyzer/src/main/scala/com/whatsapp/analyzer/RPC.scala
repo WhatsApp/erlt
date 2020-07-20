@@ -110,6 +110,26 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
+  def getPatternMatches(beamFilePath: String): PatternMatches.PatternMatches = {
+    System.err.println("loading " + beamFilePath)
+    connection.sendRPC("analyzer",
+      "pattern_matching_constructs",
+      new OtpErlangList(new OtpErlangString(beamFilePath)),
+    )
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    val module = new File(beamFilePath).getName.split("""\.""")(0)
+
+    eObject match {
+      case ETuple(List(ELong(matches), ELong(clauses))) =>
+        PatternMatches.PatternMatches(module, matches.toInt, clauses.toInt)
+      case _ =>
+        System.err.println("not loaded")
+        PatternMatches.PatternMatches(module, 0, 0)
+    }
+  }
+
   def getNonlinearClauses(beamFilePath: String): List[NonlinearClauses.NonlinearClause] = {
     System.err.println("loading " + beamFilePath)
     connection.sendRPC("analyzer",
