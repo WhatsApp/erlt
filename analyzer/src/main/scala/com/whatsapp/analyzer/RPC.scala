@@ -113,7 +113,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
   def getNonlinearFunctionClauses(beamFilePath: String): List[NonlinearClauses.NonlinearFunctionClause] = {
     System.err.println("loading " + beamFilePath)
     connection.sendRPC("analyzer",
-      "nonlinear_function_clauses",
+      "nonlinear_clauses",
       new OtpErlangList(new OtpErlangString(beamFilePath)),
     )
     val received = connection.receiveRPC
@@ -124,8 +124,8 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     eObject match {
       case EList(elems, _) =>
         elems.collect {
-          case ETuple(List(EAtom(function), ELong(arity), ELong(line), isCovered: EAtom)) =>
-            NonlinearClauses.NonlinearFunctionClause(module, function, arity.toInt, line.toInt, isCovered.asBoolean())
+          case ETuple(List(ELong(line), isCovered: EAtom)) =>
+            NonlinearClauses.NonlinearFunctionClause(module, line.toInt, isCovered.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")

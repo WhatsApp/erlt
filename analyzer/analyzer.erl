@@ -24,12 +24,14 @@
     forms/1,
     functions/1,
     receives/1,
-    nonlinear_function_clauses/1,
+    nonlinear_clauses/1,
     compound_patterns/1,
     tries/1,
     used_funs/1,
     used_primitives/2
 ]).
+
+-include_lib("stdlib/include/assert.hrl").
 
 %% Returns a list of functions used in a given module.
 -spec used_funs(file:filename()) -> list(mfa()).
@@ -191,12 +193,26 @@ receives(BeamFile) ->
     Receives = collect(Forms, fun pred/1, fun receive_anno/1),
     erlang:length(Receives).
 
--spec nonlinear_function_clauses(file:filename()) -> list(mfa()).
-nonlinear_function_clauses(BeamFile) ->
+-spec nonlinear_clauses(file:filename()) -> list(mfa()).
+nonlinear_clauses(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
+    CollectPatternMatches =
+        fun
+            ({function, _Line, _Name, _Arity, Clauses}) -> Clauses;
+            ({'fun', _Line, {clauses, Clauses}}) -> Clauses;
+            ({named_fun, _Line, _Name, Clauses}) -> Clauses;
+            ({'case', _Line, _Exp, Clauses}) -> Clauses;
+            (_) -> false
+        end,
+    PatternMatches = collect(Forms, fun pred/1, CollectPatternMatches),
+    [?assertMatch({clause, _Line, _Patterns, _Guards, _Body}, Clause) || Clause <- lists:flatten(PatternMatches)],
+
     NonlinearClauses =
-        [{Name, Arity, Clause, IsCovered} ||
-            {function, _Line, Name, Arity, Clauses} <- Forms, {Clause, IsCovered} <- nonlinear_clauses(Clauses)],
+        [{Line, is_clause_covered(Clause, Clauses)} ||
+            Clauses <- PatternMatches,
+            {clause, Line, _Patterns, _Guard, _Body} = Clause <- Clauses,
+            not is_linear_clause(Clause)
+        ],
     lists:usort(NonlinearClauses).
 
 -spec compound_patterns(file:filename()) -> list(mfa()).
@@ -223,15 +239,6 @@ is_linear_clause({clause, _Line, Patterns, _Guards, _Body}) ->
         end,
     Variables = collect(Patterns, fun pred/1, CollectVariables),
     not has_duplicates(Variables).
-
--spec nonlinear_clauses(list()) -> list({pos_integer(), boolean()}).
-nonlinear_clauses([]) ->
-    [];
-nonlinear_clauses([{clause, Line, _Patterns, _Guards, _Body} = Clause | Clauses]) ->
-    case is_linear_clause(Clause) of
-        true -> nonlinear_clauses(Clauses);
-        false -> [{Line, is_clause_covered(Clause, Clauses)} | nonlinear_clauses(Clauses)]
-    end.
 
 %% @doc Returns true if some clause in `Clauses` matches all values matched by Clause.
 is_clause_covered(Clause, Clauses) ->

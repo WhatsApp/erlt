@@ -21,7 +21,7 @@ import scala.util.Using
 object NonlinearClauses {
   private val indentation = "    "
 
-  case class NonlinearFunctionClause(module: String, function: String, arity: Int, line: Int, isCovered: Boolean)
+  case class NonlinearFunctionClause(module: String, line: Int, isCovered: Boolean)
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)
@@ -29,7 +29,7 @@ object NonlinearClauses {
     val covered = data.filter(_.isCovered)
     val uncovered = data.filter(!_.isCovered)
 
-    Console.println(s"Nonlinear function clauses: ${data.size}")
+    Console.println(s"Nonlinear clauses: ${data.size}")
     Console.println(s"${indentation}those covered by later clauses:   ${covered.size}")
     Console.println(s"${indentation}those uncovered by later clauses: ${uncovered.size}")
 
@@ -45,7 +45,7 @@ object NonlinearClauses {
   }
 
   private def print(clause: NonlinearFunctionClause): Unit =
-    Console.println(s"$indentation${clause.module}:${clause.function}/${clause.arity} at ${clause.line}")
+    Console.println(s"$indentation${clause.module}:${clause.line}")
 
   private def loadData(rpc: RPC): List[NonlinearFunctionClause] = {
     CodeDirs.firstPartyEbinDirs.flatMap(indexProjectDir(_, rpc))
