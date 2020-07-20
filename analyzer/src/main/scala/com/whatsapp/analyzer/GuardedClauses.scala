@@ -18,10 +18,10 @@ package com.whatsapp.analyzer
 
 import scala.util.Using
 
-object NonlinearClauses {
+object GuardedClauses {
   private val indentation = "    "
 
-  case class NonlinearClause(module: String, line: Int, isCovered: Boolean)
+  case class GuardedClause(module: String, line: Int, isCovered: Boolean)
 
   def main(args: Array[String]): Unit = {
     val data = Using.resource(RPC.connect())(loadData)
@@ -29,31 +29,31 @@ object NonlinearClauses {
     val covered = data.filter(_.isCovered)
     val uncovered = data.filter(!_.isCovered)
 
-    Console.println(s"Nonlinear clauses: ${data.size}")
+    Console.println(s"Causes with guards: ${data.size}")
     Console.println(s"${indentation}those covered by later clauses:   ${covered.size}")
     Console.println(s"${indentation}those uncovered by later clauses: ${uncovered.size}")
 
     Console.println()
 
-    Console.println("Covered nonlinear clauses:")
+    Console.println("Covered guarded clauses:")
     covered.foreach(print)
 
     Console.println()
 
-    Console.println("Uncovered nonlinear clauses:")
+    Console.println("Uncovered guarded clauses:")
     uncovered.foreach(print)
   }
 
-  private def print(clause: NonlinearClause): Unit =
+  private def print(clause: GuardedClause): Unit =
     Console.println(s"$indentation${clause.module}:${clause.line}")
 
-  private def loadData(rpc: RPC): List[NonlinearClause] = {
+  private def loadData(rpc: RPC): List[GuardedClause] = {
     CodeDirs.firstPartyEbinDirs.flatMap(indexProjectDir(_, rpc))
   }
 
-  private def indexProjectDir(dir: String, rpc: RPC): List[NonlinearClause] = {
+  private def indexProjectDir(dir: String, rpc: RPC): List[GuardedClause] = {
     val dirFile = new java.io.File(dir)
     val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam")).sorted
-    beamFiles flatMap { f => rpc.getNonlinearClauses(s"$dir/$f") }
+    beamFiles flatMap { f => rpc.getGuardedClauses(s"$dir/$f") }
   }
 }

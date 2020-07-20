@@ -110,7 +110,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
-  def getNonlinearFunctionClauses(beamFilePath: String): List[NonlinearClauses.NonlinearFunctionClause] = {
+  def getNonlinearClauses(beamFilePath: String): List[NonlinearClauses.NonlinearClause] = {
     System.err.println("loading " + beamFilePath)
     connection.sendRPC("analyzer",
       "nonlinear_clauses",
@@ -125,7 +125,30 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
       case EList(elems, _) =>
         elems.collect {
           case ETuple(List(ELong(line), isCovered: EAtom)) =>
-            NonlinearClauses.NonlinearFunctionClause(module, line.toInt, isCovered.asBoolean())
+            NonlinearClauses.NonlinearClause(module, line.toInt, isCovered.asBoolean())
+        }
+      case _ =>
+        System.err.println("not loaded")
+        List.empty
+    }
+  }
+
+  def getGuardedClauses(beamFilePath: String): List[GuardedClauses.GuardedClause] = {
+    System.err.println("loading " + beamFilePath)
+    connection.sendRPC("analyzer",
+      "guarded_clauses",
+      new OtpErlangList(new OtpErlangString(beamFilePath)),
+    )
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    val module = new File(beamFilePath).getName.split("""\.""")(0)
+
+    eObject match {
+      case EList(elems, _) =>
+        elems.collect {
+          case ETuple(List(ELong(line), isCovered: EAtom)) =>
+            GuardedClauses.GuardedClause(module, line.toInt, isCovered.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")
