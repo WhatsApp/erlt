@@ -52,13 +52,21 @@ object Main {
 
   private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
     Console.println(ansi(s"@|bold ${erlFile}|@"))
+    lazy val text = new String(Files.readAllBytes(Paths.get(erlFile)))
     val mainFile = etfFile.getOrElse(erlFile)
-    val rawProgram = loadProgram(mainFile)
+    val rawProgram =
+      try {
+        loadProgram(mainFile)
+      } catch {
+        case error: ParseError =>
+          printParseError(text, error)
+          sys.exit(2)
+      }
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val depContext = loadContext(mainFile, program, vars)
     val context = depContext.extend(program)
-    val text = new String(Files.readAllBytes(Paths.get(erlFile)))
+
     try {
       new AstChecks(context).check(program)
       val elaborate = new Elaborate(vars, context, program)
@@ -76,6 +84,15 @@ object Main {
         printError(text, error)
         sys.exit(2)
     }
+  }
+
+  private def printParseError(text: String, error: ParseError): Unit = {
+    val ParseError(loc) = error
+    val locator = Pos.Locator(text, loc)
+    val cTitle = ansi(s"@|bold,red Parse error at $loc|@")
+    val cQuote = ansi(s"@|magenta,bold ${locator.longString}|@")
+    Console.println(cTitle)
+    Console.println(cQuote)
   }
 
   private def printError(text: String, error: PositionedError): Unit = {

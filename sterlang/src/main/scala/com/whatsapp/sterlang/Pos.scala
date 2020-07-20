@@ -58,6 +58,33 @@ object Pos {
       )
   }
 
+  case class Locator(source: String, loc: Loc) {
+    import scala.collection.mutable.ArrayBuffer
+    private lazy val index: Array[Int] = {
+      var lineStarts = new ArrayBuffer[Int]
+      lineStarts += 0
+      for (i <- 0 until source.length)
+        if (source.charAt(i) == '\n') lineStarts += (i + 1)
+      lineStarts += source.length
+      lineStarts.toArray
+    }
+    def lineContents: String = {
+      val lineStart = index(loc.line - 1)
+      val lineEnd = index(loc.line)
+      val endIndex =
+        if (lineStart < lineEnd - 1 && source.charAt(lineEnd - 2) == '\r' && source.charAt(lineEnd - 1) == '\n') {
+          lineEnd - 2
+        } else if (lineStart < lineEnd && (source.charAt(lineEnd - 1) == '\r' || source.charAt(lineEnd - 1) == '\n')) {
+          lineEnd - 1
+        } else {
+          lineEnd
+        }
+      source.subSequence(lineStart, endIndex).toString
+    }
+    def longString: String =
+      lineContents + "\n" + lineContents.take(loc.column - 1).map { x => if (x == '\t') x else ' ' } + "^"
+  }
+
   /** Combines two ranges to create a range that spans both. */
   def merge(pos1: P, pos2: P): P =
     (pos1, pos2) match {
