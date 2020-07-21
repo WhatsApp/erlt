@@ -1,0 +1,37 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-lang([erl2]).
+-module(bins1).
+
+-export([test_bins/0]).
+
+-spec test_bins() -> ok.
+test_bins() ->
+    match_bins(mk_bins()).
+
+mk_bins() ->
+    [<<>>, <<1>>, <<1:12>>, <<1.5:64/float>>, <<1:2/integer-unit:8>>, << (<<2>>)/binary >>].
+
+match_bins([<<>> | Rest]) -> match_bins(Rest);
+match_bins([Next|Rest]) ->
+    case Next of
+        <<1>> -> ok;
+        <<1:12>> -> ok;
+        <<1.5:64/float>> -> ok;
+        <<X:2/integer-unit:8>> when X =:= 1 -> ok;
+        << Bin/binary >> when Bin =:= <<2>> -> ok
+    end,
+    match_bins(Rest);
+match_bins([]) -> ok.

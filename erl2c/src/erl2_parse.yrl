@@ -376,7 +376,7 @@ bin_elements -> bin_element : ['$1'].
 bin_elements -> bin_element ',' bin_elements : ['$1'|'$3'].
 
 bin_element -> bit_expr opt_bit_size_expr opt_bit_type_list :
-	{bin_element,?anno('$1','$3'),'$1','$2','$3'}.
+	{bin_element,?anno('$1',filter_defaults(['$3', '$2', '$1'])),'$1','$2',strip_bit_type_list('$3')}.
 
 bit_expr -> prefix_op expr_max : ?mkop1('$1', '$2').
 bit_expr -> expr_max : '$1'.
@@ -390,8 +390,8 @@ opt_bit_type_list -> '$empty' : default.
 bit_type_list -> bit_type '-' bit_type_list : ['$1' | '$3'].
 bit_type_list -> bit_type : ['$1'].
 
-bit_type -> atom             : element(3,'$1').
-bit_type -> atom ':' integer : { element(3,'$1'), element(3,'$3') }.
+bit_type -> atom             : '$1'.
+bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
 
@@ -1503,6 +1503,19 @@ check_clauses(Cs, Name, Arity) ->
         end
         || C <- Cs
     ].
+
+filter_defaults([default|Rest]) -> filter_defaults(Rest);
+filter_defaults([NonDefault|_]) -> NonDefault.
+
+%% Strip out all annotations for bit type specifications, we should revisit if this makes sense.
+strip_bit_type_list([{bit_type_unit, _Anno, Type, Unit} | Rest]) ->
+    [{element(3, Type), element(3, Unit)} | strip_bit_type_list(Rest)];
+strip_bit_type_list([Type | Rest]) ->
+    [element(3, Type) | strip_bit_type_list(Rest)];
+strip_bit_type_list([]) ->
+    [];
+strip_bit_type_list(default) ->
+    default.
 
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
