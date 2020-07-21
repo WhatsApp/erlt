@@ -236,6 +236,7 @@ pattern_matches(Forms) ->
             ({'fun', _Line, {clauses, Clauses}}) -> Clauses;
             ({named_fun, _Line, _Name, Clauses}) -> Clauses;
             ({'case', _Line, _Exp, Clauses}) -> Clauses;
+            ({'try', _Line, _Body, Clauses, _Catch, _After}) when Clauses /= [] -> Clauses;
             (_) -> false
         end,
     PatternMatches = collect(Forms, fun pred/1, Collect),
