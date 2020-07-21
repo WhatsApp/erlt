@@ -76,7 +76,7 @@ object ExprsConvert {
         Catch(convertExp(eExp))
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
-          case ETuple(List(EAtom("remote"), anno, eExp1, eExp2)) =>
+          case ETuple(List(EAtom("remote"), _, eExp1, eExp2)) =>
             RemoteCall(sp(anno), convertExp(eExp1), convertExp(eExp2), eArgs.map(convertExp))
           case _ =>
             LocalCall(sp(anno), convertExp(eExp), eArgs.map(convertExp))
