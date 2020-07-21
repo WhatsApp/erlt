@@ -220,7 +220,7 @@ guarded_clauses(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     HasGuard = fun({clause, _Line, _Patterns, Guards, _Body}) -> Guards /= [] end,
     GuardedClauses =
-        [{Line, is_clause_covered(Clause, Clauses)} ||
+        [{Line, is_clause_covered(Clause, Clauses), is_guard_type_test_only(Clause)} ||
             Clauses <- pattern_matches(Forms),
             {clause, Line, _Patterns, _Guard, _Body} = Clause <- Clauses,
             HasGuard(Clause)
@@ -269,6 +269,16 @@ is_linear_clause({clause, _Line, Patterns, _Guards, _Body}) ->
     Variables = collect(Patterns, fun pred/1, CollectVariables),
     not has_duplicates(Variables).
 
+-spec is_guard_type_test_only(clause()) -> boolean().
+%% @doc Returns true if the clause guard only does type testing.
+is_guard_type_test_only({clause, _Line, _Patterns, Guards, _Body}) ->
+    IsTypeTest =
+        fun
+            ({call, _LINE, Fun, Args}) -> erl_internal:type_test(erl_parse:normalise(Fun), length(Args));
+            (_) -> false
+        end,
+    lists:all(fun(Guard) -> lists:all(IsTypeTest, Guard) end, Guards).
+
 -spec is_clause_covered(clause(), clauses()) -> boolean().
 %% @doc Returns true if some clause in `Clauses` matches all values matched by Clause.
 is_clause_covered(Clause, Clauses) ->
@@ -285,6 +295,8 @@ is_sub_pattern(_, {var, _, _}) ->
     true;
 is_sub_pattern({match, _Line1, P_1, P_2}, P) ->
     is_sub_pattern(P_1, P) or is_sub_pattern(P_2, P);
+is_sub_pattern(P, {match, _Line2, P_1, P_2}) ->
+    is_sub_pattern(P, P_1) and is_sub_pattern(P, P_2);
 is_sub_pattern({cons, _Line1, P_h1, P_t1}, {cons, _Line2, P_h2, P_t2}) ->
     is_sub_pattern(P_h1, P_h2) and is_sub_pattern(P_t1, P_t2);
 is_sub_pattern({nil, _Line1}, {nil, _Line2}) ->

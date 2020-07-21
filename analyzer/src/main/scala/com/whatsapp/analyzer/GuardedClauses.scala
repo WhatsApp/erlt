@@ -21,17 +21,21 @@ import scala.util.Using
 object GuardedClauses {
   private val indentation = "    "
 
-  case class GuardedClause(module: String, line: Int, isCovered: Boolean)
+  case class GuardedClause(module: String, line: Int, isCovered: Boolean, isGuardTypeTestOnly: Boolean)
 
   def main(args: Array[String]): Unit = {
-    val data = Using.resource(RPC.connect())(loadData)
+    val data = Using.resource(RPC.connect())(loadData).sortBy(c => (c.module, c.line))
 
     val covered = data.filter(_.isCovered)
     val uncovered = data.filter(!_.isCovered)
+    val uncoveredTypeTestOnly = uncovered.filter(_.isGuardTypeTestOnly)
+    val uncoveredRealLogic = uncovered.filter(!_.isGuardTypeTestOnly)
 
     Console.println(s"Clauses with guards: ${data.size}")
     Console.println(s"${indentation}those covered by later clauses:   ${covered.size}")
     Console.println(s"${indentation}those uncovered by later clauses: ${uncovered.size}")
+    Console.println(s"$indentation${indentation}with only type test: ${uncoveredTypeTestOnly.size}")
+    Console.println(s"$indentation${indentation}with real logic: ${uncoveredRealLogic.size}")
 
     Console.println()
 
@@ -40,8 +44,13 @@ object GuardedClauses {
 
     Console.println()
 
-    Console.println("Uncovered guarded clauses:")
-    uncovered.foreach(print)
+    Console.println("Uncovered guarded clauses with only type tests:")
+    uncoveredTypeTestOnly.foreach(print)
+
+    Console.println()
+
+    Console.println("Uncovered guarded clauses with real logic:")
+    uncoveredRealLogic.foreach(print)
   }
 
   private def print(clause: GuardedClause): Unit =

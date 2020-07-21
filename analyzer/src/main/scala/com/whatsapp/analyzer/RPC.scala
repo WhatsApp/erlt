@@ -167,8 +167,8 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     eObject match {
       case EList(elems, _) =>
         elems.collect {
-          case ETuple(List(ELong(line), isCovered: EAtom)) =>
-            GuardedClauses.GuardedClause(module, line.toInt, isCovered.asBoolean())
+          case ETuple(List(ELong(line), isCovered: EAtom, isGuardTypeTestOnly: EAtom)) =>
+            GuardedClauses.GuardedClause(module, line.toInt, isCovered.asBoolean(), isGuardTypeTestOnly.asBoolean())
         }
       case _ =>
         System.err.println("not loaded")
