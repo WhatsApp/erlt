@@ -1,0 +1,8 @@
+val less_than/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val contains_less_than/2: fun((A, list(A)) -> boolean())
+val X: A
+val Y: A
+val X: A
+val T: list(A)

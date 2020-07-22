@@ -1,0 +1,2 @@
+-spec equal(boolean(), boolean()) -> boolean().
+-spec contains(A, list(A)) -> boolean().
