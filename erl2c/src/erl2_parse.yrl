@@ -78,24 +78,24 @@ Rootsymbol form.
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
-attribute -> '-' atom attr_val               : build_attribute('$2', '$3').
-attribute -> '-' atom typed_attr_val         : build_typed_attribute('$2','$3').
-attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4').
-attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3').
-attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3').
+attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('$2','$3'), ?anno('$1','$3')).
+attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
+attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 
 dot_atom -> atom : '$1'.
 dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
 dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
 
-type_spec -> spec_fun type_sigs : {'$1', '$2'}.
-type_spec -> '(' spec_fun type_sigs ')' : {'$2', '$3'}.
+type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
+type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
 
 spec_fun ->                       dot_atom : fold_dots('$1').
 spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
 
-typed_attr_val -> expr ',' typed_record_fields : {typed_record, '$1', '$3'}.
-typed_attr_val -> expr '::' top_type           : {type_def, '$1', '$3'}.
+typed_attr_val -> expr ',' typed_record_fields : {typed_record, ?anno('$1','$3'), '$1', '$3'}.
+typed_attr_val -> expr '::' top_type           : {type_def, ?anno('$1','$3'), '$1', '$3'}.
 
 typed_record_fields -> '{' typed_exprs '}' : {tuple, ?anno('$1','$3'), '$2'}.
 
@@ -144,10 +144,10 @@ type_500 -> type                          : '$1'.
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
 type -> dot_atom                          : fold_dots('$1').
-type -> dot_atom '{' '}'                  : build_enum_type('$1', []).
-type -> dot_atom '{' top_types '}'        : build_enum_type('$1', '$3').
-type -> dot_atom '(' ')'                  : build_gen_type('$1').
-type -> dot_atom '(' top_types ')'        : build_type('$1', '$3').
+type -> dot_atom '{' '}'                  : ?set_anno(build_enum_type('$1', []), ?anno('$1', '$3')).
+type -> dot_atom '{' top_types '}'        : ?set_anno(build_enum_type('$1', '$3'), ?anno('$1', '$4')).
+type -> dot_atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
+type -> dot_atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
 type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
                                              [fold_dots('$1'), '$3', []]}.
 type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
@@ -187,7 +187,7 @@ fun_type -> '(' top_types ')' '->' top_type
 map_pair_types -> map_pair_type                    : ['$1'].
 map_pair_types -> map_pair_type ',' map_pair_types : ['$1'|'$3'].
 
-map_pair_type  -> top_type '=>' top_type  : {type, ?anno('$2','$3'),
+map_pair_type  -> top_type '=>' top_type  : {type, ?anno('$1','$3'),
                                              map_field_assoc,['$1','$3']}.
 map_pair_type  -> top_type ':=' top_type  : {type, ?anno('$1','$3'),
                                              map_field_exact,['$1','$3']}.
@@ -289,7 +289,7 @@ expr_max -> binary : '$1'.
 expr_max -> list_comprehension : '$1'.
 expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
-expr_max -> '(' expr ')' : '$2'.
+expr_max -> '(' expr ')' : ?set_anno('$2', ?anno('$1', '$3')).
 expr_max -> 'begin' exprs 'end' : {block,?anno('$1','$3'),'$2'}.
 expr_max -> if_expr : '$1'.
 expr_max -> case_expr : '$1'.
@@ -344,13 +344,13 @@ enum_pat_expr -> pat_expr_800 '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_pat_expr -> pat_expr_800 '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 map_pat_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],'$3'}.
+	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
 map_pat_expr -> '#' map_tuple :
-	{map, ?anno('$1','$2'),'$2'}.
+	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_pat_expr -> pat_expr_max '#' map_tuple :
-	{map, ?anno('$1','$3'),'$1','$3'}.
+	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 map_pat_expr -> map_pat_expr '#' map_tuple :
-	{map, ?anno('$1','$3'),'$1','$3'}.
+	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
 record_pat_expr -> '#' atom ':' atom '.' atom :
 	{record_index,?anno('$1','$6'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
@@ -415,16 +415,16 @@ enum_expr -> expr_800 '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_expr -> expr_800 '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 map_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],'$3'}.
+	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
 map_expr -> '#' map_tuple :
-	{map, ?anno('$1','$2'),'$2'}.
+	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_expr -> expr_max '#' map_tuple :
-	{map, ?anno('$1','$3'),'$1','$3'}.
+	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 map_expr -> map_expr '#' map_tuple :
-	{map, ?anno('$1','$3'),'$1','$3'}.
+	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-map_tuple -> '{' '}' : [].
-map_tuple -> '{' map_fields '}' : '$2'.
+map_tuple -> '{' '}' : {map_tuple, ?anno('$1','$2'), []}.
+map_tuple -> '{' map_fields '}' : {map_tuple, ?anno('$1','$3'), '$2'}.
 
 map_fields -> map_field : ['$1'].
 map_fields -> map_field ',' map_fields : ['$1' | '$3'].
@@ -448,7 +448,7 @@ map_key -> expr : '$1'.
 record_expr -> '#' atom ':' atom '.' atom :
 	{record_index,?anno('$1','$6'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
 record_expr -> '#' atom '.' atom :
-	{record_index,?anno('$4'),element(3, '$2'),'$4'}.
+	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
 record_expr -> '#' atom ':' atom record_tuple :
 	{record,?anno('$1','$5'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
 record_expr -> '#' atom record_tuple :
@@ -583,8 +583,8 @@ try_opt_stacktrace -> '$empty' : '_'.
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
 
-pat_argument_list -> '(' ')' : {[],?anno('$1')}.
-pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1')}.
+pat_argument_list -> '(' ')' : {[],?anno('$1','$2')}.
+pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1','$3')}.
 
 exprs -> expr : ['$1'].
 exprs -> expr ',' exprs : ['$1' | '$3'].
@@ -1130,20 +1130,20 @@ Erlang code.
 %% mkop(Op, Arg) -> {op,Anno,Op,Arg}.
 %% mkop(Left, Op, Right) -> {op,Anno,Op,Left,Right}.
 
--define(mkop2(L, OpAnno, R), begin
-    {__Op, __Anno} = OpAnno,
-    {op, __Anno, __Op, L, R}
-end).
-
--define(mkop1(OpAnno, A), begin
-    {__Op, __Anno} = OpAnno,
-    {op, __Anno, __Op, A}
-end).
-
 %% keep track of annotation info in tokens
 -define(anno(Tup), element(2, Tup)).
 -define(anno(First, Last), anno(First, Last)).
 -define(set_anno(Tup, Anno), setelement(2, Tup, Anno)).
+
+-define(mkop2(L, OpAnno, R), begin
+    {__Op, __Anno} = OpAnno,
+    {op, ?anno(L, R), __Op, L, R}
+end).
+
+-define(mkop1(OpAnno, A), begin
+    {__Op, __Anno} = OpAnno,
+    {op, ?anno(OpAnno, A), __Op, A}
+end).
 
 %-define(DEBUG, true).
 
@@ -1218,17 +1218,17 @@ parse_term(Tokens) ->
 
 build_typed_attribute(
     {atom, Aa, record},
-    {typed_record, {atom, _An, RecordName}, RecTuple}
+    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
 ) ->
     {attribute, Aa, record, {RecordName, record_tuple(RecTuple)}};
 build_typed_attribute(
     {atom, Aa, record},
-    {typed_record, {remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple}
+    {typed_record, _TRA, {remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple}
 ) ->
     {attribute, Aa, record, {{module_record, MRa, Name1, Name2}, record_tuple(RecTuple)}};
 build_typed_attribute(
     {atom, Aa, Attr},
-    {type_def, {call, _, {atom, _, TypeName}, Args}, Type}
+    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type}
 ) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
     lists:foreach(
         fun
@@ -1258,7 +1258,7 @@ build_typed_attribute({atom, Aa, Attr}, _) ->
         _ -> ret_err(Aa, "bad attribute")
     end.
 
-build_type_spec({Kind, Aa}, {SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
+build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
         case SpecFun of
             {atom, _, Fun} ->
@@ -1516,6 +1516,9 @@ strip_bit_type_list([]) ->
     [];
 strip_bit_type_list(default) ->
     default.
+
+strip_map_tuple({map_tuple, _Anno, List}) ->
+    List.
 
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.

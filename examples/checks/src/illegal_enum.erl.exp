@@ -1,1 +1,1 @@
-illegal_enum.erl:7:25: only unqualified enum constructors are allowed in an enum type definition
+illegal_enum.erl:7:22: only unqualified enum constructors are allowed in an enum type definition
