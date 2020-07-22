@@ -13,8 +13,9 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(inexhaustive_guard).
+-module(redundant_guarded).
 -export([test1/2]).
 
 -spec test1(boolean(), boolean()) -> {}.
-test1(X, Y) when X < Y -> {}.
+test1(X, Y) -> {};
+test1(X, Y) when X =:= Y -> {}.
