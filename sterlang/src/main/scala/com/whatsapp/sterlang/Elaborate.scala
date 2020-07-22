@@ -322,7 +322,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rec1 = elab(rec, recType, d, env)
 
     unify(exp.p, ty, recType)
-    A.RecordUpdateExp(rec1, recType, fields1)(typ = ty, sourceLocation = exp.p)
+    A.RecordUpdateExp(rec1, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabAppExp(exp: S.AppExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -346,7 +346,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val record1 = elab(record, recordType, d, env)
 
     unify(exp.p, ty, fieldType)
-    A.RecordSelectionExp(record1, recordType, label)(typ = ty, sourceLocation = exp.p)
+    A.RecordSelectionExp(record1, label)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabBoolExp(exp: S.BoolExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

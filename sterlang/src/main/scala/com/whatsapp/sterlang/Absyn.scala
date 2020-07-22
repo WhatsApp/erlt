@@ -67,24 +67,18 @@ object Absyn {
   case class Filter(exp: Exp) extends Qualifier
   case class Generator(pat: Pat, exp: Exp) extends Qualifier
 
-  // TODO: is [[SeqExp]] significantly different than [[BlockExp]]?
   case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class BlockExp(body: Body)(val sourceLocation: Pos.P) extends Exp {
     override val typ: Type = body.typ
   }
 
-  // TODO: can [FnExp] be unified with [NamedFnExp]?
   case class FnExp(clauses: List[Clause])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
 
-  // TODO: should this have a RowType?
   case class RecordExp(fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P) extends Exp
-  // TODO: what's tp
-  case class RecordSelectionExp(record: Exp, tp: Type, label: String)(val typ: Type, val sourceLocation: Pos.P)
-      extends Exp
-  // TODO: what's tp1
-  case class RecordUpdateExp(record: Exp, tp1: Type, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
+  case class RecordSelectionExp(record: Exp, label: String)(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class RecordUpdateExp(record: Exp, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
 
   case class EnumConstructorExp(enum: String, constructor: String, arguments: List[Exp])(
