@@ -244,13 +244,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val branches = for (S.Rule(pat, guards, body) <- eRules) yield {
       val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = true)
-      for (guard <- guards) {
-        for (guardExp <- guard.exprs) {
-          elab(guardExp, MT.BoolType, d, env1)
-        }
-      }
+      val guards1 = elabGuards(guards, d, env1)
       val body1 = elabBody(body, resType, d + 1, env1)
-      A.Branch(pat1, body1)
+      A.Branch(pat1, guards1, body1)
     }
 
     unify(exp.p, ty, resType)
@@ -451,15 +447,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         penvAcc = penv1
         p1
       }
-      for (guard <- guards) {
-        for (guardExp <- guard.exprs) {
-          elab(guardExp, MT.BoolType, d, envAcc)
-        }
-      }
+      val guards1 = elabGuards(guards, d, envAcc)
       val body1 = elabBody(body, bodyType, d + 1, envAcc)
-      A.Clause(pats1, body1)
+      A.Clause(pats1, guards1, body1)
     }
   }
+
+  private def elabGuards(guards: List[S.Guard], d: T.Depth, env: Env): List[A.Guard] =
+    for (guard <- guards) yield {
+      A.Guard(expressions = guard.exprs.map(exp => elab(exp, MT.BoolType, d, env)))
+    }
 
   private def elabNamedFnExp(exp: S.NamedFnExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.NamedFnExp(name, clauses) = exp

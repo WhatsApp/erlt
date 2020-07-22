@@ -96,9 +96,10 @@ object Absyn {
     }
   }
   case class Fun(name: String, clauses: List[Clause], typ: Type)(val sourceLocation: Pos.P) extends Node
-  case class Clause(pats: List[Pat], body: Body)
 
-  case class Branch(pat: Pat, body: Body)
+  case class Clause(pats: List[Pat], guards: List[Guard], body: Body)
+  case class Branch(pat: Pat, guards: List[Guard], body: Body)
+  case class Guard(expressions: List[Exp])
 
   sealed trait Pat extends Node {
 
