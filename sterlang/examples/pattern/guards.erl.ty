@@ -1,0 +1,2 @@
+-spec less_than(boolean(), boolean()) -> boolean().
+-spec contains_less_than(A, list(A)) -> boolean().

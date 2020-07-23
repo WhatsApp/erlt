@@ -20,10 +20,10 @@ import com.whatsapp.sterlang.{Pos, PositionedError}
 
 sealed trait PatternWarning extends PositionedError
 
-final class MissingPatternsWarning(node: Pos.P, exampleClause: PatternMatrix.Vector)
+final class MissingPatternsWarning(node: Pos.P, confident: Boolean, exampleClause: PatternMatrix.Vector)
     extends PositionedError(
       pos = node,
-      title = "Missing Patterns",
+      title = (if (confident) "" else "Possibly ") + "Missing Patterns",
       description = Some(s"missing: ${exampleClause.map(Pattern.show).mkString(sep = ", ")}"),
     )
     with PatternWarning

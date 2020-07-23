@@ -1,0 +1,8 @@
+val equal/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val X: boolean()
+val contains/2: fun((A, list(A)) -> boolean())
+val X: A
+val X: A
+val X: A
+val T: list(A)

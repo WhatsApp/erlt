@@ -244,13 +244,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val branches = for (S.Rule(pat, guards, body) <- eRules) yield {
       val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = true)
-      for (guard <- guards) {
-        for (guardExp <- guard.exprs) {
-          elab(guardExp, MT.BoolType, d, env1)
-        }
-      }
+      val guards1 = elabGuards(guards, d, env1)
       val body1 = elabBody(body, resType, d + 1, env1)
-      A.Branch(pat1, body1)
+      A.Branch(pat1, guards1, body1)
     }
 
     unify(exp.p, ty, resType)
@@ -322,7 +318,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rec1 = elab(rec, recType, d, env)
 
     unify(exp.p, ty, recType)
-    A.RecordUpdateExp(rec1, recType, fields1)(typ = ty, sourceLocation = exp.p)
+    A.RecordUpdateExp(rec1, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabAppExp(exp: S.AppExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -346,7 +342,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val record1 = elab(record, recordType, d, env)
 
     unify(exp.p, ty, fieldType)
-    A.RecordSelectionExp(record1, recordType, label)(typ = ty, sourceLocation = exp.p)
+    A.RecordSelectionExp(record1, label)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabBoolExp(exp: S.BoolExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -451,15 +447,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         penvAcc = penv1
         p1
       }
-      for (guard <- guards) {
-        for (guardExp <- guard.exprs) {
-          elab(guardExp, MT.BoolType, d, envAcc)
-        }
-      }
+      val guards1 = elabGuards(guards, d, envAcc)
       val body1 = elabBody(body, bodyType, d + 1, envAcc)
-      A.Clause(pats1, body1)
+      A.Clause(pats1, guards1, body1)
     }
   }
+
+  private def elabGuards(guards: List[S.Guard], d: T.Depth, env: Env): List[A.Guard] =
+    for (guard <- guards) yield {
+      A.Guard(expressions = guard.exprs.map(exp => elab(exp, MT.BoolType, d, env)))
+    }
 
   private def elabNamedFnExp(exp: S.NamedFnExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.NamedFnExp(name, clauses) = exp

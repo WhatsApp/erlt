@@ -31,6 +31,9 @@ import scala.collection.mutable.ListBuffer
 class PatternChecker(private val context: Context) {
   private val A = Absyn
 
+  /** Like [[A.Clause]] but without the body. */
+  private case class ClauseHead(patterns: List[A.Pat], guards: List[A.Guard])
+
   /** Returns a list of all pattern matching related issues in the given functions and their subexpressions. */
   def warnings(functions: List[A.Fun]): List[PatternWarning] = {
     val warnings = ListBuffer[PatternWarning]()
@@ -50,16 +53,19 @@ class PatternChecker(private val context: Context) {
   }
 
   private def checkNode(node: A.Node, warnings: ListBuffer[PatternWarning]): Unit = {
+    def clauseHead(clause: A.Clause) = ClauseHead(clause.pats, clause.guards)
+    def clauseHeads(clauses: List[A.Clause]) = clauses.map(clauseHead)
+
     // Check this node
     node match {
       case node: A.Fun =>
-        checkClauses(node, node.clauses.map(_.pats), warnings)
+        checkClauses(node, clauseHeads(node.clauses), warnings)
       case node: A.FnExp =>
-        checkClauses(node, node.clauses.map(_.pats), warnings)
+        checkClauses(node, clauseHeads(node.clauses), warnings)
       case node: A.NamedFnExp =>
-        checkClauses(node, node.clauses.map(_.pats), warnings)
+        checkClauses(node, clauseHeads(node.clauses), warnings)
       case node: A.CaseExp =>
-        checkClauses(node, node.branches.map(b => List(b.pat)), warnings)
+        checkClauses(node, node.branches.map(b => ClauseHead(List(b.pat), b.guards)), warnings)
       case _: ValDef => // ignore
       case _         => // nothing to check
     }
@@ -79,7 +85,7 @@ class PatternChecker(private val context: Context) {
     */
   private def checkClauses(
       node: HasSourceLocation,
-      clauses: List[List[A.Pat]],
+      clauses: List[ClauseHead],
       warnings: ListBuffer[PatternWarning],
   ): Unit = {
     require(clauses.nonEmpty)
@@ -88,26 +94,52 @@ class PatternChecker(private val context: Context) {
 
     // Check for redundancy
     for (clause <- clauses) {
-      // TODO: check for nonlinear patterns
-
-      val simpleClause = clause.map(Pattern.simplify)
+      val simpleClause = clause.patterns.map(Pattern.simplify)
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         val location =
-          if (clause.isEmpty) Pos.NP
-          else Pos.merge(clause.head.sourceLocation, clause.last.sourceLocation)
+          if (clause.patterns.isEmpty) Pos.NP
+          else Pos.merge(clause.patterns.head.sourceLocation, clause.patterns.last.sourceLocation)
         warnings += new UselessPatternWarning(location)
       }
 
-      previousRows = previousRows.appended(simpleClause)
+      if (countsTowardExhaustiveness(clause)) {
+        previousRows = previousRows.appended(simpleClause)
+      }
     }
 
     // Check for exhaustiveness
-    missingClause(PatternMatrix.Matrix(previousRows), clauses.head.length) match {
+    missingClause(PatternMatrix.Matrix(previousRows), clauses.head.patterns.length) match {
       case None => // exhaustive
       case Some(clause) =>
-        warnings += new MissingPatternsWarning(node.sourceLocation, clause)
+        val confident = clauses.forall(countsTowardExhaustiveness)
+        warnings += new MissingPatternsWarning(node.sourceLocation, confident, clause)
     }
+  }
+
+  /** Returns true if the clause contributes to exhaustiveness. A clause does not contribute to exhaustiveness if it
+    * uses features (like nonlinear patterns and pattern guards) that we cannot reason about.
+    */
+  private def countsTowardExhaustiveness(clause: ClauseHead): Boolean =
+    clause.guards.isEmpty && isLinear(clause)
+
+  /** Returns true if the patterns in the clause do not use the same variable multiple times.
+    *
+    * Multiple occurrences of the same variable adds equality constraints, which we cannot reason about.
+    */
+  private def isLinear(clause: ClauseHead): Boolean = {
+    var variables: ListBuffer[String] = ListBuffer()
+
+    def addVariables(node: A.Node): Unit =
+      node match {
+        case variable: Absyn.VarPat =>
+          variables += variable.name
+        case _ =>
+          A.children(node).foreach(addVariables)
+      }
+
+    clause.patterns.foreach(addVariables)
+    variables.size == variables.distinct.size
   }
 
   /** Returns true if the clause is useful with respect to the pattern matrix.

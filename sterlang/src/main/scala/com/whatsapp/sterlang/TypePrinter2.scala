@@ -163,9 +163,9 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
 
       case A.RecordExp(fields) =>
         fields.foreach(f => printExp(f.value))
-      case A.RecordSelectionExp(exp, _, _) =>
+      case A.RecordSelectionExp(exp, _) =>
         printExp(exp)
-      case A.RecordUpdateExp(exp, _, fields) =>
+      case A.RecordUpdateExp(exp, fields) =>
         printExp(exp)
         fields.foreach(f => printExp(f.value))
 
