@@ -23,6 +23,10 @@ See the [examples](examples/) folder.
     make -C examples test
 
 
+## Development
+
+See [here](doc/01_intro.md#development).
+
 ## Full documentation
 
 See the [doc](doc) folder.

@@ -38,7 +38,6 @@ A subset of DT language.
 
 **Constructs not supported in ST part (at the syntax level).**
 
-* If-expression
 * Exceptions (`try`, `catch`)
 * Erlang records
 * Concurrency
@@ -46,7 +45,6 @@ A subset of DT language.
     * binary literals
     * pattern matching over binaries
     * binary comprehensions
-* List comprehensions
 * atom literals (except `true` and `false`)
 * Functions with dynamic arities (`foo/Var` instead of `foo/2`).
 

@@ -1,5 +1,9 @@
 # 6. ST mapping
 
+**This page is obsolete - it corresponds to previous version, which used
+translation of erl1+ code into OCaml and then running `ocamlc`. It is kept here
+mostly for historical reasons.**
+
 ST part of the language is type-checked. In the current implementation it
 happens via translation of ST code into OCaml code and then invoking `ocamlc`.
 
