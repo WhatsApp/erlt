@@ -159,8 +159,8 @@ object Convert {
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(p)
       case Guards.GRemoteEnumCtr(p, module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
-      case Guards.GBin(elems) =>
-        ???
+      case Guards.GBin(p, elems) =>
+        Ast.Bin(elems.map(convertGBinElem))(p)
       case Guards.GRecordCreate(recordName, fields) =>
         ???
       case Guards.GRecordIndex(recordName, fieldName) =>
@@ -348,6 +348,13 @@ object Convert {
   private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {
     val expr = convertExpr(binElem.expr)
     val size = binElem.size.map(convertExpr)
+    val binElemType = extractBinElemType(binElem.typeSpecifiers)
+    Ast.BinElement(expr, size, binElemType)
+  }
+
+  private def convertGBinElem(binElem: Guards.GBinElement): Ast.BinElement = {
+    val expr = convertGExpr(binElem.gExpr)
+    val size = binElem.size.map(convertGExpr)
     val binElemType = extractBinElemType(binElem.typeSpecifiers)
     Ast.BinElement(expr, size, binElemType)
   }

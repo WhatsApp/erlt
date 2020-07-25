@@ -27,7 +27,7 @@ object Guards {
   case class GTuple(p: Pos.SP, elems: List[GExpr]) extends GExpr
   case class GNil(p: Pos.SP) extends GExpr
   case class GCons(p: Pos.SP, hd: GExpr, tl: GExpr) extends GExpr
-  case class GBin(elems: List[GBinElement]) extends GExpr
+  case class GBin(p: Pos.SP, elems: List[GBinElement]) extends GExpr
   case class GBinaryOp(p: Pos.SP, op: String, test1: GExpr, test2: GExpr) extends GExpr
   case class GUnaryOp(p: Pos.SP, op: String, test1: GExpr) extends GExpr
   case class GRecordCreate(recordName: String, fields: List[GRecordField]) extends GExpr
@@ -39,7 +39,7 @@ object Guards {
   case class GCall(p: Pos.SP, funName: (Pos.SP, String), args: List[GExpr]) extends GExpr
   case class GLocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[GExpr]) extends GExpr
   case class GRemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[GExpr]) extends GExpr
-  case class GBinElement(test: GExpr, size: ETerm, typeSpecifiers: Exprs.TypeSpecifiers)
+  case class GBinElement(gExpr: GExpr, size: Option[GExpr], typeSpecifiers: Exprs.TypeSpecifiers)
   case class GRecordField(fieldName: String, test: GExpr)
 
   sealed trait GAssoc

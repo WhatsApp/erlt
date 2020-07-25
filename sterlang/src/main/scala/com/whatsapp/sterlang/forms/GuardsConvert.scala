@@ -42,9 +42,9 @@ object GuardsConvert {
         val hd = convertGExpr(eTest1)
         val tl = convertGExpr(eTest2)
         GCons(sp(anno), hd, tl)
-      case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
+      case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertGBinElement)
-        GBin(binElements)
+        GBin(sp(anno), binElements)
       case ETuple(List(EAtom("op"), anno, EAtom(op), eTest1, eTest2)) =>
         GBinaryOp(sp(anno), op, convertGExpr(eTest1), convertGExpr(eTest2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eTest1)) =>
@@ -116,8 +116,12 @@ object GuardsConvert {
 
   def convertGBinElement(term: ETerm): GBinElement =
     term match {
-      case ETuple(List(EAtom("bin_element"), _anno, eTest, eSize, eTypeSpecifiers)) =>
-        GBinElement(convertGExpr(eTest), eSize, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
+      case ETuple(List(EAtom("bin_element"), _anno, eExpr, eSize, eTypeSpecifiers)) =>
+        val size = eSize match {
+          case EAtom("default") => None
+          case other            => Some(convertGExpr(other))
+        }
+        GBinElement(convertGExpr(eExpr), size, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
     }
 
   def convertGRecordField(term: ETerm): GRecordField =

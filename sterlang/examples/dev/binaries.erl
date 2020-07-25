@@ -80,3 +80,12 @@ b22(<<UTF8/utf8, UTF16/utf16, UTF32/utf32>>) -> {UTF8, UTF16, UTF32}.
 b23(<<"utf8"/utf8, "utf16"/utf16, "utf32"/utf32>>) -> {}.
 
 b24(<<X/utf8, X/utf16>>) -> {}.
+
+b25(Binary1, Size1, Binary2, Size2) when <<Binary1:Size1/binary>> == <<Binary2:Size2/binary>> -> true;
+b25(Binary1, Size1, Binary2, Size2) -> false.
+
+b26(Binary1, Size1, Binary2, Size2) ->
+    if
+        <<Binary1:Size1/binary>> == <<Binary2:Size2/binary>> -> true;
+        true -> false
+    end.

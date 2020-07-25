@@ -23,3 +23,5 @@
 -spec b22(binary()) -> {integer(), integer(), integer()}.
 -spec b23(binary()) -> {}.
 -spec b24(binary()) -> {}.
+-spec b25(binary(), integer(), binary(), integer()) -> boolean().
+-spec b26(binary(), integer(), binary(), integer()) -> boolean().
