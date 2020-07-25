@@ -25,7 +25,6 @@ object SterlangTestUtil {
   import java.io.{BufferedWriter, FileWriter, StringWriter}
 
   val generateOut = false
-  val etfParser = true
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val (rawProgram) = Main.loadProgram(path)
