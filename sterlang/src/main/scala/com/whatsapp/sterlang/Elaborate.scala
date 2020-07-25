@@ -165,6 +165,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case p: A.RecordPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.ConsPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.EnumConstructorPat => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.BinPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
     }
     assert(p2.typ != null)
 
@@ -193,6 +194,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
       case listPat: S.ListPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
+      case binPat: S.BinPat =>
+        elabBinPat(binPat, ts, d, env, penv, gen)
       case consPat: S.ConsPat =>
         elabConsPat(consPat, ts, d, env, penv, gen)
     }
@@ -749,6 +752,63 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     (A.ListPat(pats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+  }
+
+  private def elabBinPat(
+      p: S.BinPat,
+      ts: ST.TypeSchema,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (A.Pat, Env, PEnv) = {
+    val S.BinPat(elems) = p
+    val t = TU.instantiate(d, ts)
+    unify(p.p, t, MT.BinaryType)
+
+    var envAcc = env
+    var penvAcc = penv
+
+    val elems1 = for { elem <- elems } yield {
+      val (elem1, env1, penv1) = elabBinElementPat(elem, d, envAcc, penvAcc, gen)
+      envAcc = env1
+      penvAcc = penv1
+      elem1
+    }
+
+    (A.BinPat(elems1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+  }
+
+  private def elabBinElementPat(
+      elem: S.BinElementPat,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (A.BinElementPat, Env, PEnv) = {
+    val size1 = elem.size.map(elab(_, MT.IntType, d, env))
+    val isStringLiteral = elem.pat match {
+      case S.StringPat(_) => true
+      case _              => false
+    }
+    val expType = elem.binElemType match {
+      case Some(value) =>
+        value match {
+          case S.IntegerBinElemType | S.Utf8BinElemType | S.Utf16BinElemType | S.Utf32BinElemType =>
+            if (isStringLiteral) MT.StringType else MT.IntType
+          case S.FloatBinElemType =>
+            MT.FloatType
+          case S.BinaryBinElemType | S.BytesBinElemType =>
+            MT.BinaryType
+          case S.BitstringBinElemType | S.BitsBinElemType =>
+            MT.BitstringType
+        }
+      case None =>
+        if (isStringLiteral) MT.StringType else MT.IntType
+    }
+
+    val (pat1, env1, penv1) = elpat(elem.pat, expType, d, env, penv, gen)
+    (A.BinElementPat(pat1, size1, elem.binElemType), env1, penv1)
   }
 
   private def elabConsPat(

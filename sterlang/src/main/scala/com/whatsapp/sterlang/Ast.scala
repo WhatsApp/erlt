@@ -211,10 +211,13 @@ object Ast {
   case class AndPat(p1: Pat, p2: Pat)(val p: Pos.P) extends Pat
   case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val p: Pos.P) extends Pat
   case class ListPat(pats: List[Pat])(val p: Pos.P) extends Pat
+  case class BinPat(pats: List[BinElementPat])(val p: Pos.P) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val p: Pos.P) extends Pat
   case class BoolPat(bool: Boolean)(val p: Pos.P) extends Pat
   case class NumberPat(n: Int)(val p: Pos.P) extends Pat
   case class StringPat(s: String)(val p: Pos.P) extends Pat
+
+  case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 
   case class Program(
       lang: Lang,

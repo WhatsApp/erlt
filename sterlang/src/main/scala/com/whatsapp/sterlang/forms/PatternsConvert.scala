@@ -34,9 +34,9 @@ object PatternsConvert {
         NilPattern(sp(anno))
       case ETuple(List(EAtom("cons"), anno, ePat1, ePat2)) =>
         ConsPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
-      case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
+      case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertPatternBinElement)
-        BinPattern(binElements)
+        BinPattern(sp(anno), binElements)
       case ETuple(List(EAtom("op"), _anno, EAtom(op), ePat1, ePat2)) =>
         BinOpPattern(op, convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("op"), _anno, EAtom(op), ePat1)) =>
@@ -88,7 +88,15 @@ object PatternsConvert {
   def convertPatternBinElement(term: ETerm): BinElementPattern =
     term match {
       case ETuple(List(EAtom("bin_element"), _anno, ePat, eSize, eTypeSpecifiers)) =>
-        BinElementPattern(convertPat(ePat), eSize, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
+        val size = eSize match {
+          case EAtom("default") => None
+          case other            => Some(ExprsConvert.convertExp(other))
+        }
+        BinElementPattern(
+          convertPat(ePat),
+          size,
+          ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers),
+        )
     }
 
   def convertRecordFieldPattern(term: ETerm): RecordFieldPattern =

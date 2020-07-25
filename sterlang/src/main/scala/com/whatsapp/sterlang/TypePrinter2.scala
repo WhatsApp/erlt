@@ -110,6 +110,12 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printPat(tPat)
       case A.EnumConstructorPat(_, _, pats) =>
         pats.foreach(printPat)
+
+      case A.BinPat(elems) =>
+        elems.foreach { elem =>
+          printPat(elem.pat)
+          elem.size.map(printExp)
+        }
     }
 
   private def printBody(body: A.Body): Unit = {

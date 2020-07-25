@@ -224,8 +224,8 @@ object Convert {
             sys.error(s"wrong pattern assoc: $other")
         }
         Ast.RecordPat(pats, open)(p)
-      case Patterns.BinPattern(elems) =>
-        ???
+      case Patterns.BinPattern(p, elems) =>
+        Ast.BinPat(elems.map(convertBinElemPat))(p)
       case Patterns.BinOpPattern(op, pat1, pat2) =>
         ???
       case Patterns.UnOpPattern(op, pat1) =>
@@ -350,6 +350,13 @@ object Convert {
     val size = binElem.size.map(convertExpr)
     val binElemType = extractBinElemType(binElem.typeSpecifiers)
     Ast.BinElement(expr, size, binElemType)
+  }
+
+  private def convertBinElemPat(binElemPat: Patterns.BinElementPattern): Ast.BinElementPat = {
+    val pat = convertPattern(binElemPat.pat)
+    val size = binElemPat.size.map(convertExpr)
+    val binElemType = extractBinElemType(binElemPat.typeSpecifiers)
+    Ast.BinElementPat(pat, size, binElemType)
   }
 
   private def extractBinElemType(specifiers: Exprs.TypeSpecifiers): Option[Ast.BinElemType] =

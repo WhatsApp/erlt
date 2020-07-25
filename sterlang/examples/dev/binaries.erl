@@ -62,3 +62,21 @@ b14() ->
 
 b15() ->
     <<"literal"/utf32>>.
+
+b16(<<>>) -> true.
+
+b17(<<>>, <<"literal">>, <<X>>, X) -> true.
+
+b18(<<>>, <<"literal">>, X, <<X>>) -> true.
+
+b19(<<X, Y/bitstring>>) -> {X, Y}.
+
+b20(<<X, Y/binary>>) -> {X, Y}.
+
+b21(<<Size1, Binary1:Size1/binary, Size2, Binary2:Size2/binary>>) -> {Size1, Binary1, Size2, Binary2}.
+
+b22(<<UTF8/utf8, UTF16/utf16, UTF32/utf32>>) -> {UTF8, UTF16, UTF32}.
+
+b23(<<"utf8"/utf8, "utf16"/utf16, "utf32"/utf32>>) -> {}.
+
+b24(<<X/utf8, X/utf16>>) -> {}.

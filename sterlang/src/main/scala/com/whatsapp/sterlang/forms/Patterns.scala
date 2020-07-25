@@ -17,7 +17,6 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.Pos
-import com.whatsapp.sterlang.etf.ETerm
 import com.whatsapp.sterlang.forms.Exprs._
 
 object Patterns {
@@ -28,7 +27,7 @@ object Patterns {
   case class TuplePattern(p: Pos.SP, elems: List[Pattern]) extends Pattern
   case class NilPattern(p: Pos.SP) extends Pattern
   case class ConsPattern(p: Pos.SP, hd: Pattern, tl: Pattern) extends Pattern
-  case class BinPattern(elems: List[BinElementPattern]) extends Pattern
+  case class BinPattern(p: Pos.SP, elems: List[BinElementPattern]) extends Pattern
   case class BinOpPattern(op: String, pat1: Pattern, pat2: Pattern) extends Pattern
   case class UnOpPattern(op: String, pat1: Pattern) extends Pattern
   case class RecordPattern(recordName: String, fields: List[RecordFieldPattern]) extends Pattern
@@ -38,8 +37,6 @@ object Patterns {
   case class RemoteEnumCtrPattern(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Pattern])
       extends Pattern
 
-  // additional classes for patterns
-  // TODO - proper size
-  case class BinElementPattern(pat: Pattern, size: ETerm, typeSpecifiers: TypeSpecifiers)
+  case class BinElementPattern(pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
   case class RecordFieldPattern(fieldName: String, pat: Pattern)
 }

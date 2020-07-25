@@ -56,6 +56,8 @@ object SyntaxUtil {
         pats.flatMap(collectPatVars)
       case S.ConsPat(hPat, tPat) =>
         collectPatVars(hPat) ++ collectPatVars(tPat)
+      case S.BinPat(elems) =>
+        elems.flatMap(elem => collectPatVars(elem.pat))
     }
 
   def collectPatVars2(pat: A.Pat): List[String] =
@@ -80,6 +82,9 @@ object SyntaxUtil {
         collectPatVars2(hPat) ++ collectPatVars2(tPat)
       case A.EnumConstructorPat(_, _, tPats) =>
         tPats.flatMap(collectPatVars2)
+
+      case A.BinPat(elems) =>
+        elems.flatMap(elem => collectPatVars2(elem.pat))
     }
 
   def collectNamedTypeVars(t: S.Type): List[String] =
@@ -468,6 +473,8 @@ object SyntaxUtil {
         pats.map(getDepPat).foldLeft(ctrDep)(_ ++ _)
       case S.ListPat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
+      case S.BinPat(elems) =>
+        elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case S.ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
       case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) =>

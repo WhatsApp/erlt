@@ -120,6 +120,7 @@ object Absyn {
   }
   case class TuplePat(elements: List[Pat])(val typ: Type, val sourceLocation: Pos.P) extends Pat
   case class ListPat(elements: List[Pat])(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class BinPat(elements: List[BinElementPat])(val typ: Type, val sourceLocation: Pos.P) extends Pat
   case class RecordPat(fields: List[Field[Pat]], open: Boolean)(val typ: Type, val sourceLocation: Pos.P) extends Pat
 
   case class ConsPat(head: Pat, tail: Pat)(val typ: Type, val sourceLocation: Pos.P) extends Pat
@@ -127,6 +128,8 @@ object Absyn {
       val typ: Type,
       val sourceLocation: Pos.P,
   ) extends Pat
+
+  case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 
   /** Returns an iterator over all immediate children nodes. This is empty for leaf nodes. */
   def children(node: Node): Iterator[Node] = {
