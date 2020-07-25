@@ -47,3 +47,21 @@ flat_map(F, L) ->
 
 list_from_binary(Binary) ->
     [ X || <<X>> <= Binary ].
+
+binary_from_list1(List) ->
+    << <<X>> || X <- List >>.
+
+binary_from_list2(List) ->
+    << X || X <- List >>.
+
+even_from_binary(Binary) ->
+    [ X || <<X>> <= Binary, X rem 2 == 0].
+
+rgb(Pixels) ->
+    [ {R,G,B} || <<R:8,G:8,B:8>> <= Pixels ].
+
+pixels(RGB) ->
+    << <<R:8, G:8, B:8>> ||  {R,G,B} <- RGB >>.
+
+slice(Binary, SliceSize) ->
+    [ Slice || <<Slice:SliceSize/binary>> <= Binary].

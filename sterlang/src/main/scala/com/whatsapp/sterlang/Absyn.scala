@@ -64,6 +64,8 @@ object Absyn {
   case class IfExp(bodies: List[Body])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
+  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val sourceLocation: Pos.P)
+      extends Exp
 
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier

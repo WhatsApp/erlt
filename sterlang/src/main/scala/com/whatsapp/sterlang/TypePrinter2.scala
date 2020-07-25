@@ -168,6 +168,18 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
             printExp(exp)
         }
         printExp(template)
+      case A.BComprehension(template, qualifiers) =>
+        qualifiers.foreach {
+          case A.Filter(exp) =>
+            printExp(exp)
+          case A.Generator(pat, exp) =>
+            printPat(pat)
+            printExp(exp)
+          case A.BGenerator(pat, exp) =>
+            printPat(pat)
+            printExp(exp)
+        }
+        printExp(template)
 
       case A.SeqExp(e1, e2) =>
         printExp(e1)

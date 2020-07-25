@@ -175,6 +175,7 @@ object Ast {
   case class NamedFnExp(name: LocalVarName, clauses: List[Clause])(val p: Pos.P) extends Exp
   case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
+  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
   case class ValDef(pat: Pat, exp: Exp)

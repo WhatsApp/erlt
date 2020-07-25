@@ -323,6 +323,15 @@ object Convert {
             case Exprs.BGenerate(p, e) => Ast.BGenerator(convertPattern(p), convertExpr(e))
           },
         )(p)
+      case Exprs.BinaryComprehension(p, template, qualifiers) =>
+        Ast.BComprehension(
+          convertExpr(template),
+          qualifiers.map {
+            case Exprs.Filter(e)       => Ast.Filter(convertExpr(e))
+            case Exprs.LGenerate(p, e) => Ast.Generator(convertPattern(p), convertExpr(e))
+            case Exprs.BGenerate(p, e) => Ast.BGenerator(convertPattern(p), convertExpr(e))
+          },
+        )(p)
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.RecordCreate(recordName, fields) =>
@@ -334,8 +343,6 @@ object Convert {
       case Exprs.RecordFieldAccess(exp, recordName, fieldName) =>
         ???
       case Exprs.Catch(exp) =>
-        ???
-      case Exprs.BinaryComprehension(template, qualifiers) =>
         ???
       case Exprs.Try(body, clauses, catchClauses, after) =>
         ???
