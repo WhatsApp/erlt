@@ -33,3 +33,6 @@ val F: fun((I) -> list(J))
 val L: list(I)
 val X: I
 val Y: J
+val list_from_binary/1: fun((binary()) -> list(integer()))
+val Binary: binary()
+val X: integer()

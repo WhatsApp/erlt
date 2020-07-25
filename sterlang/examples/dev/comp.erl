@@ -44,3 +44,6 @@ append(L) ->
 
 flat_map(F, L) ->
     [Y || X <- L, Y <- F(X)].
+
+list_from_binary(Binary) ->
+    [ X || <<X>> <= Binary ].

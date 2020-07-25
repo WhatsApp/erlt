@@ -193,6 +193,9 @@ object SyntaxUtil {
           case S.Generator(pat, exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
             patVars ++= collectPatVars(pat)
+          case S.BGenerator(pat, exp) =>
+            vars ++= (freeVars(exp, m) -- patVars)
+            patVars ++= collectPatVars(pat)
         }
         freeVars(elem, m) -- patVars
       case S.FnExp(clauses) =>
@@ -546,6 +549,8 @@ object SyntaxUtil {
           case S.Filter(exp) =>
             getDepExp(exp)
           case S.Generator(pat, exp) =>
+            getDepPat(pat) ++ getDepExp(exp)
+          case S.BGenerator(pat, exp) =>
             getDepPat(pat) ++ getDepExp(exp)
         }
         elemDeps ++ qualifierDeps

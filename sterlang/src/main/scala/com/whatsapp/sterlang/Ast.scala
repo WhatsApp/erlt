@@ -189,6 +189,7 @@ object Ast {
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier
   case class Generator(pat: Pat, exp: Exp) extends Qualifier
+  case class BGenerator(pat: Pat, exp: Exp) extends Qualifier
 
   case class BinElement(expr: Exp, size: Option[Exp], binElemType: Option[BinElemType])
 

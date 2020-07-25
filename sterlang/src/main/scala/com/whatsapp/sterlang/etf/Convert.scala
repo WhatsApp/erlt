@@ -320,7 +320,7 @@ object Convert {
           qualifiers.map {
             case Exprs.Filter(e)       => Ast.Filter(convertExpr(e))
             case Exprs.LGenerate(p, e) => Ast.Generator(convertPattern(p), convertExpr(e))
-            case Exprs.BGenerate(_, _) => ???
+            case Exprs.BGenerate(p, e) => Ast.BGenerator(convertPattern(p), convertExpr(e))
           },
         )(p)
       case Exprs.Bin(p, elems) =>

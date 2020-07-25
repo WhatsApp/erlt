@@ -290,6 +290,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         envAcc = env1
         depth += 1
         A.Generator(pat1, gExp1)
+      case S.BGenerator(pat, gExp) =>
+        val gExp1 = elab(gExp, MT.BinaryType, depth, envAcc)
+        val (pat1, env1, _) = elpat(pat, MT.BinaryType, d, envAcc, Set.empty, gen = true)
+        envAcc = env1
+        depth += 1
+        A.BGenerator(pat1, gExp1)
     }
 
     val elemType = freshTypeVar(depth)

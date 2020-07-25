@@ -5,3 +5,4 @@
 -spec sort(list(A), fun((A, A) -> boolean())) -> list(A).
 -spec append(list(list(A))) -> list(A).
 -spec flat_map(fun((A) -> list(B)), list(A)) -> list(B).
+-spec list_from_binary(binary()) -> list(integer()).

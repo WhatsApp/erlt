@@ -163,6 +163,9 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           case A.Generator(pat, exp) =>
             printPat(pat)
             printExp(exp)
+          case A.BGenerator(pat, exp) =>
+            printPat(pat)
+            printExp(exp)
         }
         printExp(template)
 
