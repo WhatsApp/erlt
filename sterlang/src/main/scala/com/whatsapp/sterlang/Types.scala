@@ -69,12 +69,18 @@ object METypes {
   // Type construction
   val IntType: ConType =
     ConType(NamedTyCon("integer"), List(), List())
+  val FloatType: ConType =
+    ConType(NamedTyCon("float"), List(), List())
   val CharType: ConType =
     ConType(NamedTyCon("char"), List(), List())
   val BoolType: ConType =
     ConType(NamedTyCon("boolean"), List(), List())
   val StringType: ConType =
     ConType(NamedTyCon("string"), List(), List())
+  val BinaryType: ConType =
+    ConType(NamedTyCon("binary"), List(), List())
+  val BitstringType: ConType =
+    ConType(NamedTyCon("bitstring"), List(), List())
   def FunType(argTypes: List[Type], resultType: Type): ConType =
     ConType(FunTyCon(argTypes.length), argTypes ++ List(resultType), List())
   def ListType(t: Type): ConType =
