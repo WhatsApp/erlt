@@ -163,6 +163,8 @@ object SyntaxUtil {
         args.flatMap(freeVars(_, m)).toSet
       case S.ListExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
+      case S.Bin(elems) =>
+        elems.flatMap(elem => freeVars(elem.expr, m)).toSet
       case S.ConsExp(h, t) =>
         freeVars(h, m) ++ freeVars(t, m)
       case S.CaseExp(selector, rules) =>
@@ -512,6 +514,8 @@ object SyntaxUtil {
         args.map(getDepExp).foldLeft(ctrDep)(_ ++ _)
       case S.ListExp(elems) =>
         elems.flatMap(getDepExp).toSet
+      case S.Bin(elems) =>
+        elems.flatMap(elem => getDepExp(elem.expr)).toSet
       case S.ConsExp(h, t) =>
         getDepExp(h) ++ getDepExp(t)
       case S.CaseExp(selector, rules) =>

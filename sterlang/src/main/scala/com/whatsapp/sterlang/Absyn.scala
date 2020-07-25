@@ -26,6 +26,7 @@ object Absyn {
   type RowType = Types.RowType
   type BinOp = Ast.BinOp
   type UOp = Ast.UOp
+  type BinElemType = Ast.BinElemType
 
   /** A node in the intermediate language abstract syntax tree.
     *
@@ -52,6 +53,7 @@ object Absyn {
   }
   case class TupleExp(elements: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class ListExp(elements: List[Exp])(val typ: Type, val sourceLocation: Pos.P) extends Exp
+  case class BinExp(elements: List[BinElement])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   // End TODO
 
@@ -66,6 +68,8 @@ object Absyn {
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier
   case class Generator(pat: Pat, exp: Exp) extends Qualifier
+
+  case class BinElement(expr: Exp, size: Option[Exp], binElemType: Option[BinElemType])
 
   case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class BlockExp(body: Body)(val sourceLocation: Pos.P) extends Exp {

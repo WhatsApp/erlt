@@ -20,6 +20,19 @@ import com.whatsapp.sterlang.{Ast, ParseError, Pos}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Guards, Patterns, Types}
 
 object Convert {
+  private def typeSpecifiersMapping: Map[String, Ast.BinElemType] =
+    Map(
+      "integer" -> Ast.IntegerBinElemType,
+      "float" -> Ast.FloatBinElemType,
+      "binary" -> Ast.BinaryBinElemType,
+      "bytes" -> Ast.BytesBinElemType,
+      "bitstring" -> Ast.BitstringBinElemType,
+      "bits" -> Ast.BitsBinElemType,
+      "utf8" -> Ast.Utf8BinElemType,
+      "utf16" -> Ast.Utf16BinElemType,
+      "utf32" -> Ast.Utf32BinElemType,
+    )
+
   def convert(form: Forms.Form): Option[Ast.ProgramElem] =
     form match {
       case Forms.Lang(mods) =>
@@ -310,8 +323,8 @@ object Convert {
             case Exprs.BGenerate(_, _) => ???
           },
         )(p)
-      case Exprs.Bin(elems) =>
-        ???
+      case Exprs.Bin(p, elems) =>
+        Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.RecordCreate(recordName, fields) =>
         ???
       case Exprs.RecordUpdate(exp1, recordName, fields) =>
@@ -330,6 +343,24 @@ object Convert {
         ???
       case Exprs.ReceiveWithTimeout(cl, timeout, default) =>
         ???
+    }
+
+  private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {
+    val expr = convertExpr(binElem.expr)
+    val size = binElem.size.map(convertExpr)
+    val binElemType = extractBinElemType(binElem.typeSpecifiers)
+    Ast.BinElement(expr, size, binElemType)
+  }
+
+  private def extractBinElemType(specifiers: Exprs.TypeSpecifiers): Option[Ast.BinElemType] =
+    specifiers match {
+      case Exprs.DefaultTypeSpecifier =>
+        None
+      case Exprs.TypeSpecifierList(specifiers) =>
+        specifiers.flatMap {
+          case Exprs.TypeSpecifierUnit(_) => None
+          case Exprs.TypeSpecifierId(id)  => typeSpecifiersMapping.get(id)
+        }.headOption
     }
 
   private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =

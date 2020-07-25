@@ -40,7 +40,7 @@ object Exprs {
   case class Tuple(p: Pos.SP, elems: List[Expr]) extends Expr
   case class Nil(p: Pos.SP) extends Expr
   case class Cons(p: Pos.SP, hd: Expr, tl: Expr) extends Expr
-  case class Bin(elems: List[BinElement]) extends Expr
+  case class Bin(p: Pos.SP, elems: List[BinElement]) extends Expr
   case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
   case class RecordCreate(recordName: String, fields: List[RecordField]) extends Expr
@@ -67,8 +67,7 @@ object Exprs {
   case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
   case class NamedFun(p: Pos.SP, funName: String, clauses: List[Clause]) extends Expr
 
-  // TODO - proper size
-  case class BinElement(expr: Expr, size: ETerm, typeSpecifiers: TypeSpecifiers)
+  case class BinElement(expr: Expr, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
 
   sealed trait TypeSpecifiers
   case object DefaultTypeSpecifier extends TypeSpecifiers

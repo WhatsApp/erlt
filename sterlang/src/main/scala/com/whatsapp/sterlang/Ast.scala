@@ -168,6 +168,7 @@ object Ast {
   case class TupleExp(elems: List[Exp])(val p: Pos.P) extends Exp
   case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val p: Pos.P) extends Exp
   case class ListExp(elems: List[Exp])(val p: Pos.P) extends Exp
+  case class Bin(elems: List[BinElement])(val p: Pos.P) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val p: Pos.P) extends Exp
   case class CaseExp(selector: Exp, rules: List[Rule])(val p: Pos.P) extends Exp
   case class IfExp(ifClauses: List[IfClause])(val p: Pos.P) extends Exp
@@ -184,9 +185,23 @@ object Ast {
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)
   case class Guard(exprs: List[Exp])
+
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier
   case class Generator(pat: Pat, exp: Exp) extends Qualifier
+
+  case class BinElement(expr: Exp, size: Option[Exp], binElemType: Option[BinElemType])
+
+  sealed trait BinElemType
+  case object IntegerBinElemType extends BinElemType
+  case object FloatBinElemType extends BinElemType
+  case object BinaryBinElemType extends BinElemType
+  case object BytesBinElemType extends BinElemType
+  case object BitstringBinElemType extends BinElemType
+  case object BitsBinElemType extends BinElemType
+  case object Utf8BinElemType extends BinElemType
+  case object Utf16BinElemType extends BinElemType
+  case object Utf32BinElemType extends BinElemType
 
   sealed trait Pat { val p: Pos.P }
   case class WildPat()(val p: Pos.P) extends Pat

@@ -139,6 +139,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabEnumConExp(enumConExp, ty, d, env)
       case blockExp: S.BlockExpr =>
         elabBlockExp(blockExp, ty, d, env)
+      case binExp: S.Bin =>
+        elabBin(binExp, ty, d, env)
     }
 
   private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
@@ -477,6 +479,38 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, MT.ListType(elemType))
     A.ListExp(elems1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabBin(exp: S.Bin, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.Bin(elems) = exp
+    val elems1 = elems.map(elabBinElement(_, d, env))
+    unify(exp.p, ty, MT.BinaryType)
+    A.BinExp(elems1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabBinElement(elem: S.BinElement, d: T.Depth, env: Env): A.BinElement = {
+    val size1 = elem.size.map(elab(_, MT.IntType, d, env))
+    val isStringLiteral = elem.expr match {
+      case S.StringExp(_) => true
+      case _              => false
+    }
+    val expType = elem.binElemType match {
+      case Some(value) =>
+        value match {
+          case S.IntegerBinElemType | S.Utf8BinElemType | S.Utf16BinElemType | S.Utf32BinElemType =>
+            if (isStringLiteral) MT.StringType else MT.IntType
+          case S.FloatBinElemType =>
+            MT.FloatType
+          case S.BinaryBinElemType | S.BytesBinElemType =>
+            MT.BinaryType
+          case S.BitstringBinElemType | S.BitsBinElemType =>
+            MT.BitstringType
+        }
+      case None =>
+        if (isStringLiteral) MT.StringType else MT.IntType
+    }
+    val exp1 = elab(elem.expr, expType, d, env)
+    A.BinElement(exp1, size1, elem.binElemType)
   }
 
   private def elabConsExp(exp: S.ConsExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

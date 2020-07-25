@@ -51,9 +51,9 @@ object ExprsConvert {
         val hd = convertExp(eExp1)
         val tl = convertExp(eExp2)
         Cons(sp(anno), hd, tl)
-      case ETuple(List(EAtom("bin"), _anno, EList(eBinElements))) =>
+      case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertBinElement)
-        Bin(binElements)
+        Bin(sp(anno), binElements)
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1, eExp2)) =>
         BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
@@ -182,7 +182,11 @@ object ExprsConvert {
   def convertBinElement(term: ETerm): BinElement =
     term match {
       case ETuple(List(EAtom("bin_element"), _anno, eExp, eSize, eTypeSpecifiers)) =>
-        BinElement(convertExp(eExp), eSize, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
+        val size = eSize match {
+          case EAtom("default") => None
+          case other            => Some(convertExp(other))
+        }
+        BinElement(convertExp(eExp), size, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
     }
 
   def convertTypeSpecifiers(term: ETerm): TypeSpecifiers =

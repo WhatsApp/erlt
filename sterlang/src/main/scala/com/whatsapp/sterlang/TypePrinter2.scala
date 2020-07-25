@@ -128,6 +128,11 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         elems.foreach(printExp)
       case A.ListExp(elems) =>
         elems.foreach(printExp)
+      case A.BinExp(elems) =>
+        elems.foreach { elem =>
+          printExp(elem.expr)
+          elem.size.foreach(printExp)
+        }
 
       case A.UOpExp(_, exp) =>
         printExp(exp)
