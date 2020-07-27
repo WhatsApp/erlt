@@ -75,4 +75,13 @@ object SterlangTestUtil {
       case _: PositionedError => true
     }
   }
+
+  def processIllSyntax(path: String): Boolean = {
+    try {
+      Main.loadProgram(path)
+      false
+    } catch {
+      case _: UnsupportedSyntaxError => true
+    }
+  }
 }
