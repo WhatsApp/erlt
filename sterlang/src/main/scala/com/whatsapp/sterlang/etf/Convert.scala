@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.etf
 
-import com.whatsapp.sterlang.{Ast, ParseError, Pos}
+import com.whatsapp.sterlang.{Ast, ParseError, Pos, UnsupportedSyntaxError}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Guards, Patterns, Types}
 
 object Convert {
@@ -55,7 +55,7 @@ object Convert {
           case Forms.Enum =>
             val enumCons =
               body match {
-                case Types.UnionType(elems) =>
+                case Types.UnionType(_, elems) =>
                   elems.map(enumCon)
                 case single =>
                   List(enumCon(single))
@@ -418,7 +418,7 @@ object Convert {
 
   private def convertType(tp: Types.Type): Ast.Type =
     tp match {
-      case Types.AnnotatedType(_, tp) =>
+      case Types.AnnotatedType(_, _, tp) =>
         convertType(tp)
       case Types.BitstringType(p, List()) =>
         Ast.UserType(Ast.LocalName("binary"), List())(p)
@@ -454,10 +454,28 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.AtomType(_) | Types.EmptyListType | Types.EnumCtr(_, _, _) | Types.FunTypeAny |
-          Types.FunTypeAnyArgs(_) | Types.IntegerRangeType(_, _) | Types.AnyMap | Types.RecordType(_, _) |
-          Types.TupleTypeAny(_) | Types.UnionType(_) | (_: Types.SingletonIntegerType) =>
-        sys.error(s"erroneous type: $tp")
+      case Types.AtomType(p, _) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.EmptyListType(p) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.FunTypeAny(p) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.FunTypeAnyArgs(p, _) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.TupleTypeAny(p) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.AnyMap(p) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.EnumCtr(p, _, _) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.UnionType(p, _) =>
+        throw new UnsupportedSyntaxError(p)
+      case Types.IntegerRangeType(p, _, _) =>
+        throw new UnsupportedSyntaxError(p)
+      case singleIntType: Types.SingletonIntegerType =>
+        throw new UnsupportedSyntaxError(singleIntType.p)
+      case Types.RecordType(p, _, _) =>
+        throw new UnsupportedSyntaxError(p)
     }
 
   private def enumCon(tp: Types.Type): Ast.EnumCon =
@@ -470,7 +488,7 @@ object Convert {
 
   private def convertAssoc(assoc: Types.AssocType): Ast.Field[Ast.Type] =
     assoc match {
-      case Types.MapFieldExact(List(Types.AtomType(field), v)) =>
+      case Types.MapFieldExact(List(Types.AtomType(_, field), v)) =>
         Ast.Field(field, convertType(v))
       case other =>
         sys.error(s"unexpected assocs: $other")

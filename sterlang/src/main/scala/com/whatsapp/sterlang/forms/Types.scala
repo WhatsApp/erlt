@@ -20,23 +20,23 @@ import com.whatsapp.sterlang.Pos
 
 object Types {
 
-  sealed trait Type
+  sealed trait Type { val p: Pos.P }
   // For use cases like spec id(Input :: atom()) -> atom.
-  case class AnnotatedType(tv: TypeVariable, tp: Type) extends Type
-  case class AtomType(atom: String) extends Type
+  case class AnnotatedType(p: Pos.SP, tv: TypeVariable, tp: Type) extends Type
+  case class AtomType(p: Pos.SP, atom: String) extends Type
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class BitstringType(p: Pos.SP, types: List[SingletonIntegerType]) extends Type
-  case object EmptyListType extends Type
+  case class EmptyListType(p: Pos.SP) extends Type
   sealed trait FunType extends Type
   // fun()
-  case object FunTypeAny extends FunType
-  case class FunTypeAnyArgs(tp: Type) extends FunType
+  case class FunTypeAny(p: Pos.SP) extends FunType
+  case class FunTypeAnyArgs(p: Pos.SP, tp: Type) extends FunType
   case class FunctionType(p: Pos.SP, args: List[Type], resType: Type) extends FunType with FunSpecType
-  case class IntegerRangeType(t1: SingletonIntegerType, t2: SingletonIntegerType) extends Type
+  case class IntegerRangeType(p: Pos.SP, t1: SingletonIntegerType, t2: SingletonIntegerType) extends Type
 
   sealed trait MapType extends Type
   // map()
-  case object AnyMap extends MapType
+  case class AnyMap(p: Pos.SP) extends MapType
   case class AssocMap(p: Pos.SP, assocs: List[AssocType]) extends MapType
 
   sealed trait AssocType {
@@ -48,21 +48,21 @@ object Types {
   case class MapFieldOpt(types: List[Type]) extends AssocType
 
   case class PredefinedType(p: Pos.SP, name: String, params: List[Type]) extends Type
-  case class RecordType(name: String, fieldTypes: List[RecordFieldType]) extends Type
+  case class RecordType(p: Pos.SP, name: String, fieldTypes: List[RecordFieldType]) extends Type
   case class RemoteType(p: Pos.SP, module: String, name: String, params: List[Type]) extends Type
 
   sealed trait SingletonIntegerType extends Type
-  case class SinlgeInteger(int: Int) extends SingletonIntegerType
-  case class SingleCharacter(char: Char) extends SingletonIntegerType
-  case class UnaryOpIntegerType(op: String, arg: SingletonIntegerType) extends SingletonIntegerType
-  case class BinaryOpIntegerType(op: String, arg1: SingletonIntegerType, arg2: SingletonIntegerType)
+  case class SinlgeInteger(p: Pos.SP, int: Int) extends SingletonIntegerType
+  case class SingleCharacter(p: Pos.SP, char: Char) extends SingletonIntegerType
+  case class UnaryOpIntegerType(p: Pos.SP, op: String, arg: SingletonIntegerType) extends SingletonIntegerType
+  case class BinaryOpIntegerType(p: Pos.SP, op: String, arg1: SingletonIntegerType, arg2: SingletonIntegerType)
       extends SingletonIntegerType
 
   sealed trait TupleType extends Type
   case class TupleTypeAny(p: Pos.SP) extends TupleType
   case class TupleTypeTyped(p: Pos.SP, params: List[Type]) extends TupleType
 
-  case class UnionType(elems: List[Type]) extends Type
+  case class UnionType(p: Pos.SP, elems: List[Type]) extends Type
   case class TypeVariable(p: Pos.SP, v: String) extends Type
   case class UserType(p: Pos.SP, name: String, params: List[Type]) extends Type
   case class EnumCtr(p: Pos.SP, ctr: String, types: List[Type]) extends Type
