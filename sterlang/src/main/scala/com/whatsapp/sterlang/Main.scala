@@ -61,6 +61,11 @@ object Main {
         case error: ParseError =>
           printParseError(text, error)
           sys.exit(2)
+        case error: PositionedError =>
+          printError(text, error)
+          Console.err.println("DEBUG INFO:")
+          error.printStackTrace(Console.err)
+          sys.exit(2)
       }
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
