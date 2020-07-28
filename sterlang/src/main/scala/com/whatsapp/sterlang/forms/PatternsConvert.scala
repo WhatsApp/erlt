@@ -37,15 +37,15 @@ object PatternsConvert {
       case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertPatternBinElement)
         BinPattern(sp(anno), binElements)
-      case ETuple(List(EAtom("op"), _anno, EAtom(op), ePat1, ePat2)) =>
-        BinOpPattern(op, convertPat(ePat1), convertPat(ePat2))
-      case ETuple(List(EAtom("op"), _anno, EAtom(op), ePat1)) =>
-        UnOpPattern(op, convertPat(ePat1))
-      case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
-        RecordPattern(recordName, eRecordFieldPatterns.map(convertRecordFieldPattern))
-      case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
+      case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1, ePat2)) =>
+        BinOpPattern(sp(anno), op, convertPat(ePat1), convertPat(ePat2))
+      case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
+        UnOpPattern(sp(anno), op, convertPat(ePat1))
+      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
+        RecordPattern(sp(anno), recordName, eRecordFieldPatterns.map(convertRecordFieldPattern))
+      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordIndexPattern(recordName, fieldName)
+        RecordIndexPattern(sp(anno), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         val (sp, openRec) = spRecordHack(anno)
         MapPattern(sp, openRec, eAssocs.map(convertAssocExact))
@@ -87,12 +87,13 @@ object PatternsConvert {
 
   def convertPatternBinElement(term: ETerm): BinElementPattern =
     term match {
-      case ETuple(List(EAtom("bin_element"), _anno, ePat, eSize, eTypeSpecifiers)) =>
+      case ETuple(List(EAtom("bin_element"), anno, ePat, eSize, eTypeSpecifiers)) =>
         val size = eSize match {
           case EAtom("default") => None
           case other            => Some(ExprsConvert.convertExp(other))
         }
         BinElementPattern(
+          sp(anno),
           convertPat(ePat),
           size,
           ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers),
@@ -101,9 +102,9 @@ object PatternsConvert {
 
   def convertRecordFieldPattern(term: ETerm): RecordFieldPattern =
     term match {
-      case ETuple(List(EAtom("record_field"), _anno, eName, ePat)) =>
+      case ETuple(List(EAtom("record_field"), anno, eName, ePat)) =>
         val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
-        RecordFieldPattern(name, convertPat(ePat))
+        RecordFieldPattern(sp(anno), name, convertPat(ePat))
     }
 
   def convertAssocExact(term: ETerm): (Pattern, Pattern) =

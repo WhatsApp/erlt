@@ -27,7 +27,7 @@ object Exprs {
 
   sealed trait Expr
 
-  sealed trait Literal extends Expr
+  sealed trait Literal extends Expr { val p: Pos.SP }
   case class AtomLiteral(p: Pos.SP, atom: String) extends Literal
   case class CharLiteral(p: Pos.SP, ch: Char) extends Literal
   case class FloatLiteral(p: Pos.SP, fl: Double) extends Literal

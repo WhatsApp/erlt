@@ -226,13 +226,13 @@ object Convert {
         Ast.RecordPat(pats, open)(p)
       case Patterns.BinPattern(p, elems) =>
         Ast.BinPat(elems.map(convertBinElemPat))(p)
-      case Patterns.BinOpPattern(op, pat1, pat2) =>
+      case Patterns.BinOpPattern(p, op, pat1, pat2) =>
         ???
-      case Patterns.UnOpPattern(op, pat1) =>
+      case Patterns.UnOpPattern(p, op, pat1) =>
         ???
-      case Patterns.RecordPattern(recordName, fields) =>
+      case Patterns.RecordPattern(p, recordName, fields) =>
         ???
-      case Patterns.RecordIndexPattern(recordName, fieldName) =>
+      case Patterns.RecordIndexPattern(p, recordName, fieldName) =>
         ???
     }
 

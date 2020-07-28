@@ -20,23 +20,23 @@ import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.forms.Exprs._
 
 object Patterns {
-  sealed trait Pattern
-  case class LiteralPattern(literal: Literal) extends Pattern
+  sealed trait Pattern { val p: Pos.SP }
+  case class LiteralPattern(literal: Literal) extends Pattern { val p: Pos.SP = literal.p }
   case class MatchPattern(p: Pos.SP, pat: Pattern, arg: Pattern) extends Pattern
   case class VariablePattern(p: Pos.SP, name: String) extends Pattern
   case class TuplePattern(p: Pos.SP, elems: List[Pattern]) extends Pattern
   case class NilPattern(p: Pos.SP) extends Pattern
   case class ConsPattern(p: Pos.SP, hd: Pattern, tl: Pattern) extends Pattern
   case class BinPattern(p: Pos.SP, elems: List[BinElementPattern]) extends Pattern
-  case class BinOpPattern(op: String, pat1: Pattern, pat2: Pattern) extends Pattern
-  case class UnOpPattern(op: String, pat1: Pattern) extends Pattern
-  case class RecordPattern(recordName: String, fields: List[RecordFieldPattern]) extends Pattern
-  case class RecordIndexPattern(recordName: String, fieldName: String) extends Pattern
+  case class BinOpPattern(p: Pos.SP, op: String, pat1: Pattern, pat2: Pattern) extends Pattern
+  case class UnOpPattern(p: Pos.SP, op: String, pat1: Pattern) extends Pattern
+  case class RecordPattern(p: Pos.SP, recordName: String, fields: List[RecordFieldPattern]) extends Pattern
+  case class RecordIndexPattern(p: Pos.SP, recordName: String, fieldName: String) extends Pattern
   case class MapPattern(p: Pos.SP, openRec: Boolean, assocs: List[(Pattern, Pattern)]) extends Pattern
   case class LocalEnumCtrPattern(p: Pos.SP, enum: String, ctr: String, args: List[Pattern]) extends Pattern
   case class RemoteEnumCtrPattern(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Pattern])
       extends Pattern
 
-  case class BinElementPattern(pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
-  case class RecordFieldPattern(fieldName: String, pat: Pattern)
+  case class BinElementPattern(p: Pos.SP, pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
+  case class RecordFieldPattern(p: Pos.SP, fieldName: String, pat: Pattern)
 }
