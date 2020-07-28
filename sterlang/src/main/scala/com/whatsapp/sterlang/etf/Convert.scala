@@ -195,10 +195,10 @@ object Convert {
             Ast.BoolPat(true)(p)
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolPat(false)(p)
-          case Exprs.AtomLiteral(_, _) =>
-            sys.error(s"atoms are not supported in ST: $p")
-          case Exprs.CharLiteral(_, ch) =>
-            sys.error("chars in patterns are not supported yet")
+          case Exprs.AtomLiteral(p, _) =>
+            throw new UnsupportedSyntaxError(p)
+          case Exprs.CharLiteral(p, _) =>
+            throw new UnsupportedSyntaxError(p)
           case Exprs.FloatLiteral(p, fl) =>
             Ast.NumberPat(fl.intValue())(p)
           case Exprs.IntLiteral(p, i) =>
@@ -227,13 +227,13 @@ object Convert {
       case Patterns.BinPattern(p, elems) =>
         Ast.BinPat(elems.map(convertBinElemPat))(p)
       case Patterns.BinOpPattern(p, op, pat1, pat2) =>
-        ???
+        throw new UnsupportedSyntaxError(p)
       case Patterns.UnOpPattern(p, op, pat1) =>
-        ???
+        throw new UnsupportedSyntaxError(p)
       case Patterns.RecordPattern(p, recordName, fields) =>
-        ???
+        throw new UnsupportedSyntaxError(p)
       case Patterns.RecordIndexPattern(p, recordName, fieldName) =>
-        ???
+        throw new UnsupportedSyntaxError(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
