@@ -149,6 +149,8 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
           ts.map(typ).mkString(name + "(", ", ", ")")
         case (TC.TupleCon(_), ts, Nil) =>
           ts.map(typ).mkString("{", ", ", "}")
+        case (TC.ERecordTyCon(name), Nil, Nil) =>
+          s"#$name{}"
         case _ => sys.error("ill-formed Contys")
       }
 

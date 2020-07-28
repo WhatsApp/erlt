@@ -48,6 +48,7 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
             EnumDef("box", List(TypeVar("A")(NP)), List(EnumCon("box", List(TypeVar("A")(NP)))(NP)))(NP),
             EnumDef("box2", List(TypeVar("A")(NP)), List(EnumCon("box2", List(TypeVar("A")(NP)))(NP)))(NP),
           ),
+          erlangRecordDefs = List.empty,
           typeAliases = List(
             TypeAlias("boxAlias", List(TypeVar("A")(NP)), UserType(LocalName("box"), List(TypeVar("A")(NP)))(NP))(NP),
             TypeAlias("boxAlias2", List(TypeVar("A")(NP)), UserType(LocalName("box2"), List(TypeVar("A")(NP)))(NP))(NP),

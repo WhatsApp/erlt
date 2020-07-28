@@ -26,6 +26,7 @@ class AstChecks(val context: Context) {
       program.typeAliases.foreach { checkTypeAlias(program, _) }
       program.opaques.foreach { checkOpaque(program, _) }
       program.enumDefs.foreach { checkEnumDef(program, _) }
+      program.erlangRecordDefs.foreach { checkErlangRecordDef(program, _) }
     } catch {
       case Cycle(name) =>
         val typeAlias = program.typeAliases.find(_.name == name).get
@@ -53,6 +54,11 @@ class AstChecks(val context: Context) {
     for (op <- program.opaques) {
       if (typeNames(op.name)) throw new DuplicateType(op.p, op.name)
       typeNames = typeNames + op.name
+    }
+    var recNames = Set.empty[String]
+    for (recDef <- program.erlangRecordDefs) {
+      if (recNames(recDef.name)) throw new DuplicateRecord(recDef.p, recDef.name)
+      recNames = recNames + recDef.name
     }
   }
 
@@ -122,6 +128,20 @@ class AstChecks(val context: Context) {
     }
   }
 
+  private def checkErlangRecordDef(program: Program, recordDef: ErlangRecordDef): Unit = {
+    var fieldNames = Set.empty[String]
+    for (f <- recordDef.fields) {
+      if (fieldNames(f.label)) {
+        throw new DuplicateFields(f.p, List(f.label))
+      }
+      fieldNames = fieldNames + f.label
+    }
+    recordDef.fields.foreach { f =>
+      expandType(program, Set.empty)(f.value)
+      collectTypeVars(Set.empty)(f.value)
+    }
+  }
+
   private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
     tp match {
       case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
@@ -179,6 +199,11 @@ class AstChecks(val context: Context) {
         expandType(program, visited)(resType)
       case ListType(elemType) =>
         expandType(program, visited)(elemType)
+      case ERecordType(name) =>
+        program.erlangRecordDefs.find(_.name == name) match {
+          case Some(_) => // OK
+          case None    => throw new UnknownRecord(tp.p, name)
+        }
     }
 
   private def collectTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
@@ -189,7 +214,7 @@ class AstChecks(val context: Context) {
         }
         Set(t)
       case WildTypeVar() =>
-        sys.error("Unexpected to see it here")
+        throw new IllegalWildTypeVariable(t.p)
       case UserType(_, args) =>
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>
@@ -202,5 +227,7 @@ class AstChecks(val context: Context) {
         (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
         collectTypeVars(bound)(elemType)
+      case ERecordType(_) =>
+        Set.empty
     }
 }

@@ -143,12 +143,14 @@ object Ast {
   case class FunType(argTypes: List[Type], resType: Type)(val p: Pos.P) extends Type
   case class ListType(elemType: Type)(val p: Pos.P) extends Type
   case class UserType(name: Name, params: List[Type])(val p: Pos.P) extends Type
+  case class ERecordType(name: String)(val p: Pos.P) extends Type
 
   case class Spec(name: VarName, funType: FunType)(val p: Pos.P)
 
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
+  case class ErlangRecordDef(name: String, fields: List[Field[Type]])(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 
@@ -226,6 +228,7 @@ object Ast {
       module: String,
       require: Require,
       enumDefs: List[EnumDef],
+      erlangRecordDefs: List[ErlangRecordDef],
       typeAliases: List[TypeAlias],
       opaques: List[Opaque],
       specs: List[Spec],
@@ -252,6 +255,7 @@ object Ast {
   case class ExportTypeElem(ids: List[(String, Int)]) extends ProgramElem
   case class EnumElem(enumDef: EnumDef) extends ProgramElem
   case class TypeAliasElem(typeAlias: TypeAlias) extends ProgramElem
+  case class ErlangRecordElem(erlangRecordDef: ErlangRecordDef) extends ProgramElem
   case class OpaqueElem(opaque: Opaque) extends ProgramElem
   case class CompileElem(options: List[String]) extends ProgramElem
 
@@ -267,6 +271,7 @@ object Ast {
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
         require = Require(elems.collect { case e: RequireElem => e.modules }.flatten.distinct),
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
+        erlangRecordDefs = elems.collect { case e: ErlangRecordElem => e.erlangRecordDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
         opaques = elems.collect { case e: OpaqueElem => e.opaque },
         specs = elems.collect { case e: SpecElem => e.spec },

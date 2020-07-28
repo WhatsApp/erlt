@@ -99,9 +99,9 @@ object FormsConvert {
         TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
-            List(EAtom("attribute"), _anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
           ) =>
-        RecordDecl(recordName, eRecFields.map(convertFieldDecl))
+        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl))
       // af_function_spec
       case ETuple(
             List(
@@ -140,14 +140,14 @@ object FormsConvert {
 
   def convertFieldDecl(term: ETerm): RecordFieldDecl =
     term match {
-      case ETuple(List(EAtom("record_field"), _anno, fieldNameLit)) =>
-        RecordFieldUntyped(convertAtomLit(fieldNameLit))
-      case ETuple(List(EAtom("record_field"), _anno, fieldNameLit, _expr)) =>
-        RecordFieldUntyped(convertAtomLit(fieldNameLit))
+      case ETuple(List(EAtom("record_field"), anno, fieldNameLit)) =>
+        RecordFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), None)
+      case ETuple(List(EAtom("record_field"), anno, fieldNameLit, expr)) =>
+        RecordFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), Some(ExprsConvert.convertExp(expr)))
       case ETuple(List(EAtom("typed_record_field"), eUntypedField, eType)) =>
-        val RecordFieldUntyped(name) = convertFieldDecl(eUntypedField)
+        val RecordFieldUntyped(p, name, initValue) = convertFieldDecl(eUntypedField)
         val tp = TypesConvert.convertType(eType)
-        RecordFieldTyped(name, tp)
+        RecordFieldTyped(p, name, initValue, tp)
     }
 
   def convertAtomLit(term: ETerm): String =

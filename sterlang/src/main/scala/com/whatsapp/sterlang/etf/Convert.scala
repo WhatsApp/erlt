@@ -83,11 +83,27 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) | Forms.RecordDecl(_, _) |
+      case Forms.RecordDecl(p, name, eFields) =>
+        val fields = eFields.map(convertRecordField)
+        val eRecordType = Ast.ErlangRecordDef(name, fields)(p)
+        Some(Ast.ErlangRecordElem(eRecordType))
+      case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
         None
       case Forms.Error(loc) =>
         throw ParseError(loc)
+    }
+
+  private def convertRecordField(eRecordField: Forms.RecordFieldDecl): Ast.Field[Ast.Type] =
+    eRecordField match {
+      case Forms.RecordFieldUntyped(p, name, initValue) =>
+        // untyped or implicitly typed record fields are not supported
+        throw new UnsupportedSyntaxError(p)
+      case Forms.RecordFieldTyped(p, name, Some(initValue), tp) =>
+        // initializers are not supported
+        throw new UnsupportedSyntaxError(p)
+      case Forms.RecordFieldTyped(p, name, None, tp) =>
+        Ast.Field(name, convertType(tp))(p)
     }
 
   private def convertFunClause(clause: Exprs.Clause): Ast.Clause =
@@ -456,6 +472,10 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+      case Types.RecordType(p, name, List()) =>
+        Ast.ERecordType(name)(p)
+      case Types.RecordType(p, _, _) =>
+        throw new UnsupportedSyntaxError(p)
       case Types.AtomType(p, _) =>
         throw new UnsupportedSyntaxError(p)
       case Types.EmptyListType(p) =>
@@ -476,8 +496,6 @@ object Convert {
         throw new UnsupportedSyntaxError(p)
       case singleIntType: Types.SingletonIntegerType =>
         throw new UnsupportedSyntaxError(singleIntType.p)
-      case Types.RecordType(p, _, _) =>
-        throw new UnsupportedSyntaxError(p)
     }
 
   private def enumCon(tp: Types.Type): Ast.EnumCon =

@@ -1,0 +1,2 @@
+val test/1: fun((#user{}) -> #user{})
+val X: #user{}

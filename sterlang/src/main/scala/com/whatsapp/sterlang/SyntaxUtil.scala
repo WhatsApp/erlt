@@ -105,6 +105,8 @@ object SyntaxUtil {
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
       case S.ListType(elemType) =>
         collectNamedTypeVars(elemType)
+      case S.ERecordType(_) =>
+        List.empty
     }
 
   @scala.annotation.tailrec
@@ -348,6 +350,8 @@ object SyntaxUtil {
           case _ => name
         }
         S.UserType(name1, params.map(globalizeType(module, names)))(tp.p)
+      case S.ERecordType(_) =>
+        tp
     }
 
   def normalizeTypes(program: S.Program): S.Program = {
@@ -359,19 +363,24 @@ object SyntaxUtil {
       program.typeAliases.map { ta => ta.copy(body = normalizeType(program)(ta.body))(ta.p) }
     val opaques1 =
       program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.p) }
+    val erlangRecordDefs1 =
+      program.erlangRecordDefs.map { recDef =>
+        recDef.copy(fields = recDef.fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(recDef.p)
+      }
     val specs1 =
       program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.p))
     program.copy(
       enumDefs = enumDefs1,
       typeAliases = typeAliases1,
       opaques = opaques1,
+      erlangRecordDefs = erlangRecordDefs1,
       specs = specs1,
     )
   }
 
   private def normalizeType(program: S.Program)(tp: S.Type): S.Type =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) => tp
+      case S.WildTypeVar() | S.TypeVar(_) | S.ERecordType(_) => tp
       case S.TupleType(ts) =>
         S.TupleType(ts.map(normalizeType(program)))(tp.p)
       case S.RecordType(fields) =>
@@ -589,7 +598,7 @@ object SyntaxUtil {
 
   private def getDepType(tp: S.Type): Set[String] =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) =>
+      case S.WildTypeVar() | S.TypeVar(_) | S.ERecordType(_) =>
         Set.empty[String]
       case S.TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
