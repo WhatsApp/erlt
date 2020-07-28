@@ -40,12 +40,13 @@ object Types {
   case class AssocMap(p: Pos.SP, assocs: List[AssocType]) extends MapType
 
   sealed trait AssocType {
+    val p: Pos.P
     val types: List[Type]
   }
   // X := Y - mandatory association
-  case class MapFieldExact(types: List[Type]) extends AssocType
+  case class MapFieldExact(p: Pos.P, types: List[Type]) extends AssocType
   // X => Y - optional association
-  case class MapFieldOpt(types: List[Type]) extends AssocType
+  case class MapFieldOpt(p: Pos.P, types: List[Type]) extends AssocType
 
   case class PredefinedType(p: Pos.SP, name: String, params: List[Type]) extends Type
   case class RecordType(p: Pos.SP, name: String, fieldTypes: List[RecordFieldType]) extends Type

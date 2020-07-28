@@ -430,11 +430,11 @@ object Convert {
         assocs match {
           case List() =>
             Ast.RecordType(List())(p)
-          case List(Types.MapFieldOpt(List(k, v))) =>
+          case List(Types.MapFieldOpt(_, List(k, v))) =>
             Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(p)
           case _ =>
             assocs.last match {
-              case Types.MapFieldExact(List(Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_"))) =>
+              case Types.MapFieldExact(_, List(Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_"))) =>
                 Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(p1 ! p2))(p)
               case _ =>
                 Ast.RecordType(assocs.map(convertAssoc))(p)
@@ -488,9 +488,9 @@ object Convert {
 
   private def convertAssoc(assoc: Types.AssocType): Ast.Field[Ast.Type] =
     assoc match {
-      case Types.MapFieldExact(List(Types.AtomType(_, field), v)) =>
+      case Types.MapFieldExact(_, List(Types.AtomType(_, field), v)) =>
         Ast.Field(field, convertType(v))
-      case other =>
-        sys.error(s"unexpected assocs: $other")
+      case _ =>
+        throw new UnsupportedSyntaxError(assoc.p)
     }
 }

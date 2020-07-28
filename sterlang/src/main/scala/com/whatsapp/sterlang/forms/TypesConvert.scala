@@ -141,11 +141,10 @@ object TypesConvert {
 
   def convertAssocType(term: ETerm): AssocType =
     term match {
-      // map_field_assoc
-      case ETuple(List(EAtom("type"), _anno, EAtom("map_field_assoc"), EList(types))) =>
-        MapFieldOpt(types.map(convertType))
-      case ETuple(List(EAtom("type"), _anno, EAtom("map_field_exact"), EList(types))) =>
-        MapFieldExact(types.map(convertType))
+      case ETuple(List(EAtom("type"), anno, EAtom("map_field_assoc"), EList(types))) =>
+        MapFieldOpt(sp(anno), types.map(convertType))
+      case ETuple(List(EAtom("type"), anno, EAtom("map_field_exact"), EList(types))) =>
+        MapFieldExact(sp(anno), types.map(convertType))
     }
 
   def convertRecordFieldType(term: ETerm): RecordFieldType =
