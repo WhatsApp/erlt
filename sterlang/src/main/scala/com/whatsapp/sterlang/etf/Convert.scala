@@ -217,11 +217,13 @@ object Convert {
       case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
       case Patterns.MapPattern(p, open, assocs) =>
-        val pats = assocs map {
-          case (Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)), pat) =>
-            Ast.Field[Ast.Pat](label, convertPattern(pat))
-          case other =>
-            sys.error(s"wrong pattern assoc: $other")
+        val pats = assocs map { elem =>
+          elem.key match {
+            case Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) =>
+              Ast.Field[Ast.Pat](label, convertPattern(elem.value))
+            case other =>
+              throw new UnsupportedSyntaxError(other.p)
+          }
         }
         Ast.RecordPat(pats, open)(p)
       case Patterns.BinPattern(p, elems) =>

@@ -107,10 +107,10 @@ object PatternsConvert {
         RecordFieldPattern(sp(anno), name, convertPat(ePat))
     }
 
-  def convertAssocExact(term: ETerm): (Pattern, Pattern) =
+  def convertAssocExact(term: ETerm): MapElemPattern =
     term match {
       case ETuple(List(EAtom("map_field_exact"), _anno, e1, e2)) =>
-        (convertPat(e1), convertPat(e2))
+        MapElemPattern(convertPat(e1), convertPat(e2))
     }
 
 }
