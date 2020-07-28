@@ -223,10 +223,10 @@ object ExprsConvert {
   def convertAssoc(term: ETerm): Assoc =
     term match {
       // map_field_assoc
-      case ETuple(List(EAtom("map_field_assoc"), _anno, eExp1, eExp2)) =>
-        OptAssoc(convertExp(eExp1), convertExp(eExp2))
-      case ETuple(List(EAtom("map_field_exact"), _anno, eExp1, eExp2)) =>
-        AssocExact(convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(EAtom("map_field_assoc"), anno, eExp1, eExp2)) =>
+        OptAssoc(sp(anno), convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(EAtom("map_field_exact"), anno, eExp1, eExp2)) =>
+        AssocExact(sp(anno), convertExp(eExp1), convertExp(eExp2))
     }
 
   def convertQualifier(term: ETerm): Qualifier =

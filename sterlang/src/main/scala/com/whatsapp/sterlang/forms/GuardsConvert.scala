@@ -108,10 +108,10 @@ object GuardsConvert {
 
   def convertGAssoc(term: ETerm): GAssoc =
     term match {
-      case ETuple(List(EAtom("map_field_assoc"), _anno, eExp1, eExp2)) =>
-        GAssocOpt(convertGExpr(eExp1), convertGExpr(eExp2))
-      case ETuple(List(EAtom("map_field_exact"), _anno, eExp1, eExp2)) =>
-        GAssocExact(convertGExpr(eExp1), convertGExpr(eExp2))
+      case ETuple(List(EAtom("map_field_assoc"), anno, eExp1, eExp2)) =>
+        GAssocOpt(sp(anno), convertGExpr(eExp1), convertGExpr(eExp2))
+      case ETuple(List(EAtom("map_field_exact"), anno, eExp1, eExp2)) =>
+        GAssocExact(sp(anno), convertGExpr(eExp1), convertGExpr(eExp2))
     }
 
   def convertGBinElement(term: ETerm): GBinElement =

@@ -220,7 +220,7 @@ object Convert {
         val pats = assocs map { elem =>
           elem.key match {
             case Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) =>
-              Ast.Field[Ast.Pat](label, convertPattern(elem.value))
+              Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.p)
             case other =>
               throw new UnsupportedSyntaxError(other.p)
           }
@@ -388,32 +388,32 @@ object Convert {
 
   private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Exprs.OptAssoc(Exprs.AtomLiteral(_, label), e) =>
-        Ast.Field(label, convertExpr(e))
+      case Exprs.OptAssoc(p, Exprs.AtomLiteral(_, label), e) =>
+        Ast.Field(label, convertExpr(e))(p)
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
 
   private def assocUpdateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Exprs.AssocExact(Exprs.AtomLiteral(_, label), e) =>
-        Ast.Field(label, convertExpr(e))
+      case Exprs.AssocExact(p, Exprs.AtomLiteral(_, label), e) =>
+        Ast.Field(label, convertExpr(e))(p)
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
 
   private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocOpt(Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
-        Ast.Field(label, convertGExpr(e))
+      case Guards.GAssocOpt(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
+        Ast.Field(label, convertGExpr(e))(p)
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
 
   private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocExact(Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
-        Ast.Field(label, convertGExpr(e))
+      case Guards.GAssocExact(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
+        Ast.Field(label, convertGExpr(e))(p)
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
@@ -490,8 +490,8 @@ object Convert {
 
   private def convertAssoc(assoc: Types.Assoc): Ast.Field[Ast.Type] =
     assoc match {
-      case Types.Assoc(_, Types.ReqAssoc, Types.AtomType(_, field), v) =>
-        Ast.Field(field, convertType(v))
+      case Types.Assoc(p, Types.ReqAssoc, Types.AtomType(_, field), v) =>
+        Ast.Field(field, convertType(v))(p)
       case _ =>
         throw new UnsupportedSyntaxError(assoc.p)
     }

@@ -79,9 +79,9 @@ object Exprs {
 
   sealed trait Assoc
   // X := Y - mandatory association
-  case class AssocExact(k: Expr, v: Expr) extends Assoc
+  case class AssocExact(p: Pos.SP, k: Expr, v: Expr) extends Assoc
   // X => Y - optional association
-  case class OptAssoc(k: Expr, v: Expr) extends Assoc
+  case class OptAssoc(p: Pos.SP, k: Expr, v: Expr) extends Assoc
 
   sealed trait Qualifier
   sealed trait Generator extends Qualifier

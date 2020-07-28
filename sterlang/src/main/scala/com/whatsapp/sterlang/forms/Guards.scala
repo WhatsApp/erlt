@@ -44,7 +44,7 @@ object Guards {
 
   sealed trait GAssoc
   // X := Y - mandatory association
-  case class GAssocExact(k: GExpr, v: GExpr) extends GAssoc
+  case class GAssocExact(p: Pos.SP, k: GExpr, v: GExpr) extends GAssoc
   // X => Y - optional association
-  case class GAssocOpt(k: GExpr, v: GExpr) extends GAssoc
+  case class GAssocOpt(p: Pos.SP, k: GExpr, v: GExpr) extends GAssoc
 }

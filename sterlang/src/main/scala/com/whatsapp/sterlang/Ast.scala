@@ -181,7 +181,7 @@ object Ast {
   case class ValDef(pat: Pat, exp: Exp)
   case class Fun(name: LocalFunName, clauses: List[Clause])(val p: Pos.P)
 
-  case class Field[A](label: String, value: A)
+  case class Field[A](label: String, value: A)(val p: Pos.P)
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)

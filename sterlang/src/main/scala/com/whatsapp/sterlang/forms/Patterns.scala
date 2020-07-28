@@ -39,5 +39,5 @@ object Patterns {
 
   case class BinElementPattern(p: Pos.SP, pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
   case class RecordFieldPattern(p: Pos.SP, fieldName: String, pat: Pattern)
-  case class MapElemPattern(key: Pattern, value: Pattern)
+  case class MapElemPattern(p: Pos.SP, key: Pattern, value: Pattern)
 }

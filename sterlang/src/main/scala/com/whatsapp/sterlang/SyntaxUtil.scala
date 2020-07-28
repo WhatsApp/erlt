@@ -329,10 +329,10 @@ object SyntaxUtil {
       case S.TupleType(params) =>
         S.TupleType(params.map(globalizeType(module, names)))(tp.p)
       case S.RecordType(fields) =>
-        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value)) }
+        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value))(f.p) }
         S.RecordType(fields1)(tp.p)
       case S.OpenRecordType(fields, rt) =>
-        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value)) }
+        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value))(f.p) }
         S.OpenRecordType(fields1, rt)(tp.p)
       case S.FunType(argTypes, resType) =>
         S.FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.p)
@@ -375,9 +375,9 @@ object SyntaxUtil {
       case S.TupleType(ts) =>
         S.TupleType(ts.map(normalizeType(program)))(tp.p)
       case S.RecordType(fields) =>
-        S.RecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))))(tp.p)
+        S.RecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(tp.p)
       case S.OpenRecordType(fields, rt) =>
-        S.OpenRecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))), rt)(tp.p)
+        S.OpenRecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)), rt)(tp.p)
       case S.FunType(args, res) =>
         S.FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
       case S.ListType(et) =>
