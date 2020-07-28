@@ -430,11 +430,11 @@ object Convert {
         assocs match {
           case List() =>
             Ast.RecordType(List())(p)
-          case List(Types.MapFieldOpt(_, List(k, v))) =>
+          case List(Types.Assoc(_, Types.OptAssoc, k, v)) =>
             Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(p)
           case _ =>
             assocs.last match {
-              case Types.MapFieldExact(_, List(Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_"))) =>
+              case Types.Assoc(_, Types.ReqAssoc, Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_")) =>
                 Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(p1 ! p2))(p)
               case _ =>
                 Ast.RecordType(assocs.map(convertAssoc))(p)
@@ -486,9 +486,9 @@ object Convert {
         sys.error(s"Expected an enum ctr but got: $other")
     }
 
-  private def convertAssoc(assoc: Types.AssocType): Ast.Field[Ast.Type] =
+  private def convertAssoc(assoc: Types.Assoc): Ast.Field[Ast.Type] =
     assoc match {
-      case Types.MapFieldExact(_, List(Types.AtomType(_, field), v)) =>
+      case Types.Assoc(_, Types.ReqAssoc, Types.AtomType(_, field), v) =>
         Ast.Field(field, convertType(v))
       case _ =>
         throw new UnsupportedSyntaxError(assoc.p)
