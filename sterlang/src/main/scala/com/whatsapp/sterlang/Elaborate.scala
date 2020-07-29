@@ -393,8 +393,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val eRecordType = MT.ERecordType(name)
-    unify(exp.p, ty, eRecordType)
+    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(name)
+
+    unify(exp.p, ty, expType)
 
     A.ERecordCreate(name, fields1)(typ = ty, sourceLocation = exp.p)
   }
@@ -402,6 +403,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabERecordUpdate(exp: S.ERecordUpdate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.ERecordUpdate(rec, name, fields) = exp
     val eRec = getERecord(exp.p, name)
+
+    if (eRec.exception) {
+      throw new UnconditionalExceptionUpdate(exp.p, name)
+    }
+
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
     checkUniqueFields(exp.p, fields.map(_.label))
@@ -435,6 +441,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabERecordSelect(exp: S.ERecordSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.ERecordSelect(rec, recName, fieldName) = exp
     val eRec = getERecord(exp.p, recName)
+
+    if (eRec.exception) {
+      throw new UnconditionalExceptionSelect(exp.p, recName)
+    }
+
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
     val fieldDef =
       eRec.fields.find(_.label == fieldName) match {
@@ -1074,7 +1085,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     checkRecordFields(fields, eRec)
 
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.ERecordType(recName))
+
+    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(recName)
+    unify(p.p, t, expType)
 
     val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
     var envAcc = env

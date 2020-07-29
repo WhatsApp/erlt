@@ -83,9 +83,9 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.RecordDecl(p, name, eFields) =>
+      case Forms.RecordDecl(p, name, eFields, exception) =>
         val fields = eFields.map(convertRecordField)
-        val eRecordType = Ast.ErlangRecordDef(name, fields)(p)
+        val eRecordType = Ast.ErlangRecordDef(name, fields, exception)(p)
         Some(Ast.ErlangRecordElem(eRecordType))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>

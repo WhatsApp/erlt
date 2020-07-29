@@ -56,6 +56,7 @@ package object sterlang {
       S.TypeId(S.LocalName("binary"), 0),
       S.TypeId(S.LocalName("bitstring"), 0),
       S.TypeId(S.LocalName("byte"), 0),
+      S.TypeId(S.LocalName("exception"), 0),
       S.TypeId(S.LocalName("identifier"), 0),
       S.TypeId(S.LocalName("iodata"), 0),
       S.TypeId(S.LocalName("iolist"), 0),

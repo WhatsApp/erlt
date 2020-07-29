@@ -1,0 +1,2 @@
+-spec mk_exn(option(exception())) -> exception().
+-spec get_target(exception()) -> option(exception()).

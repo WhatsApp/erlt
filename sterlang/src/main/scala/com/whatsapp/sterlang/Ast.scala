@@ -150,7 +150,7 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
-  case class ErlangRecordDef(name: String, fields: List[Field[Type]])(val p: Pos.P)
+  case class ErlangRecordDef(name: String, fields: List[Field[Type]], exception: Boolean)(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 
