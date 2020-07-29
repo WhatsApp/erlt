@@ -3803,6 +3803,8 @@ used_type(TypePair, L, #lint{usage = Usage, file = File} = St) ->
     UsedTypes = dict:store(TypePair, erl_anno:set_file(File, L), OldUsed),
     St#lint{usage = Usage#usage{used_types = UsedTypes}}.
 
+is_default_type({exception, 0}) ->
+    true;
 is_default_type({Name, NumberOfTypeVariables}) ->
     erl_internal:is_type(Name, NumberOfTypeVariables).
 

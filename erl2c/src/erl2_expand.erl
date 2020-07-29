@@ -163,6 +163,8 @@ type({ann_type, L, [Var, Type]}, St) ->
 type({remote_type, L, [M, F, Args]}, St) ->
     {Args1, St1} = type_list(Args, St),
     {{remote_type, L, [M, F, Args1]}, St1};
+type({user_type, L, exception, []}, St) ->
+    {{type, L, any, []}, St};
 type({user_type, L, TypeName, Args}, St) ->
     {Args1, St1} = type_list(Args, St),
     TA = {TypeName, length(Args)},
