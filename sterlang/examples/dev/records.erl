@@ -54,3 +54,13 @@ check_users(User1, User2) when User1#user.id == User2#user.id ->
     #ok{};
 check_users(User1, User2) ->
     #ok{}.
+
+is_user(#user{}) -> true.
+
+match_users(#user{id = Id}, #user{id = Id}) -> true.
+
+foo(#manager{user = User}) ->
+    User.
+
+bar(#manager.user) ->
+    #ok{}.

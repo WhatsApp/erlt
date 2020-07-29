@@ -249,9 +249,9 @@ object Convert {
       case Patterns.UnOpPattern(p, op, pat1) =>
         throw new UnsupportedSyntaxError(p)
       case Patterns.RecordPattern(p, recordName, fields) =>
-        throw new UnsupportedSyntaxError(p)
+        Ast.ERecordPat(recordName, fields.map(recordFieldPattern))(p)
       case Patterns.RecordIndexPattern(p, recordName, fieldName) =>
-        throw new UnsupportedSyntaxError(p)
+        Ast.ERecordIndexPat(recordName, fieldName)(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -423,6 +423,9 @@ object Convert {
 
   private def gRecordField(field: Guards.GRecordField): Ast.Field[Ast.Exp] =
     Ast.Field(field.fieldName, convertGExpr(field.value))(field.p)
+
+  private def recordFieldPattern(field: Patterns.RecordFieldPattern): Ast.Field[Ast.Pat] =
+    Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
 
   private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {

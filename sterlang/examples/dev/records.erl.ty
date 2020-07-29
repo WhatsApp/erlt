@@ -7,3 +7,7 @@
 -spec check_user(#user{}) -> #ok{}.
 -spec check_id(integer()) -> #ok{}.
 -spec check_users(#user{}, #user{}) -> #ok{}.
+-spec is_user(#user{}) -> boolean().
+-spec match_users(#user{}, #user{}) -> boolean().
+-spec foo(#manager{}) -> #user{}.
+-spec bar(integer()) -> #ok{}.

@@ -13,7 +13,9 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(e20record_index_pattern).
+-module(e110).
 
-test(#record.field) ->
-    1.
+-record(foo, {id :: integer()}).
+
+test(#foo.id1) ->
+    true.

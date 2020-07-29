@@ -30,4 +30,8 @@ object Values {
   case class StringValue(value: String) extends Value {
     override def typ: ConType = METypes.StringType
   }
+
+  case class RecordIndexValue(recName: String, recField: String) extends Value {
+    override def typ: ConType = METypes.IntType
+  }
 }

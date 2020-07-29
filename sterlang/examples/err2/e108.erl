@@ -13,7 +13,10 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(e22record_pattern).
+-module(e108).
 
-test(#record{x = 1}) ->
-    1.
+-record(foo, {id :: integer()}).
+
+-spec test(#foo{}) -> string().
+test(#foo{name = Name}) ->
+    Name.

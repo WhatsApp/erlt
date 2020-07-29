@@ -21,3 +21,10 @@ val User1: #user{}
 val User2: #user{}
 val User1: #user{}
 val User2: #user{}
+val is_user/1: fun((#user{}) -> boolean())
+val match_users/2: fun((#user{}, #user{}) -> boolean())
+val Id: integer()
+val Id: integer()
+val foo/1: fun((#manager{}) -> #user{})
+val User: #user{}
+val bar/1: fun((integer()) -> #ok{})

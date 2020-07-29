@@ -116,6 +116,9 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           printPat(elem.pat)
           elem.size.map(printExp)
         }
+
+      case A.ERecordPat(_, fields) =>
+        fields.foreach { f => printPat(f.value) }
     }
 
   private def printBody(body: A.Body): Unit = {

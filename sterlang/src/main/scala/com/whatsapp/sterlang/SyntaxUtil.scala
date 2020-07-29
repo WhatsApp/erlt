@@ -58,6 +58,11 @@ object SyntaxUtil {
         collectPatVars(hPat) ++ collectPatVars(tPat)
       case S.BinPat(elems) =>
         elems.flatMap(elem => collectPatVars(elem.pat))
+      case S.ERecordPat(_, fields) =>
+        val allPats = fields.map(_.value)
+        allPats.flatMap(collectPatVars)
+      case S.ERecordIndexPat(_, _) =>
+        List.empty
     }
 
   def collectPatVars2(pat: A.Pat): List[String] =
@@ -85,6 +90,8 @@ object SyntaxUtil {
 
       case A.BinPat(elems) =>
         elems.flatMap(elem => collectPatVars2(elem.pat))
+      case A.ERecordPat(_, fields) =>
+        fields.map(_.value).flatMap(collectPatVars2)
     }
 
   def collectNamedTypeVars(t: S.Type): List[String] =
@@ -495,6 +502,8 @@ object SyntaxUtil {
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
       case S.RecordPat(fields, _) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
+      case S.ERecordPat(_, fields) =>
+        fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case S.AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
       case S.EnumCtrPat(enumName, _, pats) =>
@@ -511,7 +520,7 @@ object SyntaxUtil {
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case S.ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
-      case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) =>
+      case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) | S.ERecordIndexPat(_, _) =>
         Set.empty[String]
     }
 

@@ -173,6 +173,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case p: A.TuplePat           => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.ListPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.RecordPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.ERecordPat         => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.ConsPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.EnumConstructorPat => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.BinPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
@@ -202,6 +203,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabRecordPat(recordPat, ts, d, env, penv, gen)
       case enumCtrPat: S.EnumCtrPat =>
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
+      case eRecordPat: S.ERecordPat =>
+        elabERecordPat(eRecordPat, ts, d, env, penv, gen)
+      case eRecordIndexPat: S.ERecordIndexPat =>
+        elabERecordIndexPat(eRecordIndexPat, ts, d, env, penv, gen)
       case listPat: S.ListPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
       case binPat: S.BinPat =>
@@ -850,6 +855,27 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     (A.LiteralPat(Values.StringValue(b))(sourceLocation = p.p), env, penv)
   }
 
+  private def elabERecordIndexPat(
+      p: S.ERecordIndexPat,
+      ts: ST.TypeSchema,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (A.Pat, Env, PEnv) = {
+    val S.ERecordIndexPat(recName, fieldName) = p
+
+    val eRec = getERecord(p.p, recName)
+    val knownField = eRec.fields.exists(_.label == fieldName)
+    if (!knownField) {
+      throw new UnknownERecordField(p.p, recName, fieldName)
+    }
+
+    val t = TU.instantiate(d, ts)
+    unify(p.p, t, MT.IntType)
+    (A.LiteralPat(Values.RecordIndexValue(recName, fieldName))(sourceLocation = p.p), env, penv)
+  }
+
   private def elabListPat(
       p: S.ListPat,
       ts: ST.TypeSchema,
@@ -1030,6 +1056,39 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     (A.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+  }
+
+  private def elabERecordPat(
+      p: S.ERecordPat,
+      ts: ST.TypeSchema,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (A.Pat, Env, PEnv) = {
+    val S.ERecordPat(recName, fields) = p
+    val eRec = getERecord(p.p, recName)
+    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+
+    checkUniqueFields(p.p, fields.map(_.label))
+    checkRecordFields(fields, eRec)
+
+    val t = TU.instantiate(d, ts)
+    unify(p.p, t, MT.ERecordType(recName))
+
+    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    var envAcc = env
+    var penvAcc = penv
+    val fields1 = for (field <- fields) yield {
+      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val eFieldType = expander.expandType(fieldType)
+      val (pat1, env1, penv1) = elpat(field.value, eFieldType, d, envAcc, penvAcc, gen)
+      envAcc = env1
+      penvAcc = penv1
+      A.Field(field.label, pat1)
+    }
+
+    (A.ERecordPat(recName, fields1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---

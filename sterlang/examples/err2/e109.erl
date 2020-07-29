@@ -13,7 +13,9 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(e21record_pattern_empty).
+-module(e109).
 
-test(#record{}) ->
-    1.
+-record(foo, {id :: integer()}).
+
+test(#foo{id = Id, id = Id}) ->
+    Id.
