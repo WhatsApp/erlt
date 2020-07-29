@@ -16,8 +16,9 @@
 
 package com.whatsapp.sterlang.patterns
 
+import com.whatsapp.sterlang.TyCons.RecordTyCon
 import com.whatsapp.sterlang.Values.Value
-import com.whatsapp.sterlang.{Absyn, Values}
+import com.whatsapp.sterlang.{Absyn, Types, Values, Vars}
 
 /** Provides a simplified pattern syntax used during exhaustiveness checking. */
 private[patterns] object Pattern {
@@ -32,6 +33,7 @@ private[patterns] object Pattern {
   case class Tuple(length: Int) extends Constructor
   case object EmptyList extends Constructor
   case object Cons extends Constructor
+  case class Record(fields: List[String], open: Boolean) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
 
   def show(p: Pat): String = {
@@ -42,10 +44,10 @@ private[patterns] object Pattern {
       case Wildcard                                                         => "_"
       case ConstructorApplication(Literal(Values.UnitValue), Nil)           => tuple(Nil)
       case ConstructorApplication(Literal(Values.BooleanValue(value)), Nil) => value.toString
-      case ConstructorApplication(Literal(_), Nil)                          => throw new IllegalArgumentException()
+      case ConstructorApplication(Literal(_), _)                            => throw new IllegalArgumentException()
       case ConstructorApplication(Tuple(_), arguments)                      => tuple(arguments)
       case ConstructorApplication(EmptyList, Nil)                           => "[]"
-      case ConstructorApplication(Cons, head :: tail :: Nil)                =>
+      case ConstructorApplication(Cons, List(head, tail))                   =>
         // Logic for displaying multi element lists nicely, e.g., [E1, E2, E3 | T].
         val result = new StringBuilder("[")
         result ++= show(head)
@@ -66,14 +68,24 @@ private[patterns] object Pattern {
 
         processTail(tail)
         result.toString()
+      case ConstructorApplication(EmptyList, _) | ConstructorApplication(Cons, _) =>
+        throw new IllegalArgumentException()
+      case ConstructorApplication(Record(fieldNames, open), arguments) =>
+        // Remove fields mapped to wildcards to reduce clutter
+        val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
+
+        // We need to display closed records as open if we dropped any fields above
+        val start = (if (open || arguments.contains(Wildcard)) "#" else "") + "#{"
+        // TODO: quote field name when necessary
+        fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = start, sep = ", ", end = "}")
+
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
-      case _ => throw new IllegalArgumentException()
     }
   }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
-  def simplify(pattern: Absyn.Pat): Pat =
+  def simplify(vars: Vars)(pattern: Absyn.Pat): Pat =
     pattern match {
       case Absyn.WildPat() =>
         Wildcard
@@ -83,7 +95,7 @@ private[patterns] object Pattern {
         Pattern.Wildcard
 
       case Absyn.AndPat(p1, p2) =>
-        (simplify(p1), simplify(p2)) match {
+        (simplify(vars)(p1), simplify(vars)(p2)) match {
           case (Wildcard, p2Simple) => p2Simple
           case (p1Simple, Wildcard) => p1Simple
           case _                    =>
@@ -96,19 +108,65 @@ private[patterns] object Pattern {
         ConstructorApplication(Literal(value), Nil)
 
       case Absyn.TuplePat(elements) =>
-        ConstructorApplication(Tuple(elements.length), elements.map(simplify))
+        ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars)))
 
-      case Absyn.RecordPat(_, _) => ???
+      case Absyn.RecordPat(fields, _) =>
+        val recordType = resolveRecordType(vars)(pattern.typ)
+        val fieldsMap = fields.map { f => (f.label, f.value) }.toMap
+        val sortedFieldNames: List[String] = getFieldNames(recordType).sorted
+        ConstructorApplication(
+          Record(sortedFieldNames, isOpen(recordType)),
+          sortedFieldNames.map(f => fieldsMap.get(f).map(simplify(vars)).getOrElse(Wildcard)),
+        )
 
       case Absyn.ListPat(elements) =>
         elements.foldRight(ConstructorApplication(EmptyList, Nil)) {
-          case (head, tail) => ConstructorApplication(Cons, List(simplify(head), tail))
+          case (head, tail) => ConstructorApplication(Cons, List(simplify(vars)(head), tail))
         }
 
       case Absyn.ConsPat(head, tail) =>
-        ConstructorApplication(Cons, List(simplify(head), simplify(tail)))
+        ConstructorApplication(Cons, List(simplify(vars)(head), simplify(vars)(tail)))
 
       case Absyn.EnumConstructorPat(enum, constructor, arguments) =>
-        ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify))
+        ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars)))
+    }
+
+  /** Returns all field names present in a row type. */
+  private def getFieldNames(rowType: Types.RowType): List[String] =
+    rowType match {
+      case _: Types.RowVarType | Types.RowEmptyType => Nil
+      case Types.RowFieldType(f, rest)              => f.label :: getFieldNames(rest)
+    }
+
+  /** Returns true if the given row type has a row variable. */
+  private def isOpen(rowType: Types.RowType): Boolean =
+    rowType match {
+      case _: Types.RowVarType         => true
+      case Types.RowEmptyType          => false
+      case Types.RowFieldType(_, rest) => isOpen(rest)
+    }
+
+  /** Resolves a type to a record type and resolves any row variables in the record type.  */
+  private def resolveRecordType(vars: Vars)(typ: Types.Type): Types.RowType =
+    typ match {
+      case Types.VarType(typeVar) =>
+        vars.tGet(typeVar) match {
+          case Types.Instance(constructor) => resolveRecordType(vars)(constructor)
+          case _: Types.Open               => throw new IllegalStateException()
+        }
+      case Types.ConType(RecordTyCon, List(), List(rowType)) => resolveRowVariable(vars)(rowType)
+      case _: Types.ConType                                  => throw new IllegalStateException()
+    }
+
+  /** Resolves any row variables in a row type if possible. */
+  private def resolveRowVariable(vars: Vars)(rowType: Types.RowType): Types.RowType =
+    rowType match {
+      case Types.RowVarType(typeVar) =>
+        vars.rGet(typeVar) match {
+          case Types.RowInstance(resolvedRowType) => resolvedRowType
+          case _: Types.RowOpen                   => rowType
+        }
+      case Types.RowEmptyType              => Types.RowEmptyType
+      case Types.RowFieldType(field, rest) => Types.RowFieldType(field, resolveRowVariable(vars)(rest))
     }
 }
