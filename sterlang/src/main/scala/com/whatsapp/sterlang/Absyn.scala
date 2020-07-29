@@ -72,6 +72,14 @@ object Absyn {
   case class ERecordIndex(recName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
+  case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
+      val typ: Type,
+      val sourceLocation: Pos.P,
+  ) extends Exp
+  case class TryOfCatchExp(tryBody: Body, tryBranches: List[Branch], catchBranches: List[Branch], after: Option[Body])(
+      val typ: Type,
+      val sourceLocation: Pos.P,
+  ) extends Exp
 
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier

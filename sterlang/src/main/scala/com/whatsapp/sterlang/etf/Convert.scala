@@ -115,6 +115,20 @@ object Convert {
       case _         => sys.error(s"unexpected clause: $clause")
     }
 
+  private def convertCatchClause(clause: Exprs.Clause): Ast.Rule =
+    clause.pats match {
+      case List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) =>
+        val stackTracePat = convertPattern(stackTrace)
+        stackTracePat match {
+          case Ast.WildPat() =>
+          // OK
+          case _ => throw new UnsupportedSyntaxError(stackTracePat.p)
+        }
+        val exnPat = convertPattern(exn)
+        Ast.Rule(exnPat, clause.guards.map(convertGuard), convertBody(clause.body))
+      case _ => sys.error(s"unexpected clause: $clause")
+    }
+
   private def convertIfClause(ifClause: Exprs.IfClause): Ast.IfClause =
     Ast.IfClause(ifClause.guards.map(convertGuard), convertBody(ifClause.body))
 
@@ -360,9 +374,19 @@ object Convert {
         Ast.ERecordIndex(recordName, fieldName)(p)
       case Exprs.RecordFieldAccess(p, rec, recordName, fieldName) =>
         Ast.ERecordSelect(convertExpr(rec), recordName, fieldName)(p)
+      case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
+        val tryBody = convertBody(body)
+        val tryRules = tryClauses.map(convertCaseClause)
+        val catchRules = catchClauses.map(convertCatchClause)
+        val afterBody = after match {
+          case Nil => None
+          case _   => Some(convertBody(after))
+        }
+        tryRules match {
+          case Nil => Ast.TryCatchExp(tryBody, catchRules, afterBody)(p)
+          case _   => Ast.TryOfCatchExp(tryBody, tryRules, catchRules, afterBody)(p)
+        }
       case Exprs.Catch(exp) =>
-        ???
-      case Exprs.Try(body, clauses, catchClauses, after) =>
         ???
       case Exprs.Receive(clauses) =>
         ???
