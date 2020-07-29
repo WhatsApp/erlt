@@ -195,6 +195,16 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printExp(exp)
         fields.foreach(f => printExp(f.value))
 
+      case A.ERecordCreate(_, fields) =>
+        fields.foreach(f => printExp(f.value))
+      case A.ERecordUpdate(rec, _, fields) =>
+        printExp(rec)
+        fields.foreach(f => printExp(f.value))
+      case A.ERecordIndex(_, _) =>
+      // Nothing
+      case A.ERecordSelect(rec, _, _) =>
+        printExp(rec)
+
       case A.FnExp(clauses) =>
         clauses.foreach { clause =>
           clause.pats.foreach(printPat)

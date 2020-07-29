@@ -178,6 +178,10 @@ object Ast {
   case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
+  case class ERecordCreate(name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
+  case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
+  case class ERecordIndex(recName: String, fieldName: String)(val p: Pos.P) extends Exp
+  case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val p: Pos.P) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
   case class ValDef(pat: Pat, exp: Exp)

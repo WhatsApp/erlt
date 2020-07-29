@@ -107,6 +107,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBComprehension(bComprehension, ty, d, env)
       case recordUpdateExp: S.RecordUpdateExp =>
         elabRecordUpdateExp(recordUpdateExp, ty, d, env)
+      case eRecordCreate: S.ERecordCreate =>
+        elabERecordCreate(eRecordCreate, ty, d, env)
+      case eRecordUpdate: S.ERecordUpdate =>
+        elabERecordUpdate(eRecordUpdate, ty, d, env)
+      case eRecordIndex: S.ERecordIndex =>
+        elabERecordIndex(eRecordIndex, ty, d, env)
+      case eRecordSelect: S.ERecordSelect =>
+        elabERecordSelect(eRecordSelect, ty, d, env)
       case binOpExp: S.BinOpExp =>
         elabBinOpExp(binOpExp, ty, d, env)
       case uopExp: S.UOpExp =>
@@ -362,6 +370,82 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, recType)
     A.RecordUpdateExp(rec1, fields1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabERecordCreate(exp: S.ERecordCreate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.ERecordCreate(name, fields) = exp
+    val eRec = getERecord(exp.p, name)
+    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+
+    checkUniqueFields(exp.p, fields.map(_.label))
+    checkRecordFields(fields, eRec)
+    checkRecordInit(exp.p, fields, eRec)
+
+    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    val fields1 = for (field <- fields) yield {
+      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val eFieldType = expander.expandType(fieldType)
+      A.Field(field.label, elab(field.value, eFieldType, d, env))
+    }
+
+    val eRecordType = MT.ERecordType(name)
+    unify(exp.p, ty, eRecordType)
+
+    A.ERecordCreate(name, fields1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabERecordUpdate(exp: S.ERecordUpdate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.ERecordUpdate(rec, name, fields) = exp
+    val eRec = getERecord(exp.p, name)
+    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+
+    checkUniqueFields(exp.p, fields.map(_.label))
+    checkRecordFields(fields, eRec)
+
+    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    val fields1 = for (field <- fields) yield {
+      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val eFieldType = expander.expandType(fieldType)
+      A.Field(field.label, elab(field.value, eFieldType, d, env))
+    }
+
+    val eRecordType = MT.ERecordType(name)
+    val rec1 = elab(rec, eRecordType, d, env)
+    unify(exp.p, ty, eRecordType)
+
+    A.ERecordUpdate(rec1, name, fields1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabERecordIndex(exp: S.ERecordIndex, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.ERecordIndex(recName, fieldName) = exp
+    val eRec = getERecord(exp.p, recName)
+    val knownField = eRec.fields.exists(_.label == fieldName)
+    if (!knownField) {
+      throw new UnknownERecordField(exp.p, recName, fieldName)
+    }
+    unify(exp.p, ty, MT.IntType)
+    A.ERecordIndex(recName, fieldName)(typ = MT.IntType, sourceLocation = exp.p)
+  }
+
+  private def elabERecordSelect(exp: S.ERecordSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.ERecordSelect(rec, recName, fieldName) = exp
+    val eRec = getERecord(exp.p, recName)
+    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val fieldDef =
+      eRec.fields.find(_.label == fieldName) match {
+        case Some(f) => f
+        case None    => throw new UnknownERecordField(exp.p, recName, fieldName)
+      }
+
+    val eRecordType = MT.ERecordType(recName)
+    val rec1 = elab(rec, eRecordType, d, env)
+
+    val fieldType = expander.mkType(fieldDef.value, Map.empty)
+    val eFieldType = expander.expandType(fieldType)
+
+    unify(exp.p, ty, eFieldType)
+
+    A.ERecordSelect(rec1, recName, fieldName)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabAppExp(exp: S.AppExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -979,6 +1063,22 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
+  private def checkRecordFields(usedFields: List[S.Field[_]], recDef: S.ErlangRecordDef): Unit = {
+    val recFields = recDef.fields.map(_.label).toSet
+    for (f <- usedFields) {
+      if (!recFields(f.label))
+        throw new UnknownERecordField(f.p, recDef.name, f.label)
+    }
+  }
+
+  private def checkRecordInit(pos: Pos.P, fields: List[S.Field[_]], recDef: S.ErlangRecordDef): Unit = {
+    val initialized = fields.map(_.label).toSet
+    for (f <- recDef.fields) {
+      if (!initialized(f.label))
+        throw new UnInitializedERecordField(pos, recDef.name, f.label)
+    }
+  }
+
   private def normalizeVar(v: S.VarName): S.VarName =
     v match {
       case _: S.LocalVarName => v
@@ -996,5 +1096,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case rem: S.RemoteName =>
         if (rem.module == program.module) S.LocalName(rem.name)
         else eName
+    }
+
+  private def getERecord(pos: Pos.P, name: String): S.ErlangRecordDef =
+    program.erlangRecordDefs.find(_.name == name) match {
+      case Some(recDef) => recDef
+      case None         => throw new UnknownRecord(pos, name)
     }
 }

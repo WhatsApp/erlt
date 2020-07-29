@@ -164,6 +164,14 @@ object SyntaxUtil {
           Set.empty
       case S.RecordExp(fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
+      case S.ERecordCreate(_, fields) =>
+        fields.flatMap(f => freeVars(f.value, m)).toSet
+      case S.ERecordUpdate(rec, _, fields) =>
+        freeVars(rec, m) ++ fields.flatMap(f => freeVars(f.value, m))
+      case S.ERecordIndex(_, _) =>
+        Set.empty
+      case S.ERecordSelect(rec, _, _) =>
+        freeVars(rec, m)
       case S.TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
       case S.EnumConExp(enumName, dataCon, args) =>
@@ -535,6 +543,14 @@ object SyntaxUtil {
         Set(remote.module)
       case S.RecordExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
+      case S.ERecordCreate(_, fields) =>
+        fields.flatMap(f => getDepExp(f.value)).toSet
+      case S.ERecordUpdate(rec, _, fields) =>
+        getDepExp(rec) ++ fields.flatMap(f => getDepExp(f.value))
+      case S.ERecordIndex(_, _) =>
+        Set.empty
+      case S.ERecordSelect(rec, _, _) =>
+        getDepExp(rec)
       case S.TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
       case S.EnumConExp(enumName, dataCon, args) =>

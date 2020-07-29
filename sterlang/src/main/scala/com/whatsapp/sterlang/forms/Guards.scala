@@ -30,9 +30,9 @@ object Guards {
   case class GBin(p: Pos.SP, elems: List[GBinElement]) extends GExpr
   case class GBinaryOp(p: Pos.SP, op: String, test1: GExpr, test2: GExpr) extends GExpr
   case class GUnaryOp(p: Pos.SP, op: String, test1: GExpr) extends GExpr
-  case class GRecordCreate(recordName: String, fields: List[GRecordField]) extends GExpr
-  case class GRecordIndex(recordName: String, fieldName: String) extends GExpr
-  case class GRecordFieldAccess(test: GExpr, recordName: String, fieldName: String) extends GExpr
+  case class GRecordCreate(p: Pos.SP, recordName: String, fields: List[GRecordField]) extends GExpr
+  case class GRecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends GExpr
+  case class GRecordFieldAccess(p: Pos.SP, rec: GExpr, recordName: String, fieldName: String) extends GExpr
   case class GMapCreate(p: Pos.SP, entries: List[GAssoc]) extends GExpr
   case class GMapUpdate(p: Pos.SP, exp: GExpr, entries: List[GAssoc]) extends GExpr
   // calling erlang:funName
@@ -40,7 +40,7 @@ object Guards {
   case class GLocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[GExpr]) extends GExpr
   case class GRemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[GExpr]) extends GExpr
   case class GBinElement(gExpr: GExpr, size: Option[GExpr], typeSpecifiers: Exprs.TypeSpecifiers)
-  case class GRecordField(fieldName: String, test: GExpr)
+  case class GRecordField(p: Pos.SP, fieldName: String, value: GExpr)
 
   sealed trait GAssoc
   // X := Y - mandatory association

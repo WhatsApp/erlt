@@ -177,12 +177,12 @@ object Convert {
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
       case Guards.GBin(p, elems) =>
         Ast.Bin(elems.map(convertGBinElem))(p)
-      case Guards.GRecordCreate(recordName, fields) =>
-        ???
-      case Guards.GRecordIndex(recordName, fieldName) =>
-        ???
-      case Guards.GRecordFieldAccess(test, recordName, fieldName) =>
-        ???
+      case Guards.GRecordCreate(p, recordName, fields) =>
+        Ast.ERecordCreate(recordName, fields.map(gRecordField))(p)
+      case Guards.GRecordIndex(p, recordName, fieldName) =>
+        Ast.ERecordIndex(recordName, fieldName)(p)
+      case Guards.GRecordFieldAccess(p, rec, recordName, fieldName) =>
+        Ast.ERecordSelect(convertGExpr(rec), recordName, fieldName)(p)
     }
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
@@ -352,14 +352,14 @@ object Convert {
         )(p)
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
-      case Exprs.RecordCreate(recordName, fields) =>
-        ???
-      case Exprs.RecordUpdate(exp1, recordName, fields) =>
-        ???
-      case Exprs.RecordIndex(recordName, fieldName) =>
-        ???
-      case Exprs.RecordFieldAccess(exp, recordName, fieldName) =>
-        ???
+      case Exprs.RecordCreate(p, recordName, fields) =>
+        Ast.ERecordCreate(recordName, fields.map(recordField))(p)
+      case Exprs.RecordUpdate(p, rec, recordName, fields) =>
+        Ast.ERecordUpdate(convertExpr(rec), recordName, fields.map(recordField))(p)
+      case Exprs.RecordIndex(p, recordName, fieldName) =>
+        Ast.ERecordIndex(recordName, fieldName)(p)
+      case Exprs.RecordFieldAccess(p, rec, recordName, fieldName) =>
+        Ast.ERecordSelect(convertExpr(rec), recordName, fieldName)(p)
       case Exprs.Catch(exp) =>
         ???
       case Exprs.Try(body, clauses, catchClauses, after) =>
@@ -417,6 +417,12 @@ object Convert {
       case other =>
         sys.error(s"incorrect assoc: $other")
     }
+
+  private def recordField(field: Exprs.RecordField): Ast.Field[Ast.Exp] =
+    Ast.Field(field.fieldName, convertExpr(field.value))(field.p)
+
+  private def gRecordField(field: Guards.GRecordField): Ast.Field[Ast.Exp] =
+    Ast.Field(field.fieldName, convertGExpr(field.value))(field.p)
 
   private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {

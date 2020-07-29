@@ -58,16 +58,16 @@ object ExprsConvert {
         BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
         UnaryOp(sp(anno), op, convertExp(eExp1))
-      case ETuple(List(EAtom("record"), _anno, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordCreate(recordName, eRecordFieldExps.map(convertRecordField))
-      case ETuple(List(EAtom("record"), _anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordUpdate(convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))
-      case ETuple(List(EAtom("record_index"), _anno, EAtom(recordName), eFieldName)) =>
+      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldExps))) =>
+        RecordCreate(sp(anno), recordName, eRecordFieldExps.map(convertRecordField))
+      case ETuple(List(EAtom("record"), anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
+        RecordUpdate(sp(anno), convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))
+      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordIndex(recordName, fieldName)
-      case ETuple(List(EAtom("record_field"), _anno, eExp, EAtom(recordName), eFieldName)) =>
+        RecordIndex(sp(anno), recordName, fieldName)
+      case ETuple(List(EAtom("record_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordFieldAccess(convertExp(eExp), recordName, fieldName)
+        RecordFieldAccess(sp(anno), convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
@@ -209,7 +209,7 @@ object ExprsConvert {
 
   def convertRecordField(term: ETerm): RecordField =
     term match {
-      case ETuple(List(EAtom("record_field"), _anno, eName, ePat)) =>
+      case ETuple(List(EAtom("record_field"), anno, eName, ePat)) =>
         val name = eName match {
           case ETuple(List(EAtom("atom"), _anno, EAtom(value))) =>
             value
@@ -217,7 +217,7 @@ object ExprsConvert {
             // TODO
             "_"
         }
-        RecordField(name, convertExp(ePat))
+        RecordField(sp(anno), name, convertExp(ePat))
     }
 
   def convertAssoc(term: ETerm): Assoc =

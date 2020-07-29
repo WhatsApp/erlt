@@ -42,10 +42,10 @@ object Exprs {
   case class Bin(p: Pos.SP, elems: List[BinElement]) extends Expr
   case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
-  case class RecordCreate(recordName: String, fields: List[RecordField]) extends Expr
-  case class RecordUpdate(exp1: Expr, recordName: String, fields: List[RecordField]) extends Expr
-  case class RecordIndex(recordName: String, fieldName: String) extends Expr
-  case class RecordFieldAccess(exp: Expr, recordName: String, fieldName: String) extends Expr
+  case class RecordCreate(p: Pos.SP, recordName: String, fields: List[RecordField]) extends Expr
+  case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[RecordField]) extends Expr
+  case class RecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends Expr
+  case class RecordFieldAccess(p: Pos.SP, rec: Expr, recordName: String, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
   case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
   case class Catch(exp: Expr) extends Expr
@@ -75,7 +75,7 @@ object Exprs {
   case class TypeSpecifierId(id: String) extends TypeSpecifier
   case class TypeSpecifierUnit(int: Int) extends TypeSpecifier
 
-  case class RecordField(fieldName: String, value: Expr)
+  case class RecordField(p: Pos.SP, fieldName: String, value: Expr)
 
   sealed trait Assoc
   // X := Y - mandatory association
