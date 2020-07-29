@@ -20,7 +20,7 @@ import java.util.NoSuchElementException
 
 import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
-import com.whatsapp.sterlang.{Absyn, Context, Pos, Values}
+import com.whatsapp.sterlang._
 
 import scala.collection.mutable.ListBuffer
 
@@ -28,7 +28,7 @@ import scala.collection.mutable.ListBuffer
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
   */
-class PatternChecker(private val context: Context) {
+class PatternChecker(private val vars: Vars, private val context: Context) {
   private val A = Absyn
 
   /** Like [[A.Clause]] but without the body. */
@@ -94,7 +94,7 @@ class PatternChecker(private val context: Context) {
 
     // Check for redundancy
     for (clause <- clauses) {
-      val simpleClause = clause.patterns.map(Pattern.simplify)
+      val simpleClause = clause.patterns.map(Pattern.simplify(vars))
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         val location =
@@ -263,6 +263,7 @@ class PatternChecker(private val context: Context) {
       case Pattern.Literal(_: Values.StringValue)  => None
       case Pattern.Tuple(_)                        => Some(Set(constructor))
       case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
+      case Pattern.Record(_, _)                    => Some(Set(constructor))
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
@@ -272,10 +273,11 @@ class PatternChecker(private val context: Context) {
   /** Returns the number of arguments the given constructor takes. */
   private def arity(constructor: Pattern.Constructor): Int =
     constructor match {
-      case _: Pattern.Literal   => 0
-      case Pattern.Tuple(arity) => arity
-      case Pattern.EmptyList    => 0
-      case Pattern.Cons         => 2
+      case _: Pattern.Literal        => 0
+      case Pattern.Tuple(arity)      => arity
+      case Pattern.EmptyList         => 0
+      case Pattern.Cons              => 2
+      case Pattern.Record(fields, _) => fields.length
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         enumDef.cons.find(_.name == constructorName).get.argTypes.length

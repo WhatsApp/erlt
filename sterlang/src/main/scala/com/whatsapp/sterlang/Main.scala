@@ -79,7 +79,7 @@ object Main {
 
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
-        val warnings = new PatternChecker(context).warnings(annFuns)
+        val warnings = new PatternChecker(vars, context).warnings(annFuns)
         warnings.foreach(printError(text, _))
       }
 
