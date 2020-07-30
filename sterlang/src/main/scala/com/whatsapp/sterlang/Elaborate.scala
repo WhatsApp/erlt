@@ -151,6 +151,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBlockExp(blockExp, ty, d, env)
       case binExp: S.Bin =>
         elabBin(binExp, ty, d, env)
+      case tryCatchExp: S.TryCatchExp =>
+        elabTryCatchExp(tryCatchExp, ty, d, env)
+      case tryOfCatchExp: S.TryOfCatchExp =>
+        elabTryOfCatchExp(tryOfCatchExp, ty, d, env)
     }
 
   private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
@@ -271,6 +275,74 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, resType)
     A.CaseExp(selector1, branches)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabTryCatchExp(exp: S.TryCatchExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.TryCatchExp(tryBody, catchRules, after) = exp
+
+    val resType = freshTypeVar(d)
+
+    def elabCatchRules(rules: List[S.Rule]): List[A.Branch] =
+      rules match {
+        case Nil => Nil
+        case S.Rule(pat, guards, body) :: rest =>
+          pat match {
+            case S.WildPat() | S.ERecordPat(_, _) =>
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val guards1 = elabGuards(guards, d, env1)
+              val body1 = elabBody(body, resType, d + 1, env1)
+              val branch1 = A.Branch(pat1, guards1, body1)
+              branch1 :: elabCatchRules(rest)
+            case _ =>
+              throw new IllegalCatchPattern(pat.p)
+          }
+      }
+
+    val tryBody1 = elabBody(tryBody, resType, d, env)
+    val catchBranches = elabCatchRules(catchRules)
+    val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
+
+    unify(exp.p, ty, resType)
+
+    A.TryCatchExp(tryBody1, catchBranches, after1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabTryOfCatchExp(exp: S.TryOfCatchExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.TryOfCatchExp(tryBody, tryRules, catchRules, after) = exp
+
+    val resType = freshTypeVar(d)
+    val tryBodyType = freshTypeVar(d)
+
+    def elabCatchRules(rules: List[S.Rule]): List[A.Branch] =
+      rules match {
+        case Nil => Nil
+        case S.Rule(pat, guards, body) :: rest =>
+          pat match {
+            case S.WildPat() | S.ERecordPat(_, _) =>
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val guards1 = elabGuards(guards, d, env1)
+              val body1 = elabBody(body, resType, d + 1, env1)
+              val branch1 = A.Branch(pat1, guards1, body1)
+              branch1 :: elabCatchRules(rest)
+            case _ =>
+              throw new IllegalCatchPattern(pat.p)
+          }
+      }
+
+    val tryBody1 = elabBody(tryBody, tryBodyType, d, env)
+
+    val tryBranches = for (S.Rule(pat, guards, body) <- tryRules) yield {
+      val (pat1, env1, _) = elpat(pat, tryBodyType, d, env, Set.empty, gen = true)
+      val guards1 = elabGuards(guards, d, env1)
+      val body1 = elabBody(body, resType, d + 1, env1)
+      A.Branch(pat1, guards1, body1)
+    }
+
+    val catchBranches = elabCatchRules(catchRules)
+    val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
+
+    unify(exp.p, ty, resType)
+    A.TryOfCatchExp(tryBody1, tryBranches, catchBranches, after1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

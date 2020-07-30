@@ -17,6 +17,7 @@
 
 -exception(not_found, {}).
 -exception(invocation_target_exception, {target :: exception()}).
+-exception(message_error, {message :: string()}).
 
 -enum option(A) :: none{} | some{A}.
 
@@ -29,3 +30,22 @@ get_target(#not_found{}) ->
     option.none{};
 get_target(#invocation_target_exception{target = Target}) ->
     option.some{Target}.
+
+get_message(M) ->
+    try
+        M()
+    catch
+        #message_error{message = Msg} -> Msg;
+        _ -> "Sorry"
+    end.
+
+get_other(F, G) ->
+    try
+        F(1)
+    of
+        {Res} -> Res
+    catch
+        #message_error{message = Msg} -> Msg
+    after
+        F(G)
+    end.
