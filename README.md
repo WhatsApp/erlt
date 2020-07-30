@@ -4,24 +4,17 @@ This repository is for prototyping and collaborating around the Modern Erlang pr
 
 ## Examples
 
-See the [examples](examples/) folder.
+See the [examples](sterlang/examples/) folder.
 
 ## Requirements
 
 - [erlang](https://www.erlang.org/)
 - [sbt](https://www.scala-sbt.org/)
 
-## Building
+## Building and testing
 
     make
-    cd sterlang; sbt assembly
-    make -C examples
-
-
-## Testing
-
-    make -C examples test
-
+    cd sterlang; sbt assembly; sbt test it-test
 
 ## Development
 
