@@ -58,7 +58,8 @@ object Exprs {
   case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
   case class Case(p: Pos.SP, expr: Expr, clauses: List[Clause]) extends Expr
   case class If(p: Pos.SP, clauses: List[IfClause]) extends Expr
-  case class Try(body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr]) extends Expr
+  case class Try(p: Pos.SP, body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr])
+      extends Expr
   case class Receive(clauses: List[Clause]) extends Expr
   case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
   case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr

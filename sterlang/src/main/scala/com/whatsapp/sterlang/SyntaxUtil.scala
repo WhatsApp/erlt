@@ -247,6 +247,29 @@ object SyntaxUtil {
           .reduce(_ ++ _) - varName.stringId
       case S.BlockExpr(body) =>
         freeVars(body, m)
+      case S.TryCatchExp(tryBody, catchRules, after) =>
+        val tryBodyVars = freeVars(tryBody, m)
+        val catchRulesVars = catchRules.flatMap { rule =>
+          val patVars = collectPatVars(rule.pat)
+          val bodyVars = freeVars(rule.exp, m)
+          bodyVars -- patVars
+        }
+        val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
+        tryBodyVars ++ catchRulesVars ++ afterVars
+      case S.TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
+        val tryBodyVars = freeVars(tryBody, m)
+        val tryRulesVars = tryRules.flatMap { rule =>
+          val patVars = collectPatVars(rule.pat)
+          val bodyVars = freeVars(rule.exp, m)
+          bodyVars -- patVars
+        }
+        val catchRulesVars = catchRules.flatMap { rule =>
+          val patVars = collectPatVars(rule.pat)
+          val bodyVars = freeVars(rule.exp, m)
+          bodyVars -- patVars
+        }
+        val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
+        tryBodyVars ++ tryRulesVars ++ catchRulesVars ++ afterVars
     }
 
   private def funFreeVars(fun: S.Fun, module: String): Set[String] = {
@@ -619,6 +642,32 @@ object SyntaxUtil {
         clauses.map(getDepClause).reduce(_ ++ _)
       case S.BlockExpr(body) =>
         getDepBody(body)
+      case S.TryCatchExp(tryBody, catchRules, after) =>
+        val tryBodyDeps = getDepBody(tryBody)
+        val catchRulesDeps = catchRules.flatMap { rule =>
+          val patDeps = getDepPat(rule.pat)
+          val bodyDeps = getDepBody(rule.exp)
+          val guardDeps = rule.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ patDeps ++ guardDeps
+        }
+        val afterDeps = after.map(getDepBody).getOrElse(Set.empty)
+        tryBodyDeps ++ catchRulesDeps ++ afterDeps
+      case S.TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
+        val tryBodyDeps = getDepBody(tryBody)
+        val tryRulesDeps = tryRules.flatMap { rule =>
+          val patDeps = getDepPat(rule.pat)
+          val bodyDeps = getDepBody(rule.exp)
+          val guardDeps = rule.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ patDeps ++ guardDeps
+        }
+        val catchRulesDeps = catchRules.flatMap { rule =>
+          val patDeps = getDepPat(rule.pat)
+          val bodyDeps = getDepBody(rule.exp)
+          val guardDeps = rule.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ patDeps ++ guardDeps
+        }
+        val afterDeps = after.map(getDepBody).getOrElse(Set.empty)
+        tryBodyDeps ++ tryRulesDeps ++ catchRulesDeps ++ afterDeps
     }
 
   private def getDepType(tp: S.Type): Set[String] =

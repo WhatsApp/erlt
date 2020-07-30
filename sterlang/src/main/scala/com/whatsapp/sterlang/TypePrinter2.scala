@@ -229,6 +229,26 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printExp(t)
       case A.EnumConstructorExp(_, _, exprs) =>
         exprs.foreach(printExp)
+
+      case A.TryCatchExp(tryBody, catchBranches, after) =>
+        printBody(tryBody)
+        catchBranches.foreach { branch =>
+          printPat(branch.pat)
+          printBody(branch.body)
+        }
+        after.foreach(printBody)
+
+      case A.TryOfCatchExp(tryBody, tryBranches, catchBranches, after) =>
+        printBody(tryBody)
+        tryBranches.foreach { branch =>
+          printPat(branch.pat)
+          printBody(branch.body)
+        }
+        catchBranches.foreach { branch =>
+          printPat(branch.pat)
+          printBody(branch.body)
+        }
+        after.foreach(printBody)
     }
 
   private def output(pp: String): Unit = {

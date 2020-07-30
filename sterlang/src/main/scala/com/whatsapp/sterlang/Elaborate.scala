@@ -151,6 +151,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBlockExp(blockExp, ty, d, env)
       case binExp: S.Bin =>
         elabBin(binExp, ty, d, env)
+      case tryCatchExp: S.TryCatchExp =>
+        elabTryCatchExp(tryCatchExp, ty, d, env)
+      case tryOfCatchExp: S.TryOfCatchExp =>
+        elabTryOfCatchExp(tryOfCatchExp, ty, d, env)
     }
 
   private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
@@ -273,6 +277,74 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     A.CaseExp(selector1, branches)(typ = ty, sourceLocation = exp.p)
   }
 
+  private def elabTryCatchExp(exp: S.TryCatchExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.TryCatchExp(tryBody, catchRules, after) = exp
+
+    val resType = freshTypeVar(d)
+
+    def elabCatchRules(rules: List[S.Rule]): List[A.Branch] =
+      rules match {
+        case Nil => Nil
+        case S.Rule(pat, guards, body) :: rest =>
+          pat match {
+            case S.WildPat() | S.ERecordPat(_, _) =>
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val guards1 = elabGuards(guards, d, env1)
+              val body1 = elabBody(body, resType, d + 1, env1)
+              val branch1 = A.Branch(pat1, guards1, body1)
+              branch1 :: elabCatchRules(rest)
+            case _ =>
+              throw new IllegalCatchPattern(pat.p)
+          }
+      }
+
+    val tryBody1 = elabBody(tryBody, resType, d, env)
+    val catchBranches = elabCatchRules(catchRules)
+    val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
+
+    unify(exp.p, ty, resType)
+
+    A.TryCatchExp(tryBody1, catchBranches, after1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabTryOfCatchExp(exp: S.TryOfCatchExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.TryOfCatchExp(tryBody, tryRules, catchRules, after) = exp
+
+    val resType = freshTypeVar(d)
+    val tryBodyType = freshTypeVar(d)
+
+    def elabCatchRules(rules: List[S.Rule]): List[A.Branch] =
+      rules match {
+        case Nil => Nil
+        case S.Rule(pat, guards, body) :: rest =>
+          pat match {
+            case S.WildPat() | S.ERecordPat(_, _) =>
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val guards1 = elabGuards(guards, d, env1)
+              val body1 = elabBody(body, resType, d + 1, env1)
+              val branch1 = A.Branch(pat1, guards1, body1)
+              branch1 :: elabCatchRules(rest)
+            case _ =>
+              throw new IllegalCatchPattern(pat.p)
+          }
+      }
+
+    val tryBody1 = elabBody(tryBody, tryBodyType, d, env)
+
+    val tryBranches = for (S.Rule(pat, guards, body) <- tryRules) yield {
+      val (pat1, env1, _) = elpat(pat, tryBodyType, d, env, Set.empty, gen = true)
+      val guards1 = elabGuards(guards, d, env1)
+      val body1 = elabBody(body, resType, d + 1, env1)
+      A.Branch(pat1, guards1, body1)
+    }
+
+    val catchBranches = elabCatchRules(catchRules)
+    val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
+
+    unify(exp.p, ty, resType)
+    A.TryOfCatchExp(tryBody1, tryBranches, catchBranches, after1)(typ = ty, sourceLocation = exp.p)
+  }
+
   private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val ifClauses = exp.ifClauses
 
@@ -393,8 +465,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val eRecordType = MT.ERecordType(name)
-    unify(exp.p, ty, eRecordType)
+    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(name)
+
+    unify(exp.p, ty, expType)
 
     A.ERecordCreate(name, fields1)(typ = ty, sourceLocation = exp.p)
   }
@@ -402,6 +475,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabERecordUpdate(exp: S.ERecordUpdate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.ERecordUpdate(rec, name, fields) = exp
     val eRec = getERecord(exp.p, name)
+
+    if (eRec.exception) {
+      throw new UnconditionalExceptionUpdate(exp.p, name)
+    }
+
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
     checkUniqueFields(exp.p, fields.map(_.label))
@@ -435,6 +513,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabERecordSelect(exp: S.ERecordSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
     val S.ERecordSelect(rec, recName, fieldName) = exp
     val eRec = getERecord(exp.p, recName)
+
+    if (eRec.exception) {
+      throw new UnconditionalExceptionSelect(exp.p, recName)
+    }
+
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
     val fieldDef =
       eRec.fields.find(_.label == fieldName) match {
@@ -1074,7 +1157,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     checkRecordFields(fields, eRec)
 
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.ERecordType(recName))
+
+    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(recName)
+    unify(p.p, t, expType)
 
     val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
     var envAcc = env

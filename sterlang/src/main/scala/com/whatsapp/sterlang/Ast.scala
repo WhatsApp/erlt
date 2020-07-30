@@ -150,7 +150,7 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
-  case class ErlangRecordDef(name: String, fields: List[Field[Type]])(val p: Pos.P)
+  case class ErlangRecordDef(name: String, fields: List[Field[Type]], exception: Boolean)(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 
@@ -182,6 +182,10 @@ object Ast {
   case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
   case class ERecordIndex(recName: String, fieldName: String)(val p: Pos.P) extends Exp
   case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val p: Pos.P) extends Exp
+  case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val p: Pos.P) extends Exp
+  case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
+      val p: Pos.P
+  ) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
   case class ValDef(pat: Pat, exp: Exp)

@@ -45,7 +45,7 @@ object Forms {
   case class ImportType(module: String, ids: List[IdWithArity]) extends Form
   case class Compile(options: ETerm) extends Form
   case class File(file: String) extends Form
-  case class RecordDecl(p: Pos.SP, name: String, fields: List[RecordFieldDecl]) extends Form
+  case class RecordDecl(p: Pos.SP, name: String, fields: List[RecordFieldDecl], exception: Boolean) extends Form
   case class TypeDecl(p: Pos.SP, typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type)
       extends Form
   case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form

@@ -121,7 +121,7 @@ object ExprsConvert {
       case ETuple(
             List(
               EAtom("try"),
-              _anno,
+              anno,
               EList(eExps1),
               EList(eClauses1),
               EList(eClauses2),
@@ -129,6 +129,7 @@ object ExprsConvert {
             )
           ) =>
         Try(
+          sp(anno),
           eExps1.map(convertExp),
           eClauses1.map(convertClause),
           eClauses2.map(convertClause),
