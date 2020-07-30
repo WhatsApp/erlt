@@ -24,7 +24,7 @@ import com.whatsapp.sterlang.patterns.PatternChecker
 object SterlangTestUtil {
   import java.io.{BufferedWriter, FileWriter, StringWriter}
 
-  val generateOut = true
+  val generateOut = false
 
   def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val (rawProgram) = Main.loadProgram(path)
