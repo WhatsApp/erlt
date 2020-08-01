@@ -202,8 +202,14 @@ class AstChecks(val context: Context) {
       case ERecordType(name) =>
         program.erlangRecordDefs.find(_.name == name) match {
           case Some(eRec) =>
-            if (eRec.exception)
-              throw new ExceptionType(tp.p, name)
+            eRec.kind match {
+              case ExceptionRecord =>
+                throw new ExceptionType(tp.p, name)
+              case MessageRecord =>
+                throw new MessageType(tp.p, name)
+              case ErlangRecord =>
+              // OK
+            }
           case None =>
             throw new UnknownRecord(tp.p, name)
         }

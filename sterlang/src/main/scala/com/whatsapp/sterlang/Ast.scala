@@ -59,6 +59,11 @@ object Ast {
   case object UNot extends UOp
   case object BNot extends UOp
 
+  sealed trait RecordKind
+  case object ErlangRecord extends RecordKind
+  case object ExceptionRecord extends RecordKind
+  case object MessageRecord extends RecordKind
+
   val unOps1: Map[String, UOp] =
     Map("not" -> UNot, "bnot" -> BNot)
   val unOps2: Map[String, UOp] =
@@ -150,7 +155,7 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
-  case class ErlangRecordDef(name: String, fields: List[Field[Type]], exception: Boolean)(val p: Pos.P)
+  case class ErlangRecordDef(name: String, fields: List[Field[Type]], kind: RecordKind)(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 

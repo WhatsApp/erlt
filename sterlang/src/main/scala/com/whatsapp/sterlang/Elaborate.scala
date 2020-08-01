@@ -465,7 +465,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(name)
+    val expType = eRec.kind match {
+      case Ast.ErlangRecord    => MT.ERecordType(name)
+      case Ast.ExceptionRecord => MT.ExceptionType
+      case Ast.MessageRecord   => MT.MessageType
+    }
 
     unify(exp.p, ty, expType)
 
@@ -476,8 +480,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.ERecordUpdate(rec, name, fields) = exp
     val eRec = getERecord(exp.p, name)
 
-    if (eRec.exception) {
-      throw new UnconditionalExceptionUpdate(exp.p, name)
+    eRec.kind match {
+      case Ast.ErlangRecord =>
+      // OK
+      case Ast.ExceptionRecord =>
+        throw new UnconditionalExceptionUpdate(exp.p, name)
+      case Ast.MessageRecord =>
+        throw new UnconditionalMessageUpdate(exp.p, name)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
@@ -514,8 +523,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val S.ERecordSelect(rec, recName, fieldName) = exp
     val eRec = getERecord(exp.p, recName)
 
-    if (eRec.exception) {
-      throw new UnconditionalExceptionSelect(exp.p, recName)
+    eRec.kind match {
+      case Ast.ErlangRecord =>
+      // OK
+      case Ast.ExceptionRecord =>
+        throw new UnconditionalExceptionSelect(exp.p, recName)
+      case Ast.MessageRecord =>
+        throw new UnconditionalMessageSelect(exp.p, recName)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
@@ -1158,7 +1172,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val t = TU.instantiate(d, ts)
 
-    val expType = if (eRec.exception) MT.ExceptionType else MT.ERecordType(recName)
+    val expType = eRec.kind match {
+      case S.ErlangRecord =>
+        MT.ERecordType(recName)
+      case S.ExceptionRecord =>
+        MT.ExceptionType
+      case S.MessageRecord =>
+        MT.MessageType
+    }
+
     unify(p.p, t, expType)
 
     val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap

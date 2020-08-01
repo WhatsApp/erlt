@@ -1,0 +1,2 @@
+-spec get_from(message()) -> pid().
+-spec mk_pong(message()) -> message().

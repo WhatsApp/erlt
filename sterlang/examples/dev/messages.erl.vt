@@ -1,0 +1,4 @@
+val get_from/1: fun((message()) -> pid())
+val From: pid()
+val mk_pong/1: fun((message()) -> message())
+val Ask: message()

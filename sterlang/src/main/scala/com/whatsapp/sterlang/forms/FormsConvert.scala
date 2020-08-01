@@ -101,11 +101,15 @@ object FormsConvert {
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), exception = false)
+        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), RecRecord)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(recordName), EList(eRecFields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), exception = true)
+        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), ExnRecord)
+      case ETuple(
+            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+          ) =>
+        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), MsgRecord)
       // af_function_spec
       case ETuple(
             List(

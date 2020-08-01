@@ -85,15 +85,22 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.RecordDecl(p, name, eFields, exception) =>
+      case Forms.RecordDecl(p, name, eFields, kind) =>
         val fields = eFields.map(convertRecordField)
-        val eRecordType = Ast.ErlangRecordDef(name, fields, exception)(p)
+        val eRecordType = Ast.ErlangRecordDef(name, fields, recordKind(kind))(p)
         Some(Ast.ErlangRecordElem(eRecordType))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
         None
       case Forms.Error(loc) =>
         throw ParseError(loc)
+    }
+
+  private def recordKind(recKind: Forms.RecordKind): Ast.RecordKind =
+    recKind match {
+      case Forms.RecRecord => Ast.ErlangRecord
+      case Forms.ExnRecord => Ast.ExceptionRecord
+      case Forms.MsgRecord => Ast.MessageRecord
     }
 
   private def convertRecordField(eRecordField: Forms.RecordFieldDecl): Ast.Field[Ast.Type] =
