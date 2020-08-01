@@ -428,11 +428,9 @@ object Convert {
         // catch expressions are not supported
         throw new UnsupportedSyntaxError(p)
       case Exprs.Receive(p, clauses) =>
-        // WIP -- https://github.com/WhatsApp/erl2/issues/122
-        throw new UnsupportedSyntaxError(p)
-      case Exprs.ReceiveWithTimeout(p, cl, timeout, default) =>
-        // WIP -- https://github.com/WhatsApp/erl2/issues/122
-        throw new UnsupportedSyntaxError(p)
+        Ast.ReceiveExp(clauses.map(convertCaseClause), None)(p)
+      case Exprs.ReceiveWithTimeout(p, clauses, timeout, body) =>
+        Ast.ReceiveExp(clauses.map(convertCaseClause), Some(Ast.AfterBody(convertExpr(timeout), convertBody(body))))(p)
     }
 
   private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {

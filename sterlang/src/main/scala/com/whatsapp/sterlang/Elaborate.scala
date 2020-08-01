@@ -155,6 +155,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabTryCatchExp(tryCatchExp, ty, d, env)
       case tryOfCatchExp: S.TryOfCatchExp =>
         elabTryOfCatchExp(tryOfCatchExp, ty, d, env)
+      case receiveExp: S.ReceiveExp =>
+        elabReceiveExp(receiveExp, ty, d, env)
     }
 
   private def elpat(p: S.Pat, t: T.Type, d: T.Depth, env: Env, penv: PEnv, gen: Boolean): (A.Pat, Env, PEnv) = {
@@ -343,6 +345,38 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.p, ty, resType)
     A.TryOfCatchExp(tryBody1, tryBranches, catchBranches, after1)(typ = ty, sourceLocation = exp.p)
+  }
+
+  private def elabReceiveExp(exp: S.ReceiveExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.ReceiveExp(rules, after) = exp
+    val resType = freshTypeVar(d)
+
+    def elabReceiveRules(rules: List[S.Rule]): List[A.Branch] =
+      rules match {
+        case Nil => Nil
+        case S.Rule(pat, guards, body) :: rest =>
+          pat match {
+            case S.WildPat() | S.ERecordPat(_, _) =>
+              val (pat1, env1, _) = elpat(pat, MT.MessageType, d, env, Set.empty, gen = true)
+              val guards1 = elabGuards(guards, d, env1)
+              val body1 = elabBody(body, resType, d + 1, env1)
+              val branch1 = A.Branch(pat1, guards1, body1)
+              branch1 :: elabReceiveRules(rest)
+            case _ =>
+              throw new IllegalReceivePattern(pat.p)
+          }
+      }
+    val receiveBranches = elabReceiveRules(rules)
+    val after1 = after.map {
+      case S.AfterBody(timeout, body) =>
+        val timeout1 = elab(timeout, MT.IntType, d, env)
+        val body1 = elabBody(body, resType, d, env)
+        A.AfterBody(timeout1, body1)
+    }
+
+    unify(exp.p, ty, resType)
+
+    A.ReceiveExp(receiveBranches, after1)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabIfExp(exp: S.IfExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {

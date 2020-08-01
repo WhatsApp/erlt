@@ -270,6 +270,18 @@ object SyntaxUtil {
         }
         val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
         tryBodyVars ++ tryRulesVars ++ catchRulesVars ++ afterVars
+      //
+      case S.ReceiveExp(rules, after) =>
+        val rulesVars = rules.flatMap { rule =>
+          val patVars = collectPatVars(rule.pat)
+          val bodyVars = freeVars(rule.exp, m)
+          bodyVars -- patVars
+        }.toSet
+        val afterVars =
+          after
+            .map { case S.AfterBody(timeout, body) => freeVars(timeout, m) ++ freeVars(body, m) }
+            .getOrElse(Set.empty)
+        rulesVars ++ afterVars
     }
 
   private def funFreeVars(fun: S.Fun, module: String): Set[String] = {
@@ -668,6 +680,18 @@ object SyntaxUtil {
         }
         val afterDeps = after.map(getDepBody).getOrElse(Set.empty)
         tryBodyDeps ++ tryRulesDeps ++ catchRulesDeps ++ afterDeps
+      case S.ReceiveExp(rules, after) =>
+        val rulesDeps = rules.flatMap { rule =>
+          val patDeps = getDepPat(rule.pat)
+          val bodyDeps = getDepBody(rule.exp)
+          val guardDeps = rule.guards.flatMap(_.exprs).flatMap(getDepExp)
+          bodyDeps ++ patDeps ++ guardDeps
+        }.toSet
+        val afterDeps =
+          after
+            .map { case S.AfterBody(timeout, body) => getDepExp(timeout) ++ getDepBody(body) }
+            .getOrElse(Set.empty)
+        rulesDeps ++ afterDeps
     }
 
   private def getDepType(tp: S.Type): Set[String] =

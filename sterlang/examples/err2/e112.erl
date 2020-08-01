@@ -13,20 +13,18 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(messages).
+-module(e112).
 
 -message(ping, {from :: pid()}).
 -message(pong, {in_answer_to :: message()}).
 
-get_from(#ping{from = From}) -> From.
-
-mk_pong(Ask) ->
-    #pong{in_answer_to = Ask}.
+-exception(foo, {id :: integer()}).
 
 loop_step(TimeOut, Default) ->
     receive
         #ping{} -> "ping";
         #pong{} -> "pong";
+        #foo{}  -> "foo";
         _       -> "something else"
     after
         TimeOut -> Default

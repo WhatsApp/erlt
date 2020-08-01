@@ -80,6 +80,10 @@ object Absyn {
       val typ: Type,
       val sourceLocation: Pos.P,
   ) extends Exp
+  case class ReceiveExp(branches: List[Branch], after: Option[AfterBody])(val typ: Type, val sourceLocation: Pos.P)
+      extends Exp
+
+  case class AfterBody(timeout: Exp, body: Body)
 
   sealed trait Qualifier
   case class Filter(exp: Exp) extends Qualifier

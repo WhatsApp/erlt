@@ -191,8 +191,10 @@ object Ast {
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
       val p: Pos.P
   ) extends Exp
+  case class ReceiveExp(rules: List[Rule], after: Option[AfterBody])(val p: Pos.P) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
+  case class AfterBody(timeout: Exp, body: Body)
   case class ValDef(pat: Pat, exp: Exp)
   case class Fun(name: LocalFunName, clauses: List[Clause])(val p: Pos.P)
 

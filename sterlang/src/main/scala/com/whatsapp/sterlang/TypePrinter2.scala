@@ -249,6 +249,16 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           printBody(branch.body)
         }
         after.foreach(printBody)
+
+      case A.ReceiveExp(branches, after) =>
+        branches.foreach { branch =>
+          printPat(branch.pat)
+          printBody(branch.body)
+        }
+        after.foreach { afterBody =>
+          printExp(afterBody.timeout)
+          printBody(afterBody.body)
+        }
     }
 
   private def output(pp: String): Unit = {
