@@ -266,7 +266,7 @@ object Ast {
   case class EnumElem(enumDef: EnumDef) extends ProgramElem
   case class TypeAliasElem(typeAlias: TypeAlias) extends ProgramElem
   case class ErlangRecordElem(erlangRecordDef: ErlangRecordDef) extends ProgramElem
-  case class OpaqueElem(opaque: Opaque) extends ProgramElem
+  case class OpaqueElem(`opaque`: Opaque) extends ProgramElem
   case class CompileElem(options: List[String]) extends ProgramElem
 
   case class RawProgram(elems: List[ProgramElem]) {

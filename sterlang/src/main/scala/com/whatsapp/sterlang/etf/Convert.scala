@@ -76,8 +76,10 @@ object Convert {
             val funName = new Ast.LocalFunName(name, arity)
             val spec = Ast.Spec(funName, funType)(specP)
             Some(Ast.SpecElem(spec))
-          case other =>
-            sys.error(s"Unexpected spec: $form")
+          case _ =>
+            // intersection types are not supported,
+            // when clauses in fun types are not supported
+            throw new UnsupportedSyntaxError(specP)
         }
       case Forms.FunctionDecl(p, name, arity, clauses) =>
         val funName = new Ast.LocalFunName(name, arity)
@@ -100,7 +102,7 @@ object Convert {
         // untyped or implicitly typed record fields are not supported
         throw new UnsupportedSyntaxError(p)
       case Forms.RecordFieldTyped(p, name, Some(initValue), tp) =>
-        // initializers are not supported
+        // initializers are not supported (yet)
         throw new UnsupportedSyntaxError(p)
       case Forms.RecordFieldTyped(p, name, None, tp) =>
         Ast.Field(name, convertType(tp))(p)
@@ -111,8 +113,11 @@ object Convert {
 
   private def convertCaseClause(clause: Exprs.Clause): Ast.Rule =
     clause.pats match {
-      case List(pat) => Ast.Rule(convertPattern(pat), clause.guards.map(convertGuard), convertBody(clause.body))
-      case _         => sys.error(s"unexpected clause: $clause")
+      case List(pat) =>
+        Ast.Rule(convertPattern(pat), clause.guards.map(convertGuard), convertBody(clause.body))
+      case _ =>
+        // Impossible in practice, need to handle due to clumsiness of abstract forms
+        throw new UnsupportedSyntaxError(clause.p)
     }
 
   private def convertCatchClause(clause: Exprs.Clause): Ast.Rule =
@@ -122,11 +127,15 @@ object Convert {
         stackTracePat match {
           case Ast.WildPat() =>
           // OK
-          case _ => throw new UnsupportedSyntaxError(stackTracePat.p)
+          case _ =>
+            // we do not type "stack traces" yet
+            throw new UnsupportedSyntaxError(stackTracePat.p)
         }
         val exnPat = convertPattern(exn)
         Ast.Rule(exnPat, clause.guards.map(convertGuard), convertBody(clause.body))
-      case _ => sys.error(s"unexpected clause: $clause")
+      case _ =>
+        // Impossible in practice, need to handle due to clumsiness of abstract forms
+        throw new UnsupportedSyntaxError(clause.p)
     }
 
   private def convertIfClause(ifClause: Exprs.IfClause): Ast.IfClause =
@@ -143,8 +152,9 @@ object Convert {
             Ast.BoolExp(true)(p)
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolExp(false)(p)
-          case Exprs.AtomLiteral(_, _) =>
-            sys.error(s"atoms are not supported in ST: $gExpr")
+          case Exprs.AtomLiteral(p, _) =>
+            // atom literals are not supported on its own
+            throw new UnsupportedSyntaxError(p)
           case Exprs.CharLiteral(p, ch) =>
             Ast.CharExp(ch.toString)(p)
           case Exprs.FloatLiteral(p, fl) =>
@@ -177,13 +187,19 @@ object Convert {
         Ast.SelExp(convertGExpr(exp), field)(p)
       case Guards.GBinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
-          case None        => sys.error(s"not supported binOp ($op) in: $gExpr")
+          case Some(binOp) =>
+            Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
+          case None =>
+            // Unknown binary operation
+            throw new UnsupportedSyntaxError(p)
         }
       case Guards.GUnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertGExpr(exp1))(p)
-          case None      => sys.error(s"not supported unOp ($op) in: $gExpr")
+          case Some(uOp) =>
+            Ast.UOpExp(uOp, convertGExpr(exp1))(p)
+          case None =>
+            // unknown unary operation
+            throw new UnsupportedSyntaxError(p)
         }
       case Guards.GLocalEnumCtr(p, enum, ctr, args) =>
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(p)
@@ -204,8 +220,8 @@ object Convert {
 
   private def convertValDef(expr: Exprs.Expr): Ast.ValDef =
     expr match {
-      case Exprs.Match(p, e) =>
-        Ast.ValDef(convertPattern(p), convertExpr(e))
+      case Exprs.Match(p, pat, exp) =>
+        Ast.ValDef(convertPattern(pat), convertExpr(exp))
       case e =>
         val exp = convertExpr(e)
         Ast.ValDef(Ast.WildPat()(exp.p), exp)
@@ -226,8 +242,10 @@ object Convert {
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolPat(false)(p)
           case Exprs.AtomLiteral(p, _) =>
+            // atom literals are not supported on its own
             throw new UnsupportedSyntaxError(p)
           case Exprs.CharLiteral(p, _) =>
+            // we do not handle chars in patterns explicitly yet
             throw new UnsupportedSyntaxError(p)
           case Exprs.FloatLiteral(p, fl) =>
             Ast.NumberPat(fl.intValue())(p)
@@ -252,6 +270,7 @@ object Convert {
             case Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) =>
               Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.p)
             case other =>
+              // we support only map pattern for polymorphic records
               throw new UnsupportedSyntaxError(other.p)
           }
         }
@@ -259,8 +278,10 @@ object Convert {
       case Patterns.BinPattern(p, elems) =>
         Ast.BinPat(elems.map(convertBinElemPat))(p)
       case Patterns.BinOpPattern(p, op, pat1, pat2) =>
+        // we do not support things like (4 + 5) in patterns
         throw new UnsupportedSyntaxError(p)
       case Patterns.UnOpPattern(p, op, pat1) =>
+        // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p)
       case Patterns.RecordPattern(p, recordName, fields) =>
         Ast.ERecordPat(recordName, fields.map(recordFieldPattern))(p)
@@ -270,8 +291,9 @@ object Convert {
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
     e match {
-      case Exprs.Match(_, _) =>
-        sys.error(s"such matches are not supported: $e")
+      case Exprs.Match(p, _, _) =>
+        // see https://github.com/WhatsApp/erl2/issues/107
+        throw new UnsupportedSyntaxError(p)
       case Exprs.Variable(p, name) =>
         Ast.VarExp(new Ast.LocalVarName(name))(p)
       case literal: Exprs.Literal =>
@@ -280,8 +302,9 @@ object Convert {
             Ast.BoolExp(true)(p)
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolExp(false)(p)
-          case Exprs.AtomLiteral(_, _) =>
-            sys.error(s"atoms are not supported in ST: $e")
+          case Exprs.AtomLiteral(p, _) =>
+            // Atom literals are not supported on their own
+            throw new UnsupportedSyntaxError(p)
           case Exprs.CharLiteral(p, ch) =>
             Ast.CharExp(ch.toString)(p)
           case Exprs.FloatLiteral(p, fl) =>
@@ -322,29 +345,37 @@ object Convert {
         Ast.AppExp(convertExpr(head), args.map(convertExpr))(p)
       case Exprs.RemoteCall(p1, Exprs.AtomLiteral(p2, m), Exprs.AtomLiteral(p3, f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName(m, f, args.length))(p2 ! p3), args.map(convertExpr))(p1)
-      case Exprs.RemoteCall(_, _, _, _) =>
-        sys.error(s"not supported remote call: $e")
+      case Exprs.RemoteCall(p, _, _, _) =>
+        // Remote calls in the form of Module:Fun(...) are not supported
+        throw new UnsupportedSyntaxError(p)
       case Exprs.LocalFun(p, f, arity) =>
         Ast.VarExp(new Ast.LocalFunName(f, arity))(p)
       case Exprs.RemoteFun(p, Exprs.AtomLiteral(_, m), Exprs.AtomLiteral(_, f), Exprs.IntLiteral(_, arity)) =>
         Ast.VarExp(new Ast.RemoteFunName(m, f, arity))(p)
-      case Exprs.RemoteFun(_, _, _, _) =>
-        sys.error(s"not supported: $e")
+      case Exprs.RemoteFun(p, _, _, _) =>
+        // Remote funs in the form of Module:Fun/3 are not supported
+        throw new UnsupportedSyntaxError(p)
       case Exprs.Fun(p, clauses) =>
         Ast.FnExp(clauses.map(convertFunClause))(p)
       case Exprs.NamedFun(p, funName, clauses) =>
         Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(p)
       case Exprs.UnaryOp(p, op, exp1) =>
         Ast.unOps.get(op) match {
-          case Some(uOp) => Ast.UOpExp(uOp, convertExpr(exp1))(p)
-          case None      => sys.error(s"not supported unOp ($op) in: $e")
+          case Some(uOp) =>
+            Ast.UOpExp(uOp, convertExpr(exp1))(p)
+          case None =>
+            // Unknown unary operation
+            throw new UnsupportedSyntaxError(p)
         }
       case Exprs.BinaryOp(p, ".", exp, Exprs.AtomLiteral(_, field)) =>
         Ast.SelExp(convertExpr(exp), field)(p)
       case Exprs.BinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
-          case Some(binOp) => Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(p)
-          case None        => sys.error(s"not supported binOp ($op) in: $e")
+          case Some(binOp) =>
+            Ast.BinOpExp(binOp, convertExpr(exp1), convertExpr(exp2))(p)
+          case None =>
+            // Unknown binary operation
+            throw new UnsupportedSyntaxError(p)
         }
       case Exprs.ListComprehension(p, template, qualifiers) =>
         Ast.Comprehension(
@@ -386,12 +417,15 @@ object Convert {
           case Nil => Ast.TryCatchExp(tryBody, catchRules, afterBody)(p)
           case _   => Ast.TryOfCatchExp(tryBody, tryRules, catchRules, afterBody)(p)
         }
-      case Exprs.Catch(exp) =>
-        ???
-      case Exprs.Receive(clauses) =>
-        ???
-      case Exprs.ReceiveWithTimeout(cl, timeout, default) =>
-        ???
+      case Exprs.Catch(p, exp) =>
+        // catch expressions are not supported
+        throw new UnsupportedSyntaxError(p)
+      case Exprs.Receive(p, clauses) =>
+        // WIP -- https://github.com/WhatsApp/erl2/issues/122
+        throw new UnsupportedSyntaxError(p)
+      case Exprs.ReceiveWithTimeout(p, cl, timeout, default) =>
+        // WIP -- https://github.com/WhatsApp/erl2/issues/122
+        throw new UnsupportedSyntaxError(p)
     }
 
   private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {
@@ -430,16 +464,18 @@ object Convert {
     assoc match {
       case Exprs.OptAssoc(p, Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))(p)
-      case other =>
-        sys.error(s"incorrect assoc: $other")
+      case _ =>
+        // "wrong anon struct syntax"
+        throw new UnsupportedSyntaxError(assoc.p)
     }
 
   private def assocUpdateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
     assoc match {
       case Exprs.AssocExact(p, Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))(p)
-      case other =>
-        sys.error(s"incorrect assoc: $other")
+      case _ =>
+        // "wrong anon struct syntax"
+        throw new UnsupportedSyntaxError(assoc.p)
     }
 
   private def recordField(field: Exprs.RecordField): Ast.Field[Ast.Exp] =
@@ -455,16 +491,18 @@ object Convert {
     assoc match {
       case Guards.GAssocOpt(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))(p)
-      case other =>
-        sys.error(s"incorrect assoc: $other")
+      case _ =>
+        // "wrong anon struct syntax"
+        throw new UnsupportedSyntaxError(assoc.p)
     }
 
   private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
     assoc match {
       case Guards.GAssocExact(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))(p)
-      case other =>
-        sys.error(s"incorrect assoc: $other")
+      case _ =>
+        // "wrong anon struct syntax"
+        throw new UnsupportedSyntaxError(assoc.p)
     }
 
   private def convertType(tp: Types.Type): Ast.Type =
@@ -473,8 +511,9 @@ object Convert {
         convertType(tp)
       case Types.BitstringType(p, List()) =>
         Ast.UserType(Ast.LocalName("binary"), List())(p)
-      case Types.BitstringType(_, _) =>
-        sys.error(s"Not supported (yet) binary type: $tp")
+      // <<_:M,_:_*N>>, see https://github.com/WhatsApp/erl2/issues/112
+      case Types.BitstringType(p, _) =>
+        throw new UnsupportedSyntaxError(p)
       case Types.FunctionType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
       case Types.AssocMap(p, assocs) =>
@@ -508,35 +547,48 @@ object Convert {
       case Types.RecordType(p, name, List()) =>
         Ast.ERecordType(name)(p)
       case Types.RecordType(p, _, _) =>
+        // redefining field types
+        // Erlang support writing
+        // -type my_rec = #already_defined_rec { field :: diff_type() }
         throw new UnsupportedSyntaxError(p)
       case Types.AtomType(p, _) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.EmptyListType(p) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.FunTypeAny(p) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.FunTypeAnyArgs(p, _) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.TupleTypeAny(p) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.AnyMap(p) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.EnumCtr(p, _, _) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.UnionType(p, _) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
       case Types.IntegerRangeType(p, _, _) =>
+        // banned
         throw new UnsupportedSyntaxError(p)
-      case singleIntType: Types.SingletonIntegerType =>
-        throw new UnsupportedSyntaxError(singleIntType.p)
+      case _: Types.SingletonIntegerType =>
+        // banned
+        throw new UnsupportedSyntaxError(tp.p)
     }
 
   private def enumCon(tp: Types.Type): Ast.EnumCon =
     tp match {
       case Types.EnumCtr(p, name, params) =>
         Ast.EnumCon(name, params.map(convertType))(p)
-      case other =>
-        sys.error(s"Expected an enum ctr but got: $other")
+      case _ =>
+        throw new UnsupportedSyntaxError(tp.p)
     }
 
   private def convertAssoc(assoc: Types.Assoc): Ast.Field[Ast.Type] =
@@ -544,6 +596,7 @@ object Convert {
       case Types.Assoc(p, Types.ReqAssoc, Types.AtomType(_, field), v) =>
         Ast.Field(field, convertType(v))(p)
       case _ =>
+        // wrong "record syntax"
         throw new UnsupportedSyntaxError(assoc.p)
     }
 }

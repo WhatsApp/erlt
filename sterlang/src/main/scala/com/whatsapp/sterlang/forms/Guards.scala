@@ -17,12 +17,11 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.Pos
-import com.whatsapp.sterlang.etf.ETerm
 
 object Guards {
   case class Guard(elems: List[GExpr])
-  sealed trait GExpr
-  case class GLiteral(literal: Exprs.Literal) extends GExpr
+  sealed trait GExpr { val p: Pos.SP }
+  case class GLiteral(literal: Exprs.Literal) extends GExpr { val p: Pos.SP = literal.p }
   case class GVariable(p: Pos.SP, variable: String) extends GExpr
   case class GTuple(p: Pos.SP, elems: List[GExpr]) extends GExpr
   case class GNil(p: Pos.SP) extends GExpr
@@ -42,7 +41,7 @@ object Guards {
   case class GBinElement(gExpr: GExpr, size: Option[GExpr], typeSpecifiers: Exprs.TypeSpecifiers)
   case class GRecordField(p: Pos.SP, fieldName: String, value: GExpr)
 
-  sealed trait GAssoc
+  sealed trait GAssoc { val p: Pos.SP }
   // X := Y - mandatory association
   case class GAssocExact(p: Pos.SP, k: GExpr, v: GExpr) extends GAssoc
   // X => Y - optional association

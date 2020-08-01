@@ -22,11 +22,11 @@ import com.whatsapp.sterlang.forms.Exprs._
 object ExprsConvert {
   def convertClause(term: ETerm): Clause =
     term match {
-      case ETuple(List(EAtom("clause"), _anno, EList(ePats), EList(eGuards), EList(eExps))) =>
+      case ETuple(List(EAtom("clause"), anno, EList(ePats), EList(eGuards), EList(eExps))) =>
         val pats = ePats.map(PatternsConvert.convertPat)
         val guards = eGuards.map(GuardsConvert.convertGuard)
         val exps = eExps.map(convertExp)
-        Clause(pats, guards, exps)
+        Clause(sp(anno), pats, guards, exps)
     }
 
   def convertIfClause(term: ETerm): IfClause =
@@ -39,8 +39,8 @@ object ExprsConvert {
 
   def convertExp(term: ETerm): Expr =
     term match {
-      case ETuple(List(EAtom("match"), _anno, ePat1, eExp)) =>
-        Match(PatternsConvert.convertPat(ePat1), convertExp(eExp))
+      case ETuple(List(EAtom("match"), anno, ePat1, eExp)) =>
+        Match(sp(anno), PatternsConvert.convertPat(ePat1), convertExp(eExp))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         Variable(sp(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(eExps))) =>
@@ -72,8 +72,8 @@ object ExprsConvert {
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
         MapUpdate(sp(anno), convertExp(eExp), eAssocs.map(convertAssoc))
-      case ETuple(List(EAtom("catch"), _anno, eExp)) =>
-        Catch(convertExp(eExp))
+      case ETuple(List(EAtom("catch"), anno, eExp)) =>
+        Catch(sp(anno), convertExp(eExp))
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
           case ETuple(List(EAtom("remote"), _, eExp1, eExp2)) =>
@@ -136,10 +136,10 @@ object ExprsConvert {
           eExps2.map(convertExp),
         )
 
-      case ETuple(List(EAtom("receive"), _anno, EList(eClauses))) =>
-        Receive(eClauses.map(convertClause))
-      case ETuple(List(EAtom("receive"), _anno, EList(eClauses), eTimeout, EList(defaults))) =>
-        ReceiveWithTimeout(eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))
+      case ETuple(List(EAtom("receive"), anno, EList(eClauses))) =>
+        Receive(sp(anno), eClauses.map(convertClause))
+      case ETuple(List(EAtom("receive"), anno, EList(eClauses), eTimeout, EList(defaults))) =>
+        ReceiveWithTimeout(sp(anno), eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))
 
       case ETuple(List(EAtom("fun"), anno, eFunction)) =>
         eFunction match {

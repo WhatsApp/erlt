@@ -22,10 +22,10 @@ import com.whatsapp.sterlang.forms.Guards._
 
 object Exprs {
 
-  case class Clause(pats: List[Pattern], guards: List[Guard], body: List[Expr])
+  case class Clause(p: Pos.SP, pats: List[Pattern], guards: List[Guard], body: List[Expr])
   case class IfClause(guards: List[Guard], body: List[Expr])
 
-  sealed trait Expr
+  sealed trait Expr { val p: Pos.SP }
 
   sealed trait Literal extends Expr { val p: Pos.SP }
   case class AtomLiteral(p: Pos.SP, atom: String) extends Literal
@@ -34,7 +34,7 @@ object Exprs {
   case class IntLiteral(p: Pos.SP, i: Int) extends Literal
   case class StringLiteral(p: Pos.SP, str: Option[String]) extends Literal
 
-  case class Match(pat: Pattern, arg: Expr) extends Expr
+  case class Match(p: Pos.SP, pat: Pattern, arg: Expr) extends Expr
   case class Variable(p: Pos.SP, name: String) extends Expr
   case class Tuple(p: Pos.SP, elems: List[Expr]) extends Expr
   case class Nil(p: Pos.SP) extends Expr
@@ -48,7 +48,7 @@ object Exprs {
   case class RecordFieldAccess(p: Pos.SP, rec: Expr, recordName: String, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
   case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
-  case class Catch(exp: Expr) extends Expr
+  case class Catch(p: Pos.SP, exp: Expr) extends Expr
   case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(p: Pos.SP, module: Expr, fun: Expr, args: List[Expr]) extends Expr
   case class LocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[Expr]) extends Expr
@@ -60,8 +60,8 @@ object Exprs {
   case class If(p: Pos.SP, clauses: List[IfClause]) extends Expr
   case class Try(p: Pos.SP, body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr])
       extends Expr
-  case class Receive(clauses: List[Clause]) extends Expr
-  case class ReceiveWithTimeout(cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
+  case class Receive(p: Pos.SP, clauses: List[Clause]) extends Expr
+  case class ReceiveWithTimeout(p: Pos.SP, cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
   case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr
   case class RemoteFun(p: Pos.SP, module: Expr, funName: Expr, arity: Expr) extends Expr
   case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
@@ -78,7 +78,7 @@ object Exprs {
 
   case class RecordField(p: Pos.SP, fieldName: String, value: Expr)
 
-  sealed trait Assoc
+  sealed trait Assoc { val p: Pos.SP }
   // X := Y - mandatory association
   case class AssocExact(p: Pos.SP, k: Expr, v: Expr) extends Assoc
   // X => Y - optional association
