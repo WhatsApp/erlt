@@ -3805,6 +3805,8 @@ used_type(TypePair, L, #lint{usage = Usage, file = File} = St) ->
 
 is_default_type({exception, 0}) ->
     true;
+is_default_type({message, 0}) ->
+    true;
 is_default_type({Name, NumberOfTypeVariables}) ->
     erl_internal:is_type(Name, NumberOfTypeVariables).
 

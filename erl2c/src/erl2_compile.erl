@@ -171,6 +171,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_exception),
+                    ?pass(erl2_message),
                     ?pass(erl2_module_record),
                     ?pass(erl2_lint),
                     ?pass(erl2_expand),
@@ -190,6 +191,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_exception),
+                    ?pass(erl2_message),
                     ?pass(erl2_module_record),
                     ?pass(erl2_lint),
                     ?pass(erl2_expand),
@@ -208,6 +210,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_exception),
+                    ?pass(erl2_message),
                     ?pass(erl2_module_record),
                     ?pass(erl2_lint),
                     ?pass(erl2_expand),
@@ -226,6 +229,7 @@ do_file(File, Options0) ->
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
                     ?pass(erl2_exception),
+                    ?pass(erl2_message),
                     ?pass(erl2_module_record),
                     ?pass(erl2_lint),
                     ?pass(erl2_expand),
@@ -1010,6 +1014,14 @@ erl2_exception(Code, St) ->
             {ok, Code, St}
     end.
 
+erl2_message(Code, St) ->
+    case is_lang_erl2(St) of
+        true ->
+            Code1 = erl2_message:parse_transform(Code, St#compile.options),
+            {ok, Code1, St};
+        false ->
+            {ok, Code, St}
+    end.
 
 erl2_expand(Code, St) ->
     case is_lang_erl2(St) of
