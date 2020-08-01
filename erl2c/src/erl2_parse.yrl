@@ -1397,7 +1397,7 @@ build_attribute({atom, Aa, exception}, Val) ->
         [{atom, _An, Record}, RecTuple] ->
             {attribute, Aa, exception, {Record, record_tuple(RecTuple)}};
         _Other ->
-            error_bad_decl(Aa, record)
+            error_bad_decl(Aa, exception)
     end;
 build_attribute({atom, Aa, record}, Val) ->
     case Val of
