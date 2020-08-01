@@ -61,6 +61,7 @@ package object sterlang {
       S.TypeId(S.LocalName("iodata"), 0),
       S.TypeId(S.LocalName("iolist"), 0),
       S.TypeId(S.LocalName("map"), 2),
+      S.TypeId(S.LocalName("message"), 0),
       S.TypeId(S.LocalName("neg_integer"), 0),
       S.TypeId(S.LocalName("none"), 0),
       S.TypeId(S.LocalName("non_neg_integer"), 0),

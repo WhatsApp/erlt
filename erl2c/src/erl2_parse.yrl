@@ -1227,6 +1227,11 @@ build_typed_attribute(
 ) ->
     {attribute, Aa, exception, {RecordName, record_tuple(RecTuple)}};
 build_typed_attribute(
+    {atom, Aa, message},
+    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
+) ->
+    {attribute, Aa, message, {RecordName, record_tuple(RecTuple)}};
+build_typed_attribute(
     {atom, Aa, record},
     {typed_record, _TRA, {remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple}
 ) ->
@@ -1258,6 +1263,7 @@ build_typed_attribute({atom, Aa, Attr}, _) ->
     case Attr of
         record -> error_bad_decl(Aa, record);
         exception -> error_bad_decl(Aa, exception);
+        message -> error_bad_decl(Aa, message);
         type -> error_bad_decl(Aa, type);
         opaque -> error_bad_decl(Aa, opaque);
         enum -> error_bad_decl(Aa, enum);
@@ -1398,6 +1404,13 @@ build_attribute({atom, Aa, exception}, Val) ->
             {attribute, Aa, exception, {Record, record_tuple(RecTuple)}};
         _Other ->
             error_bad_decl(Aa, exception)
+    end;
+build_attribute({atom, Aa, message}, Val) ->
+    case Val of
+        [{atom, _An, Record}, RecTuple] ->
+            {attribute, Aa, message, {Record, record_tuple(RecTuple)}};
+        _Other ->
+            error_bad_decl(Aa, message)
     end;
 build_attribute({atom, Aa, record}, Val) ->
     case Val of
@@ -2023,6 +2036,10 @@ modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
     {{attribute, A1, exception, {Name, Fields1}}, Ac2};
+modify_anno1({attribute, A, message, {Name, Fields}}, Ac, Mf) ->
+    {A1, Ac1} = Mf(A, Ac),
+    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
+    {{attribute, A1, message, {Name, Fields1}}, Ac2};
 modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),

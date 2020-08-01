@@ -84,6 +84,8 @@ object METypes {
     ConType(NamedTyCon("bitstring"), List(), List())
   val ExceptionType: ConType =
     ConType(NamedTyCon("exception"), List(), List())
+  val MessageType: ConType =
+    ConType(NamedTyCon("message"), List(), List())
   def FunType(argTypes: List[Type], resultType: Type): ConType =
     ConType(FunTyCon(argTypes.length), argTypes ++ List(resultType), List())
   def ListType(t: Type): ConType =
