@@ -1,8 +1,8 @@
 # 7. `import_type`
 
-Erl1+ introduces a new attribute `-import_type(module, [type1, type2, ...])` 
-which allows using types from remote modules via short names (as if they were 
-defined in the current module). If the imported type is an enum, the enum 
+Erl1+ introduces a new attribute `-import_type(module, [type1, type2, ...])`
+which allows using types from remote modules via short names (as if they were
+defined in the current module). If the imported type is an enum, the enum
 constructors can be used as the enum was defined in the current module.
 
 ## Example

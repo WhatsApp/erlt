@@ -370,7 +370,7 @@ let rec rec6 :
   | v_Rec ->
       let _ = v_Rec = v_Rec#set_year 2046 in
       let _ = 2046 = v_Rec#get_year in
-      v_Rec#set_year 2046  
+      v_Rec#set_year 2046
 ```
 
 As you can see - modelling or records via objects is quite verbose.

@@ -38,14 +38,8 @@ A subset of DT language.
 
 **Constructs not supported in ST part (at the syntax level).**
 
-* Exceptions (`try`, `catch`)
-* Erlang records
-* Concurrency
-* Binaries
-    * binary literals
-    * pattern matching over binaries
-    * binary comprehensions
-* atom literals (except `true` and `false`)
+* `catch`-expressions
+* Atom literals (except `true` and `false`)
 * Functions with dynamic arities (`foo/Var` instead of `foo/2`).
 
 **Map syntax is re-used for [polymorphic records](05_polymorphic_records.md)**
@@ -57,9 +51,8 @@ A subset of DT language.
 **Classic Erlang constructs not supported in ST part (at the syntax level)**.
 
 * Union types
-* Erlang Records
 * `when` clauses in specs
-* "Incomplete types" (missing important information) - like  
+* "Incomplete types" (missing important information) - like
   `fun()`, `fun((...) -> Type)`
 * Singleton types (like `1`, ``[]``)
 * `maybe_improper_list`
