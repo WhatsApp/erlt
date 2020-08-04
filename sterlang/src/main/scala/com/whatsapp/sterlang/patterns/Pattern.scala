@@ -18,7 +18,7 @@ package com.whatsapp.sterlang.patterns
 
 import com.whatsapp.sterlang.TyCons.RecordTyCon
 import com.whatsapp.sterlang.Values.Value
-import com.whatsapp.sterlang.{Absyn, Types, Values, Vars}
+import com.whatsapp.sterlang._
 
 /** Provides a simplified pattern syntax used during exhaustiveness checking. */
 private[patterns] object Pattern {
@@ -34,6 +34,7 @@ private[patterns] object Pattern {
   case object EmptyList extends Constructor
   case object Cons extends Constructor
   case class Record(fields: List[String], open: Boolean) extends Constructor
+  case class ErlangRecord(recordName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
 
   def show(p: Pat): String = {
@@ -76,8 +77,15 @@ private[patterns] object Pattern {
 
         // We need to display closed records as open if we dropped any fields above
         val start = (if (open || arguments.contains(Wildcard)) "#" else "") + "#{"
-        // TODO: quote field name when necessary
+        // TODO: quote field names when necessary (better yet, add generic function to print atoms)
         fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = start, sep = ", ", end = "}")
+
+      case ConstructorApplication(ErlangRecord(recordName, fieldNames), arguments) =>
+        // Remove fields mapped to wildcards to reduce clutter
+        val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
+
+        // TODO: quote field names when necessary
+        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$recordName{", sep = ", ", end = "}")
 
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
@@ -85,7 +93,7 @@ private[patterns] object Pattern {
   }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
-  def simplify(vars: Vars)(pattern: Absyn.Pat): Pat =
+  def simplify(vars: Vars, program: Ast.Program)(pattern: Absyn.Pat): Pat =
     pattern match {
       case Absyn.WildPat() =>
         Wildcard
@@ -95,7 +103,7 @@ private[patterns] object Pattern {
         Pattern.Wildcard
 
       case Absyn.AndPat(p1, p2) =>
-        (simplify(vars)(p1), simplify(vars)(p2)) match {
+        (simplify(vars, program)(p1), simplify(vars, program)(p2)) match {
           case (Wildcard, p2Simple) => p2Simple
           case (p1Simple, Wildcard) => p1Simple
           case _                    =>
@@ -108,27 +116,36 @@ private[patterns] object Pattern {
         ConstructorApplication(Literal(value), Nil)
 
       case Absyn.TuplePat(elements) =>
-        ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars)))
+        ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars, program)))
 
-      case Absyn.RecordPat(fields, _) =>
+      case Absyn.RecordPat(patternFields, _) =>
         val recordType = resolveRecordType(vars)(pattern.typ)
-        val fieldsMap = fields.map { f => (f.label, f.value) }.toMap
-        val sortedFieldNames: List[String] = getFieldNames(recordType).sorted
+        val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
+        val allFieldNames: List[String] = getFieldNames(recordType).sorted
         ConstructorApplication(
-          Record(sortedFieldNames, isOpen(recordType)),
-          sortedFieldNames.map(f => fieldsMap.get(f).map(simplify(vars)).getOrElse(Wildcard)),
+          Record(allFieldNames, isOpen(recordType)),
+          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
+        )
+
+      case Absyn.ERecordPat(recordName, patternFields) =>
+        val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
+        val recordDefinition = program.erlangRecordDefs.find(_.name == recordName).get
+        val allFieldNames = recordDefinition.fields.map(_.label).sorted
+        ConstructorApplication(
+          ErlangRecord(recordName, allFieldNames),
+          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
       case Absyn.ListPat(elements) =>
         elements.foldRight(ConstructorApplication(EmptyList, Nil)) {
-          case (head, tail) => ConstructorApplication(Cons, List(simplify(vars)(head), tail))
+          case (head, tail) => ConstructorApplication(Cons, List(simplify(vars, program)(head), tail))
         }
 
       case Absyn.ConsPat(head, tail) =>
-        ConstructorApplication(Cons, List(simplify(vars)(head), simplify(vars)(tail)))
+        ConstructorApplication(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
 
       case Absyn.EnumConstructorPat(enum, constructor, arguments) =>
-        ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars)))
+        ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars, program)))
     }
 
   /** Returns all field names present in a row type. */
@@ -146,7 +163,7 @@ private[patterns] object Pattern {
       case Types.RowFieldType(_, rest) => isOpen(rest)
     }
 
-  /** Resolves a type to a record type and resolves any row variables in the record type.  */
+  /** Resolves a type to a record type and resolves any row variables in the record type. */
   private def resolveRecordType(vars: Vars)(typ: Types.Type): Types.RowType =
     typ match {
       case Types.VarType(typeVar) =>

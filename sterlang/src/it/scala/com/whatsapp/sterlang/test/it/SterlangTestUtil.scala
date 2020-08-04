@@ -58,7 +58,7 @@ object SterlangTestUtil {
     // Check pattern matching
     // TODO: apply to all files when ready.
     if (new File(path).getParent == "examples/pattern")
-      new PatternChecker(vars, context).check(annDefs)
+      new PatternChecker(vars, context, program).check(annDefs)
   }
 
   def processIllTyped(path: String): Boolean = {
@@ -69,7 +69,7 @@ object SterlangTestUtil {
       val context = Main.loadContext(path, program, vars).extend(program)
       new AstChecks(context).check(program)
       val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
-      new PatternChecker(vars, context).check(annotatedFunctions)
+      new PatternChecker(vars, context, program).check(annotatedFunctions)
       false
     } catch {
       case _: PositionedError => true
