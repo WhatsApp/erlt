@@ -1,4 +1,4 @@
-.bloop
+.bloop/
 .idea/
-.metals
+.metals/
 target/
