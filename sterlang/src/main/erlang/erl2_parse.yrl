@@ -1117,15 +1117,15 @@ Erlang code.
 -type type_name() :: atom().
 -type form_info() ::
     {'eof', erl_anno:line()} |
-    {'error', erl2_scan:error_info() | error_info()} |
-    {'warning', erl2_scan:error_info() | error_info()}.
+    {'error', erl_scan:error_info() | error_info()} |
+    {'warning', erl_scan:error_info() | error_info()}.
 
 %% End of Abstract Format
 
 %% XXX. To be refined.
 -type error_description() :: term().
 -type error_info() :: {erl_anno:line(), module(), error_description()}.
--type token() :: erl2_scan:token().
+-type token() :: erl_scan:token().
 
 %% mkop(Op, Arg) -> {op,Anno,Op,Arg}.
 %% mkop(Left, Op, Right) -> {op,Anno,Op,Left,Right}.

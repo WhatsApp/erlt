@@ -40,7 +40,7 @@ lazy val sterlang = (project in file("."))
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
 val erl2etf = taskKey[Seq[File]]("Generate erl2etf command line utility")
-erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_epp.erl|erl2_parse.yrl|erl2_scan.yrl|erl2etf.erl".r
+erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_epp.erl|erl2_parse.yrl|erl2etf.erl".r
 
 erl2etf := {
   val log = streams.value.log
@@ -52,25 +52,14 @@ erl2etf := {
     import scala.sys.process.Process
     log.info("building erl2etf")
     Process(Seq("erlc", "erl2_parse.yrl"), erlangSrcDir).!!
-    Process(Seq("erlc", "erl2_epp.erl", "erl2_parse.erl", "erl2_scan.erl", "erl2etf.erl"), erlangSrcDir).!!
-    Process(
-      Seq(
-        "escript",
-        "make_escript.erl",
-        "erl2etf",
-        "erl2etf",
-        "erl2_epp.beam",
-        "erl2_parse.beam",
-        "erl2_scan.beam",
-        "erl2etf.beam",
-      ),
-      erlangSrcDir,
-    ).!!
+    Process(Seq("erlc", "erl2_epp.erl", "erl2_parse.erl", "erl2etf.erl"), erlangSrcDir).!!
+    Process(Seq("escript", "make_escript.erl"), erlangSrcDir).!!
   }
 
   IO.copy(
     Seq((erl2etfInput, erl2etfOutput)),
-    options = CopyOptions(overwrite = true, preserveLastModified = true, preserveExecutable = true),
+    options = CopyOptions(true, true, true),
   )
+  erl2etfOutput.setExecutable(true)
   Seq(erl2etfOutput)
 }
