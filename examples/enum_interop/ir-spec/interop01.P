@@ -1,0 +1,12 @@
+-file("interop01.erl", 1).
+
+-module(interop01).
+
+-type box(A, B) ::
+          {969696, interop01, box, box1, Elem1 :: A} |
+          {969696, interop01, box, box2, Elem2 :: B}.
+
+-type box_interop(A, B) :: {box1, Elem1 :: A} | {box2, Elem2 :: B}.
+
+
+
