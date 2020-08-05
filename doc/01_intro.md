@@ -94,9 +94,7 @@ backend, or everything together) - the next sections explain different
 - IJ scala plugin is well usable
 
 StErlang can type-check erl1+ files (and directories!) on its own (without being
-a part of erl2c toolchain). To do so, it relies on the `erl2etf` utility to
-parse erl1+ files.
-To make this utility available to stErlang, run `make` in the top directory.
+a part of erl2c toolchain).
 
 ```
 sbt:sterlang> run examples/elm-core
@@ -111,9 +109,6 @@ examples/elm-core/result.erl
 examples/elm-core/tuple.erl
 [success] Total time: 1 s, completed ...
 ```
-
-To keep `erl2etf` up-to-date (after pulling/rebasing) - you have to run `make`
-in the top directory.
 
 ### 2. `erl2c` frontend development
 
