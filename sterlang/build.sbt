@@ -34,6 +34,43 @@ lazy val sterlang = (project in file("."))
   .settings(
     mainClass in assembly := Some("com.whatsapp.sterlang.Main"),
     assemblyJarName in assembly := "sterlang.jar",
+    resourceGenerators in Compile += erl2etf.taskValue,
   )
 
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
+
+val erl2etf = taskKey[Seq[File]]("Generate erl2etf command line utility")
+erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_epp.erl|erl2_parse.yrl|erl2_scan.yrl|erl2etf.erl".r
+
+erl2etf := {
+  val log = streams.value.log
+  val erlangSrcDir = (Compile / sourceDirectory).value / "erlang"
+  val erl2etfInput = erlangSrcDir / "erl2etf"
+  val erl2etfOutput = (Compile / resourceManaged).value / "erl2etf"
+
+  if (erl2etf.inputFileChanges.hasChanges) {
+    import scala.sys.process.Process
+    log.info("building erl2etf")
+    Process(Seq("erlc", "erl2_parse.yrl"), erlangSrcDir).!!
+    Process(Seq("erlc", "erl2_epp.erl", "erl2_parse.erl", "erl2_scan.erl", "erl2etf.erl"), erlangSrcDir).!!
+    Process(
+      Seq(
+        "escript",
+        "make_escript.erl",
+        "erl2etf",
+        "erl2etf",
+        "erl2_epp.beam",
+        "erl2_parse.beam",
+        "erl2_scan.beam",
+        "erl2etf.beam",
+      ),
+      erlangSrcDir,
+    ).!!
+  }
+
+  IO.copy(
+    Seq((erl2etfInput, erl2etfOutput)),
+    options = CopyOptions(overwrite = true, preserveLastModified = true, preserveExecutable = true),
+  )
+  Seq(erl2etfOutput)
+}
