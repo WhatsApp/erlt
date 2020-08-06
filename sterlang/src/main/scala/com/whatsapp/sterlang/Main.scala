@@ -36,7 +36,7 @@ object Main {
 
   private def process(options: Set[String], files: List[String]): Unit = {
     files match {
-      case List(p) =>
+      case List(p) if !options("--lsp") =>
         val file = new File(p)
         assert(file.exists())
         if (file.isDirectory) {
@@ -45,9 +45,54 @@ object Main {
         } else {
           processFile(options, p, None)
         }
-      case List(erlFile, etfFile) =>
+      case List(erlFile, etfFile) if !options("--lsp") =>
         processFile(options, erlFile, Some(etfFile))
+      case List(etfFile, outputFile) if options("--lsp") =>
+        processFileForLsp(etfFile, outputFile, options: Set[String])
     }
+  }
+
+  def processFileForLsp(etfFile: String, outputFile: String, options: Set[String]): Unit = {
+    val lspBridge = new LspBridge(outputFile)
+    val rawProgram =
+      try {
+        loadProgram(etfFile)
+      } catch {
+        case error: ParseError =>
+          lspBridge.report(LspBridge.Result(LspBridge.Error, List.empty, List(error), List.empty))
+          sys.exit(0)
+        case error: PositionedError =>
+          lspBridge.report(LspBridge.Result(LspBridge.Error, List.empty, List(error), List.empty))
+          sys.exit(0)
+      }
+
+    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val vars = new Vars()
+    val depContext = loadContext(etfFile, program, vars)
+    val context = depContext.extend(program)
+
+    var warnings: List[SterlangError] = List.empty
+    var specs: List[(String, String)] = List.empty
+
+    try {
+      new AstChecks(context).check(program)
+      val elaborate = new Elaborate(vars, context, program)
+      val (annFuns, env) = elaborate.elaborateFuns(program.funs)
+      specs = TypePrinter2(vars, None).typeSchemes(annFuns, env)
+
+      // Check patterns and print warnings, if any.
+      if (options("--check-patterns")) {
+        warnings = new PatternChecker(vars, context, program).warnings(annFuns)
+      }
+
+      SyntaxUtil.checkPublicSpecs(program)
+    } catch {
+      case error: PositionedError =>
+        lspBridge.report(LspBridge.Result(LspBridge.Error, specs, List(error), warnings))
+        sys.exit(0)
+    }
+
+    lspBridge.report(LspBridge.Result(LspBridge.OK, specs, List.empty, warnings))
   }
 
   private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
