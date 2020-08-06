@@ -27,7 +27,10 @@ class TypeError(msg: String) extends Exception(msg)
 
 case class Cycle(aliasName: String) extends Exception(s"The type alias $aliasName is cyclic")
 
-case class PositionedError(pos: Pos.P, title: String, description: Option[String]) extends Exception(title)
+sealed trait SterlangError
+case class PositionedError(pos: Pos.P, title: String, description: Option[String])
+    extends Exception(title)
+    with SterlangError
 class InfiniteTypeError(pos: Pos.P, t1: String, t2: String)
     extends PositionedError(pos, s"Infinite type", Some(s"$t1 <> $t2"))
 class TypeMismatchError(pos: Pos.P, required: String, found: String)
@@ -75,5 +78,5 @@ class DuplicateFun(pos: Pos.P, name: String) extends PositionedError(pos, s"Dupl
 class UnSpecedExportedFun(pos: Pos.P, name: String)
     extends PositionedError(pos, s"Fun: $name is exported, but lacks a spec", None)
 
-case class ParseError(loc: Pos.Loc) extends Exception(s"Parse error at ${loc.line}:${loc.column}")
+case class ParseError(loc: Pos.Loc) extends Exception(s"Parse error at ${loc.line}:${loc.column}") with SterlangError
 class UnsupportedSyntaxError(pos: Pos.P) extends PositionedError(pos, s"Unsupported Syntax", None)
