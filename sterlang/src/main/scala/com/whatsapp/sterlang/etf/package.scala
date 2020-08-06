@@ -106,4 +106,24 @@ package object etf {
       case _ =>
         sys.error(s"${jObject.getClass} is not expected")
     }
+
+  def toJava(eTerm: ETerm): OtpErlangObject =
+    eTerm match {
+      case EAtom(atom) =>
+        new OtpErlangAtom(atom)
+      case EBitStr(bin, pad_bits) =>
+        new OtpErlangBitstr(bin, pad_bits)
+      case EDouble(d) =>
+        new OtpErlangDouble(d)
+      case EList(elems) =>
+        new OtpErlangList(elems.map(toJava).toArray)
+      case ELong(value) =>
+        new OtpErlangLong(value.longValue)
+      case EMap(entries) =>
+        new OtpErlangMap(entries.map(_._1).map(toJava).toArray, entries.map(_._2).map(toJava).toArray)
+      case EString(str) =>
+        new OtpErlangString(str)
+      case ETuple(elems) =>
+        new OtpErlangTuple(elems.map(toJava).toArray)
+    }
 }
