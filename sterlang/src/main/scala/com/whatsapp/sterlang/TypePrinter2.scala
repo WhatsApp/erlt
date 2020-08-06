@@ -30,10 +30,14 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
   val printer = new TypePrinter(vars, new TypesUtil(vars))
 
   def printFunsTypeSchemes(funs: List[A.Fun], env: Env): Unit = {
-    funs.foreach { f => printTypeScheme(env, f.name) }
+    funs.foreach { f => output(typeSchemeString(env, f.name)) }
   }
 
-  private def printTypeScheme(env: Env, v: String): Unit = {
+  def typeSchemes(funs: List[A.Fun], env: Env): List[(String, String)] = {
+    funs.map(f => f.name -> typeSchemeString(env, f.name))
+  }
+
+  private def typeSchemeString(env: Env, v: String): String = {
     env.get(v) match {
       case Some(typeSchema) =>
         /// "fun(...)"
@@ -41,8 +45,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         val inner = raw.substring(4, raw.length - 1)
         val slashIndex = v.lastIndexOf('/')
         val normV = v.substring(0, slashIndex)
-        val pp = "-spec " + normV + inner + "."
-        output(pp)
+        "-spec " + normV + inner + "."
       case None =>
         sys.error("showvar: variable not found")
     }
