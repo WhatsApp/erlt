@@ -35,6 +35,7 @@ private[patterns] object Pattern {
   case object Cons extends Constructor
   case class Record(fields: List[String], open: Boolean) extends Constructor
   case class ErlangRecord(recordName: String, fields: List[String]) extends Constructor
+  case class OpenVariantRecord(recordName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
 
   def show(p: Pat): String = {
@@ -87,6 +88,9 @@ private[patterns] object Pattern {
         // TODO: quote field names when necessary
         fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$recordName{", sep = ", ", end = "}")
 
+      case ConstructorApplication(OpenVariantRecord(recordName, fieldNames), arguments) =>
+        show(ConstructorApplication(ErlangRecord(recordName, fieldNames), arguments))
+
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
     }
@@ -131,8 +135,9 @@ private[patterns] object Pattern {
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val recordDefinition = program.erlangRecordDefs.find(_.name == recordName).get
         val allFieldNames = recordDefinition.fields.map(_.label).sorted
+        val constructor = if (recordDefinition.kind == Ast.ErlangRecord) ErlangRecord else OpenVariantRecord
         ConstructorApplication(
-          ErlangRecord(recordName, allFieldNames),
+          constructor(recordName, allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 

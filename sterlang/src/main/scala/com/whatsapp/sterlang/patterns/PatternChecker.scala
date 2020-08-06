@@ -55,6 +55,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   private def checkNode(node: A.Node, warnings: ListBuffer[PatternWarning]): Unit = {
     def clauseHead(clause: A.Clause) = ClauseHead(clause.pats, clause.guards)
     def clauseHeads(clauses: List[A.Clause]) = clauses.map(clauseHead)
+    def branchHeads(branches: List[A.Branch]) = branches.map(b => ClauseHead(List(b.pat), b.guards))
 
     // Check this node
     node match {
@@ -65,7 +66,14 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case node: A.NamedFnExp =>
         checkClauses(node, clauseHeads(node.clauses), warnings)
       case node: A.CaseExp =>
-        checkClauses(node, node.branches.map(b => ClauseHead(List(b.pat), b.guards)), warnings)
+        checkClauses(node, branchHeads(node.branches), warnings)
+      case node: A.TryCatchExp =>
+        checkRedundancy(node, branchHeads(node.catchBranches), warnings)
+      case node: A.TryOfCatchExp =>
+        checkClauses(node, branchHeads(node.tryBranches), warnings)
+        checkRedundancy(node, branchHeads(node.catchBranches), warnings)
+      case node: A.ReceiveExp =>
+        checkRedundancy(node, branchHeads(node.branches), warnings)
       case _: ValDef => // ignore
       case _         => // nothing to check
     }
@@ -76,7 +84,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     }
   }
 
-  /** Check clauses for exhaustiveness and redundancy.
+  /** Checks clauses for exhaustiveness and redundancy.
     *
     * @param node The pattern matching construct being checked.
     * @param warnings The list to append warnings to.
@@ -115,6 +123,23 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         val confident = clauses.forall(countsTowardExhaustiveness)
         warnings += new MissingPatternsWarning(node.sourceLocation, confident, clause)
     }
+  }
+
+  /** Checks clauses for redundancy only, ignoring exhaustiveness.
+    *
+    * @param node The pattern matching construct being checked.
+    * @param warnings The list to append warnings to.
+    * @throws MissingPatternsWarning if the clauses are inexhaustive
+    * @throws UselessPatternWarning if there is a clause that can never match
+    */
+  private def checkRedundancy(
+      node: HasSourceLocation,
+      clauses: List[ClauseHead],
+      warnings: ListBuffer[PatternWarning],
+  ) = {
+    val allWarnings = ListBuffer[PatternWarning]()
+    checkClauses(node, clauses, allWarnings)
+    warnings.appendAll(allWarnings.filter { !_.isInstanceOf[MissingPatternsWarning] })
   }
 
   /** Returns true if the clause contributes to exhaustiveness. A clause does not contribute to exhaustiveness if it
@@ -265,6 +290,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
       case Pattern.Record(_, _)                    => Some(Set(constructor))
       case Pattern.ErlangRecord(_, _)              => Some(Set(constructor))
+      case Pattern.OpenVariantRecord(_, _)         => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
@@ -274,12 +300,13 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   /** Returns the number of arguments the given constructor takes. */
   private def arity(constructor: Pattern.Constructor): Int =
     constructor match {
-      case _: Pattern.Literal              => 0
-      case Pattern.Tuple(arity)            => arity
-      case Pattern.EmptyList               => 0
-      case Pattern.Cons                    => 2
-      case Pattern.Record(fields, _)       => fields.length
-      case Pattern.ErlangRecord(_, fields) => fields.length
+      case _: Pattern.Literal                   => 0
+      case Pattern.Tuple(arity)                 => arity
+      case Pattern.EmptyList                    => 0
+      case Pattern.Cons                         => 2
+      case Pattern.Record(fields, _)            => fields.length
+      case Pattern.ErlangRecord(_, fields)      => fields.length
+      case Pattern.OpenVariantRecord(_, fields) => fields.length
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         enumDef.cons.find(_.name == constructorName).get.argTypes.length
