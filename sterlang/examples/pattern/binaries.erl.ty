@@ -1,0 +1,5 @@
+-spec test1(binary()) -> {}.
+-spec test2(binary()) -> {}.
+-spec test3(binary()) -> {}.
+-spec test4(binary()) -> {}.
+-spec test5(boolean(), binary()) -> {}.
