@@ -16,8 +16,6 @@
 
 package com.whatsapp.sterlang.patterns
 
-import java.util.NoSuchElementException
-
 import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang._
@@ -206,7 +204,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         val constructors = col.collect { case x: Pattern.ConstructorApplication => x.constructor }.toSet
 
         missingConstructors(constructors) match {
-          case MissingNone =>
+          case MissingNone | MissingAbstract =>
             def tryConstructor(c: Pattern.Constructor) = {
               val constructorArity = arity(c)
               missingClause(specialize(matrix, c), constructorArity + width - 1)
@@ -236,7 +234,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         Some(PatternMatrix.wildcards(arity(constructor)) ++ rest)
       case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == constructor =>
         Some(arguments1 ++ rest)
-      case _ =>
+      case Pattern.ConstructorApplication(_, _) :: _ =>
         None
     }
 
@@ -258,19 +256,28 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   /** At least the specified constructor is missing. There may be others. */
   private case class MissingAtLeast(constructor: Pattern.Constructor) extends MissingConstructors
 
+  /** There were [[Pattern.AbstractConstructor]]s, so an unknown set of constructors is missing. */
+  private case object MissingAbstract extends MissingConstructors
+
   /** All constructors are missing, or the data type has (effectively) infinitely many constructors. */
   private case object MissingAll extends MissingConstructors
 
   /** Returns a pattern describing the set of constructors missing from the given set. */
-  private def missingConstructors(presentConstructors: Set[Pattern.Constructor]): MissingConstructors =
-    try {
-      val all = allConstructors(presentConstructors.head).get
-      val missing = all.diff(presentConstructors)
-      if (missing.isEmpty) MissingNone else MissingAtLeast(missing.head)
-    } catch {
-      // May be thrown by [[head]] or [[get]]. Result is the same either way.
-      case _: NoSuchElementException => MissingAll
+  private def missingConstructors(presentConstructors: Set[Pattern.Constructor]): MissingConstructors = {
+    val concreteConstructors = presentConstructors.filter(!_.isInstanceOf[Pattern.AbstractConstructor])
+    val hasAbstract = concreteConstructors.size < presentConstructors.size
+    val missingOption = concreteConstructors.headOption.flatMap(allConstructors).map(_.diff(concreteConstructors))
+    missingOption match {
+      case Some(missing) if missing.isEmpty =>
+        MissingNone
+      case _ if hasAbstract =>
+        MissingAbstract
+      case Some(missing) =>
+        MissingAtLeast(missing.head)
+      case None =>
+        MissingAll
     }
+  }
 
   /** Returns the set of all constructors of a data type, or [[None]] if this set is (effectively) infinite.
     *
@@ -295,6 +302,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
         Some(constructors.toSet)
+      case _: Pattern.AbstractConstructor => throw new IllegalArgumentException()
     }
 
   /** Returns the number of arguments the given constructor takes. */
@@ -310,5 +318,6 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         enumDef.cons.find(_.name == constructorName).get.argTypes.length
+      case _: Pattern.AbstractConstructor => 0
     }
 }
