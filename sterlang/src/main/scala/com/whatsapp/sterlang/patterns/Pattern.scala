@@ -24,8 +24,10 @@ import com.whatsapp.sterlang._
 private[patterns] object Pattern {
   sealed trait Pat
 
+  /** Matches any value. */
   case object Wildcard extends Pat
 
+  /** A constructor applied to the correct number of arguments. */
   case class ConstructorApplication(constructor: Constructor, arguments: List[Pat]) extends Pat
 
   sealed trait Constructor
@@ -37,6 +39,15 @@ private[patterns] object Pattern {
   case class ErlangRecord(recordName: String, fields: List[String]) extends Constructor
   case class OpenVariantRecord(recordName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
+
+  /** An unknown constructor of some/any data type.
+    *
+    * Intuitively, this constructor will match some unknown subset of the value space.
+    * We compile patterns we cannot reason about to this class.
+    *
+    * Note that this isn't a case class because we want every instance to be unique.
+    */
+  class AbstractConstructor() extends Constructor
 
   def show(p: Pat): String = {
     def tuple(arguments: List[Pat]): String =
@@ -93,6 +104,9 @@ private[patterns] object Pattern {
 
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
+
+      case ConstructorApplication(_: AbstractConstructor, _) =>
+        "_"
     }
   }
 
@@ -140,6 +154,9 @@ private[patterns] object Pattern {
           constructor(recordName, allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
+
+      case _: Absyn.BinPat =>
+        ConstructorApplication(new AbstractConstructor(), Nil)
 
       case Absyn.ListPat(elements) =>
         elements.foldRight(ConstructorApplication(EmptyList, Nil)) {
