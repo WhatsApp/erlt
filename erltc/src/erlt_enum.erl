@@ -27,10 +27,32 @@
 -record(context, {
     module :: atom(),
     enum = [],
-    enums = #{}
+    enums = #{},
+    enum_erl1_representations = #{} :: #{atom() => enum_er1_representation()}
 }).
 
 -define(ENUM_COOKIE, 969696).
+
+%% Maps each constructor of an enum to its erl1 representation.
+-type enum_er1_representation() :: #{atom() => constructor_erl1_representation()}.
+
+%% @doc An erl1 pattern with a guard that specifies the internal representation
+%% of an enum constructor. The arguments of the constructor are referred to using
+%% {constructor_argument, Line, integer()} where the integer argument is a
+%% 1-based index.
+-type constructor_erl1_representation() :: {pattern(), guard()}.
+
+%% @doc An erl1 pattern.
+-type pattern() :: any().
+
+%% @doc An erl1 guard sequence. This is interpreted as the logical or of all guards.
+-type guard_sequence() :: list(guard()).
+
+%% @doc An erl1 guard. This is interpreted as the logical and of all guard tests.
+-type guard() :: list(guard_test()).
+
+%% @doc An erl1 guard test.
+-type guard_test() :: any().
 
 parse_transform(Forms, _Options) ->
     Context = init_context(Forms),
@@ -41,7 +63,8 @@ init_context(Forms) ->
     Enums = [E || {attribute, _, enum, E} <- Forms],
     #context{
         module = Module,
-        enums = init_enums(Enums, #{})
+        enums = init_enums(Enums, #{}),
+        enum_erl1_representations = maps:from_list(lists:flatmap(fun parse_enum_erl1_representation/1, Forms))
     }.
 
 init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
@@ -64,6 +87,55 @@ constrs([{type, _, enum, {atom, _, C}, _} | Cs]) ->
     [C | constrs(Cs)];
 constrs([]) ->
     [].
+
+%% @doc Returns the erl1 representation of an enum if the given function definition
+%% specifies one. Otherwise, returns the empty list.
+%%
+%% For now, we use plain, top-level functions for specifying the erl1
+%% representation of an enum. The function should be named
+%% erl1_type_<enum_name>, and should have one clause per constructor.
+%% The head of the clause should be a single erl1 pattern, and the body should
+%% be an application of the constructor to variables in the head.
+%% A single pattern guard can optionally be specified.
+-spec parse_enum_erl1_representation(list({clause, integer(), list(pattern()), guard_sequence(), term()}))
+        -> list({atom(), enum_er1_representation()}).
+parse_enum_erl1_representation({function, _Line, FunctionName, 1, Clauses}) ->
+    case atom_to_list(FunctionName) of
+        "erl1_type_" ++ EnumName ->
+            Representation = maps:from_list(lists:map(fun parse_constructor_erl1_representation/1, Clauses)),
+            [{list_to_atom(EnumName), Representation}];
+        _ ->
+            []
+    end;
+parse_enum_erl1_representation(_) ->
+    [].
+
+
+-spec parse_constructor_erl1_representation({clause, integer(), list(pattern()), guard_sequence(), term()})
+        -> {atom(), constructor_erl1_representation()}.
+parse_constructor_erl1_representation({clause, _Line, [Pattern], Guards, Body}) when length(Guards) =< 1 ->
+    [{enum, _, _Enum, {atom, _, Constructor}, Arguments}] = Body,
+
+    % All constructor arguments must be variables (that appear in the clause head).
+    ArgumentVariables = lists:map(fun({var, _, Name}) -> Name end, Arguments),
+
+    % Maps variable names to their indexes.
+    VariableMap = maps:from_list(lists:zip(ArgumentVariables, lists:seq(1, length(ArgumentVariables)))),
+
+    % Replace variable references with constructor argument indexes.
+    Rewrite =
+        fun
+            ({var, LineVar, Name}) -> {constructor_argument, LineVar, maps:get(Name, VariableMap)};
+            (N) -> N
+        end,
+
+    Guard =
+        case Guards of
+            [] -> [];
+            [G] -> G
+        end,
+    {Constructor, {rewrite(Rewrite, Pattern), rewrite(Rewrite, Guard)}}.
+
 
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
 
@@ -818,20 +890,20 @@ type_list([], _Context) ->
 
 %% More localized enum transformations
 
-pattern_enum({enum, Line, {remote, _L, M0, E0}, A0, Ps0}, Context) ->
+pattern_enum({enum, _Line, {remote, _L, M0, E0}, A0, Ps0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
     M1 = pattern(M0, Context),
     E1 = pattern(E0, Context),
     A1 = pattern(A0, Context),
     Ps1 = pattern_list(Ps0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ps1]};
+    compile_enum(M1, E1, A1, Ps1, Context);
 pattern_enum({enum, Line, E0, A0, Ps0}, Context) ->
     %% local qualified enum reference Enum.Constructor{...}
     M = {atom, Line, Context#context.module},
     E1 = pattern(E0, Context),
     A1 = pattern(A0, Context),
     Ps1 = pattern_list(Ps0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ps1]}.
+    compile_enum(M, E1, A1, Ps1, Context).
 
 gexpr_enum({enum, Line, E0, A0, Es0}, Context) ->
     %% local qualified enum reference Enum.Constructor{...}
@@ -839,24 +911,25 @@ gexpr_enum({enum, Line, E0, A0, Es0}, Context) ->
     E1 = gexpr(E0, Context),
     A1 = gexpr(A0, Context),
     Es1 = gexpr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]}.
+    compile_enum(M, E1, A1, Es1, Context).
 
-expr_enum({enum, Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
+expr_enum({enum, _Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
     M1 = expr(M0, Context),
     E1 = expr(E0, Context),
     A1 = expr(A0, Context),
     Es1 = expr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Es1]};
+    compile_enum(M1, E1, A1, Es1, Context);
 expr_enum({enum, Line, E0, A0, Es0}, Context) ->
     %% local qualified enum reference Enum.Constructor{...}
     M = {atom, Line, Context#context.module},
     E1 = expr(E0, Context),
     A1 = expr(A0, Context),
     Es1 = expr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]}.
+    compile_enum(M, E1, A1, Es1, Context).
 
-type_enum({type, Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
+%% TODO: custom erl1 representation
+type_enum({type, _Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
     M1 = type(M0, Context),
     E1 = type(E0, Context),
@@ -878,3 +951,58 @@ type_enum({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
     E = {atom, Line, Context#context.enum},
     M = {atom, Line, Context#context.module},
     {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A1 | Ts1]}.
+
+%% @doc Returns a pattern/expression/guard expression representing the given
+%% enum applied to the given arguments. The return type depends on the type
+%% of the arguments (e.g., given patterns, this function returns a pattern).
+compile_enum(Module, Enum, Constructor, Arguments, Context) ->
+    Representation = get_enum_erl1_representation(Module, Enum, Constructor, length(Arguments), Context),
+    Rewrite =
+        fun
+            ({constructor_argument, _, Index}) -> lists:nth(Index, Arguments);
+            (Node) -> Node
+        end,
+    % TODO: handle duplicate arguments. This will replicate expressions if the representation refers
+    %   to an argument multiple times. Correct way is to bind the expression to a name and replicate the name.
+    Representation1 = rewrite(Rewrite, Representation),
+    {Pattern, _} = Representation1,
+    %% TODO: propagate the guard up.
+    Pattern.
+
+%% @doc Returns the erl1 representation of the given enum constructor.
+%% TODO: lookup representations for remote enums also.
+%% TODO: This requires module/enum/constructor to be atoms.
+%%     I don't think there is a way around this without a lot of effort.
+-spec get_enum_erl1_representation(term(), term(), term(), integer(), #context{}) -> constructor_erl1_representation().
+get_enum_erl1_representation(
+    {atom, _, ModuleName} = Module,
+    {atom, _, EnumName} = Enum,
+    {atom, Line, ConstructorName} = Constructor,
+    Arity,
+    Context) ->
+    EnumRepresentation = maps:get(EnumName, Context#context.enum_erl1_representations, undefined),
+    case Context#context.module =:= ModuleName andalso EnumRepresentation /= undefined of
+        true ->
+            % Local enum with custom representation
+            maps:get(ConstructorName, EnumRepresentation);
+        false ->
+            % Default representation
+            Arguments = lists:map(fun(I) -> {constructor_argument, Line, I} end, lists:seq(1, Arity)),
+            Pattern = {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, Module, Enum, Constructor | Arguments]},
+            Guard = [],
+            {Pattern, Guard}
+    end.
+
+%% @doc Applies a rewrite to an AST bottom up.
+-spec rewrite(fun((term()) -> term()), term()) -> term().
+rewrite(Rewrite, Node) ->
+    WithRewrittenChildren =
+        case Node of
+            _ when is_list(Node) ->
+                lists:map(fun(N) -> rewrite(Rewrite, N) end, Node);
+            _ when is_tuple(Node) ->
+                list_to_tuple(lists:map(fun(N) -> rewrite(Rewrite, N) end, tuple_to_list(Node)));
+            _ ->
+                Node
+        end,
+    Rewrite(WithRewrittenChildren).
