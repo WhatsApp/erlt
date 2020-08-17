@@ -290,14 +290,15 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         Some(Set(constructor))
       case Pattern.Literal(_: Values.BooleanValue) =>
         Some(Set(true, false).map(b => Pattern.Literal(Values.BooleanValue(b))))
-      case Pattern.Literal(_: Values.IntegerValue) => None
-      case Pattern.Literal(_: Values.CharValue)    => None
-      case Pattern.Literal(_: Values.StringValue)  => None
-      case Pattern.Tuple(_)                        => Some(Set(constructor))
-      case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
-      case Pattern.Record(_, _)                    => Some(Set(constructor))
-      case Pattern.ErlangRecord(_, _)              => Some(Set(constructor))
-      case Pattern.OpenVariantRecord(_, _)         => None
+      case Pattern.Literal(_: Values.IntegerValue)     => None
+      case Pattern.Literal(_: Values.CharValue)        => None
+      case Pattern.Literal(_: Values.StringValue)      => None
+      case Pattern.Literal(_: Values.RecordIndexValue) => None
+      case Pattern.Tuple(_)                            => Some(Set(constructor))
+      case Pattern.EmptyList | Pattern.Cons            => Some(Set(Pattern.EmptyList, Pattern.Cons))
+      case Pattern.Record(_, _)                        => Some(Set(constructor))
+      case Pattern.ErlangRecord(_, _)                  => Some(Set(constructor))
+      case Pattern.OpenVariantRecord(_, _)             => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
