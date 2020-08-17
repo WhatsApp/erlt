@@ -28,9 +28,9 @@ val F: fun((E) -> F)
 val H: E
 val T: list(E)
 val _F: fun((E) -> F)
-val indexed_map/2: fun((fun((integer(), H) -> G), list(H)) -> list(G))
-val F: fun((integer(), H) -> G)
-val Xs: list(H)
+val indexed_map/2: fun((fun((integer(), G) -> H), list(G)) -> list(H))
+val F: fun((integer(), G) -> H)
+val Xs: list(G)
 val foldl/3: fun((fun((J, I) -> I), I, list(J)) -> I)
 val F: fun((J, I) -> I)
 val Acc: I

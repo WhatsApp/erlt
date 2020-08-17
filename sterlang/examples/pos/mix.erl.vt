@@ -1,10 +1,10 @@
 val two_selectors/1: fun((#{ person: #{ name: A, A }, B }) -> A)
 val X: #{ person: #{ name: A, A }, B }
-val seq_call/4: fun((fun((B) -> C), fun((D) -> E), B, D) -> E)
-val G1: fun((B) -> C)
-val G2: fun((D) -> E)
+val seq_call/4: fun((fun((B) -> D), fun((C) -> E), B, C) -> E)
+val G1: fun((B) -> D)
+val G2: fun((C) -> E)
 val X: B
-val Y: D
+val Y: C
 val sum_fr/2: fun((fun((F) -> integer()), #{ l01: F, l02: F, l03: F, l04: F, l05: F, l06: F, l07: F, l08: F, l09: F, l10: F, l11: F, l12: F, l13: F, l14: F, l15: F, l16: F, l17: F, l18: F, l19: F, C }) -> integer())
 val F: fun((F) -> integer())
 val R: #{ l01: F, l02: F, l03: F, l04: F, l05: F, l06: F, l07: F, l08: F, l09: F, l10: F, l11: F, l12: F, l13: F, l14: F, l15: F, l16: F, l17: F, l18: F, l19: F, C }

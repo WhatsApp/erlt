@@ -1,17 +1,17 @@
 val id/1: fun((A) -> A)
 val X: A
-val arg13/3: fun((D, B, C) -> D)
-val X: D
-val _Y: B
-val _Z: C
-val arg23/3: fun((E, G, F) -> G)
-val _X: E
-val Y: G
-val _Z: F
-val arg33/3: fun((H, I, J) -> J)
-val _X: H
-val _Y: I
-val Z: J
+val arg13/3: fun((B, C, D) -> B)
+val X: B
+val _Y: C
+val _Z: D
+val arg23/3: fun((F, E, G) -> E)
+val _X: F
+val Y: E
+val _Z: G
+val arg33/3: fun((I, J, H) -> H)
+val _X: I
+val _Y: J
+val Z: H
 val mk_int/0: fun(() -> integer())
 val mk_string/0: fun(() -> string())
 val mk_nil/0: fun(() -> list(K))

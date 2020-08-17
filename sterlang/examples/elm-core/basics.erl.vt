@@ -116,20 +116,20 @@ val clamp/3: fun((integer(), integer(), integer()) -> integer())
 val Low: integer()
 val High: integer()
 val Num: integer()
-val composeL/2: fun((fun((S) -> U), fun((T) -> S)) -> fun((T) -> U))
-val G: fun((S) -> U)
-val F: fun((T) -> S)
-val X: T
-val composeL/1: fun((fun((V) -> W)) -> fun((fun((X) -> V)) -> fun((X) -> W)))
-val G: fun((V) -> W)
-val F: fun((X) -> V)
-val composeR/2: fun((fun((Z) -> Y), fun((Y) -> T_26)) -> fun((Z) -> T_26))
-val F: fun((Z) -> Y)
-val G: fun((Y) -> T_26)
-val X: Z
-val composeR/1: fun((fun((T_27) -> T_28)) -> fun((fun((T_28) -> T_29)) -> fun((T_27) -> T_29)))
-val F: fun((T_27) -> T_28)
-val G: fun((T_28) -> T_29)
+val composeL/2: fun((fun((U) -> T), fun((S) -> U)) -> fun((S) -> T))
+val G: fun((U) -> T)
+val F: fun((S) -> U)
+val X: S
+val composeL/1: fun((fun((V) -> X)) -> fun((fun((W) -> V)) -> fun((W) -> X)))
+val G: fun((V) -> X)
+val F: fun((W) -> V)
+val composeR/2: fun((fun((Y) -> T_26), fun((T_26) -> Z)) -> fun((Y) -> Z))
+val F: fun((Y) -> T_26)
+val G: fun((T_26) -> Z)
+val X: Y
+val composeR/1: fun((fun((T_28) -> T_27)) -> fun((fun((T_27) -> T_29)) -> fun((T_28) -> T_29)))
+val F: fun((T_28) -> T_27)
+val G: fun((T_27) -> T_29)
 val apR/2: fun((T_30, fun((T_30) -> T_31)) -> T_31)
 val X: T_30
 val F: fun((T_30) -> T_31)
@@ -139,13 +139,13 @@ val F: fun((T_32) -> T_33)
 val apL/2: fun((fun((T_34) -> T_35), T_34) -> T_35)
 val F: fun((T_34) -> T_35)
 val X: T_34
-val apL/1: fun((fun((T_36) -> T_37)) -> fun((T_36) -> T_37))
-val F: fun((T_36) -> T_37)
-val X: T_36
+val apL/1: fun((fun((T_37) -> T_36)) -> fun((T_37) -> T_36))
+val F: fun((T_37) -> T_36)
+val X: T_37
 val identity/1: fun((T_38) -> T_38)
 val X: T_38
-val always/2: fun((T_40, T_39) -> T_40)
-val A: T_40
+val always/2: fun((T_39, T_40) -> T_39)
+val A: T_39
 val always/1: fun((T_41) -> fun((T_42) -> T_41))
 val A: T_41
 val X: T_42

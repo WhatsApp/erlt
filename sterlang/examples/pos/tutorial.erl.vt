@@ -15,9 +15,9 @@ val Bool1: boolean()
 val Bool2: boolean()
 val F_id: fun((A) -> A)
 val X: A
-val F_first: fun((C, B) -> C)
-val X1: C
-val Y1: B
+val F_first: fun((B, C) -> B)
+val X1: B
+val Y1: C
 val F_second: fun((D, E) -> E)
 val X2: D
 val Y2: E

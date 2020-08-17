@@ -4,9 +4,9 @@ val Y: A
 val mk_pair2/2: fun((B, C) -> {B, C})
 val X: B
 val Y: C
-val mk_con/2: fun((E, D) -> p_con(E))
-val X: E
-val Y: D
+val mk_con/2: fun((D, E) -> p_con(D))
+val X: D
+val Y: E
 val de_con/1: fun((p_con(F)) -> {F, F})
 val X: {F, F}
 val loop/0: fun(() -> G)

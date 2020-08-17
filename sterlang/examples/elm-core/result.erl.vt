@@ -6,39 +6,39 @@ val _E: A
 val with_default/1: fun((C) -> fun((result(D, C)) -> C))
 val Def: C
 val Res: result(D, C)
-val map/2: fun((fun((E) -> G), result(F, E)) -> result(F, G))
-val Func: fun((E) -> G)
-val A: E
-val _Func: fun((E) -> G)
-val E: F
-val map/1: fun((fun((H) -> I)) -> fun((result(J, H)) -> result(J, I)))
-val Func: fun((H) -> I)
-val Res: result(J, H)
-val map2/3: fun((fun((K, L) -> M), result(N, K), result(N, L)) -> result(N, M))
-val _Func: fun((K, L) -> M)
-val X: N
-val _Func: fun((K, L) -> M)
-val X: N
-val Func: fun((K, L) -> M)
-val A: K
-val B: L
-val map2/1: fun((fun((O, P) -> Q)) -> fun((result(R, O), result(R, P)) -> result(R, Q)))
-val Func: fun((O, P) -> Q)
-val ResA: result(R, O)
-val ResB: result(R, P)
-val and_then/2: fun((fun((S) -> result(T, U)), result(T, S)) -> result(T, U))
-val Callback: fun((S) -> result(T, U))
-val Value: S
-val _Callback: fun((S) -> result(T, U))
-val Msg: T
+val map/2: fun((fun((F) -> G), result(E, F)) -> result(E, G))
+val Func: fun((F) -> G)
+val A: F
+val _Func: fun((F) -> G)
+val E: E
+val map/1: fun((fun((H) -> J)) -> fun((result(I, H)) -> result(I, J)))
+val Func: fun((H) -> J)
+val Res: result(I, H)
+val map2/3: fun((fun((L, M) -> N), result(K, L), result(K, M)) -> result(K, N))
+val _Func: fun((L, M) -> N)
+val X: K
+val _Func: fun((L, M) -> N)
+val X: K
+val Func: fun((L, M) -> N)
+val A: L
+val B: M
+val map2/1: fun((fun((O, P) -> R)) -> fun((result(Q, O), result(Q, P)) -> result(Q, R)))
+val Func: fun((O, P) -> R)
+val ResA: result(Q, O)
+val ResB: result(Q, P)
+val and_then/2: fun((fun((T) -> result(S, U)), result(S, T)) -> result(S, U))
+val Callback: fun((T) -> result(S, U))
+val Value: T
+val _Callback: fun((T) -> result(S, U))
+val Msg: S
 val and_then/1: fun((fun((V) -> result(W, X))) -> fun((result(W, V)) -> result(W, X)))
 val Callback: fun((V) -> result(W, X))
 val Res: result(W, V)
-val map_error/2: fun((fun((Y) -> Z), result(Y, T_26)) -> result(Z, T_26))
-val _F: fun((Y) -> Z)
-val V: T_26
-val F: fun((Y) -> Z)
-val E: Y
+val map_error/2: fun((fun((Z) -> T_26), result(Z, Y)) -> result(T_26, Y))
+val _F: fun((Z) -> T_26)
+val V: Y
+val F: fun((Z) -> T_26)
+val E: Z
 val map_error/1: fun((fun((T_27) -> T_28)) -> fun((result(T_27, T_29)) -> result(T_28, T_29)))
 val F: fun((T_27) -> T_28)
 val Res: result(T_27, T_29)

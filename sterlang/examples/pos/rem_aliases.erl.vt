@@ -1,6 +1,6 @@
 val mk_pair1/2: fun((A, A) -> {A, A})
 val X: A
 val Y: A
-val mk_con/2: fun((C, B) -> aliases:p_con(C))
-val X: C
-val Y: B
+val mk_con/2: fun((B, C) -> aliases:p_con(B))
+val X: B
+val Y: C
