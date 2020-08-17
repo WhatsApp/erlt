@@ -19,6 +19,7 @@
 
 -enum custom() :: int{integer()} | bool{boolean()}.
 
+-spec erl1_type_custom({int, integer()} | {bool, boolean()}) -> custom().
 erl1_type_custom({int, X}) -> custom.int{X};
 erl1_type_custom({bool, X}) -> custom.bool{X}.
 

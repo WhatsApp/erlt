@@ -28,7 +28,8 @@
     module :: atom(),
     enum = [],
     enums = #{},
-    enum_erl1_representations = #{} :: #{atom() => enum_er1_representation()}
+    enum_erl1_representations :: #{atom() => enum_er1_representation()},
+    enum_erl1_types = #{} :: #{atom() => Type :: term()}
 }).
 
 -define(ENUM_COOKIE, 969696).
@@ -64,7 +65,8 @@ init_context(Forms) ->
     #context{
         module = Module,
         enums = init_enums(Enums, #{}),
-        enum_erl1_representations = maps:from_list(lists:flatmap(fun parse_enum_erl1_representation/1, Forms))
+        enum_erl1_representations = maps:from_list(lists:flatmap(fun parse_enum_erl1_representation/1, Forms)),
+        enum_erl1_types = maps:from_list(lists:flatmap(fun parse_enum_erl1_type/1, Forms))
     }.
 
 init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
@@ -97,7 +99,7 @@ constrs([]) ->
 %% The head of the clause should be a single erl1 pattern, and the body should
 %% be an application of the constructor to variables in the head.
 %% A single pattern guard can optionally be specified.
--spec parse_enum_erl1_representation(list({clause, integer(), list(pattern()), guard_sequence(), term()}))
+-spec parse_enum_erl1_representation({clause, integer(), list(pattern()), guard_sequence(), term()})
         -> list({atom(), enum_er1_representation()}).
 parse_enum_erl1_representation({function, _Line, FunctionName, 1, Clauses}) ->
     case atom_to_list(FunctionName) of
@@ -110,6 +112,18 @@ parse_enum_erl1_representation({function, _Line, FunctionName, 1, Clauses}) ->
 parse_enum_erl1_representation(_) ->
     [].
 
+%% @doc Returns the erl1 type of an enum given a function spec, if the given
+%% function spec specifies one. Otherwise, returns the empty list.
+parse_enum_erl1_type({attribute, _Line, spec, {{FunctionName, 1}, [FunctionType]}}) ->
+    case atom_to_list(FunctionName) of
+        "erl1_type_" ++ EnumName ->
+            {type, _Line1, 'fun', [{type, _Line2, product, [Erl1Type]}, _]} = FunctionType,
+            [{list_to_atom(EnumName), Erl1Type}];
+        _ ->
+            []
+    end;
+parse_enum_erl1_type(_) ->
+    [].
 
 -spec parse_constructor_erl1_representation({clause, integer(), list(pattern()), guard_sequence(), term()})
         -> {atom(), constructor_erl1_representation()}.
@@ -935,14 +949,14 @@ type_enum({type, _Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
     E1 = type(E0, Context),
     A1 = type(A0, Context),
     Ts1 = type_list(Ts0, Context),
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ts1]};
+    enum_erl1_type(M1, E1, A1, Ts1, Context);
 type_enum({type, Line, enum, E0, A0, Ts0}, Context) ->
     %% local qualified enum reference Enum.Constructor{...}
     M = {atom, Line, Context#context.module},
     E1 = type(E0, Context),
     A1 = type(A0, Context),
     Ts1 = type_list(Ts0, Context),
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ts1]};
+    enum_erl1_type(M, E1, A1, Ts1, Context);
 type_enum({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
     A1 = type(A, Context),
     Ts1 = type_list(Ts, Context),
@@ -950,11 +964,12 @@ type_enum({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
     %% enum name should be given by the context
     E = {atom, Line, Context#context.enum},
     M = {atom, Line, Context#context.module},
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A1 | Ts1]}.
+    enum_erl1_type(M, E, A1, Ts1, Context).
 
 %% @doc Returns a pattern/expression/guard expression representing the given
-%% enum applied to the given arguments. The return type depends on the type
-%% of the arguments (e.g., given patterns, this function returns a pattern).
+%% enum constructor applied to the given arguments. The return type depends on
+%% the type of the arguments (e.g., given patterns, this function returns a
+%% pattern).
 compile_enum(Module, Enum, Constructor, Arguments, Context) ->
     Representation = get_enum_erl1_representation(Module, Enum, Constructor, length(Arguments), Context),
     Rewrite =
@@ -969,10 +984,25 @@ compile_enum(Module, Enum, Constructor, Arguments, Context) ->
     %% TODO: propagate the guard up.
     Pattern.
 
+%% @doc Returns the erl1 type for the given enum constructor.
+enum_erl1_type(Module, Enum, Constructor, TypeArguments, Context) ->
+    {atom, _, ModuleName} = Module,
+    {atom, _, EnumName} = Enum,
+    {atom, Line, _} = Constructor,
+    Erl1Type = maps:get(EnumName, Context#context.enum_erl1_types, undefined),
+    case Context#context.module =:= ModuleName andalso Erl1Type /= undefined of
+        true ->
+            % Local enum with custom representation
+            %% TODO: this shouldn't be the same for all constructors
+            Erl1Type;
+        false ->
+            % Default representation
+            {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, Module, Enum, Constructor | TypeArguments]}
+    end.
+
+
 %% @doc Returns the erl1 representation of the given enum constructor.
 %% TODO: lookup representations for remote enums also.
-%% TODO: This requires module/enum/constructor to be atoms.
-%%     I don't think there is a way around this without a lot of effort.
 -spec get_enum_erl1_representation(term(), term(), term(), integer(), #context{}) -> constructor_erl1_representation().
 get_enum_erl1_representation(
     {atom, _, ModuleName} = Module,
