@@ -148,7 +148,7 @@ parse_constructor_erl1_representation({clause, _Line, [Pattern], Guards, Body}) 
             [] -> [];
             [G] -> G
         end,
-    {Constructor, {rewrite(Rewrite, Pattern), rewrite(Rewrite, Guard)}}.
+    {Constructor, {erl2_util:rewrite(Rewrite, Pattern), erl2_util:rewrite(Rewrite, Guard)}}.
 
 
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
@@ -979,7 +979,7 @@ compile_enum(Module, Enum, Constructor, Arguments, Context) ->
         end,
     % TODO: handle duplicate arguments. This will replicate expressions if the representation refers
     %   to an argument multiple times. Correct way is to bind the expression to a name and replicate the name.
-    Representation1 = rewrite(Rewrite, Representation),
+    Representation1 = erl2_util:rewrite(Rewrite, Representation),
     {Pattern, _} = Representation1,
     %% TODO: propagate the guard up.
     Pattern.
@@ -1022,17 +1022,3 @@ get_enum_erl1_representation(
             Guard = [],
             {Pattern, Guard}
     end.
-
-%% @doc Applies a rewrite to an AST bottom up.
--spec rewrite(fun((term()) -> term()), term()) -> term().
-rewrite(Rewrite, Node) ->
-    WithRewrittenChildren =
-        case Node of
-            _ when is_list(Node) ->
-                lists:map(fun(N) -> rewrite(Rewrite, N) end, Node);
-            _ when is_tuple(Node) ->
-                list_to_tuple(lists:map(fun(N) -> rewrite(Rewrite, N) end, tuple_to_list(Node)));
-            _ ->
-                Node
-        end,
-    Rewrite(WithRewrittenChildren).
