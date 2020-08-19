@@ -295,15 +295,20 @@ clauses([], _Context) ->
 
 %% -type clause(Clause,Context) -> Clause.
 
-clause({clause, Line, H0, G0, B0}, Context) ->
-    H1 = head(H0, Context),
+clause({clause, Line, P0, G0, B0}, Context) ->
+    AdditionalTests = additional_guard_tests(P0, G0, Context),
+    P1 = patterns(P0, Context),
     G1 = guard(G0, Context),
     B1 = exprs(B0, Context),
-    {clause, Line, H1, G1, B1}.
-
-%% -type head([Pattern],Context) -> [Pattern].
-
-head(Ps, Context) -> patterns(Ps, Context).
+    % Splice additional tests into every guard
+    G2 =
+        case G1 of
+            [] ->
+                [AdditionalTests];
+            _ ->
+                [AdditionalTests ++ Guard || Guard <- G1]
+        end,
+    {clause, Line, P1, G2, B1}.
 
 %% -type patterns([Pattern],Context) -> [Pattern].
 %%  These patterns are processed "sequentially" for purposes of variable
@@ -344,7 +349,8 @@ pattern({tuple, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {tuple, Line, Ps1};
 pattern({enum, _, _, _, _} = Enum, Context) ->
-    pattern_enum(Enum, Context);
+    {Pattern, _Guard} = pattern_enum(Enum, Context),
+    Pattern;
 pattern({map, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {map, Line, Ps1};
@@ -422,6 +428,32 @@ pattern_fields([{record_field, Lf, {var, La, '_'}, P0} | Pfs], Context) ->
     [{record_field, Lf, {var, La, '_'}, P1} | pattern_fields(Pfs, Context)];
 pattern_fields([], _Context) ->
     [].
+
+
+%% @doc Enums with custom erl1 mappings can generate guard tests that need to
+%% be propagated up and added to the clause head. Given a clause head, this
+%% function will recursively collect all tests that need to be added to the
+%% clause.
+-spec additional_guard_tests([pattern()], guard_sequence(), #context{}) -> [guard_test()].
+additional_guard_tests(Patterns, Guards, Context) ->
+    %% TODO: these two functions can be combined easily
+    CollectPatterns =
+        fun
+            ({enum, _, _, _, _} = Enum) ->
+                {_Pattern, Guard} = pattern_enum(Enum, Context),
+                Guard;
+            (_) -> undefined
+        end,
+    CollectGuards =
+        fun
+            ({enum, _, _, _, _} = Enum) ->
+                {_Expression, Guard} = gexpr_enum(Enum, Context),
+                Guard;
+            (_) -> undefined
+        end,
+    FromPatterns = lists:append(erl2_util:collect(CollectPatterns, Patterns)),
+    FromGuards = lists:append(erl2_util:collect(CollectGuards, Guards)),
+    FromPatterns ++ FromGuards.
 
 %% -type guard([GuardTest],Context) -> [GuardTest].
 
@@ -708,8 +740,15 @@ expr({'catch', Line, E0}, Context) ->
     {'catch', Line, E1};
 expr({match, Line, P0, E0}, Context) ->
     E1 = expr(E0, Context),
+    AdditionalTests = additional_guard_tests([P0], [], Context),
     P1 = pattern(P0, Context),
-    {match, Line, P1, E1};
+    case AdditionalTests of
+        [] ->
+            {match, Line, P1, E1};
+        _ ->
+            %% TODO: have to use case
+            throw("TODO")
+    end;
 expr({bin, Line, Fs}, Context) ->
     Fs2 = pattern_grp(Fs, Context),
     {bin, Line, Fs2};
@@ -925,7 +964,8 @@ gexpr_enum({enum, Line, E0, A0, Es0}, Context) ->
     E1 = gexpr(E0, Context),
     A1 = gexpr(A0, Context),
     Es1 = gexpr_list(Es0, Context),
-    compile_enum(M, E1, A1, Es1, Context).
+    {Expression, _Guard} = compile_enum(M, E1, A1, Es1, Context),
+    Expression.
 
 expr_enum({enum, _Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
@@ -933,14 +973,16 @@ expr_enum({enum, _Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
     E1 = expr(E0, Context),
     A1 = expr(A0, Context),
     Es1 = expr_list(Es0, Context),
-    compile_enum(M1, E1, A1, Es1, Context);
+    {Expression, _Guard} = compile_enum(M1, E1, A1, Es1, Context),
+    Expression;
 expr_enum({enum, Line, E0, A0, Es0}, Context) ->
     %% local qualified enum reference Enum.Constructor{...}
     M = {atom, Line, Context#context.module},
     E1 = expr(E0, Context),
     A1 = expr(A0, Context),
     Es1 = expr_list(Es0, Context),
-    compile_enum(M, E1, A1, Es1, Context).
+    {Expression, _Guard} = compile_enum(M, E1, A1, Es1, Context),
+    Expression.
 
 %% TODO: custom erl1 representation
 type_enum({type, _Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
@@ -979,10 +1021,7 @@ compile_enum(Module, Enum, Constructor, Arguments, Context) ->
         end,
     % TODO: handle duplicate arguments. This will replicate expressions if the representation refers
     %   to an argument multiple times. Correct way is to bind the expression to a name and replicate the name.
-    Representation1 = erl2_util:rewrite(Rewrite, Representation),
-    {Pattern, _} = Representation1,
-    %% TODO: propagate the guard up.
-    Pattern.
+    erl2_util:rewrite(Rewrite, Representation).
 
 %% @doc Returns the erl1 type for the given enum constructor.
 enum_erl1_type(Module, Enum, Constructor, TypeArguments, Context) ->
