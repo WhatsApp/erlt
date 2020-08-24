@@ -41,19 +41,7 @@
 %% of an enum constructor. The arguments of the constructor are referred to using
 %% {constructor_argument, Line, integer()} where the integer argument is a
 %% 1-based index.
--type constructor_erl1_representation() :: {pattern(), guard()}.
-
-%% @doc An erl1 pattern.
--type pattern() :: any().
-
-%% @doc An erl1 guard sequence. This is interpreted as the logical or of all guards.
--type guard_sequence() :: list(guard()).
-
-%% @doc An erl1 guard. This is interpreted as the logical and of all guard tests.
--type guard() :: list(guard_test()).
-
-%% @doc An erl1 guard test.
--type guard_test() :: any().
+-type constructor_erl1_representation() :: {erl2_parse:af_pattern(), erl2_parse:af_guard()}.
 
 parse_transform(Forms, _Options) ->
     Context = init_context(Forms),
@@ -99,8 +87,7 @@ constrs([]) ->
 %% The head of the clause should be a single erl1 pattern, and the body should
 %% be an application of the constructor to variables in the head.
 %% A single pattern guard can optionally be specified.
--spec parse_enum_erl1_representation({clause, integer(), list(pattern()), guard_sequence(), term()})
-        -> list({atom(), enum_er1_representation()}).
+-spec parse_enum_erl1_representation(erl2_parse:af_clause()) -> list({atom(), enum_er1_representation()}).
 parse_enum_erl1_representation({function, _Line, FunctionName, 1, Clauses}) ->
     case atom_to_list(FunctionName) of
         "erl1_type_" ++ EnumName ->
@@ -125,8 +112,7 @@ parse_enum_erl1_type({attribute, _Line, spec, {{FunctionName, 1}, [FunctionType]
 parse_enum_erl1_type(_) ->
     [].
 
--spec parse_constructor_erl1_representation({clause, integer(), list(pattern()), guard_sequence(), term()})
-        -> {atom(), constructor_erl1_representation()}.
+-spec parse_constructor_erl1_representation(erl2_parse:af_clause()) -> {atom(), constructor_erl1_representation()}.
 parse_constructor_erl1_representation({clause, _Line, [Pattern], Guards, Body}) when length(Guards) =< 1 ->
     [{enum, _, _Enum, {atom, _, Constructor}, Arguments}] = Body,
 
@@ -434,7 +420,8 @@ pattern_fields([], _Context) ->
 %% be propagated up and added to the clause head. Given a clause head, this
 %% function will recursively collect all tests that need to be added to the
 %% clause.
--spec additional_guard_tests([pattern()], guard_sequence(), #context{}) -> [guard_test()].
+-spec additional_guard_tests([erl2_parse:af_pattern()], erl2_parse:af_guard_sequence(), #context{})
+        -> list(erl2_parse:af_guard_test()).
 additional_guard_tests(Patterns, Guards, Context) ->
     %% TODO: these two functions can be combined easily
     CollectPatterns =
@@ -1042,7 +1029,9 @@ enum_erl1_type(Module, Enum, Constructor, TypeArguments, Context) ->
 
 %% @doc Returns the erl1 representation of the given enum constructor.
 %% TODO: lookup representations for remote enums also.
--spec get_enum_erl1_representation(term(), term(), term(), integer(), #context{}) -> constructor_erl1_representation().
+-spec get_enum_erl1_representation(
+    erl2_parse:af_lit_atom(), erl2_parse:af_lit_atom(), erl2_parse:af_lit_atom(), integer(), #context{})
+        -> constructor_erl1_representation().
 get_enum_erl1_representation(
     {atom, _, ModuleName} = Module,
     {atom, _, EnumName} = Enum,
