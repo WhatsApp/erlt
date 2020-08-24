@@ -1,4 +1,5 @@
-%% Copyright (c) Facebook, Inc. and its affiliates.
+%% Copyright Ericsson AB 1996-2020. All Rights Reserved.
+%% Copyright (c) 2020 Facebook, Inc. and its affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -12,7 +13,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erl2_module_record).
+-module(erlt_enum).
 
 %% The skeleton for this module is erl_id_trans.
 
@@ -23,92 +24,56 @@
 
 -export([parse_transform/2]).
 
-%% The terminology:
-%% MR - module record
-%% RecordTag - the runtime tag for a module record
-%% Module Record Form - corresponding (desugared) Erlang Form `-record(...).`
-%% An example:
-%% -module(ma_mod01).
-%% -record(?MODULE:r1, {field1, field2}).
-%% In this example:
-%% MR: r1
-%% RecordTag:
-%% 'ma_mod01:r1'
-%% Module Record AST:
-%% `-record('ma_mod01:r1', {field1, field2}).`
-
--record(module_record_context, {
-    %% The name of the current module
+-record(context, {
     module :: atom(),
-    %% The map Module -> (map ModuleRecord -> RecordTag) (including the current module).
-    module_record_tags :: map(),
-    % The map Module -> [RecordForm]
-    remote_module_record_forms :: map()
+    enum = [],
+    enums = #{}
 }).
 
-parse_transform(Forms0, _Options) ->
-    %% unfolds runtime names of the records
-    Forms1 = desugar_module_record_attribute(Forms0),
-    ModuleRecords =
-        [{MR, RecordTag} || {attribute, _Line, module_record, {MR, RecordTag}} <- Forms1],
-    ModuleRecordUsages =
-        collect(Forms1, fun collect_record_usage/1),
-    %% Optimization: if there is nothing to transform, there is no need to transform.
-    case {ModuleRecords, ModuleRecordUsages} of
-        {[], []} ->
-            Forms1;
-        _ ->
-            do_parse_transform(Forms1, ModuleRecords, ModuleRecordUsages)
+-define(ENUM_COOKIE, 969696).
+
+parse_transform(Forms, _Options) ->
+    Context = init_context(Forms),
+    forms(Forms, Context).
+
+init_context(Forms) ->
+    [Module] = [M || {attribute, _, module, M} <- Forms],
+    Enums = [E || {attribute, _, enum, E} <- Forms],
+    #context{
+        module = Module,
+        enums = init_enums(Enums, #{})
+    }.
+
+init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
+    init_enums(Es, add_enum(C, N, Map));
+init_enums([{N, {type, _, union, Cs}, _Vs} | Es], Map) ->
+    Map1 = lists:foldl(fun (C, M) -> add_enum(C, N, M) end, Map, constrs(Cs)),
+    init_enums(Es, Map1);
+init_enums([], Map) ->
+    Map.
+
+add_enum(C, E, Map) ->
+    case maps:find(C, Map) of
+        {ok, Enums} ->
+            Map#{C := ordsets:add_element(E, Enums)};
+        error ->
+            #{C => [E]}
     end.
 
-%% Unfolds
-%% -record(module:mr, fields)
-%% into
-%% -module_record(mr, 'module:mr').
-%% -record('module:mr', fields).
-desugar_module_record_attribute([
-    {attribute, Line, record, {{module_record, _Line3, Module, ModuleRecordName}, Fields}}
-    | T
-]) ->
-    RecordTag = list_to_atom(
-        lists:append([atom_to_list(Module), ":", atom_to_list(ModuleRecordName)])
-    ),
-    ModuleRecordAttr = {attribute, Line, module_record, {ModuleRecordName, RecordTag}},
-    RecordAttr = {attribute, Line, record, {RecordTag, Fields}},
-    [ModuleRecordAttr, RecordAttr | desugar_module_record_attribute(T)];
-desugar_module_record_attribute([H | T]) ->
-    [H | desugar_module_record_attribute(T)];
-desugar_module_record_attribute([]) ->
+constrs([{type, _, enum, {atom, _, C}, _} | Cs]) ->
+    [C | constrs(Cs)];
+constrs([]) ->
     [].
 
-do_parse_transform(Forms, ModuleRecords, ModuleRecordUsages) ->
-    %% Collecting the context.
-    %% TODO: check that there are no clashes between records.
-    Context = init_module_record_context(Forms, ModuleRecords, ModuleRecordUsages),
-    %% Unfolding all invocations #M:MR -> RecordTag
-    Forms1 = forms(Forms, Context),
-    RecordForms = maps:from_list([{N, R} || R = {attribute, _, record, {N, _}} <- Forms1]),
-    %% For each `-module_record({mr, tag}).`
-    %% adding the synthetic attribute:
-    %% -module_record_def({tag, module_record_form}).
-    Forms2 = lists:flatmap(
-        fun (Form) -> inject_module_record_forms(Form, RecordForms) end,
-        Forms1
-    ),
-    %% For each remote module which module records are used,
-    %% inject all -record(record_tag, ...) forms for module records.
-    Forms3 = lists:flatmap(
-        fun (Form) -> inject_remote_module_record_forms(Form, Context) end,
-        Forms2
-    ),
-    %% Done.
-    Forms3.
-
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
-%% The skeleton of this function is from erl_id_trans.
 
 forms([F0 | Fs0], Context) ->
-    F1 = form(F0, Context),
+    F1 =
+        try form(F0, Context)
+        catch
+            {error, Loc, Info} ->
+                {error, {Loc, ?MODULE, Info}}
+        end,
     Fs1 = forms(Fs0, Context),
     [F1 | Fs1];
 forms([], _Context) ->
@@ -156,6 +121,10 @@ form({attribute, Line, opaque, {N, T, Vs}}, Context) ->
     T1 = type(T, Context),
     Vs1 = variable_list(Vs, Context),
     {attribute, Line, opaque, {N, T1, Vs1}};
+form({attribute, Line, enum, {N, T, Vs}}, Context) ->
+    T1 = type(T, Context#context{enum = N}),
+    Vs1 = variable_list(Vs, Context),
+    {attribute, Line, type, {N, T1, Vs1}};
 form({attribute, Line, spec, {{N, A}, FTs}}, Context) ->
     FTs1 = function_type_list(FTs, Context),
     {attribute, Line, spec, {{N, A}, FTs1}};
@@ -288,6 +257,20 @@ pattern({cons, Line, H0, T0}, Context) ->
 pattern({tuple, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {tuple, Line, Ps1};
+pattern({enum, Line, {remote, _L, M0, E0}, A0, Ps0}, Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = pattern(M0, Context),
+    E1 = pattern(E0, Context),
+    A1 = pattern(A0, Context),
+    Ps1 = pattern_list(Ps0, Context),
+    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ps1]};
+pattern({enum, Line, E0, A0, Ps0}, Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = pattern(E0, Context),
+    A1 = pattern(A0, Context),
+    Ps1 = pattern_list(Ps0, Context),
+    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ps1]};
 pattern({map, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {map, Line, Ps1};
@@ -295,17 +278,12 @@ pattern({map_field_exact, Line, K, V}, Context) ->
     Ke = expr(K, Context),
     Ve = pattern(V, Context),
     {map_field_exact, Line, Ke, Ve};
-%%pattern({struct,Line,Tag,Ps0}) ->
-%%    Ps1 = pattern_list(Ps0),
-%%    {struct,Line,Tag,Ps1};
-pattern({record, Line, Name0, Pfs0}, Context) ->
+pattern({record, Line, Name, Pfs0}, Context) ->
     Pfs1 = pattern_fields(Pfs0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record, Line, Name1, Pfs1};
-pattern({record_index, Line, Name0, Field0}, Context) ->
+    {record, Line, Name, Pfs1};
+pattern({record_index, Line, Name, Field0}, Context) ->
     Field1 = pattern(Field0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record_index, Line, Name1, Field1};
+    {record_index, Line, Name, Field1};
 pattern({record_field, Line, Rec0, Name, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
     Field1 = expr(Field0, Context),
@@ -436,19 +414,23 @@ gexpr({cons, Line, H0, T0}, Context) ->
 gexpr({tuple, Line, Es0}, Context) ->
     Es1 = gexpr_list(Es0, Context),
     {tuple, Line, Es1};
-gexpr({record_index, Line, Name0, Field0}, Context) ->
+gexpr({enum, Line, E0, A0, Es0}, Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = gexpr(E0, Context),
+    A1 = gexpr(A0, Context),
+    Es1 = gexpr_list(Es0, Context),
+    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]};
+gexpr({record_index, Line, Name, Field0}, Context) ->
     Field1 = gexpr(Field0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record_index, Line, Name1, Field1};
-gexpr({record_field, Line, Rec0, Name0, Field0}, Context) ->
+    {record_index, Line, Name, Field1};
+gexpr({record_field, Line, Rec0, Name, Field0}, Context) ->
     Rec1 = gexpr(Rec0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
     Field1 = gexpr(Field0, Context),
-    {record_field, Line, Rec1, Name1, Field1};
-gexpr({record, Line, Name0, Inits0}, Context) ->
+    {record_field, Line, Rec1, Name, Field1};
+gexpr({record, Line, Name, Inits0}, Context) ->
     Inits1 = grecord_inits(Inits0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record, Line, Name1, Inits1};
+    {record, Line, Name, Inits1};
 gexpr({call, Line, {atom, La, F}, As0}, Context) ->
     case erl_internal:guard_bif(F, length(As0)) of
         true ->
@@ -485,6 +467,10 @@ gexpr({op, Line, Op, L0, R0}, Context) when Op =:= 'andalso'; Op =:= 'orelse' ->
     %They see the same variables
     R1 = gexpr(R0, Context),
     {op, Line, Op, L1, R1};
+gexpr({op, Line, '.', L0, R0}, Context) ->
+    L1 = gexpr(L0, Context),
+    R1 = gexpr(R0, Context),
+    {op, Line, '.', L1, R1};
 gexpr({op, Line, Op, L0, R0}, Context) ->
     case
         erl_internal:arith_op(Op, 2) or
@@ -559,6 +545,20 @@ expr({bc, Line, E0, Qs0}, Context) ->
 expr({tuple, Line, Es0}, Context) ->
     Es1 = expr_list(Es0, Context),
     {tuple, Line, Es1};
+expr({enum, Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = expr(M0, Context),
+    E1 = expr(E0, Context),
+    A1 = expr(A0, Context),
+    Es1 = expr_list(Es0, Context),
+    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Es1]};
+expr({enum, Line, E0, A0, Es0}, Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = expr(E0, Context),
+    A1 = expr(A0, Context),
+    Es1 = expr_list(Es0, Context),
+    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]};
 expr({map, Line, Map0, Es0}, Context) ->
     [Map1 | Es1] = exprs([Map0 | Es0], Context),
     {map, Line, Map1, Es1};
@@ -576,24 +576,20 @@ expr({map_field_exact, Line, K, V}, Context) ->
 %%expr({struct,Line,Tag,Es0}) ->
 %%    Es1 = pattern_list(Es0),
 %%    {struct,Line,Tag,Es1};
-expr({record_index, Line, Name0, Field0}, Context) ->
+expr({record_index, Line, Name, Field0}, Context) ->
     Field1 = expr(Field0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record_index, Line, Name1, Field1};
-expr({record, Line, Name0, Inits0}, Context) ->
+    {record_index, Line, Name, Field1};
+expr({record, Line, Name, Inits0}, Context) ->
     Inits1 = record_inits(Inits0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
-    {record, Line, Name1, Inits1};
-expr({record_field, Line, Rec0, Name0, Field0}, Context) ->
+    {record, Line, Name, Inits1};
+expr({record_field, Line, Rec0, Name, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
     Field1 = expr(Field0, Context),
-    {record_field, Line, Rec1, Name1, Field1};
-expr({record, Line, Rec0, Name0, Upds0}, Context) ->
+    {record_field, Line, Rec1, Name, Field1};
+expr({record, Line, Rec0, Name, Upds0}, Context) ->
     Rec1 = expr(Rec0, Context),
-    Name1 = resolve_record(Name0, Line, Context),
     Upds1 = record_updates(Upds0, Context),
-    {record, Line, Rec1, Name1, Upds1};
+    {record, Line, Rec1, Name, Upds1};
 expr({record_field, Line, Rec0, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
     Field1 = expr(Field0, Context),
@@ -630,9 +626,9 @@ expr({'fun', Line, Body}, Context) ->
             {'fun', Line, {clauses, Cs1}};
         {function, F, A} ->
             {'fun', Line, {function, F, A}};
-        {function, M, F, A} when is_atom(M), is_atom(F), is_integer(A) ->
-            %% R10B-6: fun M:F/A. (Backward compatibility)
-            {'fun', Line, {function, M, F, A}};
+        %% {function,M,F,A} when is_atom(M), is_atom(F), is_integer(A) ->
+        %%     %% R10B-6: fun M:F/A. (Backward compatibility)
+        %%     {'fun',Line,{function,M,F,A}};
         {function, M0, F0, A0} ->
             %% R15: fun M:F/A with variables.
             M = expr(M0, Context),
@@ -797,25 +793,41 @@ type({type, Line, map, any}, _Context) ->
 type({type, Line, map, Ps}, Context) ->
     Ps1 = map_pair_types(Ps, Context),
     {type, Line, map, Ps1};
-type({type, Line, record, [{atom, La, N} | Fs]}, Context) ->
+type({type, Line, record, [Name | Fs]}, Context) ->
     Fs1 = field_types(Fs, Context),
-    Name = resolve_record(N, La, Context),
-    {type, Line, record, [{atom, La, Name} | Fs1]};
-type(
-    {type, Line, record, [QR = {qualified_record, {atom, _, _}, {atom, _, _}} | Fs]},
-    Context
-) ->
-    Fs1 = field_types(Fs, Context),
-    Name = resolve_record(QR, Line, Context),
+    %% minor change to not die on qualified records
     {type, Line, record, [Name | Fs1]};
-type({remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As]}, Context) ->
+type({remote_type, Line, [M, {atom, Ln, N}, As]}, Context) ->
     As1 = type_list(As, Context),
-    {remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As1]};
+    %% minor change to not die on dotted remote types
+    {remote_type, Line, [M, {atom, Ln, N}, As1]};
 type({type, Line, tuple, any}, _Context) ->
     {type, Line, tuple, any};
 type({type, Line, tuple, Ts}, Context) ->
     Ts1 = type_list(Ts, Context),
     {type, Line, tuple, Ts1};
+type({type, Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
+    %% remote enum reference Mod.Enum.Constructor{...}
+    M1 = type(M0, Context),
+    E1 = type(E0, Context),
+    A1 = type(A0, Context),
+    Ts1 = type_list(Ts0, Context),
+    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ts1]};
+type({type, Line, enum, E0, A0, Ts0}, Context) ->
+    %% local qualified enum reference Enum.Constructor{...}
+    M = {atom, Line, Context#context.module},
+    E1 = type(E0, Context),
+    A1 = type(A0, Context),
+    Ts1 = type_list(Ts0, Context),
+    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ts1]};
+type({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
+    A1 = type(A, Context),
+    Ts1 = type_list(Ts, Context),
+    %% unqualified use can only happen in an enum def, so the
+    %% enum name should be given by the context
+    E = {atom, Line, Context#context.enum},
+    M = {atom, Line, Context#context.module},
+    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A1 | Ts1]};
 type({type, Line, union, Ts}, Context) ->
     Ts1 = type_list(Ts, Context),
     {type, Line, union, Ts1};
@@ -824,9 +836,9 @@ type({var, Line, V}, _Context) ->
 type({user_type, Line, N, As}, Context) ->
     As1 = type_list(As, Context),
     {user_type, Line, N, As1};
-type({type, Line, N, As}, Context) ->
+type({type, Line, N0, As}, Context) ->
     As1 = type_list(As, Context),
-    {type, Line, N, As1}.
+    {type, Line, N0, As1}.
 
 map_pair_types([{type, Line, map_field_assoc, [K, V]} | Ps], Context) ->
     K1 = type(K, Context),
@@ -850,136 +862,3 @@ type_list([T | Ts], Context) ->
     [T1 | type_list(Ts, Context)];
 type_list([], _Context) ->
     [].
-
-%% Implementation of Module Records
-
-%% Traverse Forms, applying F to each sub-expression.
-%% Returns the list of "truthy" outputs of F(SubExpr).
-collect(Forms, F) ->
-    do_collect(Forms, F, []).
-
-%% Relies on the fact that Forms are composed **only** of:
-%% lists, tuples, atoms, numbers and binaries.
-do_collect([], _F, Acc) ->
-    Acc;
-do_collect([H | T], F, Acc) ->
-    Acc1 = do_collect(T, F, Acc),
-    do_collect(H, F, Acc1);
-do_collect(X, _F, Acc) when is_number(X) ->
-    Acc;
-do_collect(X, _F, Acc) when is_atom(X) ->
-    Acc;
-do_collect(X, _F, Acc) when is_bitstring(X) ->
-    Acc;
-do_collect(X, F, Acc) when is_tuple(X) ->
-    L = tuple_to_list(X),
-    Acc1 = do_collect(L, F, Acc),
-    case F(X) of
-        false -> Acc1;
-        Delta -> [Delta | Acc1]
-    end.
-
-collect_record_usage({qualified_record, Module, Record}) when
-    is_atom(Module), is_atom(Record)
-->
-    {Module, Record};
-collect_record_usage({qualified_record, {atom, _, Module}, {atom, _, Record}}) when
-    is_atom(Module), is_atom(Record)
-->
-    {Module, Record};
-collect_record_usage(_) ->
-    false.
-
-init_module_record_context(Forms, ModuleRecords, ModuleRecordUsages) ->
-    [Module] = [M || {attribute, _, module, M} <- Forms],
-    UsedModules = lists:usort(lists:map(fun ({M, _}) -> M end, ModuleRecordUsages)),
-    RemoteInfo = [{M, load_remote_module_records(M)} || M <- UsedModules, M =/= Module],
-    RemoteMapping = [
-        {M, maps:from_list(RemoteModuleRecords)}
-        || {M, {RemoteModuleRecords, _}} <- RemoteInfo
-    ],
-    RemoteRecordDefs = [{GR, RecordDefs} || {GR, {_, RecordDefs}} <- RemoteInfo],
-    LocalMapping = {Module, maps:from_list(ModuleRecords)},
-    #module_record_context{
-        module = Module,
-        module_record_tags = maps:from_list([LocalMapping | RemoteMapping]),
-        remote_module_record_forms = maps:from_list(RemoteRecordDefs)
-    }.
-
-load_remote_module_records(Module) ->
-    case code:module_status(Module) of
-        not_loaded -> ok;
-        loaded -> ok
-    end,
-    case code:is_loaded(Module) of
-        {file, _} ->
-            ok;
-        false ->
-            %% TODO: error message if GM cannot be found
-            {module, _} = code:load_file(Module),
-            ok
-    end,
-    Attributes = Module:module_info(attributes),
-    ModuleRecords = [{MR, RecordTag} || {module_record, [{MR, RecordTag}]} <- Attributes],
-    ModuleRecordDefs = [RecordDef || {module_record_def, [{_, RecordDef}]} <- Attributes],
-    {ModuleRecords, ModuleRecordDefs}.
-
-resolve_qualified_record(M, MR, ModuleRecordTags) ->
-    %% TODO case maps:find(MA, QualifiedRecords) of error ->
-    %% error message that MA is not defined
-    {ok, ModuleRecords} = maps:find(M, ModuleRecordTags),
-    %% TODO case maps:find(MR, ModuleRecords) of error ->
-    %% error message that MR is not defined
-    {ok, RecordTag} = maps:find(MR, ModuleRecords),
-    RecordTag.
-
-%% Used from expressions
-resolve_record({qualified_record, M, MR}, _Line, Context) when is_atom(M), is_atom(MR) ->
-    ModuleRecordTags = Context#module_record_context.module_record_tags,
-    resolve_qualified_record(M, MR, ModuleRecordTags);
-%% Used from types
-resolve_record({qualified_record, {atom, Line, M}, {atom, _, MR}}, _Line, Context) when
-    is_atom(M), is_atom(MR)
-->
-    ModuleRecordTags = Context#module_record_context.module_record_tags,
-    Resolved = resolve_qualified_record(M, MR, ModuleRecordTags),
-    {atom, Line, Resolved};
-resolve_record(Name, _Line, Context) when is_atom(Name) ->
-    CurrentModule = Context#module_record_context.module,
-    ModuleRecordTags = Context#module_record_context.module_record_tags,
-    LocalModuleRecordTags = maps:get(CurrentModule, ModuleRecordTags),
-    case maps:find(Name, LocalModuleRecordTags) of
-        {ok, RecordTag} -> RecordTag;
-        error -> Name
-    end.
-
-%% Injects Forms for the module records defined in the current module
-%% inside generated -module_record_def attibute
-inject_module_record_forms(
-    ModuleRecord = {attribute, Line, module_record, {_, RecordTag}},
-    RecordForms
-) ->
-    %% TODO case maps:find(GR,Records) of error -> error message that GR is not defined.
-    {ok, RecordForm} = maps:find(RecordTag, RecordForms),
-    ModuleRecordDef = {attribute, Line, module_record_def, {RecordTag, RecordForm}},
-    [ModuleRecord, ModuleRecordDef];
-inject_module_record_forms(Form, _Records) ->
-    [Form].
-
-%% Injects forms for module records from other modules directly into the current module.
-%% It injects the forms right after the -module() attribute.
-%% Modules are sorted by name, and the order of record definitions (inside each remote module)
-%% is preserved.
-inject_remote_module_record_forms(ModuleAttribute = {attribute, _Line, module, _}, Context) ->
-    RemoteModuleRecordForms = Context#module_record_context.remote_module_record_forms,
-    RemoteModules = lists:usort(maps:keys(RemoteModuleRecordForms)),
-    InjectedRecordForms = lists:flatmap(
-        fun (Module) ->
-            {ok, RecordDefs} = maps:find(Module, RemoteModuleRecordForms),
-            RecordDefs
-        end,
-        RemoteModules
-    ),
-    [ModuleAttribute | InjectedRecordForms];
-inject_remote_module_record_forms(Form, _Records) ->
-    [Form].

@@ -21,7 +21,7 @@
 %% Purpose: Expand records into tuples. Also add explicit module
 %% names to calls to BIFs and imported functions and types.
 
--module(erl2_expand).
+-module(erlt_expand).
 
 -export([module/2]).
 

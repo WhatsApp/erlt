@@ -18,7 +18,7 @@
 %%
 %% %CopyrightEnd%
 
--module(erl2c).
+-module(erltc).
 
 % NOTE: what you see below is based on copy-pasted erlang/lib/stdlib-3.7/src/erl_compile.erl (R21)
 -include_lib("kernel/include/file.hrl").
@@ -42,7 +42,7 @@
     defines = [] :: [atom() | {atom(), _}],
     % Preprocessor defines.  Each
     % element is an atom
-    % (the name to define), or 
+    % (the name to define), or
     % a {Name, Value} tuple.
     warning = 1 :: non_neg_integer(),
     % Warning level (0 - no
@@ -116,7 +116,7 @@ make_erl_options(Opts) ->
 % Escript entry point
 main(Args0) ->
     % handle -pa, -pz and remove them from the original args
-    % 
+    %
     % NOTE, TODO: for now, only handling well-formed args, if things happen to
     % be misplaced things won't be handled correctly, e.g. -o -pa ...
     Args = handle_path_args(Args0),
@@ -343,7 +343,7 @@ usage() ->
         {"-o name", "name output directory or file"},
         {"-pa path", "add path to the front of Erlang's code path"},
         {"-pz path", "add path to the end of Erlang's code path"},
-        % NOTE: this option is a no-op, because erl2c is escript; on the other
+        % NOTE: this option is a no-op, because erltc is escript; on the other
         % hand, -smp is enabled by default these days, so it is a no-op in any
         % case
         {"-smp", "compile using SMP emulator"},
@@ -390,7 +390,7 @@ compile2(Files, #options{cwd = Cwd, includes = Incl} = Opts0) ->
             compile3(File, Cwd, Opts);
         _ ->
             % TODO, XXX: the reason we do not support compiling multiple .erl
-            % files in erl2c, is because, as a first step, we need to know the
+            % files in erltc, is because, as a first step, we need to know the
             % order in which these files should be compiled. This is already
             % true for behaviors. And this is going to be increasingly
             % important in Erlang v2 as we start adding more features that rely
@@ -404,7 +404,7 @@ compile2(Files, #options{cwd = Cwd, includes = Incl} = Opts0) ->
             % implement caching for compile order information.
             io:put_chars(
                 ?STDERR,
-                "erl2c expects only one input file, "
+                "erltc expects only one input file, "
                 "but more than one input files were given.\n"
             ),
             error
@@ -421,16 +421,16 @@ compile3(File, Cwd, Options) ->
     case filename:extension(File) of
         ".erl" ->
             CompileOptions = make_erl_options(Options),
-            case catch erl2_compile:compile(InFile, CompileOptions) of
+            case catch erlt_compile:compile(InFile, CompileOptions) of
                 ok ->
                     ok;
                 error ->
                     error;
                 {'EXIT', Reason} ->
-                    io:format(?STDERR, "erl2 compiler failed:\n~p~n", [Reason]),
+                    io:format(?STDERR, "erlt compiler failed:\n~p~n", [Reason]),
                     error;
                 Other ->
-                    io:format(?STDERR, "erl2 compiler returned:\n~p~n", [Other]),
+                    io:format(?STDERR, "erlt compiler returned:\n~p~n", [Other]),
                     error
             end;
         _ ->
@@ -443,8 +443,8 @@ compile3(File, Cwd, Options) ->
             %
             % One thing we could do to make this compatible throughout is,
             % instead of escript, use a shell script or modified erlc.c to call
-            % erl2c
-            io:put_chars(?STDERR, "erl2c does not support compiling non .erl files yet\n"),
+            % erltc
+            io:put_chars(?STDERR, "erltc does not support compiling non .erl files yet\n"),
             error
     end.
 
@@ -466,9 +466,9 @@ file_or_directory(Name) ->
 %% Makes an Erlang term given a string.
 
 make_term(Str) ->
-    case erl2_scan:string(Str) of
+    case erlt_scan:string(Str) of
         {ok, Tokens, _} ->
-            case erl2_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
+            case erlt_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
                 {ok, Term} ->
                     Term;
                 {error, {_, _, Reason}} ->

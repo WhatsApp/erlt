@@ -13,7 +13,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erl2_caret).
+-module(erlt_dots).
 
 %% The skeleton for this module is erl_id_trans.
 
@@ -25,7 +25,8 @@
 -export([parse_transform/2]).
 
 -record(context, {
-    module :: atom()
+    module :: atom(),
+    namespace :: atom()
 }).
 
 parse_transform(Forms, _Options) ->
@@ -34,8 +35,10 @@ parse_transform(Forms, _Options) ->
 
 init_context(Forms) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
+    Namespace = erlt_parse:concat_dotted(erlt_parse:dotted_butlast(Module)),
     #context{
-        module = Module
+        module = Module,
+        namespace = list_to_atom(Namespace)
     }.
 
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
@@ -245,12 +248,18 @@ pattern({record_field, Line, Rec0, Field0}, Context) ->
 pattern({bin, Line, Fs}, Context) ->
     Fs2 = pattern_grp(Fs, Context),
     {bin, Line, Fs2};
-pattern({op, _, '^', {var, Line, V}}, Context) ->
-    %% restore the import as the simplest solution for now
-    %% (our linter has prevented all other variable imports)
-    pattern({var, Line, V}, Context);
 pattern({op, Line, Op, A}, _Context) ->
     {op, Line, Op, A};
+pattern({op, Line, '.', L, R} = D, Context) ->
+    %% fold dotted atoms
+    D1 = erlt_parse:fold_dots(D),
+    case D1 of
+        {atom, _, _} ->
+            D1;
+        % leave to linter
+        _ ->
+            {op, Line, '.', expr(L, Context), expr(R, Context)}
+    end;
 pattern({op, Line, Op, L, R}, _Context) ->
     {op, Line, Op, L, R}.
 
@@ -414,6 +423,22 @@ gexpr({op, Line, Op, L0, R0}, Context) when Op =:= 'andalso'; Op =:= 'orelse' ->
     %They see the same variables
     R1 = gexpr(R0, Context),
     {op, Line, Op, L1, R1};
+gexpr({op, Line, '.', L, R} = D, Context) ->
+    %% fold dotted atoms
+    D1 = erlt_parse:fold_dots(D),
+    case D1 of
+        {atom, _, _} ->
+            D1;
+        _ ->
+            %% dereference X.a - assume X is a map
+            expr(
+                {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [
+                    R,
+                    L
+                ]},
+                Context
+            )
+    end;
 gexpr({op, Line, Op, L0, R0}, Context) ->
     case
         erl_internal:arith_op(Op, 2) or
@@ -567,6 +592,20 @@ expr({'fun', Line, Body}, Context) ->
     end;
 expr({named_fun, Loc, Name, Cs}, Context) ->
     {named_fun, Loc, Name, fun_clauses(Cs, Context)};
+expr({call, Line, {op, _L, '.', {atom, _, ''}, {op, L1, '.', M0, F0}}, As0}, Context) ->
+    %% '.'-prefixed call does not get namespace expanded
+    expr({call, Line, {remote, L1, M0, F0}, As0}, Context);
+expr({call, Line, {op, L1, '.', M0, F0}, As0}, Context) ->
+    %% dot as module/function separator in call
+    case M0 of
+        {atom, _, _} ->
+            Prefix = Context#context.namespace,
+            %% non-dotted module name gets expanded to local namespace
+            M1 = {op, L1, '.', {atom, L1, Prefix}, M0},
+            expr({call, Line, {remote, L1, M1, F0}, As0}, Context);
+        _ ->
+            expr({call, Line, {remote, L1, M0, F0}, As0}, Context)
+    end;
 expr({call, Line, F0, As0}, Context) ->
     %% N.B. If F an atom then call to local function or BIF, if F a
     %% remote structure (see below) then call to other module,
@@ -588,6 +627,22 @@ expr({bin, Line, Fs}, Context) ->
 expr({op, Line, Op, A0}, Context) ->
     A1 = expr(A0, Context),
     {op, Line, Op, A1};
+expr({op, Line, '.', L, R} = D, Context) ->
+    %% fold dotted atoms
+    D1 = erlt_parse:fold_dots(D),
+    case D1 of
+        {atom, _, _} ->
+            D1;
+        _ ->
+            %% dereference X.a - assume X is a map
+            expr(
+                {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [
+                    R,
+                    L
+                ]},
+                Context
+            )
+    end;
 expr({op, Line, Op, L0, R0}, Context) ->
     L1 = expr(L0, Context),
     %They see the same variables
@@ -700,6 +755,16 @@ type({integer, Line, I}, _Context) ->
 type({op, Line, Op, T}, Context) ->
     T1 = type(T, Context),
     {op, Line, Op, T1};
+type({op, Line, '.', L, R} = D, Context) ->
+    %% fold dotted atoms
+    D1 = erlt_parse:fold_dots(D),
+    case D1 of
+        {atom, _, _} ->
+            D1;
+        % leave to linter
+        _ ->
+            {op, Line, '.', expr(L, Context), expr(R, Context)}
+    end;
 type({op, Line, Op, L, R}, Context) ->
     L1 = type(L, Context),
     R1 = type(R, Context),
@@ -726,10 +791,21 @@ type({type, Line, record, [Name | Fs]}, Context) ->
     Fs1 = field_types(Fs, Context),
     %% minor change to not die on qualified records
     {type, Line, record, [Name | Fs1]};
+type({remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As]}, Context) ->
+    As1 = type_list(As, Context),
+    {remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As1]};
 type({remote_type, Line, [M, {atom, Ln, N}, As]}, Context) ->
     As1 = type_list(As, Context),
-    %% minor change to not die on dotted remote types
-    {remote_type, Line, [M, {atom, Ln, N}, As1]};
+    %% fold dotted atoms
+    M1 =
+        case erlt_parse:fold_dots(M) of
+            {atom, La, A} ->
+                {atom, La, A};
+            % leave to linter
+            {op, Ld, '.', L, R} ->
+                {op, Ld, '.', L, R}
+        end,
+    {remote_type, Line, [M1, {atom, Ln, N}, As1]};
 type({type, Line, tuple, any}, _Context) ->
     {type, Line, tuple, any};
 type({type, Line, tuple, Ts}, Context) ->
@@ -742,7 +818,22 @@ type({var, Line, V}, _Context) ->
     {var, Line, V};
 type({user_type, Line, N, As}, Context) ->
     As1 = type_list(As, Context),
-    {user_type, Line, N, As1};
+    case erlt_parse:split_dotted(N) of
+        [_] ->
+            % plain local type name
+            {user_type, Line, N, As1};
+        [M, T] ->
+            %% remote type with plain module part - expand to local namespace
+            Prefix = erlt_parse:split_dotted(Context#context.namespace),
+            M1 = list_to_atom(erlt_parse:concat_dotted(Prefix ++ [M])),
+            T1 = list_to_atom(T),
+            {remote_type, Line, [{atom, Line, M1}, {atom, Line, T1}, As]};
+        Ns ->
+            %% remote type with dotted module part - uses global namespace
+            M = list_to_atom(erlt_parse:concat_dotted(lists:droplast(Ns))),
+            T = list_to_atom(lists:last(Ns)),
+            {remote_type, Line, [{atom, Line, M}, {atom, Line, T}, As]}
+    end;
 type({type, Line, N0, As}, Context) ->
     As1 = type_list(As, Context),
     {type, Line, N0, As1}.

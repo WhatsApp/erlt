@@ -2,3 +2,4 @@
 *.beam
 **/build/
 **/.deps.mk
+erltc/src/erlt_parse.erl

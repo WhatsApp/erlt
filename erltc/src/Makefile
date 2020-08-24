@@ -2,8 +2,8 @@
 ERLC_FLAGS := -Wall -Werror +debug_info
 
 # targets
-ERL2C := ../bin/erl2c
-ERL2ETF := ../bin/erl2etf
+ERLTC := ../bin/erltc
+ERLT2ETF := ../bin/erlt2etf
 
 
 all: escripts
@@ -12,22 +12,22 @@ all: escripts
 clean: clean_escripts
 
 
-escripts: $(ERL2C) $(ERL2OCAML) $(ERL2ETF)
+escripts: $(ERLTC) $(ERLT2ETF)
 
 
 clean_escripts:
-	$(QUIET)rm -f $(ERL2C)
-	$(QUIET)rm -f $(ERL2ETF)
+	$(QUIET)rm -f $(ERLTC)
+	$(QUIET)rm -f $(ERLT2ETF)
 
 
 include ../../erl1.mk
 
 
 # NOTE: these rules are below erl1.mk, because we need $(BEAMS) variable to be defined
-$(ERL2C): $(BEAMS)
+$(ERLTC): $(BEAMS)
 	$(ECHO_1) "making escript $@"
-	$(QUIET)./make_escript $@ erl2c $(BEAMS)
+	$(QUIET)./make_escript $@ erltc $(BEAMS)
 
-$(ERL2ETF): $(BEAMS)
+$(ERLT2ETF): $(BEAMS)
 	$(ECHO_1) "making escript $@"
-	$(QUIET)./make_escript $@ erl2etf $(BEAMS)
+	$(QUIET)./make_escript $@ erlt2etf $(BEAMS)

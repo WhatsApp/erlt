@@ -13,7 +13,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erl2_enum).
+-module(erlt_caret).
 
 %% The skeleton for this module is erl_id_trans.
 
@@ -25,12 +25,8 @@
 -export([parse_transform/2]).
 
 -record(context, {
-    module :: atom(),
-    enum = [],
-    enums = #{}
+    module :: atom()
 }).
-
--define(ENUM_COOKIE, 969696).
 
 parse_transform(Forms, _Options) ->
     Context = init_context(Forms),
@@ -38,42 +34,14 @@ parse_transform(Forms, _Options) ->
 
 init_context(Forms) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
-    Enums = [E || {attribute, _, enum, E} <- Forms],
     #context{
-        module = Module,
-        enums = init_enums(Enums, #{})
+        module = Module
     }.
-
-init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
-    init_enums(Es, add_enum(C, N, Map));
-init_enums([{N, {type, _, union, Cs}, _Vs} | Es], Map) ->
-    Map1 = lists:foldl(fun (C, M) -> add_enum(C, N, M) end, Map, constrs(Cs)),
-    init_enums(Es, Map1);
-init_enums([], Map) ->
-    Map.
-
-add_enum(C, E, Map) ->
-    case maps:find(C, Map) of
-        {ok, Enums} ->
-            Map#{C := ordsets:add_element(E, Enums)};
-        error ->
-            #{C => [E]}
-    end.
-
-constrs([{type, _, enum, {atom, _, C}, _} | Cs]) ->
-    [C | constrs(Cs)];
-constrs([]) ->
-    [].
 
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
 
 forms([F0 | Fs0], Context) ->
-    F1 =
-        try form(F0, Context)
-        catch
-            {error, Loc, Info} ->
-                {error, {Loc, ?MODULE, Info}}
-        end,
+    F1 = form(F0, Context),
     Fs1 = forms(Fs0, Context),
     [F1 | Fs1];
 forms([], _Context) ->
@@ -121,10 +89,6 @@ form({attribute, Line, opaque, {N, T, Vs}}, Context) ->
     T1 = type(T, Context),
     Vs1 = variable_list(Vs, Context),
     {attribute, Line, opaque, {N, T1, Vs1}};
-form({attribute, Line, enum, {N, T, Vs}}, Context) ->
-    T1 = type(T, Context#context{enum = N}),
-    Vs1 = variable_list(Vs, Context),
-    {attribute, Line, type, {N, T1, Vs1}};
 form({attribute, Line, spec, {{N, A}, FTs}}, Context) ->
     FTs1 = function_type_list(FTs, Context),
     {attribute, Line, spec, {{N, A}, FTs1}};
@@ -257,20 +221,6 @@ pattern({cons, Line, H0, T0}, Context) ->
 pattern({tuple, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {tuple, Line, Ps1};
-pattern({enum, Line, {remote, _L, M0, E0}, A0, Ps0}, Context) ->
-    %% remote enum reference Mod.Enum.Constructor{...}
-    M1 = pattern(M0, Context),
-    E1 = pattern(E0, Context),
-    A1 = pattern(A0, Context),
-    Ps1 = pattern_list(Ps0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ps1]};
-pattern({enum, Line, E0, A0, Ps0}, Context) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    E1 = pattern(E0, Context),
-    A1 = pattern(A0, Context),
-    Ps1 = pattern_list(Ps0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ps1]};
 pattern({map, Line, Ps0}, Context) ->
     Ps1 = pattern_list(Ps0, Context),
     {map, Line, Ps1};
@@ -295,6 +245,10 @@ pattern({record_field, Line, Rec0, Field0}, Context) ->
 pattern({bin, Line, Fs}, Context) ->
     Fs2 = pattern_grp(Fs, Context),
     {bin, Line, Fs2};
+pattern({op, _, '^', {var, Line, V}}, Context) ->
+    %% restore the import as the simplest solution for now
+    %% (our linter has prevented all other variable imports)
+    pattern({var, Line, V}, Context);
 pattern({op, Line, Op, A}, _Context) ->
     {op, Line, Op, A};
 pattern({op, Line, Op, L, R}, _Context) ->
@@ -414,13 +368,6 @@ gexpr({cons, Line, H0, T0}, Context) ->
 gexpr({tuple, Line, Es0}, Context) ->
     Es1 = gexpr_list(Es0, Context),
     {tuple, Line, Es1};
-gexpr({enum, Line, E0, A0, Es0}, Context) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    E1 = gexpr(E0, Context),
-    A1 = gexpr(A0, Context),
-    Es1 = gexpr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]};
 gexpr({record_index, Line, Name, Field0}, Context) ->
     Field1 = gexpr(Field0, Context),
     {record_index, Line, Name, Field1};
@@ -467,10 +414,6 @@ gexpr({op, Line, Op, L0, R0}, Context) when Op =:= 'andalso'; Op =:= 'orelse' ->
     %They see the same variables
     R1 = gexpr(R0, Context),
     {op, Line, Op, L1, R1};
-gexpr({op, Line, '.', L0, R0}, Context) ->
-    L1 = gexpr(L0, Context),
-    R1 = gexpr(R0, Context),
-    {op, Line, '.', L1, R1};
 gexpr({op, Line, Op, L0, R0}, Context) ->
     case
         erl_internal:arith_op(Op, 2) or
@@ -545,20 +488,6 @@ expr({bc, Line, E0, Qs0}, Context) ->
 expr({tuple, Line, Es0}, Context) ->
     Es1 = expr_list(Es0, Context),
     {tuple, Line, Es1};
-expr({enum, Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
-    %% remote enum reference Mod.Enum.Constructor{...}
-    M1 = expr(M0, Context),
-    E1 = expr(E0, Context),
-    A1 = expr(A0, Context),
-    Es1 = expr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Es1]};
-expr({enum, Line, E0, A0, Es0}, Context) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    E1 = expr(E0, Context),
-    A1 = expr(A0, Context),
-    Es1 = expr_list(Es0, Context),
-    {tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Es1]};
 expr({map, Line, Map0, Es0}, Context) ->
     [Map1 | Es1] = exprs([Map0 | Es0], Context),
     {map, Line, Map1, Es1};
@@ -626,9 +555,9 @@ expr({'fun', Line, Body}, Context) ->
             {'fun', Line, {clauses, Cs1}};
         {function, F, A} ->
             {'fun', Line, {function, F, A}};
-        %% {function,M,F,A} when is_atom(M), is_atom(F), is_integer(A) ->
-        %%     %% R10B-6: fun M:F/A. (Backward compatibility)
-        %%     {'fun',Line,{function,M,F,A}};
+        {function, M, F, A} when is_atom(M), is_atom(F), is_integer(A) ->
+            %% R10B-6: fun M:F/A. (Backward compatibility)
+            {'fun', Line, {function, M, F, A}};
         {function, M0, F0, A0} ->
             %% R15: fun M:F/A with variables.
             M = expr(M0, Context),
@@ -806,28 +735,6 @@ type({type, Line, tuple, any}, _Context) ->
 type({type, Line, tuple, Ts}, Context) ->
     Ts1 = type_list(Ts, Context),
     {type, Line, tuple, Ts1};
-type({type, Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
-    %% remote enum reference Mod.Enum.Constructor{...}
-    M1 = type(M0, Context),
-    E1 = type(E0, Context),
-    A1 = type(A0, Context),
-    Ts1 = type_list(Ts0, Context),
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M1, E1, A1 | Ts1]};
-type({type, Line, enum, E0, A0, Ts0}, Context) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    E1 = type(E0, Context),
-    A1 = type(A0, Context),
-    Ts1 = type_list(Ts0, Context),
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E1, A1 | Ts1]};
-type({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
-    A1 = type(A, Context),
-    Ts1 = type_list(Ts, Context),
-    %% unqualified use can only happen in an enum def, so the
-    %% enum name should be given by the context
-    E = {atom, Line, Context#context.enum},
-    M = {atom, Line, Context#context.module},
-    {type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A1 | Ts1]};
 type({type, Line, union, Ts}, Context) ->
     Ts1 = type_list(Ts, Context),
     {type, Line, union, Ts1};

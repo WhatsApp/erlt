@@ -18,7 +18,7 @@
 %%
 %% %CopyrightEnd%
 
--module(erl2_epp).
+-module(erlt_epp).
 
 %% An Erlang code preprocessor.
 
@@ -55,7 +55,7 @@
     non_neg_integer().
 
 -type argnames() :: [atom()].
--type tokens() :: [erl2_scan:token()].
+-type tokens() :: [erlt_scan:token()].
 -type predef() :: 'undefined' | {'none', tokens()}.
 -type userdef() :: {argspec(), {argnames(), tokens()}}.
 -type used() :: {name(), argspec()}.
@@ -192,14 +192,14 @@ scan_erl_form(Epp) ->
     {'warning', WarningInfo} | {'eof', Line}
 when
     Epp :: epp_handle(),
-    AbsForm :: erl2_parse:abstract_form(),
+    AbsForm :: erlt_parse:abstract_form(),
     Line :: erl_anno:line(),
-    ErrorInfo :: erl2_scan:error_info() | erl2_parse:error_info(),
+    ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     WarningInfo :: warning_info().
 parse_erl_form(Epp) ->
     case epp_request(Epp, scan_erl_form) of
         {ok, Toks} ->
-            erl2_parse:parse_form(Toks);
+            erlt_parse:parse_form(Toks);
         Other ->
             Other
     end.
@@ -263,10 +263,10 @@ format_error(E) ->
 when
     FileName :: file:name(),
     IncludePath :: [DirectoryName :: file:name()],
-    Form :: erl2_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
+    Form :: erlt_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
     PredefMacros :: macros(),
     Line :: erl_anno:line(),
-    ErrorInfo :: erl2_scan:error_info() | erl2_parse:error_info(),
+    ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     OpenError :: file:posix() | badarg | system_limit.
 parse_file(Ifile, Path, Predefs) ->
     parse_file(Ifile, [{includes, Path}, {macros, Predefs}]).
@@ -282,9 +282,9 @@ when
         {'default_encoding', DefEncoding :: source_encoding()} |
         'extra'
     ],
-    Form :: erl2_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
+    Form :: erlt_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
     Line :: erl_anno:line(),
-    ErrorInfo :: erl2_scan:error_info() | erl2_parse:error_info(),
+    ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     Extra :: [{'encoding', source_encoding() | 'none'}],
     OpenError :: file:posix() | badarg | system_limit.
 parse_file(Ifile, Options) ->
@@ -304,11 +304,11 @@ parse_file(Ifile, Options) ->
 -spec parse_file(Epp) -> [Form] when
     Epp :: epp_handle(),
     Form ::
-        erl2_parse:abstract_form() |
+        erlt_parse:abstract_form() |
         {'error', ErrorInfo} |
         {'warning', WarningInfo} | {'eof', Line},
     Line :: erl_anno:line(),
-    ErrorInfo :: erl2_scan:error_info() | erl2_parse:error_info(),
+    ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     WarningInfo :: warning_info().
 parse_file(Epp) ->
     case parse_erl_form(Epp) of
@@ -624,7 +624,7 @@ predef_macros(File) ->
 %%  value gets the value 'true'.
 
 user_predef([{M, Val, redefine} | Pdm], Ms) when is_atom(M) ->
-    Exp = erl2_parse:tokens(erl2_parse:abstract(Val)),
+    Exp = erlt_parse:tokens(erlt_parse:abstract(Val)),
     user_predef(Pdm, Ms#{M => {none, Exp}});
 user_predef([{M, Val} | Pdm], Ms) when is_atom(M) ->
     case Ms of
@@ -635,7 +635,7 @@ user_predef([{M, Val} | Pdm], Ms) when is_atom(M) ->
             %% Predefined macros.
             {error, {redefine_predef, M}};
         _ ->
-            Exp = erl2_parse:tokens(erl2_parse:abstract(Val)),
+            Exp = erlt_parse:tokens(erlt_parse:abstract(Val)),
             user_predef(Pdm, Ms#{M => [{none, {none, Exp}}]})
     end;
 user_predef([M | Pdm], Ms) when is_atom(M) ->
@@ -795,9 +795,9 @@ leave_file(From, St) ->
             end
     end.
 
-%% Modified version of io:scan_erl_form() which uses erl2_scan instead
+%% Modified version of io:scan_erl_form() which uses erlt_scan instead
 scan_erl_form(Io, Prompt, Pos0, Options) ->
-    io:request(Io, {get_until, unicode, Prompt, erl2_scan, tokens, [Pos0, Options]}).
+    io:request(Io, {get_until, unicode, Prompt, erlt_scan, tokens, [Pos0, Options]}).
 
 %% scan_toks(From, EppState)
 %% scan_toks(Tokens, From, EppState)
@@ -886,7 +886,7 @@ scan_extends(_Ts, Ms) ->
 scan_err_warn([{'(', _} | _] = Toks0, {atom, _, Tag} = Token, From, St) ->
     try expand_macros(Toks0, St) of
         Toks when is_list(Toks) ->
-            case erl2_parse:parse_term(Toks) of
+            case erlt_parse:parse_term(Toks) of
                 {ok, Term} ->
                     epp_reply(From, {Tag, {loc(Token), epp, {Tag, Term}}});
                 {error, _} ->
@@ -1167,7 +1167,7 @@ scan_if([{'(', _} | _] = Toks, If, From, St) ->
         throw:Error0 ->
             Error =
                 case Error0 of
-                    {_, erl2_parse, _} ->
+                    {_, erlt_parse, _} ->
                         {error, Error0};
                     _ ->
                         {error, {loc(If), epp, Error0}}
@@ -1182,7 +1182,7 @@ scan_if(_Toks, If, From, St) ->
 eval_if(Toks0, St) ->
     Toks = expand_macros(Toks0, St),
     Es1 =
-        case erl2_parse:parse_exprs(Toks) of
+        case erlt_parse:parse_exprs(Toks) of
             {ok, Es0} -> Es0;
             {error, E} -> throw(E)
         end,
@@ -1202,7 +1202,7 @@ eval_if(Toks0, St) ->
 
 assert_guard_expr([E0]) ->
     E = rewrite_expr(E0, none),
-    case erl2_lint:is_guard_expr(E) of
+    case erlt_lint:is_guard_expr(E) of
         false ->
             throw({bad, 'if'});
         true ->
@@ -1490,18 +1490,18 @@ expand_macros([{'?', _Lq}, {var, Lm, 'FUNCTION_ARITY'} = Token | Toks], St0) ->
             [{integer, Lm, Arity}]
     end ++ expand_macros(Toks, St);
 expand_macros([{'?', _Lq}, {var, Lm, 'LINE'} = Tok | Toks], St) ->
-    Line = erl2_scan:line(Tok),
+    Line = erlt_scan:line(Tok),
     [{integer, Lm, Line} | expand_macros(Toks, St)];
 expand_macros([{'?', _Lq}, {var, _Lm, M} = MacT | Toks], St) ->
     expand_macros(MacT, M, Toks, St);
 %% Illegal macros
 expand_macros([{'?', _Lq}, Token | _Toks], _St) ->
     T =
-        case erl2_scan:text(Token) of
+        case erlt_scan:text(Token) of
             Text when is_list(Text) ->
                 Text;
             undefined ->
-                Symbol = erl2_scan:symbol(Token),
+                Symbol = erlt_scan:symbol(Token),
                 io_lib:fwrite(<<"~tp">>, [Symbol])
         end,
     throw({error, loc(Token), {call, [$? | T]}});
@@ -1818,7 +1818,7 @@ loc_anno({Line, _Column}) ->
     erl_anno:new(Line).
 
 loc(Token) ->
-    erl2_scan:location(Token).
+    erlt_scan:location(Token).
 
 add_line(Line, Offset) when is_integer(Line) ->
     Line + Offset;
@@ -1898,7 +1898,7 @@ interpret_file_attr([Form0 | Forms], Delta, Fs) ->
         Line = erl_anno:line(Anno),
         erl_anno:set_line(Line + Delta, Anno)
     end,
-    Form = erl2_parse:map_anno(F, Form0),
+    Form = erlt_parse:map_anno(F, Form0),
     [Form | interpret_file_attr(Forms, Delta, Fs)];
 interpret_file_attr([], _Delta, _Fs) ->
     [].

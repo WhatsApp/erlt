@@ -648,7 +648,7 @@ comp_op -> '=:=' : '$1'.
 comp_op -> '=/=' : '$1'.
 
 Header
-"%% This file was automatically generated from the file \"erl2_parse.yrl\"."
+"%% This file was automatically generated from the file \"erlt_parse.yrl\"."
 "%%"
 "%% Copyright Ericsson AB 1996-2015. All Rights Reserved."
 "%%"
@@ -1117,15 +1117,15 @@ Erlang code.
 -type type_name() :: atom().
 -type form_info() ::
     {'eof', erl_anno:line()} |
-    {'error', erl2_scan:error_info() | error_info()} |
-    {'warning', erl2_scan:error_info() | error_info()}.
+    {'error', erlt_scan:error_info() | error_info()} |
+    {'warning', erlt_scan:error_info() | error_info()}.
 
 %% End of Abstract Format
 
 %% XXX. To be refined.
 -type error_description() :: term().
 -type error_info() :: {erl_anno:line(), module(), error_description()}.
--type token() :: erl2_scan:token().
+-type token() :: erlt_scan:token().
 
 %% mkop(Op, Arg) -> {op,Anno,Op,Arg}.
 %% mkop(Left, Op, Right) -> {op,Anno,Op,Left,Right}.
@@ -1330,7 +1330,7 @@ build_bin_type([{var, Aa, _} | _], _) ->
     ret_err(Aa, "Bad binary type").
 
 build_enum_type(Name, Types) ->
-    case erl2_parse:balance_dotted(Name) of
+    case erlt_parse:balance_dotted(Name) of
         {op, A, '.', {op, A2, '.', M, E}, N} ->
             {type, A, enum, {remote, A2, fold_dots(M), E}, N, Types};
         {op, A, '.', E, N} ->
@@ -1550,7 +1550,7 @@ build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
 
 build_enum(Name, Elements, Anno) ->
-    case erl2_parse:balance_dotted(Name) of
+    case erlt_parse:balance_dotted(Name) of
         {op, _, '.', {op, ModAnno, '.', Mod, Enum}, Ctr} ->
             %% remote enum reference Mod.Enum.Constructor{...}
             {enum, Anno, {remote, ModAnno, Mod, Enum}, Ctr, Elements};
@@ -1678,7 +1678,7 @@ balance_dotted(E) ->
 -spec abstract(Data) -> AbsTerm when Data :: term(), AbsTerm :: abstract_expr().
 abstract(T) ->
     Anno = erl_anno:new(0),
-    abstract(T, Anno, enc_func(erl2_epp:default_encoding())).
+    abstract(T, Anno, enc_func(erlt_epp:default_encoding())).
 
 -type encoding_func() :: fun((non_neg_integer()) -> boolean()).
 
@@ -1692,10 +1692,10 @@ abstract(T) ->
     AbsTerm :: abstract_expr().
 abstract(T, Line) when is_integer(Line) ->
     Anno = erl_anno:new(Line),
-    abstract(T, Anno, enc_func(erl2_epp:default_encoding()));
+    abstract(T, Anno, enc_func(erlt_epp:default_encoding()));
 abstract(T, Options) when is_list(Options) ->
     Line = proplists:get_value(line, Options, 0),
-    Encoding = proplists:get_value(encoding, Options, erl2_epp:default_encoding()),
+    Encoding = proplists:get_value(encoding, Options, erlt_epp:default_encoding()),
     EncFunc = enc_func(Encoding),
     Anno = erl_anno:new(Line),
     abstract(T, Anno, EncFunc).
@@ -1906,7 +1906,7 @@ type_preop_prec('bnot') -> {600, 700};
 type_preop_prec('^') -> {600, 700};
 type_preop_prec('#') -> {700, 800}.
 
--type erl2_parse_tree() ::
+-type erlt_parse_tree() ::
     abstract_clause() |
     abstract_expr() |
     abstract_form() |
@@ -1916,8 +1916,8 @@ type_preop_prec('#') -> {700, 800}.
     Fun :: fun((Anno) -> NewAnno),
     Anno :: erl_anno:anno(),
     NewAnno :: erl_anno:anno(),
-    Abstr :: erl2_parse_tree() | form_info(),
-    NewAbstr :: erl2_parse_tree() | form_info().
+    Abstr :: erlt_parse_tree() | form_info(),
+    NewAbstr :: erlt_parse_tree() | form_info().
 map_anno(F0, Abstr) ->
     F = fun (A, Acc) -> {F0(A), Acc} end,
     {NewAbstr, []} = modify_anno1(Abstr, [], F),
@@ -1930,7 +1930,7 @@ map_anno(F0, Abstr) ->
     Acc1 :: term(),
     AccIn :: term(),
     AccOut :: term(),
-    Abstr :: erl2_parse_tree() | form_info().
+    Abstr :: erlt_parse_tree() | form_info().
 fold_anno(F0, Acc0, Abstr) ->
     F = fun (A, Acc) -> {A, F0(A, Acc)} end,
     {_, NewAcc} = modify_anno1(Abstr, Acc0, F),
@@ -1944,24 +1944,24 @@ fold_anno(F0, Acc0, Abstr) ->
     Acc1 :: term(),
     AccIn :: term(),
     AccOut :: term(),
-    Abstr :: erl2_parse_tree() | form_info(),
-    NewAbstr :: erl2_parse_tree() | form_info().
+    Abstr :: erlt_parse_tree() | form_info(),
+    NewAbstr :: erlt_parse_tree() | form_info().
 mapfold_anno(F, Acc0, Abstr) ->
     modify_anno1(Abstr, Acc0, F).
 
--spec new_anno(Term) -> Abstr when Term :: term(), Abstr :: erl2_parse_tree() | form_info().
+-spec new_anno(Term) -> Abstr when Term :: term(), Abstr :: erlt_parse_tree() | form_info().
 new_anno(Term) ->
     F = fun (L, Acc) -> {erl_anno:new(L), Acc} end,
     {NewAbstr, []} = modify_anno1(Term, [], F),
     NewAbstr.
 
--spec anno_to_term(Abstr) -> term() when Abstr :: erl2_parse_tree() | form_info().
+-spec anno_to_term(Abstr) -> term() when Abstr :: erlt_parse_tree() | form_info().
 anno_to_term(Abstract) ->
     F = fun (Anno, Acc) -> {erl_anno:to_term(Anno), Acc} end,
     {NewAbstract, []} = modify_anno1(Abstract, [], F),
     NewAbstract.
 
--spec anno_from_term(Term) -> erl2_parse_tree() | form_info() when Term :: term().
+-spec anno_from_term(Term) -> erlt_parse_tree() | form_info() when Term :: term().
 anno_from_term(Term) ->
     F = fun (T, Acc) -> {erl_anno:from_term(T), Acc} end,
     {NewTerm, []} = modify_anno1(Term, [], F),
