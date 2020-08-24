@@ -510,7 +510,8 @@ gexpr({tuple, Line, Es0}, Context) ->
     Es1 = gexpr_list(Es0, Context),
     {tuple, Line, Es1};
 gexpr({enum, _, _, _, _} = Enum, Context) ->
-    gexpr_enum(Enum, Context);
+    {Expression, _Guard} = gexpr_enum(Enum, Context),
+    Expression;
 gexpr({record_index, Line, Name, Field0}, Context) ->
     Field1 = gexpr(Field0, Context),
     {record_index, Line, Name, Field1};
@@ -953,8 +954,7 @@ gexpr_enum({enum, Line, E0, A0, Es0}, Context) ->
     E1 = gexpr(E0, Context),
     A1 = gexpr(A0, Context),
     Es1 = gexpr_list(Es0, Context),
-    {Expression, _Guard} = compile_enum(M, E1, A1, Es1, Context),
-    Expression.
+    compile_enum(M, E1, A1, Es1, Context).
 
 expr_enum({enum, _Line, {remote, _L, M0, E0}, A0, Es0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
