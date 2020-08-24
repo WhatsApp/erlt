@@ -19,7 +19,7 @@
 %% %CopyrightEnd%
 
 %% Purpose: Run the Erlang2 compiler.
--module(erl2_compile).
+-module(erlt_compile).
 
 % TODO: this prevents unused function warnings for compiler passes
 -compile(export_all).
@@ -29,7 +29,7 @@
 %%
 %% TODO: implement forms() and potentialy other APIs supported by the standard compile.erl
 -export([file/2]).
-%% Erl2c interface.
+%% erltc interface.
 -export([compile/2]).
 
 %
@@ -70,7 +70,7 @@
     module = [] :: module() | [],
     %Options for compilation
     options = [] :: [option()],
-    encoding = none :: none | erl2_epp:source_encoding(),
+    encoding = none :: none | erlt_epp:source_encoding(),
     errors = [] :: [err_warn_info()],
     warnings = [] :: [err_warn_info()],
     compile_deps = [] :: [compile_dep()],
@@ -78,19 +78,19 @@
     % indicator of Erlang language flavor; valid combinations are
     %
     %    []                  -- erl1
-    %    [erl2, dt], [erl2]  -- dynamically typed erl2
-    %    [erl2, st]          -- statically typed erl2
-    %    [erl2, ffi]         -- ffi erl2
-    %    [erl2, specs]       -- specs for a module which is somewhere else
-    lang = [] :: [erl2 | st | dt | ffi | specs],
+    %    [erl2 | erlt, dt], [erl2 | erlt]  -- dynamically typed erlt
+    %    [erl2 | erlt, st]          -- statically typed erlt
+    %    [erl2 | erlt, ffi]         -- ffi erlt
+    %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
+    lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms
 }).
 
 -define(pass(P), {P, fun P/2}).
 
-% called by erl2c.erl
+% called by erltc.erl
 %
-% XXX: move to erl2c.erl? as it is unlikely to be useful for anything else
+% XXX: move to erltc.erl? as it is unlikely to be useful for anything else
 compile(File0, Options) ->
     File = shorten_filename(File0),
     case file(File, Options) of
@@ -170,13 +170,13 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_exception),
-                    ?pass(erl2_message),
-                    ?pass(erl2_module_record),
-                    ?pass(erl2_lint),
-                    ?pass(erl2_expand),
-                    ?pass(collect_erl2_compile_deps),
-                    ?pass(erl2_to_erl1)
+                    ?pass(erlt_exception),
+                    ?pass(erlt_message),
+                    ?pass(erlt_module_record),
+                    ?pass(erlt_lint),
+                    ?pass(erlt_expand),
+                    ?pass(collect_erlt_compile_deps),
+                    ?pass(erlt_to_erl1)
                 ] ++
                     TransformPasses ++
                     [
@@ -190,13 +190,13 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_exception),
-                    ?pass(erl2_message),
-                    ?pass(erl2_module_record),
-                    ?pass(erl2_lint),
-                    ?pass(erl2_expand),
-                    ?pass(collect_erl2_compile_deps),
-                    ?pass(erl2_to_erl1),
+                    ?pass(erlt_exception),
+                    ?pass(erlt_message),
+                    ?pass(erlt_module_record),
+                    ?pass(erlt_lint),
+                    ?pass(erlt_expand),
+                    ?pass(collect_erlt_compile_deps),
+                    ?pass(erlt_to_erl1),
                     ?pass(collect_erl1_compile_deps),
                     ?pass(output_compile_deps)
                 ];
@@ -209,13 +209,13 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_exception),
-                    ?pass(erl2_message),
-                    ?pass(erl2_module_record),
-                    ?pass(erl2_lint),
-                    ?pass(erl2_expand),
-                    ?pass(erl2_typecheck),
-                    ?pass(erl2_to_erl1),
+                    ?pass(erlt_exception),
+                    ?pass(erlt_message),
+                    ?pass(erlt_module_record),
+                    ?pass(erlt_lint),
+                    ?pass(erlt_expand),
+                    ?pass(erlt_typecheck),
+                    ?pass(erlt_to_erl1),
                     ?pass(transform_module),
                     ?pass(compile_erl1_forms),
                     ?pass(maybe_save_binary)
@@ -228,14 +228,14 @@ do_file(File, Options0) ->
                     ?pass(parse_module),
                     ?pass(check_parse_errors),
                     ?pass(extract_options),
-                    ?pass(erl2_exception),
-                    ?pass(erl2_message),
-                    ?pass(erl2_module_record),
-                    ?pass(erl2_lint),
-                    ?pass(erl2_expand),
+                    ?pass(erlt_exception),
+                    ?pass(erlt_message),
+                    ?pass(erlt_module_record),
+                    ?pass(erlt_lint),
+                    ?pass(erlt_expand),
                     {iff, 'B', {src_listing, "B"}},
-                    {unless, 'P', {unless, 'E', ?pass(erl2_typecheck)}},
-                    ?pass(erl2_to_erl1),
+                    {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
+                    ?pass(erlt_to_erl1),
                     ?pass(transform_module),
                     ?pass(compile_erl1_forms),
                     ?pass(maybe_save_binary)
@@ -435,7 +435,7 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
 check_parse_errors(Forms, St0) ->
     % NOTE: not checking for parse_errors for erl1 -- in order to precisely follow erlc
     % behavior
-    case is_lang_erl2(St0) of
+    case is_lang_erlt(St0) of
         true ->
             do_check_parse_errors(Forms, St0);
         false ->
@@ -446,11 +446,11 @@ do_check_parse_errors(Forms, St0) ->
     % in normal Erlang compilation lexer, parser, and epp errors are reported by
     % erl_lint.erl which is run as one of the later passes inside compile_erl1_forms()
     %
-    % under erl2 stricter compilation model we no longer allow lexer & parser errors to
-    % slip through, because we need valid forms to be able to run erl2 to erl1
-    % translator and the erl2 typechecker
+    % under erlt stricter compilation model we no longer allow lexer & parser errors to
+    % slip through, because we need valid forms to be able to run erlt to erl1
+    % translator and the erlt typechecker
     %
-    % under erl2 stricter compilation model we no longer allow epp errors,
+    % under erlt stricter compilation model we no longer allow epp errors,
     % e.g. includes that are not found at the dependency scan stage. For
     % example, adding originally missing include later may result in a
     % different compile order, not including transitive dependencies, or a
@@ -830,7 +830,7 @@ werror(#compile{options = Opts, warnings = Ws}) ->
 %% messages_per_file([{File,[Message]}]) -> [{File,[Message]}]
 messages_per_file(Ms) ->
     T = lists:sort([{File, M} || {File, Messages} <- Ms, M <- Messages]),
-    PrioMs = [erl2_scan, erl2_epp, erl2_parse],
+    PrioMs = [erlt_scan, erlt_epp, erlt_parse],
     {Prio0, Rest} =
         lists:mapfoldl(
             fun (M, A) ->
@@ -957,19 +957,19 @@ remove_file(Code, St) ->
     {ok, Code, St}.
 
 parse_module(Forms0, St0) ->
-    % try parsing as erl2 first
-    Res = parse_module(Forms0, St0, _EppMod2 = erl2_epp),
+    % try parsing as erlt first
+    Res = parse_module(Forms0, St0, _EppMod2 = erlt_epp),
     case Res of
         {ok, _Forms1, St1} ->
-            case is_lang_erl2(St1) of
+            case is_lang_erlt(St1) of
                 true ->
-                    % this is erl2, we guessed it right => returning
+                    % this is erlt, we guessed it right => returning
                     Res;
                 false ->
                     % this is erl1, reparsing it as erl1
                     %
                     % NOTE, XXX: this is a temporary solution; it is unnecessarily expensive and only works for as long
-                    % as erl2 syntax is an extension of erl1 syntax, which may not be true in the future
+                    % as erlt syntax is an extension of erl1 syntax, which may not be true in the future
                     parse_module(Forms0, St0, _EppMod1 = epp)
             end;
         % error
@@ -996,55 +996,55 @@ parse_module(_Code, St0, EppMod) ->
             end
     end.
 
-erl2_module_record(Code, St) ->
-    case is_lang_erl2(St) of
+erlt_module_record(Code, St) ->
+    case is_lang_erlt(St) of
         true ->
-            Code1 = erl2_module_record:parse_transform(Code, St#compile.options),
+            Code1 = erlt_module_record:parse_transform(Code, St#compile.options),
             {ok, Code1, St};
         false ->
             {ok, Code, St}
     end.
 
-erl2_exception(Code, St) ->
-    case is_lang_erl2(St) of
+erlt_exception(Code, St) ->
+    case is_lang_erlt(St) of
         true ->
-            Code1 = erl2_exception:parse_transform(Code, St#compile.options),
+            Code1 = erlt_exception:parse_transform(Code, St#compile.options),
             {ok, Code1, St};
         false ->
             {ok, Code, St}
     end.
 
-erl2_message(Code, St) ->
-    case is_lang_erl2(St) of
+erlt_message(Code, St) ->
+    case is_lang_erlt(St) of
         true ->
-            Code1 = erl2_message:parse_transform(Code, St#compile.options),
+            Code1 = erlt_message:parse_transform(Code, St#compile.options),
             {ok, Code1, St};
         false ->
             {ok, Code, St}
     end.
 
-erl2_expand(Code, St) ->
-    case is_lang_erl2(St) of
+erlt_expand(Code, St) ->
+    case is_lang_erlt(St) of
         true ->
-            Code1 = erl2_expand:module(Code, St#compile.options),
+            Code1 = erlt_expand:module(Code, St#compile.options),
             {ok, Code1, St};
         false ->
             {ok, Code, St}
     end.
 
-erl2_lint(Code, St) ->
+erlt_lint(Code, St) ->
     case lists:member(get_lang(St), [dt, st, ffi]) of
         true ->
-            do_erl2_lint(Code, St);
+            do_erlt_lint(Code, St);
         false ->
             {ok, Code, St}
     end.
 
-do_erl2_lint(Code, St) ->
+do_erlt_lint(Code, St) ->
     %% suppress some warnings in standard compiler because we have already
     %% warned about them in our custom lint pass.
     Opts = [nowarn_unused_type | St#compile.options],
-    case erl2_lint:module(Code, St#compile.ifile, Opts) of
+    case erlt_lint:module(Code, St#compile.ifile, Opts) of
         {ok, Ws} ->
             {ok, Code, St#compile{warnings = St#compile.warnings ++ Ws}};
         {error, Es, Ws} ->
@@ -1175,8 +1175,8 @@ transform_module(Code0, #compile{options = Opt} = St) ->
             foldl_transform(Ts, Code, St)
     end.
 
-is_lang_erl2(St) ->
-    member(erl2, St#compile.lang).
+is_lang_erlt(St) ->
+    member(erl2, St#compile.lang) orelse member(erlt, St#compile.lang).
 
 is_lang_ffi(St) ->
     member(ffi, St#compile.lang).
@@ -1194,39 +1194,39 @@ get_lang(St) ->
         2 -> lists:nth(2, lists:usort(St#compile.lang))
     end.
 
-collect_erl2_compile_deps(Forms, St0) ->
-    case is_lang_erl2(St0) of
+collect_erlt_compile_deps(Forms, St0) ->
+    case is_lang_erlt(St0) of
         true ->
-            do_collect_erl2_compile_deps(Forms, St0);
+            do_collect_erlt_compile_deps(Forms, St0);
         false ->
             {ok, Forms, St0}
     end.
 
-do_collect_erl2_compile_deps(Forms, St0) ->
-    Deps = get_erl2_deps_from_forms(Forms, St0) ++ get_erl2_typed_deps(Forms, St0),
-    %io:format("erl2 deps: ~p~n", [Deps]),
+do_collect_erlt_compile_deps(Forms, St0) ->
+    Deps = get_erlt_deps_from_forms(Forms, St0) ++ get_erlt_typed_deps(Forms, St0),
+    %io:format("erlt deps: ~p~n", [Deps]),
 
     St1 = append_compile_deps(Deps, St0),
     {ok, Forms, St1}.
 
-get_erl2_typed_deps(Forms, St0) ->
+get_erlt_typed_deps(Forms, St0) ->
     RawDeps =
         case {is_lang_st(St0), is_lang_ffi(St0)} of
-            {true, _} -> erl2_deps:st_deps(Forms);
-            {_, true} -> erl2_deps:ffi_deps(Forms);
+            {true, _} -> erlt_deps:st_deps(Forms);
+            {_, true} -> erlt_deps:ffi_deps(Forms);
             {_, _} -> []
         end,
     F = St0#compile.ifile,
     [resolve_module_dependency(type_checking, {F, L}, M, St0) || {L, M} <- RawDeps].
 
 % TODO: remove code duplication between this and get_erl1_deps_from_forms()
-get_erl2_deps_from_forms(Forms, St0) ->
-    get_erl2_deps_from_forms(Forms, St0, _File = St0#compile.ifile, _Acc = []).
+get_erlt_deps_from_forms(Forms, St0) ->
+    get_erlt_deps_from_forms(Forms, St0, _File = St0#compile.ifile, _Acc = []).
 
-get_erl2_deps_from_forms([], _St, _File, Acc) ->
+get_erlt_deps_from_forms([], _St, _File, Acc) ->
     % NOTE: returning in the order they were present in the file
     lists:reverse(Acc);
-get_erl2_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
+get_erlt_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
     % Remove "./" in front of the dependency filename.
     NewFile = remove_dot_slash(NewFile0),
 
@@ -1234,33 +1234,33 @@ get_erl2_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File
     %
     % NOTE: not adding the file to the list of dependencies, because it will be added
     % during get_erl1_deps_from_forms() pass
-    get_erl2_deps_from_forms(Rest, St, NewFile, Acc);
-get_erl2_deps_from_forms([{attribute, Line, Name, Value} | Rest], St, File, Acc) ->
-    Deps = get_erl2_deps_from_attr(File, Line, Name, Value, St),
-    get_erl2_deps_from_forms(Rest, St, File, Deps ++ Acc);
-get_erl2_deps_from_forms([_ | Rest], St, File, Acc) ->
-    get_erl2_deps_from_forms(Rest, St, File, Acc).
+    get_erlt_deps_from_forms(Rest, St, NewFile, Acc);
+get_erlt_deps_from_forms([{attribute, Line, Name, Value} | Rest], St, File, Acc) ->
+    Deps = get_erlt_deps_from_attr(File, Line, Name, Value, St),
+    get_erlt_deps_from_forms(Rest, St, File, Deps ++ Acc);
+get_erlt_deps_from_forms([_ | Rest], St, File, Acc) ->
+    get_erlt_deps_from_forms(Rest, St, File, Acc).
 
-get_erl2_deps_from_attr(File, Line, Name, Value, St) ->
+get_erlt_deps_from_attr(File, Line, Name, Value, St) ->
     Loc = {File, Line},
     case Name of
         depends_on ->
-            % erl2 feature for specifying dependencies explicitly
-            get_erl2_deps_from_depends_on(Loc, Value, St);
+            % erlt feature for specifying dependencies explicitly
+            get_erlt_deps_from_depends_on(Loc, Value, St);
         _ ->
             []
     end.
 
 % TODO: validate -depends_on([...]) properly
-get_erl2_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
-    [get_erl2_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
+get_erlt_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
+    [get_erlt_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
 
-get_erl2_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
+get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
     resolve_module_dependency(depends_on, Loc, Mod, St).
 
-erl2_typecheck(Code, St) ->
+erlt_typecheck(Code, St) ->
     case
-        {is_lang_erl2(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)}
+        {is_lang_erlt(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)}
     of
         {true, true} ->
             run_sterlang(St),
@@ -1277,8 +1277,8 @@ run_sterlang(St) ->
     CodeETF = erlang:term_to_binary(Code1),
     ok = file:write_file(EtfFile, CodeETF),
 
-    Erl2c = escript:script_name(),
-    BinDir = filename:dirname(Erl2c),
+    Erltc = escript:script_name(),
+    BinDir = filename:dirname(Erltc),
     SterlangNative = filename:join(BinDir, "sterlang"),
     SterlangJar = filename:join(BinDir, "sterlang.jar"),
     IFile = filename:absname(St#compile.ifile),
@@ -1322,16 +1322,16 @@ run_sterlang(St) ->
             throw({error, St#compile{errors = [Error]}})
     end.
 
-erl2_to_erl1(Code, St) ->
-    case is_lang_erl2(St) of
+erlt_to_erl1(Code, St) ->
+    case is_lang_erlt(St) of
         true ->
-            do_erl2_to_erl1(Code, St);
+            do_erlt_to_erl1(Code, St);
         false ->
             {ok, Code, St}
     end.
 
-do_erl2_to_erl1(Code, St) ->
-    foldl_transform([erl2_enum, erl2_dots, erl2_caret], Code, St).
+do_erlt_to_erl1(Code, St) ->
+    foldl_transform([erlt_enum, erlt_dots, erlt_caret], Code, St).
 
 foldl_transform([T | Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),
@@ -1481,7 +1481,7 @@ format_message(F, P, [{none, Mod, E} | Es], Opts) ->
 format_message(F, P, [{Loc, Mod, E} | Es], Opts) ->
     StartLoc = erl_anno:location(Loc),
     EndLoc =
-        case erl2_parse:get_end_location(Loc) of
+        case erlt_parse:get_end_location(Loc) of
             undefined -> StartLoc;
             Loc2 -> Loc2
         end,
@@ -1516,7 +1516,7 @@ list_errors(F, [{{{_, _} = StartLoc, {_, _} = EndLoc}, Mod, E} | Es], Opts) ->
 list_errors(F, [{Loc, Mod, E} | Es], Opts) ->
     StartLoc = erl_anno:location(Loc),
     EndLoc =
-        case erl2_parse:get_end_location(Loc) of
+        case erlt_parse:get_end_location(Loc) of
             undefined -> StartLoc;
             Loc2 -> Loc2
         end,
@@ -1713,7 +1713,7 @@ src_listing(Ext, Code, St) ->
 
 do_src_listing(Lf, Fs) ->
     Opts = [lists:keyfind(encoding, 1, io:getopts(Lf))],
-    foreach(fun (F) -> io:put_chars(Lf, [erl2_pp:form(F, Opts), "\n"]) end, Fs).
+    foreach(fun (F) -> io:put_chars(Lf, [erlt_pp:form(F, Opts), "\n"]) end, Fs).
 
 listing(Ext, Code, St0) ->
     St = St0#compile{encoding = none},
@@ -1770,7 +1770,7 @@ normalize_for_typecheck(Forms, Ffi) ->
             false -> Forms;
             true -> [F || F <- Forms, not is_fun_form(F)]
         end,
-    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
+    [erlt_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(Line) when is_integer(Line) ->
@@ -1782,7 +1782,7 @@ normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
 normalize_loc(As) when is_list(As) ->
     Start = loc(erl_anno:location(As)),
     End =
-        case erl2_parse:get_end_location(As) of
+        case erlt_parse:get_end_location(As) of
             undefined -> Start;
             Loc -> loc(Loc)
         end,

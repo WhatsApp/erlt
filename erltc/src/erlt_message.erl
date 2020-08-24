@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erl2_message).
+-module(erlt_message).
 
 -export([parse_transform/2]).
 

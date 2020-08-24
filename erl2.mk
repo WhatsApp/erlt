@@ -18,11 +18,11 @@ ROOT := $(dir $(THIS_MAKEFILE))
 
 ERLBUILD := $(ROOT)/erlbuild/bin/erlbuild
 
-# NOTE: erl2c can compile both erl2 and erl1
-ERLBUILD_ERLC := $(ROOT)/erl2c/bin/erl2c
+# NOTE: erltc can compile both erlt and erl1
+ERLBUILD_ERLC := $(ROOT)/erltc/bin/erltc
 
 
-DEPS += erlbuild/src erl2c/src
+DEPS += erlbuild/src erltc/src
 
 
 include $(ROOT)/erlbuild/erlbuild.mk

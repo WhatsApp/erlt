@@ -48,7 +48,7 @@
 %%
 %% Must watch using × \327, very close to x \170.
 
--module(erl2_scan).
+-module(erlt_scan).
 
 %%% External exports
 

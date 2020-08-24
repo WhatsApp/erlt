@@ -1,5 +1,4 @@
-%% Copyright Ericsson AB 1996-2020. All Rights Reserved.
-%% Copyright (c) 2020 Facebook, Inc. and its affiliates.
+%% Copyright (c) Facebook, Inc. and its affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -13,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(erl2_dots).
+-module(erlt_module_record).
 
 %% The skeleton for this module is erl_id_trans.
 
@@ -24,24 +23,89 @@
 
 -export([parse_transform/2]).
 
--record(context, {
+%% The terminology:
+%% MR - module record
+%% RecordTag - the runtime tag for a module record
+%% Module Record Form - corresponding (desugared) Erlang Form `-record(...).`
+%% An example:
+%% -module(ma_mod01).
+%% -record(?MODULE:r1, {field1, field2}).
+%% In this example:
+%% MR: r1
+%% RecordTag:
+%% 'ma_mod01:r1'
+%% Module Record AST:
+%% `-record('ma_mod01:r1', {field1, field2}).`
+
+-record(module_record_context, {
+    %% The name of the current module
     module :: atom(),
-    namespace :: atom()
+    %% The map Module -> (map ModuleRecord -> RecordTag) (including the current module).
+    module_record_tags :: map(),
+    % The map Module -> [RecordForm]
+    remote_module_record_forms :: map()
 }).
 
-parse_transform(Forms, _Options) ->
-    Context = init_context(Forms),
-    forms(Forms, Context).
+parse_transform(Forms0, _Options) ->
+    %% unfolds runtime names of the records
+    Forms1 = desugar_module_record_attribute(Forms0),
+    ModuleRecords =
+        [{MR, RecordTag} || {attribute, _Line, module_record, {MR, RecordTag}} <- Forms1],
+    ModuleRecordUsages =
+        collect(Forms1, fun collect_record_usage/1),
+    %% Optimization: if there is nothing to transform, there is no need to transform.
+    case {ModuleRecords, ModuleRecordUsages} of
+        {[], []} ->
+            Forms1;
+        _ ->
+            do_parse_transform(Forms1, ModuleRecords, ModuleRecordUsages)
+    end.
 
-init_context(Forms) ->
-    [Module] = [M || {attribute, _, module, M} <- Forms],
-    Namespace = erl2_parse:concat_dotted(erl2_parse:dotted_butlast(Module)),
-    #context{
-        module = Module,
-        namespace = list_to_atom(Namespace)
-    }.
+%% Unfolds
+%% -record(module:mr, fields)
+%% into
+%% -module_record(mr, 'module:mr').
+%% -record('module:mr', fields).
+desugar_module_record_attribute([
+    {attribute, Line, record, {{module_record, _Line3, Module, ModuleRecordName}, Fields}}
+    | T
+]) ->
+    RecordTag = list_to_atom(
+        lists:append([atom_to_list(Module), ":", atom_to_list(ModuleRecordName)])
+    ),
+    ModuleRecordAttr = {attribute, Line, module_record, {ModuleRecordName, RecordTag}},
+    RecordAttr = {attribute, Line, record, {RecordTag, Fields}},
+    [ModuleRecordAttr, RecordAttr | desugar_module_record_attribute(T)];
+desugar_module_record_attribute([H | T]) ->
+    [H | desugar_module_record_attribute(T)];
+desugar_module_record_attribute([]) ->
+    [].
+
+do_parse_transform(Forms, ModuleRecords, ModuleRecordUsages) ->
+    %% Collecting the context.
+    %% TODO: check that there are no clashes between records.
+    Context = init_module_record_context(Forms, ModuleRecords, ModuleRecordUsages),
+    %% Unfolding all invocations #M:MR -> RecordTag
+    Forms1 = forms(Forms, Context),
+    RecordForms = maps:from_list([{N, R} || R = {attribute, _, record, {N, _}} <- Forms1]),
+    %% For each `-module_record({mr, tag}).`
+    %% adding the synthetic attribute:
+    %% -module_record_def({tag, module_record_form}).
+    Forms2 = lists:flatmap(
+        fun (Form) -> inject_module_record_forms(Form, RecordForms) end,
+        Forms1
+    ),
+    %% For each remote module which module records are used,
+    %% inject all -record(record_tag, ...) forms for module records.
+    Forms3 = lists:flatmap(
+        fun (Form) -> inject_remote_module_record_forms(Form, Context) end,
+        Forms2
+    ),
+    %% Done.
+    Forms3.
 
 %% forms(Fs,Context) -> lists:map(fun (F) -> form(F) end, Fs).
+%% The skeleton of this function is from erl_id_trans.
 
 forms([F0 | Fs0], Context) ->
     F1 = form(F0, Context),
@@ -231,12 +295,17 @@ pattern({map_field_exact, Line, K, V}, Context) ->
     Ke = expr(K, Context),
     Ve = pattern(V, Context),
     {map_field_exact, Line, Ke, Ve};
-pattern({record, Line, Name, Pfs0}, Context) ->
+%%pattern({struct,Line,Tag,Ps0}) ->
+%%    Ps1 = pattern_list(Ps0),
+%%    {struct,Line,Tag,Ps1};
+pattern({record, Line, Name0, Pfs0}, Context) ->
     Pfs1 = pattern_fields(Pfs0, Context),
-    {record, Line, Name, Pfs1};
-pattern({record_index, Line, Name, Field0}, Context) ->
+    Name1 = resolve_record(Name0, Line, Context),
+    {record, Line, Name1, Pfs1};
+pattern({record_index, Line, Name0, Field0}, Context) ->
     Field1 = pattern(Field0, Context),
-    {record_index, Line, Name, Field1};
+    Name1 = resolve_record(Name0, Line, Context),
+    {record_index, Line, Name1, Field1};
 pattern({record_field, Line, Rec0, Name, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
     Field1 = expr(Field0, Context),
@@ -250,16 +319,6 @@ pattern({bin, Line, Fs}, Context) ->
     {bin, Line, Fs2};
 pattern({op, Line, Op, A}, _Context) ->
     {op, Line, Op, A};
-pattern({op, Line, '.', L, R} = D, Context) ->
-    %% fold dotted atoms
-    D1 = erl2_parse:fold_dots(D),
-    case D1 of
-        {atom, _, _} ->
-            D1;
-        % leave to linter
-        _ ->
-            {op, Line, '.', expr(L, Context), expr(R, Context)}
-    end;
 pattern({op, Line, Op, L, R}, _Context) ->
     {op, Line, Op, L, R}.
 
@@ -377,16 +436,19 @@ gexpr({cons, Line, H0, T0}, Context) ->
 gexpr({tuple, Line, Es0}, Context) ->
     Es1 = gexpr_list(Es0, Context),
     {tuple, Line, Es1};
-gexpr({record_index, Line, Name, Field0}, Context) ->
+gexpr({record_index, Line, Name0, Field0}, Context) ->
     Field1 = gexpr(Field0, Context),
-    {record_index, Line, Name, Field1};
-gexpr({record_field, Line, Rec0, Name, Field0}, Context) ->
+    Name1 = resolve_record(Name0, Line, Context),
+    {record_index, Line, Name1, Field1};
+gexpr({record_field, Line, Rec0, Name0, Field0}, Context) ->
     Rec1 = gexpr(Rec0, Context),
+    Name1 = resolve_record(Name0, Line, Context),
     Field1 = gexpr(Field0, Context),
-    {record_field, Line, Rec1, Name, Field1};
-gexpr({record, Line, Name, Inits0}, Context) ->
+    {record_field, Line, Rec1, Name1, Field1};
+gexpr({record, Line, Name0, Inits0}, Context) ->
     Inits1 = grecord_inits(Inits0, Context),
-    {record, Line, Name, Inits1};
+    Name1 = resolve_record(Name0, Line, Context),
+    {record, Line, Name1, Inits1};
 gexpr({call, Line, {atom, La, F}, As0}, Context) ->
     case erl_internal:guard_bif(F, length(As0)) of
         true ->
@@ -423,22 +485,6 @@ gexpr({op, Line, Op, L0, R0}, Context) when Op =:= 'andalso'; Op =:= 'orelse' ->
     %They see the same variables
     R1 = gexpr(R0, Context),
     {op, Line, Op, L1, R1};
-gexpr({op, Line, '.', L, R} = D, Context) ->
-    %% fold dotted atoms
-    D1 = erl2_parse:fold_dots(D),
-    case D1 of
-        {atom, _, _} ->
-            D1;
-        _ ->
-            %% dereference X.a - assume X is a map
-            expr(
-                {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [
-                    R,
-                    L
-                ]},
-                Context
-            )
-    end;
 gexpr({op, Line, Op, L0, R0}, Context) ->
     case
         erl_internal:arith_op(Op, 2) or
@@ -530,20 +576,24 @@ expr({map_field_exact, Line, K, V}, Context) ->
 %%expr({struct,Line,Tag,Es0}) ->
 %%    Es1 = pattern_list(Es0),
 %%    {struct,Line,Tag,Es1};
-expr({record_index, Line, Name, Field0}, Context) ->
+expr({record_index, Line, Name0, Field0}, Context) ->
     Field1 = expr(Field0, Context),
-    {record_index, Line, Name, Field1};
-expr({record, Line, Name, Inits0}, Context) ->
+    Name1 = resolve_record(Name0, Line, Context),
+    {record_index, Line, Name1, Field1};
+expr({record, Line, Name0, Inits0}, Context) ->
     Inits1 = record_inits(Inits0, Context),
-    {record, Line, Name, Inits1};
-expr({record_field, Line, Rec0, Name, Field0}, Context) ->
+    Name1 = resolve_record(Name0, Line, Context),
+    {record, Line, Name1, Inits1};
+expr({record_field, Line, Rec0, Name0, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
+    Name1 = resolve_record(Name0, Line, Context),
     Field1 = expr(Field0, Context),
-    {record_field, Line, Rec1, Name, Field1};
-expr({record, Line, Rec0, Name, Upds0}, Context) ->
+    {record_field, Line, Rec1, Name1, Field1};
+expr({record, Line, Rec0, Name0, Upds0}, Context) ->
     Rec1 = expr(Rec0, Context),
+    Name1 = resolve_record(Name0, Line, Context),
     Upds1 = record_updates(Upds0, Context),
-    {record, Line, Rec1, Name, Upds1};
+    {record, Line, Rec1, Name1, Upds1};
 expr({record_field, Line, Rec0, Field0}, Context) ->
     Rec1 = expr(Rec0, Context),
     Field1 = expr(Field0, Context),
@@ -592,20 +642,6 @@ expr({'fun', Line, Body}, Context) ->
     end;
 expr({named_fun, Loc, Name, Cs}, Context) ->
     {named_fun, Loc, Name, fun_clauses(Cs, Context)};
-expr({call, Line, {op, _L, '.', {atom, _, ''}, {op, L1, '.', M0, F0}}, As0}, Context) ->
-    %% '.'-prefixed call does not get namespace expanded
-    expr({call, Line, {remote, L1, M0, F0}, As0}, Context);
-expr({call, Line, {op, L1, '.', M0, F0}, As0}, Context) ->
-    %% dot as module/function separator in call
-    case M0 of
-        {atom, _, _} ->
-            Prefix = Context#context.namespace,
-            %% non-dotted module name gets expanded to local namespace
-            M1 = {op, L1, '.', {atom, L1, Prefix}, M0},
-            expr({call, Line, {remote, L1, M1, F0}, As0}, Context);
-        _ ->
-            expr({call, Line, {remote, L1, M0, F0}, As0}, Context)
-    end;
 expr({call, Line, F0, As0}, Context) ->
     %% N.B. If F an atom then call to local function or BIF, if F a
     %% remote structure (see below) then call to other module,
@@ -627,22 +663,6 @@ expr({bin, Line, Fs}, Context) ->
 expr({op, Line, Op, A0}, Context) ->
     A1 = expr(A0, Context),
     {op, Line, Op, A1};
-expr({op, Line, '.', L, R} = D, Context) ->
-    %% fold dotted atoms
-    D1 = erl2_parse:fold_dots(D),
-    case D1 of
-        {atom, _, _} ->
-            D1;
-        _ ->
-            %% dereference X.a - assume X is a map
-            expr(
-                {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [
-                    R,
-                    L
-                ]},
-                Context
-            )
-    end;
 expr({op, Line, Op, L0, R0}, Context) ->
     L1 = expr(L0, Context),
     %They see the same variables
@@ -755,16 +775,6 @@ type({integer, Line, I}, _Context) ->
 type({op, Line, Op, T}, Context) ->
     T1 = type(T, Context),
     {op, Line, Op, T1};
-type({op, Line, '.', L, R} = D, Context) ->
-    %% fold dotted atoms
-    D1 = erl2_parse:fold_dots(D),
-    case D1 of
-        {atom, _, _} ->
-            D1;
-        % leave to linter
-        _ ->
-            {op, Line, '.', expr(L, Context), expr(R, Context)}
-    end;
 type({op, Line, Op, L, R}, Context) ->
     L1 = type(L, Context),
     R1 = type(R, Context),
@@ -787,25 +797,20 @@ type({type, Line, map, any}, _Context) ->
 type({type, Line, map, Ps}, Context) ->
     Ps1 = map_pair_types(Ps, Context),
     {type, Line, map, Ps1};
-type({type, Line, record, [Name | Fs]}, Context) ->
+type({type, Line, record, [{atom, La, N} | Fs]}, Context) ->
     Fs1 = field_types(Fs, Context),
-    %% minor change to not die on qualified records
+    Name = resolve_record(N, La, Context),
+    {type, Line, record, [{atom, La, Name} | Fs1]};
+type(
+    {type, Line, record, [QR = {qualified_record, {atom, _, _}, {atom, _, _}} | Fs]},
+    Context
+) ->
+    Fs1 = field_types(Fs, Context),
+    Name = resolve_record(QR, Line, Context),
     {type, Line, record, [Name | Fs1]};
 type({remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As]}, Context) ->
     As1 = type_list(As, Context),
     {remote_type, Line, [{atom, Lm, M}, {atom, Ln, N}, As1]};
-type({remote_type, Line, [M, {atom, Ln, N}, As]}, Context) ->
-    As1 = type_list(As, Context),
-    %% fold dotted atoms
-    M1 =
-        case erl2_parse:fold_dots(M) of
-            {atom, La, A} ->
-                {atom, La, A};
-            % leave to linter
-            {op, Ld, '.', L, R} ->
-                {op, Ld, '.', L, R}
-        end,
-    {remote_type, Line, [M1, {atom, Ln, N}, As1]};
 type({type, Line, tuple, any}, _Context) ->
     {type, Line, tuple, any};
 type({type, Line, tuple, Ts}, Context) ->
@@ -818,25 +823,10 @@ type({var, Line, V}, _Context) ->
     {var, Line, V};
 type({user_type, Line, N, As}, Context) ->
     As1 = type_list(As, Context),
-    case erl2_parse:split_dotted(N) of
-        [_] ->
-            % plain local type name
-            {user_type, Line, N, As1};
-        [M, T] ->
-            %% remote type with plain module part - expand to local namespace
-            Prefix = erl2_parse:split_dotted(Context#context.namespace),
-            M1 = list_to_atom(erl2_parse:concat_dotted(Prefix ++ [M])),
-            T1 = list_to_atom(T),
-            {remote_type, Line, [{atom, Line, M1}, {atom, Line, T1}, As]};
-        Ns ->
-            %% remote type with dotted module part - uses global namespace
-            M = list_to_atom(erl2_parse:concat_dotted(lists:droplast(Ns))),
-            T = list_to_atom(lists:last(Ns)),
-            {remote_type, Line, [{atom, Line, M}, {atom, Line, T}, As]}
-    end;
-type({type, Line, N0, As}, Context) ->
+    {user_type, Line, N, As1};
+type({type, Line, N, As}, Context) ->
     As1 = type_list(As, Context),
-    {type, Line, N0, As1}.
+    {type, Line, N, As1}.
 
 map_pair_types([{type, Line, map_field_assoc, [K, V]} | Ps], Context) ->
     K1 = type(K, Context),
@@ -860,3 +850,136 @@ type_list([T | Ts], Context) ->
     [T1 | type_list(Ts, Context)];
 type_list([], _Context) ->
     [].
+
+%% Implementation of Module Records
+
+%% Traverse Forms, applying F to each sub-expression.
+%% Returns the list of "truthy" outputs of F(SubExpr).
+collect(Forms, F) ->
+    do_collect(Forms, F, []).
+
+%% Relies on the fact that Forms are composed **only** of:
+%% lists, tuples, atoms, numbers and binaries.
+do_collect([], _F, Acc) ->
+    Acc;
+do_collect([H | T], F, Acc) ->
+    Acc1 = do_collect(T, F, Acc),
+    do_collect(H, F, Acc1);
+do_collect(X, _F, Acc) when is_number(X) ->
+    Acc;
+do_collect(X, _F, Acc) when is_atom(X) ->
+    Acc;
+do_collect(X, _F, Acc) when is_bitstring(X) ->
+    Acc;
+do_collect(X, F, Acc) when is_tuple(X) ->
+    L = tuple_to_list(X),
+    Acc1 = do_collect(L, F, Acc),
+    case F(X) of
+        false -> Acc1;
+        Delta -> [Delta | Acc1]
+    end.
+
+collect_record_usage({qualified_record, Module, Record}) when
+    is_atom(Module), is_atom(Record)
+->
+    {Module, Record};
+collect_record_usage({qualified_record, {atom, _, Module}, {atom, _, Record}}) when
+    is_atom(Module), is_atom(Record)
+->
+    {Module, Record};
+collect_record_usage(_) ->
+    false.
+
+init_module_record_context(Forms, ModuleRecords, ModuleRecordUsages) ->
+    [Module] = [M || {attribute, _, module, M} <- Forms],
+    UsedModules = lists:usort(lists:map(fun ({M, _}) -> M end, ModuleRecordUsages)),
+    RemoteInfo = [{M, load_remote_module_records(M)} || M <- UsedModules, M =/= Module],
+    RemoteMapping = [
+        {M, maps:from_list(RemoteModuleRecords)}
+        || {M, {RemoteModuleRecords, _}} <- RemoteInfo
+    ],
+    RemoteRecordDefs = [{GR, RecordDefs} || {GR, {_, RecordDefs}} <- RemoteInfo],
+    LocalMapping = {Module, maps:from_list(ModuleRecords)},
+    #module_record_context{
+        module = Module,
+        module_record_tags = maps:from_list([LocalMapping | RemoteMapping]),
+        remote_module_record_forms = maps:from_list(RemoteRecordDefs)
+    }.
+
+load_remote_module_records(Module) ->
+    case code:module_status(Module) of
+        not_loaded -> ok;
+        loaded -> ok
+    end,
+    case code:is_loaded(Module) of
+        {file, _} ->
+            ok;
+        false ->
+            %% TODO: error message if GM cannot be found
+            {module, _} = code:load_file(Module),
+            ok
+    end,
+    Attributes = Module:module_info(attributes),
+    ModuleRecords = [{MR, RecordTag} || {module_record, [{MR, RecordTag}]} <- Attributes],
+    ModuleRecordDefs = [RecordDef || {module_record_def, [{_, RecordDef}]} <- Attributes],
+    {ModuleRecords, ModuleRecordDefs}.
+
+resolve_qualified_record(M, MR, ModuleRecordTags) ->
+    %% TODO case maps:find(MA, QualifiedRecords) of error ->
+    %% error message that MA is not defined
+    {ok, ModuleRecords} = maps:find(M, ModuleRecordTags),
+    %% TODO case maps:find(MR, ModuleRecords) of error ->
+    %% error message that MR is not defined
+    {ok, RecordTag} = maps:find(MR, ModuleRecords),
+    RecordTag.
+
+%% Used from expressions
+resolve_record({qualified_record, M, MR}, _Line, Context) when is_atom(M), is_atom(MR) ->
+    ModuleRecordTags = Context#module_record_context.module_record_tags,
+    resolve_qualified_record(M, MR, ModuleRecordTags);
+%% Used from types
+resolve_record({qualified_record, {atom, Line, M}, {atom, _, MR}}, _Line, Context) when
+    is_atom(M), is_atom(MR)
+->
+    ModuleRecordTags = Context#module_record_context.module_record_tags,
+    Resolved = resolve_qualified_record(M, MR, ModuleRecordTags),
+    {atom, Line, Resolved};
+resolve_record(Name, _Line, Context) when is_atom(Name) ->
+    CurrentModule = Context#module_record_context.module,
+    ModuleRecordTags = Context#module_record_context.module_record_tags,
+    LocalModuleRecordTags = maps:get(CurrentModule, ModuleRecordTags),
+    case maps:find(Name, LocalModuleRecordTags) of
+        {ok, RecordTag} -> RecordTag;
+        error -> Name
+    end.
+
+%% Injects Forms for the module records defined in the current module
+%% inside generated -module_record_def attibute
+inject_module_record_forms(
+    ModuleRecord = {attribute, Line, module_record, {_, RecordTag}},
+    RecordForms
+) ->
+    %% TODO case maps:find(GR,Records) of error -> error message that GR is not defined.
+    {ok, RecordForm} = maps:find(RecordTag, RecordForms),
+    ModuleRecordDef = {attribute, Line, module_record_def, {RecordTag, RecordForm}},
+    [ModuleRecord, ModuleRecordDef];
+inject_module_record_forms(Form, _Records) ->
+    [Form].
+
+%% Injects forms for module records from other modules directly into the current module.
+%% It injects the forms right after the -module() attribute.
+%% Modules are sorted by name, and the order of record definitions (inside each remote module)
+%% is preserved.
+inject_remote_module_record_forms(ModuleAttribute = {attribute, _Line, module, _}, Context) ->
+    RemoteModuleRecordForms = Context#module_record_context.remote_module_record_forms,
+    RemoteModules = lists:usort(maps:keys(RemoteModuleRecordForms)),
+    InjectedRecordForms = lists:flatmap(
+        fun (Module) ->
+            {ok, RecordDefs} = maps:find(Module, RemoteModuleRecordForms),
+            RecordDefs
+        end,
+        RemoteModules
+    ),
+    [ModuleAttribute | InjectedRecordForms];
+inject_remote_module_record_forms(Form, _Records) ->
+    [Form].

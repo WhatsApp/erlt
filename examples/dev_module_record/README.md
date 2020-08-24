@@ -13,7 +13,7 @@
 - ma_mod10 - testing that #MA:MR{...} works in guards.
 - ma_mod11 - testing that #MA:MR{...} works in record updates.
 - ma_mod12 - testing that -record(?MODULE:r, ...) will produce global record 'm:r'.
-- ma_mod13 - testing that all above cases work for the case `record(?MODULE:r, ...)` and usages of `#r` 
+- ma_mod13 - testing that all above cases work for the case `record(?MODULE:r, ...)` and usages of `#r`
 (without `?MODULE:`) in the current module.
 
 The first level of testing is just to check that these modules are compiled.
@@ -33,7 +33,7 @@ XXX_global shows the desired result of the parse transformation.
 So, the second level of testing is to run
 
 ```
-erl2c {other necessary flags} -P ma_modN.erl
+erltc {other necessary flags} -P ma_modN.erl
 ```
 
 and observe that the internals of XXX_local and XXX_global are the same in ma_modN.P.

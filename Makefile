@@ -1,4 +1,4 @@
-DIRS := erlbuild/src erl2c/src
+DIRS := erlbuild/src erltc/src
 
 
 include dir.mk
