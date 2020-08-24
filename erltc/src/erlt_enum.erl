@@ -288,8 +288,10 @@ clause({clause, Line, P0, G0, B0}, Context) ->
     B1 = exprs(B0, Context),
     % Splice additional tests into every guard
     G2 =
-        case G1 of
-            [] ->
+        case {AdditionalTests, G1} of
+            {[], _} ->
+                G1;
+            {_, []} ->
                 [AdditionalTests];
             _ ->
                 [AdditionalTests ++ Guard || Guard <- G1]
