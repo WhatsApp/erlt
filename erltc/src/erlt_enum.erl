@@ -29,7 +29,7 @@
     enum = [],
     enums = #{},
     enum_erl1_representations :: #{atom() => enum_er1_representation()},
-    enum_erl1_types = #{} :: #{atom() => Type :: term()}
+    enum_erl1_types :: #{atom() => Type :: term()}
 }).
 
 -define(ENUM_COOKIE, 969696).
