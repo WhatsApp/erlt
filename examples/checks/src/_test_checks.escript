@@ -15,17 +15,17 @@
 %% limitations under the License.
 
 
-main([Erl2File]) ->
+main([ErltFile]) ->
     {ok, Cwd} = file:get_cwd(),
     BinDir = filename:dirname(filename:dirname(filename:dirname(Cwd))),
-    Erl2c = filename:join(BinDir, "erl2c/bin/erl2c"),
-    ExpOutputFile = Erl2File ++ ".exp",
+    Erltc = filename:join(BinDir, "erltc/bin/erltc"),
+    ExpOutputFile = ErltFile ++ ".exp",
     {ok, ExpOutput} =  file:read_file(ExpOutputFile),
     ExpOutPutStr = binary_to_list(ExpOutput),
-    {ExitCode, ActualOutPut} = eunit_lib:command(Erl2c ++ " +brief " ++ Erl2File),
+    {ExitCode, ActualOutPut} = eunit_lib:command(Erltc ++ " +brief " ++ ErltFile),
     case ExitCode of
         0 ->
-            io:format("`erl2c ~s` has not failed", [Erl2File]),
+            io:format("`erltc ~s` has not failed", [ErltFile]),
             halt(2);
         _ ->
             ok
@@ -33,11 +33,11 @@ main([Erl2File]) ->
     case string:str(ActualOutPut, ExpOutPutStr) of
         0 ->
             io:format(
-                "`erl2c ~s`~nExpected to see an output with:~n  ~s~nGot:~n  ~s",
-                [Erl2File, ExpOutPutStr, ActualOutPut]
+                "`erltc ~s`~nExpected to see an output with:~n  ~s~nGot:~n  ~s",
+                [ErltFile, ExpOutPutStr, ActualOutPut]
             ),
             halt(2);
         _ ->
-            io:format("OK (~s)~n", [Erl2File]),
+            io:format("OK (~s)~n", [ErltFile]),
             ok
     end.
