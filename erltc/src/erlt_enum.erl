@@ -973,7 +973,21 @@ expr_enum({enum, Line, E0, A0, Es0}, Context) ->
     {Expression, _Guard} = compile_enum(M, E1, A1, Es1, Context),
     Expression.
 
-%% TODO: custom erl1 representation
+%% @doc Returns a pattern/expression/guard expression representing the given
+%% enum constructor applied to the given arguments. The return type depends on
+%% the type of the arguments (e.g., given patterns, this function returns a
+%% pattern).
+compile_enum(Module, Enum, Constructor, Arguments, Context) ->
+    Representation = get_enum_erl1_representation(Module, Enum, Constructor, length(Arguments), Context),
+    Rewrite =
+        fun
+            ({constructor_argument, _, Index}) -> lists:nth(Index, Arguments);
+            (Node) -> Node
+        end,
+    % TODO: handle duplicate arguments. This will replicate expressions if the representation refers
+    %   to an argument multiple times. Correct way is to bind the expression to a name and replicate the name.
+    erl2_util:rewrite(Rewrite, Representation).
+
 type_enum({type, _Line, enum, {remote, _, M0, E0}, A0, Ts0}, Context) ->
     %% remote enum reference Mod.Enum.Constructor{...}
     M1 = type(M0, Context),
@@ -996,21 +1010,6 @@ type_enum({type, Line, enum, {atom, _, _} = A, Ts}, Context) ->
     E = {atom, Line, Context#context.enum},
     M = {atom, Line, Context#context.module},
     enum_erl1_type(M, E, A1, Ts1, Context).
-
-%% @doc Returns a pattern/expression/guard expression representing the given
-%% enum constructor applied to the given arguments. The return type depends on
-%% the type of the arguments (e.g., given patterns, this function returns a
-%% pattern).
-compile_enum(Module, Enum, Constructor, Arguments, Context) ->
-    Representation = get_enum_erl1_representation(Module, Enum, Constructor, length(Arguments), Context),
-    Rewrite =
-        fun
-            ({constructor_argument, _, Index}) -> lists:nth(Index, Arguments);
-            (Node) -> Node
-        end,
-    % TODO: handle duplicate arguments. This will replicate expressions if the representation refers
-    %   to an argument multiple times. Correct way is to bind the expression to a name and replicate the name.
-    erl2_util:rewrite(Rewrite, Representation).
 
 %% @doc Returns the erl1 type for the given enum constructor.
 enum_erl1_type(Module, Enum, Constructor, TypeArguments, Context) ->
