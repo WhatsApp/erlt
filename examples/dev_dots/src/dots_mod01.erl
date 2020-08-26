@@ -80,5 +80,5 @@ v(X) ->
     try lists:reverse(X) of
         {ok, abc.d.ef.g} -> ok
     catch
-        exit: foo.bar.baz : Trace -> {caught, Trace}
+        exit, foo.bar.baz, Trace -> {caught, Trace}
     end.
