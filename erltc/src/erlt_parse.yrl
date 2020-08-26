@@ -108,8 +108,7 @@ dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
 
-spec_fun ->                       dot_atom : fold_dots('$1').
-spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
+spec_fun -> dot_atom : fold_dots('$1').
 
 typed_attr_val -> expr ',' typed_record_fields : {typed_record, ?anno('$1','$3'), '$1', '$3'}.
 typed_attr_val -> expr '::' top_type           : {type_def, ?anno('$1','$3'), '$1', '$3'}.
@@ -719,9 +718,7 @@ Erlang code.
 -type type_attr() :: 'opaque' | 'type' | 'enum'.
 -type af_function_spec() ::
     {'attribute', anno(), spec_attr(),
-        {{function_name(), arity()}, af_function_type_list()}} |
-    {'attribute', anno(), 'spec',
-        {{module(), function_name(), arity()}, af_function_type_list()}}.
+        {{function_name(), arity()}, af_function_type_list()}}.
 
 -type spec_attr() :: 'callback' | 'spec'.
 -type af_wild_attribute() :: {'attribute', anno(), atom(), any()}.
@@ -1222,14 +1219,8 @@ build_typed_attribute({atom, Aa, Attr}, _) ->
         _ -> ret_err(Aa, "bad attribute")
     end.
 
-build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
-    NewSpecFun =
-        case SpecFun of
-            {atom, _, Fun} ->
-                {Fun, find_arity_from_specs(TypeSpecs)};
-            {{atom, _, Mod}, {atom, _, Fun}} ->
-                {Mod, Fun, find_arity_from_specs(TypeSpecs)}
-        end,
+build_type_spec({Kind, Aa}, {type_spec, _TA, {atom, _, Fun}, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
+    NewSpecFun = {Fun, find_arity_from_specs(TypeSpecs)},
     {attribute, Aa, Kind, {NewSpecFun, TypeSpecs}}.
 
 find_arity_from_specs([Spec | _]) ->

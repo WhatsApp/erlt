@@ -92,9 +92,6 @@ form({attribute, Line, opaque, {N, T, Vs}}, Context) ->
 form({attribute, Line, spec, {{N, A}, FTs}}, Context) ->
     FTs1 = function_type_list(FTs, Context),
     {attribute, Line, spec, {{N, A}, FTs1}};
-form({attribute, Line, spec, {{M, N, A}, FTs}}, Context) ->
-    FTs1 = function_type_list(FTs, Context),
-    {attribute, Line, spec, {{M, N, A}, FTs1}};
 form({attribute, Line, callback, {{N, A}, FTs}}, Context) ->
     FTs1 = function_type_list(FTs, Context),
     {attribute, Line, callback, {{N, A}, FTs1}};

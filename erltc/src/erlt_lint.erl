@@ -506,7 +506,7 @@ format_error({ill_defined_optional_callbacks, Behaviour}) ->
     io_lib:format("behaviour ~w optional callback functions erroneously defined", [
         Behaviour
     ]);
-format_error({behaviour_info, {_M, F, A}}) ->
+format_error({behaviour_info, {F, A}}) ->
     io_lib:format(
         "cannot define callback attibute for ~tw/~w when "
         "behaviour_info is defined",
@@ -514,7 +514,7 @@ format_error({behaviour_info, {_M, F, A}}) ->
     );
 format_error({redefine_optional_callback, {F, A}}) ->
     io_lib:format("optional callback ~tw/~w duplicated", [F, A]);
-format_error({undefined_callback, {_M, F, A}}) ->
+format_error({undefined_callback, {F, A}}) ->
     io_lib:format("callback ~tw/~w is undefined", [F, A]);
 %% --- types and specs ---
 format_error({singleton_typevar, Name}) ->
@@ -554,14 +554,10 @@ format_error(old_abstract_code) ->
         "having typed record fields cannot be compiled",
         []
     );
-format_error({redefine_spec, {M, F, A}}) ->
-    io_lib:format("spec for ~tw:~tw/~w already defined", [M, F, A]);
 format_error({redefine_spec, {F, A}}) ->
     io_lib:format("spec for ~tw/~w already defined", [F, A]);
 format_error({redefine_callback, {F, A}}) ->
     io_lib:format("callback ~tw/~w already defined", [F, A]);
-format_error({bad_callback, {M, F, A}}) ->
-    io_lib:format("explicit module not allowed for callback ~tw:~tw/~w", [M, F, A]);
 format_error({bad_module, {M, F, A}}) ->
     io_lib:format("spec for function ~w:~tw/~w from other module", [M, F, A]);
 format_error({spec_fun_undefined, {F, A}}) ->
@@ -1558,12 +1554,10 @@ check_unused_records(Forms, St0) ->
 check_callback_information(
     #lint{callbacks = Callbacks, optional_callbacks = OptionalCbs, defined = Defined} = St0
 ) ->
-    OptFun = fun ({MFA, Line}, St) ->
-        case dict:is_key(MFA, Callbacks) of
-            true ->
-                St;
-            false ->
-                add_error(Line, {undefined_callback, MFA}, St)
+    OptFun = fun ({FA, Line}, St) ->
+        case dict:is_key(FA, Callbacks) of
+            true -> St;
+            false -> add_error(Line, {undefined_callback, FA}, St)
         end
     end,
     St1 = lists:foldl(OptFun, St0, dict:to_list(OptionalCbs)),
@@ -3823,40 +3817,20 @@ obsolete_builtin_type({Name, A}) when is_atom(Name), is_integer(A) ->
 
 %% spec_decl(Line, Fun, Types, State) -> State.
 
-spec_decl(Line, MFA0, TypeSpecs, St00 = #lint{specs = Specs, module = Mod}) ->
-    MFA =
-        case MFA0 of
-            {F, Arity} -> {Mod, F, Arity};
-            {_M, _F, Arity} -> MFA0
-        end,
-    St0 = check_module_name(element(1, MFA), Line, St00),
-    St1 = St0#lint{specs = dict:store(MFA, Line, Specs)},
-    case dict:is_key(MFA, Specs) of
-        true ->
-            add_error(Line, {redefine_spec, MFA0}, St1);
-        false ->
-            case MFA of
-                {Mod, _, _} ->
-                    check_specs(TypeSpecs, spec_wrong_arity, Arity, St1);
-                _ ->
-                    add_error(Line, {bad_module, MFA}, St1)
-            end
+spec_decl(Line, {_, Arity} = FA, TypeSpecs, St0 = #lint{specs = Specs}) ->
+    St1 = St0#lint{specs = dict:store(FA, Line, Specs)},
+    case dict:is_key(FA, Specs) of
+        true -> add_error(Line, {redefine_spec, FA}, St1);
+        false -> check_specs(TypeSpecs, spec_wrong_arity, Arity, St1)
     end.
 
 %% callback_decl(Line, Fun, Types, State) -> State.
 
-callback_decl(Line, MFA0, TypeSpecs, St0 = #lint{callbacks = Callbacks, module = Mod}) ->
-    case MFA0 of
-        {M, _F, _A} ->
-            St1 = check_module_name(M, Line, St0),
-            add_error(Line, {bad_callback, MFA0}, St1);
-        {F, Arity} ->
-            MFA = {Mod, F, Arity},
-            St1 = St0#lint{callbacks = dict:store(MFA, Line, Callbacks)},
-            case dict:is_key(MFA, Callbacks) of
-                true -> add_error(Line, {redefine_callback, MFA0}, St1);
-                false -> check_specs(TypeSpecs, callback_wrong_arity, Arity, St1)
-            end
+callback_decl(Line, {_, Arity} = FA, TypeSpecs, St0 = #lint{callbacks = Callbacks}) ->
+    St1 = St0#lint{callbacks = dict:store(FA, Line, Callbacks)},
+    case dict:is_key(FA, Callbacks) of
+        true -> add_error(Line, {redefine_callback, FA}, St1);
+        false -> check_specs(TypeSpecs, callback_wrong_arity, Arity, St1)
     end.
 
 %% optional_callbacks(Line, FAs, State) -> State.
@@ -3876,14 +3850,13 @@ optional_callbacks(Line, Term, St0) ->
 
 optional_cbs(_Line, [], St) ->
     St;
-optional_cbs(Line, [{F, A} | FAs], St0) ->
-    #lint{optional_callbacks = OptionalCbs, module = Mod} = St0,
-    MFA = {Mod, F, A},
-    St1 = St0#lint{optional_callbacks = dict:store(MFA, Line, OptionalCbs)},
+optional_cbs(Line, [FA | FAs], St0) ->
+    #lint{optional_callbacks = OptionalCbs} = St0,
+    St1 = St0#lint{optional_callbacks = dict:store(FA, Line, OptionalCbs)},
     St2 =
-        case dict:is_key(MFA, OptionalCbs) of
+        case dict:is_key(FA, OptionalCbs) of
             true ->
-                add_error(Line, {redefine_optional_callback, {F, A}}, St1);
+                add_error(Line, {redefine_optional_callback, FA}, St1);
             false ->
                 St1
         end,
@@ -3946,16 +3919,12 @@ nowarn() ->
     A1 = erl_anno:set_generated(true, A0),
     erl_anno:set_file("", A1).
 
-check_specs_without_function(#lint{module = Mod, defined = Funcs, specs = Specs} = St) ->
-    Fun = fun
-        ({M, F, A}, Line, AccSt) when M =:= Mod ->
-            FA = {F, A},
-            case gb_sets:is_element(FA, Funcs) of
-                true -> AccSt;
-                false -> add_error(Line, {spec_fun_undefined, FA}, AccSt)
-            end;
-        ({_M, _F, _A}, _Line, AccSt) ->
-            AccSt
+check_specs_without_function(#lint{defined = Funcs, specs = Specs} = St) ->
+    Fun = fun (FA, Line, AccSt) ->
+        case gb_sets:is_element(FA, Funcs) of
+            true -> AccSt;
+            false -> add_error(Line, {spec_fun_undefined, FA}, AccSt)
+        end
     end,
     dict:fold(Fun, St, Specs).
 
@@ -3974,8 +3943,7 @@ check_functions_without_spec(Forms, St0) ->
             end
     end.
 
-add_missing_spec_warnings(Forms, St0, Type) ->
-    Specs = [{F, A} || {_M, F, A} <- dict:fetch_keys(St0#lint.specs)],
+add_missing_spec_warnings(Forms, #lint{specs = Specs} = St0, Type) ->
     %% functions + line numbers for which we should warn
     Warns =
         case Type of

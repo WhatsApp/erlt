@@ -436,16 +436,9 @@ tuple_type([], _) ->
 tuple_type(Ts, F) ->
     {seq, ${, $}, [$,], ltypes(Ts, F, 0)}.
 
-specattr(SpecKind, {FuncSpec, TypeSpecs}) ->
-    Func =
-        case FuncSpec of
-            {F, _A} ->
-                {atom, F};
-            {M, F, _A} ->
-                [{atom, M}, $:, {atom, F}]
-        end,
+specattr(SpecKind, {{F, _A}, TypeSpecs}) ->
     {first, leaf(lists:concat(["-", SpecKind, " "])),
-        {list, [{first, Func, spec_clauses(TypeSpecs)}]}}.
+        {list, [{first, {atom, F}, spec_clauses(TypeSpecs)}]}}.
 
 spec_clauses(TypeSpecs) ->
     {prefer_nl, [$;], [sig_type(T) || T <- TypeSpecs]}.
