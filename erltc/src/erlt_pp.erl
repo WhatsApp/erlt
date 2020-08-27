@@ -384,6 +384,8 @@ ltype({type, _, 'fun', [{type, _, any}, _]} = FunType, _) ->
     [fun_type(['fun', $(], FunType), $)];
 ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _) ->
     [fun_type(['fun', $(], FunType), $)];
+ltype({type, _Line, enum, Tag, Vars}, _) ->
+    {first, lexpr(Tag, options(none)), tuple_type(Vars, fun ltype/2)};
 ltype({type, Line, T, Ts}, _) ->
     simple_type({atom, Line, T}, Ts);
 ltype({user_type, Line, T, Ts}, _) ->

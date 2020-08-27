@@ -18,12 +18,8 @@
 %%
 %% %CopyrightEnd%
 
-%% Purpose: Run the Erlang2 compiler.
+%% Purpose: Run the ErlT compiler.
 -module(erlt_compile).
-
-% TODO: this prevents unused function warnings for compiler passes
--compile(export_all).
--compile(nowarn_export_all).
 
 %% High-level interface.
 %%
@@ -32,6 +28,7 @@
 %% erltc interface.
 -export([compile/2]).
 
+-export([format_error/1]).
 %
 % NOTE: code below is based on copy-pasted pieces from erlang/lib/compiler-7.3/src/compile.erl (R21)
 %
@@ -83,10 +80,13 @@
     %    [erl2 | erlt, ffi]         -- ffi erlt
     %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
     lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
-    original_forms
+    original_forms,
+    global_defs = #{}
 }).
 
 -define(pass(P), {P, fun P/2}).
+
+-define(DefFileSuffix, ".defs").
 
 % called by erltc.erl
 %
@@ -166,15 +166,8 @@ do_file(File, Options0) ->
                     ?pass(transform_module)
                     || member(makedep2_run_parse_transforms, Options)
                 ],
+                base_passes() ++
                 [
-                    ?pass(parse_module),
-                    ?pass(check_parse_errors),
-                    ?pass(extract_options),
-                    ?pass(erlt_exception),
-                    ?pass(erlt_message),
-                    ?pass(erlt_module_record),
-                    ?pass(erlt_lint),
-                    ?pass(erlt_expand),
                     ?pass(collect_erlt_compile_deps),
                     ?pass(erlt_to_erl1)
                 ] ++
@@ -186,15 +179,9 @@ do_file(File, Options0) ->
             build_scan ->
                 % build scan phase -- generate depfiles; later, we are also going to
                 % extract declarations from parsed module, and cache the parse tree
+                base_passes() ++
                 [
-                    ?pass(parse_module),
-                    ?pass(check_parse_errors),
-                    ?pass(extract_options),
-                    ?pass(erlt_exception),
-                    ?pass(erlt_message),
-                    ?pass(erlt_module_record),
-                    ?pass(erlt_lint),
-                    ?pass(erlt_expand),
+                    ?pass(output_declarations),
                     ?pass(collect_erlt_compile_deps),
                     ?pass(erlt_to_erl1),
                     ?pass(collect_erl1_compile_deps),
@@ -206,14 +193,10 @@ do_file(File, Options0) ->
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
-                    ?pass(parse_module),
-                    ?pass(check_parse_errors),
-                    ?pass(extract_options),
-                    ?pass(erlt_exception),
-                    ?pass(erlt_message),
-                    ?pass(erlt_module_record),
-                    ?pass(erlt_lint),
-                    ?pass(erlt_expand),
+                    ?pass(collect_definitions)
+                ] ++
+                base_passes() ++
+                [
                     ?pass(erlt_typecheck),
                     ?pass(erlt_to_erl1),
                     ?pass(transform_module),
@@ -225,14 +208,10 @@ do_file(File, Options0) ->
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
-                    ?pass(parse_module),
-                    ?pass(check_parse_errors),
-                    ?pass(extract_options),
-                    ?pass(erlt_exception),
-                    ?pass(erlt_message),
-                    ?pass(erlt_module_record),
-                    ?pass(erlt_lint),
-                    ?pass(erlt_expand),
+                    ?pass(collect_definitions)
+                ] ++
+                base_passes() ++
+                [
                     {iff, 'B', {src_listing, "B"}},
                     {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
                     ?pass(erlt_to_erl1),
@@ -256,40 +235,45 @@ do_file(File, Options0) ->
     },
     internal_comp(Passes1, _Code0 = unused, File, _Suffix = ".erl", St0).
 
+base_passes() ->
+    [?pass(parse_module),
+    ?pass(check_parse_errors),
+    ?pass(extract_options),
+    ?pass(erlt_exception),
+    ?pass(erlt_message),
+    ?pass(erlt_module_record),
+    ?pass(erlt_lint),
+    ?pass(erlt_expand)].
+
+
 is_makedep2_mode(Options) ->
     member(makedep2, Options) andalso member(makedep, Options).
 
+keep_relative_paths(Deps) ->
+    [X || X = {_, Filename} <- Deps, filename:pathtype(Filename) =:= relative].
+
+exclude_beam_dependencies(Deps) ->
+    [X || X = {file, _} <- Deps].
+
+optionally(true, F, X) -> F(X);
+optionally(false, _F, X) -> X.
+
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
 output_compile_deps(_Forms, St) ->
-    IsM2Compat = member(makedep2_compat, St#compile.options),
+    OptionSet = fun(Option) -> member(Option, St#compile.options) end,
+    IsM2Compat = OptionSet(makedep2_compat),
     TargetBeam = shorten_filename(St#compile.ofile),
 
     Deps1 = St#compile.compile_deps,
-    Deps2 =
-        case member(makedep2_only_relative, St#compile.options) of
-            false ->
-                Deps1;
-            true ->
-                % keep dependencies with relative file paths
-                [X || X = {_, Filename} <- Deps1, filename:pathtype(Filename) =:= relative]
-        end,
-    Deps =
-        case IsM2Compat of
-            false ->
-                Deps2;
-            true ->
-                % excluding .beam dependencies in -M compatibility mode (which
-                % should result in output identical to -M)
-                [X || X = {file, _} <- Deps2]
-        end,
-
+    Deps2 = optionally(OptionSet(makedep), fun keep_relative_paths/1, Deps1),
+    Deps = optionally(IsM2Compat, fun exclude_beam_dependencies/1, Deps2),
     DepsFilenames = deps_to_unique_filenames(Deps),
     RuleCode = gen_make_rule_compat(TargetBeam, DepsFilenames),
 
     PhonyRulesCode =
-        case proplists:get_value(makedep_phony, St#compile.options) of
+        case OptionSet(makedep_phony) of
             false -> "";
-            _ -> [gen_make_phony_rule(St#compile.ifile, X) || X <- DepsFilenames]
+            true -> [gen_make_phony_rule(St#compile.ifile, X) || X <- DepsFilenames]
         end,
 
     % adding the rule to rebuild the depfile itself
@@ -633,10 +617,6 @@ module_to_beam(Mod) ->
 
 module_to_specs_beam(Mod) ->
     atom_to_list(Mod) ++ ".specs.beam".
-
-%% "mod.specs" -> "mod"
-unspecs(Str) ->
-    string:slice(Str, 0, length(Str) - 6).
 
 fix_compile_options(Options, CompileMode) ->
     %% forcing to use nowarn_unused_record,
@@ -995,6 +975,21 @@ parse_module(_Code, St0, EppMod) ->
                     {error, St#compile{errors = Es ++ St#compile.errors}}
             end
     end.
+
+collect_definitions(Code, #compile{build_dir=BuildDir, global_defs = Defs0} = St) ->
+    AllDefFiles = filelib:wildcard(filename:join(BuildDir, "*" ++ ?DefFileSuffix)),
+    Defs =
+        lists:foldl(
+            fun(File, Acc) ->
+                {ok, Forms} = erlt_epp:parse_file(File, []),
+                erlt_defs:add_definitions(Forms, Acc)
+            end, Defs0, AllDefFiles),
+    {ok, Code, St#compile{global_defs=Defs}}.
+
+output_declarations(Code, #compile{build_dir=BuildDir, base=Base} = St) ->
+    Output =[erlt_pp:form(Form) || {attribute,_,_,_} = Form <- Code],
+    file:write_file(filename:join(BuildDir, Base++?DefFileSuffix), Output),
+    {ok, Code, St}.
 
 erlt_module_record(Code, St) ->
     case is_lang_erlt(St) of
