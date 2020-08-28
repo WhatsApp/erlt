@@ -17,7 +17,6 @@
 %% limitations under the License.
 %%
 %% %CopyrightEnd%
-
 %% Purpose: Run the ErlT compiler.
 -module(erlt_compile).
 
@@ -25,10 +24,12 @@
 %%
 %% TODO: implement forms() and potentialy other APIs supported by the standard compile.erl
 -export([file/2]).
+
 %% erltc interface.
 -export([compile/2]).
 
 -export([format_error/1]).
+
 %
 % NOTE: code below is based on copy-pasted pieces from erlang/lib/compiler-7.3/src/compile.erl (R21)
 %
@@ -49,12 +50,15 @@
 -define(STDERR, standard_error).
 
 -type err_warn_info() :: tuple().
+
 -type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
+
 % type of compile-time .erl dependency
 %
 % here, 'file' typically means file included by -include or -include_lib, but
 % in theory, it could be something injected by a parse transform
 -type compile_dep_type() :: file | behavior | parse_transform | core_transform.
+
 -type compile_dep() :: {compile_dep_type(), file:filename()}.
 
 % NOTE: slimmed down version of the original compile state
@@ -128,7 +132,6 @@ file(File, Options) ->
 
 do_file(File, Options0) ->
     %io:format("Options: ~tp\n", [Options0]),
-
     BuildPhase =
         case keyfind(build_phase, 1, Options0) of
             {build_phase, Phase} -> Phase;
@@ -162,15 +165,12 @@ do_file(File, Options0) ->
                 % allows to establish the order in which .erl files should be compiled
                 %
                 % this mode exists mainly for testing the new dependency scanner
-                TransformPasses = [
-                    ?pass(transform_module)
-                    || member(makedep2_run_parse_transforms, Options)
-                ],
+                TransformPasses = [?pass(transform_module) || member(makedep2_run_parse_transforms, Options)],
                 base_passes() ++
-                [
-                    ?pass(collect_erlt_compile_deps),
-                    ?pass(erlt_to_erl1)
-                ] ++
+                    [
+                        ?pass(collect_erlt_compile_deps),
+                        ?pass(erlt_to_erl1)
+                    ] ++
                     TransformPasses ++
                     [
                         ?pass(collect_erl1_compile_deps),
@@ -180,13 +180,13 @@ do_file(File, Options0) ->
                 % build scan phase -- generate depfiles; later, we are also going to
                 % extract declarations from parsed module, and cache the parse tree
                 base_passes() ++
-                [
-                    ?pass(output_declarations),
-                    ?pass(collect_erlt_compile_deps),
-                    ?pass(erlt_to_erl1),
-                    ?pass(collect_erl1_compile_deps),
-                    ?pass(output_compile_deps)
-                ];
+                    [
+                        ?pass(output_declarations),
+                        ?pass(collect_erlt_compile_deps),
+                        ?pass(erlt_to_erl1),
+                        ?pass(collect_erl1_compile_deps),
+                        ?pass(output_compile_deps)
+                    ];
             build_compile ->
                 % build compile phase -- later, we are going to use this for optimizing
                 % compilation by recovering information cached during the "scan" phase
@@ -195,14 +195,14 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(collect_definitions)
                 ] ++
-                base_passes() ++
-                [
-                    ?pass(erlt_typecheck),
-                    ?pass(erlt_to_erl1),
-                    ?pass(transform_module),
-                    ?pass(compile_erl1_forms),
-                    ?pass(maybe_save_binary)
-                ];
+                    base_passes() ++
+                    [
+                        ?pass(erlt_typecheck),
+                        ?pass(erlt_to_erl1),
+                        ?pass(transform_module),
+                        ?pass(compile_erl1_forms),
+                        ?pass(maybe_save_binary)
+                    ];
             compile ->
                 % normal .erl compilation -- for erl1, should be identical to erlc behavior
                 [
@@ -210,15 +210,15 @@ do_file(File, Options0) ->
                     ?pass(remove_file),
                     ?pass(collect_definitions)
                 ] ++
-                base_passes() ++
-                [
-                    {iff, 'B', {src_listing, "B"}},
-                    {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
-                    ?pass(erlt_to_erl1),
-                    ?pass(transform_module),
-                    ?pass(compile_erl1_forms),
-                    ?pass(maybe_save_binary)
-                ]
+                    base_passes() ++
+                    [
+                        {iff, 'B', {src_listing, "B"}},
+                        {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
+                        ?pass(erlt_to_erl1),
+                        ?pass(transform_module),
+                        ?pass(compile_erl1_forms),
+                        ?pass(maybe_save_binary)
+                    ]
         end,
     Passes1 = select_passes(Passes, Options),
 
@@ -236,15 +236,16 @@ do_file(File, Options0) ->
     internal_comp(Passes1, _Code0 = unused, File, _Suffix = ".erl", St0).
 
 base_passes() ->
-    [?pass(parse_module),
-    ?pass(check_parse_errors),
-    ?pass(extract_options),
-    ?pass(erlt_exception),
-    ?pass(erlt_message),
-    ?pass(erlt_module_record),
-    ?pass(erlt_lint),
-    ?pass(erlt_expand)].
-
+    [
+        ?pass(parse_module),
+        ?pass(check_parse_errors),
+        ?pass(extract_options),
+        ?pass(erlt_exception),
+        ?pass(erlt_message),
+        ?pass(erlt_module_record),
+        ?pass(erlt_lint),
+        ?pass(erlt_expand)
+    ].
 
 is_makedep2_mode(Options) ->
     member(makedep2, Options) andalso member(makedep, Options).
@@ -260,7 +261,7 @@ optionally(false, _F, X) -> X.
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
 output_compile_deps(_Forms, St) ->
-    OptionSet = fun(Option) -> member(Option, St#compile.options) end,
+    OptionSet = fun (Option) -> member(Option, St#compile.options) end,
     IsM2Compat = OptionSet(makedep2_compat),
     TargetBeam = shorten_filename(St#compile.ofile),
 
@@ -407,12 +408,13 @@ gen_make_phony_rule(Ifile, Filename) ->
 gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     % .d makefile depends only on includes and parse_transforms (not behaviors
     % and other stuff)
-    Deps1 = [
-        X
-        || X = {DepType, _} <- Deps0,
-           DepType =:= file orelse
-               (DepType =:= parse_transform andalso IncludeParseTransforms)
-    ],
+    Deps1 =
+        [
+            X
+            || X = {DepType, _} <- Deps0,
+               DepType =:= file orelse
+                   (DepType =:= parse_transform andalso IncludeParseTransforms)
+        ],
     DepsFilenames = deps_to_unique_filenames(Deps1),
     gen_make_rule(Target, DepsFilenames).
 
@@ -465,7 +467,6 @@ get_parse_errors([_ | Rest], File, Acc) ->
 collect_erl1_compile_deps(Forms, St0) ->
     Deps = get_erl1_deps_from_forms(Forms, St0),
     %io:format("erl1 deps: ~p~n", [Deps]),
-
     St1 = append_compile_deps(Deps, St0),
     {ok, Forms, St1}.
 
@@ -650,13 +651,11 @@ compile_erl1_forms(Forms, St0) ->
             specs -> [{attribute, L, module, M} || {attribute, L, module, M} <- Forms];
             _ -> Forms
         end,
-    Ret =
-        compile:noenv_forms(Forms1, [
-            return_errors,
-            return_warnings,
-            {source, St0#compile.filename}
-            | Opts0
-        ]),
+    Ret = compile:noenv_forms(Forms1, [
+        return_errors,
+        return_warnings,
+        {source, St0#compile.filename} | Opts0
+    ]),
 
     % TODO: handling of ok is not exhaustive, there could also be {ok, ModuleName, Warnings}
     case Ret of
@@ -779,10 +778,8 @@ comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St)
             Warn = messages_per_file(Warn0),
             report_warnings(St#compile{warnings = Warn}),
             Ret1 =
-                case
-                    member(binary, Opts) andalso
-                        not member(no_code_generation, Opts)
-                of
+                case member(binary, Opts) andalso
+                         not member(no_code_generation, Opts) of
                     true -> [Code];
                     false -> []
                 end,
@@ -811,20 +808,19 @@ werror(#compile{options = Opts, warnings = Ws}) ->
 messages_per_file(Ms) ->
     T = lists:sort([{File, M} || {File, Messages} <- Ms, M <- Messages]),
     PrioMs = [erlt_scan, erlt_epp, erlt_parse],
-    {Prio0, Rest} =
-        lists:mapfoldl(
-            fun (M, A) ->
-                lists:partition(
-                    fun
-                        ({_, {_, Mod, _}}) -> Mod =:= M;
-                        (_) -> false
-                    end,
-                    A
-                )
-            end,
-            T,
-            PrioMs
-        ),
+    {Prio0, Rest} = lists:mapfoldl(
+        fun (M, A) ->
+            lists:partition(
+                fun
+                    ({_, {_, Mod, _}}) -> Mod =:= M;
+                    (_) -> false
+                end,
+                A
+            )
+        end,
+        T,
+        PrioMs
+    ),
     Prio = lists:sort(
         fun ({_, {L1, _, _}}, {_, {L2, _, _}}) -> L1 =< L2 end,
         lists:append(Prio0)
@@ -896,7 +892,6 @@ select_cond(Flag, ShouldBe, Pass, Ps, Opts) ->
 %% select_list_passes([Pass], Opts) -> {done,[Pass]} | {not_done,[Pass]}
 %%  Evaluate all conditions having to do with listings in the list of
 %%  passes.
-
 select_list_passes(Ps, Opts) ->
     select_list_passes_1(Ps, Opts, []).
 
@@ -976,19 +971,21 @@ parse_module(_Code, St0, EppMod) ->
             end
     end.
 
-collect_definitions(Code, #compile{build_dir=BuildDir, global_defs = Defs0} = St) ->
+collect_definitions(Code, #compile{build_dir = BuildDir, global_defs = Defs0} = St) ->
     AllDefFiles = filelib:wildcard(filename:join(BuildDir, "*" ++ ?DefFileSuffix)),
-    Defs =
-        lists:foldl(
-            fun(File, Acc) ->
-                {ok, Forms} = erlt_epp:parse_file(File, []),
-                erlt_defs:add_definitions(Forms, Acc)
-            end, Defs0, AllDefFiles),
-    {ok, Code, St#compile{global_defs=Defs}}.
+    Defs = lists:foldl(
+        fun (File, Acc) ->
+            {ok, Forms} = erlt_epp:parse_file(File, []),
+            erlt_defs:add_definitions(Forms, Acc)
+        end,
+        Defs0,
+        AllDefFiles
+    ),
+    {ok, Code, St#compile{global_defs = Defs}}.
 
-output_declarations(Code, #compile{build_dir=BuildDir, base=Base} = St) ->
-    Output =[erlt_pp:form(Form) || {attribute,_,_,_} = Form <- Code],
-    file:write_file(filename:join(BuildDir, Base++?DefFileSuffix), Output),
+output_declarations(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
+    Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
+    file:write_file(filename:join(BuildDir, Base ++ ?DefFileSuffix), Output),
     {ok, Code, St}.
 
 erlt_module_record(Code, St) ->
@@ -1074,16 +1071,15 @@ do_parse_module(
             true -> filename:basename(SourceName0);
             false -> SourceName0
         end,
-    R =
-        EppMod:parse_file(File, [
-            {includes, [".", Dir | inc_paths(Opts)]},
-            {source_name, SourceName},
-            {macros, pre_defs(Opts)},
-            {default_encoding, DefEncoding},
-            {location, {1, 1}},
-            {scan_opts, [text]},
-            extra
-        ]),
+    R = EppMod:parse_file(File, [
+        {includes, [".", Dir | inc_paths(Opts)]},
+        {source_name, SourceName},
+        {macros, pre_defs(Opts)},
+        {default_encoding, DefEncoding},
+        {location, {1, 1}},
+        {scan_opts, [text]},
+        extra
+    ]),
     case R of
         {ok, Forms, Extra} ->
             Encoding = proplists:get_value(encoding, Extra),
@@ -1200,7 +1196,6 @@ collect_erlt_compile_deps(Forms, St0) ->
 do_collect_erlt_compile_deps(Forms, St0) ->
     Deps = get_erlt_deps_from_forms(Forms, St0) ++ get_erlt_typed_deps(Forms, St0),
     %io:format("erlt deps: ~p~n", [Deps]),
-
     St1 = append_compile_deps(Deps, St0),
     {ok, Forms, St1}.
 
@@ -1254,9 +1249,8 @@ get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
     resolve_module_dependency(depends_on, Loc, Mod, St).
 
 erlt_typecheck(Code, St) ->
-    case
-        {is_lang_erlt(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)}
-    of
+    case {is_lang_erlt(St),
+             is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)} of
         {true, true} ->
             run_sterlang(St),
             {ok, Code, St};
@@ -1330,10 +1324,8 @@ do_erlt_to_erl1(Code, St) ->
 
 foldl_transform([T | Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),
-    case
-        code:ensure_loaded(T) =:= {module, T} andalso
-            erlang:function_exported(T, parse_transform, 2)
-    of
+    case code:ensure_loaded(T) =:= {module, T} andalso
+             erlang:function_exported(T, parse_transform, 2) of
         true ->
             Fun = fun (Code, S) ->
                 T:parse_transform(Code, S#compile.options)
@@ -1432,7 +1424,6 @@ write_binary(Name, Bin, St) ->
 
 %% report_errors(State) -> ok
 %% report_warnings(State) -> ok
-
 report_errors(#compile{options = Opts, errors = Errors}) ->
     case member(report_errors, Opts) of
         true ->
@@ -1481,14 +1472,13 @@ format_message(F, P, [{Loc, Mod, E} | Es], Opts) ->
             Loc2 -> Loc2
         end,
     Src = quote_source(F, StartLoc, EndLoc, Opts),
-    Msg =
-        io_lib:format("~ts:~ts: ~s~ts\n~ts", [
-            F,
-            fmt_pos(StartLoc),
-            P,
-            Mod:format_error(E),
-            Src
-        ]),
+    Msg = io_lib:format("~ts:~ts: ~s~ts\n~ts", [
+        F,
+        fmt_pos(StartLoc),
+        P,
+        Mod:format_error(E),
+        Src
+    ]),
     Pos =
         if
             is_integer(StartLoc) -> {StartLoc, 0};
@@ -1499,7 +1489,6 @@ format_message(_, _, [], _Opts) ->
     [].
 
 %% list_errors(File, ErrorDescriptors, Opts) -> ok
-
 list_errors(F, [{none, Mod, E} | Es], Opts) ->
     io:fwrite("~ts: ~ts\n", [F, Mod:format_error(E)]),
     list_errors(F, Es, Opts);
@@ -1608,15 +1597,13 @@ fmt_line(L, Text) ->
 line_to_txt(0) -> "";
 line_to_txt(L) -> integer_to_list(L).
 
-decorate([{Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when
-    Line =:= StartLine, EndLine =:= StartLine
-->
+decorate([{Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol)
+        when Line =:= StartLine, EndLine =:= StartLine ->
     %% start and end on same line
     S = underline(StartCol, EndCol),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
-decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when
-    Line =:= StartLine
-->
+decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol)
+        when Line =:= StartLine ->
     %% start with end on separate line
     S = underline(StartCol, string:length(Text) + 1),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
@@ -1682,7 +1669,6 @@ take_line(<<>>, Ack) ->
 %% pre_defs(Options)
 %% inc_paths(Options)
 %%  Extract the predefined macros and include paths from the option list.
-
 pre_defs([{d, M, V} | Opts]) ->
     [{M, V} | pre_defs(Opts)];
 pre_defs([{d, M} | Opts]) ->
