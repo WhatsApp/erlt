@@ -16,18 +16,15 @@
 -export([main/1]).
 
 main(["-erl", Filename, "-etf", EtfFileName]) ->
-    {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
+    Forms = parse_file(Filename),
     Lang = parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
     Forms1 = normalize_for_typecheck(Forms, Ffi),
     CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(EtfFileName),
     ok = file:write_file(EtfFileName, CodeETF);
-main(["-ast1", File]) ->
-    {ok, Forms} = epp:parse_file(File, []),
-    io:format("Forms:\n~p\n", [Forms]);
 main(["-ast2", Filename]) ->
-    {ok, Forms} = erl2_epp:parse_file(Filename, [{location, {1, 1}}, {scan_opts, [text]}]),
+    Forms = parse_file(Filename),
     Lang = parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
     Forms1 = normalize_for_typecheck(Forms, Ffi),
@@ -76,3 +73,45 @@ loc(_Other) ->
 
 is_fun_form({function, _, _, _, _}) -> true;
 is_fun_form(_) -> false.
+
+parse_file(Filename) ->
+    {ok, Data} = file:read_file(Filename),
+    Chars = unicode:characters_to_list(Data, utf8),
+    parse_chars(Chars, {1, 1}).
+
+parse_chars(Chars, Location) ->
+    case erl_scan:tokens([], Chars, Location, ['text']) of
+        {done, Result, Chars1} ->
+            case Result of
+                {ok, Tokens, Location1} ->
+                    case erl2_parse:parse_form(Tokens) of
+                        {ok, Form} ->
+                            [Form | parse_chars(Chars1, Location1)];
+                        {error, E} ->
+                            [{error, E}]
+                    end;
+                {error, E, _Location1} ->
+                    [{error, E}];
+                {eof, EndLocation} ->
+                    [{eof, EndLocation}]
+            end;
+        {more, _} ->
+            case erl_scan:tokens([], Chars ++ eof, Location, ['text']) of
+                {done, Result, _} ->
+                    case Result of
+                        {ok, Tokens = [FirstToken | _], _} ->
+                            case erl2_parse:parse_form(Tokens) of
+                                {ok, Form} ->
+                                    [Form];
+                                {error, _} ->
+                                    [{error, {erl_scan:location(FirstToken)}}]
+                            end;
+                        {error, _, _} ->
+                            [{error, {Location}}];
+                        {eof, EndLocation} ->
+                            [{eof, EndLocation}]
+                    end;
+                {more, _} ->
+                    [{error, Location}]
+            end
+    end.

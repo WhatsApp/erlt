@@ -1,7 +1,7 @@
 -module(make_escript).
 
 main([]) ->
-    Beams = ["erl2_epp.beam", "erl2_parse.beam", "erl2etf.beam"],
+    Beams = ["erl2_parse.beam", "erl2etf.beam"],
     Archive = [{filename:basename(X), read_file(X)} || X <- Beams],
     ok =
         escript:create("erl2etf", [

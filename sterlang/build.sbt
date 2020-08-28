@@ -40,7 +40,7 @@ lazy val sterlang = (project in file("."))
 inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
 val erl2etf = taskKey[Seq[File]]("Generate erl2etf command line utility")
-erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_epp.erl|erl2_parse.yrl|erl2etf.erl".r
+erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_parse.yrl|erl2etf.erl".r
 
 erl2etf := {
   val log = streams.value.log
@@ -50,9 +50,8 @@ erl2etf := {
 
   if (erl2etf.inputFileChanges.hasChanges) {
     import scala.sys.process.Process
-    log.info("building erl2etf")
     Process(Seq("erlc", "erl2_parse.yrl"), erlangSrcDir).!!
-    Process(Seq("erlc", "erl2_epp.erl", "erl2_parse.erl", "erl2etf.erl"), erlangSrcDir).!!
+    Process(Seq("erlc", "erl2_parse.erl", "erl2etf.erl"), erlangSrcDir).!!
     Process(Seq("escript", "make_escript.erl"), erlangSrcDir).!!
   }
 
