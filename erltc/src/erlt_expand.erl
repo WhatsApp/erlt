@@ -69,7 +69,7 @@ init_calltype(Forms) ->
 init_calltype_imports([{attribute, _, import, {Mod, Fs}} | T], Ctype0) ->
     true = is_atom(Mod),
     Ctype = foldl(
-        fun (FA, Acc) ->
+        fun(FA, Acc) ->
             Acc#{FA => {imported, Mod}}
         end,
         Ctype0,
@@ -103,7 +103,7 @@ typedef({TypeName, _, Args}) ->
 init_type_imports([{attribute, _, import_type, {Mod, Ts}} | T], Types0) ->
     true = is_atom(Mod),
     Types = foldl(
-        fun (TA, Acc) ->
+        fun(TA, Acc) ->
             Acc#{TA => {imported, Mod}}
         end,
         Types0,
@@ -311,7 +311,7 @@ guard_tests1([], St) ->
     {[], St}.
 
 guard_test(G0, St0) ->
-    in_guard(fun () ->
+    in_guard(fun() ->
         {G1, St1} = guard_test1(G0, St0),
         strict_record_access(G1, St1)
     end).
@@ -367,12 +367,11 @@ record_test_in_guard(Line, Term, Name, St) ->
             Fs = record_fields(Name, St),
             NLine = no_compiler_warning(Line),
             expr(
-                {call, NLine,
-                    {remote, NLine, {atom, NLine, erlang}, {atom, NLine, is_record}}, [
-                        Term,
-                        {atom, Line, Name},
-                        {integer, Line, length(Fs) + 1}
-                    ]},
+                {call, NLine, {remote, NLine, {atom, NLine, erlang}, {atom, NLine, is_record}}, [
+                    Term,
+                    {atom, Line, Name},
+                    {integer, Line, length(Fs) + 1}
+                ]},
                 St
             )
     end.
@@ -401,8 +400,11 @@ record_test_in_body(Line, Expr, Name, St0) ->
     expr(
         {block, Line, [
             {match, Line, Var, Expr},
-            {call, NLine, {remote, NLine, {atom, NLine, erlang}, {atom, NLine, is_record}},
-                [Var, {atom, Line, Name}, {integer, Line, length(Fs) + 1}]}
+            {call, NLine, {remote, NLine, {atom, NLine, erlang}, {atom, NLine, is_record}}, [
+                Var,
+                {atom, Line, Name},
+                {integer, Line, length(Fs) + 1}
+            ]}
         ]},
         St
     ).
@@ -623,7 +625,7 @@ strict_record_access(E, #exprec{strict_ra = []} = St) ->
 strict_record_access(E0, St0) ->
     #exprec{strict_ra = StrictRA, checked_ra = CheckedRA} = St0,
     {New, NC} = lists:foldl(
-        fun ({Key, _L, _R, _Sz} = A, {L, C}) ->
+        fun({Key, _L, _R, _Sz} = A, {L, C}) ->
             case lists:keymember(Key, 1, C) of
                 true -> {L, C};
                 false -> {[A | L], [A | C]}
@@ -691,7 +693,7 @@ lc_tq(Line, [{b_generate, Lg, P0, G0} | Qs0], St0) ->
     {[{b_generate, Lg, P1, G1} | Qs1], St3};
 lc_tq(Line, [F0 | Qs0], #exprec{calltype = Calltype} = St0) ->
     %% Allow record/2 and expand out as guard test.
-    IsOverriden = fun (FA) ->
+    IsOverriden = fun(FA) ->
         case Calltype of
             #{FA := local} -> true;
             #{FA := {imported, _}} -> true;
@@ -745,7 +747,7 @@ find_field(_, []) -> error.
 %%  Return a list of the field names structures.
 
 field_names(Fs) ->
-    map(fun ({record_field, _, Field, _Val}) -> Field end, Fs).
+    map(fun({record_field, _, Field, _Val}) -> Field end, Fs).
 
 %% index_expr(Line, FieldExpr, Name, Fields) -> IndexExpr.
 %%  Return an expression which evaluates to the index of a
@@ -785,8 +787,8 @@ strict_get_record_field(Line, R, {atom, _, F} = Index, Name, St0) ->
                 {'case', NLine, R, [
                     {clause, NLine, [{tuple, RLine, P}], [], [Var]},
                     {clause, NLine, [{var, NLine, '_'}], [], [
-                        {call, NLine,
-                            {remote, NLine, {atom, NLine, erlang}, {atom, NLine, error}}, [
+                        {call, NLine, {remote, NLine, {atom, NLine, erlang}, {atom, NLine, error}},
+                            [
                                 {tuple, NLine, [
                                     {atom, NLine, badrecord},
                                     {atom, NLine, Name}
@@ -802,7 +804,7 @@ strict_get_record_field(Line, R, {atom, _, F} = Index, Name, St0) ->
             {ExpR, St1} = expr(R, St0),
             %% Just to make comparison simple:
             A0 = erl_anno:new(0),
-            ExpRp = erl_parse:map_anno(fun (_A) -> A0 end, ExpR),
+            ExpRp = erl_parse:map_anno(fun(_A) -> A0 end, ExpR),
             RA = {{Name, ExpRp}, Line, ExpR, length(Fs) + 1},
             St2 = St1#exprec{strict_ra = [RA | St1#exprec.strict_ra]},
             {{call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, element}}, [
@@ -855,7 +857,7 @@ strict_record_updates([]) ->
 pattern_fields(Fs, Ms) ->
     Wildcard = record_wildcard_init(Ms),
     map(
-        fun ({record_field, L, {atom, _, F}, _}) ->
+        fun({record_field, L, {atom, _, F}, _}) ->
             case find_field(F, Ms) of
                 {ok, Match} -> Match;
                 error when Wildcard =:= none -> {var, L, '_'};
@@ -873,7 +875,7 @@ pattern_fields(Fs, Ms) ->
 record_inits(Fs, Is) ->
     WildcardInit = record_wildcard_init(Is),
     map(
-        fun ({record_field, _, {atom, _, F}, D}) ->
+        fun({record_field, _, {atom, _, F}, D}) ->
             case find_field(F, Is) of
                 {ok, Init} -> Init;
                 error when WildcardInit =:= none -> D;
@@ -956,7 +958,7 @@ record_upd_fs([], _, St) ->
 
 record_setel(R, Name, Fs, Us0) ->
     Us1 = foldl(
-        fun ({record_field, Lf, Field, Val}, Acc) ->
+        fun({record_field, Lf, Field, Val}, Acc) ->
             {integer, _, FieldIndex} = I = index_expr(Lf, Field, Name, Fs),
             [{FieldIndex, {I, Lf, Val}} | Acc]
         end,
@@ -975,7 +977,7 @@ record_setel(R, Name, Fs, Us0) ->
     {'case', Lr, R, [
         {clause, Lr, [{tuple, Lr, [{atom, Lr, Name} | Wildcards]}], [], [
             foldr(
-                fun ({I, Lf, Val}, Acc) ->
+                fun({I, Lf, Val}, Acc) ->
                     {call, Lf, {remote, Lf, {atom, Lf, erlang}, {atom, Lf, setelement}}, [
                         I,
                         Acc,
@@ -1036,7 +1038,7 @@ is_simple_val(Val) ->
 %% pattern_bin([Element], State) -> {[Element],[Variable],[UsedVar],State}.
 
 pattern_bin(Es0, St) ->
-    foldr(fun (E, Acc) -> pattern_element(E, Acc) end, {[], St}, Es0).
+    foldr(fun(E, Acc) -> pattern_element(E, Acc) end, {[], St}, Es0).
 
 pattern_element({bin_element, Line, Expr0, Size, Type}, {Es, St0}) ->
     {Expr, St1} = pattern(Expr0, St0),
@@ -1045,7 +1047,7 @@ pattern_element({bin_element, Line, Expr0, Size, Type}, {Es, St0}) ->
 %% expr_bin([Element], State) -> {[Element],State}.
 
 expr_bin(Es0, St) ->
-    foldr(fun (E, Acc) -> bin_element(E, Acc) end, {[], St}, Es0).
+    foldr(fun(E, Acc) -> bin_element(E, Acc) end, {[], St}, Es0).
 
 bin_element({bin_element, Line, Expr, Size, Type}, {Es, St0}) ->
     {Expr1, St1} = expr(Expr, St0),
@@ -1073,7 +1075,7 @@ new_var_name(St) ->
     {list_to_atom("rec" ++ integer_to_list(C)), St#exprec{vcount = C + 1}}.
 
 make_list(Ts, Line) ->
-    foldr(fun (H, T) -> {cons, Line, H, T} end, {nil, Line}, Ts).
+    foldr(fun(H, T) -> {cons, Line, H, T} end, {nil, Line}, Ts).
 
 call_error(L, R) ->
     {call, L, {remote, L, {atom, L, erlang}, {atom, L, error}}, [R]}.

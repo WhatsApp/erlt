@@ -115,7 +115,8 @@ shorten_filename(Name0) ->
     end.
 
 file(File, Options) ->
-    try do_file(File, Options)
+    try
+        do_file(File, Options)
     catch
         Class:Error:Stk ->
             io:format(
@@ -165,7 +166,10 @@ do_file(File, Options0) ->
                 % allows to establish the order in which .erl files should be compiled
                 %
                 % this mode exists mainly for testing the new dependency scanner
-                TransformPasses = [?pass(transform_module) || member(makedep2_run_parse_transforms, Options)],
+                TransformPasses = [
+                    ?pass(transform_module)
+                    || member(makedep2_run_parse_transforms, Options)
+                ],
                 base_passes() ++
                     [
                         ?pass(collect_erlt_compile_deps),
@@ -261,7 +265,7 @@ optionally(false, _F, X) -> X.
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
 output_compile_deps(_Forms, St) ->
-    OptionSet = fun (Option) -> member(Option, St#compile.options) end,
+    OptionSet = fun(Option) -> member(Option, St#compile.options) end,
     IsM2Compat = OptionSet(makedep2_compat),
     TargetBeam = shorten_filename(St#compile.ofile),
 
@@ -408,13 +412,12 @@ gen_make_phony_rule(Ifile, Filename) ->
 gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     % .d makefile depends only on includes and parse_transforms (not behaviors
     % and other stuff)
-    Deps1 =
-        [
-            X
-            || X = {DepType, _} <- Deps0,
-               DepType =:= file orelse
-                   (DepType =:= parse_transform andalso IncludeParseTransforms)
-        ],
+    Deps1 = [
+        X
+        || X = {DepType, _} <- Deps0,
+           DepType =:= file orelse
+               (DepType =:= parse_transform andalso IncludeParseTransforms)
+    ],
     DepsFilenames = deps_to_unique_filenames(Deps1),
     gen_make_rule(Target, DepsFilenames).
 
@@ -548,7 +551,7 @@ get_deps_from_compile(Loc, Value, St) ->
         % list of values
         L when is_list(L) ->
             lists:foldl(
-                fun (X, Acc) -> get_deps_from_compile_item(Loc, X, St) ++ Acc end,
+                fun(X, Acc) -> get_deps_from_compile_item(Loc, X, St) ++ Acc end,
                 [],
                 L
             );
@@ -654,7 +657,8 @@ compile_erl1_forms(Forms, St0) ->
     Ret = compile:noenv_forms(Forms1, [
         return_errors,
         return_warnings,
-        {source, St0#compile.filename} | Opts0
+        {source, St0#compile.filename}
+        | Opts0
     ]),
 
     % TODO: handling of ok is not exhaustive, there could also be {ok, ModuleName, Warnings}
@@ -710,14 +714,14 @@ internal_comp(Passes, Code0, File, Suffix, St0) ->
                 io:format("Compiling ~tp\n", [File]),
                 fun run_tc/3;
             false ->
-                fun ({_Name, Fun}, Code, St) ->
+                fun({_Name, Fun}, Code, St) ->
                     catch Fun(Code, St)
                 end
         end,
     Run =
         case keyfind(eprof, 1, Opts) of
             {eprof, EprofPass} ->
-                fun (P, Code, St) ->
+                fun(P, Code, St) ->
                     run_eprof(P, Code, EprofPass, St)
                 end;
             false ->
@@ -778,8 +782,10 @@ comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St)
             Warn = messages_per_file(Warn0),
             report_warnings(St#compile{warnings = Warn}),
             Ret1 =
-                case member(binary, Opts) andalso
-                         not member(no_code_generation, Opts) of
+                case
+                    member(binary, Opts) andalso
+                        not member(no_code_generation, Opts)
+                of
                     true -> [Code];
                     false -> []
                 end,
@@ -809,7 +815,7 @@ messages_per_file(Ms) ->
     T = lists:sort([{File, M} || {File, Messages} <- Ms, M <- Messages]),
     PrioMs = [erlt_scan, erlt_epp, erlt_parse],
     {Prio0, Rest} = lists:mapfoldl(
-        fun (M, A) ->
+        fun(M, A) ->
             lists:partition(
                 fun
                     ({_, {_, Mod, _}}) -> Mod =:= M;
@@ -822,7 +828,7 @@ messages_per_file(Ms) ->
         PrioMs
     ),
     Prio = lists:sort(
-        fun ({_, {L1, _, _}}, {_, {L2, _, _}}) -> L1 =< L2 end,
+        fun({_, {L1, _, _}}, {_, {L2, _, _}}) -> L1 =< L2 end,
         lists:append(Prio0)
     ),
     flatmap(fun mpf/1, [Prio, Rest]).
@@ -831,7 +837,7 @@ mpf(Ms) ->
     [{File, [M || {F, M} <- Ms, F =:= File]} || File <- lists:usort([F || {F, _} <- Ms])].
 
 select_passes([{pass, Mod} | Ps], Opts) ->
-    F = fun (Code0, St) ->
+    F = fun(Code0, St) ->
         case catch Mod:module(Code0, St#compile.options) of
             {ok, Code} ->
                 {ok, Code, St};
@@ -843,9 +849,9 @@ select_passes([{pass, Mod} | Ps], Opts) ->
     end,
     [{Mod, F} | select_passes(Ps, Opts)];
 select_passes([{src_listing, Ext} | _], _Opts) ->
-    [{listing, fun (Code, St) -> src_listing(Ext, Code, St) end}];
+    [{listing, fun(Code, St) -> src_listing(Ext, Code, St) end}];
 select_passes([{listing, Ext} | _], _Opts) ->
-    [{listing, fun (Code, St) -> listing(Ext, Code, St) end}];
+    [{listing, fun(Code, St) -> listing(Ext, Code, St) end}];
 select_passes([done | _], _Opts) ->
     [];
 select_passes([{done, Ext} | _], Opts) ->
@@ -974,7 +980,7 @@ parse_module(_Code, St0, EppMod) ->
 collect_definitions(Code, #compile{build_dir = BuildDir, global_defs = Defs0} = St) ->
     AllDefFiles = filelib:wildcard(filename:join(BuildDir, "*" ++ ?DefFileSuffix)),
     Defs = lists:foldl(
-        fun (File, Acc) ->
+        fun(File, Acc) ->
             {ok, Forms} = erlt_epp:parse_file(File, []),
             erlt_defs:add_definitions(Forms, Acc)
         end,
@@ -1249,8 +1255,7 @@ get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
     resolve_module_dependency(depends_on, Loc, Mod, St).
 
 erlt_typecheck(Code, St) ->
-    case {is_lang_erlt(St),
-             is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)} of
+    case {is_lang_erlt(St), is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)} of
         {true, true} ->
             run_sterlang(St),
             {ok, Code, St};
@@ -1324,10 +1329,12 @@ do_erlt_to_erl1(Code, St) ->
 
 foldl_transform([T | Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),
-    case code:ensure_loaded(T) =:= {module, T} andalso
-             erlang:function_exported(T, parse_transform, 2) of
+    case
+        code:ensure_loaded(T) =:= {module, T} andalso
+            erlang:function_exported(T, parse_transform, 2)
+    of
         true ->
-            Fun = fun (Code, S) ->
+            Fun = fun(Code, S) ->
                 T:parse_transform(Code, S#compile.options)
             end,
             Run =
@@ -1335,7 +1342,7 @@ foldl_transform([T | Ts], Code0, St) ->
                     true ->
                         fun run_tc/3;
                     false ->
-                        fun ({_Name, F}, Code, S) ->
+                        fun({_Name, F}, Code, S) ->
                             catch F(Code, S)
                         end
                 end,
@@ -1399,8 +1406,7 @@ save_binary_1(Code, St) ->
                                 Es0 ++
                                     [
                                         {Ofile, [
-                                            {none, ?MODULE,
-                                                {delete_temp, Tfile, DeleteError}}
+                                            {none, ?MODULE, {delete_temp, Tfile, DeleteError}}
                                         ]}
                                     ]
                         end,
@@ -1456,7 +1462,7 @@ report_warnings(#compile{options = Opts, warnings = Ws0}) ->
                 Ws0
             ),
             Ws = lists:sort(Ws1),
-            foreach(fun ({_, Str}) -> io:put_chars(Str) end, Ws);
+            foreach(fun({_, Str}) -> io:put_chars(Str) end, Ws);
         false ->
             ok
     end.
@@ -1597,13 +1603,13 @@ fmt_line(L, Text) ->
 line_to_txt(0) -> "";
 line_to_txt(L) -> integer_to_list(L).
 
-decorate([{Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol)
-        when Line =:= StartLine, EndLine =:= StartLine ->
+decorate([{Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when
+    Line =:= StartLine, EndLine =:= StartLine
+->
     %% start and end on same line
     S = underline(StartCol, EndCol),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
-decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol)
-        when Line =:= StartLine ->
+decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when Line =:= StartLine ->
     %% start with end on separate line
     S = underline(StartCol, string:length(Text) + 1),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
@@ -1694,11 +1700,11 @@ src_listing(Ext, Code, St) ->
 
 do_src_listing(Lf, Fs) ->
     Opts = [lists:keyfind(encoding, 1, io:getopts(Lf))],
-    foreach(fun (F) -> io:put_chars(Lf, [erlt_pp:form(F, Opts), "\n"]) end, Fs).
+    foreach(fun(F) -> io:put_chars(Lf, [erlt_pp:form(F, Opts), "\n"]) end, Fs).
 
 listing(Ext, Code, St0) ->
     St = St0#compile{encoding = none},
-    listing(fun (Lf, Fs) -> beam_listing:module(Lf, Fs) end, Ext, Code, St).
+    listing(fun(Lf, Fs) -> beam_listing:module(Lf, Fs) end, Ext, Code, St).
 
 listing(LFun, Ext, Code, St) ->
     Lfile = outfile(St#compile.base, Ext, St#compile.options),

@@ -75,7 +75,8 @@
     'return' |
     'return_white_spaces' |
     'return_comments' |
-    'text' | {'reserved_word_fun', resword_fun()}.
+    'text' |
+    {'reserved_word_fun', resword_fun()}.
 
 -type options() :: option() | [option()].
 -type symbol() :: atom() | float() | integer() | string().
@@ -146,13 +147,12 @@ string(String, StartLocation) ->
     ErrorLocation :: erl_anno:location().
 string(String, Line, Options) when ?STRING(String), ?ALINE(Line) ->
     string1(String, options(Options), Line, no_col, []);
-string(String, {Line, Column}, Options) when
-    ?STRING(String), ?ALINE(Line), ?COLUMN(Column)
-->
+string(String, {Line, Column}, Options) when ?STRING(String), ?ALINE(Line), ?COLUMN(Column) ->
     string1(String, options(Options), Line, Column, []).
 
 -type char_spec() :: string() | 'eof'.
--type cont_fun() :: fun((
+-type cont_fun() :: fun(
+    (
         char_spec(),
         #erl_scan{},
         erl_anno:line(),
@@ -163,8 +163,8 @@ string(String, {Line, Column}, Options) when
 ).
 
 -opaque return_cont() ::
-    {erl_scan_continuation, string(), erl_anno:column(), tokens(), erl_anno:line(),
-        #erl_scan{}, any(), cont_fun()}.
+    {erl_scan_continuation, string(), erl_anno:column(), tokens(), erl_anno:line(), #erl_scan{},
+        any(), cont_fun()}.
 
 -type tokens_result() ::
     {'ok', Tokens :: tokens(), EndLocation :: erl_anno:location()} |

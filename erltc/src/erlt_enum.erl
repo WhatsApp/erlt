@@ -47,7 +47,7 @@ init_context(Forms) ->
 init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
     init_enums(Es, add_enum(C, N, Map));
 init_enums([{N, {type, _, union, Cs}, _Vs} | Es], Map) ->
-    Map1 = lists:foldl(fun (C, M) -> add_enum(C, N, M) end, Map, constrs(Cs)),
+    Map1 = lists:foldl(fun(C, M) -> add_enum(C, N, M) end, Map, constrs(Cs)),
     init_enums(Es, Map1);
 init_enums([], Map) ->
     Map.
@@ -69,7 +69,8 @@ constrs([]) ->
 
 forms([F0 | Fs0], Context) ->
     F1 =
-        try form(F0, Context)
+        try
+            form(F0, Context)
         catch
             {error, Loc, Info} ->
                 {error, {Loc, ?MODULE, Info}}

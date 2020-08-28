@@ -49,8 +49,10 @@
 parse_transform(Forms0, _Options) ->
     %% unfolds runtime names of the records
     Forms1 = desugar_module_record_attribute(Forms0),
-    ModuleRecords =
-        [{MR, RecordTag} || {attribute, _Line, module_record, {MR, RecordTag}} <- Forms1],
+    ModuleRecords = [
+        {MR, RecordTag}
+        || {attribute, _Line, module_record, {MR, RecordTag}} <- Forms1
+    ],
     ModuleRecordUsages =
         collect(Forms1, fun collect_record_usage/1),
     %% Optimization: if there is nothing to transform, there is no need to transform.
@@ -92,13 +94,13 @@ do_parse_transform(Forms, ModuleRecords, ModuleRecordUsages) ->
     %% adding the synthetic attribute:
     %% -module_record_def({tag, module_record_form}).
     Forms2 = lists:flatmap(
-        fun (Form) -> inject_module_record_forms(Form, RecordForms) end,
+        fun(Form) -> inject_module_record_forms(Form, RecordForms) end,
         Forms1
     ),
     %% For each remote module which module records are used,
     %% inject all -record(record_tag, ...) forms for module records.
     Forms3 = lists:flatmap(
-        fun (Form) -> inject_remote_module_record_forms(Form, Context) end,
+        fun(Form) -> inject_remote_module_record_forms(Form, Context) end,
         Forms2
     ),
     %% Done.
@@ -879,9 +881,7 @@ do_collect(X, F, Acc) when is_tuple(X) ->
         Delta -> [Delta | Acc1]
     end.
 
-collect_record_usage({qualified_record, Module, Record}) when
-    is_atom(Module), is_atom(Record)
-->
+collect_record_usage({qualified_record, Module, Record}) when is_atom(Module), is_atom(Record) ->
     {Module, Record};
 collect_record_usage({qualified_record, {atom, _, Module}, {atom, _, Record}}) when
     is_atom(Module), is_atom(Record)
@@ -892,7 +892,7 @@ collect_record_usage(_) ->
 
 init_module_record_context(Forms, ModuleRecords, ModuleRecordUsages) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
-    UsedModules = lists:usort(lists:map(fun ({M, _}) -> M end, ModuleRecordUsages)),
+    UsedModules = lists:usort(lists:map(fun({M, _}) -> M end, ModuleRecordUsages)),
     RemoteInfo = [{M, load_remote_module_records(M)} || M <- UsedModules, M =/= Module],
     RemoteMapping = [
         {M, maps:from_list(RemoteModuleRecords)}
@@ -974,7 +974,7 @@ inject_remote_module_record_forms(ModuleAttribute = {attribute, _Line, module, _
     RemoteModuleRecordForms = Context#module_record_context.remote_module_record_forms,
     RemoteModules = lists:usort(maps:keys(RemoteModuleRecordForms)),
     InjectedRecordForms = lists:flatmap(
-        fun (Module) ->
+        fun(Module) ->
             {ok, RecordDefs} = maps:find(Module, RemoteModuleRecordForms),
             RecordDefs
         end,
