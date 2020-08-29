@@ -83,5 +83,5 @@ second(pair.pair{_,S}) -> S.
 -spec call_this_mod(pair(A,B)) -> pair(A,B).
 call_this_mod(P) ->
   case P of
-    mod03.pair.pair{A, B} -> mod03.pair.pair{A, B}
+    mod03:pair.pair{A, B} -> mod03:pair.pair{A, B}
   end.

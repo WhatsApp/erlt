@@ -42,9 +42,9 @@ basic_values() ->
     {}.
 
 enums() ->
-    None = core.option.none{},
-    SomeInt = core.option.some{1},
-    SomeStr = core.option.some{"str"},
+    None = core:option.none{},
+    SomeInt = core:option.some{1},
+    SomeStr = core:option.some{"str"},
     L1 = [None, SomeInt],
     L2 = [None, SomeStr],
     % ill-typed
@@ -53,7 +53,7 @@ enums() ->
 
 
 id(X) -> X.
-mkSome(X) -> core.option.some{X}.
+mkSome(X) -> core:option.some{X}.
 mkList(E1, E2) -> [E1, E2].
 
 funs() ->
