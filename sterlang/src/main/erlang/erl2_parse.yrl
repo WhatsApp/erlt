@@ -37,7 +37,7 @@ tuple enum_expr
 record_expr record_tuple record_field record_fields
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
-fun_expr fun_clause fun_clauses atom_or_var integer_or_var
+fun_expr fun_clause fun_clauses
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 remote_id
@@ -395,16 +395,10 @@ receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 
 fun_expr -> 'fun' atom '/' integer :
     {'fun',?anno('$1', '$4'),{function,element(3, '$2'),element(3, '$4')}}.
-fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var :
+fun_expr -> 'fun' atom ':' atom '/' integer :
 	{'fun',?anno('$1','$6'),{function,'$2','$4','$6'}}.
 fun_expr -> 'fun' fun_clauses 'end' :
 	build_fun(?anno('$1','$3'), '$2').
-
-atom_or_var -> atom : '$1'.
-atom_or_var -> var : '$1'.
-
-integer_or_var -> integer : '$1'.
-integer_or_var -> var : '$1'.
 
 fun_clauses -> fun_clause : ['$1'].
 fun_clauses -> fun_clause ';' fun_clauses : ['$1' | '$3'].
