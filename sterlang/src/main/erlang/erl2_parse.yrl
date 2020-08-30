@@ -113,7 +113,7 @@ typed_exprs -> typed_expr ',' typed_exprs : ['$1'|'$3'].
 typed_exprs -> expr ',' typed_exprs       : ['$1'|'$3'].
 typed_exprs -> typed_expr ',' exprs       : ['$1'|'$3'].
 
-typed_expr -> expr '::' top_type          : {typed,'$1','$3'}.
+typed_expr -> atom '::' top_type          : {typed,'$1','$3'}.
 
 type_sigs -> type_sig                     : ['$1'].
 type_sigs -> type_sig ';' type_sigs       : ['$1'|'$3'].
