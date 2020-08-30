@@ -1767,10 +1767,7 @@ normalize_loc(As) when is_list(As) ->
             undefined -> Start;
             Loc -> loc(Loc)
         end,
-    case lists:member(open_rec, As) of
-        true -> {Start, End, open_rec};
-        false -> {Start, End}
-    end;
+    {Start, End};
 normalize_loc(_Other) ->
     % unknown position
     {{0, 0}, {0, 0}}.

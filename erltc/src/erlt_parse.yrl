@@ -295,8 +295,6 @@ enum_pat_expr -> pat_expr_max '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_pat_expr -> enum_pat_expr '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 enum_pat_expr -> pat_expr_max '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
-map_pat_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_pat_expr -> pat_expr_max '#' map_tuple :
@@ -366,8 +364,6 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 enum_expr -> expr_remote '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_expr -> expr_remote '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
-map_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_expr -> expr_max '#' map_tuple :
