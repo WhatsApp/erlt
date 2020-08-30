@@ -42,7 +42,7 @@ try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 remote_id
 exprs guard
-atomic strings
+atomic
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -456,19 +456,7 @@ atomic -> char : '$1'.
 atomic -> integer : '$1'.
 atomic -> float : '$1'.
 atomic -> atom : '$1'.
-atomic -> strings : '$1'.
-
-strings -> string : '$1'.
-strings -> string strings :
-        A0 = ?anno('$1','$2'),
-        A1 = case {erl_anno:text(?anno('$1')), erl_anno:text(?anno('$2'))} of
-                 {T1, T2} when is_list(T1), is_list(T2) ->
-                     %% this normalizes separating whitespace to a single space
-                     %% (note that the string quotes are included in the text)
-                     erl_anno:set_text(T1 ++ " " ++  T2, A0);
-                 _ -> A0
-             end,
-        {string,A1,element(3, '$1') ++ element(3, '$2')}.
+atomic -> string : '$1'.
 
 prefix_op -> '+' : '$1'.
 prefix_op -> '-' : '$1'.
