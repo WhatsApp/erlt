@@ -153,8 +153,7 @@ map_pair_type  -> top_type '=>' top_type  : {type, ?anno('$1','$3'),
 map_pair_type  -> top_type ':=' top_type  : {type, ?anno('$1','$3'),
                                              map_field_exact,['$1','$3']}.
 
-attr_val -> expr                     : ['$1'].
-attr_val -> expr ',' exprs           : ['$1' | '$3'].
+attr_val -> '(' expr ')'             : ['$2'].
 attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
 
 function -> function_clauses : build_function('$1').
