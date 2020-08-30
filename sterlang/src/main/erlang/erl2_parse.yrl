@@ -99,8 +99,8 @@ form -> function dot : '$1'.
 attribute -> '-' atom attr_val               : build_attribute('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' atom typed_attr_val         : build_typed_attribute('$2','$3', ?anno('$1','$3')).
 attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4', ?anno('$1','$5')).
-attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
@@ -607,7 +607,7 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
             ret_err(Aa, "bad attribute")
     end.
 
-build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
+build_type_spec({Kind, _}, {type_spec, _TA, SpecFun, TypeSpecs}, Aa) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
         case SpecFun of
             {atom, _, Fun} ->
