@@ -585,11 +585,6 @@ build_typed_attribute(
 ) ->
     {attribute, Aa, message, {RecordName, record_tuple(RecTuple)}};
 build_typed_attribute(
-    {atom, Aa, record},
-    {typed_record, _TRA, {remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple}
-) ->
-    {attribute, Aa, record, {{module_record, MRa, Name1, Name2}, record_tuple(RecTuple)}};
-build_typed_attribute(
     {atom, Aa, Attr},
     {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type}
 ) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
@@ -717,9 +712,6 @@ build_attribute({atom, Aa, record}, Val) ->
     case Val of
         [{atom, _An, Record}, RecTuple] ->
             {attribute, Aa, record, {Record, record_tuple(RecTuple)}};
-        [{remote, _, {atom, MRa, Name1}, {atom, _, Name2}}, RecTuple] ->
-            {attribute, Aa, record,
-                {{module_record, MRa, Name1, Name2}, record_tuple(RecTuple)}};
         _Other ->
             error_bad_decl(Aa, record)
     end;
