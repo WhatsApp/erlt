@@ -97,8 +97,8 @@ form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
 attribute -> '-' atom attr_val               : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('$2','$3'), ?anno('$1','$3')).
-attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
+attribute -> '-' atom typed_attr_val         : build_typed_attribute('$2','$3', ?anno('$1','$3')).
+attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4', ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 
@@ -570,23 +570,15 @@ parse_form(Tokens) ->
     parse(Tokens).
 
 build_typed_attribute(
-    {atom, Aa, record},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, record, {RecordName, record_tuple(RecTuple)}};
+    {atom, _, Attr},
+    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple},
+    Aa
+) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
+    {attribute, Aa, Attr, {RecordName, record_tuple(RecTuple)}};
 build_typed_attribute(
-    {atom, Aa, exception},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, exception, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, Aa, message},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, message, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, Aa, Attr},
-    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type}
+    {atom, _, Attr},
+    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type},
+    Aa
 ) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
     lists:foreach(
         fun
@@ -607,15 +599,12 @@ build_typed_attribute(
         true -> {attribute, Aa, Attr, {TypeName, Type, Args}};
         false -> error_bad_decl(Aa, Attr)
     end;
-build_typed_attribute({atom, Aa, Attr}, _) ->
-    case Attr of
-        record -> error_bad_decl(Aa, record);
-        exception -> error_bad_decl(Aa, exception);
-        message -> error_bad_decl(Aa, message);
-        type -> error_bad_decl(Aa, type);
-        opaque -> error_bad_decl(Aa, opaque);
-        enum -> error_bad_decl(Aa, enum);
-        _ -> ret_err(Aa, "bad attribute")
+build_typed_attribute({atom, _, Attr}, _, Aa) ->
+    if
+        Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message'; Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
+            error_bad_decl(Aa, Attr);
+        true ->
+            ret_err(Aa, "bad attribute")
     end.
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
