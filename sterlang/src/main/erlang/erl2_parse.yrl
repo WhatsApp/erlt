@@ -141,8 +141,8 @@ type -> var                               : '$1'.
 type -> atom                              : '$1'.
 type -> atom '{' '}'                      : ?set_anno(build_enum_type('$1', []), ?anno('$1', '$3')).
 type -> atom '{' top_types '}'            : ?set_anno(build_enum_type('$1', '$3'), ?anno('$1', '$4')).
-type -> atom '(' ')'                      : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
-type -> atom '(' top_types ')'            : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
+type -> atom '(' ')'                      : build_gen_type('$1', ?anno('$1', '$3')).
+type -> atom '(' top_types ')'            : build_type('$1', '$3', ?anno('$1', '$4')).
 type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1','$5'), ['$1', '$3', []]}.
 type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1','$6'), ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
@@ -633,17 +633,17 @@ lift_unions(T1, {type, _Aa, union, List}) ->
 lift_unions(T1, T2) ->
     {type, ?anno(T1), union, [T1, T2]}.
 
-build_gen_type({atom, Aa, tuple}) ->
+build_gen_type({atom, _, tuple}, Aa) ->
     {type, Aa, tuple, any};
-build_gen_type({atom, Aa, map}) ->
+build_gen_type({atom, _, map}, Aa) ->
     {type, Aa, map, any};
-build_gen_type(Name) ->
-    build_type(Name, []).
+build_gen_type(Name, Aa) ->
+    build_type(Name, [], Aa).
 
 build_enum_type({atom, A, _} = N, Types) ->
     {type, A, enum, N, Types}.
 
-build_type({atom, A, Name}, Types) ->
+build_type({atom, _, Name}, Types, A) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
 
