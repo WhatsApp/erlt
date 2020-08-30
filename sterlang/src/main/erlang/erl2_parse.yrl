@@ -48,7 +48,7 @@ binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type typed_expr typed_attr_val
 type_sig type_sigs fun_type anon_fun_type
-type_spec spec_fun typed_exprs typed_record_fields
+type_spec typed_exprs typed_record_fields
 map_pair_types map_pair_type.
 
 Terminals
@@ -102,11 +102,7 @@ attribute -> '-' atom '(' typed_attr_val ')' : build_typed_attribute('$2','$4', 
 attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
-type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
-type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
-
-spec_fun ->                       atom : '$1'.
-spec_fun ->              atom ':' atom : {'$1', '$3'}.
+type_spec -> atom type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 
 typed_attr_val -> expr ',' typed_record_fields : {typed_record, ?anno('$1','$3'), '$1', '$3'}.
 typed_attr_val -> expr '::' top_type           : {type_def, ?anno('$1','$3'), '$1', '$3'}.
