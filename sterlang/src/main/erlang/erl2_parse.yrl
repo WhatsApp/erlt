@@ -96,7 +96,7 @@ Nonassoc 500 '*'. % for binary expressions
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
-attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' atom attr_val               : build_attribute('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('$2','$3'), ?anno('$1','$3')).
 attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
@@ -664,65 +664,65 @@ type_tag(TypeName, NumberOfTypeVariables) ->
         false -> user_type
     end.
 
-build_attribute({atom, Aa, module}, Val) ->
+build_attribute({atom, _, module}, Val, Aa) ->
     case Val of
-        [{atom, _Am, Module}] ->
+        [{atom, _, Module}] ->
             {attribute, Aa, module, Module};
-        [{atom, _Am, Module}, ExpList] ->
+        [{atom, _, Module}, ExpList] ->
             {attribute, Aa, module, {Module, var_list(ExpList)}};
         _Other ->
             error_bad_decl(Aa, module)
     end;
-build_attribute({atom, Aa, export}, Val) ->
+build_attribute({atom, _, export}, Val, Aa) ->
     case Val of
         [ExpList] ->
             {attribute, Aa, export, farity_list(ExpList)};
         _Other ->
             error_bad_decl(Aa, export)
     end;
-build_attribute({atom, Aa, import}, Val) ->
+build_attribute({atom, _, import}, Val, Aa) ->
     case Val of
-        [{atom, _Am, Mod}, ImpList] ->
+        [{atom, _, Mod}, ImpList] ->
             {attribute, Aa, import, {Mod, farity_list(ImpList)}};
         _Other ->
             error_bad_decl(Aa, import)
     end;
-build_attribute({atom, Aa, import_type}, Val) ->
+build_attribute({atom, _, import_type}, Val, Aa) ->
     case Val of
-        [{atom, _Am, Mod}, ImpList] ->
+        [{atom, _, Mod}, ImpList] ->
             {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
         _Other ->
             error_bad_decl(Aa, import_type)
     end;
-build_attribute({atom, Aa, exception}, Val) ->
+build_attribute({atom, _, exception}, Val, Aa) ->
     case Val of
-        [{atom, _An, Record}, RecTuple] ->
+        [{atom, _, Record}, RecTuple] ->
             {attribute, Aa, exception, {Record, record_tuple(RecTuple)}};
         _Other ->
             error_bad_decl(Aa, exception)
     end;
-build_attribute({atom, Aa, message}, Val) ->
+build_attribute({atom, _, message}, Val, Aa) ->
     case Val of
-        [{atom, _An, Record}, RecTuple] ->
+        [{atom, _, Record}, RecTuple] ->
             {attribute, Aa, message, {Record, record_tuple(RecTuple)}};
         _Other ->
             error_bad_decl(Aa, message)
     end;
-build_attribute({atom, Aa, record}, Val) ->
+build_attribute({atom, _, record}, Val, Aa) ->
     case Val of
-        [{atom, _An, Record}, RecTuple] ->
+        [{atom, _, Record}, RecTuple] ->
             {attribute, Aa, record, {Record, record_tuple(RecTuple)}};
         _Other ->
             error_bad_decl(Aa, record)
     end;
-build_attribute({atom, Aa, file}, Val) ->
+build_attribute({atom, _, file}, Val, Aa) ->
     case Val of
-        [{string, _An, Name}, {integer, _Al, Line}] ->
+        [{string, _, Name}, {integer, _, Line}] ->
             {attribute, Aa, file, {Name, Line}};
         _Other ->
             error_bad_decl(Aa, file)
     end;
-build_attribute({atom, Aa, Attr}, Val) ->
+build_attribute({atom, _, Attr}, Val, Aa) ->
     case Val of
         [Expr0] ->
             Expr = attribute_farity(Expr0),
