@@ -47,7 +47,7 @@ prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type typed_expr typed_attr_val
-type_sig type_sigs type_guard type_guards fun_type anon_fun_type
+type_sig type_sigs fun_type anon_fun_type
 type_spec spec_fun typed_exprs typed_record_fields field_types field_type
 map_pair_types map_pair_type.
 
@@ -124,13 +124,6 @@ type_sigs -> type_sig                     : ['$1'].
 type_sigs -> type_sig ';' type_sigs       : ['$1'|'$3'].
 
 type_sig -> fun_type                      : '$1'.
-type_sig -> fun_type 'when' type_guards   : {type, ?anno('$1','$3'), bounded_fun,
-                                             ['$1','$3']}.
-
-type_guards -> type_guard                 : ['$1'].
-type_guards -> type_guard ',' type_guards : ['$1'|'$3'].
-
-type_guard -> var '::' top_type           : build_constraint('$1', '$3').
 
 top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
@@ -650,16 +643,6 @@ find_arity_from_specs([Spec | _]) ->
         end,
     {type, _, 'fun', [{type, _, product, Args}, _]} = Fun,
     length(Args).
-
-build_constraint({atom, _, is_subtype}, [{var, _, _} = LHS, Type]) ->
-    build_constraint(LHS, Type);
-build_constraint({atom, A, Atom}, _Foo) ->
-    ret_err(A, io_lib:format("unsupported constraint ~tw", [Atom]));
-build_constraint({var, A, '_'}, _Types) ->
-    ret_err(A, "bad type variable");
-build_constraint(LHS, Type) ->
-    IsSubType = {atom, ?anno(LHS), is_subtype},
-    {type, ?anno(LHS), constraint, [IsSubType, [LHS, Type]]}.
 
 lift_unions(T1, {type, _Aa, union, List}) ->
     {type, ?anno(T1), union, [T1 | List]};
