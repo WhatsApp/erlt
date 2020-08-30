@@ -266,7 +266,7 @@ enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
     {enum, ?anno('$1','$6'), '$1', '$3', '$5'}.
 
 map_pat_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
+	{open_map, ?anno('$1','$2'),strip_map_tuple('$3')}.
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_pat_expr -> pat_expr_max '#' map_tuple :
@@ -339,7 +339,7 @@ enum_expr -> remote_id '.' atom '{' exprs '}' :
     {enum, ?anno('$1','$6'), '$1', '$3', '$5'}.
 
 map_expr -> '#''#' map_tuple :
-	{map, [open_rec|?anno('$1','$3')],strip_map_tuple('$3')}.
+	{open_map, ?anno('$1','$2'),strip_map_tuple('$3')}.
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_expr -> expr_max '#' map_tuple :

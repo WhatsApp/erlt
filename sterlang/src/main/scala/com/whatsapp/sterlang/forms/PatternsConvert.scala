@@ -47,8 +47,9 @@ object PatternsConvert {
         val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordIndexPattern(sp(anno), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
-        val (sp, openRec) = spRecordHack(anno)
-        MapPattern(sp, openRec, eAssocs.map(convertAssocExact))
+        MapPattern(sp(anno), false, eAssocs.map(convertAssocExact))
+      case ETuple(List(EAtom("open_map"), anno, EList(eAssocs))) =>
+        MapPattern(sp(anno), true, eAssocs.map(convertAssocExact))
       case ETuple(
             List(
               EAtom("enum"),
