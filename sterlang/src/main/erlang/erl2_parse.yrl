@@ -48,7 +48,7 @@ binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type typed_expr typed_attr_val
 type_sig type_sigs fun_type anon_fun_type
-type_spec spec_fun typed_exprs typed_record_fields field_types field_type
+type_spec spec_fun typed_exprs typed_record_fields
 map_pair_types map_pair_type.
 
 Terminals
@@ -154,8 +154,6 @@ type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom '{' '}'                  : {type, ?anno('$1','$4'), record, ['$2']}.
-type -> '#' atom '{' field_types '}'      : {type, ?anno('$1','$5'),
-                                             record, ['$2'|'$4']}.
 type -> integer                           : '$1'.
 type -> char                              : '$1'.
 type -> 'fun' '(' ')'                     : {type, ?anno('$1','$3'), 'fun', []}.
@@ -177,12 +175,6 @@ map_pair_type  -> top_type '=>' top_type  : {type, ?anno('$1','$3'),
                                              map_field_assoc,['$1','$3']}.
 map_pair_type  -> top_type ':=' top_type  : {type, ?anno('$1','$3'),
                                              map_field_exact,['$1','$3']}.
-
-field_types -> field_type                 : ['$1'].
-field_types -> field_type ',' field_types : ['$1'|'$3'].
-
-field_type -> atom '::' top_type          : {type, ?anno('$1','$3'), field_type,
-                                             ['$1', '$3']}.
 
 attr_val -> expr                     : ['$1'].
 attr_val -> expr ',' exprs           : ['$1' | '$3'].
