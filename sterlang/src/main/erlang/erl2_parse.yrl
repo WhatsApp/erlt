@@ -47,7 +47,7 @@ prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type typed_expr typed_attr_val
-type_sig type_sigs fun_type anon_fun_type
+type_sig type_sigs fun_type
 type_spec typed_exprs typed_record_fields
 map_pair_types map_pair_type.
 
@@ -63,7 +63,7 @@ char integer float atom string var
 '++' '--'
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
-'!' '=' '::' '..' '...'
+'!' '=' '::'
 'spec' 'callback' % helper
 dot.
 
@@ -90,7 +90,6 @@ Left 900 '.'.
 
 Right 150 '::'.
 Left 170 '|'.
-Nonassoc 200 '..'.
 Nonassoc 500 '*'. % for binary expressions
 
 form -> attribute dot : '$1'.
@@ -128,10 +127,6 @@ top_type -> var '::' top_type             : {ann_type, ?anno('$1','$3'), ['$1','
 top_type -> type '|' top_type             : lift_unions('$1','$3').
 top_type -> type                          : '$1'.
 
-type -> type '..' type                    : {type, ?anno('$1','$3'), range, ['$1', '$3']}.
-type -> type add_op type                  : ?mkop2('$1', '$2', '$3').
-type -> type mult_op type                 : ?mkop2('$1', '$2', '$3').
-type -> prefix_op type                    : ?mkop1('$1', '$2').
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
 type -> atom                              : '$1'.
@@ -143,21 +138,13 @@ type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1','$5'), ['$1
 type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1','$6'), ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
-type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1','$5'),
-                                             nonempty_list, ['$2']}.
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom '{' '}'                  : {type, ?anno('$1','$4'), record, ['$2']}.
-type -> integer                           : '$1'.
-type -> char                              : '$1'.
 type -> 'fun' '(' ')'                     : {type, ?anno('$1','$3'), 'fun', []}.
-type -> 'fun' '(' anon_fun_type ')'       : '$3'.
-
-anon_fun_type -> '(' '...' ')' '->' top_type :
-    {type, ?anno('$1','$5'), 'fun', [{type, ?anno('$1','$5'), any}, '$5']}.
-anon_fun_type -> fun_type : '$1'.
+type -> 'fun' '(' fun_type ')'            : '$3'.
 
 fun_type -> '(' ')' '->' top_type :
     {type, ?anno('$1','$4'), 'fun', [{type, ?anno('$1','$4'), product, []}, '$4']}.
