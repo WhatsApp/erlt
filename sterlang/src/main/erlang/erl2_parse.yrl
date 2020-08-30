@@ -143,7 +143,6 @@ type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom '{' '}'                  : {type, ?anno('$1','$4'), record, ['$2']}.
-type -> 'fun' '(' ')'                     : {type, ?anno('$1','$3'), 'fun', []}.
 type -> 'fun' '(' fun_type ')'            : '$3'.
 
 fun_type -> '(' ')' '->' top_type :
