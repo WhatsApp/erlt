@@ -97,7 +97,7 @@ form -> function dot : '$1'.
 
 attribute -> '-' atom attr_val               : build_attribute('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' atom type_def               : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' atom '(' record_def ')'     : build_typed_attribute('$2','$4', ?anno('$1','$5')).
+attribute -> '-' atom '(' record_def ')'     : build_record_def('$2','$4', ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
@@ -510,12 +510,6 @@ parse_form(Tokens) ->
 
 build_typed_attribute(
     {atom, _, Attr},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple},
-    Aa
-) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, _, Attr},
     {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type},
     Aa
 ) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
@@ -540,7 +534,21 @@ build_typed_attribute(
     end;
 build_typed_attribute({atom, _, Attr}, _, Aa) ->
     if
-        Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message'; Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
+        Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
+            error_bad_decl(Aa, Attr);
+        true ->
+            ret_err(Aa, "bad attribute")
+    end.
+
+build_record_def(
+    {atom, _, Attr},
+    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple},
+    Aa
+) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
+    {attribute, Aa, Attr, {RecordName, record_tuple(RecTuple)}};
+build_record_def({atom, _, Attr}, _, Aa) ->
+    if
+        Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
             error_bad_decl(Aa, Attr);
         true ->
             ret_err(Aa, "bad attribute")
