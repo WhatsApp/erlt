@@ -15,6 +15,6 @@
 -lang([erl2, st]).
 -module(e90).
 
--record(bad_record, {
+-record #bad_record{
     field :: _
-}).
+}.

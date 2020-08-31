@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e100).
 
--record(my_record, {id :: integer(), hash :: integer()}).
+-record #my_record{id :: integer(), hash :: integer()}.
 
 update(Rec) ->
     Rec#my_record{id = []}.

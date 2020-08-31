@@ -15,16 +15,9 @@
 -lang([erl2, st]).
 -module(records).
 
--record(user, {
-    name :: string(),
-    id :: integer()
-}).
-
--record(manager, {
-    user :: #user{}
-}).
-
--record(ok, {}).
+-record #user{name :: string(), id :: integer()}.
+-record #manager{user :: #user{}}.
+-record #ok{}.
 
 -spec test(#user{}) -> #user{}.
 test(X) -> X.

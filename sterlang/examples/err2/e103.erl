@@ -15,8 +15,8 @@
 -lang([erl2, st]).
 -module(e103).
 
--record(foo, {id :: integer()}).
--record(bar, {id :: integer()}).
+-record #foo{id :: integer()}.
+-record #bar{id :: integer()}.
 
 test(Foo, Bar) ->
     [Foo#foo{id = 1} | [Bar#bar{id = 2}]].

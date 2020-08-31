@@ -16,7 +16,7 @@
 -module(inexhaustive_erlang_record3).
 -export([test/2]).
 
--record(r, {a :: boolean(), b :: boolean()}).
+-record #r{a :: boolean(), b :: boolean()}.
 
 -spec test(integer(), boolean()) -> {}.
 test(#r.a, true) -> {};

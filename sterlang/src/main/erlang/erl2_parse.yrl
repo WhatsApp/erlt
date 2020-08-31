@@ -46,9 +46,9 @@ atomic
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
-top_type top_types type typed_expr record_def type_def
+top_type top_types type field_defs field_def type_def
 fun_type
-type_spec typed_exprs typed_record_fields
+type_spec
 map_pair_types map_pair_type.
 
 Terminals
@@ -95,25 +95,21 @@ Nonassoc 500 '*'. % for binary expressions
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
-attribute -> '-' atom attr_val               : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' atom type_def               : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' atom '(' record_def ')'     : build_record_def('$2','$4', ?anno('$1','$5')).
-attribute -> '-' 'spec' type_spec            : build_type_spec('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec        : build_type_spec('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' atom attr_val                    : build_attribute('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' atom type_def                    : build_typed_attribute('$2','$3', ?anno('$1','$3')).
+attribute -> '-' atom '#' atom '{' field_defs '}' : build_record_def('$2','$4', '$6', ?anno('$1','$7')).
+attribute -> '-' 'spec' type_spec                 : build_type_spec('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' 'callback' type_spec             : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
-type_spec -> atom fun_type : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
+type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
 
-record_def -> expr ',' typed_record_fields  : {typed_record, ?anno('$1','$3'), '$1', '$3'}.
-type_def -> expr '::' top_type              : {type_def, ?anno('$1','$3'), '$1', '$3'}.
+type_def -> function_call '::' top_type   : {type_def, ?anno('$1','$3'), '$1', '$3'}.
 
-typed_record_fields -> '{' typed_exprs '}' : {tuple, ?anno('$1','$3'), '$2'}.
+field_defs -> '$empty'                    : [].
+field_defs -> field_def                   : ['$1'].
+field_defs -> field_def ',' field_defs    : ['$1'|'$3'].
 
-typed_exprs -> typed_expr                 : ['$1'].
-typed_exprs -> typed_expr ',' typed_exprs : ['$1'|'$3'].
-typed_exprs -> expr ',' typed_exprs       : ['$1'|'$3'].
-typed_exprs -> typed_expr ',' exprs       : ['$1'|'$3'].
-
-typed_expr -> atom '::' top_type          : {typed,'$1','$3'}.
+field_def -> atom '::' top_type           : {typed,'$1','$3'}.
 
 top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
@@ -541,12 +537,10 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
     end.
 
 build_record_def(
-    {atom, _, Attr},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple},
-    Aa
+    {atom, _, Attr}, {atom, _An, RecordName}, Fields, Aa
 ) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {RecordName, record_tuple(RecTuple)}};
-build_record_def({atom, _, Attr}, _, Aa) ->
+    {attribute, Aa, Attr, {RecordName, record_fields(Fields)}};
+build_record_def({atom, _, Attr}, _, _, Aa) ->
     if
         Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
             error_bad_decl(Aa, Attr);
@@ -627,27 +621,6 @@ build_attribute({atom, _, import_type}, Val, Aa) ->
         _Other ->
             error_bad_decl(Aa, import_type)
     end;
-build_attribute({atom, _, exception}, Val, Aa) ->
-    case Val of
-        [{atom, _, Record}, RecTuple] ->
-            {attribute, Aa, exception, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, exception)
-    end;
-build_attribute({atom, _, message}, Val, Aa) ->
-    case Val of
-        [{atom, _, Record}, RecTuple] ->
-            {attribute, Aa, message, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, message)
-    end;
-build_attribute({atom, _, record}, Val, Aa) ->
-    case Val of
-        [{atom, _, Record}, RecTuple] ->
-            {attribute, Aa, record, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, record)
-    end;
 build_attribute({atom, _, file}, Val, Aa) ->
     case Val of
         [{string, _, Name}, {integer, _, Line}] ->
@@ -700,11 +673,6 @@ farity_list({nil, _An}) ->
     [];
 farity_list(Other) ->
     ret_err(?anno(Other), "bad function arity").
-
-record_tuple({tuple, _At, Fields}) ->
-    record_fields(Fields);
-record_tuple(Other) ->
-    ret_err(?anno(Other), "bad record declaration").
 
 record_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
     [{typed_record_field, {record_field, Aa, {atom, Aa, A}}, TypeInfo} | record_fields(Fields)];
