@@ -698,13 +698,8 @@ record_tuple({tuple, _At, Fields}) ->
 record_tuple(Other) ->
     ret_err(?anno(Other), "bad record declaration").
 
-record_fields([{atom, Aa, A} | Fields]) ->
-    [{record_field, Aa, {atom, Aa, A}} | record_fields(Fields)];
-record_fields([{match, _Am, {atom, Aa, A}, Expr} | Fields]) ->
-    [{record_field, Aa, {atom, Aa, A}, Expr} | record_fields(Fields)];
-record_fields([{typed, Expr, TypeInfo} | Fields]) ->
-    [Field] = record_fields([Expr]),
-    [{typed_record_field, Field, TypeInfo} | record_fields(Fields)];
+record_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
+    [{typed_record_field, {record_field, Aa, {atom, Aa, A}}, TypeInfo} | record_fields(Fields)];
 record_fields([Other | _Fields]) ->
     ret_err(?anno(Other), "bad record field");
 record_fields([]) ->
