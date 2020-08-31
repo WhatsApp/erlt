@@ -131,7 +131,6 @@ type -> atom '(' ')'                      : build_gen_type('$1', ?anno('$1', '$3
 type -> atom '(' top_types ')'            : build_type('$1', '$3', ?anno('$1', '$4')).
 type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1','$5'), ['$1', '$3', []]}.
 type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1','$6'), ['$1', '$3', '$5']}.
-type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
