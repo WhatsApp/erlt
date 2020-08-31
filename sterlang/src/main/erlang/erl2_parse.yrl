@@ -595,8 +595,6 @@ build_attribute({atom, _, module}, Val, Aa) ->
     case Val of
         [{atom, _, Module}] ->
             {attribute, Aa, module, Module};
-        [{atom, _, Module}, ExpList] ->
-            {attribute, Aa, module, {Module, var_list(ExpList)}};
         _Other ->
             error_bad_decl(Aa, module)
     end;
@@ -636,13 +634,6 @@ build_attribute({atom, _, Attr}, Val, Aa) ->
         _Other ->
             ret_err(Aa, "bad attribute")
     end.
-
-var_list({cons, _Ac, {var, _, V}, Tail}) ->
-    [V | var_list(Tail)];
-var_list({nil, _An}) ->
-    [];
-var_list(Other) ->
-    ret_err(?anno(Other), "bad variable list").
 
 attribute_farity({cons, A, H, T}) ->
     {cons, A, attribute_farity(H), attribute_farity(T)};
