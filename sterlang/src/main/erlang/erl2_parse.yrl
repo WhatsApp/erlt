@@ -38,7 +38,7 @@ record_expr record_tuple record_field record_fields
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
-try_expr try_catch try_clause try_clauses try_opt_stacktrace
+try_expr try_catch try_clause try_clauses
 function_call argument_list
 remote_id
 exprs guard
@@ -171,7 +171,6 @@ clause_guard -> '$empty' : [].
 
 clause_body -> '->' exprs: '$2'.
 
-expr -> 'catch' expr : {'catch',?anno('$1','$2'),'$2'}.
 expr -> expr '=' expr : {match,?anno('$1','$3'),'$1','$3'}.
 expr -> expr '!' expr : ?mkop2('$1', '$2', '$3').
 expr -> expr 'orelse' expr : ?mkop2('$1', '$2', '$3').
