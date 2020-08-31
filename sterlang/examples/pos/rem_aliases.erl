@@ -21,4 +21,4 @@
 mk_pair1(X, Y) -> {X, Y}.
 
 mk_con(X, Y) ->
-    aliases.p_con.con{{X, X}}.
+    aliases:p_con.con{{X, X}}.
