@@ -15,8 +15,8 @@
 -lang([erl2, st]).
 -module(e98).
 
--record(foo, {}).
--record(bar, {}).
+-record #foo{}.
+-record #bar{}.
 
 mk_record(Cond) ->
     if

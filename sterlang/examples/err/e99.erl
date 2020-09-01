@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e99).
 
--record(foo, {}).
+-record #foo{}.
 
 mk(true) -> #foo{};
 mk(false) -> false.

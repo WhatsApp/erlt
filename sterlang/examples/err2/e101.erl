@@ -15,8 +15,8 @@
 -lang([erl2, st]).
 -module(e101).
 
--record(foo, {id :: integer()}).
--record(bar, {id :: integer()}).
+-record #foo{id :: integer()}.
+-record #bar{id :: integer()}.
 
 test() ->
     Foo = #foo{id = 1},

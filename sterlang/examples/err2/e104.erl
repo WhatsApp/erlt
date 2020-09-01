@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e104).
 
--record(foo, {id :: integer()}).
+-record #foo{id :: integer()}.
 
 test() ->
     #foo.unknown_field.

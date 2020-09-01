@@ -16,7 +16,7 @@
 -module(inexhaustive_erlang_record1).
 -export([test1/1]).
 
--record(r, {a :: boolean(), b :: boolean()}).
+-record #r{a :: boolean(), b :: boolean()}.
 
 -spec test1(#r{}) -> {}.
 test1(#r{a = false}) -> {}.

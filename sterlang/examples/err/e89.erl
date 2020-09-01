@@ -15,6 +15,6 @@
 -lang([erl2, st]).
 -module(e89).
 
--record(bad_record, {
+-record #bad_record{
     field :: TypeVar
-}).
+}.

@@ -16,7 +16,7 @@
 -module(redundant_erlang_record0).
 -export([test1/1]).
 
--record(r, {a :: boolean()}).
+-record #r{a :: boolean()}.
 
 -spec test1(#r{}) -> {}.
 test1(#r{a = _}) -> {};

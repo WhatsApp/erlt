@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e93).
 
--record(my_record, {}).
+-record #my_record{}.
 
 foo() ->
     #my_record{unknown_field = 1}.

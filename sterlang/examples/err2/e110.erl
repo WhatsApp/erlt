@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e110).
 
--record(foo, {id :: integer()}).
+-record #foo{id :: integer()}.
 
 test(#foo.id1) ->
     true.

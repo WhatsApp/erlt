@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e108).
 
--record(foo, {id :: integer()}).
+-record #foo{id :: integer()}.
 
 -spec test(#foo{}) -> string().
 test(#foo{name = Name}) ->
