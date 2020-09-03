@@ -48,6 +48,8 @@ keep_error(illegal_enum, _Def) ->
     true;
 keep_error({redefine_enum, _T, _C}, _Def) ->
     true;
+keep_error({redefine_struct, _N}, _Def) ->
+    true;
 keep_error({undefined_enum, _E}, _Def) ->
     true;
 keep_error({undefined_enum_constructor, _E, _A, _N}, _Def) ->
@@ -153,11 +155,11 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %Actually imported types
     imported_types = [],
     %Used record definitions
-    used_records = sets:new() ::
-        sets:set(atom()),
+    used_records = sets:new() :: sets:set(atom()),
     %Used type definitions
-    used_types = dict:new() ::
-        dict:dict(ta(), line())
+    used_types = dict:new() :: dict:dict(ta(), line()),
+    % Used struct definitons
+    used_structs = #{} :: #{atom() => []}
 }).
 
 %% Define the lint state record.
@@ -178,6 +180,8 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %Record definitions
     records = dict:new() ::
         dict:dict(atom(), {line(), Fields :: term()}),
+    % Struct definitions
+    structs = #{} :: #{atom() => Def :: term()},
     %All defined functions (prescanned)
     locals = gb_sets:empty() ::
         gb_sets:set(fa()),
@@ -418,6 +422,8 @@ format_error(unqualified_enum) ->
     "unqualified enum constructors may only be used in an enum definition";
 format_error({redefine_enum, T, C}) ->
     io_lib:format("constructor ~tw already defined in enum ~tw", [C, T]);
+format_error({redefine_struct, N}) ->
+    io_lib:format("struct ~tw already defined", [N]);
 format_error({undefined_enum, E}) ->
     io_lib:format("enum ~tw undefined", [E]);
 format_error({undefined_enum_constructor, E, A, N}) ->
@@ -1020,7 +1026,8 @@ attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
 attribute_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    type_def(struct, L, TypeName, TypeDef, Args, St);
+    St1 = struct_def(TypeDef, St),
+    type_def(struct, L, TypeName, TypeDef, Args, St1);
 attribute_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute, L, callback, {Fun, Types}}, St) ->
@@ -1052,7 +1059,8 @@ function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
 function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    type_def(struct, L, TypeName, TypeDef, Args, St);
+    St1 = struct_def(TypeDef, St),
+    type_def(struct, L, TypeName, TypeDef, Args, St1);
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
@@ -1986,6 +1994,15 @@ pattern({record, Line, Name, Pfs}, Vt, Old, Bvt, St) ->
         error ->
             {[], [], add_error(Line, {undefined_record, Name}, St)}
     end;
+%% TODO: handle remote structs
+pattern({struct, Line, {atom, _, Name}, Pfs}, Vt, Old, Bvt, St) ->
+    case maps:find(Name, St#lint.structs) of
+        {ok, Def} ->
+            St1 = used_struct(Name, St),
+            pattern_struct_fields(Pfs, Name, Def, Vt, Old, Bvt, St1);
+        error ->
+            {[], [], add_error(Line, {undefined_struct, Name}, St)}
+    end;
 pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
     pattern_bin(Fs, Vt, Old, Bvt, St);
 pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, Bvt, St) ->
@@ -2802,6 +2819,10 @@ expr({map, _Line, Src, Es}, Vt, St) ->
     {vtupdate(Svt, Fvt), St2};
 expr({record_index, Line, Name, Field}, _Vt, St) ->
     check_record(Line, Name, St, fun (Dfs, St1) -> record_field(Field, Name, Dfs, St1) end);
+expr({struct, Line, Name, Fields}, Vt, St) ->
+    check_struct(Line, Name, St, fun(Dfs, St1) ->
+        init_struct_fields(Fields, Line, Name, Dfs, Vt, St1)
+    end);
 expr({record, Line, Name, Inits}, Vt, St) ->
     check_record(Line, Name, St, fun (Dfs, St1) ->
         init_fields(Inits, Line, Name, Dfs, Vt, St1)
@@ -3329,6 +3350,43 @@ normalise_fields(Fs) ->
         Fs
     ).
 
+%% TODO: add remote struct handling
+check_struct(Line, {atom, _, Name}, St, CheckFun) ->
+    case maps:find(Name, St#lint.structs) of
+        {ok, Def} -> CheckFun(Def, used_struct(Name, St));
+        error -> {[], add_error(Line, {undefined_struct, Name}, St)}
+    end.
+
+init_struct_fields(Fields, _Line, Name, Defs, Vt0, St0) ->
+    {Vt1, St1} = check_struct_fields(Fields, Name, Defs, Vt0, St0, fun expr/3),
+    % Dfs = init_fields(Ifs, Line, Defs),
+    % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
+    {Vt1, St1#lint{usage = St1#lint.usage}}.
+
+check_struct_fields(Fields, Name, Defs, Vt0, St0, CheckFun) ->
+    Fun = fun (Field, {Sfsa, Vta, Sta}) ->
+        {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, Defs, Vt0, Sta, Sfsa, CheckFun),
+        {Sfsb, vtmerge_pat(Vta, Vtb), Stb}
+    end,
+    {_SeenFields, Uvt, St1} = foldl(Fun, {[], [], St0}, Fields),
+    {Uvt, St1}.
+
+check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, Fields, Vt, St, Sfs, CheckFun) ->
+    case member(F, Sfs) of
+        true ->
+            {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
+        false ->
+            {[F | Sfs],
+                case is_map_key(F, Fields) of
+                    true -> CheckFun(Val, Vt, St);
+                    false -> {[], add_error(La, {undefined_field, Name, F}, St)}
+                end}
+    end.
+
+used_struct(Name, #lint{usage = Usage} = St) ->
+    UsedRecs = (Usage#usage.used_structs)#{Name => []},
+    St#lint{usage = Usage#usage{used_structs = UsedRecs}}.
+
 %% exist_record(Line, RecordName, State) -> State.
 %%  Check if a record exists.  Set State.
 
@@ -3418,6 +3476,23 @@ pattern_field({atom, La, F}, Name, Fields, St) ->
         error -> {[], add_error(La, {undefined_field, Name, F}, St)}
     end.
 
+pattern_struct_fields(Fs, Name, Fields, Vt0, Old, Bvt, St0) ->
+    CheckFun = fun (Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
+    {_SeenFields, Uvt, Bvt1, St1} =
+        foldl(
+            fun (Field, {Sfsa, Vta, Bvt1, Sta}) ->
+                case check_struct_field(Field, Name, Fields, Vt0, Sta, Sfsa, CheckFun) of
+                    {Sfsb, {Vtb, Stb}} ->
+                        {Sfsb, vtmerge_pat(Vta, Vtb), [], Stb};
+                    {Sfsb, {Vtb, Bvt2, Stb}} ->
+                        {Sfsb, vtmerge_pat(Vta, Vtb), vtmerge_pat(Bvt1, Bvt2), Stb}
+                end
+            end,
+            {[], [], [], St0},
+            Fs
+        ),
+    {Uvt, Bvt1, St1}.
+
 %% pattern_fields([PatField],RecordName,[RecDefField],
 %%                VarTable,Old,Bvt,State) ->
 %%      {UpdVarTable,UpdBinVarTable,State}.
@@ -3503,6 +3578,17 @@ exist_field(_F, []) -> false.
 find_field(_F, [{record_field, _Lf, {atom, _La, _F}, Val} | _Fs]) -> {ok, Val};
 find_field(F, [_ | Fs]) -> find_field(F, Fs);
 find_field(_F, []) -> error.
+
+%% Does not do any checking, this is done in check_type
+
+struct_def({type, Line, struct, {atom, _, Name}, Fields}, St) ->
+    case is_map_key(Name, St#lint.structs) of
+        true ->
+            add_error(Line, {redefine_struct, Name}, St);
+        false ->
+            FieldsMap = maps:from_list([{Field, _Default = undefined} || {struct_field, _, {atom, _, Field}, _} <- Fields]),
+            St#lint{structs = (St#lint.structs)#{Name => FieldsMap}}
+    end.
 
 %% Checks that constructors of an enum are valid
 %% - only a single constructor or a union of constructors

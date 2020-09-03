@@ -17,8 +17,8 @@
 
 -export([]).
 
--exception(error1, {}).
--exception(error2, {name :: string()}).
+-exception error1 :: ().
+-exception error2 :: (name :: string()).
 
 -enum my_error() :: my_error{exception()}.
 
@@ -28,4 +28,3 @@ mk_error1() ->
 -spec mk_error2() -> exception().
 mk_error2() ->
     #error2{name = "bad error"}.
-

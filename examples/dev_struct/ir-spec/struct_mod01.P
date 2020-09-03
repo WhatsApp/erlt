@@ -4,9 +4,20 @@
 
 -export_type([foo/0,bar/1]).
 
+-export([foo/0,bar/0,pattern/2]).
+
 -type foo() :: {'$#struct_mod01:foo'}.
 
 -type bar(A) :: {'$#struct_mod01:bar', A, foo()}.
+
+foo() ->
+    {'$#struct_mod01:foo'}.
+
+bar() ->
+    {'$#struct_mod01:bar', 1, {'$#struct_mod01:foo'}}.
+
+pattern({'$#struct_mod01:foo'}, {'$#struct_mod01:bar', _, B}) ->
+    B.
 
 
 

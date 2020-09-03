@@ -27,6 +27,6 @@ forms([]) ->
     [].
 
 form({attribute, Anno, message, Def}) ->
-    {attribute, Anno, record, Def};
+    {attribute, Anno, struct, Def};
 form(Form) ->
     Form.
