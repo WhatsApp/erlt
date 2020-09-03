@@ -48,7 +48,8 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type typed_expr typed_attr_val
 type_sig type_sigs type_guard type_guards fun_type anon_fun_type binary_type
 type_spec spec_fun typed_exprs typed_record_fields field_types field_type
-map_pair_types map_pair_type bin_base_type bin_unit_type.
+map_pair_types map_pair_type bin_base_type bin_unit_type
+struct_def type_name vars field_defs field_def.
 
 Terminals
 char integer float atom string var
@@ -63,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' % helper
+'spec' 'callback' 'struct' % helper
 dot.
 
 Expect 0.
@@ -100,10 +101,25 @@ attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('
 attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'struct' struct_def         : build_struct_def(?anno('$1', '$3'), '$3').
 
 dot_atom -> atom : '$1'.
 dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
 dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
+
+struct_def -> type_name '::' '(' ')' : {struct_def, ?anno('$1', '$4'), '$1', []}.
+struct_def -> type_name '::' '(' field_defs ')' : {struct_def, ?anno('$1', '$5'), '$1', '$4'}.
+
+type_name -> atom : {call, ?anno('$1'), '$1', []}.
+type_name -> atom '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
+
+vars -> var ',' vars : ['$1' | '$3'].
+vars -> var : ['$1'].
+
+field_defs -> field_def ',' field_defs : ['$1' | '$3'].
+field_defs -> field_def : ['$1'].
+
+field_def -> atom '::' type : {struct_field, ?anno('$1', '$3'), '$1', '$3'}.
 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
@@ -1122,6 +1138,10 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
+parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
+    NewTokens = [{'-', A1}, {'struct', A2} | Tokens],
+    ?ANNO_CHECK(NewTokens),
+    parse(NewTokens);
 parse_form(Tokens) ->
     ?ANNO_CHECK(Tokens),
     parse(Tokens).
@@ -1217,6 +1237,11 @@ build_typed_attribute({atom, Aa, Attr}, _) ->
         enum -> error_bad_decl(Aa, enum);
         _ -> ret_err(Aa, "bad attribute")
     end.
+
+build_struct_def(Anno, {struct_def, DefAnno, Name, Fields}) ->
+    {call, _, {atom, _, TypeName} = Tag, Args} = Name,
+    Type = {type, DefAnno, struct, Tag, Fields},
+    {attribute, Anno, struct, {TypeName, Type, Args}}.
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =

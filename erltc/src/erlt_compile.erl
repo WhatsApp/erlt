@@ -1320,7 +1320,7 @@ erlt_to_erl1(Code, St) ->
     end.
 
 do_erlt_to_erl1(Code, St) ->
-    foldl_transform([erlt_enum, erlt_dots, erlt_caret], Code, St).
+    foldl_transform([erlt_enum, erlt_struct, erlt_dots, erlt_caret], Code, St).
 
 foldl_transform([T | Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),
