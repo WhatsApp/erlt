@@ -19,11 +19,12 @@ test-ir:
 	$(MAKE) -C elm-core/src test-ir
 	$(MAKE) -C dev_dots/src test-ir
 	$(MAKE) -C dev_enum/src test-ir
-	$(MAKE) -C dev_struct/src test-ir
 	$(MAKE) -C calc/src test-ir
+	$(MAKE) -C dev_struct/src test-ir
 
 test-others:
-	$(MAKE) -C dev_module_record/src erl2c-records
+	# TODO: port to remote structs and re-enable
+	# $(MAKE) -C dev_module_record/src erl2c-records
 	$(MAKE) -C checks/src test
 
 update-ir-spec: $(TEST_DIRS:%=.update-ir-spec/%)

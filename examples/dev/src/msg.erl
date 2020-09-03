@@ -17,8 +17,8 @@
 
 -export([mk_reply/1, mk_ping/0]).
 
--message(ping, {from :: pid()}).
--message(pong, {from :: pid(), in_reply_to :: wrapped_message()}).
+-message ping :: (from :: pid()).
+-message pong :: (from :: pid(), in_reply_to :: wrapped_message()).
 
 -enum wrapped_message() :: wrapped_message{message()}.
 
@@ -31,5 +31,3 @@ mk_ping() ->
     message().
 mk_reply(Ping) ->
     #pong{from = self(), in_reply_to = wrapped_message.wrapped_message{Ping}}.
-
-

@@ -28,13 +28,13 @@ attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_remote expr_max
-pat_expr pat_expr_max map_pat_expr record_pat_expr enum_pat_expr
+pat_expr pat_expr_max map_pat_expr record_pat_expr struct_pat_expr enum_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
-tuple enum_expr
-record_expr record_tuple record_field record_fields
+tuple enum_expr record_expr
+struct_expr struct_name struct_tuple struct_fields struct_field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses atom_or_var integer_or_var
@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' 'struct' % helper
+'spec' 'callback' struct_like % helper
 dot.
 
 Expect 0.
@@ -101,7 +101,7 @@ attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('
 attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' 'struct' struct_def         : build_struct_def(?anno('$1', '$3'), '$3').
+attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
 
 dot_atom -> atom : '$1'.
 dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
@@ -266,6 +266,7 @@ expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
 expr -> record_expr : '$1'.
+expr -> struct_expr : '$1'.
 expr -> expr_remote : '$1'.
 
 expr_remote -> expr_max ':' expr_max : {remote,?anno('$1','$3'),'$1','$3'}.
@@ -295,6 +296,7 @@ pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
 pat_expr -> map_pat_expr : '$1'.
 pat_expr -> record_pat_expr : '$1'.
+pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
@@ -318,14 +320,11 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-record_pat_expr -> '#' atom ':' atom '.' atom :
-	{record_index,?anno('$1','$6'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
 record_pat_expr -> '#' atom '.' atom :
 	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
-record_pat_expr -> '#' atom ':' atom record_tuple :
-	{record,?anno('$1','$5'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
-record_pat_expr -> '#' atom record_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
+
+struct_pat_expr -> '#' struct_name struct_tuple :
+    {struct, ?anno('$1', '$3'), '$2', '$3'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
 list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
@@ -404,44 +403,30 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-
-%% N.B. This is called from expr_700.
-%% N.B. Field names are returned as the complete object, even if they are
-%% always atoms for the moment, this might change in the future.
-
-record_expr -> '#' atom ':' atom '.' atom :
-	{record_index,?anno('$1','$6'),{qualified_record,element(3, '$2'),element(3, '$4')},'$6'}.
 record_expr -> '#' atom '.' atom :
-	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
-record_expr -> '#' atom ':' atom record_tuple :
-	{record,?anno('$1','$5'),{qualified_record,element(3, '$2'),element(3, '$4')},'$5'}.
-record_expr -> '#' atom record_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
-record_expr -> expr_max '#' atom ':' atom '.' atom :
-	{record_field,?anno('$2','$7'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
-record_expr -> expr_max '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> expr_max '#' atom ':' atom record_tuple :
-	{record,?anno('$2','$6'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
-record_expr -> expr_max '#' atom record_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, '$3'),'$4'}.
-record_expr -> record_expr '#' atom ':' atom '.' atom :
-	{record_field,?anno('$2','$7'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$7'}.
-record_expr -> record_expr '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> record_expr '#' atom ':' atom record_tuple :
-	{record,?anno('$2','$6'),'$1',{qualified_record,element(3, '$3'),element(3, '$5')},'$6'}.
-record_expr -> record_expr '#' atom record_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, hd('$3')),'$4'}.
+    {record_index, ?anno('$1', '$4'), '$2', '$4'}.
 
-record_tuple -> '{' '}' : [].
-record_tuple -> '{' record_fields '}' : '$2'.
+struct_expr -> '#' struct_name struct_tuple :
+    {struct, ?anno('$1', '$3'), '$2', '$3'}.
+struct_expr -> expr_max '#' struct_name '.' atom :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+struct_expr -> struct_expr '#' struct_name '.' atom :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+struct_expr -> expr_max '#' struct_name struct_tuple :
+    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
+struct_expr -> struct_expr '#' struct_name struct_tuple :
+    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
 
-record_fields -> record_field : ['$1'].
-record_fields -> record_field ',' record_fields : ['$1' | '$3'].
+struct_name -> atom : '$1'.
+struct_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
-record_field -> var '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
-record_field -> atom '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
+struct_tuple -> '{' '}' : [].
+struct_tuple -> '{' struct_fields '}' : '$2'.
+
+struct_fields -> struct_field : ['$1'].
+struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
+
+struct_field -> atom '=' expr : {struct_field, ?anno('$1','$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 
@@ -1138,8 +1123,10 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
-parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
-    NewTokens = [{'-', A1}, {'struct', A2} | Tokens],
+parse_form([{'-', A1}, {atom, A2, StructLike} = Atom | Tokens]) when
+    StructLike =:= struct; StructLike =:= message; StructLike =:= exception
+->
+    NewTokens = [{'-', A1}, {struct_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form(Tokens) ->
@@ -1238,10 +1225,10 @@ build_typed_attribute({atom, Aa, Attr}, _) ->
         _ -> ret_err(Aa, "bad attribute")
     end.
 
-build_struct_def(Anno, {struct_def, DefAnno, Name, Fields}) ->
+build_struct_def(Anno, {atom, _, Attr}, {struct_def, DefAnno, Name, Fields}) ->
     {call, _, {atom, _, TypeName} = Tag, Args} = Name,
     Type = {type, DefAnno, struct, Tag, Fields},
-    {attribute, Anno, struct, {TypeName, Type, Args}}.
+    {attribute, Anno, Attr, {TypeName, Type, Args}}.
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =

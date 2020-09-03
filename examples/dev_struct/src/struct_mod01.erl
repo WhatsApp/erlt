@@ -17,6 +17,16 @@
 
 -export_type([foo/0, bar/1]).
 
+-export([foo/0, bar/0, pattern/2]).
+
 -struct foo :: ().
 
 -struct bar(A) :: (a :: A, b :: foo()).
+
+foo() ->
+    #foo{}.
+
+bar() ->
+    #bar{a = 1, b = #foo{}}.
+
+pattern(#foo{}, #bar{b = B}) -> B.

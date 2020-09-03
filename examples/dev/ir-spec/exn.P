@@ -4,19 +4,19 @@
 
 -export([]).
 
--record(error1,{}).
+-type error1() :: {'$#exn:error1'}.
 
--record(error2,{name :: string()}).
+-type error2() :: {'$#exn:error2', string()}.
 
 -type my_error() :: {969696, exn, my_error, my_error, any()}.
 
 mk_error1() ->
-    {error1}.
+    {'$#exn:error1'}.
 
 -spec mk_error2() -> any().
 
 mk_error2() ->
-    {error2, "bad error"}.
+    {'$#exn:error2', "bad error"}.
 
 
 
