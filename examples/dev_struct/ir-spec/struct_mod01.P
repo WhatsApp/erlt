@@ -1,0 +1,12 @@
+-file("struct_mod01.erl", 1).
+
+-module(struct_mod01).
+
+-export_type([foo/0,bar/1]).
+
+-type foo() :: {'$#struct_mod01:foo'}.
+
+-type bar(A) :: {'$#struct_mod01:bar', A, foo()}.
+
+
+

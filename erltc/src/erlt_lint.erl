@@ -431,6 +431,8 @@ format_error({redefine_record, T}) ->
     io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
     io_lib:format("field ~tw already defined in record ~tw", [F, T]);
+format_error({redefine_struct_field, T, F}) ->
+    io_lib:format("field ~tw already defined in struct ~tw", [F, T]);
 format_error({undefined_field, T, F}) ->
     io_lib:format("field ~tw undefined in record ~tw", [F, T]);
 format_error(illegal_record_info) ->
@@ -1017,6 +1019,8 @@ attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
+attribute_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
+    type_def(struct, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute, L, callback, {Fun, Types}}, St) ->
@@ -1047,6 +1051,8 @@ function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
+function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
+    type_def(struct, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
@@ -3095,7 +3101,7 @@ check_enum(none, C, _Args, St) ->
     case St#lint.enum of
         [] ->
             add_error(element(2, C), unqualified_enum, St);
-        E when is_atom(E) ->
+        Atom when is_atom(Atom) ->
             %% in definition, not a use
             St
     end.
@@ -3523,7 +3529,7 @@ enum_def_1(TypeName, [], _Ns, NAs, #lint{enums = Map} = St) ->
     St#lint{enums = Map#{TypeName => NAs}}.
 
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
-%%    Attr :: 'type' | 'opaque' | 'enum'
+%%    Attr :: 'type' | 'opaque' | 'enum' | 'struct'
 %% Checks that a type definition is valid.
 
 -dialyzer({no_match, type_def/6}).
@@ -3690,6 +3696,8 @@ check_type({type, La, enum, C, As}, SeenVars, St) ->
 check_type({type, La, enum, E, C, As}, SeenVars, St) ->
     St1 = check_enum(E, C, As, St),
     check_type({type, La, product, As}, SeenVars, St1);
+check_type({type, La, struct, {atom, _, Tag}, Fields}, SeenVars, St) ->
+    check_struct_types(La, Tag, Fields, SeenVars, St);
 check_type({type, _L, Tag, Args}, SeenVars, St) when
     Tag =:= product; Tag =:= union; Tag =:= tuple
 ->
@@ -3749,6 +3757,20 @@ check_type(I, SeenVars, St) ->
         {integer, _ILn, _Integer} -> {SeenVars, St};
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
     end.
+
+%% Struct types only appear in struct definitions
+check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->
+    Fun = fun({struct_field, Line, {atom, _, Name}, Type}, {SeenVars, St, FieldsAcc}) ->
+        St1 =
+            case is_map_key(Name, FieldsAcc) of
+                true -> add_error(Line, {redefine_struct_field, StructName, Name}, St);
+                false -> St
+            end,
+        {SeenVars1, St2} = check_type(Type, SeenVars, St1),
+        {SeenVars1, St2, FieldsAcc#{Name => Type}}
+    end,
+    {SeenVars, St, _} = lists:foldl(Fun, {SeenVars0, St0, #{}}, Fields),
+    {SeenVars, St}.
 
 check_record_types(Line, Name, Fields, SeenVars, St) ->
     case dict:find(Name, St#lint.records) of
@@ -4041,6 +4063,8 @@ check_local_opaque_types(St) ->
             (_Type, #typeinfo{attr = type}, AccSt) ->
                 AccSt;
             (_Type, #typeinfo{attr = enum}, AccSt) ->
+                AccSt;
+            (_Type, #typeinfo{attr = struct}, AccSt) ->
                 AccSt;
             (Type, #typeinfo{attr = opaque, line = FileLine}, AccSt) ->
                 case gb_sets:is_element(Type, ExpTs) of
