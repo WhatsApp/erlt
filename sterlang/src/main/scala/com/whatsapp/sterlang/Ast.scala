@@ -226,7 +226,9 @@ object Ast {
   case class WildPat()(val p: Pos.P) extends Pat
   case class VarPat(v: String)(val p: Pos.P) extends Pat
   case class TuplePat(pats: List[Pat])(val p: Pos.P) extends Pat
-  case class RecordPat(fields: List[Field[Pat]], open: Boolean)(val p: Pos.P) extends Pat
+  // it's always an "open record" - see
+  // https://forum.erl2.org/t/matching-anonymous-structs-in-erlt-open-by-default/74
+  case class RecordPat(fields: List[Field[Pat]])(val p: Pos.P) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val p: Pos.P) extends Pat
   case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val p: Pos.P) extends Pat
   case class ListPat(pats: List[Pat])(val p: Pos.P) extends Pat

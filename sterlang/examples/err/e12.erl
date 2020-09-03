@@ -15,5 +15,5 @@
 -lang([erl2, st]).
 -module(e12).
 foo(X) ->
-    Y = #{id => 1, location => "unknown"},
-    X andalso (Y #{id := 2}).
+    Y = #(id = 1, location = "unknown"),
+    X andalso (Y #(id = 2)).

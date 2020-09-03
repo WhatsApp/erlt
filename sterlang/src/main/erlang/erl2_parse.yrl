@@ -35,7 +35,7 @@ list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
 record_expr record_tuple record_field record_fields
-map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
+map_expr map_tuple map_field map_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
 try_expr try_catch try_clause try_clauses
@@ -49,7 +49,7 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type field_defs field_def type_def
 fun_type
 type_spec
-map_pair_types map_pair_type.
+map_field_types map_field_type.
 
 Terminals
 char integer float atom string var
@@ -61,7 +61,7 @@ char integer float atom string var
 '*' '/' 'div' 'rem' 'band' 'and'
 '+' '-' 'bor' 'bxor' 'bsl' 'bsr' 'or' 'xor'
 '++' '--'
-'==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
+'==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
 'spec' 'callback' % helper
@@ -118,35 +118,33 @@ top_type -> var '::' top_type             : {ann_type, ?anno('$1','$3'), ['$1','
 top_type -> type '|' top_type             : lift_unions('$1','$3').
 top_type -> type                          : '$1'.
 
-type -> '(' top_type ')'                  : '$2'.
-type -> var                               : '$1'.
-type -> atom                              : '$1'.
-type -> atom '{' '}'                      : {type, ?anno('$1', '$3'), enum, '$1', []}.
-type -> atom '{' top_types '}'            : {type, ?anno('$1', '$4'), enum, '$1', '$3'}.
-type -> atom '(' ')'                      : build_gen_type('$1', ?anno('$1', '$3')).
-type -> atom '(' top_types ')'            : build_type('$1', '$3', ?anno('$1', '$4')).
-type -> atom ':' atom '(' ')'             : {remote_type, ?anno('$1','$5'), ['$1', '$3', []]}.
-type -> atom ':' atom '(' top_types ')'   : {remote_type, ?anno('$1','$6'), ['$1', '$3', '$5']}.
-type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
-type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
-type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
-type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
-type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
-type -> '#' atom '{' '}'                  : {type, ?anno('$1','$4'), record, ['$2']}.
-type -> 'fun' '(' fun_type ')'            : '$3'.
+type -> '(' top_type ')'                      : '$2'.
+type -> var                                   : '$1'.
+type -> atom                                  : '$1'.
+type -> atom '{' '}'                          : {type, ?anno('$1', '$3'), enum, '$1', []}.
+type -> atom '{' top_types '}'                : {type, ?anno('$1', '$4'), enum, '$1', '$3'}.
+type -> atom '(' ')'                          : build_gen_type('$1', ?anno('$1', '$3')).
+type -> atom '(' top_types ')'                : build_type('$1', '$3', ?anno('$1', '$4')).
+type -> atom ':' atom '(' ')'                 : {remote_type, ?anno('$1','$5'), ['$1', '$3', []]}.
+type -> atom ':' atom '(' top_types ')'       : {remote_type, ?anno('$1','$6'), ['$1', '$3', '$5']}.
+type -> '[' top_type ']'                      : {type, ?anno('$1','$3'), list, ['$2']}.
+type -> '#' '(' ')'                           : {type, ?anno('$1','$3'), map, []}.
+type -> '#' '(' map_field_types ')'           : build_map_type(?anno('$1', '$4'), '$3').
+type -> '{' '}'                               : {type, ?anno('$1','$2'), tuple, []}.
+type -> '{' top_types '}'                     : {type, ?anno('$1','$3'), tuple, '$2'}.
+type -> '#' atom '{' '}'                      : {type, ?anno('$1','$4'), record, ['$2']}.
+type -> 'fun' '(' fun_type ')'                : '$3'.
 
 fun_type -> '(' ')' '->' top_type :
     {type, ?anno('$1','$4'), 'fun', [{type, ?anno('$1','$4'), product, []}, '$4']}.
 fun_type -> '(' top_types ')' '->' top_type :
     {type, ?anno('$1','$5'), 'fun', [{type, ?anno('$1','$5'), product, '$2'},'$5']}.
 
-map_pair_types -> map_pair_type                    : ['$1'].
-map_pair_types -> map_pair_type ',' map_pair_types : ['$1'|'$3'].
+map_field_types -> type                               : {[], '$1'}.
+map_field_types -> map_field_type                     : ['$1'].
+map_field_types -> map_field_type ',' map_field_types : build_map_internals_type('$1', '$3').
 
-map_pair_type  -> top_type '=>' top_type  : {type, ?anno('$1','$3'),
-                                             map_field_assoc,['$1','$3']}.
-map_pair_type  -> top_type ':=' top_type  : {type, ?anno('$1','$3'),
-                                             map_field_exact,['$1','$3']}.
+map_field_type -> atom '::' top_type  : {type, ?anno('$1', '$3'), map_field, ['$1', '$3']}.
 
 attr_val -> '(' expr ')'             : ['$2'].
 attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
@@ -184,7 +182,7 @@ expr -> expr_max : '$1'.
 
 remote_id -> atom ':' atom : {remote, ?anno('$1','$3'), '$1', '$3'}.
 
-expr_max -> expr_max '.' expr_max : ?mkop2('$1', '$2', '$3').
+expr_max -> expr_max '#' '(' atom ')' : {map_field, ?anno('$1','$5'), '$1', '$4'}.
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
@@ -227,13 +225,9 @@ enum_pat_expr -> remote_id '.' atom '{' '}' :
 enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
     {enum, ?anno('$1','$6'), '$1', '$3', '$5'}.
 
-map_pat_expr -> '#''#' map_tuple :
-	{open_map, ?anno('$1','$2'),strip_map_tuple('$3')}.
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_pat_expr -> pat_expr_max '#' map_tuple :
-	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
-map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
 record_pat_expr -> '#' atom '.' atom :
@@ -300,8 +294,6 @@ enum_expr -> remote_id '.' atom '{' '}' :
 enum_expr -> remote_id '.' atom '{' exprs '}' :
     {enum, ?anno('$1','$6'), '$1', '$3', '$5'}.
 
-map_expr -> '#''#' map_tuple :
-	{open_map, ?anno('$1','$2'),strip_map_tuple('$3')}.
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
 map_expr -> expr_max '#' map_tuple :
@@ -309,22 +301,13 @@ map_expr -> expr_max '#' map_tuple :
 map_expr -> map_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-map_tuple -> '{' '}' : {map_tuple, ?anno('$1','$2'), []}.
-map_tuple -> '{' map_fields '}' : {map_tuple, ?anno('$1','$3'), '$2'}.
+map_tuple -> '(' ')' : {map_tuple, ?anno('$1','$2'), []}.
+map_tuple -> '(' map_fields ')' : {map_tuple, ?anno('$1','$3'), '$2'}.
 
 map_fields -> map_field : ['$1'].
 map_fields -> map_field ',' map_fields : ['$1' | '$3'].
 
-map_field -> map_field_assoc : '$1'.
-map_field -> map_field_exact : '$1'.
-
-map_field_assoc -> map_key '=>' expr :
-	{map_field_assoc,?anno('$1','$3'),'$1','$3'}.
-
-map_field_exact -> map_key ':=' expr :
-	{map_field_exact,?anno('$1','$3'),'$1','$3'}.
-
-map_key -> expr : '$1'.
+map_field -> atom '=' expr : {map_field, ?anno('$1','$3'), '$1', '$3'}.
 
 record_expr -> '#' atom '.' atom :
 	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
@@ -581,6 +564,16 @@ build_gen_type({atom, _, map}, Aa) ->
 build_gen_type(Name, Aa) ->
     build_type(Name, [], Aa).
 
+build_map_internals_type(This, {Fields, Rest}) ->
+    {[This | Fields], Rest};
+build_map_internals_type(This, Rest) when is_list(Rest) ->
+    [This | Rest].
+
+build_map_type(Anno, {Fields, RowType}) ->
+    {type, Anno, open_map, Fields, RowType};
+build_map_type(Anno, Fields) when is_list(Fields) ->
+    {type, Anno, map, Fields}.
+
 build_type({atom, _, Name}, Types, A) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
@@ -764,8 +757,7 @@ normalise({map, _, Pairs} = M) ->
     maps:from_list(
         lists:map(
             fun
-                %% only allow '=>'
-                ({map_field_assoc, _, K, V}) ->
+                ({map_field, _, K, V}) ->
                     {normalise(K), normalise(V)};
                 (_) ->
                     erlang:error({badarg, M})

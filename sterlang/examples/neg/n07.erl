@@ -10,4 +10,4 @@ getOrElse(Opt, Alt) ->
 
 %% the type for rec cannot be expressed without recursion
 unBox(Rec, Alt) ->
-  getOrElse(Rec.next, Rec).
+  getOrElse(Rec#(next), Rec).

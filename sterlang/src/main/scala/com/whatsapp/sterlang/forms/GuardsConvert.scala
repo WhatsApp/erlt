@@ -61,6 +61,9 @@ object GuardsConvert {
         GMapCreate(sp(anno), eAssocs.map(convertGAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
         GMapUpdate(sp(anno), convertGExpr(eExp), eAssocs.map(convertGAssoc))
+      case ETuple(List(EAtom("map_field"), anno, eExp, eFieldName)) =>
+        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        GMapFieldAccess(sp(anno), convertGExpr(eExp), fieldName)
       case ETuple(
             List(EAtom("call"), anno, ETuple(List(EAtom("remote"), _anno1, erlang, eFun)), EList(eTests))
           ) =>

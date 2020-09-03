@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e58).
 % Duplicate fields in record expression
-f() -> #{x => 1, x => 2}.
+f() -> #(x = 1, x = 2).

@@ -13,10 +13,6 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(e17open_typed_record).
-
-%% the last field should be _ := _ for now,
-%% but see https://github.com/WhatsApp/erl2/issues/118
--spec test(#{id := integer(), _ := A }) -> integer().
-test(X) ->
-    1.
+-module(e42).
+foo(Rec) ->
+    case Rec of #(x = false) -> 1; #(y = true) -> 2 end.

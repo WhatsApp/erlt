@@ -16,5 +16,5 @@
 -module(inexhaustive_record1).
 -export([test1/1]).
 
--spec test1(#{a := boolean()}) -> {}.
-test1(##{a := false}) -> {}.
+-spec test1(#(a :: boolean())) -> {}.
+test1(#(a = false)) -> {}.

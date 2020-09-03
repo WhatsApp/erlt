@@ -17,6 +17,6 @@
 foo(B, R) ->
     % circularity
     if
-        B -> R.x;
+        B -> R#(x);
         true -> R
     end.

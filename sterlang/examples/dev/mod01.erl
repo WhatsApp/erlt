@@ -77,39 +77,39 @@ mk_tuple(A, B, C) ->
 mk_tuple2(A) ->
     {1, 2, 3, A}.
 
--spec mk_map(A, B) -> #{a := A, b := B}.
+-spec mk_map(A, B) -> #(a :: A, b :: B).
 mk_map(A, B) ->
-    #{a => A, b => B}.
+    #(a = A, b = B).
 
--spec update_map1(#{a := A}, A) -> #{a := A}.
+-spec update_map1(#(a :: A), A) -> #(a :: A).
 update_map1(M, A) ->
-    M#{a := A}.
+    M#(a = A).
 
 %% Generic updates are forbidden
-%%-spec update_map2(#{a := A, _ := _}, A) -> #{a := A, _ := _}.
+%%-spec update_map2(#{a = A, _ = _}, A) -> #{a = A, _ = _}.
 %%update_map2(M, A) ->
-%%    M#{a := A}.
+%%    M#{a = A}.
 
--spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
+-spec update_map3(#(a :: A, b :: A)) -> #(a :: A, b :: A).
 update_map3(M) ->
-    A0 = M.a,
-B0 = M.a,
-M#{a := B0, b := A0}.
+    A0 = M#(a),
+    B0 = M#(a),
+    M#(a = B0, b = A0).
 
 %% Generic updates are forbidden
-%%-spec update_map4(#{a := A, b := A, _ := _}) -> #{a := A, b := A, _ := _}.
+%%-spec update_map4(#{a = A, b = A, _ = _}) -> #{a = A, b = A, _ = _}.
 %%update_map4(M) ->
 %%    A0 = M.a,
 %%    B0 = M.a,
-%%    M#{a := B0, b := A0}.
+%%    M#{a = B0, b = A0}.
 
--spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
+-spec access_map(#(id :: Id, location :: Location, _)) -> {Id, Location}.
 access_map(M) ->
-    {M.id, M.location}.
+    {M#(id), M#(location)}.
 
--spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
+-spec access_map2(#(inner1 :: #(inner2 :: A))) -> A.
 access_map2(M) ->
-    M.inner1.inner2.
+    M#(inner1)#(inner2).
 
 -spec mk_seq() -> {integer(), integer()}.
 mk_seq() ->
@@ -303,7 +303,7 @@ comp6(X, Y) ->
 
 -spec comp7(A, A) -> boolean().
 comp7(X, Y) ->
-    X =:= Y.
+    X == Y.
 
 -spec comp8(A, A) -> boolean().
 comp8(X, Y) ->
@@ -369,7 +369,7 @@ iodata_id(A) -> A.
 -spec iolist_id(iolist()) -> iolist().
 iolist_id(A) -> A.
 
--spec map_id(#{A => B}) -> #{A => B}.
+-spec map_id(map(A, B)) -> map(A, B).
 map_id(M) -> M.
 
 -spec none_id(none()) -> none().

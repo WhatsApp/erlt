@@ -102,7 +102,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         pats.foreach(printPat)
       case A.ListPat(pats) =>
         pats.foreach(printPat)
-      case A.RecordPat(fields, _) =>
+      case A.RecordPat(fields) =>
         fields.foreach { f => printPat(f.value) }
 
       case A.ConsPat(hPat, tPat) =>

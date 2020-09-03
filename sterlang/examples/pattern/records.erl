@@ -16,35 +16,35 @@
 -module(records).
 -export([test0/1, test1/1, test2/1, test3/1, test4/1, test5/1, test6/1, test7/1, test8/1]).
 
--spec test0(#{}) -> {}.
+-spec test0(#()) -> {}.
 test0(_) -> {}.
 
--spec test1(#{}) -> {}.
-test1(#{}) -> {}.
+-spec test1(#()) -> {}.
+test1(#()) -> {}.
 
--spec test2(#{}) -> {}.
-test2(##{}) -> {}.
+-spec test2(#()) -> {}.
+test2(#()) -> {}.
 
--spec test3(#{a := boolean()}) -> {}.
-test3(#{a := true}) -> {};
-test3(#{a := false}) -> {}.
+-spec test3(#(a :: boolean())) -> {}.
+test3(#(a = true)) -> {};
+test3(#(a = false)) -> {}.
 
--spec test4(#{a := boolean()}) -> {}.
-test4(##{a := true}) -> {};
-test4(##{a := false}) -> {}.
+-spec test4(#(a :: boolean())) -> {}.
+test4(#(a = true)) -> {};
+test4(#(a = false)) -> {}.
 
--spec test5(#{a := boolean()}) -> {}.
-test5(##{a := true}) -> {};
-test5(##{}) -> {}.
+-spec test5(#(a :: boolean())) -> {}.
+test5(#(a = true)) -> {};
+test5(#()) -> {}.
 
--spec test6(#{a := boolean()}) -> {}.
-test6(##{}) -> {}.
+-spec test6(#(a :: boolean())) -> {}.
+test6(#()) -> {}.
 
--spec test7(#{a := boolean(), b := boolean()}) -> {}.
-test7(##{a := true}) -> {};
-test7(##{b := true}) -> {};
-test7(##{a := false, b := false}) -> {}.
+-spec test7(#(a :: boolean(), b :: boolean())) -> {}.
+test7(#(a = true)) -> {};
+test7(#(b = true)) -> {};
+test7(#(a = false, b = false)) -> {}.
 
-test8(##{a := true}) -> {};
-test8(##{b := true}) -> {};
-test8(##{a := false, b := false}) -> {}.
+test8(#(a = true)) -> {};
+test8(#(b = true)) -> {};
+test8(#(a = false, b = false)) -> {}.

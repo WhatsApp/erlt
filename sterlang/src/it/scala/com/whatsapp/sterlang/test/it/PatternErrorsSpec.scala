@@ -16,16 +16,15 @@
 
 package com.whatsapp.sterlang.test.it
 
-class ErrorsSpec extends DirSpec {
-  testDir("examples/neg")
-  testDir("examples/err")
-  testDir("examples/err2")
+class PatternErrorsSpec extends DirSpec {
+
+  testDir("examples/pattern-error")
 
   override def testFile(f: String): Unit = {
     if (f.endsWith("core.erl")) {
       super.testFile(f)
     } else {
-      assert(SterlangTestUtil.processIllTyped(f))
+      assert(SterlangTestUtil.processIllPatterns(f))
     }
   }
 

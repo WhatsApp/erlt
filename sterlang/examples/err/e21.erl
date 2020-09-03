@@ -16,5 +16,5 @@
 -module(e21).
 double(X) -> X + X.
 foo() ->
-    R = #{x => false},
-    double(R.x).
+    R = #(x = false),
+    double(R#(x)).

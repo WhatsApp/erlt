@@ -15,5 +15,5 @@
 -lang([erl2, st]).
 -module(e13).
 foo(X) ->
-    Y = #{id1 => 1},
-    Y #{id2 := 2}.
+    Y = #(id1 = 1),
+    Y #(id2 = 2).

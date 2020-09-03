@@ -13,9 +13,6 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(e15heterogeneous_map_type).
-
-%% maps can be only homogeneous
--spec test(#{integer() => integer(), atom() => atom()}) -> integer().
-test(X) ->
-    1.
+-module(e41).
+foo() ->
+    case #(x = true, y = false) of #(x = false) -> 1 end.

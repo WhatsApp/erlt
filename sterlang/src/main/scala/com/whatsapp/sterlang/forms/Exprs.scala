@@ -46,8 +46,9 @@ object Exprs {
   case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[RecordField]) extends Expr
   case class RecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends Expr
   case class RecordFieldAccess(p: Pos.SP, rec: Expr, recordName: String, fieldName: String) extends Expr
-  case class MapCreate(p: Pos.SP, entries: List[Assoc]) extends Expr
-  case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[Assoc]) extends Expr
+  case class MapFieldAccess(p: Pos.SP, map: Expr, fieldName: String) extends Expr
+  case class MapCreate(p: Pos.SP, entries: List[MapField]) extends Expr
+  case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[MapField]) extends Expr
   case class Catch(p: Pos.SP, exp: Expr) extends Expr
   case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(p: Pos.SP, module: Expr, fun: Expr, args: List[Expr]) extends Expr
@@ -77,12 +78,7 @@ object Exprs {
   case class TypeSpecifierUnit(int: Int) extends TypeSpecifier
 
   case class RecordField(p: Pos.SP, fieldName: String, value: Expr)
-
-  sealed trait Assoc { val p: Pos.SP }
-  // X := Y - mandatory association
-  case class AssocExact(p: Pos.SP, k: Expr, v: Expr) extends Assoc
-  // X => Y - optional association
-  case class OptAssoc(p: Pos.SP, k: Expr, v: Expr) extends Assoc
+  case class MapField(p: Pos.SP, k: Expr, v: Expr)
 
   sealed trait Qualifier
   sealed trait Generator extends Qualifier

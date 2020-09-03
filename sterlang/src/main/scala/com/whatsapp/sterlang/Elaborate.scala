@@ -1117,18 +1117,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penv: PEnv,
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
-    val S.RecordPat(fieldPats, open) = p
+    val S.RecordPat(fieldPats) = p
     checkUniqueFields(p.p, fieldPats.map(_.label))
 
     val t = TU.instantiate(d, ts)
 
     val labelPatTypes =
       for { S.Field(lbl, pat) <- fieldPats } yield (lbl, pat, freshTypeVar(d))
-    val baseType =
-      if (open)
-        freshRowTypeVar(d, labelPatTypes.map(_._1).toSet)
-      else
-        T.RowEmptyType
+    val baseType = freshRowTypeVar(d, labelPatTypes.map(_._1).toSet)
 
     val rowType = labelPatTypes.foldRight(baseType) {
       case ((label, _, fieldType), acc) => T.RowFieldType(T.Field(label, fieldType), acc)
@@ -1144,7 +1140,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(l, p1)
     }
 
-    (A.RecordPat(fields, open)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+    (A.RecordPat(fields)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(

@@ -12,7 +12,17 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+% edge cases for structural records
 -lang([erl2, st]).
--module(e41).
-foo() ->
-    case #{x => true, y => false} of #{x := false} -> 1 end.
+-module(anonymous_structs_guards).
+
+-export([]).
+
+test1(X) ->
+    if
+        X#(y) -> 1;
+        true -> 2
+    end.
+
+test2(M) when M#(id) > 0 -> 1;
+test2(M) when M#(name)#(first) =/= "" -> 0.

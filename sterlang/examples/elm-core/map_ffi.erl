@@ -23,7 +23,7 @@
 
 -import_type(maybe, [maybe/1]).
 
--opaque map(K, V) :: #{K => V}.
+-opaque map(K, V) :: map(K, V).
 
 -spec empty() -> map(_K, _V).
 empty() ->

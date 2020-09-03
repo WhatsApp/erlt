@@ -38,13 +38,9 @@ object Types {
   // map()
   case class AnyMap(p: Pos.SP) extends MapType
   case class AssocMap(p: Pos.SP, assocs: List[Assoc]) extends MapType
+  case class OpenAssocMap(p: Pos.SP, assocs: List[Assoc], restType: Type) extends MapType
 
-  case class Assoc(p: Pos.P, kind: AssocKind, keyType: Type, valueType: Type)
-  sealed trait AssocKind
-  // X := Y - required association
-  case object ReqAssoc extends AssocKind
-  // X => Y - optional association
-  case object OptAssoc extends AssocKind
+  case class Assoc(p: Pos.P, keyType: Type, valueType: Type)
 
   case class PredefinedType(p: Pos.SP, name: String, params: List[Type]) extends Type
   case class RecordType(p: Pos.SP, name: String, fieldTypes: List[RecordFieldType]) extends Type

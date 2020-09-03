@@ -23,14 +23,14 @@ minimal() ->
 basic_values() ->
     My_int = 0,
     My_str = "hello",
-    Empty_record = #{},
+    Empty_record = #(),
     Unit = {},
     Tuple1 = {1, 2},
     Tuple2 = {My_int, My_str},
     Int_list = [My_int, My_int],
 
-    My_profile_rec = #{name => "Ilya", languages => ["Erlang", "Scala"]},
-    Location_rec = #{city => "London", country => "UK"},
+    My_profile_rec = #(name = "Ilya", languages = ["Erlang", "Scala"]),
+    Location_rec = #(city = "London", country = "UK"),
 
     Bool1 = true,
     Bool2 = false,
@@ -62,14 +62,14 @@ funs() ->
     {}.
 
 pieces() ->
-    My_rec = #{n => 1, st => "", z => []},
-    NVal = My_rec.n,
-    #{n := N1, st := S1, z := Z1} = My_rec,
-    #{n := N, st := St, z := Z} = My_rec,
-    Rec1 = #{n => N, z => Z},
-    ##{n := NVal} = My_rec,
+    My_rec = #(n = 1, st = "", z = []),
+    NVal = My_rec#(n),
+    #(n = N1, st = S1, z = Z1) = My_rec,
+    #(n = N, st = St, z = Z) = My_rec,
+    Rec1 = #(n = N, z = Z),
+    #(n = NVal) = My_rec,
     % transforming record:
-    My_rec1 = My_rec #{n := 2},
+    My_rec1 = My_rec #(n = 2),
     My_pair = {1, []},
     {Elem1, Elem2} = My_pair,
     {}.
@@ -97,7 +97,7 @@ map(F, Xs) ->
     end.
 
 getIds(Recs) ->
-    map(fun (X) -> X.id end, Recs).
+    map(fun (X) -> X#(id) end, Recs).
 
 %% named local funs
 global(X, V) -> if X -> V; true -> global(true, V) end.
@@ -115,19 +115,19 @@ inside2() ->
     T.
 
 get_id(R) ->
-    R.id.
+    R#(id).
 
 % So, what to do if we want to process "heterogeneous" records together?
 % Explicitly cast/restrict them!
-extract(##{id := Id}) -> #{id => Id}.
+extract(#(id = Id)) -> #(id = Id).
 
 records_example() ->
     % polymorphism - get_id is polymorphic
-    Id1 = get_id(#{id => 1}),
-    Id2 = get_id(#{id => "id", key => 3}),
+    Id1 = get_id(#(id = 1)),
+    Id2 = get_id(#(id = "id", key = 3)),
 
-    Rec1 = #{id => 1},
-    Rec2 = #{id => 2, key => 3},
+    Rec1 = #(id = 1),
+    Rec2 = #(id = 2, key = 3),
 
     % However, this is not well-typed:
     % Field mismatch: key
@@ -138,17 +138,17 @@ records_example() ->
 
 % record is a special "kind" of types
 id_rec(R) ->
-    ##{} = R,
+    #() = R,
     R.
 
 get_id1(Rec) ->
-    ##{id := IdVal} = Rec,
+    #(id = IdVal) = Rec,
     IdVal.
 
 update_a_b(R) ->
-    R #{a := 1, b := 2}.
+    R #(a = 1, b = 2).
 swap_a_b(R) ->
-    R #{a := R.b, b := R.a}.
+    R #(a = R#(b), b = R#(a)).
 
 id01(A) -> A.
 id02((A)) -> A.

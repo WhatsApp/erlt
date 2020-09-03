@@ -85,6 +85,8 @@ object TypesConvert {
       // af_map_type
       case ETuple(List(EAtom("type"), anno, EAtom("map"), EList(assocTypes))) =>
         AssocMap(sp(anno), assocTypes.map(convertAssocType))
+      case ETuple(List(EAtom("type"), anno, EAtom("open_map"), EList(assocTypes), restType)) =>
+        OpenAssocMap(sp(anno), assocTypes.map(convertAssocType), convertType(restType))
       // af_record_type
       case ETuple(List(EAtom("type"), anno, EAtom("record"), EList(recordNameLit :: eFieldTypes))) =>
         RecordType(sp(anno), FormsConvert.convertAtomLit(recordNameLit), eFieldTypes.map(convertRecordFieldType))
@@ -141,10 +143,8 @@ object TypesConvert {
 
   def convertAssocType(term: ETerm): Assoc =
     term match {
-      case ETuple(List(EAtom("type"), anno, EAtom("map_field_assoc"), EList(List(kType, vType)))) =>
-        Assoc(sp(anno), Types.OptAssoc, convertType(kType), convertType(vType))
-      case ETuple(List(EAtom("type"), anno, EAtom("map_field_exact"), EList(List(kType, vType)))) =>
-        Assoc(sp(anno), Types.ReqAssoc, convertType(kType), convertType(vType))
+      case ETuple(List(EAtom("type"), anno, EAtom("map_field"), EList(List(kType, vType)))) =>
+        Assoc(sp(anno), convertType(kType), convertType(vType))
     }
 
   def convertRecordFieldType(term: ETerm): RecordFieldType =

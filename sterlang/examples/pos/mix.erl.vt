@@ -51,22 +51,22 @@ val Add_id: fun((M) -> #{ id: N, E })
 val Rec: M
 val Rec1: #{ id: N, E }
 val Unused_id: N
-val add_id_empty_rec/1: fun((()) -> #{ id: string() })
-val add_id_rec_f/1: fun((#{ f: O }) -> #{ f: O, id: string() })
+val add_id_empty_rec/1: fun((#{ F }) -> #{ id: string() })
+val add_id_rec_f/1: fun((#{ f: O, G }) -> #{ f: O, id: string() })
 val X: O
 val rec_tricky/0: fun(() -> {})
-val Rec1: fun((()) -> #{ id: string() })
-val X: ()
-val Rec2: fun((#{ f: P }) -> #{ f: P, id: string() })
-val X: #{ f: P }
+val Rec1: fun((#{ H }) -> #{ id: string() })
+val X: #{ H }
+val Rec2: fun((#{ f: P, I }) -> #{ f: P, id: string() })
+val X: #{ f: P, I }
 val even/1: fun((integer()) -> boolean())
 val I: integer()
 val odd/1: fun((integer()) -> boolean())
 val I: integer()
-val loop/1: fun(({}) -> fun((#{ a: Q, F }) -> Q))
-val Foo: fun((#{ a: R, G }) -> R)
-val X: #{ a: R, G }
-val dummy/0: fun(() -> fun((#{ a: S, H }) -> S))
+val loop/1: fun(({}) -> fun((#{ a: Q, J }) -> Q))
+val Foo: fun((#{ a: R, K }) -> R)
+val X: #{ a: R, K }
+val dummy/0: fun(() -> fun((#{ a: S, L }) -> S))
 val id/1: fun((T) -> T)
 val I: T
 val x_fun/0: fun(() -> integer())

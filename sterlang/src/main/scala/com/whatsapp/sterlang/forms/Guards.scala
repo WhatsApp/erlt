@@ -32,6 +32,7 @@ object Guards {
   case class GRecordCreate(p: Pos.SP, recordName: String, fields: List[GRecordField]) extends GExpr
   case class GRecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends GExpr
   case class GRecordFieldAccess(p: Pos.SP, rec: GExpr, recordName: String, fieldName: String) extends GExpr
+  case class GMapFieldAccess(p: Pos.SP, rec: GExpr, fieldName: String) extends GExpr
   case class GMapCreate(p: Pos.SP, entries: List[GAssoc]) extends GExpr
   case class GMapUpdate(p: Pos.SP, exp: GExpr, entries: List[GAssoc]) extends GExpr
   // calling erlang:funName

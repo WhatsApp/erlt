@@ -14,4 +14,4 @@
 
 -lang([erl2, st]).
 -module(e48).
-f04(X = #{x := X}) -> X.
+f04(X = #(x = X)) -> X.

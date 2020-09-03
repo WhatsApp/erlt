@@ -15,4 +15,4 @@
 -lang([erl2, st]).
 -module(e22).
 double(X) -> X + X.
-foo() -> double(#{x => false}).
+foo() -> double(#(x = false)).

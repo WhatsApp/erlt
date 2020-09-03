@@ -68,11 +68,27 @@ object SterlangTestUtil {
       val vars = new Vars()
       val context = Main.loadContext(path, program, vars).extend(program)
       new AstChecks(context).check(program)
-      val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      false
+    } catch {
+      case _: PositionedError =>
+        true
+    }
+  }
+
+  def processIllPatterns(path: String): Boolean = {
+    val rawProgram = Main.loadProgram(path)
+    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val vars = new Vars()
+    val context = Main.loadContext(path, program, vars).extend(program)
+    new AstChecks(context).check(program)
+    val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+    try {
       new PatternChecker(vars, context, program).check(annotatedFunctions)
       false
     } catch {
-      case _: PositionedError => true
+      case _: PositionedError =>
+        true
     }
   }
 

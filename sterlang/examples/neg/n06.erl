@@ -2,4 +2,4 @@
 -module(n06).
 foo(B, R) ->
     % circularity
-    if B -> R.x; true -> R end.
+    if B -> R#(x); true -> R end.

@@ -45,7 +45,7 @@ object SyntaxUtil {
         List(v)
       case S.TuplePat(pats) =>
         pats.flatMap(collectPatVars)
-      case S.RecordPat(fields, _) =>
+      case S.RecordPat(fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
       case S.AndPat(p1, p2) =>
@@ -80,7 +80,7 @@ object SyntaxUtil {
         tPats.flatMap(collectPatVars2)
       case A.ListPat(tPats) =>
         tPats.flatMap(collectPatVars2)
-      case A.RecordPat(fields, _) =>
+      case A.RecordPat(fields) =>
         fields.map(_.value).flatMap(collectPatVars2)
 
       case A.ConsPat(hPat, tPat) =>
@@ -535,7 +535,7 @@ object SyntaxUtil {
         Set.empty[String]
       case S.TuplePat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
-      case S.RecordPat(fields, _) =>
+      case S.RecordPat(fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case S.ERecordPat(_, fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)

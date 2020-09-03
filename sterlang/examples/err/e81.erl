@@ -15,8 +15,7 @@
 -lang([erl2, st]).
 -module(e81).
 
-%% Record is closed
--spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
+-spec access_map(#(id :: Id, location :: Location, _)) -> #(id :: Id, location :: Location).
 access_map(M) ->
-    #{id := X, location := L} = M,
+    #(id = X, location = L) = M,
     M.

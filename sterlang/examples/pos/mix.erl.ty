@@ -10,8 +10,8 @@
 -spec unRec(rec(A)) -> #{ name: A, next: core:option(rec(A)) }.
 -spec unRec2(rec(A)) -> rec(A).
 -spec apply_add_id(fun((A) -> #{ id: B, 'A }), A) -> #{ id: B, 'A }.
--spec add_id_empty_rec(()) -> #{ id: string() }.
--spec add_id_rec_f(#{ f: A }) -> #{ f: A, id: string() }.
+-spec add_id_empty_rec(#{ 'A }) -> #{ id: string() }.
+-spec add_id_rec_f(#{ f: A, 'A }) -> #{ f: A, id: string() }.
 -spec rec_tricky() -> {}.
 -spec even(integer()) -> boolean().
 -spec odd(integer()) -> boolean().

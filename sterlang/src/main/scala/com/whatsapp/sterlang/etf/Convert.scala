@@ -188,10 +188,10 @@ object Convert {
         val recExp = convertGExpr(exp)
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
         Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
+      case Guards.GMapFieldAccess(p, exp, fieldName) =>
+        Ast.SelExp(convertGExpr(exp), fieldName)(p)
       case Guards.GCall(p, (fp, f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(fp), args.map(convertGExpr))(p)
-      case Guards.GBinaryOp(p, ".", exp, Guards.GLiteral(Exprs.AtomLiteral(_, field))) =>
-        Ast.SelExp(convertGExpr(exp), field)(p)
       case Guards.GBinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
           case Some(binOp) =>
@@ -271,7 +271,7 @@ object Convert {
         Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
       case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
-      case Patterns.MapPattern(p, open, assocs) =>
+      case Patterns.MapPattern(p, assocs) =>
         val pats = assocs map { elem =>
           elem.key match {
             case Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) =>
@@ -281,7 +281,7 @@ object Convert {
               throw new UnsupportedSyntaxError(other.p)
           }
         }
-        Ast.RecordPat(pats, open)(p)
+        Ast.RecordPat(pats)(p)
       case Patterns.BinPattern(p, elems) =>
         Ast.BinPat(elems.map(convertBinElemPat))(p)
       case Patterns.BinOpPattern(p, op, pat1, pat2) =>
@@ -334,12 +334,12 @@ object Convert {
       case Exprs.RemoteEnumCtr(p, module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
       case Exprs.MapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(assocCreateToFieldExp))(p)
+        Ast.RecordExp(entries.map(field))(p)
       case Exprs.MapUpdate(p, exp, entries) =>
         val recExp = convertExpr(exp)
         // this is not present in Erlang. Approximating
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(assocUpdateToFieldExp))(updateRange))(p)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(field))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>
@@ -374,8 +374,8 @@ object Convert {
             // Unknown unary operation
             throw new UnsupportedSyntaxError(p)
         }
-      case Exprs.BinaryOp(p, ".", exp, Exprs.AtomLiteral(_, field)) =>
-        Ast.SelExp(convertExpr(exp), field)(p)
+      case Exprs.MapFieldAccess(p, map, fieldName) =>
+        Ast.SelExp(convertExpr(map), fieldName)(p)
       case Exprs.BinaryOp(p, op, exp1, exp2) =>
         Ast.binOps.get(op) match {
           case Some(binOp) =>
@@ -465,18 +465,9 @@ object Convert {
         }.headOption
     }
 
-  private def assocCreateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
+  private def field(assoc: Exprs.MapField): Ast.Field[Ast.Exp] =
     assoc match {
-      case Exprs.OptAssoc(p, Exprs.AtomLiteral(_, label), e) =>
-        Ast.Field(label, convertExpr(e))(p)
-      case _ =>
-        // "wrong anon struct syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
-    }
-
-  private def assocUpdateToFieldExp(assoc: Exprs.Assoc): Ast.Field[Ast.Exp] =
-    assoc match {
-      case Exprs.AssocExact(p, Exprs.AtomLiteral(_, label), e) =>
+      case Exprs.MapField(p, Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))(p)
       case _ =>
         // "wrong anon struct syntax"
@@ -522,19 +513,10 @@ object Convert {
       case Types.FunctionType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
       case Types.AssocMap(p, assocs) =>
-        assocs match {
-          case List() =>
-            Ast.RecordType(List())(p)
-          case List(Types.Assoc(_, Types.OptAssoc, k, v)) =>
-            Ast.UserType(Ast.LocalName("map"), List(convertType(k), convertType(v)))(p)
-          case _ =>
-            assocs.last match {
-              case Types.Assoc(_, Types.ReqAssoc, Types.TypeVariable(p1, "_"), Types.TypeVariable(p2, "_")) =>
-                Ast.OpenRecordType(assocs.init.map(convertAssoc), Ast.WildTypeVar()(p1 ! p2))(p)
-              case _ =>
-                Ast.RecordType(assocs.map(convertAssoc))(p)
-            }
-        }
+        Ast.RecordType(assocs.map(convertAssoc))(p)
+      case Types.OpenAssocMap(p, assocs, restType) =>
+        // TODO
+        Ast.OpenRecordType(assocs.map(convertAssoc), Ast.WildTypeVar()(restType.p))(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
@@ -598,7 +580,7 @@ object Convert {
 
   private def convertAssoc(assoc: Types.Assoc): Ast.Field[Ast.Type] =
     assoc match {
-      case Types.Assoc(p, Types.ReqAssoc, Types.AtomType(_, field), v) =>
+      case Types.Assoc(p, Types.AtomType(_, field), v) =>
         Ast.Field(field, convertType(v))(p)
       case _ =>
         // wrong "record syntax"

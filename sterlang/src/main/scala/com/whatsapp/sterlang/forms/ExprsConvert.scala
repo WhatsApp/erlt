@@ -72,6 +72,9 @@ object ExprsConvert {
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
         MapUpdate(sp(anno), convertExp(eExp), eAssocs.map(convertAssoc))
+      case ETuple(List(EAtom("map_field"), anno, eExp, eFieldName)) =>
+        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        MapFieldAccess(sp(anno), convertExp(eExp), fieldName)
       case ETuple(List(EAtom("catch"), anno, eExp)) =>
         Catch(sp(anno), convertExp(eExp))
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
@@ -221,13 +224,10 @@ object ExprsConvert {
         RecordField(sp(anno), name, convertExp(ePat))
     }
 
-  def convertAssoc(term: ETerm): Assoc =
+  def convertAssoc(term: ETerm): MapField =
     term match {
-      // map_field_assoc
-      case ETuple(List(EAtom("map_field_assoc"), anno, eExp1, eExp2)) =>
-        OptAssoc(sp(anno), convertExp(eExp1), convertExp(eExp2))
-      case ETuple(List(EAtom("map_field_exact"), anno, eExp1, eExp2)) =>
-        AssocExact(sp(anno), convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(EAtom("map_field"), anno, eExp1, eExp2)) =>
+        MapField(sp(anno), convertExp(eExp1), convertExp(eExp2))
     }
 
   def convertQualifier(term: ETerm): Qualifier =

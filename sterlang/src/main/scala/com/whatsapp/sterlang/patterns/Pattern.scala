@@ -136,7 +136,7 @@ private[patterns] object Pattern {
       case Absyn.TuplePat(elements) =>
         ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars, program)))
 
-      case Absyn.RecordPat(patternFields, _) =>
+      case Absyn.RecordPat(patternFields) =>
         val recordType = resolveRecordType(vars)(pattern.typ)
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val allFieldNames: List[String] = getFieldNames(recordType).sorted

@@ -16,7 +16,7 @@
 -module(redundant_record2).
 -export([test1/1]).
 
--spec test1(#{a := boolean(), b := boolean()}) -> {}.
-test1(##{a := true}) -> {};
-test1(#{a := _, b := _}) -> {};
-test1(##{}) -> {}.
+-spec test1(#(a :: boolean(), b :: boolean())) -> {}.
+test1(#(a = true)) -> {};
+test1(#(a = _, b = _)) -> {};
+test1(#()) -> {}.
