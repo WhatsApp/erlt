@@ -20,7 +20,7 @@
     traverse/4
 ]).
 
--type ctx() :: form | expr | guard | pattern.
+-type ctx() :: form | expr | guard | pattern | type.
 
 -type t() :: tuple() | [tuple()].
 
@@ -40,6 +40,21 @@ postwalk(Ast, Fun) ->
 postwalk(Ast, Acc0, Fun) ->
     traverse(Ast, Acc0, fun(Node, Acc, _Ctx) -> {Node, Acc} end, Fun).
 
+-define(IS_ATOMIC(Kind),
+    Kind =:= integer orelse
+        Kind =:= float orelse
+        Kind =:= char orelse
+        Kind =:= atom orelse
+        Kind =:= string orelse
+        Kind =:= var
+).
+
+-define(IS_TYPE(Kind),
+    Kind =:= type orelse
+        Kind =:= opaque orelse
+        Kind =:= enum
+).
+
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun((t(), any(), ctx()) -> {t(), any()})) -> {t(), any()}.
 traverse(Ast, Acc, Pre, Post) ->
     case Ast of
@@ -47,10 +62,8 @@ traverse(Ast, Acc, Pre, Post) ->
         List when is_list(List) ->
             Fun = fun(Node, Acc1) -> traverse(Node, Acc1, Pre, Post) end,
             lists:mapfoldl(Fun, Acc, List);
-        %% never recurse into attributes, it's messy
         {attribute, _, _, _} = Node ->
-            {Node1, Acc1} = Pre(Node, Acc, form),
-            Post(Node1, Acc1, form);
+            do_traverse(Node, Acc, Pre, Post, form);
         {function, _, _, _, _} = Node ->
             do_traverse(Node, Acc, Pre, Post, form);
         %% don't traverse special parser forms
@@ -62,18 +75,16 @@ traverse(Ast, Acc, Pre, Post) ->
             {Node, Acc}
     end.
 
--define(IS_ATOMIC(Kind),
-    Kind =:= integer orelse
-        Kind =:= float orelse
-        Kind =:= char orelse
-        Kind =:= atom orelse
-        Kind =:= string orelse
-        Kind =:= var
-).
-
 do_traverse(Node0, Acc, Pre, Post, Ctx) ->
     {Node, Acc0} = Pre(Node0, Acc, Ctx),
     case Node of
+        {attribute, Line, Type, {Name, Def0, Args0}} when ?IS_TYPE(Type) ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, type),
+            {Def1, Acc2} = do_traverse(Def0, Acc1, Pre, Post, type),
+            Post({attribute, Line, Type, {Name, Def1, Args1}}, Acc2, Ctx);
+        %% TODO: traverse other attributes that can have type defintions
+        {attribute, _, _, _} ->
+            Post(Node, Acc0, Ctx);
         {function, Line, Name, Arity, Clauses} ->
             {Clauses1, Acc1} = do_traverse_list(Clauses, Acc0, Pre, Post, Ctx),
             Post({function, Line, Name, Arity, Clauses1}, Acc1, Ctx);
@@ -217,7 +228,40 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {OfClauses1, Acc2} = do_traverse_list(OfClauses0, Acc1, Pre, Post, Ctx),
             {CatchClauses1, Acc3} = do_traverse_list(CatchClauses0, Acc2, Pre, Post, Ctx),
             {After1, Acc4} = do_traverse_list(After0, Acc3, Pre, Post, Ctx),
-            Post({'try', Line, Exprs1, OfClauses1, CatchClauses1, After1}, Acc4, Ctx)
+            Post({'try', Line, Exprs1, OfClauses1, CatchClauses1, After1}, Acc4, Ctx);
+        {type, _, map, any} ->
+            Post(Node, Acc0, Ctx);
+        {type, _, tuple, any} ->
+            Post(Node, Acc0, Ctx);
+        {type, Line, enum, Name0, Constr0, Args0} ->
+            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
+            {Args1, Acc3} = do_traverse_list(Args0, Acc2, Pre, Post, Ctx),
+            Post({type, Line, enum, Name1, Constr1, Args1}, Acc3, Ctx);
+        {type, Line, enum, Constr0, Args0} ->
+            {Constr1, Acc1} = do_traverse(Constr0, Acc0, Pre, Post, Ctx),
+            {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
+            Post({type, Line, enum, Constr1, Args1}, Acc2, Ctx);
+        {type, Line, Name, Args0} ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
+            Post({type, Line, Name, Args1}, Acc1, Ctx);
+        {type, _, any} ->
+            Post(Node, Acc0, Ctx);
+        {qualified_record, M0, N0} ->
+            {M1, Acc1} = do_traverse(M0, Acc0, Pre, Post, Ctx),
+            {N1, Acc2} = do_traverse(N0, Acc1, Pre, Post, Ctx),
+            Post({qualified_record, M1, N1}, Acc2, Ctx);
+        {ann_type, Line, Args0} ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
+            Post({ann_type, Line, Args1}, Acc1, Ctx);
+        {remote_type, Line, [Mod0, Name0, Args0]} ->
+            {Mod1, Acc1} = do_traverse(Mod0, Acc0, Pre, Post, Ctx),
+            {Name1, Acc2} = do_traverse(Name0, Acc1, Pre, Post, Ctx),
+            {Args1, Acc3} = do_traverse_list(Args0, Acc2, Pre, Post, Ctx),
+            Post({remote_type, Line, [Mod1, Name1, Args1]}, Acc3, Ctx);
+        {user_type, Line, Name, Args0} ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
+            Post({user_type, Line, Name, Args1}, Acc1, Ctx)
     end.
 
 do_traverse_list(List, Acc0, Pre, Post, Ctx) ->

@@ -1352,7 +1352,7 @@ foldl_transform([T | Ts], Code0, St) ->
                     foldl_transform(Ts, Forms, St#compile{
                         warnings = St#compile.warnings ++ Ws
                     });
-                Forms ->
+                Forms when is_list(Forms) ->
                     foldl_transform(Ts, Forms, St)
             end;
         false ->
