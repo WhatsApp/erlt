@@ -26,10 +26,8 @@
 
 -module(erlt_lint).
 
--export([module/1, module/2, module/3, format_error/1]).
-% Used from erl_eval.erl.
--export([exprs/2, exprs_opt/3, used_vars/2]).
--export([is_pattern_expr/1, is_guard_test/1, is_guard_test/2, is_guard_test/3]).
+-export([module/4, format_error/1]).
+-export([is_pattern_expr/1]).
 -export([is_guard_expr/1]).
 -export([bool_option/4, value_option/3, value_option/7]).
 
@@ -248,7 +246,9 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %Current enum
     enum = [] :: atom() | [],
     %In a try head.
-    in_try_head = false :: boolean()
+    in_try_head = false :: boolean(),
+    % Global definition database
+    defs_db :: erlt_defs:defs()
 }).
 
 -type lint_state() :: #lint{}.
@@ -646,104 +646,35 @@ format_where(Anno) when is_list(Anno) ->
 pseudolocals() ->
     [{module_info, 0}, {module_info, 1}, {record_info, 2}].
 
-%%
-%% Used by erl_eval.erl to check commands.
-%%
-exprs(Exprs, BindingsList) ->
-    exprs_opt(Exprs, BindingsList, []).
-
-exprs_opt(Exprs, BindingsList, Opts) ->
-    {St0, Vs} = foldl(
-        fun
-            ({{record, _SequenceNumber, _Name}, Attr0}, {St1, Vs1}) ->
-                Attr = set_file(Attr0, "none"),
-                {attribute_state(Attr, St1), Vs1};
-            ({V, _}, {St1, Vs1}) ->
-                {St1, [{V, {bound, unused, []}} | Vs1]}
-        end,
-        {start("nofile", Opts), []},
-        BindingsList
-    ),
-    Vt = orddict:from_list(Vs),
-    {_Evt, St} = exprs(set_file(Exprs, "nofile"), Vt, St0),
-    return_status(St).
-
-used_vars(Exprs, BindingsList) ->
-    Vs = foldl(
-        fun
-            ({{record, _SequenceNumber, _Name}, _Attr}, Vs0) -> Vs0;
-            ({V, _Val}, Vs0) -> [{V, {bound, unused, []}} | Vs0]
-        end,
-        [],
-        BindingsList
-    ),
-    Vt = orddict:from_list(Vs),
-    {Evt, _St} = exprs(set_file(Exprs, "nofile"), Vt, start()),
-    {ok,
-        foldl(
-            fun
-                ({V, {_, used, _}}, L) -> [V | L];
-                (_, L) -> L
-            end,
-            [],
-            Evt
-        )}.
-
-%% module([Form]) ->
-%% module([Form], FileName) ->
-%% module([Form], FileName, [CompileOption]) ->
+%% module([Form], FileName, DefsDb, [CompileOption]) ->
 %%      {ok,[Warning]} | {error,[Error],[Warning]}
 %%  Start processing a module. Define predefined functions and exports and
 %%  apply_lambda/2 has been called to shut lint up. N.B. these lists are
 %%  really all ordsets!
 
--spec module(AbsForms) -> {ok, Warnings} | {error, Errors, Warnings} when
-    AbsForms :: [erlt_parse:abstract_form() | erlt_parse:form_info()],
-    Warnings :: [{file:filename(), [ErrorInfo]}],
-    Errors :: [{FileName2 :: file:filename(), [ErrorInfo]}],
-    ErrorInfo :: error_info().
-module(Forms) ->
-    Opts = compiler_options(Forms),
-    St = forms(Forms, start("nofile", Opts)),
-    return_status(St).
-
--spec module(AbsForms, FileName) -> {ok, Warnings} | {error, Errors, Warnings} when
-    AbsForms :: [erlt_parse:abstract_form() | erlt_parse:form_info()],
-    FileName :: atom() | string(),
-    Warnings :: [{file:filename(), [ErrorInfo]}],
-    Errors :: [{FileName2 :: file:filename(), [ErrorInfo]}],
-    ErrorInfo :: error_info().
-module(Forms, FileName) ->
-    Opts = compiler_options(Forms),
-    St = forms(Forms, start(FileName, Opts)),
-    return_status(St).
-
--spec module(AbsForms, FileName, CompileOptions) ->
+-spec module(AbsForms, FileName, DefsDB, CompileOptions) ->
     {ok, Warnings} | {error, Errors, Warnings}
 when
     AbsForms :: [erlt_parse:abstract_form() | erlt_parse:form_info()],
     FileName :: atom() | string(),
+    DefsDB :: erlt_defs:defs(),
     CompileOptions :: [compile:option()],
     Warnings :: [{file:filename(), [ErrorInfo]}],
     Errors :: [{FileName2 :: file:filename(), [ErrorInfo]}],
     ErrorInfo :: error_info().
-module(Forms, FileName, Opts0) ->
+module(Forms, FileName, DefsDB, Opts0) ->
     %% We want the options given on the command line to take
     %% precedence over options in the module.
     Opts = compiler_options(Forms) ++ Opts0,
-    St = forms(Forms, start(FileName, Opts)),
+    St = forms(Forms, start(FileName, DefsDB, Opts)),
     return_status(St).
 
 compiler_options(Forms) ->
     lists:flatten([C || {attribute, _, compile, C} <- Forms]).
 
-%% start() -> State
-%% start(FileName, [Option]) -> State
+%% start(FileName, DepsDB, [Option]) -> State
 
-start() ->
-    start("nofile", []).
-
-start(File, Opts) ->
+start(File, DefsDB, Opts) ->
     Enabled0 =
         [
             {unused_vars, bool_option(warn_unused_vars, nowarn_unused_vars, true, Opts)},
@@ -799,6 +730,7 @@ start(File, Opts) ->
         warn_format = value_option(warn_format, 1, warn_format, 1, nowarn_format, 0, Opts),
         enabled_warnings = Enabled,
         nowarn_bif_clash = nowarn_function(nowarn_bif_clash, Opts),
+        defs_db = DefsDB,
         file = File
     }.
 
@@ -947,15 +879,6 @@ set_form_file({function, L, N, A, C}, File) ->
     {function, erl_anno:set_file(File, L), N, A, C};
 set_form_file(Form, _File) ->
     Form.
-
-set_file(Ts, File) when is_list(Ts) ->
-    [anno_set_file(T, File) || T <- Ts];
-set_file(T, File) ->
-    anno_set_file(T, File).
-
-anno_set_file(T, File) ->
-    F = fun (Anno) -> erl_anno:set_file(File, Anno) end,
-    erlt_parse:map_anno(F, T).
 
 %% form(Form, State) -> State'
 %%  Check a form returning the updated State. Handle generic cases here.
@@ -2607,46 +2530,6 @@ gexpr_list(Es, Vt, St) ->
         {[], St},
         Es
     ).
-
-%% is_guard_test(Expression) -> boolean().
-%%  Test if a general expression is a guard test.
-%%
-%%  Note: Only use this function in contexts where there can be
-%%  no definition of a local function that may override a guard BIF
-%%  (for example, in the shell).
--spec is_guard_test(Expr) -> boolean() when Expr :: erlt_parse:abstract_expr().
-is_guard_test(E) ->
-    is_guard_test2(E, {dict:new(), fun (_) -> false end}).
-
-%% is_guard_test(Expression, Forms) -> boolean().
-is_guard_test(Expression, Forms) ->
-    is_guard_test(Expression, Forms, fun (_) -> false end).
-
-%% is_guard_test(Expression, Forms, IsOverridden) -> boolean().
-%%  Test if a general expression is a guard test.
-%%
-%%  IsOverridden({Name,Arity}) should return 'true' if Name/Arity is
-%%  a local or imported function in the module. If the abstract code has
-%%  passed through erl_expand_records, any call without an explicit
-%%  module is to a local function, so IsOverridden can be defined as:
-%%
-%%    fun(_) -> true end
-%%
--spec is_guard_test(Expr, Forms, IsOverridden) -> boolean() when
-    Expr :: erlt_parse:abstract_expr(),
-    Forms :: [erlt_parse:abstract_form() | erlt_parse:form_info()],
-    IsOverridden :: fun((fa()) -> boolean()).
-is_guard_test(Expression, Forms, IsOverridden) ->
-    RecordAttributes = [A || A = {attribute, _, record, _D} <- Forms],
-    St0 = foldl(
-        fun (Attr0, St1) ->
-            Attr = set_file(Attr0, "none"),
-            attribute_state(Attr, St1)
-        end,
-        start(),
-        RecordAttributes
-    ),
-    is_guard_test2(set_file(Expression, "nofile"), {St0#lint.records, IsOverridden}).
 
 %% is_guard_test2(Expression, RecordDefs :: dict:dict()) -> boolean().
 is_guard_test2({call, Line, {atom, Lr, record}, [E, A]}, Info) ->

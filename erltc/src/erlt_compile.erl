@@ -1036,7 +1036,7 @@ do_erlt_lint(Code, St) ->
     %% suppress some warnings in standard compiler because we have already
     %% warned about them in our custom lint pass.
     Opts = [nowarn_unused_type | St#compile.options],
-    case erlt_lint:module(Code, St#compile.ifile, Opts) of
+    case erlt_lint:module(Code, St#compile.ifile, St#compile.global_defs, Opts) of
         {ok, Ws} ->
             {ok, Code, St#compile{warnings = St#compile.warnings ++ Ws}};
         {error, Es, Ws} ->
