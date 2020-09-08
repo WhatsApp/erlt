@@ -332,6 +332,8 @@ lattribute(Name, Arg, Options) ->
 abstract(Arg, #options{encoding = Encoding}) ->
     erlt_parse:abstract(Arg, [{encoding, Encoding}]).
 
+typeattr(struct, {TypeName, Type, []}, _Opts) ->
+    {first, leaf("-struct "), typed(atom_to_list(TypeName), Type)};
 typeattr(Tag, {TypeName, Type, Args}, _Opts) ->
     {first, leaf("-" ++ atom_to_list(Tag) ++ " "),
         typed(call({atom, a0(), TypeName}, Args, 0, options(none)), Type)}.
