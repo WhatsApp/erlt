@@ -290,6 +290,8 @@ lattribute({attribute, _Line, opaque, Type}, Opts) ->
     [typeattr(opaque, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, enum, Type}, Opts) ->
     [typeattr(enum, Type, Opts), leaf(".\n")];
+lattribute({attribute, _Line, struct, Type}, Opts) ->
+    [typeattr(struct, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, spec, Arg}, _Opts) ->
     [specattr(spec, Arg), leaf(".\n")];
 lattribute({attribute, _Line, callback, Arg}, _Opts) ->
@@ -386,6 +388,8 @@ ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _) ->
     [fun_type(['fun', $(], FunType), $)];
 ltype({type, _Line, enum, Tag, Vars}, _) ->
     {first, lexpr(Tag, options(none)), tuple_type(Vars, fun ltype/2)};
+ltype({type, _Line, struct, _Name, Fields}, _) ->
+    {seq, $(, $), [$,], struct_fields(Fields, "::", fun ltype/2, 0)};
 ltype({type, Line, T, Ts}, _) ->
     simple_type({atom, Line, T}, Ts);
 ltype({user_type, Line, T, Ts}, _) ->
@@ -489,6 +493,12 @@ ltypes(Ts, Prec) ->
 
 ltypes(Ts, F, Prec) ->
     [F(T, Prec) || T <- Ts].
+
+struct_fields(Fields, Join, F, Prec) ->
+    [
+        {first, [F(Name, Prec), " " ++ Join ++ " "], F(Value, Prec)}
+        || {struct_field, _, Name, Value} <- Fields
+    ].
 
 attr(Name, Args) ->
     {first, [$-, {atom, Name}], args(Args, options(none))}.
