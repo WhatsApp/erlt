@@ -18,8 +18,8 @@ jobs:
         run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: make project
         run:  make
-      - name: build sterlang backend
-        run:  cd sterlang; sbt assembly
+      # - name: build sterlang backend
+      #   run:  cd sterlang; sbt assembly
       - name: "examples/dev/src: make"
         run:  make -C examples/dev/src
       - name: "examples/doc/src: make"
