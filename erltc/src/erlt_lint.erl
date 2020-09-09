@@ -1923,38 +1923,8 @@ pattern({record, Line, Name, Pfs}, Vt, Old, Bvt, St) ->
         error ->
             {[], [], add_error(Line, {undefined_record, Name}, St)}
     end;
-%% TODO: handle remote structs
-pattern({struct, Line, {atom, _, Name} = N0, Pfs}, Vt, Old, Bvt, St) ->
-    case imported_type(Name, St) of
-        {yes, M, Arity} ->
-            %% actually a remote struct
-            TypePair = {Name, Arity},
-            U0 = St#lint.usage,
-            Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-            St1 = St#lint{usage = U0#usage{imported_types = Imp}},
-            pattern({struct, Line, {remote, Line, {atom, Line, M}, N0}, Pfs}, Vt, Old, Bvt, St1);
-        no ->
-            case maps:find(Name, St#lint.structs) of
-                {ok, Def} ->
-                    St1 = used_struct(Name, St),
-                    pattern_struct_fields(Pfs, Name, Def, Vt, Old, Bvt, St1);
-                error ->
-                    {[], [], add_error(Line, {undefined_struct, Name}, St)}
-            end
-    end;
-pattern({struct, Line, {remote, _, M, E}, Pfs}, Vt, Old, Bvt, St) ->
-    case St#lint.defs_db of
-        undefined ->
-            pattern_struct_fields_no_definition(Pfs, E, Vt, Old, Bvt, St);
-        GlobalDefs ->
-            case erlt_defs:find_struct(M, E, GlobalDefs) of
-                {ok, StructDef} ->
-                    Def = get_field_map_from_struct_def(StructDef),
-                    pattern_struct_fields(Pfs, E, Def, Vt, Old, Bvt, St);
-                error ->
-                    {[], [], add_error(Line, {undefined_struct, {M,E}}, St)}
-            end
-    end;
+pattern({struct, Line, N, Pfs}, Vt, Old, Bvt, St) ->
+    check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St);
 pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
     pattern_bin(Fs, Vt, Old, Bvt, St);
 pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, Bvt, St) ->
@@ -3271,32 +3241,64 @@ normalise_fields(Fs) ->
         Fs
     ).
 
-%% TODO: add remote struct handling
-check_struct(Line, {atom, _, Name} = N0, St, CheckFun) ->
+handle_imported_struct({atom, Line, Name} = N0, St) ->
     case imported_type(Name, St) of
         {yes, M, Arity} ->
             %% actually a remote struct
             TypePair = {Name, Arity},
             U0 = St#lint.usage,
             Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-            St1 = St#lint{usage = U0#usage{imported_types = Imp}},
-            check_struct(Line, {remote, Line, {atom, Line, M}, N0}, St1, CheckFun);
+            {{remote, Line, {atom, Line, M}, N0},
+             St#lint{usage = U0#usage{imported_types = Imp}}};
         no ->
-            case maps:find(Name, St#lint.structs) of
-                {ok, Def} -> CheckFun(fun(F) -> is_map_key(F, Def) end, used_struct(Name, St));
-                error -> {[], add_error(Line, {undefined_struct, Name}, St)}
-            end
+            {N0, St}
     end;
-check_struct(Line, {remote, _, {atom, _, M}, {atom, _, N}}, St, CheckFun) ->
-    case St#lint.defs_db of
-        undefined ->
-            CheckFun(fun(_F) -> true end, St);
-        GlobalDefs ->
-            case erlt_defs:find_struct(M, N, GlobalDefs) of
-                {ok, StructDef} ->
-                    CheckFun(fun(F) -> is_map_key(F, get_field_map_from_struct_def(StructDef)) end, St);
+handle_imported_struct(N, St) ->
+    {N, St}.
+
+check_struct(Line, N, St, CheckFun) ->
+    case handle_imported_struct(N, St) of
+        {{atom, _, Name}, St1} ->
+            case maps:find(Name, St#lint.structs) of
+                {ok, Def} -> CheckFun(fun(F) -> is_map_key(F, Def) end, used_struct(Name, St1));
+                error -> {[], add_error(Line, {undefined_struct, Name}, St1)}
+            end;
+        {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
+            case St#lint.defs_db of
+                undefined ->
+                    CheckFun(fun(_F) -> true end, St1);
+                GlobalDefs ->
+                    case erlt_defs:find_struct(M, N, GlobalDefs) of
+                        {ok, StructDef} ->
+                            CheckFun(fun(F) -> is_map_key(F, get_field_map_from_struct_def(StructDef)) end, St1);
+                        error ->
+                            {[], add_error(Line, {undefined_struct, N}, St1)}
+                    end
+            end
+    end.
+
+check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St) ->
+    case handle_imported_struct(N, St) of
+        {{atom, _, Name}, St1} ->
+            case maps:find(Name, St#lint.structs) of
+                {ok, Def} ->
+                    St1 = used_struct(Name, St),
+                    pattern_struct_fields(Pfs, Name, Def, Vt, Old, Bvt, St1);
                 error ->
-                    {[], add_error(Line, {undefined_struct, N}, St)}
+                    {[], [], add_error(Line, {undefined_struct, Name}, St)}
+            end;
+        {{remote, _, {atom, _, M}, {atom, _, E}}, St1} ->
+            case St#lint.defs_db of
+                undefined ->
+                    pattern_struct_fields_no_definition(Pfs, E, Vt, Old, Bvt, St1);
+                GlobalDefs ->
+                    case erlt_defs:find_struct(M, E, GlobalDefs) of
+                        {ok, StructDef} ->
+                            Def = get_field_map_from_struct_def(StructDef),
+                            pattern_struct_fields(Pfs, E, Def, Vt, Old, Bvt, St1);
+                        error ->
+                            {[], [], add_error(Line, {undefined_struct, {M,E}}, St1)}
+                    end
             end
     end.
 
@@ -3304,10 +3306,6 @@ get_field_map_from_struct_def(
     {attribute, _Loc, struct, {_Name, {type, _DefAnno, struct, _Tag, Fields}, _Vs}}
     ) ->
     Fields.
-
-
-
-
 
 init_struct_fields(Fields, _Line, Name, IsDefined, Vt0, St0) ->
     {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3),
