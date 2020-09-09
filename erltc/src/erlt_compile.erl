@@ -85,7 +85,7 @@
     %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
     lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms,
-    global_defs :: erlt_defs:defs()
+    global_defs :: undefined | erlt_defs:defs()
 }).
 
 -define(pass(P), {P, fun P/2}).
