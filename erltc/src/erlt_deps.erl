@@ -16,7 +16,8 @@
 
 -export([
     st_deps/1,
-    ffi_deps/1
+    ffi_deps/1,
+    dt_deps/1
 ]).
 
 get_module(Forms) ->
@@ -30,6 +31,11 @@ st_deps(Forms) ->
 ffi_deps(Forms) ->
     Module = get_module(Forms),
     Remotes = collect(Forms, fun ffi_pred/1, fun remote/1),
+    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+
+dt_deps(Forms) ->
+    Module = get_module(Forms),
+    Remotes = collect(Forms, fun dt_pred/1, fun remote/1),
     [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
 
 %% remote call
@@ -59,6 +65,9 @@ ffi_pred({function, _, _, _, _}) ->
     false;
 ffi_pred(_) ->
     true.
+
+%% dt for now does not establish deps in here
+dt_pred(_) -> false.
 
 collect(Forms, Pred, Collect) ->
     do_collect(Forms, Pred, Collect, []).
