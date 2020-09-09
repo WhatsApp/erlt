@@ -55,7 +55,9 @@ postwalk(Ast, Acc0, Fun) ->
         Kind =:= enum
 ).
 
--spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun((t(), any(), ctx()) -> {t(), any()})) -> {t(), any()}.
+-spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
+    (t(), any(), ctx()) -> {t(), any()}
+)) -> {t(), any()}.
 traverse(Ast, Acc, Pre, Post) ->
     case Ast of
         %% the module definiton is a list

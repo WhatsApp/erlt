@@ -166,7 +166,7 @@ compile(List) ->
 
 -spec compiler_runner([cmd_line_arg()]) -> fun(() -> no_return()).
 compiler_runner(List) ->
-    fun () ->
+    fun() ->
         %% We don't want the current directory in the code path.
         %% Remove it.
         Path = [D || D <- code:get_path(), D =/= "."],

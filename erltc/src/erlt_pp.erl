@@ -56,12 +56,14 @@
 
 -type hook_function() ::
     none |
-    fun((
+    fun(
+        (
             Expr :: erlt_parse:abstract_expr(),
             CurrentIndentation :: integer(),
             CurrentPrecedence :: non_neg_integer(),
             Options :: options()
-        ) -> io_lib:chars()).
+        ) -> io_lib:chars()
+    ).
 
 -type option() ::
     {hook, hook_function()} |
@@ -94,7 +96,8 @@
     %% erl_pp does not use the annoations, but test it anyway.
     %% Note: hooks are not handled.
     _ =
-        try erlt_parse:map_anno(fun (A) when is_list(A) -> A end, T)
+        try
+            erlt_parse:map_anno(fun(A) when is_list(A) -> A end, T)
         catch
             _:_ ->
                 erlang:error(badarg, [T])
@@ -114,13 +117,12 @@
 %%%
 %%% Exported functions
 %%%
--spec form(Form) -> io_lib:chars()
-    when Form :: erlt_parse:abstract_form() | erlt_parse:form_info().
+-spec form(Form) -> io_lib:chars() when Form :: erlt_parse:abstract_form() | erlt_parse:form_info().
 form(Thing) ->
     form(Thing, none).
 
--spec form(Form, Options) -> io_lib:chars()
-    when Form :: erlt_parse:abstract_form() | erlt_parse:form_info(), Options :: options().
+-spec form(Form, Options) -> io_lib:chars() when
+    Form :: erlt_parse:abstract_form() | erlt_parse:form_info(), Options :: options().
 form(Thing, Options) ->
     ?FORM_TEST(Thing),
     State = state(Options),
@@ -130,8 +132,8 @@ form(Thing, Options) ->
 attribute(Thing) ->
     attribute(Thing, none).
 
--spec attribute(Attribute, Options) -> io_lib:chars()
-    when Attribute :: erlt_parse:abstract_form(), Options :: options().
+-spec attribute(Attribute, Options) -> io_lib:chars() when
+    Attribute :: erlt_parse:abstract_form(), Options :: options().
 attribute(Thing, Options) ->
     ?TEST(Thing),
     State = state(Options),
@@ -141,8 +143,8 @@ attribute(Thing, Options) ->
 function(F) ->
     function(F, none).
 
--spec function(Function, Options) -> io_lib:chars()
-    when Function :: erlt_parse:abstract_form(), Options :: options().
+-spec function(Function, Options) -> io_lib:chars() when
+    Function :: erlt_parse:abstract_form(), Options :: options().
 function(F, Options) ->
     ?TEST(F),
     frmt(lfunction(F, options(Options)), state(Options)).
@@ -151,8 +153,8 @@ function(F, Options) ->
 guard(Gs) ->
     guard(Gs, none).
 
--spec guard(Guard, Options) -> io_lib:chars()
-    when Guard :: [erlt_parse:abstract_expr()], Options :: options().
+-spec guard(Guard, Options) -> io_lib:chars() when
+    Guard :: [erlt_parse:abstract_expr()], Options :: options().
 guard(Gs, Options) ->
     ?EXPRS_TEST(Gs),
     frmt(lguard(Gs, options(Options)), state(Options)).
@@ -161,15 +163,13 @@ guard(Gs, Options) ->
 exprs(Es) ->
     exprs(Es, 0, none).
 
--spec exprs(Expressions, Options) -> io_lib:chars()
-    when Expressions :: [erlt_parse:abstract_expr()], Options :: options().
+-spec exprs(Expressions, Options) -> io_lib:chars() when
+    Expressions :: [erlt_parse:abstract_expr()], Options :: options().
 exprs(Es, Options) ->
     exprs(Es, 0, Options).
 
--spec exprs(Expressions, Indent, Options) -> io_lib:chars()
-    when Expressions :: [erlt_parse:abstract_expr()],
-         Indent :: integer(),
-         Options :: options().
+-spec exprs(Expressions, Indent, Options) -> io_lib:chars() when
+    Expressions :: [erlt_parse:abstract_expr()], Indent :: integer(), Options :: options().
 exprs(Es, I, Options) ->
     ?EXPRS_TEST(Es),
     frmt({seq, [], [], [$,], lexprs(Es, options(Options))}, I, state(Options)).
@@ -179,25 +179,23 @@ expr(E) ->
     ?TEST(E),
     frmt(lexpr(E, 0, options(none)), state(none)).
 
--spec expr(Expression, Options) -> io_lib:chars()
-    when Expression :: erlt_parse:abstract_expr(), Options :: options().
+-spec expr(Expression, Options) -> io_lib:chars() when
+    Expression :: erlt_parse:abstract_expr(), Options :: options().
 expr(E, Options) ->
     ?TEST(E),
     frmt(lexpr(E, 0, options(Options)), state(Options)).
 
--spec expr(Expression, Indent, Options) -> io_lib:chars()
-    when Expression :: erlt_parse:abstract_expr(),
-         Indent :: integer(),
-         Options :: options().
+-spec expr(Expression, Indent, Options) -> io_lib:chars() when
+    Expression :: erlt_parse:abstract_expr(), Indent :: integer(), Options :: options().
 expr(E, I, Options) ->
     ?TEST(E),
     frmt(lexpr(E, 0, options(Options)), I, state(Options)).
 
--spec expr(Expression, Indent, Precedence, Options) -> io_lib:chars()
-    when Expression :: erlt_parse:abstract_expr(),
-         Indent :: integer(),
-         Precedence :: non_neg_integer(),
-         Options :: options().
+-spec expr(Expression, Indent, Precedence, Options) -> io_lib:chars() when
+    Expression :: erlt_parse:abstract_expr(),
+    Indent :: integer(),
+    Precedence :: non_neg_integer(),
+    Options :: options().
 expr(E, I, P, Options) ->
     ?TEST(E),
     frmt(lexpr(E, P, options(Options)), I, state(Options)).
@@ -223,14 +221,13 @@ state(_Hook) ->
 
 latin1_state(Quote) ->
     Options = [{encoding, latin1}],
-    ValueFun = fun (V) -> io_lib_pretty:print(V, Options) end,
+    ValueFun = fun(V) -> io_lib_pretty:print(V, Options) end,
     SingletonFun =
         case Quote of
             true ->
-                fun
-                    (A) ->
-                        io_lib:write_string_as_latin1(atom_to_list(A), $')
-                    %'
+                fun(A) ->
+                    io_lib:write_string_as_latin1(atom_to_list(A), $')
+                %'
                 end;
             false ->
                 ValueFun
@@ -244,12 +241,12 @@ latin1_state(Quote) ->
 
 unicode_state(Quote) ->
     Options = [{encoding, unicode}],
-    ValueFun = fun (V) -> io_lib_pretty:print(V, Options) end,
+    ValueFun = fun(V) -> io_lib_pretty:print(V, Options) end,
     SingletonFun =
         case Quote of
             true ->
                 %'
-                fun (A) -> io_lib:write_string(atom_to_list(A), $') end;
+                fun(A) -> io_lib:write_string(atom_to_list(A), $') end;
             false ->
                 ValueFun
         end,
@@ -304,7 +301,7 @@ lattribute(module, {M, Vs}, _Opts) ->
     A = a0(),
     attr(module, [
         {var, A, pname(M)},
-        foldr(fun (V, C) -> {cons, A, {var, A, V}, C} end, {nil, A}, Vs)
+        foldr(fun(V, C) -> {cons, A, {var, A, V}, C} end, {nil, A}, Vs)
     ]);
 lattribute(module, M, _Opts) ->
     attr(module, [{var, a0(), pname(M)}]);
@@ -317,7 +314,8 @@ lattribute(import, {From, Falist}, _Opts) ->
 lattribute(export_type, Talist, _Opts) ->
     attrib(export_type, falist(Talist));
 lattribute(optional_callbacks, Falist, Opts) ->
-    try attrib(optional_callbacks, falist(Falist))
+    try
+        attrib(optional_callbacks, falist(Falist))
     catch
         _:_ -> attr(optional_callbacks, [abstract(Falist, Opts)])
     end;
@@ -374,7 +372,7 @@ ltype({type, _Line, record, [{atom, _, N} | Fs]}, Prec) ->
     maybe_paren(P, Prec, E);
 ltype({type, _Line, range, [_I1, _I2] = Es}, Prec) ->
     {_L, P, R} = type_inop_prec('..'),
-    F = fun (E, Opts) -> lexpr(E, R, Opts) end,
+    F = fun(E, Opts) -> lexpr(E, R, Opts) end,
     E = expr_list(Es, '..', F, options(none)),
     maybe_paren(P, Prec, E);
 ltype({type, _Line, binary, [I1, I2]}, _) ->
@@ -510,17 +508,17 @@ pname(A) when is_atom(A) ->
 falist([]) ->
     ['[]'];
 falist(Falist) ->
-    L =
-        [
-            begin
-                {Name, Arity} = Fa,
-                [{atom, Name}, leaf(format("/~w", [Arity]))]
-            end || Fa <- Falist
-        ],
+    L = [
+        begin
+            {Name, Arity} = Fa,
+            [{atom, Name}, leaf(format("/~w", [Arity]))]
+        end
+        || Fa <- Falist
+    ],
     [{seq, $[, $], $,, L}].
 
 lfunction({function, _Line, Name, _Arity, Cs}, Opts) ->
-    Cll = nl_clauses(fun (C, H) -> func_clause(Name, C, H) end, $;, Opts, Cs),
+    Cll = nl_clauses(fun(C, H) -> func_clause(Name, C, H) end, $;, Opts, Cs),
     [Cll, leaf(".\n")].
 
 func_clause(Name, {clause, Line, Head, Guard, Body}, Opts) ->
@@ -639,8 +637,7 @@ lexpr({'if', _, Cs}, _, Opts) ->
     {list, [{step, 'if', if_clauses(Cs, Opts)}, {reserved, 'end'}]};
 lexpr({'case', _, Expr, Cs}, _, Opts) ->
     {list, [
-        {step, {list, [{step, 'case', lexpr(Expr, Opts)}, {reserved, 'of'}]},
-            cr_clauses(Cs, Opts)},
+        {step, {list, [{step, 'case', lexpr(Expr, Opts)}, {reserved, 'of'}]}, cr_clauses(Cs, Opts)},
         {reserved, 'end'}
     ]};
 lexpr({'cond', _, Cs}, _, Opts) ->
@@ -658,8 +655,7 @@ lexpr({'fun', _, {function, F, A}}, _Prec, _Opts) ->
     [leaf("fun "), {atom, F}, leaf(format("/~w", [A]))];
 lexpr({'fun', L, {function, _, _} = Func, Extra}, Prec, Opts) ->
     {force_nl, fun_info(Extra), lexpr({'fun', L, Func}, Prec, Opts)};
-lexpr({'fun', L, {function, M, F, A}}, Prec, Opts)
-        when is_atom(M), is_atom(F), is_integer(A) ->
+lexpr({'fun', L, {function, M, F, A}}, Prec, Opts) when is_atom(M), is_atom(F), is_integer(A) ->
     %% For backward compatibility with pre-R15 abstract format.
     Mod = erlt_parse:abstract(M),
     Fun = erlt_parse:abstract(F),
@@ -674,8 +670,7 @@ lexpr({'fun', _, {function, M, F, A}}, _Prec, Opts) ->
 lexpr({'fun', _, {clauses, Cs}}, _Prec, Opts) ->
     {list, [{first, 'fun', fun_clauses(Cs, Opts, unnamed)}, {reserved, 'end'}]};
 lexpr({named_fun, _, Name, Cs}, _Prec, Opts) ->
-    {list,
-        [{first, ['fun', " "], fun_clauses(Cs, Opts, {named, Name})}, {reserved, 'end'}]};
+    {list, [{first, ['fun', " "], fun_clauses(Cs, Opts, {named, Name})}, {reserved, 'end'}]};
 lexpr({'fun', _, {clauses, Cs}, Extra}, _Prec, Opts) ->
     {force_nl, fun_info(Extra),
         {list, [{first, 'fun', fun_clauses(Cs, Opts, unnamed)}, {reserved, 'end'}]}};
@@ -932,7 +927,7 @@ fun_clauses(Cs, Opts, unnamed) ->
     nl_clauses(fun fun_clause/2, [$;], Opts, Cs);
 fun_clauses(Cs, Opts, {named, Name}) ->
     nl_clauses(
-        fun (C, H) ->
+        fun(C, H) ->
             {step, Gl, Bl} = fun_clause(C, H),
             {step, [atom_to_list(Name), Gl], Bl}
         end,
@@ -1166,7 +1161,7 @@ fl1([CItem | CItems], F, Sep, LastSep, After) ->
 
 consecutive(Items, CharSize1, I0, ST, WT, PP) ->
     {CharsSizes, _Length} = mapfoldl(
-        fun (Item, Len) ->
+        fun(Item, Len) ->
             CharsSize = f(Item, Len, ST, WT, PP),
             {CharsSize, indent(CharsSize, Len)}
         end,
@@ -1183,7 +1178,7 @@ unz1(CharSizes) ->
     lists:unzip(nonzero(CharSizes)).
 
 nonzero(CharSizes) ->
-    lists:filter(fun ({_, Sz}) -> Sz =/= 0 end, CharSizes).
+    lists:filter(fun({_, Sz}) -> Sz =/= 0 end, CharSizes).
 
 maybe_newlines([{Chars, Size}], [], _I, _NSepChars, _ST) ->
     {Chars, Size};
@@ -1376,7 +1371,7 @@ a0() ->
 -define(N_SPACES, 30).
 
 spacetab() ->
-    {[_ | L], _} = mapfoldl(fun (_, A) -> {A, [$\s | A]} end, [], lists:seq(0, ?N_SPACES)),
+    {[_ | L], _} = mapfoldl(fun(_, A) -> {A, [$\s | A]} end, [], lists:seq(0, ?N_SPACES)),
     list_to_tuple(L).
 
 spaces(N, T) when N =< ?N_SPACES ->
@@ -1385,34 +1380,33 @@ spaces(N, T) ->
     [element(?N_SPACES, T) | spaces(N - ?N_SPACES, T)].
 
 wordtable() ->
-    L =
-        [
-            begin
-                {leaf, Sz, S} = leaf(W),
-                {S, Sz}
-            end
-            || W <- [
-                   " ->",
-                   " =",
-                   "<<",
-                   ">>",
-                   "[]",
-                   "after",
-                   "begin",
-                   "case",
-                   "catch",
-                   "end",
-                   "fun",
-                   "if",
-                   "of",
-                   "receive",
-                   "try",
-                   "when",
-                   " ::",
-                   "..",
-                   " |"
-               ]
-        ],
+    L = [
+        begin
+            {leaf, Sz, S} = leaf(W),
+            {S, Sz}
+        end
+        || W <- [
+               " ->",
+               " =",
+               "<<",
+               ">>",
+               "[]",
+               "after",
+               "begin",
+               "case",
+               "catch",
+               "end",
+               "fun",
+               "if",
+               "of",
+               "receive",
+               "try",
+               "when",
+               " ::",
+               "..",
+               " |"
+           ]
+    ],
     list_to_tuple(L).
 
 word(' ->', WT) -> element(1, WT);

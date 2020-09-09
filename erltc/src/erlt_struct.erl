@@ -36,7 +36,10 @@ init_context(Forms) ->
     }.
 
 init_structs(Defs, Module) ->
-    Map = [{Tag, struct_info(Module, Tag, Fields)} || {_Name, {type, _, struct, {atom, _, Tag}, Fields}, _Args} <- Defs],
+    Map = [
+        {Tag, struct_info(Module, Tag, Fields)}
+        || {_Name, {type, _, struct, {atom, _, Tag}, Fields}, _Args} <- Defs
+    ],
     maps:from_list(Map).
 
 struct_info(Module, Tag, Fields) ->
@@ -48,7 +51,8 @@ struct_info(Module, Tag, Fields) ->
 rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, _Ctx, Context) ->
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
     {RuntimeTag, _} = map_get(Tag, Context#context.structs),
-    Type = {type, TypeLine, tuple, [RuntimeTag | [Type || {struct_field, _, _Name, Type} <- Fields]]},
+    Type =
+        {type, TypeLine, tuple, [RuntimeTag | [Type || {struct_field, _, _Name, Type} <- Fields]]},
     {attribute, Line, type, {TypeName, Type, Args}};
 rewrite({struct, Line, {atom, _, Name}, Fields}, pattern, Context) ->
     {RuntimeTag, Def} = map_get(Name, Context#context.structs),
