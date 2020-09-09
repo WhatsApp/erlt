@@ -85,7 +85,7 @@
     %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
     lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms,
-    global_defs = erlt_defs:new() :: erlt_defs:defs()
+    global_defs :: erlt_defs:defs()
 }).
 
 -define(pass(P), {P, fun P/2}).
@@ -971,14 +971,14 @@ parse_module(_Code, St0, EppMod) ->
             end
     end.
 
-collect_definitions(Code, #compile{build_dir = BuildDir, global_defs = Defs0} = St) ->
+collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     AllDefFiles = filelib:wildcard(filename:join(BuildDir, "*" ++ ?DefFileSuffix)),
     Defs = lists:foldl(
         fun (File, Acc) ->
             {ok, Forms} = erlt_epp:parse_file(File, []),
             erlt_defs:add_definitions(Forms, Acc)
         end,
-        Defs0,
+        erlt_defs:new(),
         AllDefFiles
     ),
     {ok, Code, St#compile{global_defs = Defs}}.

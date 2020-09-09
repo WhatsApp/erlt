@@ -1,0 +1,6 @@
+-lang([erl2]).
+-module(define_enum).
+
+-export_type([foo/0]).
+
+-enum foo() :: bar{}.
