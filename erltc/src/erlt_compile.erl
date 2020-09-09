@@ -165,15 +165,9 @@ do_file(File, Options0) ->
                 % allows to establish the order in which .erl files should be compiled
                 %
                 % this mode exists mainly for testing the new dependency scanner
-                TransformPasses = [?pass(transform_module) || member(makedep2_run_parse_transforms, Options)],
                 base_passes() ++
                     [
-                        ?pass(collect_erlt_compile_deps),
-                        ?pass(erlt_to_erl1)
-                    ] ++
-                    TransformPasses ++
-                    [
-                        ?pass(collect_erl1_compile_deps),
+                        ?pass(collect_compile_deps),
                         ?pass(output_compile_deps)
                     ];
             build_scan ->
@@ -182,9 +176,7 @@ do_file(File, Options0) ->
                 base_passes() ++
                     [
                         ?pass(output_declarations),
-                        ?pass(collect_erlt_compile_deps),
-                        ?pass(erlt_to_erl1),
-                        ?pass(collect_erl1_compile_deps),
+                        ?pass(collect_compile_deps),
                         ?pass(output_compile_deps)
                     ];
             build_compile ->
@@ -464,12 +456,6 @@ get_parse_errors([{error, Error} | Rest], File, Acc) ->
 get_parse_errors([_ | Rest], File, Acc) ->
     get_parse_errors(Rest, File, Acc).
 
-collect_erl1_compile_deps(Forms, St0) ->
-    Deps = get_erl1_deps_from_forms(Forms, St0),
-    %io:format("erl1 deps: ~p~n", [Deps]),
-    St1 = append_compile_deps(Deps, St0),
-    {ok, Forms, St1}.
-
 append_compile_deps(Deps, St0) ->
     St0#compile{
         compile_deps = lists_append_uniq(St0#compile.compile_deps, Deps)
@@ -488,13 +474,13 @@ lists_append_uniq([H | T], To, Acc) ->
         end,
     lists_append_uniq(T, To, NewAcc).
 
-get_erl1_deps_from_forms(Forms, St0) ->
-    get_erl1_deps_from_forms(Forms, St0, _File = St0#compile.ifile, _Acc = []).
+get_attr_deps(Forms, St0) ->
+    get_attr_deps(Forms, St0, _File = St0#compile.ifile, _Acc = []).
 
-get_erl1_deps_from_forms([], _St, _File, Acc) ->
+get_attr_deps([], _St, _File, Acc) ->
     % NOTE: returning in the order they were present in the file
     lists:reverse(Acc);
-get_erl1_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
+get_attr_deps([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
     % Remove "./" in front of the dependency filename.
     NewFile = remove_dot_slash(NewFile0),
 
@@ -505,31 +491,28 @@ get_erl1_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File
             false -> [Dep | Acc]
         end,
     % update the name of the current file
-    get_erl1_deps_from_forms(Rest, St, NewFile, NewAcc);
-get_erl1_deps_from_forms([{attribute, Line, Name, Value} | Rest], St, File, Acc) ->
-    Deps = get_erl1_deps_from_attr(File, Line, Name, Value, St),
-    get_erl1_deps_from_forms(Rest, St, File, Deps ++ Acc);
-get_erl1_deps_from_forms([_ | Rest], St, File, Acc) ->
-    get_erl1_deps_from_forms(Rest, St, File, Acc).
+    get_attr_deps(Rest, St, NewFile, NewAcc);
+get_attr_deps([{attribute, _Line, import, Value} | Rest], St, File, Acc) ->
+    Deps = get_deps_from_import(Value, St),
+    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([{attribute, Line, compile, Value} | Rest], St, File, Acc) ->
+    Deps = get_deps_from_compile({File, Line}, Value, St),
+    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([{attribute, Line, behavior, Value} | Rest], St, File, Acc) ->
+    Deps = get_deps_from_behavior({File, Line}, Value, St),
+    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([{attribute, Line, behaviour, Value} | Rest], St, File, Acc) ->
+    Deps = get_deps_from_behavior({File, Line}, Value, St),
+    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([{attribute, Line, depends_on, Value} | Rest], St, File, Acc) ->
+    % erlt feature for specifying dependencies explicitly
+    Deps = get_erlt_deps_from_depends_on({File, Line}, Value, St),
+    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([_ | Rest], St, File, Acc) ->
+    get_attr_deps(Rest, St, File, Acc).
 
-remove_dot_slash(NewFile0) ->
-    case NewFile0 of
-        "./" ++ NewFile1 -> NewFile1;
-        _ -> NewFile0
-    end.
-
-get_erl1_deps_from_attr(File, Line, Name, Value, St) ->
-    Loc = {File, Line},
-    case Name of
-        import ->
-            get_deps_from_import(Value, St);
-        compile ->
-            get_deps_from_compile(Loc, Value, St);
-        _ when Name =:= behavior; Name =:= behaviour ->
-            get_deps_from_behavior(Loc, Value, St);
-        _ ->
-            []
-    end.
+remove_dot_slash("./" ++ File) -> File;
+remove_dot_slash(Other) -> Other.
 
 get_deps_from_import({_Mod, _Funs}, _St) ->
     % NOTE: not returning anything for now, as imported module is not a
@@ -566,6 +549,13 @@ get_deps_from_compile_item(Loc, Value, St) ->
         _ ->
             []
     end.
+
+% TODO: validate -depends_on([...]) properly
+get_erlt_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
+    [get_erlt_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
+
+get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
+    resolve_module_dependency(depends_on, Loc, Mod, St).
 
 % ModuleDepType = behavior | parse_transform | core_transform | depends_on | type_checking
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
@@ -1185,76 +1175,27 @@ get_lang(St) ->
         2 -> lists:nth(2, lists:usort(St#compile.lang))
     end.
 
-collect_erlt_compile_deps(Forms, St0) ->
-    case is_lang_erlt(St0) of
-        true ->
-            do_collect_erlt_compile_deps(Forms, St0);
-        false ->
-            {ok, Forms, St0}
-    end.
+collect_compile_deps(Forms, St0) ->
+    AttrDeps = get_attr_deps(Forms, St0),
+    TypedDeps = get_erlt_deps(Forms, St0),
+    {ok, Forms, append_compile_deps(AttrDeps ++ TypedDeps, St0)}.
 
-do_collect_erlt_compile_deps(Forms, St0) ->
-    Deps = get_erlt_deps_from_forms(Forms, St0) ++ get_erlt_typed_deps(Forms, St0),
-    %io:format("erlt deps: ~p~n", [Deps]),
-    St1 = append_compile_deps(Deps, St0),
-    {ok, Forms, St1}.
-
-get_erlt_typed_deps(Forms, St0) ->
+get_erlt_deps(Forms, St0) ->
     RawDeps =
         case {is_lang_st(St0), is_lang_ffi(St0)} of
             {true, _} -> erlt_deps:st_deps(Forms);
             {_, true} -> erlt_deps:ffi_deps(Forms);
-            {_, _} -> []
+            {_, _} -> erlt_deps:dt_deps(Forms)
         end,
     F = St0#compile.ifile,
     [resolve_module_dependency(type_checking, {F, L}, M, St0) || {L, M} <- RawDeps].
 
-% TODO: remove code duplication between this and get_erl1_deps_from_forms()
-get_erlt_deps_from_forms(Forms, St0) ->
-    get_erlt_deps_from_forms(Forms, St0, _File = St0#compile.ifile, _Acc = []).
-
-get_erlt_deps_from_forms([], _St, _File, Acc) ->
-    % NOTE: returning in the order they were present in the file
-    lists:reverse(Acc);
-get_erlt_deps_from_forms([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
-    % Remove "./" in front of the dependency filename.
-    NewFile = remove_dot_slash(NewFile0),
-
-    % update the name of the current file
-    %
-    % NOTE: not adding the file to the list of dependencies, because it will be added
-    % during get_erl1_deps_from_forms() pass
-    get_erlt_deps_from_forms(Rest, St, NewFile, Acc);
-get_erlt_deps_from_forms([{attribute, Line, Name, Value} | Rest], St, File, Acc) ->
-    Deps = get_erlt_deps_from_attr(File, Line, Name, Value, St),
-    get_erlt_deps_from_forms(Rest, St, File, Deps ++ Acc);
-get_erlt_deps_from_forms([_ | Rest], St, File, Acc) ->
-    get_erlt_deps_from_forms(Rest, St, File, Acc).
-
-get_erlt_deps_from_attr(File, Line, Name, Value, St) ->
-    Loc = {File, Line},
-    case Name of
-        depends_on ->
-            % erlt feature for specifying dependencies explicitly
-            get_erlt_deps_from_depends_on(Loc, Value, St);
-        _ ->
-            []
-    end.
-
-% TODO: validate -depends_on([...]) properly
-get_erlt_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
-    [get_erlt_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
-
-get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
-    resolve_module_dependency(depends_on, Loc, Mod, St).
-
 erlt_typecheck(Code, St) ->
-    case {is_lang_erlt(St),
-             is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)} of
-        {true, true} ->
+    case is_lang_erlt(St) andalso (is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St)) of
+        true ->
             run_sterlang(St),
             {ok, Code, St};
-        {_, _} ->
+        _ ->
             {ok, Code, St}
     end.
 
