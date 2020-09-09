@@ -1,5 +1,5 @@
-val test1/1: fun((#{ y: boolean(), A }) -> integer())
-val X: #{ y: boolean(), A }
-val test2/1: fun((#{ id: integer(), name: #{ first: string(), B }, C }) -> integer())
-val M: #{ id: integer(), name: #{ first: string(), B }, C }
-val M: #{ id: integer(), name: #{ first: string(), B }, C }
+val test1/1: fun((#( y :: boolean(), A )) -> integer())
+val X: #( y :: boolean(), A )
+val test2/1: fun((#( id :: integer(), name :: #( first :: string(), B ), C )) -> integer())
+val M: #( id :: integer(), name :: #( first :: string(), B ), C )
+val M: #( id :: integer(), name :: #( first :: string(), B ), C )

@@ -1,2 +1,2 @@
--spec test1(#{ y: boolean(), 'A }) -> integer().
--spec test2(#{ id: integer(), name: #{ first: string(), 'A }, 'B }) -> integer().
+-spec test1(#( y :: boolean(), 'A )) -> integer().
+-spec test2(#( id :: integer(), name :: #( first :: string(), 'A ), 'B )) -> integer().

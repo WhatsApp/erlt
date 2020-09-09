@@ -156,12 +156,12 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
 
     def recordStr(sRowType: ST.RowType): String =
       sRowType match {
-        case ST.RowEmptyType => "()"
-        case _               => rowtype(sRowType, lb = "#{ ", rb = " }")
+        case ST.RowEmptyType => "#()"
+        case _               => rowtype(sRowType, lb = "#( ", rb = " )")
       }
 
     def namedField(sField: ST.Field): String =
-      sField.label + ": " + typ(sField.value)
+      sField.label + " :: " + typ(sField.value)
 
     def rowtype(sRowType: ST.RowType, lb: String, rb: String): String = {
 

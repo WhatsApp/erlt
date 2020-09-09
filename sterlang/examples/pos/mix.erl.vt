@@ -1,13 +1,13 @@
-val two_selectors/1: fun((#{ person: #{ name: A, A }, B }) -> A)
-val X: #{ person: #{ name: A, A }, B }
+val two_selectors/1: fun((#( person :: #( name :: A, A ), B )) -> A)
+val X: #( person :: #( name :: A, A ), B )
 val seq_call/4: fun((fun((B) -> D), fun((C) -> E), B, C) -> E)
 val G1: fun((B) -> D)
 val G2: fun((C) -> E)
 val X: B
 val Y: C
-val sum_fr/2: fun((fun((F) -> integer()), #{ l01: F, l02: F, l03: F, l04: F, l05: F, l06: F, l07: F, l08: F, l09: F, l10: F, l11: F, l12: F, l13: F, l14: F, l15: F, l16: F, l17: F, l18: F, l19: F, C }) -> integer())
+val sum_fr/2: fun((fun((F) -> integer()), #( l01 :: F, l02 :: F, l03 :: F, l04 :: F, l05 :: F, l06 :: F, l07 :: F, l08 :: F, l09 :: F, l10 :: F, l11 :: F, l12 :: F, l13 :: F, l14 :: F, l15 :: F, l16 :: F, l17 :: F, l18 :: F, l19 :: F, C )) -> integer())
 val F: fun((F) -> integer())
-val R: #{ l01: F, l02: F, l03: F, l04: F, l05: F, l06: F, l07: F, l08: F, l09: F, l10: F, l11: F, l12: F, l13: F, l14: F, l15: F, l16: F, l17: F, l18: F, l19: F, C }
+val R: #( l01 :: F, l02 :: F, l03 :: F, l04 :: F, l05 :: F, l06 :: F, l07 :: F, l08 :: F, l09 :: F, l10 :: F, l11 :: F, l12 :: F, l13 :: F, l14 :: F, l15 :: F, l16 :: F, l17 :: F, l18 :: F, l19 :: F, C )
 val X01: integer()
 val X02: integer()
 val X03: integer()
@@ -27,9 +27,9 @@ val X16: integer()
 val X17: integer()
 val X18: integer()
 val X19: integer()
-val sum_fr_proxy/2: fun((fun((G) -> integer()), #{ l01: G, l02: G, l03: G, l04: G, l05: G, l06: G, l07: G, l08: G, l09: G, l10: G, l11: G, l12: G, l13: G, l14: G, l15: G, l16: G, l17: G, l18: G, l19: G, D }) -> integer())
+val sum_fr_proxy/2: fun((fun((G) -> integer()), #( l01 :: G, l02 :: G, l03 :: G, l04 :: G, l05 :: G, l06 :: G, l07 :: G, l08 :: G, l09 :: G, l10 :: G, l11 :: G, l12 :: G, l13 :: G, l14 :: G, l15 :: G, l16 :: G, l17 :: G, l18 :: G, l19 :: G, D )) -> integer())
 val F: fun((G) -> integer())
-val R: #{ l01: G, l02: G, l03: G, l04: G, l05: G, l06: G, l07: G, l08: G, l09: G, l10: G, l11: G, l12: G, l13: G, l14: G, l15: G, l16: G, l17: G, l18: G, l19: G, D }
+val R: #( l01 :: G, l02 :: G, l03 :: G, l04 :: G, l05 :: G, l06 :: G, l07 :: G, l08 :: G, l09 :: G, l10 :: G, l11 :: G, l12 :: G, l13 :: G, l14 :: G, l15 :: G, l16 :: G, l17 :: G, l18 :: G, l19 :: G, D )
 val add_f/1: fun((integer()) -> integer())
 val X: integer()
 val rich_record_example/0: fun(() -> integer())
@@ -41,32 +41,32 @@ val RecRec: rec_rec2(I)
 val Y: core:option(rec_rec2(I))
 val unBox/1: fun((rec_rec2(J)) -> rec_rec2(J))
 val Rec: rec_rec2(J)
-val unRec/1: fun((rec(K)) -> #{ name: K, next: core:option(rec(K)) })
+val unRec/1: fun((rec(K)) -> #( name :: K, next :: core:option(rec(K)) ))
 val Rec: rec(K)
-val X: #{ name: K, next: core:option(rec(K)) }
+val X: #( name :: K, next :: core:option(rec(K)) )
 val unRec2/1: fun((rec(L)) -> rec(L))
 val Rec: rec(L)
-val apply_add_id/2: fun((fun((M) -> #{ id: N, E }), M) -> #{ id: N, E })
-val Add_id: fun((M) -> #{ id: N, E })
+val apply_add_id/2: fun((fun((M) -> #( id :: N, E )), M) -> #( id :: N, E ))
+val Add_id: fun((M) -> #( id :: N, E ))
 val Rec: M
-val Rec1: #{ id: N, E }
+val Rec1: #( id :: N, E )
 val Unused_id: N
-val add_id_empty_rec/1: fun((#{ F }) -> #{ id: string() })
-val add_id_rec_f/1: fun((#{ f: O, G }) -> #{ f: O, id: string() })
+val add_id_empty_rec/1: fun((#( F )) -> #( id :: string() ))
+val add_id_rec_f/1: fun((#( f :: O, G )) -> #( f :: O, id :: string() ))
 val X: O
 val rec_tricky/0: fun(() -> {})
-val Rec1: fun((#{ H }) -> #{ id: string() })
-val X: #{ H }
-val Rec2: fun((#{ f: P, I }) -> #{ f: P, id: string() })
-val X: #{ f: P, I }
+val Rec1: fun((#( H )) -> #( id :: string() ))
+val X: #( H )
+val Rec2: fun((#( f :: P, I )) -> #( f :: P, id :: string() ))
+val X: #( f :: P, I )
 val even/1: fun((integer()) -> boolean())
 val I: integer()
 val odd/1: fun((integer()) -> boolean())
 val I: integer()
-val loop/1: fun(({}) -> fun((#{ a: Q, J }) -> Q))
-val Foo: fun((#{ a: R, K }) -> R)
-val X: #{ a: R, K }
-val dummy/0: fun(() -> fun((#{ a: S, L }) -> S))
+val loop/1: fun(({}) -> fun((#( a :: Q, J )) -> Q))
+val Foo: fun((#( a :: R, K )) -> R)
+val X: #( a :: R, K )
+val dummy/0: fun(() -> fun((#( a :: S, L )) -> S))
 val id/1: fun((T) -> T)
 val I: T
 val x_fun/0: fun(() -> integer())

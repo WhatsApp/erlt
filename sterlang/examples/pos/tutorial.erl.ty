@@ -11,18 +11,18 @@
 -spec list3(list(A)) -> {A, list(A)}.
 -spec list4(list(A)) -> {A, A, A}.
 -spec map(fun((A) -> B), list(A)) -> list(B).
--spec getIds(list(#{ id: A, 'A })) -> list(A).
+-spec getIds(list(#( id :: A, 'A ))) -> list(A).
 -spec global(boolean(), A) -> A.
 -spec inside(A) -> A.
 -spec inside1() -> fun((A) -> A).
 -spec inside2() -> fun((A) -> A).
--spec get_id(#{ id: A, 'A }) -> A.
--spec extract(#{ id: A, 'A }) -> #{ id: A }.
+-spec get_id(#( id :: A, 'A )) -> A.
+-spec extract(#( id :: A, 'A )) -> #( id :: A ).
 -spec records_example() -> {}.
--spec id_rec(#{ 'A }) -> #{ 'A }.
--spec get_id1(#{ id: A, 'A }) -> A.
--spec update_a_b(#{ a: integer(), b: integer(), 'A }) -> #{ a: integer(), b: integer(), 'A }.
--spec swap_a_b(#{ a: A, b: A, 'A }) -> #{ a: A, b: A, 'A }.
+-spec id_rec(#( 'A )) -> #( 'A ).
+-spec get_id1(#( id :: A, 'A )) -> A.
+-spec update_a_b(#( a :: integer(), b :: integer(), 'A )) -> #( a :: integer(), b :: integer(), 'A ).
+-spec swap_a_b(#( a :: A, b :: A, 'A )) -> #( a :: A, b :: A, 'A ).
 -spec id01(A) -> A.
 -spec id02(A) -> A.
 -spec id03(A) -> A.

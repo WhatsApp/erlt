@@ -1,22 +1,22 @@
--spec two_selectors(#{ person: #{ name: A, 'A }, 'B }) -> A.
+-spec two_selectors(#( person :: #( name :: A, 'A ), 'B )) -> A.
 -spec seq_call(fun((A) -> B), fun((C) -> D), A, C) -> D.
--spec sum_fr(fun((A) -> integer()), #{ l01: A, l02: A, l03: A, l04: A, l05: A, l06: A, l07: A, l08: A, l09: A, l10: A, l11: A, l12: A, l13: A, l14: A, l15: A, l16: A, l17: A, l18: A, l19: A, 'A }) -> integer().
--spec sum_fr_proxy(fun((A) -> integer()), #{ l01: A, l02: A, l03: A, l04: A, l05: A, l06: A, l07: A, l08: A, l09: A, l10: A, l11: A, l12: A, l13: A, l14: A, l15: A, l16: A, l17: A, l18: A, l19: A, 'A }) -> integer().
+-spec sum_fr(fun((A) -> integer()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, 'A )) -> integer().
+-spec sum_fr_proxy(fun((A) -> integer()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, 'A )) -> integer().
 -spec add_f(integer()) -> integer().
 -spec rich_record_example() -> integer().
 -spec name(rec_rec2(A)) -> A.
 -spec next(rec_rec2(A)) -> core:option(rec_rec2(A)).
 -spec unBox(rec_rec2(A)) -> rec_rec2(A).
--spec unRec(rec(A)) -> #{ name: A, next: core:option(rec(A)) }.
+-spec unRec(rec(A)) -> #( name :: A, next :: core:option(rec(A)) ).
 -spec unRec2(rec(A)) -> rec(A).
--spec apply_add_id(fun((A) -> #{ id: B, 'A }), A) -> #{ id: B, 'A }.
--spec add_id_empty_rec(#{ 'A }) -> #{ id: string() }.
--spec add_id_rec_f(#{ f: A, 'A }) -> #{ f: A, id: string() }.
+-spec apply_add_id(fun((A) -> #( id :: B, 'A )), A) -> #( id :: B, 'A ).
+-spec add_id_empty_rec(#( 'A )) -> #( id :: string() ).
+-spec add_id_rec_f(#( f :: A, 'A )) -> #( f :: A, id :: string() ).
 -spec rec_tricky() -> {}.
 -spec even(integer()) -> boolean().
 -spec odd(integer()) -> boolean().
--spec loop({}) -> fun((#{ a: A, 'A }) -> A).
--spec dummy() -> fun((#{ a: A, 'A }) -> A).
+-spec loop({}) -> fun((#( a :: A, 'A )) -> A).
+-spec dummy() -> fun((#( a :: A, 'A )) -> A).
 -spec id(A) -> A.
 -spec x_fun() -> integer().
 -spec y_fun() -> {}.

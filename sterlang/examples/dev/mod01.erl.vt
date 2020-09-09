@@ -24,20 +24,20 @@ val B: N
 val C: O
 val mk_tuple2/1: fun((P) -> {integer(), integer(), integer(), P})
 val A: P
-val mk_map/2: fun((Q, R) -> #{ a: Q, b: R })
+val mk_map/2: fun((Q, R) -> #( a :: Q, b :: R ))
 val A: Q
 val B: R
-val update_map1/2: fun((#{ a: S }, S) -> #{ a: S })
-val M: #{ a: S }
+val update_map1/2: fun((#( a :: S ), S) -> #( a :: S ))
+val M: #( a :: S )
 val A: S
-val update_map3/1: fun((#{ a: T, b: T }) -> #{ a: T, b: T })
-val M: #{ a: T, b: T }
+val update_map3/1: fun((#( a :: T, b :: T )) -> #( a :: T, b :: T ))
+val M: #( a :: T, b :: T )
 val A0: T
 val B0: T
-val access_map/1: fun((#{ id: U, location: V, A }) -> {U, V})
-val M: #{ id: U, location: V, A }
-val access_map2/1: fun((#{ inner1: #{ inner2: W } }) -> W)
-val M: #{ inner1: #{ inner2: W } }
+val access_map/1: fun((#( id :: U, location :: V, A )) -> {U, V})
+val M: #( id :: U, location :: V, A )
+val access_map2/1: fun((#( inner1 :: #( inner2 :: W ) )) -> W)
+val M: #( inner1 :: #( inner2 :: W ) )
 val mk_seq/0: fun(() -> {integer(), integer()})
 val X: integer()
 val Y: integer()

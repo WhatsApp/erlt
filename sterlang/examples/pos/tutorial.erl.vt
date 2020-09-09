@@ -4,13 +4,13 @@ val Y: integer()
 val basic_values/0: fun(() -> {})
 val My_int: integer()
 val My_str: string()
-val Empty_record: ()
+val Empty_record: #()
 val Unit: {}
 val Tuple1: {integer(), integer()}
 val Tuple2: {integer(), string()}
 val Int_list: list(integer())
-val My_profile_rec: #{ languages: list(string()), name: string() }
-val Location_rec: #{ city: string(), country: string() }
+val My_profile_rec: #( languages :: list(string()), name :: string() )
+val Location_rec: #( city :: string(), country :: string() )
 val Bool1: boolean()
 val Bool2: boolean()
 val F_id: fun((A) -> A)
@@ -39,7 +39,7 @@ val funs/0: fun(() -> {})
 val V1: core:option(integer())
 val V2: core:option(string())
 val pieces/0: fun(() -> {})
-val My_rec: #{ n: integer(), st: string(), z: list(J) }
+val My_rec: #( n :: integer(), st :: string(), z :: list(J) )
 val NVal: integer()
 val N1: integer()
 val S1: string()
@@ -47,9 +47,9 @@ val Z1: list(K)
 val N: integer()
 val St: string()
 val Z: list(L)
-val Rec1: #{ n: integer(), z: list(M) }
+val Rec1: #( n :: integer(), z :: list(M) )
 val NVal: integer()
-val My_rec1: #{ n: integer(), st: string(), z: list(N) }
+val My_rec1: #( n :: integer(), st :: string(), z :: list(N) )
 val My_pair: {integer(), list(O)}
 val Elem1: integer()
 val Elem2: list(P)
@@ -71,9 +71,9 @@ val F: fun((V) -> W)
 val Xs: list(V)
 val X1: V
 val Xs1: list(V)
-val getIds/1: fun((list(#{ id: X, A })) -> list(X))
-val Recs: list(#{ id: X, A })
-val X: #{ id: X, A }
+val getIds/1: fun((list(#( id :: X, A ))) -> list(X))
+val Recs: list(#( id :: X, A ))
+val X: #( id :: X, A )
 val global/2: fun((boolean(), Y) -> Y)
 val X: boolean()
 val V: Y
@@ -90,25 +90,25 @@ val inside2/0: fun(() -> fun((T_30) -> T_30))
 val T: fun((T_31) -> T_31)
 val Local: fun((T_32) -> T_32)
 val X: T_32
-val get_id/1: fun((#{ id: T_33, B }) -> T_33)
-val R: #{ id: T_33, B }
-val extract/1: fun((#{ id: T_34, C }) -> #{ id: T_34 })
+val get_id/1: fun((#( id :: T_33, B )) -> T_33)
+val R: #( id :: T_33, B )
+val extract/1: fun((#( id :: T_34, C )) -> #( id :: T_34 ))
 val Id: T_34
 val records_example/0: fun(() -> {})
 val Id1: integer()
 val Id2: string()
-val Rec1: #{ id: integer() }
-val Rec2: #{ id: integer(), key: integer() }
-val Rec_list: list(#{ id: integer() })
-val id_rec/1: fun((#{ D }) -> #{ D })
-val R: #{ D }
-val get_id1/1: fun((#{ id: T_35, E }) -> T_35)
-val Rec: #{ id: T_35, E }
+val Rec1: #( id :: integer() )
+val Rec2: #( id :: integer(), key :: integer() )
+val Rec_list: list(#( id :: integer() ))
+val id_rec/1: fun((#( D )) -> #( D ))
+val R: #( D )
+val get_id1/1: fun((#( id :: T_35, E )) -> T_35)
+val Rec: #( id :: T_35, E )
 val IdVal: T_35
-val update_a_b/1: fun((#{ a: integer(), b: integer(), F }) -> #{ a: integer(), b: integer(), F })
-val R: #{ a: integer(), b: integer(), F }
-val swap_a_b/1: fun((#{ a: T_36, b: T_36, G }) -> #{ a: T_36, b: T_36, G })
-val R: #{ a: T_36, b: T_36, G }
+val update_a_b/1: fun((#( a :: integer(), b :: integer(), F )) -> #( a :: integer(), b :: integer(), F ))
+val R: #( a :: integer(), b :: integer(), F )
+val swap_a_b/1: fun((#( a :: T_36, b :: T_36, G )) -> #( a :: T_36, b :: T_36, G ))
+val R: #( a :: T_36, b :: T_36, G )
 val id01/1: fun((T_37) -> T_37)
 val A: T_37
 val id02/1: fun((T_38) -> T_38)
