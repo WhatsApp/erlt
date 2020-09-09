@@ -89,11 +89,9 @@
     %Include-path
     path = [] :: [file:name()],
     %Macros (don't care locations)
-    macs = #{} ::
-        #{name() => predef() | [userdef()]},
+    macs = #{} :: #{name() => predef() | [userdef()]},
     %Macro use structure
-    uses = #{} ::
-        #{name() => [{argspec(), [used()]}]},
+    uses = #{} :: #{name() => [{argspec(), [used()]}]},
     default_encoding = ?DEFAULT_ENCODING :: source_encoding(),
     pre_opened = false :: boolean(),
     %Scanner options
@@ -121,9 +119,7 @@
 open(Name, Path) ->
     open(Name, Path, []).
 
--spec open(FileName, IncludePath, PredefMacros) ->
-    {'ok', Epp} | {'error', ErrorDescriptor}
-when
+-spec open(FileName, IncludePath, PredefMacros) -> {'ok', Epp} | {'error', ErrorDescriptor} when
     FileName :: file:name(),
     IncludePath :: [DirectoryName :: file:name()],
     PredefMacros :: macros(),
@@ -160,7 +156,7 @@ internal_open(Options, St) ->
             erlang:error(badarg);
         Name ->
             Self = self(),
-            Epp = spawn(fun () -> server(Self, Name, Options, St) end),
+            Epp = spawn(fun() -> server(Self, Name, Options, St) end),
             case epp_request(Epp) of
                 {ok, Pid, Encoding} ->
                     case proplists:get_bool(extra, Options) of
@@ -189,7 +185,8 @@ scan_erl_form(Epp) ->
 -spec parse_erl_form(Epp) ->
     {'ok', AbsForm} |
     {error, ErrorInfo} |
-    {'warning', WarningInfo} | {'eof', Line}
+    {'warning', WarningInfo} |
+    {'eof', Line}
 when
     Epp :: epp_handle(),
     AbsForm :: erlt_parse:abstract_form(),
@@ -258,9 +255,7 @@ format_error({warning, Term}) ->
 format_error(E) ->
     file:format_error(E).
 
--spec parse_file(FileName, IncludePath, PredefMacros) ->
-    {'ok', [Form]} | {error, OpenError}
-when
+-spec parse_file(FileName, IncludePath, PredefMacros) -> {'ok', [Form]} | {error, OpenError} when
     FileName :: file:name(),
     IncludePath :: [DirectoryName :: file:name()],
     Form :: erlt_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
@@ -306,7 +301,8 @@ parse_file(Ifile, Options) ->
     Form ::
         erlt_parse:abstract_form() |
         {'error', ErrorInfo} |
-        {'warning', WarningInfo} | {'eof', Line},
+        {'warning', WarningInfo} |
+        {'eof', Line},
     Line :: erl_anno:line(),
     ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     WarningInfo :: warning_info().
@@ -340,8 +336,10 @@ read_encoding(Name, Options) ->
     InComment = proplists:get_value(in_comment_only, Options, true),
     case file:open(Name, [read]) of
         {ok, File} ->
-            try read_encoding_from_file(File, InComment)
-            after ok = file:close(File)
+            try
+                read_encoding_from_file(File, InComment)
+            after
+                ok = file:close(File)
             end;
         _Error ->
             none
@@ -380,7 +378,8 @@ read_encoding_from_binary(Binary) ->
     Binary :: binary(), Options :: [Option], Option :: {in_comment_only, boolean()}.
 read_encoding_from_binary(Binary, Options) ->
     InComment = proplists:get_value(in_comment_only, Options, true),
-    try com_nl(Binary, fake_reader(0), 0, InComment)
+    try
+        com_nl(Binary, fake_reader(0), 0, InComment)
     catch
         throw:no ->
             none
@@ -1189,7 +1188,7 @@ eval_if(Toks0, St) ->
     Es = rewrite_expr(Es1, St),
     assert_guard_expr(Es),
     Bs = erl_eval:new_bindings(),
-    LocalFun = fun (_Name, _Args) ->
+    LocalFun = fun(_Name, _Args) ->
         error(badarg)
     end,
     try erl_eval:exprs(Es, Bs, {value, LocalFun}) of
@@ -1894,7 +1893,7 @@ interpret_file_attr([{attribute, Anno, file, {File, Line}} = Form | Forms], Delt
             end
     end;
 interpret_file_attr([Form0 | Forms], Delta, Fs) ->
-    F = fun (Anno) ->
+    F = fun(Anno) ->
         Line = erl_anno:line(Anno),
         erl_anno:set_line(Line + Delta, Anno)
     end,
