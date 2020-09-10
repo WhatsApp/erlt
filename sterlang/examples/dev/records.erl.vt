@@ -7,15 +7,12 @@ val update_user/3: fun((#user{}, string(), integer()) -> #user{})
 val User: #user{}
 val Name: string()
 val Id: integer()
-val index/0: fun(() -> integer())
 val get_id/1: fun((#user{}) -> integer())
 val User: #user{}
 val get_man_id/1: fun((#manager{}) -> integer())
 val Manager: #manager{}
 val check_user/1: fun((#user{}) -> #ok{})
 val User: #user{}
-val check_id/1: fun((integer()) -> #ok{})
-val Id: integer()
 val check_users/2: fun((#user{}, #user{}) -> #ok{})
 val User1: #user{}
 val User2: #user{}
@@ -27,4 +24,3 @@ val Id: integer()
 val Id: integer()
 val foo/1: fun((#manager{}) -> #user{})
 val User: #user{}
-val bar/1: fun((integer()) -> #ok{})

@@ -28,9 +28,6 @@ mk_user(Name, Id) ->
 update_user(User, Name, Id) ->
     User#user{name = Name, id = Id}.
 
-index() ->
-    #user.name.
-
 get_id(User) ->
     User#user.id.
 
@@ -38,9 +35,6 @@ get_man_id(Manager) ->
     (Manager#manager.user)#user.id.
 
 check_user(User) when User == #user{name = "anonymous", id = -1} ->
-    #ok{}.
-
-check_id(Id) when Id > #user.id ->
     #ok{}.
 
 check_users(User1, User2) when User1#user.id == User2#user.id ->
@@ -54,6 +48,3 @@ match_users(#user{id = Id}, #user{id = Id}) -> true.
 
 foo(#manager{user = User}) ->
     User.
-
-bar(#manager.user) ->
-    #ok{}.

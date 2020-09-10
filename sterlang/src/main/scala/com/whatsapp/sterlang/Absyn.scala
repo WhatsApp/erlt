@@ -69,7 +69,6 @@ object Absyn {
   case class ERecordCreate(name: String, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
-  case class ERecordIndex(recName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P) extends Exp
   case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(

@@ -62,9 +62,6 @@ object ExprsConvert {
         RecordCreate(sp(anno), recordName, eRecordFieldExps.map(structField))
       case ETuple(List(EAtom("record"), anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
         RecordUpdate(sp(anno), convertExp(eExp), recordName, eRecordFieldExps.map(structField))
-      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordIndex(sp(anno), recordName, fieldName)
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         StructFieldAccess(sp(anno), convertExp(eExp), recordName, fieldName)

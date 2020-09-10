@@ -185,7 +185,6 @@ object Ast {
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
   case class ERecordCreate(name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
   case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class ERecordIndex(recName: String, fieldName: String)(val p: Pos.P) extends Exp
   case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val p: Pos.P) extends Exp
   case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val p: Pos.P) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
@@ -238,7 +237,6 @@ object Ast {
   case class NumberPat(n: Int)(val p: Pos.P) extends Pat
   case class StringPat(s: String)(val p: Pos.P) extends Pat
   case class ERecordPat(recName: String, fields: List[Field[Pat]])(val p: Pos.P) extends Pat
-  case class ERecordIndexPat(recName: String, fieldName: String)(val p: Pos.P) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

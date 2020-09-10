@@ -44,7 +44,6 @@ object Exprs {
   case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
   case class RecordCreate(p: Pos.SP, recordName: String, fields: List[StructField]) extends Expr
   case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[StructField]) extends Expr
-  case class RecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends Expr
   case class StructFieldAccess(p: Pos.SP, struct: Expr, structName: String, fieldName: String) extends Expr
   case class MapFieldAccess(p: Pos.SP, map: Expr, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[MapField]) extends Expr

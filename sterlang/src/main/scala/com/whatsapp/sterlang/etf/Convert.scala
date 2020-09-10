@@ -216,8 +216,6 @@ object Convert {
         Ast.Bin(elems.map(convertGBinElem))(p)
       case Guards.GRecordCreate(p, recordName, fields) =>
         Ast.ERecordCreate(recordName, fields.map(gStructField))(p)
-      case Guards.GRecordIndex(p, recordName, fieldName) =>
-        Ast.ERecordIndex(recordName, fieldName)(p)
       case Guards.GStructFieldAccess(p, rec, recordName, fieldName) =>
         Ast.ERecordSelect(convertGExpr(rec), recordName, fieldName)(p)
     }
@@ -292,8 +290,6 @@ object Convert {
         throw new UnsupportedSyntaxError(p)
       case Patterns.RecordPattern(p, recordName, fields) =>
         Ast.ERecordPat(recordName, fields.map(structFieldPattern))(p)
-      case Patterns.RecordIndexPattern(p, recordName, fieldName) =>
-        Ast.ERecordIndexPat(recordName, fieldName)(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -408,8 +404,6 @@ object Convert {
         Ast.ERecordCreate(recordName, fields.map(structField))(p)
       case Exprs.RecordUpdate(p, rec, recordName, fields) =>
         Ast.ERecordUpdate(convertExpr(rec), recordName, fields.map(structField))(p)
-      case Exprs.RecordIndex(p, recordName, fieldName) =>
-        Ast.ERecordIndex(recordName, fieldName)(p)
       case Exprs.StructFieldAccess(p, rec, recordName, fieldName) =>
         Ast.ERecordSelect(convertExpr(rec), recordName, fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>

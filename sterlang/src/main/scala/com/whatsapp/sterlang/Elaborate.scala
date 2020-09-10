@@ -111,8 +111,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabERecordCreate(eRecordCreate, ty, d, env)
       case eRecordUpdate: S.ERecordUpdate =>
         elabERecordUpdate(eRecordUpdate, ty, d, env)
-      case eRecordIndex: S.ERecordIndex =>
-        elabERecordIndex(eRecordIndex, ty, d, env)
       case eRecordSelect: S.ERecordSelect =>
         elabERecordSelect(eRecordSelect, ty, d, env)
       case binOpExp: S.BinOpExp =>
@@ -211,8 +209,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
       case eRecordPat: S.ERecordPat =>
         elabERecordPat(eRecordPat, ts, d, env, penv, gen)
-      case eRecordIndexPat: S.ERecordIndexPat =>
-        elabERecordIndexPat(eRecordIndexPat, ts, d, env, penv, gen)
       case listPat: S.ListPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
       case binPat: S.BinPat =>
@@ -540,17 +536,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     unify(exp.p, ty, eRecordType)
 
     A.ERecordUpdate(rec1, name, fields1)(typ = ty, sourceLocation = exp.p)
-  }
-
-  private def elabERecordIndex(exp: S.ERecordIndex, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
-    val S.ERecordIndex(recName, fieldName) = exp
-    val eRec = getERecord(exp.p, recName)
-    val knownField = eRec.fields.exists(_.label == fieldName)
-    if (!knownField) {
-      throw new UnknownERecordField(exp.p, recName, fieldName)
-    }
-    unify(exp.p, ty, MT.IntType)
-    A.ERecordIndex(recName, fieldName)(typ = MT.IntType, sourceLocation = exp.p)
   }
 
   private def elabERecordSelect(exp: S.ERecordSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -984,27 +969,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t = TU.instantiate(d, ts)
     unify(p.p, t, MT.StringType)
     (A.LiteralPat(Values.StringValue(b))(sourceLocation = p.p), env, penv)
-  }
-
-  private def elabERecordIndexPat(
-      p: S.ERecordIndexPat,
-      ts: ST.TypeSchema,
-      d: T.Depth,
-      env: Env,
-      penv: PEnv,
-      gen: Boolean,
-  ): (A.Pat, Env, PEnv) = {
-    val S.ERecordIndexPat(recName, fieldName) = p
-
-    val eRec = getERecord(p.p, recName)
-    val knownField = eRec.fields.exists(_.label == fieldName)
-    if (!knownField) {
-      throw new UnknownERecordField(p.p, recName, fieldName)
-    }
-
-    val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.IntType)
-    (A.LiteralPat(Values.RecordIndexValue(recName, fieldName))(sourceLocation = p.p), env, penv)
   }
 
   private def elabListPat(

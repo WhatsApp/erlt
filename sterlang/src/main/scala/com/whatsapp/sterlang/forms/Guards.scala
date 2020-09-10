@@ -30,7 +30,6 @@ object Guards {
   case class GBinaryOp(p: Pos.SP, op: String, test1: GExpr, test2: GExpr) extends GExpr
   case class GUnaryOp(p: Pos.SP, op: String, test1: GExpr) extends GExpr
   case class GRecordCreate(p: Pos.SP, recordName: String, fields: List[GStructField]) extends GExpr
-  case class GRecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends GExpr
   case class GStructFieldAccess(p: Pos.SP, rec: GExpr, recordName: String, fieldName: String) extends GExpr
   case class GMapFieldAccess(p: Pos.SP, rec: GExpr, fieldName: String) extends GExpr
   case class GMapCreate(p: Pos.SP, entries: List[GAssoc]) extends GExpr

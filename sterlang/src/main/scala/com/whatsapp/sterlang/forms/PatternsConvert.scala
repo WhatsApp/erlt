@@ -43,9 +43,6 @@ object PatternsConvert {
         UnOpPattern(sp(anno), op, convertPat(ePat1))
       case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
         RecordPattern(sp(anno), recordName, eRecordFieldPatterns.map(structFieldPattern))
-      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordIndexPattern(sp(anno), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapPattern(sp(anno), eAssocs.map(convertMapFieldPattern))
       case ETuple(

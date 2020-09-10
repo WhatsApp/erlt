@@ -61,8 +61,6 @@ object SyntaxUtil {
       case S.ERecordPat(_, fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
-      case S.ERecordIndexPat(_, _) =>
-        List.empty
     }
 
   def collectPatVars2(pat: A.Pat): List[String] =
@@ -175,8 +173,6 @@ object SyntaxUtil {
         fields.flatMap(f => freeVars(f.value, m)).toSet
       case S.ERecordUpdate(rec, _, fields) =>
         freeVars(rec, m) ++ fields.flatMap(f => freeVars(f.value, m))
-      case S.ERecordIndex(_, _) =>
-        Set.empty
       case S.ERecordSelect(rec, _, _) =>
         freeVars(rec, m)
       case S.TupleExp(elems) =>
@@ -555,7 +551,7 @@ object SyntaxUtil {
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case S.ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
-      case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) | S.ERecordIndexPat(_, _) =>
+      case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) =>
         Set.empty[String]
     }
 
@@ -591,8 +587,6 @@ object SyntaxUtil {
         fields.flatMap(f => getDepExp(f.value)).toSet
       case S.ERecordUpdate(rec, _, fields) =>
         getDepExp(rec) ++ fields.flatMap(f => getDepExp(f.value))
-      case S.ERecordIndex(_, _) =>
-        Set.empty
       case S.ERecordSelect(rec, _, _) =>
         getDepExp(rec)
       case S.TupleExp(elems) =>

@@ -51,9 +51,6 @@ object GuardsConvert {
         GUnaryOp(sp(anno), op, convertGExpr(eTest1))
       case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldTests))) =>
         GRecordCreate(sp(anno), recordName, eRecordFieldTests.map(gStructField))
-      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        GRecordIndex(sp(anno), recordName, fieldName)
       case ETuple(List(EAtom("struct_field"), anno, eTest, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         GStructFieldAccess(sp(anno), convertGExpr(eTest), recordName, fieldName)

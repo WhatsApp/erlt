@@ -230,8 +230,6 @@ map_pat_expr -> '#' map_tuple :
 map_pat_expr -> pat_expr_max '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-record_pat_expr -> '#' atom '.' atom :
-	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
 record_pat_expr -> '#' atom record_tuple :
 	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
 
@@ -309,8 +307,6 @@ map_fields -> map_field ',' map_fields : ['$1' | '$3'].
 
 map_field -> atom '=' expr : {map_field, ?anno('$1','$3'), '$1', '$3'}.
 
-record_expr -> '#' atom '.' atom :
-	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
 record_expr -> '#' atom record_tuple :
 	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
 record_expr -> expr_max '#' atom '.' atom :
