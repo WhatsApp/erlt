@@ -30,7 +30,7 @@ object Patterns {
   case class BinPattern(p: Pos.SP, elems: List[BinElementPattern]) extends Pattern
   case class BinOpPattern(p: Pos.SP, op: String, pat1: Pattern, pat2: Pattern) extends Pattern
   case class UnOpPattern(p: Pos.SP, op: String, pat1: Pattern) extends Pattern
-  case class RecordPattern(p: Pos.SP, recordName: String, fields: List[RecordFieldPattern]) extends Pattern
+  case class RecordPattern(p: Pos.SP, recordName: String, fields: List[StructFieldPattern]) extends Pattern
   case class RecordIndexPattern(p: Pos.SP, recordName: String, fieldName: String) extends Pattern
   case class MapPattern(p: Pos.SP, elems: List[MapFieldPattern]) extends Pattern
   case class LocalEnumCtrPattern(p: Pos.SP, enum: String, ctr: String, args: List[Pattern]) extends Pattern
@@ -38,6 +38,6 @@ object Patterns {
       extends Pattern
 
   case class BinElementPattern(p: Pos.SP, pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
-  case class RecordFieldPattern(p: Pos.SP, fieldName: String, pat: Pattern)
+  case class StructFieldPattern(p: Pos.SP, fieldName: String, pat: Pattern)
   case class MapFieldPattern(p: Pos.SP, key: Pattern, value: Pattern)
 }

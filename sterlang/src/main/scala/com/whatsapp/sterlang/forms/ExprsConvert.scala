@@ -59,15 +59,15 @@ object ExprsConvert {
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
         UnaryOp(sp(anno), op, convertExp(eExp1))
       case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordCreate(sp(anno), recordName, eRecordFieldExps.map(convertRecordField))
+        RecordCreate(sp(anno), recordName, eRecordFieldExps.map(structField))
       case ETuple(List(EAtom("record"), anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordUpdate(sp(anno), convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))
+        RecordUpdate(sp(anno), convertExp(eExp), recordName, eRecordFieldExps.map(structField))
       case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
         RecordIndex(sp(anno), recordName, fieldName)
-      case ETuple(List(EAtom("record_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
+      case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        RecordFieldAccess(sp(anno), convertExp(eExp), recordName, fieldName)
+        StructFieldAccess(sp(anno), convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
@@ -211,9 +211,9 @@ object ExprsConvert {
         TypeSpecifierUnit(value.intValue)
     }
 
-  def convertRecordField(term: ETerm): RecordField =
+  def structField(term: ETerm): StructField =
     term match {
-      case ETuple(List(EAtom("record_field"), anno, eName, ePat)) =>
+      case ETuple(List(EAtom("struct_field"), anno, eName, exp)) =>
         val name = eName match {
           case ETuple(List(EAtom("atom"), _anno, EAtom(value))) =>
             value
@@ -221,7 +221,7 @@ object ExprsConvert {
             // TODO
             "_"
         }
-        RecordField(sp(anno), name, convertExp(ePat))
+        StructField(sp(anno), name, convertExp(exp))
     }
 
   def convertAssoc(term: ETerm): MapField =

@@ -34,7 +34,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
-record_expr record_tuple record_field record_fields
+record_expr record_tuple struct_field struct_fields
 map_expr map_tuple map_field map_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
@@ -314,22 +314,21 @@ record_expr -> '#' atom '.' atom :
 record_expr -> '#' atom record_tuple :
 	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
 record_expr -> expr_max '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
+	{struct_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
 record_expr -> expr_max '#' atom record_tuple :
 	{record,?anno('$2','$4'),'$1',element(3, '$3'),'$4'}.
 record_expr -> record_expr '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
+	{struct_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
 record_expr -> record_expr '#' atom record_tuple :
 	{record,?anno('$2','$4'),'$1',element(3, hd('$3')),'$4'}.
 
 record_tuple -> '{' '}' : [].
-record_tuple -> '{' record_fields '}' : '$2'.
+record_tuple -> '{' struct_fields '}' : '$2'.
 
-record_fields -> record_field : ['$1'].
-record_fields -> record_field ',' record_fields : ['$1' | '$3'].
+struct_fields -> struct_field : ['$1'].
+struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
 
-record_field -> var '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
-record_field -> atom '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
+struct_field -> atom '=' expr : {struct_field, ?anno('$1', '$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 function_call -> remote_id argument_list :
@@ -522,7 +521,7 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
 build_record_def(
     {atom, _, Attr}, {atom, _An, RecordName}, Fields, Aa
 ) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {RecordName, record_fields(Fields)}};
+    {attribute, Aa, Attr, {RecordName, struct_fields(Fields)}};
 build_record_def({atom, _, Attr}, _, _, Aa) ->
     if
         Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
@@ -658,11 +657,11 @@ farity_list({nil, _An}) ->
 farity_list(Other) ->
     ret_err(?anno(Other), "bad function arity").
 
-record_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
-    [{typed_record_field, {record_field, Aa, {atom, Aa, A}}, TypeInfo} | record_fields(Fields)];
-record_fields([Other | _Fields]) ->
+struct_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
+    [{typed_struct_field, {struct_field, Aa, {atom, Aa, A}}, TypeInfo} | struct_fields(Fields)];
+struct_fields([Other | _Fields]) ->
     ret_err(?anno(Other), "bad record field");
-record_fields([]) ->
+struct_fields([]) ->
     [].
 
 term(Expr) ->
@@ -903,10 +902,10 @@ modify_anno1({eof, L}, Ac, _Mf) ->
 modify_anno1({clauses, Cs}, Ac, Mf) ->
     {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
     {{clauses, Cs1}, Ac1};
-modify_anno1({typed_record_field, Field, Type}, Ac, Mf) ->
+modify_anno1({typed_struct_field, Field, Type}, Ac, Mf) ->
     {Field1, Ac1} = modify_anno1(Field, Ac, Mf),
     {Type1, Ac2} = modify_anno1(Type, Ac1, Mf),
-    {{typed_record_field, Field1, Type1}, Ac2};
+    {{typed_struct_field, Field1, Type1}, Ac2};
 modify_anno1({Tag, A}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {{Tag, A1}, Ac1};

@@ -42,10 +42,10 @@ object Exprs {
   case class Bin(p: Pos.SP, elems: List[BinElement]) extends Expr
   case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
-  case class RecordCreate(p: Pos.SP, recordName: String, fields: List[RecordField]) extends Expr
-  case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[RecordField]) extends Expr
+  case class RecordCreate(p: Pos.SP, recordName: String, fields: List[StructField]) extends Expr
+  case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[StructField]) extends Expr
   case class RecordIndex(p: Pos.SP, recordName: String, fieldName: String) extends Expr
-  case class RecordFieldAccess(p: Pos.SP, rec: Expr, recordName: String, fieldName: String) extends Expr
+  case class StructFieldAccess(p: Pos.SP, struct: Expr, structName: String, fieldName: String) extends Expr
   case class MapFieldAccess(p: Pos.SP, map: Expr, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[MapField]) extends Expr
   case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[MapField]) extends Expr
@@ -77,7 +77,7 @@ object Exprs {
   case class TypeSpecifierId(id: String) extends TypeSpecifier
   case class TypeSpecifierUnit(int: Int) extends TypeSpecifier
 
-  case class RecordField(p: Pos.SP, fieldName: String, value: Expr)
+  case class StructField(p: Pos.SP, fieldName: String, value: Expr)
   case class MapField(p: Pos.SP, k: Expr, v: Expr)
 
   sealed trait Qualifier

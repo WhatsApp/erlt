@@ -50,7 +50,7 @@ object Forms {
   case class ImportType(module: String, ids: List[IdWithArity]) extends Form
   case class Compile(options: ETerm) extends Form
   case class File(file: String) extends Form
-  case class RecordDecl(p: Pos.SP, name: String, fields: List[RecordFieldDecl], kind: RecordKind) extends Form
+  case class RecordDecl(p: Pos.SP, name: String, fields: List[StructFieldDecl], kind: RecordKind) extends Form
   case class TypeDecl(p: Pos.SP, typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type)
       extends Form
   case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
@@ -60,7 +60,7 @@ object Forms {
   case class WildAttribute(p: Pos.SP, name: String) extends Form
   case class Error(loc: Pos.Loc) extends Form
 
-  sealed trait RecordFieldDecl
-  case class RecordFieldUntyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr]) extends RecordFieldDecl
-  case class RecordFieldTyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr], tp: Type) extends RecordFieldDecl
+  sealed trait StructFieldDecl
+  case class StructFieldUntyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr]) extends StructFieldDecl
+  case class StructFieldTyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr], tp: Type) extends StructFieldDecl
 }
