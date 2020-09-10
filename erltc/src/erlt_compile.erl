@@ -1236,7 +1236,7 @@ run_sterlang(St) ->
                 ])
         end,
     % io:format("Running: ~p~n", [CheckCmd]),
-    {ExitCode, Output} = eunit_lib:command(CheckCmd, BinDir),
+    {ExitCode, Output} = do_invoke_sterlang(CheckCmd, BinDir),
     case ExitCode of
         0 ->
             % TODO: check for warnings
@@ -1251,6 +1251,12 @@ run_sterlang(St) ->
             % NOTE: the error thrown here will be caught by internal_comp() -> Run0
             throw({error, St#compile{errors = [Error]}})
     end.
+
+%% Currently does nothing.
+do_invoke_sterlang(_CheckCmd, _BinDir) ->
+    FakeExitCode = 0,
+    FakeOutput = "",
+    {FakeExitCode, FakeOutput}.
 
 erlt_to_erl1(Code, St) ->
     case is_lang_erlt(St) of
