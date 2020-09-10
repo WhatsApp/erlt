@@ -13,11 +13,11 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(records).
+-module(structs).
 
--record #user{name :: string(), id :: integer()}.
--record #manager{user :: #user{}}.
--record #ok{}.
+-struct #user{name :: string(), id :: integer()}.
+-struct #manager{user :: #user{}}.
+-struct #ok{}.
 
 -spec test(#user{}) -> #user{}.
 test(X) -> X.
@@ -32,7 +32,7 @@ get_id(User) ->
     User#user.id.
 
 get_man_id(Manager) ->
-    (Manager#manager.user)#user.id.
+    Manager#manager.user#user.id.
 
 check_user(User) when User == #user{name = "anonymous", id = -1} ->
     #ok{}.

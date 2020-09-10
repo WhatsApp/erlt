@@ -58,13 +58,13 @@ object ExprsConvert {
         BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
         UnaryOp(sp(anno), op, convertExp(eExp1))
-      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordCreate(sp(anno), recordName, eRecordFieldExps.map(structField))
-      case ETuple(List(EAtom("record"), anno, eExp, EAtom(recordName), EList(eRecordFieldExps))) =>
-        RecordUpdate(sp(anno), convertExp(eExp), recordName, eRecordFieldExps.map(structField))
+      case ETuple(List(EAtom("struct"), anno, EAtom(name), EList(fields))) =>
+        StructCreate(sp(anno), name, fields.map(structField))
+      case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
+        StructUpdate(sp(anno), convertExp(eExp), name, fields.map(structField))
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        StructFieldAccess(sp(anno), convertExp(eExp), recordName, fieldName)
+        StructSelect(sp(anno), convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapCreate(sp(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>

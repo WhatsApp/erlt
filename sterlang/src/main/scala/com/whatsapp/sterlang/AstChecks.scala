@@ -26,7 +26,7 @@ class AstChecks(val context: Context) {
       program.typeAliases.foreach { checkTypeAlias(program, _) }
       program.opaques.foreach { checkOpaque(program, _) }
       program.enumDefs.foreach { checkEnumDef(program, _) }
-      program.erlangRecordDefs.foreach { checkErlangRecordDef(program, _) }
+      program.structDefs.foreach { checkStructDef(program, _) }
     } catch {
       case Cycle(name) =>
         val typeAlias = program.typeAliases.find(_.name == name).get
@@ -56,7 +56,7 @@ class AstChecks(val context: Context) {
       typeNames = typeNames + op.name
     }
     var recNames = Set.empty[String]
-    for (recDef <- program.erlangRecordDefs) {
+    for (recDef <- program.structDefs) {
       if (recNames(recDef.name)) throw new DuplicateRecord(recDef.p, recDef.name)
       recNames = recNames + recDef.name
     }
@@ -128,7 +128,7 @@ class AstChecks(val context: Context) {
     }
   }
 
-  private def checkErlangRecordDef(program: Program, recordDef: ErlangRecordDef): Unit = {
+  private def checkStructDef(program: Program, recordDef: StructDef): Unit = {
     var fieldNames = Set.empty[String]
     for (f <- recordDef.fields) {
       if (fieldNames(f.label)) {
@@ -199,19 +199,19 @@ class AstChecks(val context: Context) {
         expandType(program, visited)(resType)
       case ListType(elemType) =>
         expandType(program, visited)(elemType)
-      case ERecordType(name) =>
-        program.erlangRecordDefs.find(_.name == name) match {
+      case StructType(name) =>
+        program.structDefs.find(_.name == name) match {
           case Some(eRec) =>
             eRec.kind match {
-              case ExceptionRecord =>
+              case ExnStruct =>
                 throw new ExceptionType(tp.p, name)
-              case MessageRecord =>
+              case MsgStruct =>
                 throw new MessageType(tp.p, name)
-              case ErlangRecord =>
+              case StrStruct =>
               // OK
             }
           case None =>
-            throw new UnknownRecord(tp.p, name)
+            throw new UnknownStruct(tp.p, name)
         }
     }
 
@@ -236,7 +236,7 @@ class AstChecks(val context: Context) {
         (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
         collectTypeVars(bound)(elemType)
-      case ERecordType(_) =>
+      case StructType(_) =>
         Set.empty
     }
 }

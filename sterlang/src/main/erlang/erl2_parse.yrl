@@ -34,7 +34,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
-record_expr struct_tuple struct_field struct_fields
+struct_expr struct_tuple struct_field struct_fields
 map_expr map_tuple map_field map_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
@@ -97,7 +97,7 @@ form -> function dot : '$1'.
 
 attribute -> '-' atom attr_val                    : build_attribute('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' atom type_def                    : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' atom '#' atom '{' field_defs '}' : build_record_def('$2','$4', '$6', ?anno('$1','$7')).
+attribute -> '-' atom '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
 attribute -> '-' 'spec' type_spec                 : build_type_spec('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec             : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
@@ -132,7 +132,7 @@ type -> '#' '(' ')'                           : {type, ?anno('$1','$3'), map, []
 type -> '#' '(' map_field_types ')'           : build_map_type(?anno('$1', '$4'), '$3').
 type -> '{' '}'                               : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                     : {type, ?anno('$1','$3'), tuple, '$2'}.
-type -> '#' atom '{' '}'                      : {type, ?anno('$1','$4'), record, ['$2']}.
+type -> '#' atom '{' '}'                      : {type, ?anno('$1','$4'), struct, ['$2']}.
 type -> 'fun' '(' fun_type ')'                : '$3'.
 
 fun_type -> '(' ')' '->' top_type :
@@ -177,7 +177,7 @@ expr -> prefix_op expr : ?mkop1('$1', '$2').
 expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
-expr -> record_expr : '$1'.
+expr -> struct_expr : '$1'.
 expr -> expr_max : '$1'.
 
 remote_id -> atom ':' atom : {remote, ?anno('$1','$3'), '$1', '$3'}.
@@ -307,16 +307,16 @@ map_fields -> map_field ',' map_fields : ['$1' | '$3'].
 
 map_field -> atom '=' expr : {map_field, ?anno('$1','$3'), '$1', '$3'}.
 
-record_expr -> '#' atom struct_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
-record_expr -> expr_max '#' atom '.' atom :
-	{struct_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> expr_max '#' atom struct_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, '$3'),'$4'}.
-record_expr -> record_expr '#' atom '.' atom :
-	{struct_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> record_expr '#' atom struct_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, hd('$3')),'$4'}.
+struct_expr -> '#' atom struct_tuple :
+	{struct, ?anno('$1','$3'), element(3, '$2'), '$3'}.
+struct_expr -> expr_max '#' atom '.' atom :
+	{struct_field, ?anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
+struct_expr -> struct_expr '#' atom '.' atom :
+	{struct_field, ?anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
+struct_expr -> expr_max '#' atom struct_tuple :
+	{struct, ?anno('$2','$4'), '$1', element(3, '$3'), '$4'}.
+struct_expr -> struct_expr '#' atom struct_tuple :
+	{struct, ?anno('$2','$4'), '$1', element(3, hd('$3')), '$4'}.
 
 struct_tuple -> '{' '}' : [].
 struct_tuple -> '{' struct_fields '}' : '$2'.
@@ -514,13 +514,13 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
             ret_err(Aa, "bad attribute")
     end.
 
-build_record_def(
-    {atom, _, Attr}, {atom, _An, RecordName}, Fields, Aa
-) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {RecordName, struct_fields(Fields)}};
-build_record_def({atom, _, Attr}, _, _, Aa) ->
+build_struct_def(
+    {atom, _, Attr}, {atom, _An, StructName}, Fields, Aa
+) when Attr =:= 'struct'; Attr =:= 'exception'; Attr =:= 'message' ->
+    {attribute, Aa, Attr, {StructName, struct_fields(Fields)}};
+build_struct_def({atom, _, Attr}, _, _, Aa) ->
     if
-        Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
+        Attr =:= 'struct'; Attr =:= 'exception'; Attr =:= 'message' ->
             error_bad_decl(Aa, Attr);
         true ->
             ret_err(Aa, "bad attribute")
@@ -656,7 +656,7 @@ farity_list(Other) ->
 struct_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
     [{typed_struct_field, {struct_field, Aa, {atom, Aa, A}}, TypeInfo} | struct_fields(Fields)];
 struct_fields([Other | _Fields]) ->
-    ret_err(?anno(Other), "bad record field");
+    ret_err(?anno(Other), "bad struct field");
 struct_fields([]) ->
     [].
 
@@ -850,10 +850,10 @@ modify_anno1({function, M, F, A}, Ac, Mf) ->
     {F1, Ac2} = modify_anno1(F, Ac1, Mf),
     {A1, Ac3} = modify_anno1(A, Ac2, Mf),
     {{function, M1, F1, A1}, Ac3};
-modify_anno1({attribute, A, record, {Name, Fields}}, Ac, Mf) ->
+modify_anno1({attribute, A, struct, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, record, {Name, Fields1}}, Ac2};
+    {{attribute, A1, struct, {Name, Fields1}}, Ac2};
 modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),

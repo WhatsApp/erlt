@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e107).
 
--record #foo{id :: integer()}.
+-struct #foo{id :: integer()}.
 
 -spec test(#foo{}) -> string().
 test(Foo) when Foo == #foo{name = "anonymous"} ->

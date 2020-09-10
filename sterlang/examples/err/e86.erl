@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e86).
 
--record #record_with_duplicate_fields{
+-struct #record_with_duplicate_fields{
     field :: integer(),
     field :: string()
 }.

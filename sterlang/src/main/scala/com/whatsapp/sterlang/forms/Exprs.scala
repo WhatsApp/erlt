@@ -42,9 +42,9 @@ object Exprs {
   case class Bin(p: Pos.SP, elems: List[BinElement]) extends Expr
   case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
-  case class RecordCreate(p: Pos.SP, recordName: String, fields: List[StructField]) extends Expr
-  case class RecordUpdate(p: Pos.SP, rec: Expr, recordName: String, fields: List[StructField]) extends Expr
-  case class StructFieldAccess(p: Pos.SP, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class StructCreate(p: Pos.SP, structName: String, fields: List[StructField]) extends Expr
+  case class StructUpdate(p: Pos.SP, rec: Expr, structName: String, fields: List[StructField]) extends Expr
+  case class StructSelect(p: Pos.SP, struct: Expr, structName: String, fieldName: String) extends Expr
   case class MapFieldAccess(p: Pos.SP, map: Expr, fieldName: String) extends Expr
   case class MapCreate(p: Pos.SP, entries: List[MapField]) extends Expr
   case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[MapField]) extends Expr

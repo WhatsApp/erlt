@@ -49,11 +49,11 @@ object GuardsConvert {
         GBinaryOp(sp(anno), op, convertGExpr(eTest1), convertGExpr(eTest2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eTest1)) =>
         GUnaryOp(sp(anno), op, convertGExpr(eTest1))
-      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldTests))) =>
-        GRecordCreate(sp(anno), recordName, eRecordFieldTests.map(gStructField))
+      case ETuple(List(EAtom("struct"), anno, EAtom(recordName), EList(eRecordFieldTests))) =>
+        GStructCreate(sp(anno), recordName, eRecordFieldTests.map(gStructField))
       case ETuple(List(EAtom("struct_field"), anno, eTest, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        GStructFieldAccess(sp(anno), convertGExpr(eTest), recordName, fieldName)
+        GStructSelect(sp(anno), convertGExpr(eTest), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         GMapCreate(sp(anno), eAssocs.map(convertGAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>

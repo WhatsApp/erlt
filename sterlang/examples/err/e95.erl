@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e95).
 
--record #my_record{id :: integer()}.
+-struct #my_record{id :: integer()}.
 
 uninitialized() ->
     #my_record{}.

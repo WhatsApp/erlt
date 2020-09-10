@@ -32,7 +32,9 @@ object FormsConvert {
     "compile",
     "type",
     "opaque",
-    "record",
+    "struct",
+    "message",
+    "exception",
     "spec",
     "callback",
   )
@@ -99,17 +101,17 @@ object FormsConvert {
         TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(structFieldDecl), RecRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), StrStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(structFieldDecl), ExnRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), ExnStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(structFieldDecl), MsgRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), MsgStruct)
       // af_function_spec
       case ETuple(
             List(

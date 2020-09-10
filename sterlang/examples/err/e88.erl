@@ -15,6 +15,6 @@
 -lang([erl2, st]).
 -module(e88).
 
--record #bad_record{
+-struct #bad_record{
     field :: #unknown_record{}
 }.

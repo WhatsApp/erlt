@@ -85,10 +85,10 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.RecordDecl(p, name, eFields, kind) =>
+      case Forms.StructDecl(p, name, eFields, kind) =>
         val fields = eFields.map(convertStructField)
-        val eRecordType = Ast.ErlangRecordDef(name, fields, recordKind(kind))(p)
-        Some(Ast.ErlangRecordElem(eRecordType))
+        val eStructType = Ast.StructDef(name, fields, recordKind(kind))(p)
+        Some(Ast.StructElem(eStructType))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
         None
@@ -96,11 +96,11 @@ object Convert {
         throw ParseError(loc)
     }
 
-  private def recordKind(recKind: Forms.RecordKind): Ast.RecordKind =
+  private def recordKind(recKind: Forms.StructKind): Ast.StructKind =
     recKind match {
-      case Forms.RecRecord => Ast.ErlangRecord
-      case Forms.ExnRecord => Ast.ExceptionRecord
-      case Forms.MsgRecord => Ast.MessageRecord
+      case Forms.StrStruct => Ast.StrStruct
+      case Forms.ExnStruct => Ast.ExnStruct
+      case Forms.MsgStruct => Ast.MsgStruct
     }
 
   private def convertStructField(eStructField: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
@@ -214,10 +214,10 @@ object Convert {
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
       case Guards.GBin(p, elems) =>
         Ast.Bin(elems.map(convertGBinElem))(p)
-      case Guards.GRecordCreate(p, recordName, fields) =>
-        Ast.ERecordCreate(recordName, fields.map(gStructField))(p)
-      case Guards.GStructFieldAccess(p, rec, recordName, fieldName) =>
-        Ast.ERecordSelect(convertGExpr(rec), recordName, fieldName)(p)
+      case Guards.GStructCreate(p, structName, fields) =>
+        Ast.StructCreate(structName, fields.map(gStructField))(p)
+      case Guards.GStructSelect(p, rec, recordName, fieldName) =>
+        Ast.StructSelect(convertGExpr(rec), recordName, fieldName)(p)
     }
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
@@ -400,12 +400,12 @@ object Convert {
         )(p)
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
-      case Exprs.RecordCreate(p, recordName, fields) =>
-        Ast.ERecordCreate(recordName, fields.map(structField))(p)
-      case Exprs.RecordUpdate(p, rec, recordName, fields) =>
-        Ast.ERecordUpdate(convertExpr(rec), recordName, fields.map(structField))(p)
-      case Exprs.StructFieldAccess(p, rec, recordName, fieldName) =>
-        Ast.ERecordSelect(convertExpr(rec), recordName, fieldName)(p)
+      case Exprs.StructCreate(p, structName, fields) =>
+        Ast.StructCreate(structName, fields.map(structField))(p)
+      case Exprs.StructUpdate(p, rec, structName, fields) =>
+        Ast.StructUpdate(convertExpr(rec), structName, fields.map(structField))(p)
+      case Exprs.StructSelect(p, rec, structName, fieldName) =>
+        Ast.StructSelect(convertExpr(rec), structName, fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)
@@ -525,9 +525,9 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.RecordType(p, name, List()) =>
-        Ast.ERecordType(name)(p)
-      case Types.RecordType(p, _, _) =>
+      case Types.StructType(p, name, List()) =>
+        Ast.StructType(name)(p)
+      case Types.StructType(p, _, _) =>
         // redefining field types
         // Erlang support writing
         // -type my_rec = #already_defined_rec { field :: diff_type() }

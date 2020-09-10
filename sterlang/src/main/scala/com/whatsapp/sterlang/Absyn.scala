@@ -66,10 +66,13 @@ object Absyn {
       extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
-  case class ERecordCreate(name: String, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P) extends Exp
-  case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
+  case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
-  case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P)
+  case class StructUpdate(rec: Exp, structName: String, fields: List[Field[Exp]])(
+      val typ: Type,
+      val sourceLocation: Pos.P,
+  ) extends Exp
+  case class StructSelect(rec: Exp, structName: String, fieldName: String)(val typ: Type, val sourceLocation: Pos.P)
       extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,

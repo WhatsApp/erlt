@@ -59,10 +59,10 @@ object Ast {
   case object UNot extends UOp
   case object BNot extends UOp
 
-  sealed trait RecordKind
-  case object ErlangRecord extends RecordKind
-  case object ExceptionRecord extends RecordKind
-  case object MessageRecord extends RecordKind
+  sealed trait StructKind
+  case object StrStruct extends StructKind
+  case object ExnStruct extends StructKind
+  case object MsgStruct extends StructKind
 
   val unOps1: Map[String, UOp] =
     Map("not" -> UNot, "bnot" -> BNot)
@@ -148,14 +148,14 @@ object Ast {
   case class FunType(argTypes: List[Type], resType: Type)(val p: Pos.P) extends Type
   case class ListType(elemType: Type)(val p: Pos.P) extends Type
   case class UserType(name: Name, params: List[Type])(val p: Pos.P) extends Type
-  case class ERecordType(name: String)(val p: Pos.P) extends Type
+  case class StructType(name: String)(val p: Pos.P) extends Type
 
   case class Spec(name: VarName, funType: FunType)(val p: Pos.P)
 
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
-  case class ErlangRecordDef(name: String, fields: List[Field[Type]], kind: RecordKind)(val p: Pos.P)
+  case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
   case class Require(modules: List[String])
 
@@ -183,9 +183,9 @@ object Ast {
   case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
-  case class ERecordCreate(name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class ERecordUpdate(rec: Exp, name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class ERecordSelect(rec: Exp, recName: String, fieldName: String)(val p: Pos.P) extends Exp
+  case class StructCreate(name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
+  case class StructUpdate(struct: Exp, structName: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
+  case class StructSelect(struct: Exp, structName: String, fieldName: String)(val p: Pos.P) extends Exp
   case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val p: Pos.P) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
       val p: Pos.P
@@ -245,7 +245,7 @@ object Ast {
       module: String,
       require: Require,
       enumDefs: List[EnumDef],
-      erlangRecordDefs: List[ErlangRecordDef],
+      structDefs: List[StructDef],
       typeAliases: List[TypeAlias],
       opaques: List[Opaque],
       specs: List[Spec],
@@ -272,8 +272,8 @@ object Ast {
   case class ExportTypeElem(ids: List[(String, Int)]) extends ProgramElem
   case class EnumElem(enumDef: EnumDef) extends ProgramElem
   case class TypeAliasElem(typeAlias: TypeAlias) extends ProgramElem
-  case class ErlangRecordElem(erlangRecordDef: ErlangRecordDef) extends ProgramElem
-  case class OpaqueElem(`opaque`: Opaque) extends ProgramElem
+  case class StructElem(structDef: StructDef) extends ProgramElem
+  case class OpaqueElem(opaque: Opaque) extends ProgramElem
   case class CompileElem(options: List[String]) extends ProgramElem
 
   case class RawProgram(elems: List[ProgramElem]) {
@@ -288,7 +288,7 @@ object Ast {
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
         require = Require(elems.collect { case e: RequireElem => e.modules }.flatten.distinct),
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
-        erlangRecordDefs = elems.collect { case e: ErlangRecordElem => e.erlangRecordDef },
+        structDefs = elems.collect { case e: StructElem => e.structDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
         opaques = elems.collect { case e: OpaqueElem => e.opaque },
         specs = elems.collect { case e: SpecElem => e.spec },

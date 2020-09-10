@@ -13,12 +13,10 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(redundant_erlang_record2).
+-module(inexhaustive_struct1).
 -export([test1/1]).
 
--record #r{a :: boolean(), b :: boolean()}.
+-struct #r{a :: boolean(), b :: boolean()}.
 
 -spec test1(#r{}) -> {}.
-test1(#r{a = true}) -> {};
-test1(#r{a = _, b = _}) -> {};
-test1(#r{}) -> {}.
+test1(#r{a = false}) -> {}.

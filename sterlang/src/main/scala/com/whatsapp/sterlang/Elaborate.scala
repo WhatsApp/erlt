@@ -107,12 +107,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabBComprehension(bComprehension, ty, d, env)
       case recordUpdateExp: S.RecordUpdateExp =>
         elabRecordUpdateExp(recordUpdateExp, ty, d, env)
-      case eRecordCreate: S.ERecordCreate =>
-        elabERecordCreate(eRecordCreate, ty, d, env)
-      case eRecordUpdate: S.ERecordUpdate =>
-        elabERecordUpdate(eRecordUpdate, ty, d, env)
-      case eRecordSelect: S.ERecordSelect =>
-        elabERecordSelect(eRecordSelect, ty, d, env)
+      case structCreate: S.StructCreate =>
+        elabStructCreate(structCreate, ty, d, env)
+      case structUpdate: S.StructUpdate =>
+        elabStructUpdate(structUpdate, ty, d, env)
+      case structSelect: S.StructSelect =>
+        elabStructSelect(structSelect, ty, d, env)
       case binOpExp: S.BinOpExp =>
         elabBinOpExp(binOpExp, ty, d, env)
       case uopExp: S.UOpExp =>
@@ -479,94 +479,94 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     A.RecordUpdateExp(rec1, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
-  private def elabERecordCreate(exp: S.ERecordCreate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
-    val S.ERecordCreate(name, fields) = exp
-    val eRec = getERecord(exp.p, name)
+  private def elabStructCreate(exp: S.StructCreate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.StructCreate(name, fields) = exp
+    val structDef = getStructDef(exp.p, name)
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
     checkUniqueFields(exp.p, fields.map(_.label))
-    checkRecordFields(fields, eRec)
-    checkRecordInit(exp.p, fields, eRec)
+    checkStructFields(fields, structDef)
+    checkStructInit(exp.p, fields, structDef)
 
-    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
       val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
       val eFieldType = expander.expandType(fieldType)
       A.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val expType = eRec.kind match {
-      case Ast.ErlangRecord    => MT.ERecordType(name)
-      case Ast.ExceptionRecord => MT.ExceptionType
-      case Ast.MessageRecord   => MT.MessageType
+    val expType = structDef.kind match {
+      case Ast.StrStruct => MT.StructType(name)
+      case Ast.ExnStruct => MT.ExceptionType
+      case Ast.MsgStruct => MT.MessageType
     }
 
     unify(exp.p, ty, expType)
 
-    A.ERecordCreate(name, fields1)(typ = ty, sourceLocation = exp.p)
+    A.StructCreate(name, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
-  private def elabERecordUpdate(exp: S.ERecordUpdate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
-    val S.ERecordUpdate(rec, name, fields) = exp
-    val eRec = getERecord(exp.p, name)
+  private def elabStructUpdate(exp: S.StructUpdate, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.StructUpdate(struct, name, fields) = exp
+    val structDef = getStructDef(exp.p, name)
 
-    eRec.kind match {
-      case Ast.ErlangRecord =>
+    structDef.kind match {
+      case Ast.StrStruct =>
       // OK
-      case Ast.ExceptionRecord =>
+      case Ast.ExnStruct =>
         throw new UnconditionalExceptionUpdate(exp.p, name)
-      case Ast.MessageRecord =>
+      case Ast.MsgStruct =>
         throw new UnconditionalMessageUpdate(exp.p, name)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
     checkUniqueFields(exp.p, fields.map(_.label))
-    checkRecordFields(fields, eRec)
+    checkStructFields(fields, structDef)
 
-    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
       val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
       val eFieldType = expander.expandType(fieldType)
       A.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val eRecordType = MT.ERecordType(name)
-    val rec1 = elab(rec, eRecordType, d, env)
-    unify(exp.p, ty, eRecordType)
+    val structType = MT.StructType(name)
+    val struct1 = elab(struct, structType, d, env)
+    unify(exp.p, ty, structType)
 
-    A.ERecordUpdate(rec1, name, fields1)(typ = ty, sourceLocation = exp.p)
+    A.StructUpdate(struct1, name, fields1)(typ = ty, sourceLocation = exp.p)
   }
 
-  private def elabERecordSelect(exp: S.ERecordSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
-    val S.ERecordSelect(rec, recName, fieldName) = exp
-    val eRec = getERecord(exp.p, recName)
+  private def elabStructSelect(exp: S.StructSelect, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
+    val S.StructSelect(struct, name, fieldName) = exp
+    val structDef = getStructDef(exp.p, name)
 
-    eRec.kind match {
-      case Ast.ErlangRecord =>
+    structDef.kind match {
+      case Ast.StrStruct =>
       // OK
-      case Ast.ExceptionRecord =>
-        throw new UnconditionalExceptionSelect(exp.p, recName)
-      case Ast.MessageRecord =>
-        throw new UnconditionalMessageSelect(exp.p, recName)
+      case Ast.ExnStruct =>
+        throw new UnconditionalExceptionSelect(exp.p, name)
+      case Ast.MsgStruct =>
+        throw new UnconditionalMessageSelect(exp.p, name)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
     val fieldDef =
-      eRec.fields.find(_.label == fieldName) match {
+      structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
-        case None    => throw new UnknownERecordField(exp.p, recName, fieldName)
+        case None    => throw new UnknownStructField(exp.p, name, fieldName)
       }
 
-    val eRecordType = MT.ERecordType(recName)
-    val rec1 = elab(rec, eRecordType, d, env)
+    val structType = MT.StructType(name)
+    val struct1 = elab(struct, structType, d, env)
 
     val fieldType = expander.mkType(fieldDef.value, Map.empty)
     val eFieldType = expander.expandType(fieldType)
 
     unify(exp.p, ty, eFieldType)
 
-    A.ERecordSelect(rec1, recName, fieldName)(typ = ty, sourceLocation = exp.p)
+    A.StructSelect(struct1, name, fieldName)(typ = ty, sourceLocation = exp.p)
   }
 
   private def elabAppExp(exp: S.AppExp, ty: T.Type, d: T.Depth, env: Env): A.Exp = {
@@ -1157,27 +1157,27 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penv: PEnv,
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
-    val S.StructPat(recName, fields) = p
-    val eRec = getERecord(p.p, recName)
+    val S.StructPat(name, fields) = p
+    val structDef = getStructDef(p.p, name)
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
     checkUniqueFields(p.p, fields.map(_.label))
-    checkRecordFields(fields, eRec)
+    checkStructFields(fields, structDef)
 
     val t = TU.instantiate(d, ts)
 
-    val expType = eRec.kind match {
-      case S.ErlangRecord =>
-        MT.ERecordType(recName)
-      case S.ExceptionRecord =>
+    val expType = structDef.kind match {
+      case S.StrStruct =>
+        MT.StructType(name)
+      case S.ExnStruct =>
         MT.ExceptionType
-      case S.MessageRecord =>
+      case S.MsgStruct =>
         MT.MessageType
     }
 
     unify(p.p, t, expType)
 
-    val fieldTypes = eRec.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     var envAcc = env
     var penvAcc = penv
     val fields1 = for (field <- fields) yield {
@@ -1189,7 +1189,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(field.label, pat1)
     }
 
-    (A.StructPat(recName, fields1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+    (A.StructPat(name, fields1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---
@@ -1223,19 +1223,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
-  private def checkRecordFields(usedFields: List[S.Field[_]], recDef: S.ErlangRecordDef): Unit = {
-    val recFields = recDef.fields.map(_.label).toSet
+  private def checkStructFields(usedFields: List[S.Field[_]], structDef: S.StructDef): Unit = {
+    val structFields = structDef.fields.map(_.label).toSet
     for (f <- usedFields) {
-      if (!recFields(f.label))
-        throw new UnknownERecordField(f.p, recDef.name, f.label)
+      if (!structFields(f.label))
+        throw new UnknownStructField(f.p, structDef.name, f.label)
     }
   }
 
-  private def checkRecordInit(pos: Pos.P, fields: List[S.Field[_]], recDef: S.ErlangRecordDef): Unit = {
+  private def checkStructInit(pos: Pos.P, fields: List[S.Field[_]], structDef: S.StructDef): Unit = {
     val initialized = fields.map(_.label).toSet
-    for (f <- recDef.fields) {
+    for (f <- structDef.fields) {
       if (!initialized(f.label))
-        throw new UnInitializedERecordField(pos, recDef.name, f.label)
+        throw new UnInitializedStructField(pos, structDef.name, f.label)
     }
   }
 
@@ -1258,9 +1258,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         else eName
     }
 
-  private def getERecord(pos: Pos.P, name: String): S.ErlangRecordDef =
-    program.erlangRecordDefs.find(_.name == name) match {
-      case Some(recDef) => recDef
-      case None         => throw new UnknownRecord(pos, name)
+  private def getStructDef(pos: Pos.P, name: String): S.StructDef =
+    program.structDefs.find(_.name == name) match {
+      case Some(structDef) => structDef
+      case None            => throw new UnknownStruct(pos, name)
     }
 }

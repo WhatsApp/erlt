@@ -22,7 +22,7 @@ object TyCons {
   case object RecordTyCon extends TyCon
   case class TupleCon(arity: Int) extends TyCon
   case class NamedTyCon(name: String) extends TyCon
-  case class ERecordTyCon(name: String) extends TyCon
+  case class StructTyCon(name: String) extends TyCon
 }
 
 object Types {
@@ -98,8 +98,8 @@ object METypes {
     ConType(TupleCon(ts.size), ts, List())
   def NamedType(name: String, ts: List[Type]): ConType =
     ConType(NamedTyCon(name), ts, Nil)
-  def ERecordType(name: String): ConType =
-    ConType(ERecordTyCon(name), Nil, Nil)
+  def StructType(name: String): ConType =
+    ConType(StructTyCon(name), Nil, Nil)
 }
 
 // Schematic types
@@ -157,6 +157,6 @@ object MESTypes {
     ConType(TupleCon(ts.size), ts, List())
   def EnumType(name: String, ts: List[Type]): ConType =
     ConType(NamedTyCon(name), ts, Nil)
-  def ERecordType(name: String): ConType =
-    ConType(ERecordTyCon(name), List(), List())
+  def StructType(name: String): ConType =
+    ConType(StructTyCon(name), List(), List())
 }

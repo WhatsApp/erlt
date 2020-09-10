@@ -110,7 +110,7 @@ object SyntaxUtil {
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
       case S.ListType(elemType) =>
         collectNamedTypeVars(elemType)
-      case S.ERecordType(_) =>
+      case S.StructType(_) =>
         List.empty
     }
 
@@ -169,12 +169,12 @@ object SyntaxUtil {
           Set.empty
       case S.RecordExp(fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
-      case S.ERecordCreate(_, fields) =>
+      case S.StructCreate(_, fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
-      case S.ERecordUpdate(rec, _, fields) =>
-        freeVars(rec, m) ++ fields.flatMap(f => freeVars(f.value, m))
-      case S.ERecordSelect(rec, _, _) =>
-        freeVars(rec, m)
+      case S.StructUpdate(struct, _, fields) =>
+        freeVars(struct, m) ++ fields.flatMap(f => freeVars(f.value, m))
+      case S.StructSelect(struct, _, _) =>
+        freeVars(struct, m)
       case S.TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
       case S.EnumConExp(enumName, dataCon, args) =>
@@ -396,7 +396,7 @@ object SyntaxUtil {
           case _ => name
         }
         S.UserType(name1, params.map(globalizeType(module, names)))(tp.p)
-      case S.ERecordType(_) =>
+      case S.StructType(_) =>
         tp
     }
 
@@ -409,9 +409,10 @@ object SyntaxUtil {
       program.typeAliases.map { ta => ta.copy(body = normalizeType(program)(ta.body))(ta.p) }
     val opaques1 =
       program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.p) }
-    val erlangRecordDefs1 =
-      program.erlangRecordDefs.map { recDef =>
-        recDef.copy(fields = recDef.fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(recDef.p)
+    val structDefs1 =
+      program.structDefs.map { structDef =>
+        structDef
+          .copy(fields = structDef.fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(structDef.p)
       }
     val specs1 =
       program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.p))
@@ -419,14 +420,14 @@ object SyntaxUtil {
       enumDefs = enumDefs1,
       typeAliases = typeAliases1,
       opaques = opaques1,
-      erlangRecordDefs = erlangRecordDefs1,
+      structDefs = structDefs1,
       specs = specs1,
     )
   }
 
   private def normalizeType(program: S.Program)(tp: S.Type): S.Type =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) | S.ERecordType(_) => tp
+      case S.WildTypeVar() | S.TypeVar(_) | S.StructType(_) => tp
       case S.TupleType(ts) =>
         S.TupleType(ts.map(normalizeType(program)))(tp.p)
       case S.RecordType(fields) =>
@@ -583,12 +584,12 @@ object SyntaxUtil {
         Set(remote.module)
       case S.RecordExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
-      case S.ERecordCreate(_, fields) =>
+      case S.StructCreate(_, fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
-      case S.ERecordUpdate(rec, _, fields) =>
-        getDepExp(rec) ++ fields.flatMap(f => getDepExp(f.value))
-      case S.ERecordSelect(rec, _, _) =>
-        getDepExp(rec)
+      case S.StructUpdate(struct, _, fields) =>
+        getDepExp(struct) ++ fields.flatMap(f => getDepExp(f.value))
+      case S.StructSelect(struct, _, _) =>
+        getDepExp(struct)
       case S.TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
       case S.EnumConExp(enumName, dataCon, args) =>
@@ -690,7 +691,7 @@ object SyntaxUtil {
 
   private def getDepType(tp: S.Type): Set[String] =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) | S.ERecordType(_) =>
+      case S.WildTypeVar() | S.TypeVar(_) | S.StructType(_) =>
         Set.empty[String]
       case S.TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
