@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'callback' 'struct' 'exception' 'message' % helper
+'spec' 'struct' 'exception' 'message' % helper
 dot.
 
 Expect 0.
@@ -102,8 +102,7 @@ struct_kind -> 'message'   : '$1'.
 attribute -> '-' atom attr_val                           : build_attribute('$2', '$3', ?anno('$1','$3')).
 attribute -> '-' atom type_def                           : build_typed_attribute('$2','$3', ?anno('$1','$3')).
 attribute -> '-' struct_kind '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
-attribute -> '-' 'spec' type_spec                        : build_type_spec('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec                    : build_type_spec('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' 'spec' type_spec                        : build_type_spec('$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
 
@@ -479,8 +478,6 @@ end).
 
 parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
     parse([{'-', A1}, {'spec', A2} | Tokens]);
-parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
-    parse([{'-', A1}, {'callback', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
     parse([{'-', A1}, {'struct', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, exception} | Tokens]) ->
@@ -525,7 +522,7 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
 build_struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
     {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
 
-build_type_spec({Kind, _}, {type_spec, _TA, SpecFun, TypeSpecs}, Aa) when Kind =:= spec; Kind =:= callback ->
+build_type_spec({type_spec, _TA, SpecFun, TypeSpecs}, Aa) ->
     NewSpecFun =
         case SpecFun of
             {atom, _, Fun} ->
@@ -533,7 +530,7 @@ build_type_spec({Kind, _}, {type_spec, _TA, SpecFun, TypeSpecs}, Aa) when Kind =
             {{atom, _, Mod}, {atom, _, Fun}} ->
                 {Mod, Fun, find_arity_from_specs(TypeSpecs)}
         end,
-    {attribute, Aa, Kind, {NewSpecFun, TypeSpecs}}.
+    {attribute, Aa, spec, {NewSpecFun, TypeSpecs}}.
 
 find_arity_from_specs([Spec | _]) ->
     %% Use the first spec to find the arity. If all are not the same,
@@ -865,10 +862,6 @@ modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
     {{attribute, A1, spec, {Fun, Types1}}, Ac2};
-modify_anno1({attribute, A, callback, {Fun, Types}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute, A1, callback, {Fun, Types1}}, Ac2};
 modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
