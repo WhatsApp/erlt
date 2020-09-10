@@ -288,8 +288,8 @@ object Convert {
       case Patterns.UnOpPattern(p, op, pat1) =>
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p)
-      case Patterns.RecordPattern(p, recordName, fields) =>
-        Ast.ERecordPat(recordName, fields.map(structFieldPattern))(p)
+      case Patterns.StructPattern(p, recordName, fields) =>
+        Ast.StructPat(recordName, fields.map(structFieldPattern))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =

@@ -236,7 +236,7 @@ object Ast {
   case class BoolPat(bool: Boolean)(val p: Pos.P) extends Pat
   case class NumberPat(n: Int)(val p: Pos.P) extends Pat
   case class StringPat(s: String)(val p: Pos.P) extends Pat
-  case class ERecordPat(recName: String, fields: List[Field[Pat]])(val p: Pos.P) extends Pat
+  case class StructPat(structName: String, fields: List[Field[Pat]])(val p: Pos.P) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

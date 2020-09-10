@@ -145,7 +145,7 @@ private[patterns] object Pattern {
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
-      case Absyn.ERecordPat(recordName, patternFields) =>
+      case Absyn.StructPat(recordName, patternFields) =>
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val recordDefinition = program.erlangRecordDefs.find(_.name == recordName).get
         val allFieldNames = recordDefinition.fields.map(_.label).sorted

@@ -41,8 +41,8 @@ object PatternsConvert {
         BinOpPattern(sp(anno), op, convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
         UnOpPattern(sp(anno), op, convertPat(ePat1))
-      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldPatterns))) =>
-        RecordPattern(sp(anno), recordName, eRecordFieldPatterns.map(structFieldPattern))
+      case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
+        StructPattern(sp(anno), structName, eStructFieldPatterns.map(structFieldPattern))
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapPattern(sp(anno), eAssocs.map(convertMapFieldPattern))
       case ETuple(

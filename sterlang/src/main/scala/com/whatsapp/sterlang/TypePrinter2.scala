@@ -117,7 +117,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           elem.size.map(printExp)
         }
 
-      case A.ERecordPat(_, fields) =>
+      case A.StructPat(_, fields) =>
         fields.foreach { f => printPat(f.value) }
     }
 

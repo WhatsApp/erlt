@@ -150,7 +150,8 @@ object Absyn {
   ) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
-  case class ERecordPat(recName: String, fields: List[Field[Pat]])(val typ: Type, val sourceLocation: Pos.P) extends Pat
+  case class StructPat(structName: String, fields: List[Field[Pat]])(val typ: Type, val sourceLocation: Pos.P)
+      extends Pat
 
   /** Returns an iterator over all immediate children nodes. This is empty for leaf nodes. */
   def children(node: Node): Iterator[Node] = {

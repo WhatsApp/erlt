@@ -58,7 +58,7 @@ object SyntaxUtil {
         collectPatVars(hPat) ++ collectPatVars(tPat)
       case S.BinPat(elems) =>
         elems.flatMap(elem => collectPatVars(elem.pat))
-      case S.ERecordPat(_, fields) =>
+      case S.StructPat(_, fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
     }
@@ -88,7 +88,7 @@ object SyntaxUtil {
 
       case A.BinPat(elems) =>
         elems.flatMap(elem => collectPatVars2(elem.pat))
-      case A.ERecordPat(_, fields) =>
+      case A.StructPat(_, fields) =>
         fields.map(_.value).flatMap(collectPatVars2)
     }
 
@@ -533,7 +533,7 @@ object SyntaxUtil {
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
       case S.RecordPat(fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case S.ERecordPat(_, fields) =>
+      case S.StructPat(_, fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case S.AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)

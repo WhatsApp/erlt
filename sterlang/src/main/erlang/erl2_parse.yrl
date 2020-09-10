@@ -28,7 +28,7 @@ attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_max
-pat_expr pat_expr_max map_pat_expr record_pat_expr enum_pat_expr
+pat_expr pat_expr_max map_pat_expr struct_pat_expr enum_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
@@ -205,7 +205,7 @@ pat_expr -> pat_expr add_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
 pat_expr -> map_pat_expr : '$1'.
-pat_expr -> record_pat_expr : '$1'.
+pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
@@ -230,8 +230,8 @@ map_pat_expr -> '#' map_tuple :
 map_pat_expr -> pat_expr_max '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-record_pat_expr -> '#' atom struct_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
+struct_pat_expr -> '#' atom struct_tuple :
+	{struct, ?anno('$1', '$3'), element(3, '$2'), '$3'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
 list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.

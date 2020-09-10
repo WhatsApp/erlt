@@ -177,7 +177,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case p: A.TuplePat           => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.ListPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.RecordPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
-      case p: A.ERecordPat         => p.copy()(typ = t, sourceLocation = p.sourceLocation)
+      case p: A.StructPat          => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.ConsPat            => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.EnumConstructorPat => p.copy()(typ = t, sourceLocation = p.sourceLocation)
       case p: A.BinPat             => p.copy()(typ = t, sourceLocation = p.sourceLocation)
@@ -207,8 +207,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabRecordPat(recordPat, ts, d, env, penv, gen)
       case enumCtrPat: S.EnumCtrPat =>
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
-      case eRecordPat: S.ERecordPat =>
-        elabERecordPat(eRecordPat, ts, d, env, penv, gen)
+      case eRecordPat: S.StructPat =>
+        elabStructPat(eRecordPat, ts, d, env, penv, gen)
       case listPat: S.ListPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
       case binPat: S.BinPat =>
@@ -285,7 +285,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Nil => Nil
         case S.Rule(pat, guards, body) :: rest =>
           pat match {
-            case S.WildPat() | S.ERecordPat(_, _) =>
+            case S.WildPat() | S.StructPat(_, _) =>
               val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
@@ -316,7 +316,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Nil => Nil
         case S.Rule(pat, guards, body) :: rest =>
           pat match {
-            case S.WildPat() | S.ERecordPat(_, _) =>
+            case S.WildPat() | S.StructPat(_, _) =>
               val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
@@ -352,7 +352,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Nil => Nil
         case S.Rule(pat, guards, body) :: rest =>
           pat match {
-            case S.WildPat() | S.ERecordPat(_, _) =>
+            case S.WildPat() | S.StructPat(_, _) =>
               val (pat1, env1, _) = elpat(pat, MT.MessageType, d, env, Set.empty, gen = true)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
@@ -1149,15 +1149,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     (A.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
-  private def elabERecordPat(
-      p: S.ERecordPat,
+  private def elabStructPat(
+      p: S.StructPat,
       ts: ST.TypeSchema,
       d: T.Depth,
       env: Env,
       penv: PEnv,
       gen: Boolean,
   ): (A.Pat, Env, PEnv) = {
-    val S.ERecordPat(recName, fields) = p
+    val S.StructPat(recName, fields) = p
     val eRec = getERecord(p.p, recName)
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
@@ -1189,7 +1189,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       A.Field(field.label, pat1)
     }
 
-    (A.ERecordPat(recName, fields1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
+    (A.StructPat(recName, fields1)(typ = null, sourceLocation = p.p), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---

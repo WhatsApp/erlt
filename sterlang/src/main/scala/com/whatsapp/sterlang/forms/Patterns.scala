@@ -30,7 +30,7 @@ object Patterns {
   case class BinPattern(p: Pos.SP, elems: List[BinElementPattern]) extends Pattern
   case class BinOpPattern(p: Pos.SP, op: String, pat1: Pattern, pat2: Pattern) extends Pattern
   case class UnOpPattern(p: Pos.SP, op: String, pat1: Pattern) extends Pattern
-  case class RecordPattern(p: Pos.SP, recordName: String, fields: List[StructFieldPattern]) extends Pattern
+  case class StructPattern(p: Pos.SP, structName: String, fields: List[StructFieldPattern]) extends Pattern
   case class MapPattern(p: Pos.SP, elems: List[MapFieldPattern]) extends Pattern
   case class LocalEnumCtrPattern(p: Pos.SP, enum: String, ctr: String, args: List[Pattern]) extends Pattern
   case class RemoteEnumCtrPattern(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Pattern])
