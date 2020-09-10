@@ -49,7 +49,7 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type field_defs field_def type_def
 fun_type
 type_spec
-map_field_types map_field_type.
+map_field_types map_field_type struct_kind.
 
 Terminals
 char integer float atom string var
@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'callback' % helper
+'spec' 'callback' 'struct' 'exception' 'message' % helper
 dot.
 
 Expect 0.
@@ -95,11 +95,15 @@ Nonassoc 500 '*'. % for binary expressions
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
-attribute -> '-' atom attr_val                    : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' atom type_def                    : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' atom '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
-attribute -> '-' 'spec' type_spec                 : build_type_spec('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec             : build_type_spec('$2', '$3', ?anno('$1','$3')).
+struct_kind -> 'struct'    : '$1'.
+struct_kind -> 'exception' : '$1'.
+struct_kind -> 'message'   : '$1'.
+
+attribute -> '-' atom attr_val                           : build_attribute('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' atom type_def                           : build_typed_attribute('$2','$3', ?anno('$1','$3')).
+attribute -> '-' struct_kind '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
+attribute -> '-' 'spec' type_spec                        : build_type_spec('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' 'callback' type_spec                    : build_type_spec('$2', '$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
 
@@ -474,11 +478,15 @@ end).
 %% entry points working.
 
 parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
-    NewTokens = [{'-', A1}, {'spec', A2} | Tokens],
-    parse(NewTokens);
+    parse([{'-', A1}, {'spec', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
-    NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
-    parse(NewTokens);
+    parse([{'-', A1}, {'callback', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
+    parse([{'-', A1}, {'struct', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, exception} | Tokens]) ->
+    parse([{'-', A1}, {'exception', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, message} | Tokens]) ->
+    parse([{'-', A1}, {'message', A2} | Tokens]);
 parse_form(Tokens) ->
     parse(Tokens).
 
@@ -514,17 +522,8 @@ build_typed_attribute({atom, _, Attr}, _, Aa) ->
             ret_err(Aa, "bad attribute")
     end.
 
-build_struct_def(
-    {atom, _, Attr}, {atom, _An, StructName}, Fields, Aa
-) when Attr =:= 'struct'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {StructName, struct_fields(Fields)}};
-build_struct_def({atom, _, Attr}, _, _, Aa) ->
-    if
-        Attr =:= 'struct'; Attr =:= 'exception'; Attr =:= 'message' ->
-            error_bad_decl(Aa, Attr);
-        true ->
-            ret_err(Aa, "bad attribute")
-    end.
+build_struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
+    {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
 
 build_type_spec({Kind, _}, {type_spec, _TA, SpecFun, TypeSpecs}, Aa) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
