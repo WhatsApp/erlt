@@ -179,11 +179,11 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post({remote, Line, Mod1, Name1}, Acc2, Ctx);
         {lc, Line, Expr0, Compr0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            {Compr1, Acc2} = do_traverse(Compr0, Acc1, Pre, Post, Ctx),
+            {Compr1, Acc2} = do_traverse_list(Compr0, Acc1, Pre, Post, Ctx),
             Post({lc, Line, Expr1, Compr1}, Acc2, Ctx);
         {bc, Line, Expr0, Compr0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            {Compr1, Acc2} = do_traverse(Compr0, Acc1, Pre, Post, Ctx),
+            {Compr1, Acc2} = do_traverse_list(Compr0, Acc1, Pre, Post, Ctx),
             Post({bc, Line, Expr1, Compr1}, Acc2, Ctx);
         {Generate, Line, Pattern0, Expr0} when Generate =:= generate; Generate =:= b_generate ->
             {Pattern1, Acc1} = do_traverse(Pattern0, Acc0, Pre, Post, pattern),

@@ -15,7 +15,7 @@
 -lang([erl2]).
 -module(caret_mod01).
 
--export([f/1, g/1, h/1]).
+-export([f/1, g/1, h/1, i/2]).
 
 f(X) ->
     Y = 42,
@@ -36,3 +36,6 @@ h(X) ->
     Y = 42,
     {ok, ^Y} = X,  % assert
     true.
+
+i(Elem, List) ->
+    [found || ^Elem <- List].
