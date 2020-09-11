@@ -46,10 +46,10 @@ atomic
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
-top_type top_types type field_defs field_def type_def
+top_type top_types type field_defs field_def
 fun_type
 type_spec
-map_field_types map_field_type struct_kind type_head var_list vars.
+map_field_types map_field_type struct_kind var_list vars.
 
 Terminals
 char integer float atom string var
@@ -99,15 +99,16 @@ struct_kind -> 'struct'    : '$1'.
 struct_kind -> 'exception' : '$1'.
 struct_kind -> 'message'   : '$1'.
 
-attribute -> '-' atom attr_val                           : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' type_kind type_def                      : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' struct_kind '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
-attribute -> '-' 'spec' type_spec                        : build_type_spec('$3', ?anno('$1','$3')).
+attribute -> '-' atom attr_val :
+    build_attribute('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' type_kind atom var_list '::' top_type :
+    type_def('$2', '$3', '$4', '$6', ?anno('$1','$6')).
+attribute -> '-' struct_kind '#' atom '{' field_defs '}' :
+    build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
+attribute -> '-' 'spec' type_spec :
+    build_type_spec('$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
-
-type_def -> type_head '::' top_type   : {type_def, ?anno('$1','$3'), '$1', '$3'}.
-type_head -> atom var_list            : {call, ?anno('$1', '$2'), '$1', element(1, '$2')}.
 
 field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
@@ -396,8 +397,8 @@ try_clause -> pat_expr clause_guard clause_body :
 	A = ?anno('$1','$3'),
 	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
 
-var_list -> '(' ')'      : {[], ?anno('$1','$2')}.
-var_list -> '(' vars ')' : {'$2', ?anno('$1','$3')}.
+var_list -> '(' ')'      : [].
+var_list -> '(' vars ')' : '$2'.
 
 vars -> var          : ['$1'].
 vars -> var ',' vars : ['$1' | '$3'].
@@ -499,12 +500,8 @@ parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
 parse_form(Tokens) ->
     parse(Tokens).
 
-build_typed_attribute(
-    {type_kind, TypeKind},
-    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type},
-    Aa
-) ->
-    {attribute, Aa, TypeKind, {TypeName, Type, Args}}.
+type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
+    {attribute, Aa, Kind, {Name, Type, Args}}.
 
 build_struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
     {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
