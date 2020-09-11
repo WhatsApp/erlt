@@ -235,7 +235,6 @@ base_passes() ->
         ?pass(extract_options),
         ?pass(erlt_exception),
         ?pass(erlt_message),
-        ?pass(erlt_module_record),
         ?pass(erlt_lint),
         ?pass(erlt_expand)
     ].
@@ -980,15 +979,6 @@ output_declarations(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
     Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
     file:write_file(filename:join(BuildDir, Base ++ ?DefFileSuffix), Output),
     {ok, Code, St}.
-
-erlt_module_record(Code, St) ->
-    case is_lang_erlt(St) of
-        true ->
-            Code1 = erlt_module_record:parse_transform(Code, St#compile.options),
-            {ok, Code1, St};
-        false ->
-            {ok, Code, St}
-    end.
 
 erlt_exception(Code, St) ->
     case is_lang_erlt(St) of
