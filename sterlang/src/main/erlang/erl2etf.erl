@@ -28,7 +28,24 @@ main(["-ast", Filename]) ->
     Lang = parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
     Forms1 = normalize_for_typecheck(Forms, Ffi),
-    io:format("Forms:\n~p\n", [Forms1]).
+    io:format("Forms:\n~p\n", [Forms1]);
+main(["-idir", IDir, "-odir", ODir]) ->
+    {ok, Files} = file:list_dir(IDir),
+    SortedFiles = lists:sort(Files),
+    ErlFiles = lists:filter(
+        fun(Name) -> filename:extension(Name) == ".erl" end,
+        SortedFiles
+    ),
+    lists:foreach(
+        fun(ErlFile) ->
+            EtfFile = filename:basename(ErlFile, ".erl") ++ ".etf",
+            IFile = filename:join(IDir, ErlFile),
+            OFile = filename:join(ODir, EtfFile),
+            ok = main(["-ifile", IFile, "-ofile", OFile])
+        end,
+        ErlFiles
+    ),
+    ok.
 
 parse_lang(Forms) ->
     lists:nth(1, [Lang || {attribute, _, lang, Lang} <- Forms]).

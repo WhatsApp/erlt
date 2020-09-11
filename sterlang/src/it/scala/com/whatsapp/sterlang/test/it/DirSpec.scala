@@ -16,37 +16,46 @@
 
 package com.whatsapp.sterlang.test.it
 
+import java.nio.file.Files
+
 import com.whatsapp.sterlang.TypePrinter2.{TypeSchemes, Types}
 
 abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
   import java.io.File
 
-  def testDir(dir: String): Unit = {
-    describe(dir) {
-      val file = new File(dir)
-      val files = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl"))
-      val paths: Array[String] = files.map(_.getPath).sorted
-      paths.foreach { p =>
-        it(p) {
-          testFile(p)
-          testFileVerbose(p)
+  def testDir(iDirPath: String): Unit = {
+    import sys.process._
+    describe(iDirPath) {
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./erl2etf -idir $iDirPath -odir $oDirPath".!!
+
+      val file = new File(iDirPath)
+      val moduleNames =
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4))
+
+      moduleNames.foreach { p =>
+        val erlPath = s"$iDirPath/$p.erl"
+        val etfPath = s"$oDirPath/$p.etf"
+        it(erlPath) {
+          testFile(erlPath, etfPath)
+          testFileVerbose(erlPath, etfPath)
         }
       }
     }
   }
 
-  def testFile(f: String): Unit = {
-    SterlangTestUtil.processFile(f, TypeSchemes, "_ty", "ty")
+  def testFile(erlPath: String, etfPath: String): Unit = {
+    SterlangTestUtil.processFile(erlPath, etfPath, TypeSchemes, "_ty", "ty")
 
-    val myOutput = fileContent(f + "._ty")
-    val expectedOut = fileContent(f + ".ty")
+    val myOutput = fileContent(erlPath + "._ty")
+    val expectedOut = fileContent(erlPath + ".ty")
     assert(myOutput == expectedOut)
 
-    new File(f + "._ty").delete()
+    new File(erlPath + "._ty").delete()
   }
 
-  def testFileVerbose(f: String): Unit = {
-    SterlangTestUtil.processFile(f, Types, "_vt", "vt")
+  def testFileVerbose(f: String, etfPath: String): Unit = {
+    SterlangTestUtil.processFile(f, etfPath, Types, "_vt", "vt")
 
     val myOutput = fileContent(f + "._vt")
     val expectedOut = fileContent(f + ".vt")

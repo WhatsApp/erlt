@@ -20,15 +20,15 @@ class PatternErrorsSpec extends DirSpec {
 
   testDir("examples/pattern-error")
 
-  override def testFile(f: String): Unit = {
-    if (f.endsWith("core.erl")) {
-      super.testFile(f)
+  override def testFile(erlPath: String, etfPath: String): Unit = {
+    if (erlPath.endsWith("core.erl")) {
+      super.testFile(erlPath, etfPath)
     } else {
-      assert(SterlangTestUtil.processIllPatterns(f))
+      assert(SterlangTestUtil.processIllPatterns(erlPath, etfPath))
     }
   }
 
-  override def testFileVerbose(f: String): Unit = {
+  override def testFileVerbose(erlPath: String, etfPath: String): Unit = {
     // doing nothing
   }
 }
