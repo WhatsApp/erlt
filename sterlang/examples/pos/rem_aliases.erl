@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(rem_aliases).
 
 -type this_pair(A) :: aliases:pair(A).

@@ -41,7 +41,7 @@ object Forms {
 
   sealed trait Form
 
-  case class Lang(mods: List[String]) extends Form
+  case class Lang(lang: String) extends Form
   case class Module(name: String) extends Form
   case class Behaviour(name: String) extends Form
   case class Export(ids: List[IdWithArity]) extends Form

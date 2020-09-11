@@ -12,6 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e34).
 foo() -> [fun ([]) -> 1 end, fun ([]) -> "1"; ([_,_]) -> "2" end].

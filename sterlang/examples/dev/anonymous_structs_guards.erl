@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 % edge cases for structural records
--lang([erl2, st]).
+-lang(st).
 -module(anonymous_structs_guards).
 
 -export([]).

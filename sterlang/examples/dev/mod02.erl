@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(mod02).
 
 -export([odd/1, id/1, id_caller/1, id_rec/1, even/1, mod01call/1, list_to_string/1, int_to_string/1, mk_unit/0]).

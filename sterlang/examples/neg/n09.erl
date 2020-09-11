@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(n09).
 test() ->
     Rec1 = #(n = 1),

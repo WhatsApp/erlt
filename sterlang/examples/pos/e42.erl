@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e42).
 foo(Rec) ->
     case Rec of #(x = false) -> 1; #(y = true) -> 2 end.

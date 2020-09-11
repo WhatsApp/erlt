@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(aliases).
 -export_type([pair/1]).
 -export_type([p_con/1]).

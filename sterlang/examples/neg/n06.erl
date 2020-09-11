@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(n06).
 foo(B, R) ->
     % circularity

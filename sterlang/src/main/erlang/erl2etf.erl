@@ -18,16 +18,14 @@
 main(["-ifile", IFile, "-ofile", OFile]) ->
     Forms = parse_file(IFile),
     Lang = parse_lang(Forms),
-    Ffi = lists:member(ffi, Lang),
-    Forms1 = normalize_for_typecheck(Forms, Ffi),
+    Forms1 = normalize_for_typecheck(Forms, Lang),
     CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(OFile),
     ok = file:write_file(OFile, CodeETF);
 main(["-ast", Filename]) ->
     Forms = parse_file(Filename),
     Lang = parse_lang(Forms),
-    Ffi = lists:member(ffi, Lang),
-    Forms1 = normalize_for_typecheck(Forms, Ffi),
+    Forms1 = normalize_for_typecheck(Forms, Lang),
     io:format("Forms:\n~p\n", [Forms1]);
 main(["-idir", IDir, "-odir", ODir]) ->
     {ok, Files} = file:list_dir(IDir),
@@ -51,11 +49,11 @@ parse_lang(Forms) ->
     lists:nth(1, [Lang || {attribute, _, lang, Lang} <- Forms]).
 
 %% Turn annotation fields into a uniform format for export to the type checker
-normalize_for_typecheck(Forms, Ffi) ->
+normalize_for_typecheck(Forms, Lang) ->
     Forms1 =
-        case Ffi of
-            false -> Forms;
-            true -> [F || F <- Forms, not is_fun_form(F)]
+        case Lang of
+            st -> Forms;
+            ffi -> [F || F <- Forms, not is_fun_form(F)]
         end,
     [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
 

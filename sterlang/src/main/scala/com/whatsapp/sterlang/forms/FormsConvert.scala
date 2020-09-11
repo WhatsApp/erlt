@@ -49,10 +49,8 @@ object FormsConvert {
 
   def convertForm(term: ETerm): Form =
     term match {
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EList(List(EAtom(mod1), EAtom(mod2))))) =>
-        Lang(List(mod1, mod2))
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EList(List(EAtom(mod1))))) =>
-        Lang(List(mod1))
+      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EAtom(lang))) =>
+        Lang(lang)
       // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
         Module(name)

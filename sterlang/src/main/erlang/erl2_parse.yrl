@@ -574,14 +574,10 @@ build_attribute({atom, _, file}, Val, Aa) ->
         _Other ->
             error_bad_decl(Aa, file)
     end;
-build_attribute({atom, _, Attr}, Val, Aa) ->
-    case Val of
-        [Expr0] ->
-            Expr = attribute_farity(Expr0),
-            {attribute, Aa, Attr, term(Expr)};
-        _Other ->
-            ret_err(Aa, "bad attribute")
-    end.
+build_attribute({atom, _, lang}, [{atom, _, Lang}], Aa) when Lang == ffi; Lang == st ->
+    {attribute, Aa, lang, Lang};
+build_attribute(_, _, Aa) ->
+    ret_err(Aa, "bad attribute").
 
 attribute_farity({cons, A, H, T}) ->
     {cons, A, attribute_farity(H), attribute_farity(T)};

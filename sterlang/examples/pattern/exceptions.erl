@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(exceptions).
 -export([test1/0, test2/1, test3/0, test4/0, test5/0, test6/0, test7/0, test8/1]).
 

@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e63).
 % Unknown type some_type
 -enum my_enum() :: ctr{some_type()}.

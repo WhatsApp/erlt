@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(n04).
 %% even simpler example of row circularity
 foo(B, R) ->

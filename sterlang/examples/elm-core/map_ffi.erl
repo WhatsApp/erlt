@@ -12,10 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, ffi]).
+-lang(ffi).
 -module(map_ffi).
 
--require([maybe]).
 -export_type([map/2]).
 
 -export([empty/0, get/2, size/1, insert/3, remove/2, fold/3, union/2, filter/2, map/2]).

@@ -12,6 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e32).
 foo(C) -> (case C of true -> "" end) + 1.
