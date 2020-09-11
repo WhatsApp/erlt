@@ -458,7 +458,7 @@ Erlang code.
 
 -export([parse_form/1]).
 -export([map_anno/2]).
--export([get_end_location/1]).
+-export([get_end_location/1, location/1]).
 
 %% keep track of annotation info in tokens
 -define(anno(Tup), element(2, Tup)).
@@ -675,7 +675,7 @@ build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
 
 ret_err(Anno, S) ->
-    return_error(erl_anno:location(Anno), S).
+    return_error(location(Anno), S).
 
 %%  Convert between the abstract form of a term and a term.
 normalise({integer, _, I}) ->
@@ -709,12 +709,12 @@ anno(Left, Right) -> merge_anno(?anno(Left), ?anno(Right)).
 
 merge_anno(Left, Right) ->
     New = filter_anno(Left),
-    LeftLoc = erl_anno:location(New),
+    LeftLoc = location(New),
     case get_end_location(Right) of
         LeftLoc ->
             New;
         undefined ->
-            case erl_anno:location(Right) of
+            case location(Right) of
                 LeftLoc -> New;
                 undefined -> New;
                 RightLoc -> [{end_location, RightLoc} | ensure_anno_list(New)]
@@ -747,12 +747,65 @@ get_end_location(Anno) when is_list(Anno) ->
     %% use existing end_location annotation if present
     case lists:keyfind(end_location, 1, Anno) of
         false ->
-            erl_anno:end_location(Anno);
+            end_location(Anno);
         {end_location, Pos} ->
             Pos
     end;
 get_end_location(Anno) ->
-    erl_anno:end_location(Anno).
+    end_location(Anno).
+
+location(Line) when is_integer(Line) ->
+    Line;
+location({Line, Column}=Location) when is_integer(Line), is_integer(Column) ->
+    Location;
+location(Anno) ->
+    anno_info(Anno, location).
+
+anno_info(Anno, Item) ->
+    try lists:keyfind(Item, 1, Anno) of
+        {Item, Value} ->
+            Value;
+        false ->
+            undefined
+    catch
+        _:_ ->
+            erlang:error(badarg, [Anno])
+    end.
+
+end_location(Anno) ->
+    case text(Anno) of
+        undefined ->
+            undefined;
+        Text ->
+            case location(Anno) of
+                {Line, Column} ->
+                    end_location(Text, Line, Column);
+                Line ->
+                    end_location(Text, Line)
+            end
+    end.
+
+end_location("", Line, Column) ->
+    {Line, Column};
+end_location([$\n|String], Line, _Column) ->
+    end_location(String, Line+1, 1);
+end_location([_|String], Line, Column) ->
+    end_location(String, Line, Column+1).
+
+end_location("", Line) ->
+    Line;
+end_location([$\n|String], Line) ->
+    end_location(String, Line+1);
+end_location([_|String], Line) ->
+    end_location(String, Line).
+
+text(Line) when is_integer(Line) ->
+    undefined;
+text({Line, Column}) when is_integer(Line), is_integer(Column) ->
+    undefined;
+text(Anno) ->
+    anno_info(Anno, text).
+
 
 %% Forms.
 modify_anno1({function, F, A}, Ac, _Mf) ->
