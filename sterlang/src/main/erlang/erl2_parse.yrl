@@ -546,6 +546,13 @@ build_attribute({atom, _, export}, Val, Aa) ->
         _Other ->
             error_bad_decl(Aa, export)
     end;
+build_attribute({atom, _, export_type}, Val, Aa) ->
+    case Val of
+        [ExpList] ->
+            {attribute, Aa, export_type, farity_list(ExpList)};
+        _Other ->
+            error_bad_decl(Aa, export)
+    end;
 build_attribute({atom, _, import}, Val, Aa) ->
     case Val of
         [{atom, _, Mod}, ImpList] ->
