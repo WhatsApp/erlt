@@ -49,7 +49,7 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type field_defs field_def type_def
 fun_type
 type_spec
-map_field_types map_field_type struct_kind.
+map_field_types map_field_type struct_kind type_head var_list vars.
 
 Terminals
 char integer float atom string var
@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'struct' 'exception' 'message' % helper
+'spec' 'struct' 'exception' 'message' 'type_kind' % helper
 dot.
 
 Expect 0.
@@ -100,13 +100,14 @@ struct_kind -> 'exception' : '$1'.
 struct_kind -> 'message'   : '$1'.
 
 attribute -> '-' atom attr_val                           : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' atom type_def                           : build_typed_attribute('$2','$3', ?anno('$1','$3')).
+attribute -> '-' type_kind type_def                      : build_typed_attribute('$2','$3', ?anno('$1','$3')).
 attribute -> '-' struct_kind '#' atom '{' field_defs '}' : build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
 attribute -> '-' 'spec' type_spec                        : build_type_spec('$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
 
-type_def -> function_call '::' top_type   : {type_def, ?anno('$1','$3'), '$1', '$3'}.
+type_def -> type_head '::' top_type   : {type_def, ?anno('$1','$3'), '$1', '$3'}.
+type_head -> atom var_list            : {call, ?anno('$1', '$2'), '$1', element(1, '$2')}.
 
 field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
@@ -329,7 +330,6 @@ struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
 
 struct_field -> atom '=' expr : {struct_field, ?anno('$1', '$3'), '$1', '$3'}.
 
-%% N.B. This is called from expr.
 function_call -> remote_id argument_list :
 	{call, ?anno('$1','$2'), '$1', element(1, '$2')}.
 function_call -> expr_max argument_list :
@@ -396,14 +396,20 @@ try_clause -> pat_expr clause_guard clause_body :
 	A = ?anno('$1','$3'),
 	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
 
+var_list -> '(' ')'      : {[], ?anno('$1','$2')}.
+var_list -> '(' vars ')' : {'$2', ?anno('$1','$3')}.
+
+vars -> var          : ['$1'].
+vars -> var ',' vars : ['$1' | '$3'].
+
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
 
-pat_argument_list -> '(' ')' : {[],?anno('$1','$2')}.
-pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1','$3')}.
-
 exprs -> expr : ['$1'].
 exprs -> expr ',' exprs : ['$1' | '$3'].
+
+pat_argument_list -> '(' ')' : {[],?anno('$1','$2')}.
+pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1','$3')}.
 
 pat_exprs -> pat_expr : ['$1'].
 pat_exprs -> pat_expr ',' pat_exprs : ['$1' | '$3'].
@@ -484,40 +490,21 @@ parse_form([{'-', A1}, {atom, A2, exception} | Tokens]) ->
     parse([{'-', A1}, {'exception', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, message} | Tokens]) ->
     parse([{'-', A1}, {'message', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, _, type} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, type} | Tokens]);
+parse_form([{'-', A1}, {atom, _, enum} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, enum} | Tokens]);
+parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, opaque} | Tokens]);
 parse_form(Tokens) ->
     parse(Tokens).
 
 build_typed_attribute(
-    {atom, _, Attr},
+    {type_kind, TypeKind},
     {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type},
     Aa
-) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
-    lists:foreach(
-        fun
-            ({var, A, '_'}) -> ret_err(A, "bad type variable");
-            (_) -> ok
-        end,
-        Args
-    ),
-    case
-        lists:all(
-            fun
-                ({var, _, _}) -> true;
-                (_) -> false
-            end,
-            Args
-        )
-    of
-        true -> {attribute, Aa, Attr, {TypeName, Type, Args}};
-        false -> error_bad_decl(Aa, Attr)
-    end;
-build_typed_attribute({atom, _, Attr}, _, Aa) ->
-    if
-        Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
-            error_bad_decl(Aa, Attr);
-        true ->
-            ret_err(Aa, "bad attribute")
-    end.
+) ->
+    {attribute, Aa, TypeKind, {TypeName, Type, Args}}.
 
 build_struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
     {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
