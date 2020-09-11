@@ -60,33 +60,10 @@ normalize_for_typecheck(Forms, Ffi) ->
     [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
-normalize_loc(Line) when is_integer(Line) ->
-    % only start line known
-    {{Line, 0}, {Line, 0}};
-normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
-    % only start position known
-    {Loc, Loc};
 normalize_loc(As) when is_list(As) ->
-    Start = loc(erl_anno:location(As)),
-    End =
-        case erl2_parse:get_end_location(As) of
-            undefined -> Start;
-            Loc -> loc(Loc)
-        end,
-    case lists:member(open_rec, As) of
-        true -> {Start, End, open_rec};
-        false -> {Start, End}
-    end;
-normalize_loc(_Other) ->
-    % unknown position
-    {{0, 0}, {0, 0}}.
-
-loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
-    Loc;
-loc(Line) when is_integer(Line) ->
-    {Line, 0};
-loc(_Other) ->
-    {0, 0}.
+    Start = erl_anno:location(As),
+    End = erl2_parse:get_end_location(As),
+    {Start, End}.
 
 is_fun_form({function, _, _, _, _}) -> true;
 is_fun_form(_) -> false.
