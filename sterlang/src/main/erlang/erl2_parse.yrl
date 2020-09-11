@@ -104,9 +104,9 @@ attribute -> '-' atom attr_val :
 attribute -> '-' type_kind atom var_list '::' top_type :
     type_def('$2', '$3', '$4', '$6', ?anno('$1','$6')).
 attribute -> '-' struct_kind '#' atom '{' field_defs '}' :
-    build_struct_def('$2','$4', '$6', ?anno('$1','$7')).
+    struct_def('$2','$4', '$6', ?anno('$1','$7')).
 attribute -> '-' 'spec' type_spec :
-    build_type_spec('$3', ?anno('$1','$3')).
+    type_spec('$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
 
@@ -479,10 +479,6 @@ end).
     {op, ?anno(OpAnno, A), __Op, A}
 end).
 
-%% Entry points compatible to old erl_parse.
-%% These really suck and are only here until Calle gets multiple
-%% entry points working.
-
 parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
     parse([{'-', A1}, {'spec', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
@@ -503,28 +499,14 @@ parse_form(Tokens) ->
 type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
     {attribute, Aa, Kind, {Name, Type, Args}}.
 
-build_struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
+struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
     {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
 
-build_type_spec({type_spec, _TA, SpecFun, TypeSpecs}, Aa) ->
-    NewSpecFun =
-        case SpecFun of
-            {atom, _, Fun} ->
-                {Fun, find_arity_from_specs(TypeSpecs)};
-            {{atom, _, Mod}, {atom, _, Fun}} ->
-                {Mod, Fun, find_arity_from_specs(TypeSpecs)}
-        end,
-    {attribute, Aa, spec, {NewSpecFun, TypeSpecs}}.
+type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
+    {attribute, Aa, spec, {{Fun, find_arity_from_specs(TypeSpecs)}, TypeSpecs}}.
 
 find_arity_from_specs([Spec | _]) ->
-    %% Use the first spec to find the arity. If all are not the same,
-    %% erl_lint will find this.
-    Fun =
-        case Spec of
-            {type, _, bounded_fun, [F, _]} -> F;
-            {type, _, 'fun', _} = F -> F
-        end,
-    {type, _, 'fun', [{type, _, product, Args}, _]} = Fun,
+    {type, _, 'fun', [{type, _, product, Args}, _]} = Spec,
     length(Args).
 
 lift_unions(T1, {type, _Aa, union, List}) ->
