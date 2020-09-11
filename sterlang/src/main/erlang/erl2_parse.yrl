@@ -194,7 +194,7 @@ expr_max -> binary : '$1'.
 expr_max -> list_comprehension : '$1'.
 expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
-expr_max -> '(' expr ')' : ?set_anno('$2', ?anno('$1', '$3')).
+expr_max -> '(' expr ')' : '$2'.
 expr_max -> 'begin' exprs 'end' : {block,?anno('$1','$3'),'$2'}.
 expr_max -> if_expr : '$1'.
 expr_max -> case_expr : '$1'.
@@ -237,12 +237,12 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 struct_pat_expr -> '#' atom struct_tuple :
 	{struct, ?anno('$1', '$3'), element(3, '$2'), '$3'}.
 
-list -> '[' ']' : {nil,?anno('$1','$2')}.
-list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
+list -> '[' ']'       : {nil,  ?anno('$1','$2')}.
+list -> '[' expr tail : {cons, ?anno('$1','$3'),'$2','$3'}.
 
-tail -> ']' : {nil,?anno('$1')}.
-tail -> '|' expr ']' : ?set_anno('$2',?anno('$1','$3')).
-tail -> ',' expr tail : {cons,?anno('$2','$3'),'$2','$3'}.
+tail -> ']'           : {nil,  ?anno('$1')}.
+tail -> '|' expr ']'  : '$2'.
+tail -> ',' expr tail : {cons, ?anno('$2','$3'),'$2','$3'}.
 
 
 binary -> '<<' '>>' : {bin,?anno('$1','$2'),[]}.
@@ -463,7 +463,6 @@ Erlang code.
 %% keep track of annotation info in tokens
 -define(anno(Tup), element(2, Tup)).
 -define(anno(First, Last), anno(First, Last)).
--define(set_anno(Tup, Anno), setelement(2, Tup, Anno)).
 
 -define(mkop2(L, OpAnno, R), begin
     {__Op, __Anno} = OpAnno,
