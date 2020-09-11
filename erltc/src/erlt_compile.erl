@@ -1251,13 +1251,16 @@ do_invoke_sterlang(_CheckCmd, _BinDir) ->
 erlt_to_erl1(Code, St) ->
     case is_lang_erlt(St) of
         true ->
-            do_erlt_to_erl1(Code, St);
+            case erlt_struct:module(Code, St#compile.global_defs) of
+                Forms when is_list(Forms) ->
+                    do_erlt_to_erl1(Forms, St)
+            end;
         false ->
             {ok, Code, St}
     end.
 
 do_erlt_to_erl1(Code, St) ->
-    foldl_transform([erlt_struct, erlt_enum, erlt_dots, erlt_caret], Code, St).
+    foldl_transform([erlt_enum, erlt_dots, erlt_caret], Code, St).
 
 foldl_transform([T | Ts], Code0, St) ->
     Name = "transform " ++ atom_to_list(T),

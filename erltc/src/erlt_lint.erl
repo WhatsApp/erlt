@@ -438,6 +438,10 @@ format_error({enum_constructor_wrong_arity, E, A, N}) ->
 %% --- records ---
 format_error({undefined_record, T}) ->
     io_lib:format("record ~tw undefined", [T]);
+format_error({undefined_struct, N}) ->
+    io_lib:format("struct ~tw undefined", [N]);
+format_error({undefined_struct, M, N}) ->
+    io_lib:format("struct ~tw:~tw undefined", [M, N]);
 format_error({redefine_record, T}) ->
     io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
@@ -3236,12 +3240,12 @@ handle_imported_struct({atom, Line, Name} = N0, St) ->
 handle_imported_struct(N, St) ->
     {N, St}.
 
-check_struct(Line, N, St, CheckFun) ->
-    case handle_imported_struct(N, St) of
-        {{atom, _, Name}, St1} ->
-            case maps:find(Name, St#lint.structs) of
-                {ok, Def} -> CheckFun(fun(F) -> is_map_key(F, Def) end, used_struct(Name, St1));
-                error -> {[], add_error(Line, {undefined_struct, Name}, St1)}
+check_struct(Line, RawName, St, CheckFun) ->
+    case handle_imported_struct(RawName, St) of
+        {{atom, _, N}, St1} ->
+            case maps:find(N, St#lint.structs) of
+                {ok, Def} -> CheckFun(fun(F) -> is_map_key(F, Def) end, used_struct(N, St1));
+                error -> {[], add_error(Line, {undefined_struct, N}, St1)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
             case St#lint.defs_db of
@@ -3250,39 +3254,35 @@ check_struct(Line, N, St, CheckFun) ->
                 GlobalDefs ->
                     case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
-                            CheckFun(
-                                fun(F) ->
-                                    is_map_key(F, get_field_map_from_struct_def(StructDef))
-                                end,
-                                St1
-                            );
+                            FieldMap = get_field_map_from_struct_def(StructDef),
+                            CheckFun(fun(F) -> is_map_key(F, FieldMap) end, St1);
                         error ->
-                            {[], add_error(Line, {undefined_struct, N}, St1)}
+                            {[], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
             end
     end.
 
-check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St) ->
-    case handle_imported_struct(N, St) of
-        {{atom, _, Name}, St1} ->
-            case maps:find(Name, St#lint.structs) of
+check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
+    case handle_imported_struct(RawName, St) of
+        {{atom, _, N}, St1} ->
+            case maps:find(N, St#lint.structs) of
                 {ok, Def} ->
-                    St1 = used_struct(Name, St),
-                    pattern_struct_fields(Pfs, Name, Def, Vt, Old, Bvt, St1);
+                    St1 = used_struct(N, St),
+                    pattern_struct_fields(Pfs, N, Def, Vt, Old, Bvt, St1);
                 error ->
-                    {[], [], add_error(Line, {undefined_struct, Name}, St)}
+                    {[], [], add_error(Line, {undefined_struct, N}, St)}
             end;
-        {{remote, _, {atom, _, M}, {atom, _, E}}, St1} ->
+        {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
             case St#lint.defs_db of
                 undefined ->
-                    pattern_struct_fields_no_definition(Pfs, E, Vt, Old, Bvt, St1);
+                    pattern_struct_fields_no_definition(Pfs, N, Vt, Old, Bvt, St1);
                 GlobalDefs ->
-                    case erlt_defs:find_struct(M, E, GlobalDefs) of
+                    case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
                             Def = get_field_map_from_struct_def(StructDef),
-                            pattern_struct_fields(Pfs, E, Def, Vt, Old, Bvt, St1);
+                            pattern_struct_fields(Pfs, N, Def, Vt, Old, Bvt, St1);
                         error ->
-                            {[], [], add_error(Line, {undefined_struct, {M, E}}, St1)}
+                            {[], [], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
             end
     end.

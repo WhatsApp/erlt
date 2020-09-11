@@ -15,34 +15,32 @@
 
 -module(erlt_struct).
 
--export([parse_transform/2]).
+-export([module/2]).
 
 -record(context, {
     module :: atom(),
-    struct = [],
-    structs = #{}
+    structs = #{},
+    def_db :: erlt_defs:def_db()
 }).
 
-parse_transform(Forms, _Options) ->
-    Context = init_context(Forms),
+module(Forms, DefDb) ->
+    Context = init_context(Forms, DefDb),
     erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Ctx, Context) end).
 
-init_context(Forms) ->
+init_context(Forms, DefDb) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
     Structs = [Def || {attribute, _, struct, Def} <- Forms],
     #context{
         module = Module,
-        structs = init_structs(Structs, Module)
+        structs = init_structs(Structs, Module),
+        def_db = DefDb
     }.
 
 init_structs(Defs, Module) ->
-    Map = [
-        {Tag, struct_info(Module, Tag, Fields)}
-        || {_Name, {type, _, struct, {atom, _, Tag}, Fields}, _Args} <- Defs
-    ],
+    Map = [{Name, struct_info(Module, Type)} || {Name, Type, _Args} <- Defs],
     maps:from_list(Map).
 
-struct_info(Module, Tag, Fields) ->
+struct_info(Module, {type, _, struct, {atom, _, Tag}, Fields}) ->
     RuntimeTag = list_to_atom("$#" ++ atom_to_list(Module) ++ ":" ++ atom_to_list(Tag)),
     Anno = erl_anno:set_generated(true, erl_anno:new(0)),
     FieldsMap = [{Field, _Default = undefined} || {struct_field, _, {atom, _, Field}, _} <- Fields],
@@ -54,16 +52,23 @@ rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, _Ctx, Context) 
     Type =
         {type, TypeLine, tuple, [RuntimeTag | [Type || {struct_field, _, _Name, Type} <- Fields]]},
     {attribute, Line, type, {TypeName, Type, Args}};
-rewrite({struct, Line, {atom, _, Name}, Fields}, pattern, Context) ->
-    {RuntimeTag, Def} = map_get(Name, Context#context.structs),
+rewrite({struct, Line, Name, Fields}, pattern, Context) ->
+    {RuntimeTag, Def} = get_definition(Name, Context),
     Fields1 = struct_pattern(Fields, Def),
     {tuple, Line, [RuntimeTag | Fields1]};
-rewrite({struct, Line, {atom, _, Name}, Fields}, _Ctx, Context) ->
-    {RuntimeTag, Def} = map_get(Name, Context#context.structs),
+rewrite({struct, Line, Name, Fields}, _Ctx, Context) ->
+    {RuntimeTag, Def} = get_definition(Name, Context),
     Fields1 = struct_init(Fields, Def),
     {tuple, Line, [RuntimeTag | Fields1]};
 rewrite(Other, _, _) ->
     Other.
+
+get_definition({atom, _, Name}, Context) ->
+    map_get(Name, Context#context.structs);
+get_definition({remote, _, {atom, _, Module}, {atom, _, Name}}, Context) ->
+    {ok, {attribute, _, _, {_, Type, _}}} =
+        erlt_defs:find_struct(Module, Name, Context#context.def_db),
+    struct_info(Module, Type).
 
 struct_init(Fields, Defs) ->
     Fun = fun({Name, Default}) ->
