@@ -182,12 +182,12 @@ object Convert {
       case Guards.GCons(p, hd, tl) =>
         Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
       case Guards.GMapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(p)
+        Ast.RecordExp(entries.map(gMapField))(p)
       case Guards.GMapUpdate(p, exp, entries) =>
         // this is not present in Erlang. Approximating
         val recExp = convertGExpr(exp)
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gMapField))(updateRange))(p)
       case Guards.GMapFieldAccess(p, exp, fieldName) =>
         Ast.SelExp(convertGExpr(exp), fieldName)(p)
       case Guards.GCall(p, (fp, f), args) =>
@@ -477,18 +477,9 @@ object Convert {
   private def structFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
     Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
 
-  private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
+  private def gMapField(assoc: Guards.GMapField): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocOpt(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
-        Ast.Field(label, convertGExpr(e))(p)
-      case _ =>
-        // "wrong anon struct syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
-    }
-
-  private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
-    assoc match {
-      case Guards.GAssocExact(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
+      case Guards.GMapField(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))(p)
       case _ =>
         // "wrong anon struct syntax"

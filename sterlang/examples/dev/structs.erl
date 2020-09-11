@@ -18,6 +18,7 @@
 -struct #user{name :: string(), id :: integer()}.
 -struct #manager{user :: #user{}}.
 -struct #ok{}.
+-struct #boxed_int{int :: integer()}.
 
 -spec test(#user{}) -> #user{}.
 test(X) -> X.
@@ -48,3 +49,7 @@ match_users(#user{id = Id}, #user{id = Id}) -> true.
 
 foo(#manager{user = User}) ->
     User.
+
+%% For the record): This is an illegal guard expression! - updating a record is forbidden!
+%% guard1(BoxedInt) when BoxedInt == BoxedInt#boxed_int{int = 3} -> true.
+

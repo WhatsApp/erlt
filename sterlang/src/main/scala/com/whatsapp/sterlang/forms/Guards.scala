@@ -32,8 +32,8 @@ object Guards {
   case class GStructCreate(p: Pos.SP, structName: String, fields: List[GStructField]) extends GExpr
   case class GStructSelect(p: Pos.SP, struct: GExpr, structName: String, fieldName: String) extends GExpr
   case class GMapFieldAccess(p: Pos.SP, rec: GExpr, fieldName: String) extends GExpr
-  case class GMapCreate(p: Pos.SP, entries: List[GAssoc]) extends GExpr
-  case class GMapUpdate(p: Pos.SP, exp: GExpr, entries: List[GAssoc]) extends GExpr
+  case class GMapCreate(p: Pos.SP, fields: List[GMapField]) extends GExpr
+  case class GMapUpdate(p: Pos.SP, exp: GExpr, fields: List[GMapField]) extends GExpr
   // calling erlang:funName
   case class GCall(p: Pos.SP, funName: (Pos.SP, String), args: List[GExpr]) extends GExpr
   case class GLocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[GExpr]) extends GExpr
@@ -41,9 +41,5 @@ object Guards {
   case class GBinElement(gExpr: GExpr, size: Option[GExpr], typeSpecifiers: Exprs.TypeSpecifiers)
   case class GStructField(p: Pos.SP, fieldName: String, value: GExpr)
 
-  sealed trait GAssoc { val p: Pos.SP }
-  // X := Y - mandatory association
-  case class GAssocExact(p: Pos.SP, k: GExpr, v: GExpr) extends GAssoc
-  // X => Y - optional association
-  case class GAssocOpt(p: Pos.SP, k: GExpr, v: GExpr) extends GAssoc
+  case class GMapField(p: Pos.SP, k: GExpr, v: GExpr)
 }
