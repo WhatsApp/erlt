@@ -15,14 +15,14 @@
 
 -export([main/1]).
 
-main(["-erl", Filename, "-etf", EtfFileName]) ->
-    Forms = parse_file(Filename),
+main(["-ifile", IFile, "-ofile", OFile]) ->
+    Forms = parse_file(IFile),
     Lang = parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
     Forms1 = normalize_for_typecheck(Forms, Ffi),
     CodeETF = erlang:term_to_binary(Forms1),
-    ok = filelib:ensure_dir(EtfFileName),
-    ok = file:write_file(EtfFileName, CodeETF);
+    ok = filelib:ensure_dir(OFile),
+    ok = file:write_file(OFile, CodeETF);
 main(["-ast", Filename]) ->
     Forms = parse_file(Filename),
     Lang = parse_lang(Forms),

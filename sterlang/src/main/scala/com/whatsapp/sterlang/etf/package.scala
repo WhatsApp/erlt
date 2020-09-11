@@ -57,7 +57,7 @@ package object etf {
         val tmp =
           if (debug) Paths.get(path.substring(0, path.length - 3) + "etf")
           else Files.createTempFile("etf_reader", ".etf")
-        s"./erl2etf -erl $path -etf $tmp".!!
+        s"./erl2etf -ifile $path -ofile $tmp".!!
         tmp
       }
     readEtf(etfPath)
@@ -67,7 +67,7 @@ package object etf {
     val tmpErl = Files.createTempFile("etf_reader", ".erl")
     Files.write(tmpErl, text.getBytes)
     val tmpEtf = Files.createTempFile("etf_reader", ".etf")
-    s"./erl2etf -erl $tmpErl -etf $tmpEtf".!!
+    s"./erl2etf -ifile $tmpErl -ofile $tmpEtf".!!
     readEtf(tmpEtf)
   }
 
