@@ -26,11 +26,11 @@ object SterlangTestUtil {
 
   val generateOut = false
 
-  def processFile(path: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
-    val (rawProgram) = Main.loadProgram(path)
+  def processFile(erlPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
+    val rawProgram = Main.loadProgram(etfPath)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(path, program, vars).extend(program)
+    val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
@@ -44,29 +44,29 @@ object SterlangTestUtil {
     }
 
     {
-      val w2 = new BufferedWriter(new FileWriter(path + "." + tmpExt))
+      val w2 = new BufferedWriter(new FileWriter(erlPath + "." + tmpExt))
       w2.write(sw.toString)
       w2.close()
     }
 
     if (generateOut) {
-      val w = new BufferedWriter(new FileWriter(path + "." + outExt))
+      val w = new BufferedWriter(new FileWriter(erlPath + "." + outExt))
       w.write(sw.toString)
       w.close()
     }
 
     // Check pattern matching
     // TODO: apply to all files when ready.
-    if (new File(path).getParent == "examples/pattern")
+    if (new File(erlPath).getParent == "examples/pattern")
       new PatternChecker(vars, context, program).check(annDefs)
   }
 
-  def processIllTyped(path: String): Boolean = {
-    val rawProgram = Main.loadProgram(path)
+  def processIllTyped(erlPath: String, etfPath: String): Boolean = {
+    val rawProgram = Main.loadProgram(etfPath)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Main.loadContext(path, program, vars).extend(program)
+      val context = Main.loadContext(etfPath, program, vars).extend(program)
       new AstChecks(context).check(program)
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
       false
@@ -76,11 +76,11 @@ object SterlangTestUtil {
     }
   }
 
-  def processIllPatterns(path: String): Boolean = {
-    val rawProgram = Main.loadProgram(path)
+  def processIllPatterns(erlPath: String, etfPath: String): Boolean = {
+    val rawProgram = Main.loadProgram(etfPath)
     val program = SyntaxUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(path, program, vars).extend(program)
+    val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
     try {

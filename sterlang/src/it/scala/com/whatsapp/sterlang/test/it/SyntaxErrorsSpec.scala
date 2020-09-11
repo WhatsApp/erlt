@@ -19,11 +19,11 @@ package com.whatsapp.sterlang.test.it
 class SyntaxErrorsSpec extends DirSpec {
   testDir("examples/err-syntax")
 
-  override def testFile(f: String): Unit = {
-    assert(SterlangTestUtil.processIllSyntax(f))
+  override def testFile(erlPath: String, etfPath: String): Unit = {
+    assert(SterlangTestUtil.processIllSyntax(etfPath))
   }
 
-  override def testFileVerbose(f: String): Unit = {
+  override def testFileVerbose(erlPath: String, etfPath: String): Unit = {
     // doing nothing
   }
 }

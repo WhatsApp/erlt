@@ -21,15 +21,15 @@ class ErrorsSpec extends DirSpec {
   testDir("examples/err")
   testDir("examples/err2")
 
-  override def testFile(f: String): Unit = {
-    if (f.endsWith("core.erl")) {
-      super.testFile(f)
+  override def testFile(erlPath: String, etfPath: String): Unit = {
+    if (erlPath.endsWith("core.erl")) {
+      super.testFile(erlPath, etfPath)
     } else {
-      assert(SterlangTestUtil.processIllTyped(f))
+      assert(SterlangTestUtil.processIllTyped(erlPath, etfPath))
     }
   }
 
-  override def testFileVerbose(f: String): Unit = {
+  override def testFileVerbose(erlPath: String, etfPath: String): Unit = {
     // doing nothing
   }
 }
