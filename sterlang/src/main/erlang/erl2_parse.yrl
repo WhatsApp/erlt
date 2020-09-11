@@ -162,7 +162,6 @@ function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 function_clause -> atom clause_args clause_guard clause_body :
 	{clause,?anno('$1','$4'),element(3, '$1'),'$2','$3','$4'}.
 
-
 clause_args -> pat_argument_list : element(1, '$1').
 
 clause_guard -> 'when' guard : '$2'.
@@ -272,7 +271,6 @@ bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
 
-
 list_comprehension -> '[' expr '||' lc_exprs ']' :
 	{lc,?anno('$1','$5'),'$2','$4'}.
 binary_comprehension -> '<<' expr_max '||' lc_exprs '>>' :
@@ -344,7 +342,6 @@ if_clauses -> if_clause ';' if_clauses : ['$1' | '$3'].
 if_clause -> guard clause_body :
 	{clause,?anno(hd(hd('$1')),'$2'),[],'$1','$2'}.
 
-
 case_expr -> 'case' expr 'of' cr_clauses 'end' :
 	{'case',?anno('$1','$5'),'$2','$4'}.
 
@@ -360,7 +357,6 @@ receive_expr -> 'receive' 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$5'),[],'$3','$4'}.
 receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$6'),'$2','$4','$5'}.
-
 
 fun_expr -> 'fun' atom '/' integer :
     {'fun',?anno('$1', '$4'),{function,element(3, '$2'),element(3, '$4')}}.
