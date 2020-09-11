@@ -703,62 +703,16 @@ ret_err(Anno, S) ->
     return_error(erl_anno:location(Anno), S).
 
 %%  Convert between the abstract form of a term and a term.
-normalise({char, _, C}) ->
-    C;
 normalise({integer, _, I}) ->
     I;
-normalise({float, _, F}) ->
-    F;
 normalise({atom, _, A}) ->
     A;
-normalise({string, _, S}) ->
-    S;
 normalise({nil, _}) ->
     [];
-normalise({bin, _, Fs}) ->
-    {value, B, _} =
-        eval_bits:expr_grp(
-            Fs,
-            [],
-            fun (E, _) ->
-                {value, normalise(E), []}
-            end,
-            [],
-            true
-        ),
-    B;
 normalise({cons, _, Head, Tail}) ->
     [normalise(Head) | normalise(Tail)];
 normalise({tuple, _, Args}) ->
     list_to_tuple(normalise_list(Args));
-normalise({map, _, Pairs} = M) ->
-    maps:from_list(
-        lists:map(
-            fun
-                ({map_field, _, K, V}) ->
-                    {normalise(K), normalise(V)};
-                (_) ->
-                    erlang:error({badarg, M})
-            end,
-            Pairs
-        )
-    );
-normalise({'fun', _, {function, {atom, _, M}, {atom, _, F}, {integer, _, A}}}) ->
-    fun M:F/A;
-%% Special case for unary +/-.
-normalise({op, _, '+', {char, _, I}}) ->
-    I;
-normalise({op, _, '+', {integer, _, I}}) ->
-    I;
-normalise({op, _, '+', {float, _, F}}) ->
-    F;
-%Weird, but compatible!
-normalise({op, _, '-', {char, _, I}}) ->
-    -I;
-normalise({op, _, '-', {integer, _, I}}) ->
-    -I;
-normalise({op, _, '-', {float, _, F}}) ->
-    -F;
 normalise(X) ->
     erlang:error({badarg, X}).
 
