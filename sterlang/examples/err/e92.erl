@@ -16,4 +16,4 @@
 -module(e92).
 
 foo() ->
-    #unknown_record{}.
+    #unknown_struct{}.

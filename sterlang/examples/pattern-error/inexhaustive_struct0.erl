@@ -16,7 +16,7 @@
 -module(inexhaustive_struct0).
 -export([test1/1]).
 
--struct #r{a :: boolean()}.
+-struct r :: {a :: boolean()}.
 
 -spec test1(#r{}) -> {}.
 test1(#r{a = false}) -> {}.

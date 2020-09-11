@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e94).
 
--struct #my_record{id :: integer()}.
+-struct my_record :: {id :: integer()}.
 
 foo() ->
     #my_record{id = 1, id = 2}.

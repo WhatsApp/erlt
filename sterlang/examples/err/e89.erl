@@ -15,6 +15,6 @@
 -lang([erl2, st]).
 -module(e89).
 
--struct #bad_record{
+-struct bad_record :: {
     field :: TypeVar
 }.

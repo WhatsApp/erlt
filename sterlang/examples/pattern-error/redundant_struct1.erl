@@ -16,7 +16,7 @@
 -module(redundant_struct1).
 -export([test1/1]).
 
--struct #r{a :: boolean()}.
+-struct r :: {a :: boolean()}.
 
 -spec test1(#r{}) -> {}.
 test1(#r{}) -> {};

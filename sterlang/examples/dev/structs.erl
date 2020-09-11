@@ -15,10 +15,10 @@
 -lang([erl2, st]).
 -module(structs).
 
--struct #user{name :: string(), id :: integer()}.
--struct #manager{user :: #user{}}.
--struct #ok{}.
--struct #boxed_int{int :: integer()}.
+-struct user :: {name :: string(), id :: integer()}.
+-struct manager :: {user :: #user{}}.
+-struct ok :: {}.
+-struct boxed_int :: {int :: integer()}.
 
 -spec test(#user{}) -> #user{}.
 test(X) -> X.

@@ -15,8 +15,8 @@
 -lang([erl2, st]).
 -module(messages).
 
--message #ping{from :: pid()}.
--message #pong{in_answer_to :: message()}.
+-message ping :: {from :: pid()}.
+-message pong :: {in_answer_to :: message()}.
 
 get_from(#ping{from = From}) -> From.
 

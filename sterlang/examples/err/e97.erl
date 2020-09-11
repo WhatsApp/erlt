@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e97).
 
--struct #my_record{id :: integer(), hash :: integer()}.
+-struct my_record :: {id :: integer(), hash :: integer()}.
 
 bad_field() ->
     #my_record{hash = 1, id = "test"}.

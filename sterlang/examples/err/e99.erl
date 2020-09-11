@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e99).
 
--struct #foo{}.
+-struct foo :: {}.
 
 mk(true) -> #foo{};
 mk(false) -> false.

@@ -15,8 +15,8 @@
 -lang([erl2, st]).
 -module(e98).
 
--struct #foo{}.
--struct #bar{}.
+-struct foo :: {}.
+-struct bar :: {}.
 
 mk_record(Cond) ->
     if
