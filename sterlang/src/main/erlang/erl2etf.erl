@@ -23,7 +23,7 @@ main(["-erl", Filename, "-etf", EtfFileName]) ->
     CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(EtfFileName),
     ok = file:write_file(EtfFileName, CodeETF);
-main(["-ast2", Filename]) ->
+main(["-ast", Filename]) ->
     Forms = parse_file(Filename),
     Lang = parse_lang(Forms),
     Ffi = lists:member(ffi, Lang),
