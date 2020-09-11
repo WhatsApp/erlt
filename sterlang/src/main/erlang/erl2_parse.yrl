@@ -579,26 +579,6 @@ build_attribute({atom, _, lang}, [{atom, _, Lang}], Aa) when Lang == ffi; Lang =
 build_attribute(_, _, Aa) ->
     ret_err(Aa, "bad attribute").
 
-attribute_farity({cons, A, H, T}) ->
-    {cons, A, attribute_farity(H), attribute_farity(T)};
-attribute_farity({tuple, A, Args0}) ->
-    Args = attribute_farity_list(Args0),
-    {tuple, A, Args};
-attribute_farity({map, A, Args0}) ->
-    Args = attribute_farity_map(Args0),
-    {map, A, Args};
-attribute_farity({op, A, '/', {atom, _, _} = Name, {integer, _, _} = Arity}) ->
-    {tuple, A, [Name, Arity]};
-attribute_farity(Other) ->
-    Other.
-
-attribute_farity_list(Args) ->
-    [attribute_farity(A) || A <- Args].
-
-%% It is not meaningful to have farity keys.
-attribute_farity_map(Args) ->
-    [{Op, A, K, attribute_farity(V)} || {Op, A, K, V} <- Args].
-
 error_bad_decl(Anno, S) ->
     ret_err(Anno, io_lib:format("bad ~tw declaration", [S])).
 
@@ -615,12 +595,6 @@ struct_fields([Other | _Fields]) ->
     ret_err(anno(Other), "bad struct field");
 struct_fields([]) ->
     [].
-
-term(Expr) ->
-    try normalise(Expr)
-    catch
-        _:_R -> ret_err(anno(Expr), "bad attribute")
-    end.
 
 %% build_function([Clause]) -> {function,Anno,Name,Arity,[Clause]}
 
@@ -674,25 +648,6 @@ build_try(Try, Es, Scs, {Ccs, As, End}) ->
 
 ret_err(Anno, S) ->
     return_error(location(Anno), S).
-
-%%  Convert between the abstract form of a term and a term.
-normalise({integer, _, I}) ->
-    I;
-normalise({atom, _, A}) ->
-    A;
-normalise({nil, _}) ->
-    [];
-normalise({cons, _, Head, Tail}) ->
-    [normalise(Head) | normalise(Tail)];
-normalise({tuple, _, Args}) ->
-    list_to_tuple(normalise_list(Args));
-normalise(X) ->
-    erlang:error({badarg, X}).
-
-normalise_list([H | T]) ->
-    [normalise(H) | normalise_list(T)];
-normalise_list([]) ->
-    [].
 
 map_anno(F0, Abstr) ->
     F = fun (A, Acc) -> {F0(A), Acc} end,
