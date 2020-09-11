@@ -22,22 +22,17 @@ lazy val projectSetting = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature"),
   libraryDependencies += "org.fusesource.jansi" % "jansi" % "1.18",
   libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test,it",
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
-  IntegrationTest / testOptions += Tests.Argument("-oD"),
 )
 
 lazy val sterlang = (project in file("."))
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings)
   .settings(projectSetting)
   .settings(
     mainClass in assembly := Some("com.whatsapp.sterlang.Main"),
     assemblyJarName in assembly := "sterlang.jar",
     resourceGenerators in Compile += erl2etf.taskValue,
   )
-
-inConfig(IntegrationTest)(org.scalafmt.sbt.ScalafmtPlugin.scalafmtConfigSettings)
 
 val erl2etf = taskKey[Seq[File]]("Generate erl2etf command line utility")
 erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_parse.yrl|erl2etf.erl".r

@@ -13,8 +13,8 @@ jobs:
         java-version: 11
     - name: Erlang version
       run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
-    - name: Run tests
-      run: cd sterlang; sbt assembly it:test
+    - name: assembly sterlang.jar
+      run: cd sterlang; sbt assembly
     - name: upload sterlang.jar
       uses: actions/upload-artifact@v2
       with:
