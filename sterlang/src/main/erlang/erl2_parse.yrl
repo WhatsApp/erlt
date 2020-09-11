@@ -99,8 +99,8 @@ struct_kind -> 'struct'    : '$1'.
 struct_kind -> 'exception' : '$1'.
 struct_kind -> 'message'   : '$1'.
 
-attribute -> '-' atom attr_val :
-    build_attribute('$2', '$3', anno('$1','$3')).
+attribute -> '-' atom '(' attr_val ')' :
+    build_attribute('$2', '$4', anno('$1','$5')).
 attribute -> '-' type_kind atom var_list '::' top_type :
     type_def('$2', '$3', '$4', '$6', anno('$1','$6')).
 attribute -> '-' struct_kind atom '::' '{' field_defs '}' :
@@ -151,8 +151,8 @@ map_field_types -> map_field_type ',' map_field_types : build_map_internals_type
 
 map_field_type -> atom '::' top_type  : {type, anno('$1', '$3'), map_field, ['$1', '$3']}.
 
-attr_val -> '(' expr ')'             : ['$2'].
-attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
+attr_val -> expr             : '$1'.
+attr_val -> expr ',' exprs   : ['$1' | '$3'].
 
 function -> function_clauses : build_function('$1').
 
@@ -160,7 +160,7 @@ function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
 function_clause -> atom clause_args clause_guard clause_body :
-	{clause,anno('$1','$4'),element(3, '$1'),'$2','$3','$4'}.
+	{clause, anno('$1','$4'), element(3, '$1'), '$2', '$3', '$4'}.
 
 clause_args -> pat_argument_list : element(1, '$1').
 
@@ -532,55 +532,22 @@ type_tag(TypeName, NumberOfTypeVariables) ->
         false -> user_type
     end.
 
-build_attribute({atom, _, module}, Val, Aa) ->
-    case Val of
-        [{atom, _, Module}] ->
-            {attribute, Aa, module, Module};
-        _Other ->
-            error_bad_decl(Aa, module)
-    end;
+build_attribute({atom, _, module}, {atom, _, Module}, Aa) ->
+    {attribute, Aa, module, Module};
 build_attribute({atom, _, export}, Val, Aa) ->
-    case Val of
-        [ExpList] ->
-            {attribute, Aa, export, farity_list(ExpList)};
-        _Other ->
-            error_bad_decl(Aa, export)
-    end;
+    {attribute, Aa, export, farity_list(Val)};
 build_attribute({atom, _, export_type}, Val, Aa) ->
-    case Val of
-        [ExpList] ->
-            {attribute, Aa, export_type, farity_list(ExpList)};
-        _Other ->
-            error_bad_decl(Aa, export)
-    end;
-build_attribute({atom, _, import}, Val, Aa) ->
-    case Val of
-        [{atom, _, Mod}, ImpList] ->
-            {attribute, Aa, import, {Mod, farity_list(ImpList)}};
-        _Other ->
-            error_bad_decl(Aa, import)
-    end;
-build_attribute({atom, _, import_type}, Val, Aa) ->
-    case Val of
-        [{atom, _, Mod}, ImpList] ->
-            {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
-        _Other ->
-            error_bad_decl(Aa, import_type)
-    end;
-build_attribute({atom, _, file}, Val, Aa) ->
-    case Val of
-        [{string, _, Name}, {integer, _, Line}] ->
-            {attribute, Aa, file, {Name, Line}};
-        _Other ->
-            error_bad_decl(Aa, file)
-    end;
-build_attribute({atom, _, lang}, [{atom, _, Lang}], Aa) when Lang == ffi; Lang == st ->
+    {attribute, Aa, export_type, farity_list(Val)};
+build_attribute({atom, _, import}, [{atom, _, Mod}, ImpList], Aa) ->
+    {attribute, Aa, import, {Mod, farity_list(ImpList)}};
+build_attribute({atom, _, import_type}, [{atom, _, Mod}, ImpList], Aa) ->
+    {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
+build_attribute({atom, _, file}, [{string, _, Name}, {integer, _, Line}], Aa) ->
+    {attribute, Aa, file, {Name, Line}};
+build_attribute({atom, _, lang}, {atom, _, Lang}, Aa) when Lang == ffi; Lang == st ->
     {attribute, Aa, lang, Lang};
 build_attribute(_, _, Aa) ->
     ret_err(Aa, "bad attribute").
-
-error_bad_decl(Anno, S) ->
-    ret_err(Anno, io_lib:format("bad ~tw declaration", [S])).
 
 farity_list({cons, _Ac, {op, _Ao, '/', {atom, _Aa, A}, {integer, _Ai, I}}, Tail}) ->
     [{A, I} | farity_list(Tail)];
