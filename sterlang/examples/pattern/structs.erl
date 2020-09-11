@@ -13,12 +13,12 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(erlang_records).
+-module(structs).
 -export([test1/1, test2/1, test3/1, test4/1, test5/1, test6/1, test7/1]).
 
--record #r0{}.
--record #r1{a :: boolean()}.
--record #r2{a :: boolean(), b :: boolean()}.
+-struct r0 :: {}.
+-struct r1 :: {a :: boolean()}.
+-struct r2 :: {a :: boolean(), b :: boolean()}.
 
 -spec test1(#r0{}) -> {}.
 test1(_) -> {}.

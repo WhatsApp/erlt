@@ -16,7 +16,7 @@
 -module(redundant_catch1).
 -export([test/0]).
 
--exception #e0{}.
+-exception e0 :: {}.
 
 -spec test() -> {}.
 test() ->

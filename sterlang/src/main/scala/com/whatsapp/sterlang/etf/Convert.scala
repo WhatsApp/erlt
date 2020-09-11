@@ -85,10 +85,10 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.RecordDecl(p, name, eFields, kind) =>
-        val fields = eFields.map(convertRecordField)
-        val eRecordType = Ast.ErlangRecordDef(name, fields, recordKind(kind))(p)
-        Some(Ast.ErlangRecordElem(eRecordType))
+      case Forms.StructDecl(p, name, eFields, kind) =>
+        val fields = eFields.map(convertStructField)
+        val eStructType = Ast.StructDef(name, fields, recordKind(kind))(p)
+        Some(Ast.StructElem(eStructType))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
         None
@@ -96,22 +96,22 @@ object Convert {
         throw ParseError(loc)
     }
 
-  private def recordKind(recKind: Forms.RecordKind): Ast.RecordKind =
+  private def recordKind(recKind: Forms.StructKind): Ast.StructKind =
     recKind match {
-      case Forms.RecRecord => Ast.ErlangRecord
-      case Forms.ExnRecord => Ast.ExceptionRecord
-      case Forms.MsgRecord => Ast.MessageRecord
+      case Forms.StrStruct => Ast.StrStruct
+      case Forms.ExnStruct => Ast.ExnStruct
+      case Forms.MsgStruct => Ast.MsgStruct
     }
 
-  private def convertRecordField(eRecordField: Forms.RecordFieldDecl): Ast.Field[Ast.Type] =
-    eRecordField match {
-      case Forms.RecordFieldUntyped(p, name, initValue) =>
+  private def convertStructField(eStructField: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
+    eStructField match {
+      case Forms.StructFieldUntyped(p, name, initValue) =>
         // untyped or implicitly typed record fields are not supported
         throw new UnsupportedSyntaxError(p)
-      case Forms.RecordFieldTyped(p, name, Some(initValue), tp) =>
+      case Forms.StructFieldTyped(p, name, Some(initValue), tp) =>
         // initializers are not supported (yet)
         throw new UnsupportedSyntaxError(p)
-      case Forms.RecordFieldTyped(p, name, None, tp) =>
+      case Forms.StructFieldTyped(p, name, None, tp) =>
         Ast.Field(name, convertType(tp))(p)
     }
 
@@ -182,12 +182,12 @@ object Convert {
       case Guards.GCons(p, hd, tl) =>
         Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
       case Guards.GMapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(gAssocCreateToFieldExp))(p)
+        Ast.RecordExp(entries.map(gMapField))(p)
       case Guards.GMapUpdate(p, exp, entries) =>
         // this is not present in Erlang. Approximating
         val recExp = convertGExpr(exp)
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gAssocUpdateToFieldExp))(updateRange))(p)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gMapField))(updateRange))(p)
       case Guards.GMapFieldAccess(p, exp, fieldName) =>
         Ast.SelExp(convertGExpr(exp), fieldName)(p)
       case Guards.GCall(p, (fp, f), args) =>
@@ -214,12 +214,10 @@ object Convert {
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
       case Guards.GBin(p, elems) =>
         Ast.Bin(elems.map(convertGBinElem))(p)
-      case Guards.GRecordCreate(p, recordName, fields) =>
-        Ast.ERecordCreate(recordName, fields.map(gRecordField))(p)
-      case Guards.GRecordIndex(p, recordName, fieldName) =>
-        Ast.ERecordIndex(recordName, fieldName)(p)
-      case Guards.GRecordFieldAccess(p, rec, recordName, fieldName) =>
-        Ast.ERecordSelect(convertGExpr(rec), recordName, fieldName)(p)
+      case Guards.GStructCreate(p, structName, fields) =>
+        Ast.StructCreate(structName, fields.map(gStructField))(p)
+      case Guards.GStructSelect(p, rec, recordName, fieldName) =>
+        Ast.StructSelect(convertGExpr(rec), recordName, fieldName)(p)
     }
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
@@ -290,10 +288,8 @@ object Convert {
       case Patterns.UnOpPattern(p, op, pat1) =>
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p)
-      case Patterns.RecordPattern(p, recordName, fields) =>
-        Ast.ERecordPat(recordName, fields.map(recordFieldPattern))(p)
-      case Patterns.RecordIndexPattern(p, recordName, fieldName) =>
-        Ast.ERecordIndexPat(recordName, fieldName)(p)
+      case Patterns.StructPattern(p, recordName, fields) =>
+        Ast.StructPat(recordName, fields.map(structFieldPattern))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -404,14 +400,12 @@ object Convert {
         )(p)
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
-      case Exprs.RecordCreate(p, recordName, fields) =>
-        Ast.ERecordCreate(recordName, fields.map(recordField))(p)
-      case Exprs.RecordUpdate(p, rec, recordName, fields) =>
-        Ast.ERecordUpdate(convertExpr(rec), recordName, fields.map(recordField))(p)
-      case Exprs.RecordIndex(p, recordName, fieldName) =>
-        Ast.ERecordIndex(recordName, fieldName)(p)
-      case Exprs.RecordFieldAccess(p, rec, recordName, fieldName) =>
-        Ast.ERecordSelect(convertExpr(rec), recordName, fieldName)(p)
+      case Exprs.StructCreate(p, structName, fields) =>
+        Ast.StructCreate(structName, fields.map(structField))(p)
+      case Exprs.StructUpdate(p, rec, structName, fields) =>
+        Ast.StructUpdate(convertExpr(rec), structName, fields.map(structField))(p)
+      case Exprs.StructSelect(p, rec, structName, fieldName) =>
+        Ast.StructSelect(convertExpr(rec), structName, fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)
@@ -474,27 +468,18 @@ object Convert {
         throw new UnsupportedSyntaxError(assoc.p)
     }
 
-  private def recordField(field: Exprs.RecordField): Ast.Field[Ast.Exp] =
+  private def structField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
     Ast.Field(field.fieldName, convertExpr(field.value))(field.p)
 
-  private def gRecordField(field: Guards.GRecordField): Ast.Field[Ast.Exp] =
+  private def gStructField(field: Guards.GStructField): Ast.Field[Ast.Exp] =
     Ast.Field(field.fieldName, convertGExpr(field.value))(field.p)
 
-  private def recordFieldPattern(field: Patterns.RecordFieldPattern): Ast.Field[Ast.Pat] =
+  private def structFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
     Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
 
-  private def gAssocCreateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
+  private def gMapField(assoc: Guards.GMapField): Ast.Field[Ast.Exp] =
     assoc match {
-      case Guards.GAssocOpt(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
-        Ast.Field(label, convertGExpr(e))(p)
-      case _ =>
-        // "wrong anon struct syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
-    }
-
-  private def gAssocUpdateToFieldExp(assoc: Guards.GAssoc): Ast.Field[Ast.Exp] =
-    assoc match {
-      case Guards.GAssocExact(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
+      case Guards.GMapField(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
         Ast.Field(label, convertGExpr(e))(p)
       case _ =>
         // "wrong anon struct syntax"
@@ -531,9 +516,9 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.RecordType(p, name, List()) =>
-        Ast.ERecordType(name)(p)
-      case Types.RecordType(p, _, _) =>
+      case Types.StructType(p, name, List()) =>
+        Ast.StructType(name)(p)
+      case Types.StructType(p, _, _) =>
         // redefining field types
         // Erlang support writing
         // -type my_rec = #already_defined_rec { field :: diff_type() }

@@ -15,7 +15,7 @@
 -lang([erl2, st]).
 -module(e93).
 
--record #my_record{}.
+-struct my_struct :: {}.
 
 foo() ->
-    #my_record{unknown_field = 1}.
+    #my_struct{unknown_field = 1}.

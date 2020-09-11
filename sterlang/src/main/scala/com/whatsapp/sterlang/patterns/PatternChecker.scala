@@ -290,15 +290,14 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
         Some(Set(constructor))
       case Pattern.Literal(_: Values.BooleanValue) =>
         Some(Set(true, false).map(b => Pattern.Literal(Values.BooleanValue(b))))
-      case Pattern.Literal(_: Values.IntegerValue)     => None
-      case Pattern.Literal(_: Values.CharValue)        => None
-      case Pattern.Literal(_: Values.StringValue)      => None
-      case Pattern.Literal(_: Values.RecordIndexValue) => None
-      case Pattern.Tuple(_)                            => Some(Set(constructor))
-      case Pattern.EmptyList | Pattern.Cons            => Some(Set(Pattern.EmptyList, Pattern.Cons))
-      case Pattern.Record(_, _)                        => Some(Set(constructor))
-      case Pattern.ErlangRecord(_, _)                  => Some(Set(constructor))
-      case Pattern.OpenVariantRecord(_, _)             => None
+      case Pattern.Literal(_: Values.IntegerValue) => None
+      case Pattern.Literal(_: Values.CharValue)    => None
+      case Pattern.Literal(_: Values.StringValue)  => None
+      case Pattern.Tuple(_)                        => Some(Set(constructor))
+      case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
+      case Pattern.Record(_, _)                    => Some(Set(constructor))
+      case Pattern.ClassicStruct(_, _)             => Some(Set(constructor))
+      case Pattern.OpenVariantStruct(_, _)         => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
@@ -314,8 +313,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.EmptyList                    => 0
       case Pattern.Cons                         => 2
       case Pattern.Record(fields, _)            => fields.length
-      case Pattern.ErlangRecord(_, fields)      => fields.length
-      case Pattern.OpenVariantRecord(_, fields) => fields.length
+      case Pattern.ClassicStruct(_, fields)     => fields.length
+      case Pattern.OpenVariantStruct(_, fields) => fields.length
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         enumDef.cons.find(_.name == constructorName).get.argTypes.length

@@ -28,13 +28,13 @@ attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_max
-pat_expr pat_expr_max map_pat_expr record_pat_expr enum_pat_expr
+pat_expr pat_expr_max map_pat_expr struct_pat_expr enum_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
-record_expr record_tuple record_field record_fields
+struct_expr struct_tuple struct_field struct_fields
 map_expr map_tuple map_field map_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
@@ -46,10 +46,10 @@ atomic
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
-top_type top_types type field_defs field_def type_def
+top_type top_types type field_defs field_def
 fun_type
 type_spec
-map_field_types map_field_type.
+map_field_types map_field_type struct_kind var_list vars.
 
 Terminals
 char integer float atom string var
@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'callback' % helper
+'spec' 'struct' 'exception' 'message' 'type_kind' % helper
 dot.
 
 Expect 0.
@@ -95,15 +95,20 @@ Nonassoc 500 '*'. % for binary expressions
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
-attribute -> '-' atom attr_val                    : build_attribute('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' atom type_def                    : build_typed_attribute('$2','$3', ?anno('$1','$3')).
-attribute -> '-' atom '#' atom '{' field_defs '}' : build_record_def('$2','$4', '$6', ?anno('$1','$7')).
-attribute -> '-' 'spec' type_spec                 : build_type_spec('$2', '$3', ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec             : build_type_spec('$2', '$3', ?anno('$1','$3')).
+struct_kind -> 'struct'    : '$1'.
+struct_kind -> 'exception' : '$1'.
+struct_kind -> 'message'   : '$1'.
+
+attribute -> '-' atom attr_val :
+    build_attribute('$2', '$3', ?anno('$1','$3')).
+attribute -> '-' type_kind atom var_list '::' top_type :
+    type_def('$2', '$3', '$4', '$6', ?anno('$1','$6')).
+attribute -> '-' struct_kind atom '::' '{' field_defs '}' :
+    struct_def('$2', '$3', '$6', ?anno('$1','$7')).
+attribute -> '-' 'spec' type_spec :
+    type_spec('$3', ?anno('$1','$3')).
 
 type_spec -> atom fun_type                : {type_spec, ?anno('$1','$2'), '$1', ['$2']}.
-
-type_def -> function_call '::' top_type   : {type_def, ?anno('$1','$3'), '$1', '$3'}.
 
 field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
@@ -132,7 +137,7 @@ type -> '#' '(' ')'                           : {type, ?anno('$1','$3'), map, []
 type -> '#' '(' map_field_types ')'           : build_map_type(?anno('$1', '$4'), '$3').
 type -> '{' '}'                               : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                     : {type, ?anno('$1','$3'), tuple, '$2'}.
-type -> '#' atom '{' '}'                      : {type, ?anno('$1','$4'), record, ['$2']}.
+type -> '#' atom '{' '}'                      : {type, ?anno('$1','$4'), struct, ['$2']}.
 type -> 'fun' '(' fun_type ')'                : '$3'.
 
 fun_type -> '(' ')' '->' top_type :
@@ -157,7 +162,6 @@ function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 function_clause -> atom clause_args clause_guard clause_body :
 	{clause,?anno('$1','$4'),element(3, '$1'),'$2','$3','$4'}.
 
-
 clause_args -> pat_argument_list : element(1, '$1').
 
 clause_guard -> 'when' guard : '$2'.
@@ -177,7 +181,7 @@ expr -> prefix_op expr : ?mkop1('$1', '$2').
 expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
-expr -> record_expr : '$1'.
+expr -> struct_expr : '$1'.
 expr -> expr_max : '$1'.
 
 remote_id -> atom ':' atom : {remote, ?anno('$1','$3'), '$1', '$3'}.
@@ -205,7 +209,7 @@ pat_expr -> pat_expr add_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
 pat_expr -> map_pat_expr : '$1'.
-pat_expr -> record_pat_expr : '$1'.
+pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
@@ -230,10 +234,8 @@ map_pat_expr -> '#' map_tuple :
 map_pat_expr -> pat_expr_max '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-record_pat_expr -> '#' atom '.' atom :
-	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
-record_pat_expr -> '#' atom record_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
+struct_pat_expr -> '#' atom struct_tuple :
+	{struct, ?anno('$1', '$3'), element(3, '$2'), '$3'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
 list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
@@ -268,7 +270,6 @@ bit_type -> atom             : '$1'.
 bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
-
 
 list_comprehension -> '[' expr '||' lc_exprs ']' :
 	{lc,?anno('$1','$5'),'$2','$4'}.
@@ -309,29 +310,25 @@ map_fields -> map_field ',' map_fields : ['$1' | '$3'].
 
 map_field -> atom '=' expr : {map_field, ?anno('$1','$3'), '$1', '$3'}.
 
-record_expr -> '#' atom '.' atom :
-	{record_index,?anno('$1','$4'),element(3, '$2'),'$4'}.
-record_expr -> '#' atom record_tuple :
-	{record,?anno('$1','$3'),element(3, '$2'),'$3'}.
-record_expr -> expr_max '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> expr_max '#' atom record_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, '$3'),'$4'}.
-record_expr -> record_expr '#' atom '.' atom :
-	{record_field,?anno('$2','$5'),'$1',element(3, '$3'),'$5'}.
-record_expr -> record_expr '#' atom record_tuple :
-	{record,?anno('$2','$4'),'$1',element(3, hd('$3')),'$4'}.
+struct_expr -> '#' atom struct_tuple :
+	{struct, ?anno('$1','$3'), element(3, '$2'), '$3'}.
+struct_expr -> expr_max '#' atom '.' atom :
+	{struct_field, ?anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
+struct_expr -> struct_expr '#' atom '.' atom :
+	{struct_field, ?anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
+struct_expr -> expr_max '#' atom struct_tuple :
+	{struct, ?anno('$2','$4'), '$1', element(3, '$3'), '$4'}.
+struct_expr -> struct_expr '#' atom struct_tuple :
+	{struct, ?anno('$2','$4'), '$1', element(3, hd('$3')), '$4'}.
 
-record_tuple -> '{' '}' : [].
-record_tuple -> '{' record_fields '}' : '$2'.
+struct_tuple -> '{' '}' : [].
+struct_tuple -> '{' struct_fields '}' : '$2'.
 
-record_fields -> record_field : ['$1'].
-record_fields -> record_field ',' record_fields : ['$1' | '$3'].
+struct_fields -> struct_field : ['$1'].
+struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
 
-record_field -> var '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
-record_field -> atom '=' expr : {record_field,?anno('$1','$3'),'$1','$3'}.
+struct_field -> atom '=' expr : {struct_field, ?anno('$1', '$3'), '$1', '$3'}.
 
-%% N.B. This is called from expr.
 function_call -> remote_id argument_list :
 	{call, ?anno('$1','$2'), '$1', element(1, '$2')}.
 function_call -> expr_max argument_list :
@@ -344,7 +341,6 @@ if_clauses -> if_clause ';' if_clauses : ['$1' | '$3'].
 
 if_clause -> guard clause_body :
 	{clause,?anno(hd(hd('$1')),'$2'),[],'$1','$2'}.
-
 
 case_expr -> 'case' expr 'of' cr_clauses 'end' :
 	{'case',?anno('$1','$5'),'$2','$4'}.
@@ -361,7 +357,6 @@ receive_expr -> 'receive' 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$5'),[],'$3','$4'}.
 receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$6'),'$2','$4','$5'}.
-
 
 fun_expr -> 'fun' atom '/' integer :
     {'fun',?anno('$1', '$4'),{function,element(3, '$2'),element(3, '$4')}}.
@@ -398,14 +393,20 @@ try_clause -> pat_expr clause_guard clause_body :
 	A = ?anno('$1','$3'),
 	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
 
+var_list -> '(' ')'      : [].
+var_list -> '(' vars ')' : '$2'.
+
+vars -> var          : ['$1'].
+vars -> var ',' vars : ['$1' | '$3'].
+
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
 
-pat_argument_list -> '(' ')' : {[],?anno('$1','$2')}.
-pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1','$3')}.
-
 exprs -> expr : ['$1'].
 exprs -> expr ',' exprs : ['$1' | '$3'].
+
+pat_argument_list -> '(' ')' : {[],?anno('$1','$2')}.
+pat_argument_list -> '(' pat_exprs ')' : {'$2',?anno('$1','$3')}.
 
 pat_exprs -> pat_expr : ['$1'].
 pat_exprs -> pat_expr ',' pat_exprs : ['$1' | '$3'].
@@ -474,82 +475,34 @@ end).
     {op, ?anno(OpAnno, A), __Op, A}
 end).
 
-%% Entry points compatible to old erl_parse.
-%% These really suck and are only here until Calle gets multiple
-%% entry points working.
-
 parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
-    NewTokens = [{'-', A1}, {'spec', A2} | Tokens],
-    parse(NewTokens);
-parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
-    NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
-    parse(NewTokens);
+    parse([{'-', A1}, {'spec', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
+    parse([{'-', A1}, {'struct', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, exception} | Tokens]) ->
+    parse([{'-', A1}, {'exception', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, A2, message} | Tokens]) ->
+    parse([{'-', A1}, {'message', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, _, type} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, type} | Tokens]);
+parse_form([{'-', A1}, {atom, _, enum} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, enum} | Tokens]);
+parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
+    parse([{'-', A1}, {type_kind, opaque} | Tokens]);
 parse_form(Tokens) ->
     parse(Tokens).
 
-build_typed_attribute(
-    {atom, _, Attr},
-    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type},
-    Aa
-) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
-    lists:foreach(
-        fun
-            ({var, A, '_'}) -> ret_err(A, "bad type variable");
-            (_) -> ok
-        end,
-        Args
-    ),
-    case
-        lists:all(
-            fun
-                ({var, _, _}) -> true;
-                (_) -> false
-            end,
-            Args
-        )
-    of
-        true -> {attribute, Aa, Attr, {TypeName, Type, Args}};
-        false -> error_bad_decl(Aa, Attr)
-    end;
-build_typed_attribute({atom, _, Attr}, _, Aa) ->
-    if
-        Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
-            error_bad_decl(Aa, Attr);
-        true ->
-            ret_err(Aa, "bad attribute")
-    end.
+type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
+    {attribute, Aa, Kind, {Name, Type, Args}}.
 
-build_record_def(
-    {atom, _, Attr}, {atom, _An, RecordName}, Fields, Aa
-) when Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-    {attribute, Aa, Attr, {RecordName, record_fields(Fields)}};
-build_record_def({atom, _, Attr}, _, _, Aa) ->
-    if
-        Attr =:= 'record'; Attr =:= 'exception'; Attr =:= 'message' ->
-            error_bad_decl(Aa, Attr);
-        true ->
-            ret_err(Aa, "bad attribute")
-    end.
+struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
+    {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
 
-build_type_spec({Kind, _}, {type_spec, _TA, SpecFun, TypeSpecs}, Aa) when Kind =:= spec; Kind =:= callback ->
-    NewSpecFun =
-        case SpecFun of
-            {atom, _, Fun} ->
-                {Fun, find_arity_from_specs(TypeSpecs)};
-            {{atom, _, Mod}, {atom, _, Fun}} ->
-                {Mod, Fun, find_arity_from_specs(TypeSpecs)}
-        end,
-    {attribute, Aa, Kind, {NewSpecFun, TypeSpecs}}.
+type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
+    {attribute, Aa, spec, {{Fun, find_arity_from_specs(TypeSpecs)}, TypeSpecs}}.
 
 find_arity_from_specs([Spec | _]) ->
-    %% Use the first spec to find the arity. If all are not the same,
-    %% erl_lint will find this.
-    Fun =
-        case Spec of
-            {type, _, bounded_fun, [F, _]} -> F;
-            {type, _, 'fun', _} = F -> F
-        end,
-    {type, _, 'fun', [{type, _, product, Args}, _]} = Fun,
+    {type, _, 'fun', [{type, _, product, Args}, _]} = Spec,
     length(Args).
 
 lift_unions(T1, {type, _Aa, union, List}) ->
@@ -658,11 +611,11 @@ farity_list({nil, _An}) ->
 farity_list(Other) ->
     ret_err(?anno(Other), "bad function arity").
 
-record_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
-    [{typed_record_field, {record_field, Aa, {atom, Aa, A}}, TypeInfo} | record_fields(Fields)];
-record_fields([Other | _Fields]) ->
-    ret_err(?anno(Other), "bad record field");
-record_fields([]) ->
+struct_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
+    [{typed_struct_field, {struct_field, Aa, {atom, Aa, A}}, TypeInfo} | struct_fields(Fields)];
+struct_fields([Other | _Fields]) ->
+    ret_err(?anno(Other), "bad struct field");
+struct_fields([]) ->
     [].
 
 term(Expr) ->
@@ -725,62 +678,16 @@ ret_err(Anno, S) ->
     return_error(erl_anno:location(Anno), S).
 
 %%  Convert between the abstract form of a term and a term.
-normalise({char, _, C}) ->
-    C;
 normalise({integer, _, I}) ->
     I;
-normalise({float, _, F}) ->
-    F;
 normalise({atom, _, A}) ->
     A;
-normalise({string, _, S}) ->
-    S;
 normalise({nil, _}) ->
     [];
-normalise({bin, _, Fs}) ->
-    {value, B, _} =
-        eval_bits:expr_grp(
-            Fs,
-            [],
-            fun (E, _) ->
-                {value, normalise(E), []}
-            end,
-            [],
-            true
-        ),
-    B;
 normalise({cons, _, Head, Tail}) ->
     [normalise(Head) | normalise(Tail)];
 normalise({tuple, _, Args}) ->
     list_to_tuple(normalise_list(Args));
-normalise({map, _, Pairs} = M) ->
-    maps:from_list(
-        lists:map(
-            fun
-                ({map_field, _, K, V}) ->
-                    {normalise(K), normalise(V)};
-                (_) ->
-                    erlang:error({badarg, M})
-            end,
-            Pairs
-        )
-    );
-normalise({'fun', _, {function, {atom, _, M}, {atom, _, F}, {integer, _, A}}}) ->
-    fun M:F/A;
-%% Special case for unary +/-.
-normalise({op, _, '+', {char, _, I}}) ->
-    I;
-normalise({op, _, '+', {integer, _, I}}) ->
-    I;
-normalise({op, _, '+', {float, _, F}}) ->
-    F;
-%Weird, but compatible!
-normalise({op, _, '-', {char, _, I}}) ->
-    -I;
-normalise({op, _, '-', {integer, _, I}}) ->
-    -I;
-normalise({op, _, '-', {float, _, F}}) ->
-    -F;
 normalise(X) ->
     erlang:error({badarg, X}).
 
@@ -855,10 +762,10 @@ modify_anno1({function, M, F, A}, Ac, Mf) ->
     {F1, Ac2} = modify_anno1(F, Ac1, Mf),
     {A1, Ac3} = modify_anno1(A, Ac2, Mf),
     {{function, M1, F1, A1}, Ac3};
-modify_anno1({attribute, A, record, {Name, Fields}}, Ac, Mf) ->
+modify_anno1({attribute, A, struct, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, record, {Name, Fields1}}, Ac2};
+    {{attribute, A1, struct, {Name, Fields1}}, Ac2};
 modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
@@ -871,10 +778,6 @@ modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
     {{attribute, A1, spec, {Fun, Types1}}, Ac2};
-modify_anno1({attribute, A, callback, {Fun, Types}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute, A1, callback, {Fun, Types1}}, Ac2};
 modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
@@ -903,10 +806,10 @@ modify_anno1({eof, L}, Ac, _Mf) ->
 modify_anno1({clauses, Cs}, Ac, Mf) ->
     {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
     {{clauses, Cs1}, Ac1};
-modify_anno1({typed_record_field, Field, Type}, Ac, Mf) ->
+modify_anno1({typed_struct_field, Field, Type}, Ac, Mf) ->
     {Field1, Ac1} = modify_anno1(Field, Ac, Mf),
     {Type1, Ac2} = modify_anno1(Type, Ac1, Mf),
-    {{typed_record_field, Field1, Type1}, Ac2};
+    {{typed_struct_field, Field1, Type1}, Ac2};
 modify_anno1({Tag, A}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {{Tag, A1}, Ac1};

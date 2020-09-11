@@ -26,3 +26,13 @@ test1(X) ->
 
 test2(M) when M#(id) > 0 -> 1;
 test2(M) when M#(name)#(first) =/= "" -> 0.
+
+
+%% create in in guards
+test3(M) when M == #(x = 1) -> true.
+
+%% update in guards
+test4(M) when M == M#(x = 1) -> true.
+
+%% More updates in guards
+test5(M) when M == M#(x = 1)#(y = 2) -> true.

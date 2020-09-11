@@ -117,7 +117,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
           elem.size.map(printExp)
         }
 
-      case A.ERecordPat(_, fields) =>
+      case A.StructPat(_, fields) =>
         fields.foreach { f => printPat(f.value) }
     }
 
@@ -198,15 +198,13 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         printExp(exp)
         fields.foreach(f => printExp(f.value))
 
-      case A.ERecordCreate(_, fields) =>
+      case A.StructCreate(_, fields) =>
         fields.foreach(f => printExp(f.value))
-      case A.ERecordUpdate(rec, _, fields) =>
-        printExp(rec)
+      case A.StructUpdate(struct, _, fields) =>
+        printExp(struct)
         fields.foreach(f => printExp(f.value))
-      case A.ERecordIndex(_, _) =>
-      // Nothing
-      case A.ERecordSelect(rec, _, _) =>
-        printExp(rec)
+      case A.StructSelect(struct, _, _) =>
+        printExp(struct)
 
       case A.FnExp(clauses) =>
         clauses.foreach { clause =>

@@ -13,11 +13,12 @@
 %% limitations under the License.
 
 -lang([erl2, st]).
--module(records).
+-module(structs).
 
--record #user{name :: string(), id :: integer()}.
--record #manager{user :: #user{}}.
--record #ok{}.
+-struct user :: {name :: string(), id :: integer()}.
+-struct manager :: {user :: #user{}}.
+-struct ok :: {}.
+-struct boxed_int :: {int :: integer()}.
 
 -spec test(#user{}) -> #user{}.
 test(X) -> X.
@@ -28,19 +29,13 @@ mk_user(Name, Id) ->
 update_user(User, Name, Id) ->
     User#user{name = Name, id = Id}.
 
-index() ->
-    #user.name.
-
 get_id(User) ->
     User#user.id.
 
 get_man_id(Manager) ->
-    (Manager#manager.user)#user.id.
+    Manager#manager.user#user.id.
 
 check_user(User) when User == #user{name = "anonymous", id = -1} ->
-    #ok{}.
-
-check_id(Id) when Id > #user.id ->
     #ok{}.
 
 check_users(User1, User2) when User1#user.id == User2#user.id ->
@@ -55,5 +50,6 @@ match_users(#user{id = Id}, #user{id = Id}) -> true.
 foo(#manager{user = User}) ->
     User.
 
-bar(#manager.user) ->
-    #ok{}.
+%% For the record): This is an illegal guard expression! - updating a record is forbidden!
+%% guard1(BoxedInt) when BoxedInt == BoxedInt#boxed_int{int = 3} -> true.
+

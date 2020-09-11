@@ -49,14 +49,11 @@ object GuardsConvert {
         GBinaryOp(sp(anno), op, convertGExpr(eTest1), convertGExpr(eTest2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eTest1)) =>
         GUnaryOp(sp(anno), op, convertGExpr(eTest1))
-      case ETuple(List(EAtom("record"), anno, EAtom(recordName), EList(eRecordFieldTests))) =>
-        GRecordCreate(sp(anno), recordName, eRecordFieldTests.map(convertGRecordField))
-      case ETuple(List(EAtom("record_index"), anno, EAtom(recordName), eFieldName)) =>
+      case ETuple(List(EAtom("struct"), anno, EAtom(recordName), EList(eRecordFieldTests))) =>
+        GStructCreate(sp(anno), recordName, eRecordFieldTests.map(gStructField))
+      case ETuple(List(EAtom("struct_field"), anno, eTest, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        GRecordIndex(sp(anno), recordName, fieldName)
-      case ETuple(List(EAtom("record_field"), anno, eTest, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(_, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        GRecordFieldAccess(sp(anno), convertGExpr(eTest), recordName, fieldName)
+        GStructSelect(sp(anno), convertGExpr(eTest), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         GMapCreate(sp(anno), eAssocs.map(convertGAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
@@ -109,12 +106,10 @@ object GuardsConvert {
         }
     }
 
-  def convertGAssoc(term: ETerm): GAssoc =
+  def convertGAssoc(term: ETerm): GMapField =
     term match {
-      case ETuple(List(EAtom("map_field_assoc"), anno, eExp1, eExp2)) =>
-        GAssocOpt(sp(anno), convertGExpr(eExp1), convertGExpr(eExp2))
-      case ETuple(List(EAtom("map_field_exact"), anno, eExp1, eExp2)) =>
-        GAssocExact(sp(anno), convertGExpr(eExp1), convertGExpr(eExp2))
+      case ETuple(List(EAtom("map_field"), anno, eExp1, eExp2)) =>
+        GMapField(sp(anno), convertGExpr(eExp1), convertGExpr(eExp2))
     }
 
   def convertGBinElement(term: ETerm): GBinElement =
@@ -127,10 +122,10 @@ object GuardsConvert {
         GBinElement(convertGExpr(eExpr), size, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
     }
 
-  def convertGRecordField(term: ETerm): GRecordField =
+  def gStructField(term: ETerm): GStructField =
     term match {
-      case ETuple(List(EAtom("record_field"), anno, eName, ePat)) =>
+      case ETuple(List(EAtom("struct_field"), anno, eName, ePat)) =>
         val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
-        GRecordField(sp(anno), name, convertGExpr(ePat))
+        GStructField(sp(anno), name, convertGExpr(ePat))
     }
 }

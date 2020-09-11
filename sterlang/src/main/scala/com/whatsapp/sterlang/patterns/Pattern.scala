@@ -36,8 +36,8 @@ private[patterns] object Pattern {
   case object EmptyList extends Constructor
   case object Cons extends Constructor
   case class Record(fields: List[String], open: Boolean) extends Constructor
-  case class ErlangRecord(recordName: String, fields: List[String]) extends Constructor
-  case class OpenVariantRecord(recordName: String, fields: List[String]) extends Constructor
+  case class ClassicStruct(structName: String, fields: List[String]) extends Constructor
+  case class OpenVariantStruct(structName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
 
   /** An unknown constructor of some/any data type.
@@ -92,15 +92,15 @@ private[patterns] object Pattern {
         // TODO: quote field names when necessary (better yet, add generic function to print atoms)
         fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = start, sep = ", ", end = "}")
 
-      case ConstructorApplication(ErlangRecord(recordName, fieldNames), arguments) =>
+      case ConstructorApplication(ClassicStruct(recordName, fieldNames), arguments) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
 
         // TODO: quote field names when necessary
         fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$recordName{", sep = ", ", end = "}")
 
-      case ConstructorApplication(OpenVariantRecord(recordName, fieldNames), arguments) =>
-        show(ConstructorApplication(ErlangRecord(recordName, fieldNames), arguments))
+      case ConstructorApplication(OpenVariantStruct(recordName, fieldNames), arguments) =>
+        show(ConstructorApplication(ClassicStruct(recordName, fieldNames), arguments))
 
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
@@ -145,13 +145,13 @@ private[patterns] object Pattern {
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
-      case Absyn.ERecordPat(recordName, patternFields) =>
+      case Absyn.StructPat(name, patternFields) =>
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
-        val recordDefinition = program.erlangRecordDefs.find(_.name == recordName).get
-        val allFieldNames = recordDefinition.fields.map(_.label).sorted
-        val constructor = if (recordDefinition.kind == Ast.ErlangRecord) ErlangRecord else OpenVariantRecord
+        val structDef = program.structDefs.find(_.name == name).get
+        val allFieldNames = structDef.fields.map(_.label).sorted
+        val constructor = if (structDef.kind == Ast.StrStruct) ClassicStruct else OpenVariantStruct
         ConstructorApplication(
-          constructor(recordName, allFieldNames),
+          constructor(name, allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 

@@ -15,8 +15,6 @@
 -lang([erl2, st]).
 -module(comp).
 
--author("anonymous").
-
 map(F, L) ->
     [F(X) || X <- L].
 

@@ -43,7 +43,7 @@ object Types {
   case class Assoc(p: Pos.P, keyType: Type, valueType: Type)
 
   case class PredefinedType(p: Pos.SP, name: String, params: List[Type]) extends Type
-  case class RecordType(p: Pos.SP, name: String, fieldTypes: List[RecordFieldType]) extends Type
+  case class StructType(p: Pos.SP, name: String, fieldTypes: List[StructFieldType]) extends Type
   case class RemoteType(p: Pos.SP, module: String, name: String, params: List[Type]) extends Type
 
   sealed trait SingletonIntegerType extends Type
@@ -62,7 +62,7 @@ object Types {
   case class UserType(p: Pos.SP, name: String, params: List[Type]) extends Type
   case class EnumCtr(p: Pos.SP, ctr: String, types: List[Type]) extends Type
 
-  case class RecordFieldType(name: String, tp: Type)
+  case class StructFieldType(name: String, tp: Type)
 
   sealed trait FunSpecType
   case class AF_ContrainedFunctionType(functionType: FunctionType, constraints: List[Constraint]) extends FunSpecType

@@ -32,7 +32,9 @@ object FormsConvert {
     "compile",
     "type",
     "opaque",
-    "record",
+    "struct",
+    "message",
+    "exception",
     "spec",
     "callback",
   )
@@ -99,17 +101,17 @@ object FormsConvert {
         TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("record"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), RecRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), StrStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), ExnRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), ExnStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(recordName), EList(eRecFields))))
+            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        RecordDecl(sp(anno), recordName, eRecFields.map(convertFieldDecl), MsgRecord)
+        StructDecl(sp(anno), name, fields.map(structFieldDecl), MsgStruct)
       // af_function_spec
       case ETuple(
             List(
@@ -146,16 +148,16 @@ object FormsConvert {
         (name, arity.intValue)
     }
 
-  def convertFieldDecl(term: ETerm): RecordFieldDecl =
+  def structFieldDecl(term: ETerm): StructFieldDecl =
     term match {
-      case ETuple(List(EAtom("record_field"), anno, fieldNameLit)) =>
-        RecordFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), None)
-      case ETuple(List(EAtom("record_field"), anno, fieldNameLit, expr)) =>
-        RecordFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), Some(ExprsConvert.convertExp(expr)))
-      case ETuple(List(EAtom("typed_record_field"), eUntypedField, eType)) =>
-        val RecordFieldUntyped(p, name, initValue) = convertFieldDecl(eUntypedField)
+      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit)) =>
+        StructFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), None)
+      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, expr)) =>
+        StructFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), Some(ExprsConvert.convertExp(expr)))
+      case ETuple(List(EAtom("typed_struct_field"), eUntypedField, eType)) =>
+        val StructFieldUntyped(p, name, initValue) = structFieldDecl(eUntypedField)
         val tp = TypesConvert.convertType(eType)
-        RecordFieldTyped(p, name, initValue, tp)
+        StructFieldTyped(p, name, initValue, tp)
     }
 
   def convertAtomLit(term: ETerm): String =

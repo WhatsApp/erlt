@@ -15,5 +15,5 @@
 -lang([erl2, st]).
 -module(e91).
 
--record #duplicate_record{}.
--record #duplicate_record{id :: integer()}.
+-struct duplicate_struct :: {}.
+-struct duplicate_struct :: {id :: integer()}.
