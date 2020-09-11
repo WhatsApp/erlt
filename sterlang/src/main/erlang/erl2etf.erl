@@ -61,9 +61,27 @@ normalize_for_typecheck(Forms, Ffi) ->
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(As) when is_list(As) ->
-    Start = erl_anno:location(As),
+    Start = location(As),
     End = erl2_parse:get_end_location(As),
     {Start, End}.
+
+location(Line) when is_integer(Line) ->
+    Line;
+location({Line, Column}=Location) when is_integer(Line), is_integer(Column) ->
+    Location;
+location(Anno) ->
+    anno_info(Anno, location).
+
+anno_info(Anno, Item) ->
+    try lists:keyfind(Item, 1, Anno) of
+        {Item, Value} ->
+            Value;
+        false ->
+            undefined
+    catch
+        _:_ ->
+            erlang:error(badarg, [Anno])
+    end.
 
 is_fun_form({function, _, _, _, _}) -> true;
 is_fun_form(_) -> false.
