@@ -235,7 +235,7 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 	{map, anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
 struct_pat_expr -> '#' atom struct_tuple :
-	{struct, anno('$1', '$3'), element(3, '$2'), '$3'}.
+	{struct, anno('$1', '$3'), element(3, '$2'), element(1, '$3')}.
 
 list -> '[' ']'       : {nil,  anno('$1','$2')}.
 list -> '[' expr tail : {cons, anno('$1','$3'),'$2','$3'}.
@@ -311,18 +311,18 @@ map_fields -> map_field ',' map_fields : ['$1' | '$3'].
 map_field -> atom '=' expr : {map_field, anno('$1','$3'), '$1', '$3'}.
 
 struct_expr -> '#' atom struct_tuple :
-	{struct, anno('$1','$3'), element(3, '$2'), '$3'}.
+	{struct, anno('$1','$3'), element(3, '$2'), element(1, '$3')}.
 struct_expr -> expr_max '#' atom '.' atom :
 	{struct_field, anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
 struct_expr -> struct_expr '#' atom '.' atom :
 	{struct_field, anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
 struct_expr -> expr_max '#' atom struct_tuple :
-	{struct, anno('$2','$4'), '$1', element(3, '$3'), '$4'}.
+	{struct, anno('$2','$4'), '$1', element(3, '$3'), element(1, '$4')}.
 struct_expr -> struct_expr '#' atom struct_tuple :
-	{struct, anno('$2','$4'), '$1', element(3, hd('$3')), '$4'}.
+	{struct, anno('$2','$4'), '$1', element(3, hd('$3')), element(1, '$4')}.
 
-struct_tuple -> '{' '}' : [].
-struct_tuple -> '{' struct_fields '}' : '$2'.
+struct_tuple -> '{' '}'               : {[],   anno('$1', '$2')}.
+struct_tuple -> '{' struct_fields '}' : {'$2', anno('$1', '$3')}.
 
 struct_fields -> struct_field : ['$1'].
 struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
