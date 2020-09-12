@@ -1,16 +1,11 @@
 -module(make_escript).
 
 main([]) ->
-    Beams = ["erl2_parse.beam", "erl2etf.beam"],
-    Archive = [{filename:basename(X), read_file(X)} || X <- Beams],
+    {ok, Beam} = file:read_file("parser.beam"),
     ok =
-        escript:create("erl2etf", [
+        escript:create("parser", [
             shebang,
             comment,
-            {emu_args, "+sbtu +A0 -noinput -mode minimal -escript main erl2etf"},
-            {archive, Archive, []}
+            {emu_args, "+sbtu +A0 -noinput -mode minimal -escript main parser"},
+            {beam, Beam}
         ]).
-
-read_file(Name) ->
-    {ok, Bin} = file:read_file(Name),
-    Bin.

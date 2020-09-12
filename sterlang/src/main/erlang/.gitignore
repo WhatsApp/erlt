@@ -1,2 +1,2 @@
-erl2_parse.erl
-erl2etf
+parser.erl
+parser

@@ -56,18 +56,18 @@ package object etf {
       } else {
         val tmp =
           if (debug) Paths.get(path.substring(0, path.length - 3) + "etf")
-          else Files.createTempFile("etf_reader", ".etf")
-        s"./erl2etf -ifile $path -ofile $tmp".!!
+          else Files.createTempFile("sterlang", ".etf")
+        s"./parser -ifile $path -ofile $tmp".!!
         tmp
       }
     readEtf(etfPath)
   }
 
   private def etfFromString(text: String): ETerm = {
-    val tmpErl = Files.createTempFile("etf_reader", ".erl")
+    val tmpErl = Files.createTempFile("sterlang", ".erl")
     Files.write(tmpErl, text.getBytes)
-    val tmpEtf = Files.createTempFile("etf_reader", ".etf")
-    s"./erl2etf -ifile $tmpErl -ofile $tmpEtf".!!
+    val tmpEtf = Files.createTempFile("sterlang", ".etf")
+    s"./parser -ifile $tmpErl -ofile $tmpEtf".!!
     readEtf(tmpEtf)
   }
 

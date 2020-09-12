@@ -31,29 +31,29 @@ lazy val sterlang = (project in file("."))
   .settings(
     mainClass in assembly := Some("com.whatsapp.sterlang.Main"),
     assemblyJarName in assembly := "sterlang.jar",
-    resourceGenerators in Compile += erl2etf.taskValue,
+    resourceGenerators in Compile += parser.taskValue,
   )
 
-val erl2etf = taskKey[Seq[File]]("Generate erl2etf command line utility")
-erl2etf / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "erl2_parse.yrl|erl2etf.erl".r
+val parser = taskKey[Seq[File]]("Generate parser command line utility")
+parser / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
 
-erl2etf := {
+parser := {
   val log = streams.value.log
   val erlangSrcDir = (Compile / sourceDirectory).value / "erlang"
-  val erl2etfInput = erlangSrcDir / "erl2etf"
-  val erl2etfOutput = (Compile / resourceManaged).value / "erl2etf"
+  val parserInput = erlangSrcDir / "parser"
+  val parserOutput = (Compile / resourceManaged).value / "parser"
 
-  if (erl2etf.inputFileChanges.hasChanges) {
+  if (parser.inputFileChanges.hasChanges) {
     import scala.sys.process.Process
-    Process(Seq("erlc", "erl2_parse.yrl"), erlangSrcDir).!!
-    Process(Seq("erlc", "erl2_parse.erl", "erl2etf.erl"), erlangSrcDir).!!
+    Process(Seq("erlc", "parser.yrl"), erlangSrcDir).!!
+    Process(Seq("erlc", "parser.erl"), erlangSrcDir).!!
     Process(Seq("escript", "make_escript.erl"), erlangSrcDir).!!
   }
 
   IO.copy(
-    Seq((erl2etfInput, erl2etfOutput)),
+    Seq((parserInput, parserOutput)),
     options = CopyOptions(true, true, true),
   )
-  erl2etfOutput.setExecutable(true)
-  Seq(erl2etfOutput)
+  parserOutput.setExecutable(true)
+  Seq(parserOutput)
 }

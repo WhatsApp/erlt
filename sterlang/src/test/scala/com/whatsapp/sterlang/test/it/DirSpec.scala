@@ -27,7 +27,7 @@ abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
     import sys.process._
     describe(iDirPath) {
       val oDirPath = Files.createTempDirectory("sterlang")
-      s"./erl2etf -idir $iDirPath -odir $oDirPath".!!
+      s"./parser -idir $iDirPath -odir $oDirPath".!!
 
       val file = new File(iDirPath)
       val moduleNames =
