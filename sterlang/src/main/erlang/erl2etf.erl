@@ -48,7 +48,6 @@ main(["-idir", IDir, "-odir", ODir]) ->
 parse_lang(Forms) ->
     lists:nth(1, [Lang || {attribute, _, lang, Lang} <- Forms]).
 
-%% Turn annotation fields into a uniform format for export to the type checker
 normalize_for_typecheck(Forms, Lang) ->
     Forms1 =
         case Lang of
@@ -56,12 +55,6 @@ normalize_for_typecheck(Forms, Lang) ->
             ffi -> [F || F <- Forms, not is_fun_form(F)]
         end,
     Forms1.
-
-%% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
-normalize_loc(As) when is_list(As) ->
-    {location, Start} = lists:keyfind(location, 1, As),
-    End = erl2_parse:get_end_location(As),
-    {Start, End}.
 
 is_fun_form({function, _, _, _, _}) -> true;
 is_fun_form(_) -> false.
