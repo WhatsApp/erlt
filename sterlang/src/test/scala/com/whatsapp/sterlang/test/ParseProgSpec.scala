@@ -30,10 +30,8 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Should be parsed correctly") {
       testProg(
         """
-          |-lang([erl2, st]).
+          |-lang(st).
           |-module(test).
-          |-depends_on([mod1]).
-          |-depends_on([mod2]).
           |-enum box(A) :: box{A}.
           |-type boxAlias(A) :: box(A).
           |-enum box2(A) :: box2{A}.
@@ -43,7 +41,7 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
           |test(X) -> if X -> true; true -> false end.
           |""".stripMargin,
         Program(
-          require = Require(List("mod1", "mod2")),
+          require = Require(List()),
           enumDefs = List(
             EnumDef("box", List(TypeVar("A")(NP)), List(EnumCon("box", List(TypeVar("A")(NP)))(NP)))(NP),
             EnumDef("box2", List(TypeVar("A")(NP)), List(EnumCon("box2", List(TypeVar("A")(NP)))(NP)))(NP),

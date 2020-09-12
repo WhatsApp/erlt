@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(n07).
 -enum option(A) :: none{} | some{A}.
 

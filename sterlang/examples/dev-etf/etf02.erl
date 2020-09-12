@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(etf02).
 
 -export([first_arg/2]).

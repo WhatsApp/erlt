@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e72).
 % Useless variable
 -enum e(A) :: e1{} | e1{A}.

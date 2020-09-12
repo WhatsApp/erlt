@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e79).
 % wrong opaque: unknown test(A).
 -opaque elem(A) :: {test(A)}.

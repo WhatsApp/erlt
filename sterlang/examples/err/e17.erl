@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e17).
 foo(X, Y) ->
     X + (not Y).

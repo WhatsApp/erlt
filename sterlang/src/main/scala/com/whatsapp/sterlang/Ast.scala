@@ -264,7 +264,7 @@ object Ast {
   case class RequireElem(modules: List[String]) extends ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
-  case class LangElem(mods: List[String]) extends ProgramElem
+  case class LangElem(lang: String) extends ProgramElem
   case class ModuleElem(module: String) extends ProgramElem
   case class ExportElem(ids: List[(String, Int)]) extends ProgramElem
   case class ImportElem(module: String, ids: List[LocalFunName]) extends ProgramElem
@@ -278,11 +278,11 @@ object Ast {
 
   case class RawProgram(elems: List[ProgramElem]) {
     def program: Program = {
-      val mods = elems.find { _.isInstanceOf[LangElem] }.get.asInstanceOf[LangElem].mods.toSet
-      val lang: Lang =
-        if (mods == Set("erl2", "st")) ST
-        else if (mods == Set("erl2", "ffi")) FFI
-        else sys.error("unexpected mode")
+      val langString = elems.find { _.isInstanceOf[LangElem] }.get.asInstanceOf[LangElem].lang
+      val lang: Lang = langString match {
+        case "st"  => ST
+        case "ffi" => FFI
+      }
       Program(
         lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,

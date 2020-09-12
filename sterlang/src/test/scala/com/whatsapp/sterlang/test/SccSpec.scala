@@ -30,7 +30,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
   describe("SCCs") {
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |""".stripMargin,
       List(),
@@ -38,7 +38,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |even() -> odd().
         |odd() -> even().
@@ -48,7 +48,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |odd() -> even().
         |even() -> odd().
@@ -58,7 +58,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |odd1() -> even1().
         |odd2() -> even2().
@@ -70,7 +70,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |odd2() -> even2().
         |odd1() -> even1().
@@ -82,7 +82,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |main1() -> even1().
         |odd2() -> even2().
@@ -96,7 +96,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |main2() -> even2().
         |odd2() -> even2().
@@ -110,7 +110,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |main() -> test:foo1().
         |foo1() -> 1.
@@ -120,7 +120,7 @@ class SccSpec extends org.scalatest.funspec.AnyFunSpec {
 
     testScc(
       """
-        |-lang([erl2, st]).
+        |-lang(st).
         |-module(test).
         |main() -> fun test:foo2/0.
         |foo2() -> 1.

@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e26).
 -enum e1(A) :: e1{A}.
 -enum e2(A) :: e2{A}.

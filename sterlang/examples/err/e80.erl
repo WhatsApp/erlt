@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e80).
 % core:tuple1(A) is opaque
 -spec tuple1(A) -> core:tuple1(A).

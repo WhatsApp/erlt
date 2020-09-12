@@ -49,10 +49,8 @@ object FormsConvert {
 
   def convertForm(term: ETerm): Form =
     term match {
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EList(List(EAtom(mod1), EAtom(mod2))))) =>
-        Lang(List(mod1, mod2))
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EList(List(EAtom(mod1))))) =>
-        Lang(List(mod1))
+      case ETuple(List(EAtom("attribute"), _anno, EAtom("lang"), EAtom(lang))) =>
+        Lang(lang)
       // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
         Module(name)
@@ -137,6 +135,8 @@ object FormsConvert {
       case ETuple(List(EAtom("attribute"), anno, EAtom(attrName), attrValue)) =>
         WildAttribute(sp(anno), attrName)
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
+        Error(Pos.Loc(line.toInt, column.toInt))
+      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
         Error(Pos.Loc(line.toInt, column.toInt))
       case _ =>
         sys.error(s"unexpected term: $term")

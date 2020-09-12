@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(n08).
 -enum option(A) :: none{} | some{A}.
 %% simulating it via Variant

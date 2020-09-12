@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
+-lang(st).
 -module(e81).
 
 -spec access_map(#(id :: Id, location :: Location, _)) -> #(id :: Id, location :: Location).

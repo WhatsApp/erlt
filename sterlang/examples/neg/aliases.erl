@@ -1,4 +1,4 @@
--lang([erl2, st]).
+-lang(st).
 -module(aliases).
 -type pair(A, B) :: {A, B}.
 

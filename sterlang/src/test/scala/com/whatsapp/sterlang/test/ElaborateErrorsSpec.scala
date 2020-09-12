@@ -45,7 +45,7 @@ class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     it("example1") {
       val input =
         """
-          |-lang([erl2, st]).
+          |-lang(st).
           |-module(test).
           |-spec call_id(A) -> B.
           |call_id(X) -> id(X).

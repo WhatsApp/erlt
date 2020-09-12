@@ -18,16 +18,14 @@
 main(["-ifile", IFile, "-ofile", OFile]) ->
     Forms = parse_file(IFile),
     Lang = parse_lang(Forms),
-    Ffi = lists:member(ffi, Lang),
-    Forms1 = normalize_for_typecheck(Forms, Ffi),
+    Forms1 = normalize_for_typecheck(Forms, Lang),
     CodeETF = erlang:term_to_binary(Forms1),
     ok = filelib:ensure_dir(OFile),
     ok = file:write_file(OFile, CodeETF);
 main(["-ast", Filename]) ->
     Forms = parse_file(Filename),
     Lang = parse_lang(Forms),
-    Ffi = lists:member(ffi, Lang),
-    Forms1 = normalize_for_typecheck(Forms, Ffi),
+    Forms1 = normalize_for_typecheck(Forms, Lang),
     io:format("Forms:\n~p\n", [Forms1]);
 main(["-idir", IDir, "-odir", ODir]) ->
     {ok, Files} = file:list_dir(IDir),
@@ -50,43 +48,13 @@ main(["-idir", IDir, "-odir", ODir]) ->
 parse_lang(Forms) ->
     lists:nth(1, [Lang || {attribute, _, lang, Lang} <- Forms]).
 
-%% Turn annotation fields into a uniform format for export to the type checker
-normalize_for_typecheck(Forms, Ffi) ->
+normalize_for_typecheck(Forms, Lang) ->
     Forms1 =
-        case Ffi of
-            false -> Forms;
-            true -> [F || F <- Forms, not is_fun_form(F)]
+        case Lang of
+            st -> Forms;
+            ffi -> [F || F <- Forms, not is_fun_form(F)]
         end,
-    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
-
-%% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
-normalize_loc(Line) when is_integer(Line) ->
-    % only start line known
-    {{Line, 0}, {Line, 0}};
-normalize_loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
-    % only start position known
-    {Loc, Loc};
-normalize_loc(As) when is_list(As) ->
-    Start = loc(erl_anno:location(As)),
-    End =
-        case erl2_parse:get_end_location(As) of
-            undefined -> Start;
-            Loc -> loc(Loc)
-        end,
-    case lists:member(open_rec, As) of
-        true -> {Start, End, open_rec};
-        false -> {Start, End}
-    end;
-normalize_loc(_Other) ->
-    % unknown position
-    {{0, 0}, {0, 0}}.
-
-loc({Line, Col} = Loc) when is_integer(Line), is_integer(Col) ->
-    Loc;
-loc(Line) when is_integer(Line) ->
-    {Line, 0};
-loc(_Other) ->
-    {0, 0}.
+    Forms1.
 
 is_fun_form({function, _, _, _, _}) -> true;
 is_fun_form(_) -> false.
@@ -101,7 +69,8 @@ parse_chars(Chars, Location) ->
         {done, Result, Chars1} ->
             case Result of
                 {ok, Tokens, Location1} ->
-                    case erl2_parse:parse_form(Tokens) of
+                    Tokens1 = norm_loc_tokens(Tokens),
+                    case erl2_parse:parse_form(Tokens1) of
                         {ok, Form} ->
                             [Form | parse_chars(Chars1, Location1)];
                         {error, E} ->
@@ -117,7 +86,8 @@ parse_chars(Chars, Location) ->
                 {done, Result, _} ->
                     case Result of
                         {ok, Tokens = [FirstToken | _], _} ->
-                            case erl2_parse:parse_form(Tokens) of
+                            Tokens1 = norm_loc_tokens(Tokens),
+                            case erl2_parse:parse_form(Tokens1) of
                                 {ok, Form} ->
                                     [Form];
                                 {error, _} ->
@@ -132,3 +102,20 @@ parse_chars(Chars, Location) ->
                     [{error, Location}]
             end
     end.
+
+norm_loc_token(Tok) ->
+    [{text, Text}, {location, {L1, C1}}] = erlang:element(2, Tok),
+    {L2, C2} = end_text_location(Text, L1, C1),
+    erlang:setelement(2, Tok, {{L1, C1}, {L2, C2}}).
+
+norm_loc_tokens([]) ->
+    [];
+norm_loc_tokens([Tok | Toks]) ->
+    [norm_loc_token(Tok) | norm_loc_tokens(Toks)].
+
+end_text_location("", Line, Column) ->
+    {Line, Column};
+end_text_location([$\n|String], Line, _Column) ->
+    end_text_location(String, Line+1, 1);
+end_text_location([_|String], Line, Column) ->
+    end_text_location(String, Line, Column+1).
