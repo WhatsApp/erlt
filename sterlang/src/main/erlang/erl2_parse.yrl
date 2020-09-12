@@ -458,7 +458,7 @@ Erlang code.
 
 -export([parse_form/1]).
 -export([map_anno/2]).
--export([get_end_location/1, location/1]).
+-export([get_end_location/1]).
 
 -define(mkop2(L, OpAnno, R), begin
     {__Op, __Anno} = OpAnno,
@@ -614,7 +614,8 @@ build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', anno(Try, End), Es, Scs, Ccs, As}.
 
 ret_err(Anno, S) ->
-    return_error(location(Anno), S).
+    {location, Location} = lists:keyfind(location, 1, Anno),
+    return_error(Location, S).
 
 map_anno(F0, Abstr) ->
     F = fun (A, Acc) -> {F0(A), Acc} end,
@@ -627,15 +628,9 @@ anno(Left, Right) when is_list(Right) -> merge_anno(anno(Left), anno(lists:last(
 anno(Left, Right) when is_tuple(Right) -> merge_anno(anno(Left), anno(Right)).
 
 merge_anno(Left, Right) ->
-    LeftLoc = location(Left),
-    case get_end_location(Right) of
-        LeftLoc ->
-            LeftLoc;
-        undefined ->
-            error(Right);
-        RightLoc ->
-            [{end_location, RightLoc} | ensure_anno_list(LeftLoc)]
-    end.
+    {location, LeftLoc} = lists:keyfind(location, 1, Left),
+    RightLoc = get_end_location(Right),
+    [{end_location, RightLoc} | ensure_anno_list(LeftLoc)].
 
 ensure_anno_list({L, C} = Loc) when is_integer(L), is_integer(C) ->
     [{location, Loc}];
@@ -643,68 +638,21 @@ ensure_anno_list(L) when is_list(L) ->
     L.
 
 get_end_location(Anno) when is_list(Anno) ->
-    %% use existing end_location annotation if present
     case lists:keyfind(end_location, 1, Anno) of
-        false ->
-            end_location(Anno);
         {end_location, Pos} ->
-            Pos
-    end;
-get_end_location(Anno) ->
-    end_location(Anno).
-
-location(Line) when is_integer(Line) ->
-    Line;
-location({Line, Column}=Location) when is_integer(Line), is_integer(Column) ->
-    Location;
-location(Anno) ->
-    anno_info(Anno, location).
-
-anno_info(Anno, Item) ->
-    try lists:keyfind(Item, 1, Anno) of
-        {Item, Value} ->
-            Value;
+            Pos;
         false ->
-            undefined
-    catch
-        _:_ ->
-            erlang:error(badarg, [Anno])
+            {location, {Line, Column}} = lists:keyfind(location, 1, Anno),
+            {text, Text} = lists:keyfind(text, 1, Anno),
+            end_text_location(Text, Line, Column)
     end.
 
-end_location(Anno) ->
-    case text(Anno) of
-        undefined ->
-            undefined;
-        Text ->
-            case location(Anno) of
-                {Line, Column} ->
-                    end_location(Text, Line, Column);
-                Line ->
-                    end_location(Text, Line)
-            end
-    end.
-
-end_location("", Line, Column) ->
+end_text_location("", Line, Column) ->
     {Line, Column};
-end_location([$\n|String], Line, _Column) ->
-    end_location(String, Line+1, 1);
-end_location([_|String], Line, Column) ->
-    end_location(String, Line, Column+1).
-
-end_location("", Line) ->
-    Line;
-end_location([$\n|String], Line) ->
-    end_location(String, Line+1);
-end_location([_|String], Line) ->
-    end_location(String, Line).
-
-text(Line) when is_integer(Line) ->
-    undefined;
-text({Line, Column}) when is_integer(Line), is_integer(Column) ->
-    undefined;
-text(Anno) ->
-    anno_info(Anno, text).
-
+end_text_location([$\n|String], Line, _Column) ->
+    end_text_location(String, Line+1, 1);
+end_text_location([_|String], Line, Column) ->
+    end_text_location(String, Line, Column+1).
 
 %% Forms.
 modify_anno1({function, F, A}, Ac, _Mf) ->

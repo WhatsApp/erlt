@@ -59,7 +59,7 @@ normalize_for_typecheck(Forms, Lang) ->
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(As) when is_list(As) ->
-    Start = erl2_parse:location(As),
+    {location, Start} = lists:keyfind(location, 1, As),
     End = erl2_parse:get_end_location(As),
     {Start, End}.
 
