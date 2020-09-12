@@ -1,0 +1,17 @@
+-file("struct_mod03.erl", 1).
+
+-module(struct_mod03).
+
+-export([expr/0,pattern/1,guard/1]).
+
+expr() ->
+    {'$#struct_mod02:foo'}.
+
+pattern({'$#struct_mod02:foo'}) ->
+    ok.
+
+guard(Value) when Value =:= {'$#struct_mod02:foo'} ->
+    ok.
+
+
+
