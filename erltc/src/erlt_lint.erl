@@ -2416,6 +2416,10 @@ gexpr({record, Line, Name, Inits}, Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) ->
         ginit_fields(Inits, Line, Name, Dfs, Vt, St1)
     end);
+gexpr({struct, Line, Name, Fields}, Vt, St) ->
+    check_struct(Line, Name, St, fun(IsDef, St1) ->
+        init_struct_fields_guard(Fields, Line, Name, IsDef, Vt, St1)
+    end);
 gexpr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun gexpr/3);
 gexpr({call, _Line, {atom, _Lr, is_record}, [E, {atom, Ln, Name}]}, Vt, St0) ->
@@ -3294,6 +3298,12 @@ get_field_map_from_struct_def(
 
 init_struct_fields(Fields, _Line, Name, IsDefined, Vt0, St0) ->
     {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3),
+    % Dfs = init_fields(Ifs, Line, Defs),
+    % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
+    {Vt1, St1#lint{usage = St1#lint.usage}}.
+
+init_struct_fields_guard(Fields, _Line, Name, IsDefined, Vt0, St0) ->
+    {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun gexpr/3),
     % Dfs = init_fields(Ifs, Line, Defs),
     % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
     {Vt1, St1#lint{usage = St1#lint.usage}}.

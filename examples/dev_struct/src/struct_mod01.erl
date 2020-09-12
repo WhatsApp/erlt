@@ -17,7 +17,7 @@
 
 -export_type([foo/0, bar/1]).
 
--export([foo/0, bar/0, pattern/2]).
+-export([foo/0, bar/0, pattern/2, guard/1]).
 
 -struct foo :: ().
 
@@ -30,3 +30,6 @@ bar() ->
     #bar{a = 1, b = #foo{}}.
 
 pattern(#foo{}, #bar{b = B}) -> B.
+
+guard(Value) when Value =:= #bar{a = 1, b = 2} ->
+    ok.

@@ -17,9 +17,15 @@
 
 -export_type([foo/0]).
 
--export([foo/0]).
+-export([expr/0, pattern/1, guard/1]).
 
 -struct foo :: ().
 
-foo() ->
+expr() ->
     #?MODULE:foo{}.
+
+pattern(#?MODULE:foo{}) ->
+    ok.
+
+guard(Value) when Value =:= #?MODULE:foo{} ->
+    ok.
