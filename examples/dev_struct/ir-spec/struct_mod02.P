@@ -4,12 +4,18 @@
 
 -export_type([foo/0]).
 
--export([foo/0]).
+-export([expr/0,pattern/1,guard/1]).
 
 -type foo() :: {'$#struct_mod02:foo'}.
 
-foo() ->
+expr() ->
     {'$#struct_mod02:foo'}.
+
+pattern({'$#struct_mod02:foo'}) ->
+    ok.
+
+guard(Value) when Value =:= {'$#struct_mod02:foo'} ->
+    ok.
 
 
 
