@@ -55,7 +55,7 @@ normalize_for_typecheck(Forms, Lang) ->
             st -> Forms;
             ffi -> [F || F <- Forms, not is_fun_form(F)]
         end,
-    [erl2_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
+    Forms1.
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(As) when is_list(As) ->
@@ -76,7 +76,8 @@ parse_chars(Chars, Location) ->
         {done, Result, Chars1} ->
             case Result of
                 {ok, Tokens, Location1} ->
-                    case erl2_parse:parse_form(Tokens) of
+                    Tokens1 = norm_loc_tokens(Tokens),
+                    case erl2_parse:parse_form(Tokens1) of
                         {ok, Form} ->
                             [Form | parse_chars(Chars1, Location1)];
                         {error, E} ->
@@ -92,7 +93,8 @@ parse_chars(Chars, Location) ->
                 {done, Result, _} ->
                     case Result of
                         {ok, Tokens = [FirstToken | _], _} ->
-                            case erl2_parse:parse_form(Tokens) of
+                            Tokens1 = norm_loc_tokens(Tokens),
+                            case erl2_parse:parse_form(Tokens1) of
                                 {ok, Form} ->
                                     [Form];
                                 {error, _} ->
@@ -107,3 +109,20 @@ parse_chars(Chars, Location) ->
                     [{error, Location}]
             end
     end.
+
+norm_loc_token(Tok) ->
+    [{text, Text}, {location, {L1, C1}}] = erlang:element(2, Tok),
+    {L2, C2} = end_text_location(Text, L1, C1),
+    erlang:setelement(2, Tok, {{L1, C1}, {L2, C2}}).
+
+norm_loc_tokens([]) ->
+    [];
+norm_loc_tokens([Tok | Toks]) ->
+    [norm_loc_token(Tok) | norm_loc_tokens(Toks)].
+
+end_text_location("", Line, Column) ->
+    {Line, Column};
+end_text_location([$\n|String], Line, _Column) ->
+    end_text_location(String, Line+1, 1);
+end_text_location([_|String], Line, Column) ->
+    end_text_location(String, Line, Column+1).

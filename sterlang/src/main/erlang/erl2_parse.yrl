@@ -457,8 +457,6 @@ comp_op -> '=/=' : '$1'.
 Erlang code.
 
 -export([parse_form/1]).
--export([map_anno/2]).
--export([get_end_location/1]).
 
 -define(mkop2(L, OpAnno, R), begin
     {__Op, __Anno} = OpAnno,
@@ -617,134 +615,12 @@ ret_err(Anno, S) ->
     {location, Location} = lists:keyfind(location, 1, Anno),
     return_error(Location, S).
 
-map_anno(F0, Abstr) ->
-    F = fun (A, Acc) -> {F0(A), Acc} end,
-    {NewAbstr, []} = modify_anno1(Abstr, [], F),
-    NewAbstr.
-
 anno(Tup) -> element(2, Tup).
 
-anno(Left, Right) when is_list(Right) -> merge_anno(anno(Left), anno(lists:last(Right)));
-anno(Left, Right) when is_tuple(Right) -> merge_anno(anno(Left), anno(Right)).
+anno(Left, Right) when is_list(Right) ->
+    merge_anno(anno(Left), anno(lists:last(Right)));
+anno(Left, Right) when is_tuple(Right) ->
+    merge_anno(anno(Left), anno(Right)).
 
-merge_anno(Left, Right) ->
-    {location, LeftLoc} = lists:keyfind(location, 1, Left),
-    RightLoc = get_end_location(Right),
-    [{end_location, RightLoc} | ensure_anno_list(LeftLoc)].
-
-ensure_anno_list({L, C} = Loc) when is_integer(L), is_integer(C) ->
-    [{location, Loc}];
-ensure_anno_list(L) when is_list(L) ->
-    L.
-
-get_end_location(Anno) when is_list(Anno) ->
-    case lists:keyfind(end_location, 1, Anno) of
-        {end_location, Pos} ->
-            Pos;
-        false ->
-            {location, {Line, Column}} = lists:keyfind(location, 1, Anno),
-            {text, Text} = lists:keyfind(text, 1, Anno),
-            end_text_location(Text, Line, Column)
-    end.
-
-end_text_location("", Line, Column) ->
-    {Line, Column};
-end_text_location([$\n|String], Line, _Column) ->
-    end_text_location(String, Line+1, 1);
-end_text_location([_|String], Line, Column) ->
-    end_text_location(String, Line, Column+1).
-
-%% Forms.
-modify_anno1({function, F, A}, Ac, _Mf) ->
-    {{function, F, A}, Ac};
-modify_anno1({function, M, F, A}, Ac, Mf) ->
-    {M1, Ac1} = modify_anno1(M, Ac, Mf),
-    {F1, Ac2} = modify_anno1(F, Ac1, Mf),
-    {A1, Ac3} = modify_anno1(A, Ac2, Mf),
-    {{function, M1, F1, A1}, Ac3};
-modify_anno1({attribute, A, struct, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, struct, {Name, Fields1}}, Ac2};
-modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, exception, {Name, Fields1}}, Ac2};
-modify_anno1({attribute, A, message, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, message, {Name, Fields1}}, Ac2};
-modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute, A1, spec, {Fun, Types1}}, Ac2};
-modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, type, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, opaque, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, enum, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, enum, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, Attr, Val}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {{attribute, A1, Attr, Val}, Ac1};
-modify_anno1({warning, W}, Ac, _Mf) ->
-    {{warning, W}, Ac};
-modify_anno1({error, W}, Ac, _Mf) ->
-    {{error, W}, Ac};
-modify_anno1({eof, L}, Ac, _Mf) ->
-    {{eof, L}, Ac};
-%% Expressions.
-modify_anno1({clauses, Cs}, Ac, Mf) ->
-    {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
-    {{clauses, Cs1}, Ac1};
-modify_anno1({typed_struct_field, Field, Type}, Ac, Mf) ->
-    {Field1, Ac1} = modify_anno1(Field, Ac, Mf),
-    {Type1, Ac2} = modify_anno1(Type, Ac1, Mf),
-    {{typed_struct_field, Field1, Type1}, Ac2};
-modify_anno1({Tag, A}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {{Tag, A1}, Ac1};
-modify_anno1({Tag, A, E1}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {{Tag, A1, E11}, Ac2};
-modify_anno1({Tag, A, E1, E2}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{Tag, A1, E11, E21}, Ac3};
-modify_anno1({bin_element, A, E1, E2, TSL}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{bin_element, A1, E11, E21, TSL}, Ac3};
-modify_anno1({Tag, A, E1, E2, E3}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
-    {{Tag, A1, E11, E21, E31}, Ac4};
-modify_anno1({Tag, A, E1, E2, E3, E4}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
-    {E41, Ac5} = modify_anno1(E4, Ac4, Mf),
-    {{Tag, A1, E11, E21, E31, E41}, Ac5};
-modify_anno1([H | T], Ac, Mf) ->
-    {H1, Ac1} = modify_anno1(H, Ac, Mf),
-    {T1, Ac2} = modify_anno1(T, Ac1, Mf),
-    {[H1 | T1], Ac2};
-modify_anno1([], Ac, _Mf) ->
-    {[], Ac};
-modify_anno1(E, Ac, _Mf) when not is_tuple(E), not is_list(E) ->
-    {E, Ac}.
+merge_anno({Start1,_}, {_,End2}) ->
+    {Start1, End2}.
