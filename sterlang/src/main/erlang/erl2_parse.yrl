@@ -623,45 +623,24 @@ map_anno(F0, Abstr) ->
 
 anno(Tup) -> element(2, Tup).
 
-anno(Left, []) -> anno(Left);
-anno(Left, [_ | _] = Right) -> merge_anno(anno(Left), anno(lists:last(Right)));
-anno(Left, Right) -> merge_anno(anno(Left), anno(Right)).
+anno(Left, Right) when is_list(Right) -> merge_anno(anno(Left), anno(lists:last(Right)));
+anno(Left, Right) when is_tuple(Right) -> merge_anno(anno(Left), anno(Right)).
 
 merge_anno(Left, Right) ->
-    New = filter_anno(Left),
-    LeftLoc = location(New),
+    LeftLoc = location(Left),
     case get_end_location(Right) of
         LeftLoc ->
-            New;
+            LeftLoc;
         undefined ->
-            case location(Right) of
-                LeftLoc -> New;
-                undefined -> New;
-                RightLoc -> [{end_location, RightLoc} | ensure_anno_list(New)]
-            end;
+            error(Right);
         RightLoc ->
-            [{end_location, RightLoc} | ensure_anno_list(New)]
+            [{end_location, RightLoc} | ensure_anno_list(LeftLoc)]
     end.
 
-ensure_anno_list(L) when is_integer(L) ->
-    [{location, L}];
 ensure_anno_list({L, C} = Loc) when is_integer(L), is_integer(C) ->
     [{location, Loc}];
 ensure_anno_list(L) when is_list(L) ->
     L.
-
-%% keep annotations to be propagated to parent
-filter_anno([{location, _} = A | As]) ->
-    [A | filter_anno(As)];
-filter_anno([{file, _} = A | As]) ->
-    [A | filter_anno(As)];
-filter_anno([_ | As]) ->
-    filter_anno(As);
-filter_anno([]) ->
-    [];
-filter_anno(Pos) ->
-    % Line or {Line,Col}
-    Pos.
 
 get_end_location(Anno) when is_list(Anno) ->
     %% use existing end_location annotation if present
