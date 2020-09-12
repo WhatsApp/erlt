@@ -611,9 +611,10 @@ strip_map_tuple({map_tuple, _Anno, List}) ->
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', anno(Try, End), Es, Scs, Ccs, As}.
 
-ret_err(Anno, S) ->
-    {location, Location} = lists:keyfind(location, 1, Anno),
-    return_error(Location, S).
+ret_err({{Start, End}, _}, S) ->
+    return_error({Start, End}, S);
+ret_err(Loc, S) ->
+    return_error(Loc, S).
 
 anno(Tup) -> element(2, Tup).
 

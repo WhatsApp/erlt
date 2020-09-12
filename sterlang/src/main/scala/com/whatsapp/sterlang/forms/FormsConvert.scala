@@ -136,6 +136,8 @@ object FormsConvert {
         WildAttribute(sp(anno), attrName)
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
         Error(Pos.Loc(line.toInt, column.toInt))
+      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
+        Error(Pos.Loc(line.toInt, column.toInt))
       case _ =>
         sys.error(s"unexpected term: $term")
     }
