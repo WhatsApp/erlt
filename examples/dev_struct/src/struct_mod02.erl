@@ -17,7 +17,7 @@
 
 -export_type([foo/0]).
 
--export([expr/0, pattern/1, guard/1, field/1]).
+-export([expr/0, pattern/1, guard/1, field/1, update/1]).
 
 -struct foo :: ().
 
@@ -34,3 +34,6 @@ guard(Value) when Value =:= #?MODULE:foo{} ->
 
 field(Value) when Value#?MODULE:bar.a =:= 1 ->
     Value#?MODULE:bar.b.
+
+update(Value) ->
+    Value#?MODULE:bar{a = 2}.
