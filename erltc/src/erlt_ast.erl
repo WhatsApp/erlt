@@ -52,7 +52,8 @@ postwalk(Ast, Acc0, Fun) ->
 -define(IS_TYPE(Kind),
     Kind =:= type orelse
         Kind =:= opaque orelse
-        Kind =:= enum
+        Kind =:= enum orelse
+        Kind =:= struct
 ).
 
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
@@ -258,6 +259,10 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Constr1, Acc1} = do_traverse(Constr0, Acc0, Pre, Post, Ctx),
             {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
             Post({type, Line, enum, Constr1, Args1}, Acc2, Ctx);
+        {type, Line, struct, Name0, Fields0} ->
+            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
+            Post({type, Line, struct, Name1, Fields1}, Acc2, Ctx);
         {type, Line, Name, Args0} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             Post({type, Line, Name, Args1}, Acc1, Ctx);
