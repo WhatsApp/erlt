@@ -64,12 +64,15 @@ rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) 
     {{attribute, Line, type, {TypeName, Type, Args}}, Context};
 rewrite({struct, Line, Name, Fields}, Context, pattern) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
-    Fields1 = struct_pattern(Fields, Def),
-    {{tuple, Line, [RuntimeTag | Fields1]}, Context};
+    Pattern = struct_pattern(Fields, Def),
+    {{tuple, Line, [RuntimeTag | Pattern]}, Context};
 rewrite({struct, Line, Name, Fields}, Context, _Ctx) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
-    Fields1 = struct_init(Fields, Def),
-    {{tuple, Line, [RuntimeTag | Fields1]}, Context};
+    Constructor = struct_init(Fields, Def),
+    {{tuple, Line, [RuntimeTag | Constructor]}, Context};
+rewrite({struct, Line, Expr, Name, Fields}, Context, _Ctx) ->
+    {RuntimeTag, Def} = get_definition(Name, Context),
+    {struct_update(Line, Expr, RuntimeTag, Def, Fields), Context};
 rewrite({struct_field, Line, Expr, Name, Field}, Context, expr) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
     {struct_field_expr(Line, Expr, RuntimeTag, Def, Field), Context};
@@ -115,6 +118,19 @@ struct_pattern(Fields, Defs) ->
     end,
     lists:map(Fun, Defs).
 
+update_pattern(Line, Fields, Defs) ->
+    Fun = fun({Name, _Default}) ->
+        case find_field(Name, Fields) of
+            {struct_field, _, _, _} ->
+                {{var, Line, '_'}, []};
+            error ->
+                Var = gen_var(Line, Name),
+                {Var, [{struct_field, Line, {atom, Line, Name}, Var}]}
+        end
+    end,
+    {Pattern, ExtraFields} = lists:unzip(lists:map(Fun, Defs)),
+    {Pattern, lists:flatten(ExtraFields)}.
+
 find_field(Name, [{struct_field, _, {atom, _, Name}, _} = Field | _]) ->
     Field;
 find_field(Name, [_ | Rest]) ->
@@ -131,10 +147,9 @@ struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
     Pattern = struct_pattern([{struct_field, GenLine, Field, Var}], Def),
-    Error = {tuple, GenLine, [{atom, GenLine, badstruct}, RuntimeTag]},
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
-        {clause, GenLine, [{var, GenLine, '_'}], [], [?CALL(GenLine, erlang, error, [Error])]}
+        {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
     ]}.
 
 struct_field_guard(Line, Expr, Def, {atom, _, FieldRaw}) ->
@@ -147,6 +162,19 @@ struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->
     Check = ?CALL(GenLine, erlang, is_record, [Expr, RuntimeTag, {integer, GenLine, length(Def) + 1}]),
     %% Force guard crash by evaluating to non-boolean
     {op, GenLine, 'orelse', Check, {atom, GenLine, fail}}.
+
+struct_update(Line, Expr, RuntimeTag, Def, Fields) ->
+    GenLine = erl_anno:set_generated(true, Line),
+    {Pattern, ExtraFields} = update_pattern(GenLine, Fields, Def),
+    Constructor = struct_init(Fields ++ ExtraFields, Def),
+    Value = {tuple, Line, [RuntimeTag | Constructor]},
+    {'case', GenLine, Expr, [
+        {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Value]},
+        {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
+    ]}.
+
+badstruct(Line, Tag) ->
+    ?CALL(Line, erlang, error, [{tuple, Line, [{atom, Line, badstruct}, Tag]}]).
 
 gen_var(Line, Mnemo) ->
     Num = get(struct_gen_var),

@@ -4,7 +4,7 @@
 
 -export_type([foo/0]).
 
--export([expr/0,pattern/1,guard/1,field/1]).
+-export([expr/0,pattern/1,guard/1,field/1,update/1]).
 
 -type foo() :: {'$#struct_mod02:foo'}.
 
@@ -28,6 +28,14 @@ field(Value)
     case Value of
         {'$#struct_mod02:bar', _, StructGenVar@0@b} ->
             StructGenVar@0@b;
+        _ ->
+            error({badstruct, '$#struct_mod02:bar'})
+    end.
+
+update(Value) ->
+    case Value of
+        {'$#struct_mod02:bar', _, StructGenVar@1@b} ->
+            {'$#struct_mod02:bar', 2, StructGenVar@1@b};
         _ ->
             error({badstruct, '$#struct_mod02:bar'})
     end.

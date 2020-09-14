@@ -15,7 +15,7 @@
 -lang([erl2]).
 -module(struct_mod03).
 
--export([expr/0, pattern/1, guard/1, field/1]).
+-export([expr/0, pattern/1, guard/1, field/1, update/1]).
 
 expr() ->
     #struct_mod02:foo{}.
@@ -28,3 +28,6 @@ guard(Value) when Value =:= #struct_mod02:foo{} ->
 
 field(Value) when Value#struct_mod02:bar.a =:= 1 ->
     Value#struct_mod02:bar.b.
+
+update(Value) ->
+    Value#struct_mod02:bar{a = 2}.

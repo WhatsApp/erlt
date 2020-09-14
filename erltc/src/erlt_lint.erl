@@ -2705,6 +2705,14 @@ expr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(IsDef, St1) ->
         init_struct_fields(Fields, Line, Name, IsDef, Vt, St1)
     end);
+expr({struct, Line, Expr, Name, Fields}, Vt, St0) ->
+    St1 = warn_invalid_struct(Line, Expr, St0),
+    {Evt, St2} = expr(Expr, Vt, St1),
+    {Uvt, St3} =
+        check_struct(Line, Name, St2, fun(IsDef, St) ->
+            update_struct_fields(Fields, Line, Name, IsDef, Vt, St)
+        end),
+    {vtmerge(Evt, Uvt), St3};
 expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
     St1 = warn_invalid_struct(Line, Expr, St0),
     {Evt, St2} = expr(Expr, Vt, St1),
@@ -3366,6 +3374,9 @@ init_struct_fields_guard(Fields, _Line, Name, IsDefined, Vt0, St0) ->
     % Dfs = init_fields(Ifs, Line, Defs),
     % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
     {Vt1, St1#lint{usage = St1#lint.usage}}.
+
+update_struct_fields(Fields, _Line, Name, IsDefined, Vt, St) ->
+    check_struct_fields(Fields, Name, IsDefined, Vt, St, fun expr/3).
 
 check_struct_fields(Fields, Name, IsDefined, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->

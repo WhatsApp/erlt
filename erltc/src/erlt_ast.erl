@@ -135,6 +135,11 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
             Post({struct, Line, Name1, Fields1}, Acc2, Ctx);
+        {struct, Line, Expr0, Name0, Fields0} ->
+            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
+            {Name1, Acc2} = do_traverse(Name0, Acc1, Pre, Post, Ctx),
+            {Fields1, Acc3} = do_traverse_list(Fields0, Acc2, Pre, Post, Ctx),
+            Post({struct, Line, Expr1, Name1, Fields1}, Acc3, Ctx);
         {struct_field, Line, Name0, Value0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),

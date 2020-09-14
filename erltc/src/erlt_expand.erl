@@ -500,6 +500,11 @@ expr({struct, Line0, Name0, Pfs}, St0) ->
     {Name1, St1} = expr(Name0, St0),
     {Pfs1, St2} = expr_list(Pfs, St1),
     {{struct, Line0, Name1, Pfs1}, St2};
+expr({struct, Line0, Expr0, Name0, Pfs}, St0) ->
+    {Expr1, St1} = expr(Expr0, St0),
+    {Name1, St2} = expr(Name0, St1),
+    {Pfs1, St3} = expr_list(Pfs, St2),
+    {{struct, Line0, Expr1, Name1, Pfs1}, St3};
 expr({struct_field, Line, Name0, Value0}, St0) ->
     {Name1, St1} = expr(Name0, St0),
     {Value1, St2} = expr(Value0, St1),
