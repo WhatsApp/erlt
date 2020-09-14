@@ -448,6 +448,10 @@ format_error({redefine_field, T, F}) ->
     io_lib:format("field ~tw already defined in record ~tw", [F, T]);
 format_error({redefine_struct_field, T, F}) ->
     io_lib:format("field ~tw already defined in struct ~tw", [F, T]);
+format_error({undefined_struct_field, N, F}) ->
+    io_lib:format("field ~tw undefined in struct ~tw", [F, N]);
+format_error({undefined_struct_field, M, N, F}) ->
+    io_lib:format("field ~tw undefined in struct ~tw:~tw", [F, M, N]);
 format_error({undefined_field, T, F}) ->
     io_lib:format("field ~tw undefined in record ~tw", [F, T]);
 format_error(illegal_record_info) ->
@@ -2420,6 +2424,13 @@ gexpr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(IsDef, St1) ->
         init_struct_fields_guard(Fields, Line, Name, IsDef, Vt, St1)
     end);
+gexpr({struct_field, Line, Rec, Name, Field}, Vt, St0) ->
+    {Rvt, St1} = gexpr(Rec, Vt, St0),
+    {Fvt, St2} =
+        check_struct(Line, Name, St1, fun(Dfs, St) ->
+            struct_field(Field, Name, Dfs, St)
+        end),
+    {vtmerge(Rvt, Fvt), St2};
 gexpr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun gexpr/3);
 gexpr({call, _Line, {atom, _Lr, is_record}, [E, {atom, Ln, Name}]}, Vt, St0) ->
@@ -2694,6 +2705,14 @@ expr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(IsDef, St1) ->
         init_struct_fields(Fields, Line, Name, IsDef, Vt, St1)
     end);
+expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
+    St1 = warn_invalid_struct(Line, Expr, St0),
+    {Evt, St2} = expr(Expr, Vt, St1),
+    {Fvt, St3} =
+        check_struct(Line, Name, St2, fun(IsDef, St) ->
+            struct_field(Field, Name, IsDef, St)
+        end),
+    {vtmerge(Evt, Fvt), St3};
 expr({record, Line, Name, Inits}, Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) ->
         init_fields(Inits, Line, Name, Dfs, Vt, St1)
@@ -3036,6 +3055,33 @@ is_valid_record(Rec) ->
         _ -> true
     end.
 
+%% warn_invalid_struct(Line, Struct, State0) -> State
+%% Adds warning if the struct is invalid.
+
+warn_invalid_struct(Line, Struct, St) ->
+    case is_valid_struct(Struct) of
+        true -> St;
+        false -> add_warning(Line, invalid_struct, St)
+    end.
+
+%% is_valid_struct(Struct) -> boolean().
+
+is_valid_struct(Struct) ->
+    case Struct of
+        {char, _, _} -> false;
+        {integer, _, _} -> false;
+        {float, _, _} -> false;
+        {atom, _, _} -> false;
+        {string, _, _} -> false;
+        {cons, _, _, _} -> false;
+        {nil, _} -> false;
+        {lc, _, _, _} -> false;
+        {struct_index, _, _, _} -> false;
+        {'fun', _, _} -> false;
+        {named_fun, _, _, _} -> false;
+        _ -> true
+    end.
+
 %% warn_invalid_call(Line, Call, State0) -> State
 %% Adds warning if the call is invalid.
 
@@ -3294,7 +3340,20 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
 get_field_map_from_struct_def(
     {attribute, _Loc, struct, {_Name, {type, _DefAnno, struct, _Tag, Fields}, _Vs}}
 ) ->
-    Fields.
+    maps:from_list([{Name, Def} || {struct_field, _, {atom, _, Name}, Def} <- Fields]).
+
+struct_field({atom, La, F}, Name, IsDefined, St) ->
+    case IsDefined(F) of
+        true ->
+            {[], St};
+        false ->
+            case Name of
+                {atom, _, N} ->
+                    {[], add_error(La, {undefined_struct_field, N, F}, St)};
+                {remote, _, {atom, _, M}, {atom, _, N}} ->
+                    {[], add_error(La, {undefined_struct_field, M, N, F}, St)}
+            end
+    end.
 
 init_struct_fields(Fields, _Line, Name, IsDefined, Vt0, St0) ->
     {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3),
