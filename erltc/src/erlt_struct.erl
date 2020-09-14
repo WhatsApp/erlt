@@ -24,7 +24,7 @@
 }).
 
 -define(CALL(Anno, Mod, Fun, Args),
-    {call, Anno, {remote, Anno, {atom, Anno, Mod}, {atom, Anno, Mod}}, Args}
+    {call, Anno, {remote, Anno, {atom, Anno, Mod}, {atom, Anno, Fun}}, Args}
 ).
 
 module(Forms, DefDb) ->
@@ -110,6 +110,11 @@ find_field(Name, [_ | Rest]) ->
 find_field(_Name, []) ->
     error.
 
+find_index(Name, [{Name, _} | _Rest], Acc) ->
+    Acc;
+find_index(Name, [_ | Rest], Acc) ->
+    find_index(Name, Rest, Acc + 1).
+
 struct_field(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field, expr) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
@@ -118,7 +123,11 @@ struct_field(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field, expr) ->
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
         {clause, GenLine, [{var, GenLine, '_'}], [], [?CALL(GenLine, erlang, error, [Error])]}
-    ]}.
+    ]};
+struct_field(Line, Expr, _RuntimeTag, Def, {atom, _, FieldRaw}, guard) ->
+    GenLine = erl_anno:set_generated(true, Line),
+    Index = {integer, GenLine, find_index(FieldRaw, Def, 2)},
+    ?CALL(GenLine, erlang, element, [Index, Expr]).
 
 gen_var(Line, Mnemo) ->
     Num = get(struct_gen_var),

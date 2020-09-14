@@ -8,7 +8,7 @@
 
 -type foo() :: {'$#struct_mod02:foo'}.
 
--type bar() :: {'$#struct_mod02:bar', integer()}.
+-type bar() :: {'$#struct_mod02:bar', integer(), integer()}.
 
 expr() ->
     {'$#struct_mod02:foo'}.
@@ -19,12 +19,12 @@ pattern({'$#struct_mod02:foo'}) ->
 guard(Value) when Value =:= {'$#struct_mod02:foo'} ->
     ok.
 
-field(Value) ->
+field(Value) when element(2, Value) =:= 1 ->
     case Value of
-        {'$#struct_mod02:bar', StructGenVar@0@b} ->
+        {'$#struct_mod02:bar', _, StructGenVar@0@b} ->
             StructGenVar@0@b;
         _ ->
-            erlang:erlang({badstruct, '$#struct_mod02:bar'})
+            error({badstruct, '$#struct_mod02:bar'})
     end.
 
 

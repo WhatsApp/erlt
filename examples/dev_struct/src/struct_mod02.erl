@@ -21,7 +21,7 @@
 
 -struct foo :: ().
 
--struct bar :: (b :: integer()).
+-struct bar :: (a :: integer(), b :: integer()).
 
 expr() ->
     #?MODULE:foo{}.
@@ -32,5 +32,5 @@ pattern(#?MODULE:foo{}) ->
 guard(Value) when Value =:= #?MODULE:foo{} ->
     ok.
 
-field(Value) ->% when Value#?MODULE:bar.a =:= 1 ->
+field(Value) when Value#?MODULE:bar.a =:= 1 ->
     Value#?MODULE:bar.b.

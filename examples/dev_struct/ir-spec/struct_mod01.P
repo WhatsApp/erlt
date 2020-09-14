@@ -22,12 +22,12 @@ pattern({'$#struct_mod01:foo'}, {'$#struct_mod01:bar', _, B}) ->
 guard(Value) when Value =:= {'$#struct_mod01:bar', 1, 2} ->
     ok.
 
-field(Value) ->
+field(Value) when element(2, Value) =:= 1 ->
     case Value of
         {'$#struct_mod01:bar', _, StructGenVar@0@b} ->
             StructGenVar@0@b;
         _ ->
-            erlang:erlang({badstruct, '$#struct_mod01:bar'})
+            error({badstruct, '$#struct_mod01:bar'})
     end.
 
 
