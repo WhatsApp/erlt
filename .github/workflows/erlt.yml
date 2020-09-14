@@ -30,6 +30,8 @@ jobs:
         run:  make -C examples/dev_dots/src
       - name: "examples/dev_enum/src: make"
         run:  make -C examples/dev_enum/src
+      - name: "examples/dev_struct/src: make"
+        run:  make -C examples/dev_struct/src
       - name: "examples/calc/src: make"
         run:  make -C examples/calc/src
       - name: "examples/dev/src: test-ir"
@@ -44,5 +46,7 @@ jobs:
         run:  make test-ir -C examples/dev_enum/src
       - name: "examples/calc/src: test-ir"
         run:  make test-ir -C examples/calc/src
+      - name: "examples/dev_struct/src: test-ir"
+        run:  make test-ir -C examples/dev_struct/src
       - name: "examples/checks/src: test"
         run:  make test -C examples/checks/src
