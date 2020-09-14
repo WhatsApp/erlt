@@ -1,5 +1,8 @@
 # 2. General Syntax
 
+> The specs in Quip are the source of truth for this information
+
+
 There are two layers/languages: the language of expressions and the language of
 types. They are different in different modes.
 See the [ST/FFI/DT modes](03_modes.md) document for an overview.

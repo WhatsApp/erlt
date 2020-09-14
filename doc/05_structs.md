@@ -1,19 +1,21 @@
-# 5. Polymorphic records
+# 5. Structs Rationale
 
-Erl1+ ST introduces a new concept - polymorphic record. It re-uses the syntax
+ErlT introduces a new concept - structs. It re-uses the syntax
 of classic Erlang for maps, but gives it a different interpretation in
 the context of the typing discipline.
 
-## What are polymorphic records?
+## What are structs?
 
-A record is a lightweight labeled data structure, or:
-polymorphic records are maps with atomic keys.
-For now records are represented as maps at runtime.
+A struct is a lightweight labeled data structure, or:
+sturcts are maps with atomic keys.
+For now sturcts are represented as maps at runtime.
+
+> **The below is likely to be out of date. The [spec](https://fb.quip.com/olhzAKEm2Jqz) is the source of truth**
 
 **Similar constructs in other languages**
 
 * Elm records - https://elm-lang.org/docs/records -
-  quite a good description of records
+  quite a good description of record
 * Purescript - https://git.io/JfLsm
 * Hugs/TREX - https://www.haskell.org/hugs/pages/hugsman/exts.html#sect7.2
 
@@ -23,7 +25,7 @@ Some background
 
 ## Operations
 
-### Creating records
+### Creating structs
 
 Just use map literals:
 
@@ -35,14 +37,14 @@ Point = #{x => 1, y => 1},
 
 ### Access
 
-Erl1+ introduces the "." - dot operator for accessing records.
+ErlT introduces the "." - dot operator for accessing records.
 
 ```erlang
 Date.year
 Mode.dialect
 ```
 
-As in Elm, the accessor can be used only for a record that has a required field.
+As with Elm records, the accessor can be used only for a struct that has a required field.
 
 ```erlang
 Date = #{year => 2020, month => "April"},
@@ -79,10 +81,10 @@ mk_date() -> #{year => 2020, month => "April"}.
 get_x(Point) -> Point.x.
 ```
 
-## Extensible (open) records
+## Extensible (open) structs
 
 It is possible to write a function which can read a particular field `x` of
-any record (other fields are irrelevant).
+any structs (other fields are irrelevant).
 
 
 ```erlang
@@ -97,12 +99,12 @@ example() ->
     Xs.
 ```
 
-To denote an open record the special magic syntax for the last field `_ := _`
+To denote an open structs the special magic syntax for the last field `_ := _`
 is used in the current implementation.
 
-## Current limitations of polymorphic records in Erl1+ ST
+## Current limitations of structs in Erl1+ ST
 
-**Pattern matching of records is not supported** (for now)
+**Pattern matching of structs is not supported** (for now)
 
 The following code is not supported in Erl1+ ST.
 
@@ -111,9 +113,9 @@ get_x(#{x := X, y := Y}) ->
   x.
 ```
 
-**Representation of open records in the language of types is quite limiting.**
+**Representation of open structs in the language of types is quite limiting.**
 
-It is possible to express a generic update for a "closed" record:
+It is possible to express a generic update for a "closed" structs:
 
 ```erlang
 -spec update_x(#{ x: = A}, A) -> #{x := A}.
@@ -121,7 +123,7 @@ update_x(R, X) ->
     R#{ x := X }.
 ```
 
-But it is not possible (for now) to express a generic update for an open record:
+But it is not possible (for now) to express a generic update for an open structs:
 
 ```erlang
 %% Does not work
@@ -136,8 +138,8 @@ In DT code all mentioned constructs behave as usual (as in classic Erlang).
 The only extension (syntactic sugar) is dot operation for accessing atomic
 associations.
 
-Ideally (to be consistent), map literals should use `:=`,  so that record
-creation and record update are symmetrical in syntax.
+Ideally (to be consistent), map literals should use `:=`,  so that structs
+creation and structs update are symmetrical in syntax.
 
 Ideally:
 
