@@ -276,11 +276,18 @@ do_traverse_list(List, Acc0, Pre, Post, Ctx) ->
     end,
     lists:mapfoldl(Fun, Acc0, List).
 
-do_traverse_guards(List, Acc0, Pre, Post) ->
-    Fun = fun(Nodes, Acc) ->
-        do_traverse_list(Nodes, Acc, Pre, Post, guard)
+do_traverse_guards(List0, Acc0, Pre, Post) ->
+    %% no support for transforming guard_or/and to something else
+    {{guard_or, _, List1}, Acc1} = Pre({guard_or, 0, List0}, Acc0, guard),
+    Fun = fun(Nodes0, AccInner0) ->
+        {{guard_and, _, Nodes1}, AccInner1} = Pre({guard_and, 0, Nodes0}, AccInner0, guard),
+        {Nodes2, AccInner2} = do_traverse_list(Nodes1, AccInner1, Pre, Post, guard),
+        {{guard_and, _, Nodes3}, AccInner3} = Post({guard_and, 0, Nodes2}, AccInner2, guard),
+        {Nodes3, AccInner3}
     end,
-    lists:mapfoldl(Fun, Acc0, List).
+    {List2, Acc2} = lists:mapfoldl(Fun, Acc1, List1),
+    {{guard_or, _, List3}, Acc3} = Post({guard_or, 0, List2}, Acc2, guard),
+    {List3, Acc3}.
 
 pattern_to_expr(pattern) -> expr;
 pattern_to_expr(Other) -> Other.
