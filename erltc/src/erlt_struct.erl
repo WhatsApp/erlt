@@ -23,9 +23,18 @@
     def_db :: erlt_defs:def_db()
 }).
 
+-define(CALL(Anno, Mod, Fun, Args),
+    {call, Anno, {remote, Anno, {atom, Anno, Mod}, {atom, Anno, Mod}}, Args}
+).
+
 module(Forms, DefDb) ->
     Context = init_context(Forms, DefDb),
-    erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Ctx, Context) end).
+    put(struct_gen_var, 0),
+    try
+        erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Ctx, Context) end)
+    after
+        erase(struct_gen_var)
+    end.
 
 init_context(Forms, DefDb) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
@@ -60,6 +69,9 @@ rewrite({struct, Line, Name, Fields}, _Ctx, Context) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
     Fields1 = struct_init(Fields, Def),
     {tuple, Line, [RuntimeTag | Fields1]};
+rewrite({struct_field, Line, Expr, Name, Field}, Ctx, Context) ->
+    {RuntimeTag, Def} = get_definition(Name, Context),
+    struct_field(Line, Expr, RuntimeTag, Def, Field, Ctx);
 rewrite(Other, _, _) ->
     Other.
 
@@ -97,3 +109,19 @@ find_field(Name, [_ | Rest]) ->
     find_field(Name, Rest);
 find_field(_Name, []) ->
     error.
+
+struct_field(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field, expr) ->
+    Var = gen_var(Line, FieldRaw),
+    GenLine = erl_anno:set_generated(true, Line),
+    Pattern = struct_pattern([{struct_field, GenLine, Field, Var}], Def),
+    Error = {tuple, GenLine, [{atom, GenLine, badstruct}, RuntimeTag]},
+    {'case', GenLine, Expr, [
+        {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
+        {clause, GenLine, [{var, GenLine, '_'}], [], [?CALL(GenLine, erlang, error, [Error])]}
+    ]}.
+
+gen_var(Line, Mnemo) ->
+    Num = get(struct_gen_var),
+    put(struct_gen_var, Num + 1),
+    Name = "StructGenVar@" ++ integer_to_list(Num) ++ "@" ++ atom_to_list(Mnemo),
+    {var, Line, list_to_atom(Name)}.

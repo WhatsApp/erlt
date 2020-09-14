@@ -504,6 +504,11 @@ expr({struct_field, Line, Name0, Value0}, St0) ->
     {Name1, St1} = expr(Name0, St0),
     {Value1, St2} = expr(Value0, St1),
     {{struct_field, Line, Name1, Value1}, St2};
+expr({struct_field, Line, Expr0, Name0, Value0}, St0) ->
+    {Expr1, St1} = expr(Expr0, St0),
+    {Name1, St2} = expr(Name0, St1),
+    {Value1, St3} = expr(Value0, St2),
+    {{struct_field, Line, Expr1, Name1, Value1}, St3};
 expr({bin, Line, Es0}, St0) ->
     {Es1, St1} = expr_bin(Es0, St0),
     {{bin, Line, Es1}, St1};

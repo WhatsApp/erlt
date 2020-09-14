@@ -17,9 +17,11 @@
 
 -export_type([foo/0]).
 
--export([expr/0, pattern/1, guard/1]).
+-export([expr/0, pattern/1, guard/1, field/1]).
 
 -struct foo :: ().
+
+-struct bar :: (b :: integer()).
 
 expr() ->
     #?MODULE:foo{}.
@@ -29,3 +31,6 @@ pattern(#?MODULE:foo{}) ->
 
 guard(Value) when Value =:= #?MODULE:foo{} ->
     ok.
+
+field(Value) ->% when Value#?MODULE:bar.a =:= 1 ->
+    Value#?MODULE:bar.b.
