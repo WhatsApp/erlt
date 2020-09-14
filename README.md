@@ -13,10 +13,14 @@ See the [examples](examples/) folder.
 
 ## Building
 
+erltc (WIP)
+
     make
-    cd sterlang; sbt assembly
     make -C examples
 
+stErlang:
+
+    cd sterlang; sbt assembly
 
 ## Testing
 

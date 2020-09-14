@@ -110,6 +110,12 @@ examples/elm-core/tuple.erl
 [success] Total time: 1 s, completed ...
 ```
 
+Coverage report:
+
+```
+sbt clean coverage test coverageReport
+```
+
 ### 2. `erl2c` frontend development
 
 `erl2c` relies on stErlang for type-checking. It supports invoking stErlang in
