@@ -133,8 +133,12 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post({map_field_assoc, Line, Key1, Value1}, Acc2, Ctx);
         {struct, Line, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Fields1, Acc2} = do_traverse(Fields0, Acc1, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
             Post({struct, Line, Name1, Fields1}, Acc2, Ctx);
+        {struct_field, Line, Name0, Field0} ->
+            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse(Field0, Acc1, Pre, Post, Ctx),
+            Post({struct_field, Line, Name1, Fields1}, Acc2, Ctx);
         {record, Line, Name, Fields0} ->
             {Fields1, Acc1} = do_traverse_list(Fields0, Acc0, Pre, Post, Ctx),
             Post({record, Line, Name, Fields1}, Acc1, Ctx);

@@ -85,7 +85,8 @@
     %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
     lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms,
-    global_defs :: undefined | erlt_defs:defs()
+    global_defs :: undefined | erlt_defs:defs(),
+    variable_state :: undefined | erlt:var_state()
 }).
 
 -define(pass(P), {P, fun P/2}).
@@ -237,6 +238,7 @@ base_passes() ->
         ?pass(erlt_message),
         ?pass(erlt_module_record),
         ?pass(erlt_lint),
+        ?pass(erlt_track_vars),
         ?pass(erlt_expand)
     ].
 
@@ -1007,6 +1009,10 @@ erlt_message(Code, St) ->
         false ->
             {ok, Code, St}
     end.
+
+erlt_track_vars(Code, St) ->
+    VarState = erlt_vars:initialize_vars(Code),
+    {ok, Code, St#compile{variable_state=VarState}}.
 
 erlt_expand(Code, St) ->
     case is_lang_erlt(St) of
