@@ -26,5 +26,5 @@ pattern(#struct_mod02:foo{}) ->
 guard(Value) when Value =:= #struct_mod02:foo{} ->
     ok.
 
-field(Value) ->% when Value#struct_mod02:bar.a =:= 1 ->
+field(Value) when Value#struct_mod02:bar.a =:= 1 ->
     Value#struct_mod02:bar.b.

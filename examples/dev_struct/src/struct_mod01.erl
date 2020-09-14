@@ -34,5 +34,5 @@ pattern(#foo{}, #bar{b = B}) -> B.
 guard(Value) when Value =:= #bar{a = 1, b = 2} ->
     ok.
 
-field(Value) ->% when Value#bar.a =:= 1 ->
+field(Value) when Value#bar.a =:= 1 ->
     Value#bar.b.
