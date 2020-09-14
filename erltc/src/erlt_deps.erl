@@ -20,73 +20,49 @@
     dt_deps/1
 ]).
 
-get_module(Forms) ->
-    erlang:hd([M || {attribute, _, module, M} <- Forms]).
-
 st_deps(Forms) ->
-    Module = get_module(Forms),
-    Remotes = collect(Forms, fun st_pred/1, fun remote/1),
-    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+    collect(Forms, [fun calls/1, fun structs/1, fun enums/1, fun types/1]).
 
 ffi_deps(Forms) ->
-    Module = get_module(Forms),
-    Remotes = collect(Forms, fun ffi_pred/1, fun remote/1),
-    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+    collect(Forms, [fun structs/1, fun enums/1, fun types/1]).
 
 dt_deps(Forms) ->
+    collect(Forms, [fun structs/1, fun enums/1]).
+
+calls({call, _, {remote, _, {atom, L, M}, _}, _}) ->
+    [{L, M}];
+calls({'fun', _, {function, {atom, L, M}, _, _}}) ->
+    [{L, M}];
+calls(_) ->
+    [].
+
+types({remote_type, _, [{atom, L, M} | _]}) ->
+    [{L, M}];
+types(_) ->
+    [].
+
+structs({struct, _, {remote, _, {atom, L, M}, _}, _}) ->
+    [{L, M}];
+structs({struct, _, _, {remote, _, {atom, L, M}, _}, _}) ->
+    [{L, M}];
+structs({struct_field, _, _, {remote, _, {atom, L, M}, _}, _}) ->
+    [{L, M}];
+structs(_) ->
+    [].
+
+enums({enum, _, {remote, _, {atom, L, M}, _}, _, _}) ->
+    [{L, M}];
+enums(_) ->
+    [].
+
+collect(Forms, Collectors) ->
     Module = get_module(Forms),
-    Remotes = collect(Forms, fun dt_pred/1, fun remote/1),
-    [{L, M} || {L, M} <- Remotes, M =/= ffi, M =/= Module].
+    {_Forms, Results} =
+        erlt_ast:prewalk(Forms, [], fun(Node, Acc, _Ctx) ->
+            Results = lists:flatmap(fun(Fun) -> Fun(Node) end, Collectors),
+            {Node, [{L, M} || {L, M} <- Results, M =/= Module, M =/= ffi] ++ Acc}
+        end),
+    Results.
 
-%% remote call
-remote({remote, _Ln, {atom, Ln, Mod}, _}) ->
-    {Ln, Mod};
-%% remote type
-remote({remote_type, _Ln, [{atom, Ln, Mod} | _]}) ->
-    {Ln, Mod};
-%% remote enum ctr
-remote(
-    {enum, _, {remote, _, {atom, Ln, Mod}, {atom, _, _Enum}}, {atom, _, _Ctr}, _Args}
-) ->
-    {Ln, Mod};
-%% fn mod:f/n
-remote({'fun', _Ln, {function, {atom, Ln, Mod}, {atom, _, F}, {integer, _, A}}}) when
-    is_atom(Mod), is_atom(F), is_integer(A)
-->
-    {Ln, Mod};
-remote(_Form) ->
-    false.
-
-st_pred(_Form) ->
-    true.
-
-%% ffi is not interested in function bodies
-ffi_pred({function, _, _, _, _}) ->
-    false;
-ffi_pred(_) ->
-    true.
-
-%% dt for now does not establish deps in here
-dt_pred(_) -> false.
-
-collect(Forms, Pred, Collect) ->
-    do_collect(Forms, Pred, Collect, []).
-
-do_collect([], _Pred, _Collect, Acc) ->
-    Acc;
-do_collect([H | T], Pred, Collect, Acc) ->
-    Acc1 = do_collect(T, Pred, Collect, Acc),
-    do_collect(H, Pred, Collect, Acc1);
-do_collect(X, Pred, Collect, Acc) when is_tuple(X) ->
-    case Pred(X) of
-        true ->
-            Acc1 = do_collect(tuple_to_list(X), Pred, Collect, Acc),
-            case Collect(X) of
-                false -> Acc1;
-                Delta -> [Delta | Acc1]
-            end;
-        false ->
-            Acc
-    end;
-do_collect(_X, _Pred, _Collect, Acc) ->
-    Acc.
+get_module(Forms) ->
+    erlang:hd([M || {attribute, _, module, M} <- Forms]).
