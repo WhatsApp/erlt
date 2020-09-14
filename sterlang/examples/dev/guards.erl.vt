@@ -1,0 +1,9 @@
+val any/2: fun((fun((A) -> boolean()), list(A)) -> boolean())
+val Pred: fun((A) -> boolean())
+val Hd: A
+val Tail: list(A)
+val Pred: fun((A) -> boolean())
+val is_even/1: fun((integer()) -> boolean())
+val N: integer()
+val any_even_or_empty/1: fun((list(integer())) -> boolean())
+val L: list(integer())

@@ -18,7 +18,6 @@ package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.Pos
 import com.whatsapp.sterlang.forms.Patterns._
-import com.whatsapp.sterlang.forms.Guards._
 
 object Exprs {
 
@@ -66,6 +65,8 @@ object Exprs {
   case class RemoteFun(p: Pos.SP, module: Expr, funName: Expr, arity: Expr) extends Expr
   case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
   case class NamedFun(p: Pos.SP, funName: String, clauses: List[Clause]) extends Expr
+
+  case class Guard(elems: List[Expr])
 
   case class BinElement(expr: Expr, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
 

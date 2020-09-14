@@ -24,7 +24,7 @@ object ExprsConvert {
     term match {
       case ETuple(List(EAtom("clause"), anno, EList(ePats), EList(eGuards), EList(eExps))) =>
         val pats = ePats.map(PatternsConvert.convertPat)
-        val guards = eGuards.map(GuardsConvert.convertGuard)
+        val guards = eGuards.map(convertGuard)
         val exps = eExps.map(convertExp)
         Clause(sp(anno), pats, guards, exps)
     }
@@ -32,7 +32,7 @@ object ExprsConvert {
   def convertIfClause(term: ETerm): IfClause =
     term match {
       case ETuple(List(EAtom("clause"), _anno, EList(List()), EList(eGuards), EList(eExps))) =>
-        val guards = eGuards.map(GuardsConvert.convertGuard)
+        val guards = eGuards.map(convertGuard)
         val exps = eExps.map(convertExp)
         IfClause(guards, exps)
     }
@@ -160,6 +160,11 @@ object ExprsConvert {
         }
 
     }
+
+  def convertGuard(term: ETerm): Guard = {
+    val EList(tests) = term
+    Guard(tests.map(ExprsConvert.convertExp))
+  }
 
   def maybeLiteral(term: ETerm): Option[Literal] =
     term match {

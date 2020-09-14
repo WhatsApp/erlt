@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.etf
 
 import com.whatsapp.sterlang.{Ast, ParseError, Pos, UnsupportedSyntaxError}
-import com.whatsapp.sterlang.forms.{Exprs, Forms, Guards, Patterns, Types}
+import com.whatsapp.sterlang.forms.{Exprs, Forms, Patterns, Types}
 
 object Convert {
   private def typeSpecifiersMapping: Map[String, Ast.BinElemType] =
@@ -148,77 +148,8 @@ object Convert {
   private def convertIfClause(ifClause: Exprs.IfClause): Ast.IfClause =
     Ast.IfClause(ifClause.guards.map(convertGuard), convertBody(ifClause.body))
 
-  private def convertGuard(guard: Guards.Guard): Ast.Guard =
-    Ast.Guard(guard.elems.map(convertGExpr))
-
-  private def convertGExpr(gExpr: Guards.GExpr): Ast.Exp =
-    gExpr match {
-      case Guards.GLiteral(literal) =>
-        literal match {
-          case Exprs.AtomLiteral(p, "true") =>
-            Ast.BoolExp(true)(p)
-          case Exprs.AtomLiteral(p, "false") =>
-            Ast.BoolExp(false)(p)
-          case Exprs.AtomLiteral(p, _) =>
-            // atom literals are not supported on its own
-            throw new UnsupportedSyntaxError(p)
-          case Exprs.CharLiteral(p, ch) =>
-            Ast.CharExp(ch.toString)(p)
-          case Exprs.FloatLiteral(p, fl) =>
-            Ast.NumberExp(fl.intValue())(p)
-          case Exprs.IntLiteral(p, i) =>
-            Ast.NumberExp(i)(p)
-          case Exprs.StringLiteral(p, Some(str)) =>
-            Ast.StringExp(str)(p)
-          case Exprs.StringLiteral(p, None) =>
-            Ast.StringExp("???")(p)
-        }
-      case Guards.GVariable(p, name) =>
-        Ast.VarExp(new Ast.LocalVarName(name))(p)
-      case Guards.GTuple(p, elems) =>
-        Ast.TupleExp(elems.map(convertGExpr))(p)
-      case Guards.GNil(p) =>
-        Ast.ListExp(List())(p)
-      case Guards.GCons(p, hd, tl) =>
-        Ast.ConsExp(convertGExpr(hd), convertGExpr(tl))(p)
-      case Guards.GMapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(gMapField))(p)
-      case Guards.GMapUpdate(p, exp, entries) =>
-        // this is not present in Erlang. Approximating
-        val recExp = convertGExpr(exp)
-        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(gMapField))(updateRange))(p)
-      case Guards.GMapFieldAccess(p, exp, fieldName) =>
-        Ast.SelExp(convertGExpr(exp), fieldName)(p)
-      case Guards.GCall(p, (fp, f), args) =>
-        Ast.AppExp(Ast.VarExp(new Ast.RemoteFunName("erlang", f, args.length))(fp), args.map(convertGExpr))(p)
-      case Guards.GBinaryOp(p, op, exp1, exp2) =>
-        Ast.binOps.get(op) match {
-          case Some(binOp) =>
-            Ast.BinOpExp(binOp, convertGExpr(exp1), convertGExpr(exp2))(p)
-          case None =>
-            // Unknown binary operation
-            throw new UnsupportedSyntaxError(p)
-        }
-      case Guards.GUnaryOp(p, op, exp1) =>
-        Ast.unOps.get(op) match {
-          case Some(uOp) =>
-            Ast.UOpExp(uOp, convertGExpr(exp1))(p)
-          case None =>
-            // unknown unary operation
-            throw new UnsupportedSyntaxError(p)
-        }
-      case Guards.GLocalEnumCtr(p, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertGExpr))(p)
-      case Guards.GRemoteEnumCtr(p, module, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertGExpr))(p)
-      case Guards.GBin(p, elems) =>
-        Ast.Bin(elems.map(convertGBinElem))(p)
-      case Guards.GStructCreate(p, structName, fields) =>
-        Ast.StructCreate(structName, fields.map(gStructField))(p)
-      case Guards.GStructSelect(p, rec, recordName, fieldName) =>
-        Ast.StructSelect(convertGExpr(rec), recordName, fieldName)(p)
-    }
+  private def convertGuard(guard: Exprs.Guard): Ast.Guard =
+    Ast.Guard(guard.elems.map(convertExpr))
 
   private def convertBody(exprs: List[Exprs.Expr]): Ast.Body =
     Ast.Body(exprs.init.map(convertValDef), convertValDef(exprs.last))
@@ -434,13 +365,6 @@ object Convert {
     Ast.BinElement(expr, size, binElemType)
   }
 
-  private def convertGBinElem(binElem: Guards.GBinElement): Ast.BinElement = {
-    val expr = convertGExpr(binElem.gExpr)
-    val size = binElem.size.map(convertGExpr)
-    val binElemType = extractBinElemType(binElem.typeSpecifiers)
-    Ast.BinElement(expr, size, binElemType)
-  }
-
   private def convertBinElemPat(binElemPat: Patterns.BinElementPattern): Ast.BinElementPat = {
     val pat = convertPattern(binElemPat.pat)
     val size = binElemPat.size.map(convertExpr)
@@ -471,20 +395,8 @@ object Convert {
   private def structField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
     Ast.Field(field.fieldName, convertExpr(field.value))(field.p)
 
-  private def gStructField(field: Guards.GStructField): Ast.Field[Ast.Exp] =
-    Ast.Field(field.fieldName, convertGExpr(field.value))(field.p)
-
   private def structFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
     Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
-
-  private def gMapField(assoc: Guards.GMapField): Ast.Field[Ast.Exp] =
-    assoc match {
-      case Guards.GMapField(p, Guards.GLiteral(Exprs.AtomLiteral(_, label)), e) =>
-        Ast.Field(label, convertGExpr(e))(p)
-      case _ =>
-        // "wrong anon struct syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
-    }
 
   private def convertType(tp: Types.Type): Ast.Type =
     tp match {
