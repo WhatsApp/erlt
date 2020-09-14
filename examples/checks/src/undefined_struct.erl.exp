@@ -1,0 +1,2 @@
+undefined_struct.erl:7:5: struct does_not_exist undefined
+undefined_struct.erl:10:5: struct some_module:does_not_exist undefined
