@@ -20,7 +20,8 @@
 -record(context, {
     module :: atom(),
     structs = #{},
-    def_db :: erlt_defs:def_db()
+    def_db :: erlt_defs:def_db(),
+    extra_guard_checks = []
 }).
 
 -define(CALL(Anno, Mod, Fun, Args),
@@ -31,7 +32,7 @@ module(Forms, DefDb) ->
     Context = init_context(Forms, DefDb),
     put(struct_gen_var, 0),
     try
-        erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Ctx, Context) end)
+        element(1, erlt_ast:traverse(Forms, Context, fun rewrite/3, fun post/3))
     after
         erase(struct_gen_var)
     end.
@@ -55,25 +56,36 @@ struct_info(Module, {type, _, struct, {atom, _, Tag}, Fields}) ->
     FieldsMap = [{Field, _Default = undefined} || {struct_field, _, {atom, _, Field}, _} <- Fields],
     {{atom, Anno, RuntimeTag}, FieldsMap}.
 
-rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, _Ctx, Context) ->
+rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) ->
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
     {RuntimeTag, _} = map_get(Tag, Context#context.structs),
     Type =
         {type, TypeLine, tuple, [RuntimeTag | [Type || {struct_field, _, _Name, Type} <- Fields]]},
-    {attribute, Line, type, {TypeName, Type, Args}};
-rewrite({struct, Line, Name, Fields}, pattern, Context) ->
+    {{attribute, Line, type, {TypeName, Type, Args}}, Context};
+rewrite({struct, Line, Name, Fields}, Context, pattern) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
     Fields1 = struct_pattern(Fields, Def),
-    {tuple, Line, [RuntimeTag | Fields1]};
-rewrite({struct, Line, Name, Fields}, _Ctx, Context) ->
+    {{tuple, Line, [RuntimeTag | Fields1]}, Context};
+rewrite({struct, Line, Name, Fields}, Context, _Ctx) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
     Fields1 = struct_init(Fields, Def),
-    {tuple, Line, [RuntimeTag | Fields1]};
-rewrite({struct_field, Line, Expr, Name, Field}, Ctx, Context) ->
+    {{tuple, Line, [RuntimeTag | Fields1]}, Context};
+rewrite({struct_field, Line, Expr, Name, Field}, Context, expr) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
-    struct_field(Line, Expr, RuntimeTag, Def, Field, Ctx);
-rewrite(Other, _, _) ->
-    Other.
+    {struct_field_expr(Line, Expr, RuntimeTag, Def, Field), Context};
+rewrite({struct_field, Line, Expr, Name, Field}, Context, guard) ->
+    {RuntimeTag, Def} = get_definition(Name, Context),
+    Check = struct_field_guard_check(Line, Expr, RuntimeTag, Def),
+    Context1 = Context#context{extra_guard_checks = [Check | Context#context.extra_guard_checks]},
+    {struct_field_guard(Line, Expr, Def, Field), Context1};
+rewrite(Other, Context, _) ->
+    {Other, Context}.
+
+post({guard_and, Line, Exprs}, Context, _) ->
+    Context1 = Context#context{extra_guard_checks = []},
+    {{guard_and, Line, Context#context.extra_guard_checks ++ Exprs}, Context1};
+post(Other, Context, _) ->
+    {Other, Context}.
 
 get_definition({atom, _, Name}, Context) ->
     map_get(Name, Context#context.structs);
@@ -115,7 +127,7 @@ find_index(Name, [{Name, _} | _Rest], Acc) ->
 find_index(Name, [_ | Rest], Acc) ->
     find_index(Name, Rest, Acc + 1).
 
-struct_field(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field, expr) ->
+struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
     Pattern = struct_pattern([{struct_field, GenLine, Field, Var}], Def),
@@ -123,11 +135,18 @@ struct_field(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field, expr) ->
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
         {clause, GenLine, [{var, GenLine, '_'}], [], [?CALL(GenLine, erlang, error, [Error])]}
-    ]};
-struct_field(Line, Expr, _RuntimeTag, Def, {atom, _, FieldRaw}, guard) ->
+    ]}.
+
+struct_field_guard(Line, Expr, Def, {atom, _, FieldRaw}) ->
     GenLine = erl_anno:set_generated(true, Line),
     Index = {integer, GenLine, find_index(FieldRaw, Def, 2)},
     ?CALL(GenLine, erlang, element, [Index, Expr]).
+
+struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->
+    GenLine = erl_anno:set_generated(true, Line),
+    Check = ?CALL(GenLine, erlang, is_record, [Expr, RuntimeTag, {integer, GenLine, length(Def) + 1}]),
+    %% Force guard crash by evaluating to non-boolean
+    {op, GenLine, 'orelse', Check, {atom, GenLine, fail}}.
 
 gen_var(Line, Mnemo) ->
     Num = get(struct_gen_var),
