@@ -150,14 +150,8 @@ object FormsConvert {
 
   def structFieldDecl(term: ETerm): StructFieldDecl =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit)) =>
-        StructFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), None)
-      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, expr)) =>
-        StructFieldUntyped(sp(anno), convertAtomLit(fieldNameLit), Some(ExprsConvert.convertExp(expr)))
-      case ETuple(List(EAtom("typed_struct_field"), eUntypedField, eType)) =>
-        val StructFieldUntyped(p, name, initValue) = structFieldDecl(eUntypedField)
-        val tp = TypesConvert.convertType(eType)
-        StructFieldTyped(p, name, initValue, tp)
+      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, eType)) =>
+        StructFieldTyped(sp(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
     }
 
   def convertAtomLit(term: ETerm): String =

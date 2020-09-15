@@ -61,6 +61,5 @@ object Forms {
   case class Error(loc: Pos.Loc) extends Form
 
   sealed trait StructFieldDecl
-  case class StructFieldUntyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr]) extends StructFieldDecl
   case class StructFieldTyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr], tp: Type) extends StructFieldDecl
 }

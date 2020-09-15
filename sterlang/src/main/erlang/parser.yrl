@@ -114,7 +114,7 @@ field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
 field_defs -> field_def ',' field_defs    : ['$1'|'$3'].
 
-field_def -> atom '::' top_type           : {typed,'$1','$3'}.
+field_def -> atom '::' top_type           : {struct_field, anno('$1', '$3'), '$1', '$3'}.
 
 top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
@@ -489,7 +489,7 @@ type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
     {attribute, Aa, Kind, {Name, Type, Args}}.
 
 struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
-    {attribute, Aa, StructKind, {StructName, struct_fields(Fields)}}.
+    {attribute, Aa, StructKind, {StructName, Fields}}.
 
 type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
     {attribute, Aa, spec, {{Fun, find_arity_from_specs(TypeSpecs)}, TypeSpecs}}.
@@ -553,13 +553,6 @@ farity_list({nil, _An}) ->
     [];
 farity_list(Other) ->
     ret_err(anno(Other), "bad function arity").
-
-struct_fields([{typed, {atom, Aa, A}, TypeInfo} | Fields]) ->
-    [{typed_struct_field, {struct_field, Aa, {atom, Aa, A}}, TypeInfo} | struct_fields(Fields)];
-struct_fields([Other | _Fields]) ->
-    ret_err(anno(Other), "bad struct field");
-struct_fields([]) ->
-    [].
 
 %% build_function([Clause]) -> {function,Anno,Name,Arity,[Clause]}
 

@@ -105,9 +105,6 @@ object Convert {
 
   private def convertStructFieldDecl(structFieldDecl: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
     structFieldDecl match {
-      case Forms.StructFieldUntyped(p, name, initValue) =>
-        // untyped or implicitly typed record fields are not supported
-        throw new UnsupportedSyntaxError(p)
       case Forms.StructFieldTyped(p, name, Some(initValue), tp) =>
         // initializers are not supported (yet)
         throw new UnsupportedSyntaxError(p)
