@@ -1,4 +1,4 @@
-name: Erl1+ CI
+name: ErlT CI
 
 on: [push]
 
