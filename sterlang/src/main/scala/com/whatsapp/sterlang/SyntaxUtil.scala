@@ -63,35 +63,6 @@ object SyntaxUtil {
         allPats.flatMap(collectPatVars)
     }
 
-  def collectPatVars2(pat: A.Pat): List[String] =
-    pat match {
-      case A.WildPat() =>
-        List.empty
-      case A.VarPat(v) =>
-        List(v)
-      case A.AndPat(p1, p2) =>
-        collectPatVars2(p1) ++ collectPatVars2(p2)
-
-      case A.LiteralPat(_) =>
-        List.empty
-      case A.TuplePat(tPats) =>
-        tPats.flatMap(collectPatVars2)
-      case A.ListPat(tPats) =>
-        tPats.flatMap(collectPatVars2)
-      case A.RecordPat(fields) =>
-        fields.map(_.value).flatMap(collectPatVars2)
-
-      case A.ConsPat(hPat, tPat) =>
-        collectPatVars2(hPat) ++ collectPatVars2(tPat)
-      case A.EnumConstructorPat(_, _, tPats) =>
-        tPats.flatMap(collectPatVars2)
-
-      case A.BinPat(elems) =>
-        elems.flatMap(elem => collectPatVars2(elem.pat))
-      case A.StructPat(_, fields) =>
-        fields.map(_.value).flatMap(collectPatVars2)
-    }
-
   def collectNamedTypeVars(t: S.Type): List[String] =
     t match {
       case S.TypeVar(n) =>
