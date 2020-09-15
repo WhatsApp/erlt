@@ -391,7 +391,7 @@ ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _) ->
 ltype({type, _Line, enum, Tag, Vars}, _) ->
     {first, lexpr(Tag, options(none)), tuple_type(Vars, fun ltype/2)};
 ltype({type, _Line, struct, _Name, Fields}, _) ->
-    {seq, $(, $), [$,], struct_fields(Fields, "::", fun ltype/2, 0)};
+    {seq, $(, $), [$,], lists:map(fun field_def/1, Fields)};
 ltype({type, Line, T, Ts}, _) ->
     simple_type({atom, Line, T}, Ts);
 ltype({user_type, Line, T, Ts}, _) ->
@@ -496,11 +496,11 @@ ltypes(Ts, Prec) ->
 ltypes(Ts, F, Prec) ->
     [F(T, Prec) || T <- Ts].
 
-struct_fields(Fields, Join, F, Prec) ->
-    [
-        {first, [F(Name, Prec), " " ++ Join ++ " "], F(Value, Prec)}
-        || {struct_field, _, Name, Value} <- Fields
-    ].
+
+field_def({field_definition, _, Name, undefined, Type}) ->
+    [ltype(Name, 0), " :: ", ltype(Type, 0)];
+field_def({field_definition, _, Name, Default, Type}) ->
+    [ltype(Name, 0), " = ", lexpr(Default, 0), " :: ", ltype(Type, 0)].
 
 attr(Name, Args) ->
     {first, [$-, {atom, Name}], args(Args, options(none))}.

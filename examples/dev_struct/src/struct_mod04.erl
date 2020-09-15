@@ -13,29 +13,16 @@
 %% limitations under the License.
 
 -lang([erlt]).
--module(struct_mod01).
+-module(struct_mod04).
 
--export_type([foo/0, bar/1]).
+-export_type([struct/0]).
 
--export([foo/0, bar/0, pattern/2, guard/1, field/1, update/1]).
+-export([local/0, remote/0]).
 
--struct foo :: ().
+-struct struct :: (a = 5 :: integer(), b :: float()).
 
--struct bar(A) :: (a :: A, b :: foo()).
+local() ->
+    {#struct{b = 1.0}, #struct{a = 10, b = 1.0}}.
 
-foo() ->
-    #foo{}.
-
-bar() ->
-    #bar{a = 1, b = #foo{}}.
-
-pattern(#foo{}, #bar{b = B}) -> B.
-
-guard(Value) when Value =:= #bar{a = 1, b = 2} ->
-    ok.
-
-field(Value) when Value#bar.a =:= 1 ->
-    Value#bar.b.
-
-update(Value) ->
-    Value#bar{a = 2}.
+remote() ->
+    {#?MODULE:struct{b = 1.0}, #?MODULE:struct{a = 10, b = 1.0}}.
