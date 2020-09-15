@@ -61,14 +61,4 @@ private[patterns] object PatternMatrix {
       }
     }
   }
-
-  object AddRow {
-
-    /** Strip the first row in matrix. */
-    def unapply(matrix: Matrix): Option[(Vector, Matrix)] =
-      matrix.rows match {
-        case Nil         => None
-        case row :: rows => Some(row, Matrix(rows))
-      }
-  }
 }
