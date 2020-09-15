@@ -17,17 +17,24 @@
 
 -export_type([foo/0, bar/1]).
 
--export([foo/0, bar/0, pattern/2, guard/1, field/1, update/1]).
+-export([foo/0, bar/0, baz/0, pattern/2, guard/1, field/1, update/1]).
 
 -struct foo :: ().
 
 -struct bar(A) :: (a :: A, b :: foo()).
+
+-struct baz :: (bar = #bar{a = 1, b = #foo{}} :: bar(integer())).
+
+-struct default_with_default :: (x = #baz{} :: baz()).
 
 foo() ->
     #foo{}.
 
 bar() ->
     #bar{a = 1, b = #foo{}}.
+
+baz() ->
+    {#baz{}, #default_with_default{}}.
 
 pattern(#foo{}, #bar{b = B}) -> B.
 
