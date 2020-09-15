@@ -44,7 +44,5 @@ jobs:
         run:  make test-ir -C examples/dev_enum/src
       - name: "examples/calc/src: test-ir"
         run:  make test-ir -C examples/calc/src
-      # - name: "examples/dev_module_record/src: make"
-      #   run:  make erl2c-records -C examples/dev_module_record/src
       - name: "examples/checks/src: test"
         run:  make test -C examples/checks/src
