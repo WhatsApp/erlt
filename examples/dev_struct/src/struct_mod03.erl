@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2]).
+-lang([erlt]).
 -module(struct_mod03).
 
 -export([expr/0, pattern/1, guard/1, field/1, update/1]).

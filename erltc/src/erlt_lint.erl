@@ -452,6 +452,10 @@ format_error({undefined_struct_field, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw", [F, N]);
 format_error({undefined_struct_field, M, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw:~tw", [F, M, N]);
+format_error({illegal_struct_default_call, {F, A}}) ->
+    io_lib:format("call to local/imported function ~tw/~w is illegal in struct defaults", [F, A]);
+format_error(illegal_struct_default) ->
+    "illegal struct default expression";
 format_error({undefined_field, T, F}) ->
     io_lib:format("field ~tw undefined in record ~tw", [F, T]);
 format_error(illegal_record_info) ->
@@ -3345,10 +3349,8 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
             end
     end.
 
-get_field_map_from_struct_def(
-    {attribute, _Loc, struct, {_Name, {type, _DefAnno, struct, _Tag, Fields}, _Vs}}
-) ->
-    maps:from_list([{Name, Def} || {struct_field, _, {atom, _, Name}, Def} <- Fields]).
+get_field_map_from_struct_def({attribute, _Loc, struct, {_Name, TypeDef, _Vs}}) ->
+    struct_fields_map(TypeDef).
 
 struct_field({atom, La, F}, Name, IsDefined, St) ->
     case IsDefined(F) of
@@ -3364,16 +3366,10 @@ struct_field({atom, La, F}, Name, IsDefined, St) ->
     end.
 
 init_struct_fields(Fields, _Line, Name, IsDefined, Vt0, St0) ->
-    {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3),
-    % Dfs = init_fields(Ifs, Line, Defs),
-    % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
-    {Vt1, St1#lint{usage = St1#lint.usage}}.
+    check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3).
 
 init_struct_fields_guard(Fields, _Line, Name, IsDefined, Vt0, St0) ->
-    {Vt1, St1} = check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun gexpr/3),
-    % Dfs = init_fields(Ifs, Line, Defs),
-    % {_, St2} = check_fields(Dfs, Name, Dfs, Vt1, St1, fun expr/3),
-    {Vt1, St1#lint{usage = St1#lint.usage}}.
+    check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun gexpr/3).
 
 update_struct_fields(Fields, _Line, Name, IsDefined, Vt, St) ->
     check_struct_fields(Fields, Name, IsDefined, Vt, St, fun expr/3).
@@ -3394,7 +3390,8 @@ check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, IsDefined, Vt, 
             {[F | Sfs],
                 case IsDefined(F) of
                     true -> CheckFun(Val, Vt, St);
-                    false -> {[], add_error(La, {undefined_field, Name, F}, St)}
+                    % TODO: fix error
+                    false -> {[], add_error(La, {undefined_struct_field, Name, F}, St)}
                 end}
     end.
 
@@ -3604,17 +3601,19 @@ find_field(_F, []) -> error.
 
 %% Does not do any checking, this is done in check_type
 
-struct_def({type, Line, struct, {atom, _, Name}, Fields}, St) ->
+struct_def({type, Line, struct, {atom, _, Name}, _Fields} = Type, St) ->
     case is_map_key(Name, St#lint.structs) of
         true ->
             add_error(Line, {redefine_struct, Name}, St);
         false ->
-            FieldsMap = maps:from_list([
-                {Field, _Default = undefined}
-                || {struct_field, _, {atom, _, Field}, _} <- Fields
-            ]),
-            St#lint{structs = (St#lint.structs)#{Name => FieldsMap}}
+            St#lint{structs = (St#lint.structs)#{Name => struct_fields_map(Type)}}
     end.
+
+struct_fields_map({type, _, struct, _, Fields}) ->
+    maps:from_list([
+        {Field, Type}
+        || {field_definition, _, {atom, _, Field}, _Default, Type} <- Fields
+    ]).
 
 %% Checks that constructors of an enum are valid
 %% - only a single constructor or a union of constructors
@@ -3869,17 +3868,33 @@ check_type(I, SeenVars, St) ->
 
 %% Struct types only appear in struct definitions
 check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->
-    Fun = fun({struct_field, Line, {atom, _, Name}, Type}, {SeenVars, St, FieldsAcc}) ->
+    Fun = fun({field_definition, Line, {atom, _, Name}, Default, Type}, {SeenVars, St, FieldsAcc}) ->
         St1 =
             case is_map_key(Name, FieldsAcc) of
+                %% TODO: fix name reporting
                 true -> add_error(Line, {redefine_struct_field, StructName, Name}, St);
                 false -> St
             end,
-        {SeenVars1, St2} = check_type(Type, SeenVars, St1),
-        {SeenVars1, St2, FieldsAcc#{Name => Type}}
+        St2 = check_struct_default(Default, St1),
+        {SeenVars1, St3} = check_type(Type, SeenVars, St2),
+        {SeenVars1, St3, FieldsAcc#{Name => Type}}
     end,
     {SeenVars, St, _} = lists:foldl(Fun, {SeenVars0, St0, #{}}, Fields),
     {SeenVars, St}.
+
+check_struct_default(undefined, St) ->
+    St;
+check_struct_default(Expr, St = #lint{errors = OriginalErrors}) ->
+    {_, St1 = #lint{errors = NewErrors}} = gexpr(Expr, [], St#lint{errors = []}),
+    Errors = lists:map(fun translate_struct_default_error/1, NewErrors) ++ OriginalErrors,
+    St1#lint{errors = Errors}.
+
+translate_struct_default_error({File, {Loc, Mod, illegal_guard_expr}}) ->
+    {File, {Loc, Mod, illegal_struct_default}};
+translate_struct_default_error({File, {Loc, Mod, {illegal_guard_local_call, Call}}}) ->
+    {File, {Loc, Mod, {illegal_strtuct_default_local_call, Call}}};
+translate_struct_default_error(Other) ->
+    Other.
 
 check_record_types(Line, Name, Fields, SeenVars, St) ->
     case dict:find(Name, St#lint.records) of

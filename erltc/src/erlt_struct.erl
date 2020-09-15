@@ -53,14 +53,17 @@ init_structs(Defs, Module) ->
 struct_info(Module, {type, _, struct, {atom, _, Tag}, Fields}) ->
     RuntimeTag = list_to_atom("$#" ++ atom_to_list(Module) ++ ":" ++ atom_to_list(Tag)),
     Anno = erl_anno:set_generated(true, erl_anno:new(0)),
-    FieldsMap = [{Field, _Default = undefined} || {struct_field, _, {atom, _, Field}, _} <- Fields],
+    FieldsMap = [
+        {Name, Default}
+        || {field_definition, _, {atom, _, Name}, Default, _Type} <- Fields
+    ],
     {{atom, Anno, RuntimeTag}, FieldsMap}.
 
 rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) ->
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
     {RuntimeTag, _} = map_get(Tag, Context#context.structs),
-    Type =
-        {type, TypeLine, tuple, [RuntimeTag | [Type || {struct_field, _, _Name, Type} <- Fields]]},
+    FieldTypes = [Type || {field_definition, _, _Name, _Default, Type} <- Fields],
+    Type = {type, TypeLine, tuple, [RuntimeTag | FieldTypes]},
     {{attribute, Line, type, {TypeName, Type, Args}}, Context};
 rewrite({struct, Line, Name, Fields}, Context, pattern) ->
     {RuntimeTag, Def} = get_definition(Name, Context),
@@ -101,7 +104,7 @@ struct_init(Fields, Defs) ->
     Fun = fun({Name, Default}) ->
         case find_field(Name, Fields) of
             {struct_field, _, _, Value} -> Value;
-            error -> Default
+            error when Default =/= undefined -> Default
         end
     end,
     lists:map(Fun, Defs).

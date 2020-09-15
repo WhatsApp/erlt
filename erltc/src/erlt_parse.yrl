@@ -119,7 +119,8 @@ vars -> var : ['$1'].
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
 
-field_def -> atom '::' type : {struct_field, ?anno('$1', '$3'), '$1', '$3'}.
+field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
