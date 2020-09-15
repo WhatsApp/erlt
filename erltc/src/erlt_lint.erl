@@ -452,6 +452,8 @@ format_error({undefined_struct_field, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw", [F, N]);
 format_error({undefined_struct_field, M, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw:~tw", [F, M, N]);
+format_error({no_field_value, M}) ->
+    io_lib:format("field ~tw has no initializer or default value", [M]);
 format_error({illegal_struct_default_call, {F, A}}) ->
     io_lib:format("call to local/imported function ~tw/~w is illegal in struct defaults", [F, A]);
 format_error(illegal_struct_default) ->
@@ -1904,8 +1906,6 @@ pattern({enum, _Line, E, C, Ps}, Vt, Old, Bvt, St) ->
     pattern_list([E, C | Ps], Vt, Old, Bvt, check_enum(E, C, Ps, St));
 pattern({map, _Line, Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
-%%pattern({struct,_Line,_Tag,Ps}, Vt, Old, Bvt, St) ->
-%%    pattern_list(Ps, Vt, Old, Bvt, St);
 pattern({record_index, Line, Name, Field}, _Vt, _Old, _Bvt, St) ->
     {Vt1, St1} =
         check_record(Line, Name, St, fun(Dfs, St1) ->
@@ -3306,18 +3306,18 @@ check_struct(Line, RawName, St, CheckFun) ->
     case handle_imported_struct(RawName, St) of
         {{atom, _, N}, St1} ->
             case maps:find(N, St#lint.structs) of
-                {ok, Def} -> CheckFun(fun(F) -> is_map_key(F, Def) end, used_struct(N, St1));
+                {ok, Def} -> CheckFun(Def, used_struct(N, St1));
                 error -> {[], add_error(Line, {undefined_struct, N}, St1)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
             case St#lint.defs_db of
                 undefined ->
-                    CheckFun(fun(_F) -> true end, St1);
+                    CheckFun(unavailable, St1);
                 GlobalDefs ->
                     case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
                             FieldMap = get_field_map_from_struct_def(StructDef),
-                            CheckFun(fun(F) -> is_map_key(F, FieldMap) end, St1);
+                            CheckFun(FieldMap, St1);
                         error ->
                             {[], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
@@ -3330,19 +3330,19 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
             case maps:find(N, St#lint.structs) of
                 {ok, Def} ->
                     St1 = used_struct(N, St),
-                    pattern_struct_fields(Pfs, N, Def, Vt, Old, Bvt, St1);
+                    pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
                 error ->
                     {[], [], add_error(Line, {undefined_struct, N}, St)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
             case St#lint.defs_db of
                 undefined ->
-                    pattern_struct_fields_no_definition(Pfs, N, Vt, Old, Bvt, St1);
+                    pattern_struct_fields(Pfs, N, unavailable, Vt, Old, Bvt, St1);
                 GlobalDefs ->
                     case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
                             Def = get_field_map_from_struct_def(StructDef),
-                            pattern_struct_fields(Pfs, N, Def, Vt, Old, Bvt, St1);
+                            pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
                         error ->
                             {[], [], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
@@ -3352,8 +3352,8 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
 get_field_map_from_struct_def({attribute, _Loc, struct, {_Name, TypeDef, _Vs}}) ->
     struct_fields_map(TypeDef).
 
-struct_field({atom, La, F}, Name, IsDefined, St) ->
-    case IsDefined(F) of
+struct_field({atom, La, F}, Name, Definitions, St) ->
+    case Definitions =:= unavailable orelse is_map_key(F, Definitions) of
         true ->
             {[], St};
         false ->
@@ -3365,33 +3365,54 @@ struct_field({atom, La, F}, Name, IsDefined, St) ->
             end
     end.
 
-init_struct_fields(Fields, _Line, Name, IsDefined, Vt0, St0) ->
-    check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun expr/3).
+init_struct_fields(Fields, Line, Name, Definitions, Vt0, St0) ->
+    {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun expr/3),
+    {Uvt, ensure_all_field_values(Line, SeenFields, Definitions, St)}.
 
-init_struct_fields_guard(Fields, _Line, Name, IsDefined, Vt0, St0) ->
-    check_struct_fields(Fields, Name, IsDefined, Vt0, St0, fun gexpr/3).
+init_struct_fields_guard(Fields, Line, Name, Definitions, Vt0, St0) ->
+    {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
+    {Uvt, ensure_all_field_values(Line, SeenFields, Definitions, St)}.
 
-update_struct_fields(Fields, _Line, Name, IsDefined, Vt, St) ->
-    check_struct_fields(Fields, Name, IsDefined, Vt, St, fun expr/3).
+update_struct_fields(Fields, _Line, Name, Definitions, Vt, St) ->
+    {_SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt, St, fun expr/3),
+    {Uvt, St}.
 
-check_struct_fields(Fields, Name, IsDefined, Vt0, St0, CheckFun) ->
+ensure_all_field_values(_Line, _Seen, unavailable, St) ->
+    St;
+ensure_all_field_values(Line, Seen, Definitions, St0) ->
+    Fun = fun
+        (Field, undefined, St) ->
+            case member(Field, Seen) of
+                true -> St;
+                false -> add_error(Line, {no_field_value, Field}, St)
+            end;
+        (_Field, _Default, St) ->
+            St
+    end,
+    maps:fold(Fun, St0, Definitions).
+
+check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->
-        {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, IsDefined, Vt0, Sta, Sfsa, CheckFun),
+        {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun),
         {Sfsb, vtmerge_pat(Vta, Vtb), Stb}
     end,
-    {_SeenFields, Uvt, St1} = foldl(Fun, {[], [], St0}, Fields),
-    {Uvt, St1}.
+    foldl(Fun, {[], [], St0}, Fields).
 
-check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, IsDefined, Vt, St, Sfs, CheckFun) ->
+check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, Definitions, Vt, St, Sfs, CheckFun) ->
     case member(F, Sfs) of
         true ->
             {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
         false ->
             {[F | Sfs],
-                case IsDefined(F) of
+                case Definitions =:= unavailable orelse is_map_key(F, Definitions) of
                     true -> CheckFun(Val, Vt, St);
-                    % TODO: fix error
-                    false -> {[], add_error(La, {undefined_struct_field, Name, F}, St)}
+                    false ->
+                        case Name of
+                            {atom, _, N} ->
+                                {[], add_error(La, {undefined_struct_field, N, F}, St)};
+                            {remote, _, {atom, _, M}, {atom, _, N}} ->
+                                {[], add_error(La, {undefined_struct_field, M, N, F}, St)}
+                        end
                 end}
     end.
 
@@ -3488,20 +3509,12 @@ pattern_field({atom, La, F}, Name, Fields, St) ->
         error -> {[], add_error(La, {undefined_field, Name, F}, St)}
     end.
 
-pattern_struct_fields_no_definition(Fs, Name, Vt0, Old, Bvt, St0) ->
-    AlwaysDefined = fun(_F) -> true end,
-    do_pattern_struct_fields(Fs, Name, AlwaysDefined, Vt0, Old, Bvt, St0).
-
-pattern_struct_fields(Fs, Name, Fields, Vt0, Old, Bvt, St0) ->
-    IsDefined = fun(F) -> is_map_key(F, Fields) end,
-    do_pattern_struct_fields(Fs, Name, IsDefined, Vt0, Old, Bvt, St0).
-
-do_pattern_struct_fields(Fs, Name, IsDefined, Vt0, Old, Bvt, St0) ->
+pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
     {_SeenFields, Uvt, Bvt1, St1} =
         foldl(
             fun(Field, {Sfsa, Vta, Bvt1, Sta}) ->
-                case check_struct_field(Field, Name, IsDefined, Vt0, Sta, Sfsa, CheckFun) of
+                case check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun) of
                     {Sfsb, {Vtb, Stb}} ->
                         {Sfsb, vtmerge_pat(Vta, Vtb), [], Stb};
                     {Sfsb, {Vtb, Bvt2, Stb}} ->
@@ -3611,8 +3624,8 @@ struct_def({type, Line, struct, {atom, _, Name}, _Fields} = Type, St) ->
 
 struct_fields_map({type, _, struct, _, Fields}) ->
     maps:from_list([
-        {Field, Type}
-        || {field_definition, _, {atom, _, Field}, _Default, Type} <- Fields
+        {Field, Default}
+        || {field_definition, _, {atom, _, Field}, Default, _Type} <- Fields
     ]).
 
 %% Checks that constructors of an enum are valid
@@ -3871,7 +3884,6 @@ check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->
     Fun = fun({field_definition, Line, {atom, _, Name}, Default, Type}, {SeenVars, St, FieldsAcc}) ->
         St1 =
             case is_map_key(Name, FieldsAcc) of
-                %% TODO: fix name reporting
                 true -> add_error(Line, {redefine_struct_field, StructName, Name}, St);
                 false -> St
             end,

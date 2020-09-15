@@ -1,0 +1,4 @@
+struct_fields.erl:12:9: field b has no initializer or default value
+struct_fields.erl:13:9: field b has no initializer or default value
+struct_fields.erl:14:26: field does_not_exist undefined in struct struct
+struct_fields.erl:15:17: field does_not_exist undefined in struct struct

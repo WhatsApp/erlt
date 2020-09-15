@@ -33,7 +33,7 @@ main([ErltFile]) ->
     case string:str(ActualOutPut, ExpOutPutStr) of
         0 ->
             io:format(
-                "`erltc ~s`~nExpected to see an output with:~n  ~s~nGot:~n  ~s",
+                "`erltc ~s`~nExpected to see an output with:~n~n~s~nGot:~n~n~s~n",
                 [ErltFile, ExpOutPutStr, ActualOutPut]
             ),
             halt(2);
