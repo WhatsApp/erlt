@@ -496,11 +496,19 @@ ltypes(Ts, Prec) ->
 ltypes(Ts, F, Prec) ->
     [F(T, Prec) || T <- Ts].
 
+struct_fields(FieldVals, Opts) ->
+    {L, _, R} = inop_prec('='),
+    Fields = [
+        [lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)]
+        || {struct_field, _, Name, Value} <- FieldVals
+    ],
+    {seq, ${, $}, [$,], Fields}.
 
 field_def({field_definition, _, Name, undefined, Type}) ->
     [ltype(Name, 0), " :: ", ltype(Type, 0)];
 field_def({field_definition, _, Name, Default, Type}) ->
-    [ltype(Name, 0), " = ", lexpr(Default, 0), " :: ", ltype(Type, 0)].
+    Opts = options(none),
+    [ltype(Name, 0), " = ", lexpr(Default, 0, Opts), " :: ", ltype(Type, 0)].
 
 attr(Name, Args) ->
     {first, [$-, {atom, Name}], args(Args, options(none))}.
@@ -599,8 +607,10 @@ lexpr({tuple, _, Elts}, _, Opts) ->
     tuple(Elts, Opts);
 lexpr({enum, _, C, Elts}, _, Opts) ->
     {first, lexpr(C, Opts), tuple(Elts, Opts)};
-%%lexpr({struct,_,Tag,Elts}, _, Opts) ->
-%%  {first,format("~w", [Tag]),tuple(Elts, Opts)};
+lexpr({struct, _, Tag, Elts}, Prec, Opts) ->
+    {P, R} = preop_prec('#'),
+    El = {first, "#", {first, lexpr(Tag, R, Opts), struct_fields(Elts, Opts)}},
+    maybe_paren(P, Prec, El);
 lexpr({record_index, _, Name, F}, Prec, Opts) ->
     {P, R} = preop_prec('#'),
     Nl = record_name(Name),
