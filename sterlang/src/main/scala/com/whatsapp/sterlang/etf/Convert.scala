@@ -33,7 +33,7 @@ object Convert {
       "utf32" -> Ast.Utf32BinElemType,
     )
 
-  def convert(form: Forms.Form): Option[Ast.ProgramElem] =
+  def convertForm(form: Forms.Form): Option[Ast.ProgramElem] =
     form match {
       case Forms.Lang(mods) =>
         Some(Ast.LangElem(mods))
@@ -56,9 +56,9 @@ object Convert {
             val enumCons =
               body match {
                 case Types.UnionType(_, elems) =>
-                  elems.map(enumCon)
+                  elems.map(convertEnumCon)
                 case single =>
-                  List(enumCon(single))
+                  List(convertEnumCon(single))
               }
             val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(p)
             Some(Ast.EnumElem(enumDef))
@@ -86,8 +86,8 @@ object Convert {
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
       case Forms.StructDecl(p, name, eFields, kind) =>
-        val fields = eFields.map(convertStructField)
-        val eStructType = Ast.StructDef(name, fields, recordKind(kind))(p)
+        val fields = eFields.map(convertStructFieldDecl)
+        val eStructType = Ast.StructDef(name, fields, convertStructKind(kind))(p)
         Some(Ast.StructElem(eStructType))
       case Forms.Behaviour(_) | Forms.Compile(_) | Forms.EOF | Forms.File(_) |
           Forms.FunctionSpec(_, Forms.Callback, _, _) | Forms.WildAttribute(_, _) =>
@@ -96,15 +96,15 @@ object Convert {
         throw ParseError(loc)
     }
 
-  private def recordKind(recKind: Forms.StructKind): Ast.StructKind =
-    recKind match {
+  private def convertStructKind(strKind: Forms.StructKind): Ast.StructKind =
+    strKind match {
       case Forms.StrStruct => Ast.StrStruct
       case Forms.ExnStruct => Ast.ExnStruct
       case Forms.MsgStruct => Ast.MsgStruct
     }
 
-  private def convertStructField(eStructField: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
-    eStructField match {
+  private def convertStructFieldDecl(structFieldDecl: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
+    structFieldDecl match {
       case Forms.StructFieldUntyped(p, name, initValue) =>
         // untyped or implicitly typed record fields are not supported
         throw new UnsupportedSyntaxError(p)
@@ -115,35 +115,27 @@ object Convert {
         Ast.Field(name, convertType(tp))(p)
     }
 
-  private def convertFunClause(clause: Exprs.Clause): Ast.Clause =
-    Ast.Clause(clause.pats.map(convertPattern), clause.guards.map(convertGuard), convertBody(clause.body))
+  private def convertFunClause(funClause: Exprs.Clause): Ast.Clause =
+    Ast.Clause(funClause.pats.map(convertPattern), funClause.guards.map(convertGuard), convertBody(funClause.body))
 
-  private def convertCaseClause(clause: Exprs.Clause): Ast.Rule =
-    clause.pats match {
-      case List(pat) =>
-        Ast.Rule(convertPattern(pat), clause.guards.map(convertGuard), convertBody(clause.body))
-      case _ =>
-        // Impossible in practice, need to handle due to clumsiness of abstract forms
-        throw new UnsupportedSyntaxError(clause.p)
-    }
+  private def convertCaseClause(caseClause: Exprs.Clause): Ast.Rule = {
+    val List(pat) = caseClause.pats
+    Ast.Rule(convertPattern(pat), caseClause.guards.map(convertGuard), convertBody(caseClause.body))
+  }
 
-  private def convertCatchClause(clause: Exprs.Clause): Ast.Rule =
-    clause.pats match {
-      case List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) =>
-        val stackTracePat = convertPattern(stackTrace)
-        stackTracePat match {
-          case Ast.WildPat() =>
-          // OK
-          case _ =>
-            // we do not type "stack traces" yet
-            throw new UnsupportedSyntaxError(stackTracePat.p)
-        }
-        val exnPat = convertPattern(exn)
-        Ast.Rule(exnPat, clause.guards.map(convertGuard), convertBody(clause.body))
+  private def convertCatchClause(catchClause: Exprs.Clause): Ast.Rule = {
+    val List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) = catchClause.pats
+    val stackTracePat = convertPattern(stackTrace)
+    stackTracePat match {
+      // OK
+      case Ast.WildPat() =>
+      // we do not type "stack traces" yet
       case _ =>
-        // Impossible in practice, need to handle due to clumsiness of abstract forms
-        throw new UnsupportedSyntaxError(clause.p)
+        throw new UnsupportedSyntaxError(stackTracePat.p)
     }
+    val exnPat = convertPattern(exn)
+    Ast.Rule(exnPat, catchClause.guards.map(convertGuard), convertBody(catchClause.body))
+  }
 
   private def convertIfClause(ifClause: Exprs.IfClause): Ast.IfClause =
     Ast.IfClause(ifClause.guards.map(convertGuard), convertBody(ifClause.body))
@@ -212,7 +204,7 @@ object Convert {
         }
         Ast.RecordPat(pats)(p)
       case Patterns.BinPattern(p, elems) =>
-        Ast.BinPat(elems.map(convertBinElemPat))(p)
+        Ast.BinPat(elems.map(convertBinElemPattern))(p)
       case Patterns.BinOpPattern(p, op, pat1, pat2) =>
         // we do not support things like (4 + 5) in patterns
         throw new UnsupportedSyntaxError(p)
@@ -220,7 +212,7 @@ object Convert {
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p)
       case Patterns.StructPattern(p, recordName, fields) =>
-        Ast.StructPat(recordName, fields.map(structFieldPattern))(p)
+        Ast.StructPat(recordName, fields.map(convertStructFieldPattern))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -261,12 +253,12 @@ object Convert {
       case Exprs.RemoteEnumCtr(p, module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
       case Exprs.MapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(field))(p)
+        Ast.RecordExp(entries.map(convertRecordField))(p)
       case Exprs.MapUpdate(p, exp, entries) =>
         val recExp = convertExpr(exp)
         // this is not present in Erlang. Approximating
         val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(field))(updateRange))(p)
+        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(convertRecordField))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>
@@ -332,9 +324,9 @@ object Convert {
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.StructCreate(p, structName, fields) =>
-        Ast.StructCreate(structName, fields.map(structField))(p)
+        Ast.StructCreate(structName, fields.map(convertStructField))(p)
       case Exprs.StructUpdate(p, rec, structName, fields) =>
-        Ast.StructUpdate(convertExpr(rec), structName, fields.map(structField))(p)
+        Ast.StructUpdate(convertExpr(rec), structName, fields.map(convertStructField))(p)
       case Exprs.StructSelect(p, rec, structName, fieldName) =>
         Ast.StructSelect(convertExpr(rec), structName, fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
@@ -365,7 +357,7 @@ object Convert {
     Ast.BinElement(expr, size, binElemType)
   }
 
-  private def convertBinElemPat(binElemPat: Patterns.BinElementPattern): Ast.BinElementPat = {
+  private def convertBinElemPattern(binElemPat: Patterns.BinElementPattern): Ast.BinElementPat = {
     val pat = convertPattern(binElemPat.pat)
     val size = binElemPat.size.map(convertExpr)
     val binElemType = extractBinElemType(binElemPat.typeSpecifiers)
@@ -383,7 +375,7 @@ object Convert {
         }.headOption
     }
 
-  private def field(assoc: Exprs.MapField): Ast.Field[Ast.Exp] =
+  private def convertRecordField(assoc: Exprs.MapField): Ast.Field[Ast.Exp] =
     assoc match {
       case Exprs.MapField(p, Exprs.AtomLiteral(_, label), e) =>
         Ast.Field(label, convertExpr(e))(p)
@@ -392,10 +384,10 @@ object Convert {
         throw new UnsupportedSyntaxError(assoc.p)
     }
 
-  private def structField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
+  private def convertStructField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
     Ast.Field(field.fieldName, convertExpr(field.value))(field.p)
 
-  private def structFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
+  private def convertStructFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
     Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
 
   private def convertType(tp: Types.Type): Ast.Type =
@@ -410,10 +402,10 @@ object Convert {
       case Types.FunctionType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
       case Types.AssocMap(p, assocs) =>
-        Ast.RecordType(assocs.map(convertAssoc))(p)
+        Ast.RecordType(assocs.map(convertKeyValueType))(p)
       case Types.OpenAssocMap(p, assocs, restType) =>
         // TODO
-        Ast.OpenRecordType(assocs.map(convertAssoc), Ast.WildTypeVar()(restType.p))(p)
+        Ast.OpenRecordType(assocs.map(convertKeyValueType), Ast.WildTypeVar()(restType.p))(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
@@ -467,7 +459,7 @@ object Convert {
         throw new UnsupportedSyntaxError(tp.p)
     }
 
-  private def enumCon(tp: Types.Type): Ast.EnumCon =
+  private def convertEnumCon(tp: Types.Type): Ast.EnumCon =
     tp match {
       case Types.EnumCtr(p, name, params) =>
         Ast.EnumCon(name, params.map(convertType))(p)
@@ -475,7 +467,7 @@ object Convert {
         throw new UnsupportedSyntaxError(tp.p)
     }
 
-  private def convertAssoc(assoc: Types.Assoc): Ast.Field[Ast.Type] =
+  private def convertKeyValueType(assoc: Types.Assoc): Ast.Field[Ast.Type] =
     assoc match {
       case Types.Assoc(p, Types.AtomType(_, field), v) =>
         Ast.Field(field, convertType(v))(p)
