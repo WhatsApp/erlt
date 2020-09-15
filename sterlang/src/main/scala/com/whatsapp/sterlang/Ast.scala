@@ -157,7 +157,6 @@ object Ast {
   case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
   case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val p: Pos.P)
   case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
-  case class Require(modules: List[String])
 
   sealed trait Exp { val p: Pos.P }
   case class BlockExpr(body: Body)(val p: Pos.P) extends Exp
@@ -243,7 +242,6 @@ object Ast {
   case class Program(
       lang: Lang,
       module: String,
-      require: Require,
       enumDefs: List[EnumDef],
       structDefs: List[StructDef],
       typeAliases: List[TypeAlias],
@@ -261,7 +259,6 @@ object Ast {
 
   // "High-level" program element
   sealed trait ProgramElem
-  case class RequireElem(modules: List[String]) extends ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
   case class LangElem(lang: String) extends ProgramElem
@@ -286,7 +283,6 @@ object Ast {
       Program(
         lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
-        require = Require(elems.collect { case e: RequireElem => e.modules }.flatten.distinct),
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
         structDefs = elems.collect { case e: StructElem => e.structDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },

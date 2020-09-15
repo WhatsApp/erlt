@@ -39,8 +39,6 @@ object Convert {
         Some(Ast.LangElem(mods))
       case Forms.Module(name) =>
         Some(Ast.ModuleElem(name))
-      case Forms.Require(modules) =>
-        Some(Ast.RequireElem(modules))
       case Forms.Export(ids) =>
         Some(Ast.ExportElem(ids))
       case Forms.Import(module, ids) =>

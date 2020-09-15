@@ -434,7 +434,6 @@ object SyntaxUtil {
 
   def getDeps(program: S.Program): Set[String] = {
     var result = Set.empty[String]
-    result ++= getDepsRequire(program.require)
     program.enumDefs.foreach {
       result ++= getDepEnumDef(_)
     }
@@ -455,9 +454,6 @@ object SyntaxUtil {
     result -= program.module
     result
   }
-
-  private def getDepsRequire(req: S.Require): Set[String] =
-    req.modules.toSet
 
   private def getDepEnumDef(enumDef: S.EnumDef): Set[String] =
     enumDef.cons.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)

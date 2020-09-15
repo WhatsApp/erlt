@@ -74,12 +74,6 @@ object FormsConvert {
       // af_file
       case ETuple(List(EAtom("attribute"), _anno1, EAtom("file"), ETuple(List(EString(file), _anno2)))) =>
         File(file)
-      case ETuple(List(EAtom("attribute"), _anno1, EAtom("require" | "depends_on"), EList(modAtoms))) =>
-        val modules = modAtoms.map {
-          case EAtom(module) => module
-          case modAtom       => sys.error(s"Unexpected: $modAtom")
-        }
-        Require(modules)
       // af_type_decl
       case ETuple(
             List(

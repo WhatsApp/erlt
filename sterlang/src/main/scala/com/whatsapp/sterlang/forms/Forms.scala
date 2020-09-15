@@ -55,7 +55,6 @@ object Forms {
       extends Form
   case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
   case class FunctionDecl(p: Pos.SP, name: String, arity: Int, clauses: List[Clause]) extends Form
-  case class Require(modules: List[String]) extends Form
   case object EOF extends Form
   case class WildAttribute(p: Pos.SP, name: String) extends Form
   case class Error(loc: Pos.Loc) extends Form
