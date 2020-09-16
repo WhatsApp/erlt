@@ -68,6 +68,7 @@
     base = "" :: file:filename(),
     ifile = "" :: file:filename(),
     ofile = "" :: file:filename(),
+    defs_file = undefined :: undefined | file:filename(),
     module = [] :: module() | [],
     %Options for compilation
     options = [] :: [option()],
@@ -259,6 +260,13 @@ output_compile_deps(_Forms, St) ->
     DepsFilenames = deps_to_unique_filenames(Deps),
     RuleCode = gen_make_rule(TargetBeam, DepsFilenames),
 
+    % TODO: do we have to handle IsM2Compat here?
+    DefsRuleCode = case St#compile.defs_file of
+        undefined -> "";
+        DefsFile ->
+            gen_make_rule_compat(shorten_filename(DefsFile), DepsFilenames)
+        end,
+
     PhonyRulesCode =
         case OptionSet(makedep_phony) of
             false -> "";
@@ -285,6 +293,7 @@ output_compile_deps(_Forms, St) ->
 
     Code = [
         RuleCode,
+        DefsRuleCode,
         MakedepRuleCode,
         PhonyRulesCode
     ],
@@ -936,8 +945,9 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
 
 output_declarations(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
     Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
-    file:write_file(filename:join(BuildDir, Base ++ ?DefFileSuffix), Output),
-    {ok, Code, St}.
+    Filename = filename:join(BuildDir, Base ++ ?DefFileSuffix),
+    file:write_file(Filename, Output),
+    {ok, Code, St#compile{defs_file = Filename}}.
 
 erlt_exception(Code, St) ->
     case is_lang_erlt(St) of
