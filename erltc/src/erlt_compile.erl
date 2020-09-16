@@ -505,10 +505,6 @@ get_attr_deps([{attribute, Line, behavior, Value} | Rest], St, File, Acc) ->
 get_attr_deps([{attribute, Line, behaviour, Value} | Rest], St, File, Acc) ->
     Deps = get_deps_from_behavior({File, Line}, Value, St),
     get_attr_deps(Rest, St, File, Deps ++ Acc);
-get_attr_deps([{attribute, Line, depends_on, Value} | Rest], St, File, Acc) ->
-    % erlt feature for specifying dependencies explicitly
-    Deps = get_erlt_deps_from_depends_on({File, Line}, Value, St),
-    get_attr_deps(Rest, St, File, Deps ++ Acc);
 get_attr_deps([_ | Rest], St, File, Acc) ->
     get_attr_deps(Rest, St, File, Acc).
 
@@ -551,14 +547,7 @@ get_deps_from_compile_item(Loc, Value, St) ->
             []
     end.
 
-% TODO: validate -depends_on([...]) properly
-get_erlt_deps_from_depends_on(Loc, Deps, St) when is_list(Deps) ->
-    [get_erlt_deps_from_depends_on_item(Loc, X, St) || X <- Deps].
-
-get_erlt_deps_from_depends_on_item(Loc, Mod, St) when is_atom(Mod) ->
-    resolve_module_dependency(depends_on, Loc, Mod, St).
-
-% ModuleDepType = behavior | parse_transform | core_transform | depends_on | type_checking
+% ModuleDepType = behavior | parse_transform | core_transform | type_checking
 resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
     SpecsErl = filename:join(St#compile.dir, module_to_specs_erl(Mod)),

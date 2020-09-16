@@ -19,11 +19,6 @@ folder of a corresponding project. Namely:
 
     make VERBOSE=2
 
-
-# How to set explicit compile-time dependencies for enforcing compile/typechecking order
-
-Add `-depends_on([mod01, ...]).` to your .erl files -- see `depends_test.erl` for example.
-
 # Some specific examples
 
 [checks/src](checks/src) - some examples of new checks in `-lang([erl2, st])` and `-lang([erl2, dt])`.

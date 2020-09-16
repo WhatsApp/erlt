@@ -1,8 +1,0 @@
--file("depends_test.erl", 1).
-
--module(depends_test).
-
--depends_on([mod01]).
-
-
-
