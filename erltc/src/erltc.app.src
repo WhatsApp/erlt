@@ -1,11 +1,11 @@
-{application, erltc,
- [{description, "erlt compiler"},
-  {vsn, "0.1"},
-  {registered, []},
-  {applications, [kernel, stdlib]},
-  {env,[]},
-  {modules, []},
-  {licenses, ["Apache-2.0"]},
-  {links, [{"GitHub", "https://github.com/WhatsApp/erlt"}]},
-  {exclude_files, ["src/erlt_parse.erl"]}
+{application, erltc, [
+    {description, "erlt compiler"},
+    {vsn, "0.1"},
+    {registered, []},
+    {applications, [kernel, stdlib]},
+    {env, []},
+    {modules, []},
+    {licenses, ["Apache-2.0"]},
+    {links, [{"GitHub", "https://github.com/WhatsApp/erlt"}]},
+    {exclude_files, ["src/erlt_parse.erl"]}
 ]}.
