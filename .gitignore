@@ -1,6 +1,6 @@
 **/*.swp
 *.beam
 **/build/
-**/_build/
+/_build/
 **/.deps.mk
 erltc/src/erlt_parse.erl

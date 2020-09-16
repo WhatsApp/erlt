@@ -18,7 +18,7 @@
 main([ErltFile]) ->
     {ok, Cwd} = file:get_cwd(),
     BinDir = filename:dirname(filename:dirname(filename:dirname(Cwd))),
-    Erltc = filename:join(BinDir, "erltc/_build/default/bin/erltc"),
+    Erltc = filename:join(BinDir, "_build/default/bin/erltc"),
     ExpOutputFile = ErltFile ++ ".exp",
     {ok, ExpOutput} =  file:read_file(ExpOutputFile),
     ExpOutPutStr = binary_to_list(ExpOutput),
