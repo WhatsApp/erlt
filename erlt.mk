@@ -16,10 +16,10 @@ THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 ROOT := $(dir $(THIS_MAKEFILE))
 
 
-ERLBUILD := $(ROOT)/erlbuild/_build/default/bin/erlbuild
+ERLBUILD := $(ROOT)/_build/default/bin/erlbuild
 
 # NOTE: erltc can compile both erlt and erl1
-ERLBUILD_ERLC := $(ROOT)/erltc/_build/default/bin/erltc
+ERLBUILD_ERLC := $(ROOT)/_build/default/bin/erltc
 
 
 include $(ROOT)/erlbuild/erlbuild.mk
@@ -31,10 +31,8 @@ include $(ROOT)/common.mk
 
 ERLBUILD_INPUTS := $(filter-out %_parse.erl, $(wildcard $(ROOT)/erlbuild/src/*.erl $(ROOT)/erltc/src/*.erl $(ROOT)/erltc/src/*.yrl))
 $(ERLBUILD) : $(ERLBUILD_INPUTS)
-	$(ECHO_1) "=== rebar3 erlbuild"
-	$(QUIET)cd $(ROOT)/erlbuild; rebar3 escriptize
-	$(ECHO_1) "=== rebar3 erltc"
-	$(QUIET)cd $(ROOT)/erltc; rebar3 escriptize
+	$(ECHO_1) "=== rebar3 compile"
+	$(QUIET)cd $(ROOT); rebar3 compile
 
 IR_DIR = $(BUILD_DIR)/ir
 IR_SPEC_DIR = ../ir-spec

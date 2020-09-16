@@ -665,7 +665,7 @@ make_shell_command_line(Argv) ->
     lists:join(" ", [X || X <- Argv, X =/= 'undefined']).
 
 erlbuild_template_mk() ->
-    {ok, Bytes} = file:read_file("src/erlbuild.template.mk"),
+    {ok, Bytes} = file:read_file("erlbuild/src/erlbuild.template.mk"),
     Bytes.
 
 write_file(File, Body) when File =:= standard_io; File =:= standard_error ->
