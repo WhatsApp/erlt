@@ -1,0 +1,40 @@
+-file("struct_mod05.erl", 1).
+
+-module(struct_mod04).
+
+-export([expr/0,pattern/1,guard/1,field/1,update/1]).
+
+-import_type({struct_mod02, [{foo, 0}, {bar, 0}]}).
+
+expr() ->
+    {'$#struct_mod02:foo'}.
+
+pattern({'$#struct_mod02:foo'}) ->
+    ok.
+
+guard(Value) when Value =:= {'$#struct_mod02:foo'} ->
+    ok.
+
+field(Value)
+    when
+        is_record(Value, '$#struct_mod02:bar', 3)
+        orelse
+        fail,
+        element(2, Value) =:= 1 ->
+    case Value of
+        {'$#struct_mod02:bar', _, StructGenVar@0@b} ->
+            StructGenVar@0@b;
+        _ ->
+            error({badstruct, '$#struct_mod02:bar'})
+    end.
+
+update(Value) ->
+    case Value of
+        {'$#struct_mod02:bar', _, StructGenVar@1@b} ->
+            {'$#struct_mod02:bar', 2, StructGenVar@1@b};
+        _ ->
+            error({badstruct, '$#struct_mod02:bar'})
+    end.
+
+
+
