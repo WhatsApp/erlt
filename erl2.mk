@@ -29,6 +29,13 @@ include $(ROOT)/common.mk
 
 # Helper targets for developement and hacking
 
+ERLBUILD_INPUTS := $(filter-out %_parse.erl, $(wildcard $(ROOT)/erlbuild/src/*.erl $(ROOT)/erltc/src/*.erl $(ROOT)/erltc/src/*.yrl))
+$(ERLBUILD) : $(ERLBUILD_INPUTS)
+	$(ECHO_1) "=== rebar3 erlbuild"
+	$(QUIET)cd $(ROOT)/erlbuild; rebar3 escriptize
+	$(ECHO_1) "=== rebar3 erltc"
+	$(QUIET)cd $(ROOT)/erltc; rebar3 escriptize
+
 IR_DIR = $(BUILD_DIR)/ir
 IR_SPEC_DIR = ../ir-spec
 
