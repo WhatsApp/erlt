@@ -16,13 +16,10 @@ THIS_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
 ROOT := $(dir $(THIS_MAKEFILE))
 
 
-ERLBUILD := $(ROOT)/erlbuild/bin/erlbuild
+ERLBUILD := $(ROOT)/erlbuild/_build/default/bin/erlbuild
 
 # NOTE: erltc can compile both erlt and erl1
-ERLBUILD_ERLC := $(ROOT)/erltc/bin/erltc
-
-
-DEPS += erlbuild/src erltc/src
+ERLBUILD_ERLC := $(ROOT)/erltc/_build/default/bin/erltc
 
 
 include $(ROOT)/erlbuild/erlbuild.mk

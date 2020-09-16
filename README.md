@@ -13,16 +13,21 @@ See the [examples](examples/) folder.
 
 ## Building
 
-erltc (WIP)
+`erlbuild` (to be removed)
 
-    make
-    make -C examples
+    cd erlbuild; rebar3 escriptize
 
-stErlang:
+`erltc` (WIP)
+
+    cd erltc; rebar3 escriptize
+
+`stErlang`:
 
     cd sterlang; sbt assembly
 
 ## Testing
+
+You have to build `erlbuild` and `erltc` first
 
     make -C examples test
 
