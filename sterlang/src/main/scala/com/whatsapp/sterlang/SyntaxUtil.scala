@@ -20,18 +20,7 @@ object SyntaxUtil {
   val S = Ast
   val A = Absyn
 
-  def checkPublicSpecs(program: S.Program): Unit = {
-    val speced: Set[S.VarName] =
-      program.specs.map(_.name).toSet
-    val exported: Set[S.VarName] =
-      program.exports.map { e => new Ast.LocalFunName(e._1, e._2) }
-    val unspeced: Set[S.VarName] =
-      exported -- speced
-    for (f <- program.funs)
-      if (unspeced(f.name)) throw new UnSpecedExportedFun(f.p, f.name.stringId)
-  }
-
-  def collectPatVars(pat: S.Pat): List[String] =
+  private def collectPatVars(pat: S.Pat): List[String] =
     pat match {
       case S.WildPat() =>
         List.empty

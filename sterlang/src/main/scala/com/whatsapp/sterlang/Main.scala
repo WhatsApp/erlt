@@ -73,7 +73,8 @@ object Main {
     val context = depContext.extend(program)
 
     try {
-      new AstChecks(context).check(program)
+      val astChecks = new AstChecks(context)
+      astChecks.check(program)
       val elaborate = new Elaborate(vars, context, program)
       val (annFuns, env) = elaborate.elaborateFuns(program.funs)
 
@@ -83,7 +84,8 @@ object Main {
         warnings.foreach(printError(text, _))
       }
 
-      SyntaxUtil.checkPublicSpecs(program)
+      // checking them in the very end - since it is possible to present inferred types here
+      astChecks.checkPublicSpecs(program)
     } catch {
       case error: PositionedError =>
         printError(text, error)
