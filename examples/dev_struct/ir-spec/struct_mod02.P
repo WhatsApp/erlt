@@ -2,7 +2,7 @@
 
 -module(struct_mod02).
 
--export_type([foo/0]).
+-export_type([foo/0,bar/0]).
 
 -export([expr/0,pattern/1,guard/1,field/1,update/1]).
 

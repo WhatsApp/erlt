@@ -423,6 +423,8 @@ format_error({redefine_enum, T, C}) ->
     io_lib:format("constructor ~tw already defined in enum ~tw", [C, T]);
 format_error({redefine_struct, N}) ->
     io_lib:format("struct ~tw already defined", [N]);
+format_error({private_enum, {M, E}}) ->
+    io_lib:format("enum ~tw:~tw is not exported", [M, E]);
 format_error({undefined_enum, {M, E}}) ->
     io_lib:format("enum ~tw.~tw undefined", [M, E]);
 format_error({undefined_enum, E}) ->
@@ -442,6 +444,8 @@ format_error({undefined_struct, N}) ->
     io_lib:format("struct ~tw undefined", [N]);
 format_error({undefined_struct, M, N}) ->
     io_lib:format("struct ~tw:~tw undefined", [M, N]);
+format_error({private_struct, M, N}) ->
+    io_lib:format("struct ~tw:~tw is not exported", [M, N]);
 format_error({redefine_record, T}) ->
     io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
@@ -3024,11 +3028,13 @@ convert_to_constructor_list(
     {ok, {attribute, _, enum, {_, {type, _, enum, {atom, _, C}, Args}, _}}}
 ) ->
     {ok, [{C, length(Args)}]};
-convert_to_constructor_list(error) ->
-    error.
+convert_to_constructor_list(Error) ->
+    Error.
 
 check_constructor_and_arity(error, L, Enum, _A, _Args, St) ->
     add_error(L, {undefined_enum, Enum}, St);
+check_constructor_and_arity(private, L, Enum, _A, _Args, St) ->
+    add_error(L, {private_enum, Enum}, St);
 check_constructor_and_arity({ok, Cs}, L, Enum, A, Args, St) ->
     N = length(Args),
     case lists:keyfind(A, 1, Cs) of
@@ -3318,6 +3324,8 @@ check_struct(Line, RawName, St, CheckFun) ->
                         {ok, StructDef} ->
                             FieldMap = get_field_map_from_struct_def(StructDef),
                             CheckFun(FieldMap, St1);
+                        private ->
+                            {[], add_error(Line, {private_struct, M, N}, St1)};
                         error ->
                             {[], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
@@ -3343,6 +3351,8 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
                         {ok, StructDef} ->
                             Def = get_field_map_from_struct_def(StructDef),
                             pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
+                        private ->
+                            {[], add_error(Line, {private_struct, M, N}, St1)};
                         error ->
                             {[], [], add_error(Line, {undefined_struct, M, N}, St1)}
                     end
