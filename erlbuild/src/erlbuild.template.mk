@@ -113,6 +113,8 @@ BEAMS := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
 # compile-time dependencies
 DEPFILES := $(ERLS:%.erl=$(BUILD_DIR)/%.d)
 
+# declaration files
+DEFS := $(ERLS:%.erl=$(BUILD_DIR)/%.defs)
 
 ENABLE_GENERATE := true
 
@@ -247,6 +249,7 @@ endif  # ENABLE_GENERATE
 clean:
 	$(QUIET)rm -f $(BEAMS)
 	$(QUIET)rm -f $(DEPFILES)
+	$(QUIET)rm -f $(DEFS)
 ifneq ($(strip $(GENERATED_ERLS)),)
 	$(QUIET)rm -f $(GENERATED_ERLS)
 endif
