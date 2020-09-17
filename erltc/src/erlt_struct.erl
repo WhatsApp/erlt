@@ -15,7 +15,7 @@
 
 -module(erlt_struct).
 
--export([module/2]).
+-export([module/2, local_rewriter/1]).
 
 -record(context, {
     module :: atom(),
@@ -36,6 +36,18 @@ module(Forms, DefDb) ->
         element(1, erlt_ast:traverse(Forms, Context, fun rewrite/3, fun post/3))
     after
         erase(struct_gen_var)
+    end.
+
+local_rewriter(Forms) ->
+    Context = init_context(Forms, erlt_defs:new()),
+    fun(Expr) ->
+        %% there shouldn't be any var generation here, crash otherwise
+        put(struct_gen_var, please_crash_if_used),
+        try
+            rewrite_local(Expr, Context)
+        after
+            erase(struct_gen_var)
+        end
     end.
 
 init_context(Forms, DefDb) ->
@@ -98,6 +110,16 @@ rewrite({struct_field, Line, Expr, Name, Field}, Context, guard) ->
     {struct_field_guard(Line, Expr, Def, Field), Context1};
 rewrite(Other, Context, _) ->
     {Other, Context}.
+
+rewrite_local({struct, Line, {atom, _, Name} = FullName, Fields}, Context) ->
+    case maps:find(Name, Context#context.imported) of
+        {ok, Module} ->
+            {struct, Line, {remote, Line, {atom, Line, Module}, FullName}, Fields};
+        error ->
+            {RuntimeTag, Def} = map_get(Name, Context#context.structs),
+            Constructor = struct_init(Fields, Def),
+            {tuple, Line, [RuntimeTag | Constructor]}
+    end.
 
 post({guard_and, Line, Exprs}, Context, _) ->
     Context1 = Context#context{extra_guard_checks = []},

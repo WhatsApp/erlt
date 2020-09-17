@@ -15,7 +15,7 @@
 -lang([erlt]).
 -module(struct_mod04).
 
--export([expr/0, pattern/1, guard/1, field/1, update/1]).
+-export([expr/0, pattern/1, guard/1, field/1, update/1, remote_with_defaults/0]).
 
 -import_type(struct_mod02, [foo/0, bar/0]).
 
@@ -33,3 +33,6 @@ field(Value) when Value#bar.a =:= 1 ->
 
 update(Value) ->
     Value#bar{a = 2}.
+
+remote_with_defaults() ->
+    #struct_mod01:default_with_default{}.

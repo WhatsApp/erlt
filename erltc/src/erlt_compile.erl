@@ -949,7 +949,7 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     {ok, Code, St#compile{global_defs = Defs}}.
 
 output_declarations(Code, #compile{defs_file = FileName} = St) ->
-    Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
+    Output = [erlt_pp:form(Form, [full_bifs]) || Form <- erlt_defs:normalise_definitions(Code)],
     file:write_file(FileName, Output),
     {ok, Code, St#compile{has_written_defs_file = true}}.
 
