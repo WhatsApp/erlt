@@ -1,0 +1,4 @@
+type_vars.erl:4:13: type variable 'A' appears multiple times in type arguments
+type_vars.erl:5:10: _ is not a valid type variable
+type_vars.erl:8:15: type variable 'A' appears multiple times in type arguments
+type_vars.erl:9:12: _ is not a valid type variable
