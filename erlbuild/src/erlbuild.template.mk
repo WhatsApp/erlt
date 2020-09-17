@@ -196,6 +196,11 @@ do_scan: $(DEPFILES)
 # NOTE: we want phony targets (-MP) to gracefully handle the case when .hrl /
 # .beam dependencies were purposefully deleted.
 #
+# NOTE: this phase generates not only .d files,  but **also** .defs files.
+# We are not telling Make about this because it is hard to represent group targets
+# targets on old versions of Make. This missing dependency information
+# in our DAG is harmless because no rules depend on .defs yet.
+#
 # TODO: strictly speaking, missing dependenices should trigger .erl
 # recompilation, but make doesn't allow to do this easily. Not handling this is
 # still relatively safe, because if .erl files still depend on deleted
