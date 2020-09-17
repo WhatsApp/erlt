@@ -295,8 +295,6 @@ parse_dep_option("D", T) ->
     {[makedep], T};
 parse_dep_option("2", T) ->
     {[makedep, makedep2], T};
-parse_dep_option("2C", T) ->
-    {[makedep, makedep2, makedep2_compat], T};
 parse_dep_option("MD", T) ->
     {[makedep_side_effect], T};
 parse_dep_option("F" ++ Opt, T0) ->
@@ -327,8 +325,6 @@ usage() ->
         {"-M", "generate a rule for make(1) describing the dependencies"},
         {"-M2",
             "similar to -M, but also includes dependencies on .beam files from behaviors and parse transforms"},
-        {"-M2C",
-            "-M2 with -M compatibility mode: -M2C means -M2 without .beam dependencies; -M2C output should be identical to -M"},
         {"-MF file", "write the dependencies to 'file'"},
         {"-MT target",
             "change the target of the rule emitted by dependency "

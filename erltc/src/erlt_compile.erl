@@ -247,23 +247,17 @@ is_makedep2_mode(Options) ->
 keep_relative_paths(Deps) ->
     [X || X = {_, Filename} <- Deps, filename:pathtype(Filename) =:= relative].
 
-exclude_beam_dependencies(Deps) ->
-    [X || X = {file, _} <- Deps].
-
 optionally(true, F, X) -> F(X);
 optionally(false, _F, X) -> X.
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
 output_compile_deps(_Forms, St) ->
     OptionSet = fun(Option) -> member(Option, St#compile.options) end,
-    IsM2Compat = OptionSet(makedep2_compat),
     TargetBeam = shorten_filename(St#compile.ofile),
 
-    Deps1 = St#compile.compile_deps,
-    Deps2 = optionally(OptionSet(makedep), fun keep_relative_paths/1, Deps1),
-    Deps = optionally(IsM2Compat, fun exclude_beam_dependencies/1, Deps2),
+    Deps = optionally(OptionSet(makedep), fun keep_relative_paths/1, St#compile.compile_deps),
     DepsFilenames = deps_to_unique_filenames(Deps),
-    RuleCode = gen_make_rule_compat(TargetBeam, DepsFilenames),
+    RuleCode = gen_make_rule(TargetBeam, DepsFilenames),
 
     PhonyRulesCode =
         case OptionSet(makedep_phony) of
@@ -275,10 +269,6 @@ output_compile_deps(_Forms, St) ->
     MakedepRuleCode =
         case proplists:get_value(makedep_output, St#compile.options) of
             undefined ->
-                "";
-            _ when IsM2Compat ->
-                % excluding this rule generation in -M compatibility mode
-                % (which should result in output identical to -M)
                 "";
             MakedepFilename ->
                 % NOTE: only including parse transforms as dependency graph
@@ -367,28 +357,6 @@ gen_make_rule(Target, DepsFilenames) ->
     [FirstFilename | RestFilenames] = DepsFilenames,
     RestLines = [[" \\\n  ", X] || X <- RestFilenames],
     [Target, ": ", FirstFilename, RestLines, "\n"].
-
-% same as gen_make_rule(), but make sure the line are no longer than 78
-% characters. This behavior is compatible with erlc (WHY?!)
-gen_make_rule_compat(_Target, _DepsFilenames = []) ->
-    [];
-gen_make_rule_compat(Target, DepsFilenames) ->
-    FirstLine = Target ++ ":",
-    gen_make_rule_compat(DepsFilenames, FirstLine, _Acc = []).
-
-gen_make_rule_compat([], CurrentLine, Acc) ->
-    LastLine = CurrentLine ++ "\n",
-    lists:reverse([LastLine | Acc]);
-gen_make_rule_compat([NextFilename | RestFilenames], CurrentLine, Acc) ->
-    NewCurrentLine = CurrentLine ++ " " ++ NextFilename,
-    case length(NewCurrentLine) > 76 of
-        false ->
-            gen_make_rule_compat(RestFilenames, NewCurrentLine, Acc);
-        true ->
-            NewAcc = [CurrentLine ++ " \\\n" | Acc],
-            NewCurrentLine1 = "  " ++ NextFilename,
-            gen_make_rule_compat(RestFilenames, NewCurrentLine1, NewAcc)
-    end.
 
 gen_make_phony_rule(Ifile, Filename) ->
     case Ifile =:= Filename of
