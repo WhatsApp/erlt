@@ -74,7 +74,7 @@
 
 -record(pp, {value_fun, singleton_atom_type_fun, string_fun, char_fun}).
 
--record(options, {hook, encoding, opts}).
+-record(options, {hook, encoding, full_bifs, opts}).
 
 %-define(DEBUG, true).
 -ifdef(DEBUG).
@@ -206,9 +206,10 @@ expr(E, I, P, Options) ->
 options(Options) when is_list(Options) ->
     Hook = proplists:get_value(hook, Options, none),
     Encoding = encoding(Options),
-    #options{hook = Hook, encoding = Encoding, opts = Options};
+    FullBifs = proplists:get_value(full_bifs, Options, false),
+    #options{hook = Hook, encoding = Encoding, full_bifs = FullBifs, opts = Options};
 options(Hook) ->
-    #options{hook = Hook, encoding = encoding([]), opts = Hook}.
+    #options{hook = Hook, encoding = encoding([]), full_bifs = false, opts = Hook}.
 
 state(Options) when is_list(Options) ->
     Quote = proplists:get_bool(quote_singleton_atom_types, Options),
@@ -292,10 +293,10 @@ lattribute({attribute, _Line, enum, Type}, Opts) ->
     [typeattr(enum, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, struct, Type}, Opts) ->
     [typeattr(struct, Type, Opts), leaf(".\n")];
-lattribute({attribute, _Line, spec, Arg}, _Opts) ->
-    [specattr(spec, Arg), leaf(".\n")];
-lattribute({attribute, _Line, callback, Arg}, _Opts) ->
-    [specattr(callback, Arg), leaf(".\n")];
+lattribute({attribute, _Line, spec, Arg}, Opts) ->
+    [specattr(spec, Arg, Opts), leaf(".\n")];
+lattribute({attribute, _Line, callback, Arg}, Opts) ->
+    [specattr(callback, Arg, Opts), leaf(".\n")];
 lattribute({attribute, _Line, Name, Arg}, Opts) ->
     [lattribute(Name, Arg, Opts), leaf(".\n")].
 
@@ -332,83 +333,83 @@ lattribute(Name, Arg, Options) ->
 abstract(Arg, #options{encoding = Encoding}) ->
     erlt_parse:abstract(Arg, [{encoding, Encoding}]).
 
-typeattr(struct, {TypeName, Type, []}, _Opts) ->
-    {first, leaf("-struct "), typed(atom_to_list(TypeName), Type)};
-typeattr(Tag, {TypeName, Type, Args}, _Opts) ->
+typeattr(struct, {TypeName, Type, []}, Opts) ->
+    {first, leaf("-struct "), typed(atom_to_list(TypeName), Type, Opts)};
+typeattr(Tag, {TypeName, Type, Args}, Opts) ->
     {first, leaf("-" ++ atom_to_list(Tag) ++ " "),
-        typed(call({atom, a0(), TypeName}, Args, 0, options(none)), Type)}.
+        typed(call({atom, a0(), TypeName}, Args, 0, Opts), Type, Opts)}.
 
-ltype(T) ->
-    ltype(T, 0).
+ltype(T, Opts) ->
+    ltype(T, 0, Opts).
 
-ltype({ann_type, _Line, [V, T]}, Prec) ->
+ltype({ann_type, _Line, [V, T]}, Prec, Opts) ->
     {L, P, R} = type_inop_prec('::'),
-    Vl = ltype(V, L),
-    Tr = ltype(T, R),
+    Vl = ltype(V, L, Opts),
+    Tr = ltype(T, R, Opts),
     El = {list, [{cstep, [Vl, ' ::'], Tr}]},
     maybe_paren(P, Prec, El);
-ltype({paren_type, _Line, [T]}, P) ->
+ltype({paren_type, _Line, [T]}, P, Opts) ->
     %% Generated before Erlang/OTP 18.
-    ltype(T, P);
-ltype({type, _Line, union, Ts}, Prec) ->
+    ltype(T, P, Opts);
+ltype({type, _Line, union, Ts}, Prec, Opts) ->
     {_L, P, R} = type_inop_prec('|'),
-    E = {seq, [], [], [' |'], ltypes(Ts, R)},
+    E = {seq, [], [], [' |'], ltypes(Ts, Opts, R)},
     maybe_paren(P, Prec, E);
-ltype({type, _Line, list, [T]}, _) ->
-    {seq, $[, $], $,, [ltype(T)]};
-ltype({type, _Line, nonempty_list, [T]}, _) ->
-    {seq, $[, $], [$,], [ltype(T), leaf("...")]};
-ltype({type, Line, nil, []}, _) ->
-    lexpr({nil, Line}, options(none));
-ltype({type, Line, map, any}, _) ->
-    simple_type({atom, Line, map}, []);
-ltype({type, _Line, map, Pairs}, Prec) ->
+ltype({type, _Line, list, [T]}, _, Opts) ->
+    {seq, $[, $], $,, [ltype(T, Opts)]};
+ltype({type, _Line, nonempty_list, [T]}, _, Opts) ->
+    {seq, $[, $], [$,], [ltype(T, Opts), leaf("...")]};
+ltype({type, Line, nil, []}, _, Opts) ->
+    lexpr({nil, Line}, Opts);
+ltype({type, Line, map, any}, _, Opts) ->
+    simple_type({atom, Line, map}, [], Opts);
+ltype({type, _Line, map, Pairs}, Prec, Opts) ->
     {P, _R} = type_preop_prec('#'),
-    E = map_type(Pairs),
+    E = map_type(Pairs, Opts),
     maybe_paren(P, Prec, E);
-ltype({type, Line, tuple, any}, _) ->
-    simple_type({atom, Line, tuple}, []);
-ltype({type, _Line, tuple, Ts}, _) ->
-    tuple_type(Ts, fun ltype/2);
-ltype({type, _Line, record, [{atom, _, N} | Fs]}, Prec) ->
+ltype({type, Line, tuple, any}, _, Opts) ->
+    simple_type({atom, Line, tuple}, [], Opts);
+ltype({type, _Line, tuple, Ts}, _, Opts) ->
+    tuple_type(Ts, Opts, fun ltype/3);
+ltype({type, _Line, record, [{atom, _, N} | Fs]}, Prec, Opts) ->
     {P, _R} = type_preop_prec('#'),
-    E = record_type(N, Fs),
+    E = record_type(N, Fs, Opts),
     maybe_paren(P, Prec, E);
-ltype({type, _Line, range, [_I1, _I2] = Es}, Prec) ->
+ltype({type, _Line, range, [_I1, _I2] = Es}, Prec, Opts0) ->
     {_L, P, R} = type_inop_prec('..'),
     F = fun(E, Opts) -> lexpr(E, R, Opts) end,
-    E = expr_list(Es, '..', F, options(none)),
+    E = expr_list(Es, '..', F, Opts0),
     maybe_paren(P, Prec, E);
-ltype({type, _Line, binary, [I1, I2]}, _) ->
+ltype({type, _Line, binary, [I1, I2]}, _, Opts) ->
     % except binary()
-    binary_type(I1, I2);
-ltype({type, _Line, 'fun', []}, _) ->
+    binary_type(I1, I2, Opts);
+ltype({type, _Line, 'fun', []}, _, _Opts) ->
     leaf("fun()");
-ltype({type, _, 'fun', [{type, _, any}, _]} = FunType, _) ->
-    [fun_type(['fun', $(], FunType), $)];
-ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _) ->
-    [fun_type(['fun', $(], FunType), $)];
-ltype({type, _Line, enum, Tag, Vars}, _) ->
-    {first, lexpr(Tag, options(none)), tuple_type(Vars, fun ltype/2)};
-ltype({type, _Line, struct, _Name, Fields}, _) ->
-    {seq, $(, $), [$,], lists:map(fun field_def/1, Fields)};
-ltype({type, Line, T, Ts}, _) ->
-    simple_type({atom, Line, T}, Ts);
-ltype({user_type, Line, T, Ts}, _) ->
-    simple_type({atom, Line, T}, Ts);
-ltype({remote_type, Line, [M, F, Ts]}, _) ->
-    simple_type({remote, Line, M, F}, Ts);
-ltype({atom, _, T}, _) ->
+ltype({type, _, 'fun', [{type, _, any}, _]} = FunType, _, Opts) ->
+    [fun_type(['fun', $(], FunType, Opts), $)];
+ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _, Opts) ->
+    [fun_type(['fun', $(], FunType, Opts), $)];
+ltype({type, _Line, enum, Tag, Vars}, _, Opts) ->
+    {first, lexpr(Tag, Opts), tuple_type(Vars, Opts, fun ltype/3)};
+ltype({type, _Line, struct, _Name, Fields}, _, Opts) ->
+    {seq, $(, $), [$,], lists:map(fun(Field) -> field_def(Field, Opts) end, Fields)};
+ltype({type, Line, T, Ts}, _, Opts) ->
+    simple_type({atom, Line, T}, Ts, Opts);
+ltype({user_type, Line, T, Ts}, _, Opts) ->
+    simple_type({atom, Line, T}, Ts, Opts);
+ltype({remote_type, Line, [M, F, Ts]}, _, Opts) ->
+    simple_type({remote, Line, M, F}, Ts, Opts);
+ltype({atom, _, T}, _, _Opts) ->
     {singleton_atom_type, T};
-ltype(E, P) ->
-    lexpr(E, P, options(none)).
+ltype(E, P, Opts) ->
+    lexpr(E, P, Opts).
 
-binary_type(I1, I2) ->
+binary_type(I1, I2, Opts) ->
     B = [[] || {integer, _, 0} <- [I1]] =:= [],
     U = [[] || {integer, _, 0} <- [I2]] =:= [],
     P = max_prec(),
-    E1 = [[leaf("_:"), lexpr(I1, P, options(none))] || B],
-    E2 = [[leaf("_:_*"), lexpr(I2, P, options(none))] || U],
+    E1 = [[leaf("_:"), lexpr(I1, P, Opts)] || B],
+    E2 = [[leaf("_:_*"), lexpr(I2, P, Opts)] || U],
     case E1 ++ E2 of
         [] ->
             leaf("<<>>");
@@ -416,35 +417,35 @@ binary_type(I1, I2) ->
             {seq, '<<', '>>', [$,], Es}
     end.
 
-map_type(Fs) ->
-    {first, [$#], map_pair_types(Fs)}.
+map_type(Fs, Opts) ->
+    {first, [$#], map_pair_types(Fs, Opts)}.
 
-map_pair_types(Fs) ->
-    tuple_type(Fs, fun map_pair_type/2).
+map_pair_types(Fs, Opts) ->
+    tuple_type(Fs, Opts, fun map_pair_type/3).
 
-map_pair_type({type, _Line, map_field_assoc, [KType, VType]}, Prec) ->
-    {list, [{cstep, [ltype(KType, Prec), leaf(" =>")], ltype(VType, Prec)}]};
-map_pair_type({type, _Line, map_field_exact, [KType, VType]}, Prec) ->
-    {list, [{cstep, [ltype(KType, Prec), leaf(" :=")], ltype(VType, Prec)}]}.
+map_pair_type({type, _Line, map_field_assoc, [KType, VType]}, Prec, Opts) ->
+    {list, [{cstep, [ltype(KType, Prec, Opts), leaf(" =>")], ltype(VType, Prec, Opts)}]};
+map_pair_type({type, _Line, map_field_exact, [KType, VType]}, Prec, Opts) ->
+    {list, [{cstep, [ltype(KType, Prec, Opts), leaf(" :=")], ltype(VType, Prec, Opts)}]}.
 
-record_type(Name, Fields) ->
-    {first, [record_name(Name)], field_types(Fields)}.
+record_type(Name, Fields, Opts) ->
+    {first, [record_name(Name)], field_types(Fields, Opts)}.
 
-field_types(Fs) ->
-    tuple_type(Fs, fun field_type/2).
+field_types(Fs, Opts) ->
+    tuple_type(Fs, Opts, fun field_type/3).
 
-field_type({type, _Line, field_type, [Name, Type]}, _Prec) ->
-    typed(lexpr(Name, options(none)), Type).
+field_type({type, _Line, field_type, [Name, Type]}, _Prec, Opts) ->
+    typed(lexpr(Name, Opts), Type, Opts).
 
-typed(B, Type) ->
-    {list, [{cstep, [B, ' ::'], ltype(Type)}]}.
+typed(B, Type, Opts) ->
+    {list, [{cstep, [B, ' ::'], ltype(Type, Opts)}]}.
 
-tuple_type([], _) ->
+tuple_type([], _, _) ->
     leaf("{}");
-tuple_type(Ts, F) ->
-    {seq, ${, $}, [$,], ltypes(Ts, F, 0)}.
+tuple_type(Ts, Opts, F) ->
+    {seq, ${, $}, [$,], ltypes(Ts, Opts, F, 0)}.
 
-specattr(SpecKind, {FuncSpec, TypeSpecs}) ->
+specattr(SpecKind, {FuncSpec, TypeSpecs}, Opts) ->
     Func =
         case FuncSpec of
             {F, _A} ->
@@ -453,15 +454,15 @@ specattr(SpecKind, {FuncSpec, TypeSpecs}) ->
                 [{atom, M}, $:, {atom, F}]
         end,
     {first, leaf(lists:concat(["-", SpecKind, " "])),
-        {list, [{first, Func, spec_clauses(TypeSpecs)}]}}.
+        {list, [{first, Func, spec_clauses(TypeSpecs, Opts)}]}}.
 
-spec_clauses(TypeSpecs) ->
-    {prefer_nl, [$;], [sig_type(T) || T <- TypeSpecs]}.
+spec_clauses(TypeSpecs, Opts) ->
+    {prefer_nl, [$;], [sig_type(T, Opts) || T <- TypeSpecs]}.
 
-sig_type({type, _Line, bounded_fun, [T, Gs]}) ->
-    guard_type(fun_type([], T), Gs);
-sig_type(FunType) ->
-    fun_type([], FunType).
+sig_type({type, _Line, bounded_fun, [T, Gs]}, Opts) ->
+    guard_type(fun_type([], T, Opts), Gs);
+sig_type(FunType, Opts) ->
+    fun_type([], FunType, Opts).
 
 guard_type(Before, Gs) ->
     Opts = options(none),
@@ -470,31 +471,31 @@ guard_type(Before, Gs) ->
 
 constraint(
     {type, _Line, constraint, [{atom, _, is_subtype}, [{var, _, _} = V, Type]]},
-    _Opts
+    Opts
 ) ->
-    typed(lexpr(V, options(none)), Type);
-constraint({type, _Line, constraint, [Tag, As]}, _Opts) ->
-    simple_type(Tag, As).
+    typed(lexpr(V, options(none)), Type, Opts);
+constraint({type, _Line, constraint, [Tag, As]}, Opts) ->
+    simple_type(Tag, As, Opts).
 
-fun_type(Before, {type, _, 'fun', [FType, Ret]}) ->
-    {first, Before, {step, [type_args(FType), ' ->'], ltype(Ret)}}.
+fun_type(Before, {type, _, 'fun', [FType, Ret]}, Opts) ->
+    {first, Before, {step, [type_args(FType, Opts), ' ->'], ltype(Ret, Opts)}}.
 
-type_args({type, _Line, any}) ->
+type_args({type, _Line, any}, _Opts) ->
     leaf("(...)");
-type_args({type, _line, product, Ts}) ->
-    targs(Ts).
+type_args({type, _line, product, Ts}, Opts) ->
+    targs(Ts, Opts).
 
-simple_type(Tag, Types) ->
-    {first, lexpr(Tag, options(none)), targs(Types)}.
+simple_type(Tag, Types, Opts) ->
+    {first, lexpr(Tag, Opts), targs(Types, Opts)}.
 
-targs(Ts) ->
-    {seq, $(, $), [$,], ltypes(Ts, 0)}.
+targs(Ts, Opts) ->
+    {seq, $(, $), [$,], ltypes(Ts, Opts, 0)}.
 
-ltypes(Ts, Prec) ->
-    ltypes(Ts, fun ltype/2, Prec).
+ltypes(Ts, Opts, Prec) ->
+    ltypes(Ts, Opts, fun ltype/3, Prec).
 
-ltypes(Ts, F, Prec) ->
-    [F(T, Prec) || T <- Ts].
+ltypes(Ts, Opts, F, Prec) ->
+    [F(T, Prec, Opts) || T <- Ts].
 
 struct_fields(FieldVals, Opts) ->
     {L, _, R} = inop_prec('='),
@@ -504,11 +505,10 @@ struct_fields(FieldVals, Opts) ->
     ],
     {seq, ${, $}, [$,], Fields}.
 
-field_def({field_definition, _, Name, undefined, Type}) ->
-    [ltype(Name, 0), " :: ", ltype(Type, 0)];
-field_def({field_definition, _, Name, Default, Type}) ->
-    Opts = options(none),
-    [ltype(Name, 0), " = ", lexpr(Default, 0, Opts), " :: ", ltype(Type, 0)].
+field_def({field_definition, _, Name, undefined, Type}, Opts) ->
+    [ltype(Name, Opts), " :: ", ltype(Type, Opts)];
+field_def({field_definition, _, Name, Default, Type}, Opts) ->
+    [ltype(Name, Opts), " = ", lexpr(Default, Opts), " :: ", ltype(Type, Opts)].
 
 attr(Name, Args) ->
     {first, [$-, {atom, Name}], args(Args, options(none))}.
@@ -703,7 +703,7 @@ lexpr({named_fun, _, Name, Cs, Extra}, _Prec, Opts) ->
             {reserved, 'end'}
         ]}};
 lexpr({call, _, {remote, _, {atom, _, M}, {atom, _, F} = N} = Name, Args}, Prec, Opts) ->
-    case erl_internal:bif(M, F, length(Args)) of
+    case (not Opts#options.full_bifs) andalso erl_internal:bif(M, F, length(Args)) of
         true ->
             call(N, Args, Prec, Opts);
         false ->
@@ -871,10 +871,10 @@ record_field({record_field, _, F, Val}, Opts) ->
 record_field({typed_record_field, {record_field, _, F, Val}, Type}, Opts) ->
     {L, _P, R} = inop_prec('='),
     Fl = lexpr(F, L, Opts),
-    Vl = typed(lexpr(Val, R, Opts), Type),
+    Vl = typed(lexpr(Val, R, Opts), Type, Opts),
     {list, [{cstep, [Fl, ' ='], Vl}]};
 record_field({typed_record_field, Field, Type}, Opts) ->
-    typed(record_field(Field, Opts), Type);
+    typed(record_field(Field, Opts), Type, Opts);
 record_field({record_field, _, F}, Opts) ->
     lexpr(F, 0, Opts).
 
