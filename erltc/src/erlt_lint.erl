@@ -3338,12 +3338,12 @@ handle_imported_struct(N, St) ->
 check_struct(Line, RawName, St, CheckFun) ->
     case handle_imported_struct(RawName, St) of
         {{atom, _, N}, St1} ->
-            case maps:find(N, St#lint.structs) of
+            case maps:find(N, St1#lint.structs) of
                 {ok, Def} -> CheckFun(Def, used_struct(N, St1));
                 error -> {[], add_error(Line, {undefined_struct, N}, St1)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
-            case St#lint.defs_db of
+            case St1#lint.defs_db of
                 undefined ->
                     CheckFun(unavailable, St1);
                 GlobalDefs ->
@@ -3362,15 +3362,15 @@ check_struct(Line, RawName, St, CheckFun) ->
 check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
     case handle_imported_struct(RawName, St) of
         {{atom, _, N}, St1} ->
-            case maps:find(N, St#lint.structs) of
+            case maps:find(N, St1#lint.structs) of
                 {ok, Def} ->
-                    St1 = used_struct(N, St),
-                    pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
+                    St2 = used_struct(N, St1),
+                    pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St2);
                 error ->
                     {[], [], add_error(Line, {undefined_struct, N}, St)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
-            case St#lint.defs_db of
+            case St1#lint.defs_db of
                 undefined ->
                     pattern_struct_fields(Pfs, N, unavailable, Vt, Old, Bvt, St1);
                 GlobalDefs ->
