@@ -22,7 +22,7 @@ object SCC {
 
   case class Vertex(label: String)
   case class Edge(from: Vertex, to: Vertex)
-  case class G(start: Vertex, vertices: List[Vertex], edges: List[Edge])
+  case class G(vertices: List[Vertex], edges: List[Edge])
 
   case class State(
       graph: G,
@@ -46,7 +46,7 @@ object SCC {
     )
 
   def components(graph: G): List[Component] = {
-    var state = search(graph.start, initial(graph))
+    var state = search(graph.vertices.head, initial(graph))
     while (state.visited.exists(_._2 == false)) {
       state.visited.find(_._2 == false).foreach { tuple =>
         val (vertex, _) = tuple

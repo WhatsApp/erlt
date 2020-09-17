@@ -279,7 +279,7 @@ object SyntaxUtil {
       nameToUsedVars(fun.name.stringId).toList.map(SCC.Vertex).map(SCC.Edge(funVertex, _))
     }
 
-    val g = SCC.G(vertices.head, vertices, edges)
+    val g = SCC.G(vertices, edges)
     val components = SCC.components(g)
     val compNames = components.map { c => c.map(_.label) }
 
