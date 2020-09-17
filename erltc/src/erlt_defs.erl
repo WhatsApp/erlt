@@ -1,6 +1,6 @@
 -module(erlt_defs).
 
--export([new/0, find_enum/3, find_struct/3, add_definitions/2]).
+-export([new/0, find_enum/3, find_struct/3, add_definitions/2, normalise_definitions/1]).
 
 -export_type([defs/0]).
 
@@ -35,7 +35,7 @@ find_struct(Module, Name, #defs{structs = Structs}) ->
         #{} -> error
     end.
 
--spec add_definitions([erl_parse:abstract_form()], defs()) -> defs().
+-spec add_definitions([erlt_parse:abstract_form()], defs()) -> defs().
 add_definitions(Forms, Defs0) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
     Exports = gather_exported_types(Forms),
@@ -63,3 +63,26 @@ gather_exported_types(Forms) ->
         (_) -> []
     end,
     cerl_sets:from_list(lists:flatmap(Fun, Forms)).
+
+-spec normalise_definitions([erlt_parse:abstract_form()]) -> [erlt_parse:abstract_form()].
+normalise_definitions(Forms) ->
+    StructRewriter = erlt_struct:local_rewriter(Forms),
+    [normalise_definition(Form, StructRewriter) || {attribute, _, _, _} = Form <- Forms].
+
+normalise_definition({attribute, Loc, struct, {Name, Type0, Vs}}, StructRewriter) ->
+    Fun = fun(Node, Ctx) -> normalise_locals(Node, StructRewriter, Ctx) end,
+    Type = erlt_ast:prewalk(Type0, Fun),
+    {attribute, Loc, struct, {Name, Type, Vs}};
+normalise_definition(Other, _StructRewriter) ->
+    Other.
+
+%% Expand local guard calls to fully qualified erlang: calls
+%% in case the including module uses no_auto_import
+normalise_locals({call, Line0, {atom, _, _} = Name, Args}, _StructRewriter, guard) ->
+    {call, Line0, {remote, Line0, {atom, Line0, erlang}, Name}, Args};
+%% Expand local structs, so that we don't encounter scoping issues
+%% in the importing module
+normalise_locals({struct, _, {atom, _, _}, _} = Struct, StructRewriter, guard) ->
+    StructRewriter(Struct);
+normalise_locals(Other, _StructRewriter, _Ctx) ->
+    Other.

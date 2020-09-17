@@ -82,7 +82,9 @@ traverse(Ast, Acc, Pre, Post) ->
         {warning, _} = Node ->
             {Node, Acc};
         {eof, _} = Node ->
-            {Node, Acc}
+            {Node, Acc};
+        Node when tuple_size(Node) >= 3 ->
+            do_traverse(Node, Acc, Pre, Post, expr)
     end.
 
 do_traverse(Node0, Acc, Pre, Post, Ctx) ->

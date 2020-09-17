@@ -15,7 +15,7 @@
 -lang([erlt]).
 -module(struct_mod01).
 
--export_type([foo/0, bar/1]).
+-export_type([foo/0, bar/1, default_with_default/0]).
 
 -export([foo/0, bar/0, baz/0, pattern/2, guard/1, field/1, update/1]).
 
@@ -23,7 +23,7 @@
 
 -struct bar(A) :: (a :: A, b :: foo()).
 
--struct baz :: (bar = #bar{a = 1, b = #foo{}} :: bar(integer())).
+-struct baz :: (bar = #bar{a = trunc(1.5), b = #foo{}} :: bar(integer())).
 
 -struct default_with_default :: (x = #baz{} :: baz()).
 
