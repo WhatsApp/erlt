@@ -47,9 +47,9 @@ atomic strings dot_atom
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
-top_type top_types type typed_expr typed_attr_val
+type_def top_type top_types type
 type_sig type_sigs type_guard type_guards fun_type anon_fun_type binary_type
-type_spec spec_fun typed_exprs typed_record_fields field_types field_type
+type_spec spec_fun field_types field_type
 map_pair_types map_pair_type bin_base_type bin_unit_type
 struct_def type_name vars field_defs field_def anon_field_defs non_default_field_def.
 
@@ -66,7 +66,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' struct_like % helper
+'spec' 'callback' struct_like type_like % helper
 dot.
 
 Expect 0.
@@ -99,11 +99,10 @@ form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 
 attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' atom typed_attr_val         : ?set_anno(build_typed_attribute('$2','$3'), ?anno('$1','$3')).
-attribute -> '-' atom '(' typed_attr_val ')' : ?set_anno(build_typed_attribute('$2','$4'), ?anno('$1','$5')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' type_like atom type_def     : build_type_def(?anno('$1', '$4'), '$3', '$4').
 
 dot_atom -> atom : '$1'.
 dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
@@ -113,6 +112,7 @@ struct_def -> type_name '::' '(' ')' : {struct_def, ?anno('$1', '$4'), '$1', []}
 struct_def -> type_name '::' '(' field_defs ')' : {struct_def, ?anno('$1', '$5'), '$1', '$4'}.
 
 type_name -> atom : {call, ?anno('$1'), '$1', []}.
+type_name -> atom '(' ')' : {call, ?anno('$1', '$3'), '$1', []}.
 type_name -> atom '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
 
 vars -> var ',' vars : ['$1' | '$3'].
@@ -135,17 +135,7 @@ type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$
 spec_fun ->                       dot_atom : fold_dots('$1').
 spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
 
-typed_attr_val -> expr ',' typed_record_fields : {typed_record, ?anno('$1','$3'), '$1', '$3'}.
-typed_attr_val -> expr '::' top_type           : {type_def, ?anno('$1','$3'), '$1', '$3'}.
-
-typed_record_fields -> '{' typed_exprs '}' : {tuple, ?anno('$1','$3'), '$2'}.
-
-typed_exprs -> typed_expr                 : ['$1'].
-typed_exprs -> typed_expr ',' typed_exprs : ['$1'|'$3'].
-typed_exprs -> expr ',' typed_exprs       : ['$1'|'$3'].
-typed_exprs -> typed_expr ',' exprs       : ['$1'|'$3'].
-
-typed_expr -> expr '::' top_type          : {typed,'$1','$3'}.
+type_def -> type_name '::' top_type : {type_def, ?anno('$1', '$3'), '$1', '$3'}.
 
 type_sigs -> type_sig                     : ['$1'].
 type_sigs -> type_sig ';' type_sigs       : ['$1'|'$3'].
@@ -1154,6 +1144,12 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
+parse_form([{'-', A1}, {atom, A2, TypeLike} = Atom | Tokens]) when
+    TypeLike =:= type; TypeLike =:= opaque; TypeLike =:= enum
+->
+    NewTokens = [{'-', A1}, {type_like, A2}, Atom | Tokens],
+    ?ANNO_CHECK(NewTokens),
+    parse(NewTokens);
 parse_form([{'-', A1}, {atom, A2, StructLike} = Atom | Tokens]) when
     StructLike =:= struct; StructLike =:= message; StructLike =:= exception
 ->
@@ -1202,58 +1198,13 @@ parse_term(Tokens) ->
     'module' |
     'opaque' | 'record' | 'type' | 'enum'.
 
-build_typed_attribute(
-    {atom, Aa, record},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, record, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, Aa, exception},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, exception, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, Aa, message},
-    {typed_record, _TRA, {atom, _An, RecordName}, RecTuple}
-) ->
-    {attribute, Aa, message, {RecordName, record_tuple(RecTuple)}};
-build_typed_attribute(
-    {atom, Aa, Attr},
-    {type_def, _TDA, {call, _, {atom, _, TypeName}, Args}, Type}
-) when Attr =:= 'type'; Attr =:= 'opaque'; Attr =:= 'enum' ->
-    lists:foreach(
-        fun
-            ({var, A, '_'}) -> ret_err(A, "bad type variable");
-            (_) -> ok
-        end,
-        Args
-    ),
-    case
-        lists:all(
-            fun
-                ({var, _, _}) -> true;
-                (_) -> false
-            end,
-            Args
-        )
-    of
-        true -> {attribute, Aa, Attr, {TypeName, Type, Args}};
-        false -> error_bad_decl(Aa, Attr)
-    end;
-build_typed_attribute({atom, Aa, Attr}, _) ->
-    case Attr of
-        record -> error_bad_decl(Aa, record);
-        exception -> error_bad_decl(Aa, exception);
-        message -> error_bad_decl(Aa, message);
-        type -> error_bad_decl(Aa, type);
-        opaque -> error_bad_decl(Aa, opaque);
-        enum -> error_bad_decl(Aa, enum);
-        _ -> ret_err(Aa, "bad attribute")
-    end.
-
 build_struct_def(Anno, {atom, _, Attr}, {struct_def, DefAnno, Name, Fields}) ->
     {call, _, {atom, _, TypeName} = Tag, Args} = Name,
     Type = {type, DefAnno, struct, Tag, Fields},
+    {attribute, Anno, Attr, {TypeName, Type, Args}}.
+
+build_type_def(Anno, {atom, _, Attr}, {type_def, _DefAnno, Name, Type}) ->
+    {call, _, {atom, _, TypeName}, Args} = Name,
     {attribute, Anno, Attr, {TypeName, Type, Args}}.
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->

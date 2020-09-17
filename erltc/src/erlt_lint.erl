@@ -557,7 +557,11 @@ format_error({undefined_callback, {_M, F, A}}) ->
     io_lib:format("callback ~tw/~w is undefined", [F, A]);
 %% --- types and specs ---
 format_error({singleton_typevar, Name}) ->
-    io_lib:format("type variable ~w is only used once (is unbound)", [Name]);
+    io_lib:format("type variable ~tw is only used once (is unbound)", [Name]);
+format_error({reused_typevar, Name}) ->
+    io_lib:format("type variable ~tw appears multiple times in type arguments", [Name]);
+format_error(underscore_typevar) ->
+    "_ is not a valid type variable";
 format_error({bad_export_type, _ETs}) ->
     io_lib:format("bad export_type declaration", []);
 format_error({duplicated_export_type, {T, A}}) ->
@@ -3753,20 +3757,21 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
         CheckType = {type, nowarn(), product, [ProtoType | Args]},
         check_type(CheckType, St#lint{types = NewDefs})
     end,
+    St1 = verify_typevars(Args, St0),
     case is_default_type(TypePair) of
         true ->
             case is_obsolete_builtin_type(TypePair) of
                 true ->
-                    StoreType(St0);
+                    StoreType(St1);
                 false ->
                     case is_newly_introduced_builtin_type(TypePair) of
                         %% allow some types just for bootstrapping
                         true ->
                             Warn = {new_builtin_type, TypePair},
-                            St1 = add_warning(Line, Warn, St0),
-                            StoreType(St1);
+                            St2 = add_warning(Line, Warn, St1),
+                            StoreType(St2);
                         false ->
-                            add_error(Line, {builtin_type, TypePair}, St0)
+                            add_error(Line, {builtin_type, TypePair}, St1)
                     end
             end;
         false ->
@@ -3774,22 +3779,34 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
             Names = [N || {N, _} <- dict:fetch_keys(TypeDefs)],
             case lists:member(TypeName, Names) of
                 true ->
-                    add_error(Line, {redefine_type, TypePair}, St0);
+                    add_error(Line, {redefine_type, TypePair}, St1);
                 false ->
-                    St1 =
+                    St2 =
                         case
                             Attr =:= opaque andalso
                                 is_underspecified(ProtoType, Arity)
                         of
                             true ->
                                 Warn = {underspecified_opaque, TypePair},
-                                add_warning(Line, Warn, St0);
+                                add_warning(Line, Warn, St1);
                             false ->
-                                St0
+                                St1
                         end,
-                    StoreType(St1)
+                    StoreType(St2)
             end
     end.
+
+verify_typevars(Vars, St0) ->
+    Fun = fun
+        ({var, Line, '_'}, {St, Names}) ->
+            {add_error(Line, underscore_typevar, St), Names};
+        ({var, Line, Name}, {St, Names}) ->
+            case cerl_sets:is_element(Name, Names) of
+                true -> {add_error(Line, {reused_typevar, Name}, St), Names};
+                false -> {St, cerl_sets:add_element(Name, Names)}
+            end
+    end,
+    element(1, lists:foldl(Fun, {St0, cerl_sets:new()}, Vars)).
 
 is_underspecified({type, _, term, []}, 0) -> true;
 is_underspecified({type, _, any, []}, 0) -> true;
