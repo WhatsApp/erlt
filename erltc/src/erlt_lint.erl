@@ -248,7 +248,9 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %In a try head.
     in_try_head = false :: boolean(),
     % Global definition database
-    defs_db :: erlt_defs:defs()
+    defs_db :: erlt_defs:defs(),
+    % Used to track recursive struct defaults
+    struct_expansion = skip :: skip | cerl_sets:set(atom() | {atom(), atom()})
 }).
 
 -type lint_state() :: #lint{}.
@@ -460,6 +462,8 @@ format_error({undefined_struct_field, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw", [F, N]);
 format_error({undefined_struct_field, M, N, F}) ->
     io_lib:format("field ~tw undefined in struct ~tw:~tw", [F, M, N]);
+format_error({recursive_struct_field, N, F}) ->
+    io_lib:format("field ~tw of struct ~ts contains recursive default value", [F, format_name(N)]);
 format_error({no_field_value, M}) ->
     io_lib:format("field ~tw has no initializer or default value", [M]);
 format_error({illegal_struct_default_call, {F, A}}) ->
@@ -641,6 +645,9 @@ format_error({bad_dialyzer_option, Term}) ->
 %% --- obsolete? unused? ---
 format_error({format_error, {Fmt, Args}}) ->
     io_lib:format(Fmt, Args).
+
+format_name({M, N}) -> io_lib:format("~tw:~tw", [M, N]);
+format_name(N) -> io_lib:format("~tw", [N]).
 
 gen_type_paren(Arity) when is_integer(Arity), Arity >= 0 ->
     gen_type_paren_1(Arity, ")").
@@ -3397,29 +3404,48 @@ struct_field({atom, La, F}, Name, Definitions, St) ->
 
 init_struct_fields(Fields, Line, Name, Definitions, Vt0, St0) ->
     {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun expr/3),
-    {Uvt, ensure_all_field_values(Line, SeenFields, Definitions, St)}.
+    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Definitions, fun expr/3, Uvt, St)}.
 
 init_struct_fields_guard(Fields, Line, Name, Definitions, Vt0, St0) ->
     {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
-    {Uvt, ensure_all_field_values(Line, SeenFields, Definitions, St)}.
+    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Definitions, fun gexpr/3, Uvt, St)}.
 
 update_struct_fields(Fields, _Line, Name, Definitions, Vt, St) ->
     {_SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt, St, fun expr/3),
     {Uvt, St}.
 
-ensure_all_field_values(_Line, _Seen, unavailable, St) ->
+ensure_all_field_values(_Line, _Name, _SeenFields, unavailable, _Expand, _Vt, St) ->
     St;
-ensure_all_field_values(Line, Seen, Definitions, St0) ->
-    Fun = fun
-        (Field, undefined, St) ->
-            case member(Field, Seen) of
-                true -> St;
-                false -> add_error(Line, {no_field_value, Field}, St)
-            end;
-        (_Field, _Default, St) ->
-            St
+ensure_all_field_values(Line, Name, SeenFields, Definitions, Expand, Vt, St0) ->
+    Fun = fun(Field, Default0, St) ->
+        case member(Field, SeenFields) of
+            true ->
+                St;
+            false when Default0 =/= undefined ->
+                Default = copy_expr(Default0, Line),
+                verify_no_recursive_defaults(Line, Default, Name, Field, Expand, Vt, St);
+            false when Default0 =:= undefined ->
+                add_error(Line, {no_field_value, Field}, St)
+        end
     end,
     maps:fold(Fun, St0, Definitions).
+
+verify_no_recursive_defaults(_, _, _, _, _, _, #lint{struct_expansion = skip} = St) ->
+    St;
+verify_no_recursive_defaults(Line, Expr, Name, Field, Expand, Vt, St) ->
+    Key = struct_name_to_key(Name),
+    ExpansionState = St#lint.struct_expansion,
+    case cerl_sets:is_element(Key, ExpansionState) of
+        true ->
+            add_error(Line, {recursive_struct_field, Key, Field}, St);
+        false ->
+            St1 = St#lint{struct_expansion = cerl_sets:add_element(Key, ExpansionState)},
+            {_, St2} = Expand(Expr, Vt, St1),
+            St2#lint{struct_expansion = ExpansionState}
+    end.
+
+struct_name_to_key({atom, _, Name}) -> Name;
+struct_name_to_key({remote, _, {atom, _, Module}, {atom, _, Name}}) -> {Module, Name}.
 
 check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
     check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
@@ -3445,6 +3471,7 @@ check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fiel
     end;
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
+
 
 check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->
@@ -3945,10 +3972,10 @@ check_anon_struct_types(Fields, SeenVars, St) ->
 check_anon_struct_types([{field_definition, Line, {atom, _, Name}, undefined, Type} | Rest],
     SeenVars, St, FieldsAcc) ->
     case is_map_key(Name, FieldsAcc) of
-        true -> 
+        true ->
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
             {SeenVars1, add_error(Line, {redefine_anon_struct_field, Name}, St1)};
-        false -> 
+        false ->
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
             check_anon_struct_types(Rest, SeenVars1, St1, FieldsAcc#{Name => Type})
     end;
@@ -3963,19 +3990,20 @@ check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->
                 true -> add_error(Line, {redefine_struct_field, StructName, Name}, St);
                 false -> St
             end,
-        St2 = check_struct_default(Default, St1),
+        St2 = check_struct_default(Default, StructName, St1),
         {SeenVars1, St3} = check_type(Type, SeenVars, St2),
         {SeenVars1, St3, FieldsAcc#{Name => Type}}
     end,
     {SeenVars, St, _} = lists:foldl(Fun, {SeenVars0, St0, #{}}, Fields),
     {SeenVars, St}.
 
-check_struct_default(undefined, St) ->
+check_struct_default(undefined, _StructName, St) ->
     St;
-check_struct_default(Expr, St = #lint{errors = OriginalErrors}) ->
-    {_, St1 = #lint{errors = NewErrors}} = gexpr(Expr, [], St#lint{errors = []}),
+check_struct_default(Expr, StructName, St = #lint{errors = OriginalErrors}) ->
+    St1 = St#lint{errors = [], struct_expansion = cerl_sets:from_list([StructName])},
+    {_, St2 = #lint{errors = NewErrors}} = gexpr(Expr, [], St1),
     Errors = lists:map(fun translate_struct_default_error/1, NewErrors) ++ OriginalErrors,
-    St1#lint{errors = Errors}.
+    St2#lint{errors = Errors, struct_expansion = skip}.
 
 translate_struct_default_error({File, {Loc, Mod, illegal_guard_expr}}) ->
     {File, {Loc, Mod, illegal_struct_default}};
