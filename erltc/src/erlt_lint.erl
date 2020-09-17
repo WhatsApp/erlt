@@ -560,8 +560,8 @@ format_error({singleton_typevar, Name}) ->
     io_lib:format("type variable ~tw is only used once (is unbound)", [Name]);
 format_error({reused_typevar, Name}) ->
     io_lib:format("type variable ~tw appears multiple times in type arguments", [Name]);
-format_error(underscore_typevar) ->
-    "_ is not a valid type variable";
+format_error(underscore_type) ->
+    "_ is not a valid type";
 format_error({bad_export_type, _ETs}) ->
     io_lib:format("bad export_type declaration", []);
 format_error({duplicated_export_type, {T, A}}) ->
@@ -3270,7 +3270,7 @@ record_def(Line, Name, Fs0, St0) ->
             {Fs1, St1} = def_fields(normalise_fields(Fs0), Name, St0),
             St2 = St1#lint{records = dict:store(Name, {Line, Fs1}, St1#lint.records)},
             Types = [T || {typed_record_field, _, T} <- Fs0],
-            check_type({type, nowarn(), product, Types}, St2)
+            check_type_in_def({type, nowarn(), product, Types}, St2)
     end.
 
 %% def_fields([RecDef], RecordName, State) -> {[DefField],State}.
@@ -3755,7 +3755,7 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
     StoreType = fun(St) ->
         NewDefs = dict:store(TypePair, Info, TypeDefs),
         CheckType = {type, nowarn(), product, [ProtoType | Args]},
-        check_type(CheckType, St#lint{types = NewDefs})
+        check_type_in_def(CheckType, St#lint{types = NewDefs})
     end,
     St1 = verify_typevars(Args, St0),
     case is_default_type(TypePair) of
@@ -3797,14 +3797,11 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
     end.
 
 verify_typevars(Vars, St0) ->
-    Fun = fun
-        ({var, Line, '_'}, {St, Names}) ->
-            {add_error(Line, underscore_typevar, St), Names};
-        ({var, Line, Name}, {St, Names}) ->
-            case cerl_sets:is_element(Name, Names) of
-                true -> {add_error(Line, {reused_typevar, Name}, St), Names};
-                false -> {St, cerl_sets:add_element(Name, Names)}
-            end
+    Fun = fun({var, Line, Name}, {St, Names}) ->
+        case cerl_sets:is_element(Name, Names) of
+            true -> {add_error(Line, {reused_typevar, Name}, St), Names};
+            false -> {St, cerl_sets:add_element(Name, Names)}
+        end
     end,
     element(1, lists:foldl(Fun, {St0, cerl_sets:new()}, Vars)).
 
@@ -3812,8 +3809,14 @@ is_underspecified({type, _, term, []}, 0) -> true;
 is_underspecified({type, _, any, []}, 0) -> true;
 is_underspecified(_ProtType, _Arity) -> false.
 
-check_type(Types, St) ->
-    {SeenVars, St1} = check_type(Types, dict:new(), St),
+check_type_in_spec(Type, St) ->
+    do_check_type(Type, [{'_', predefined}], St).
+
+check_type_in_def(Type, St) ->
+    do_check_type(Type, [], St).
+
+do_check_type(Types, Vars, St) ->
+    {SeenVars, St1} = check_type(Types, dict:from_list(Vars), St),
     dict:fold(
         fun
             (Var, {seen_once, Line}, AccSt) ->
@@ -3821,6 +3824,8 @@ check_type(Types, St) ->
                     "_" ++ _ -> AccSt;
                     _ -> add_error(Line, {singleton_typevar, Var}, AccSt)
                 end;
+            ('_', predefined, AccSt) ->
+                AccSt;
             (_Var, seen_multiple, AccSt) ->
                 AccSt
         end,
@@ -3850,8 +3855,11 @@ check_type({integer, _L, _}, SeenVars, St) ->
     {SeenVars, St};
 check_type({atom, _L, _}, SeenVars, St) ->
     {SeenVars, St};
-check_type({var, _L, '_'}, SeenVars, St) ->
-    {SeenVars, St};
+check_type({var, L, '_'}, SeenVars, St) ->
+    case dict:find('_', SeenVars) of
+        {ok, predefined} -> {SeenVars, St};
+        error -> {SeenVars, add_error(L, underscore_type, St)}
+    end;
 check_type({var, L, Name}, SeenVars, St) ->
     NewSeenVars =
         case dict:find(Name, SeenVars) of
@@ -4218,7 +4226,7 @@ check_specs([FunType | Left], ETag, Arity, St0) ->
             false ->
                 add_error(L, ETag, St0)
         end,
-    St2 = check_type({type, nowarn(), product, [FunType1 | CTypes]}, St1),
+    St2 = check_type_in_spec({type, nowarn(), product, [FunType1 | CTypes]}, St1),
     check_specs(Left, ETag, Arity, St2);
 check_specs([], _ETag, _Arity, St) ->
     St.
