@@ -1,6 +1,6 @@
 -file("struct_mod05.erl", 1).
 
--module(struct_mod04).
+-module(struct_mod05).
 
 -export([expr/0,
          pattern/1,
@@ -9,7 +9,12 @@
          update/1,
          remote_with_defaults/0]).
 
+-export_type([with_imported_default/0]).
+
 -import_type({struct_mod02, [{foo, 0}, {bar, 0}]}).
+
+-type with_imported_default() ::
+          {'$#struct_mod05:with_imported_default', struct_mod02:foo()}.
 
 expr() ->
     {'$#struct_mod02:foo'}.
@@ -42,9 +47,10 @@ update(Value) ->
     end.
 
 remote_with_defaults() ->
-    {'$#struct_mod01:default_with_default',
-     {'$#struct_mod01:baz',
-      {'$#struct_mod01:bar', trunc(1.5), {'$#struct_mod01:foo'}}}}.
+    {{'$#struct_mod01:default_with_default',
+      {'$#struct_mod01:baz',
+       {'$#struct_mod01:bar', trunc(1.5), {'$#struct_mod01:foo'}}}},
+     {'$#struct_mod05:with_imported_default', {'$#struct_mod02:foo'}}}.
 
 
 

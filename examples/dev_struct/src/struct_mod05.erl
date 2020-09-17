@@ -13,11 +13,15 @@
 %% limitations under the License.
 
 -lang([erlt]).
--module(struct_mod04).
+-module(struct_mod05).
 
 -export([expr/0, pattern/1, guard/1, field/1, update/1, remote_with_defaults/0]).
 
+-export_type([with_imported_default/0]).
+
 -import_type(struct_mod02, [foo/0, bar/0]).
+
+-struct with_imported_default :: (foo = #foo{} :: foo()).
 
 expr() ->
     #foo{}.
@@ -35,4 +39,7 @@ update(Value) ->
     Value#bar{a = 2}.
 
 remote_with_defaults() ->
-    #struct_mod01:default_with_default{}.
+    {
+        #struct_mod01:default_with_default{},
+        #?MODULE:with_imported_default{}
+    }.

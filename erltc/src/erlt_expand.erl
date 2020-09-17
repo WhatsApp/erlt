@@ -137,6 +137,11 @@ forms([{attribute, L, enum, {EnumName, EnumTypeDef0, Args}} | Fs], St0) ->
     Attr = {attribute, L, enum, {EnumName, EnumTypeDef, Args}},
     {Fs1, St2} = forms(Fs, St1),
     {[Attr | Fs1], St2};
+forms([{attribute, L, struct, {TypeName, TypeDef0, Args}} | Fs], St0) ->
+    {TypeDef, St1} = type(TypeDef0, St0),
+    Attr = {attribute, L, struct, {TypeName, TypeDef, Args}},
+    {Fs1, St2} = forms(Fs, St1),
+    {[Attr | Fs1], St2};
 forms([{attribute, L, spec, {Fun, Types}} | Fs], St) ->
     {Types1, St1} = type_list(Types, St),
     Attr = {attribute, L, spec, {Fun, Types1}},
@@ -186,6 +191,9 @@ type({type, L, Tag, Args}, St) ->
 type({type, L, enum, Constructor, Args}, St) ->
     {Args1, St1} = type_list(Args, St),
     {{type, L, enum, Constructor, Args1}, St1};
+type({type, L, struct, Name, Fields}, St) ->
+    {Fields1, St1} = field_definitions(Fields, St),
+    {{type, L, struct, Name, Fields1}, St1};
 type({type, _, any} = T, St) ->
     {T, St};
 type({op, L, Op, T1, T2}, St) ->
@@ -201,6 +209,18 @@ type_list([T | Ts], St) ->
     {Ts1, St2} = type_list(Ts, St1),
     {[T1 | Ts1], St2};
 type_list([], St) ->
+    {[], St}.
+
+field_definitions([{field_definition, L, Name, undefined, Type} | Rest], St) ->
+    {Type1, St1} = type(Type, St),
+    {Rest1, St2} = field_definitions(Rest, St1),
+    {[{field_definition, L, Name, undefined, Type1} | Rest1], St2};
+field_definitions([{field_definition, L, Name, Default, Type} | Rest], St) ->
+    {Default1, St1} = expr(Default, St),
+    {Type1, St2} = type(Type, St1),
+    {Rest1, St3} = field_definitions(Rest, St2),
+    {[{field_definition, L, Name, Default1, Type1} | Rest1], St3};
+field_definitions([], St) ->
     {[], St}.
 
 clauses([{clause, Line, H0, G0, B0} | Cs0], St0) ->
