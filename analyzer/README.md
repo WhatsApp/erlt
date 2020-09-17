@@ -21,6 +21,8 @@ project.
    `try`-expressions, etc
 - `com.whatsapp.analyzer.HighLevelStats` - number of projects, modules,
    generated files, etc
+- `com.whatsapp.analyzer.ModCycles` - reports cycles between modules 
+   (it takes into account only functions for now)
 - `com.whatsapp.analyzer.OtpFunsUsage` - stats about which functions from
 OTP libs are used in the project.
 - `com.whatsapp.analyzer.Primitives concurrency` - stats about using
