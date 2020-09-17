@@ -870,6 +870,10 @@ pre_scan([{attribute, L, compile, C} | Fs], St) ->
         false ->
             pre_scan(Fs, St)
     end;
+%% structs can appear in any order, scan for definitions before
+%% actual checking begins
+pre_scan([{attribute, _, struct, {_, TypeDef, _}} | Fs], St) ->
+    pre_scan(Fs, struct_def(TypeDef, St));
 pre_scan([_ | Fs], St) ->
     pre_scan(Fs, St);
 pre_scan([], St) ->
@@ -974,8 +978,7 @@ attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
 attribute_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    St1 = struct_def(TypeDef, St),
-    type_def(struct, L, TypeName, TypeDef, Args, St1);
+    type_def(struct, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute, L, callback, {Fun, Types}}, St) ->
