@@ -19,8 +19,6 @@
 
 -export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1]).
 
--struct foo :: ().
-
 -struct bar(A) :: (a :: A, b :: foo()).
 
 -struct baz :: (bar = #bar{a = trunc(1.5), b = #foo{}} :: bar(integer())).
@@ -28,6 +26,8 @@
 -struct in_pattern :: ().
 
 -struct default_with_default :: (x = #baz{} :: baz()).
+
+-struct foo :: ().
 
 foo() ->
     #foo{}.

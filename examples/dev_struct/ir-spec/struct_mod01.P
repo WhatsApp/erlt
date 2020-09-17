@@ -6,8 +6,6 @@
 
 -export([foo/0,bar/0,baz/0,pattern/3,guard/1,field/1,update/1]).
 
--type foo() :: {'$#struct_mod01:foo'}.
-
 -type bar(A) :: {'$#struct_mod01:bar', A, foo()}.
 
 -type baz() :: {'$#struct_mod01:baz', bar(integer())}.
@@ -16,6 +14,8 @@
 
 -type default_with_default() ::
           {'$#struct_mod01:default_with_default', baz()}.
+
+-type foo() :: {'$#struct_mod01:foo'}.
 
 foo() ->
     {'$#struct_mod01:foo'}.
