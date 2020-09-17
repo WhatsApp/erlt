@@ -68,7 +68,8 @@
     base = "" :: file:filename(),
     ifile = "" :: file:filename(),
     ofile = "" :: file:filename(),
-    defs_file = undefined :: undefined | file:filename(),
+    defs_file :: undefined | file:filename(),
+    should_ouptut_defs_file = false :: boolean(),
     module = [] :: module() | [],
     %Options for compilation
     options = [] :: [option()],
@@ -260,11 +261,10 @@ output_compile_deps(_Forms, St) ->
     DepsFilenames = deps_to_unique_filenames(Deps),
     RuleCode = gen_make_rule(TargetBeam, DepsFilenames),
 
-    % TODO: do we have to handle IsM2Compat here?
-    DefsRuleCode = case St#compile.defs_file of
-        undefined -> "";
-        DefsFile ->
-            gen_make_rule_compat(shorten_filename(DefsFile), DepsFilenames)
+    DefsRuleCode = case St#compile.should_ouptut_defs_file of
+        true ->
+            gen_make_rule(shorten_filename(St#compile.defs_file), DepsFilenames);
+        false -> ""
         end,
 
     PhonyRulesCode =
@@ -659,7 +659,8 @@ internal_comp(Passes, Code0, File, Suffix, St0) ->
         dir = Dir,
         base = Base,
         ifile = erlfile(Dir, Base, Suffix),
-        ofile = objfile(Base, St0)
+        ofile = objfile(Base, St0),
+        defs_file = filename:join(St0#compile.build_dir, Base ++ ?DefFileSuffix)
     },
     Opts = St1#compile.options,
     Run0 =
@@ -943,11 +944,10 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     ),
     {ok, Code, St#compile{global_defs = Defs}}.
 
-output_declarations(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
+output_declarations(Code, #compile{defs_file = FileName} = St) ->
     Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
-    Filename = filename:join(BuildDir, Base ++ ?DefFileSuffix),
-    file:write_file(Filename, Output),
-    {ok, Code, St#compile{defs_file = Filename}}.
+    file:write_file(FileName, Output),
+    {ok, Code, St#compile{should_ouptut_defs_file = true}}.
 
 erlt_exception(Code, St) ->
     case is_lang_erlt(St) of
