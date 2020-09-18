@@ -68,8 +68,6 @@
     base = "" :: file:filename(),
     ifile = "" :: file:filename(),
     ofile = "" :: file:filename(),
-    defs_file :: undefined | file:filename(),
-    should_ouptut_defs_file = false :: boolean(),
     module = [] :: module() | [],
     %Options for compilation
     options = [] :: [option()],
@@ -88,7 +86,11 @@
     lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms,
     global_defs :: undefined | erlt_defs:defs(),
-    variable_state :: undefined | erlt:var_state()
+    variable_state :: undefined | erlt:var_state(),
+    % path to .defs file (contains specs, types, enums, and structs)
+    defs_file :: undefined | file:filename(),
+    % whether we have written a defs file to disk
+    has_written_defs_file = false :: boolean()
 }).
 
 -define(pass(P), {P, fun P/2}).
@@ -261,10 +263,12 @@ output_compile_deps(_Forms, St) ->
     DepsFilenames = deps_to_unique_filenames(Deps),
     RuleCode = gen_make_rule(TargetBeam, DepsFilenames),
 
-    DefsRuleCode = case St#compile.should_ouptut_defs_file of
-        true ->
-            gen_make_rule(shorten_filename(St#compile.defs_file), DepsFilenames);
-        false -> ""
+    DefsRuleCode =
+        case St#compile.has_written_defs_file of
+            true ->
+                gen_make_rule(shorten_filename(St#compile.defs_file), DepsFilenames);
+            false ->
+                ""
         end,
 
     PhonyRulesCode =
@@ -947,7 +951,7 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
 output_declarations(Code, #compile{defs_file = FileName} = St) ->
     Output = [erlt_pp:form(Form) || {attribute, _, _, _} = Form <- Code],
     file:write_file(FileName, Output),
-    {ok, Code, St#compile{should_ouptut_defs_file = true}}.
+    {ok, Code, St#compile{has_written_defs_file = true}}.
 
 erlt_exception(Code, St) ->
     case is_lang_erlt(St) of
@@ -969,7 +973,7 @@ erlt_message(Code, St) ->
 
 erlt_track_vars(Code, St) ->
     VarState = erlt_vars:initialize_vars(Code),
-    {ok, Code, St#compile{variable_state=VarState}}.
+    {ok, Code, St#compile{variable_state = VarState}}.
 
 erlt_expand(Code, St) ->
     case is_lang_erlt(St) of
