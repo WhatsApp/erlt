@@ -35,7 +35,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr record_expr
-anon_struct_expr anon_struct_update_expr anon_struct_field_expr
+anon_struct_expr anon_struct_field_expr
 struct_expr struct_name struct_tuple struct_fields struct_field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
@@ -278,7 +278,6 @@ expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
 expr -> record_expr : '$1'.
-expr -> anon_struct_update_expr : '$1'.
 expr -> anon_struct_expr : '$1'.
 expr -> anon_struct_field_expr : '$1'.
 expr -> struct_expr : '$1'.
@@ -400,13 +399,12 @@ enum_expr -> expr_remote '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
 anon_struct_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
-
-anon_struct_update_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_update_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_update_expr -> anon_struct_expr '#' '(' struct_fields ')' :
+anon_struct_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
+anon_struct_expr -> expr_max '#' '(' struct_fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_update_expr -> expr_max '#' '(' struct_fields ')' :
+anon_struct_expr -> anon_struct_expr '#' '(' struct_fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
+anon_struct_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
 
 anon_struct_field_expr -> anon_struct_expr '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
 anon_struct_field_expr -> expr_max '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
