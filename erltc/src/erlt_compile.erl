@@ -481,12 +481,12 @@ get_attr_deps([{attribute, _Line, import, _Value} | Rest], St, File, Acc) ->
 get_attr_deps([{attribute, _Line, compile, _Value} | Rest], St, File, Acc) ->
     % in classic Erlang erlc, information about parse transforms is read from the beam file by the compiler,
     % we decided not to support parse transforms for the prototype - we may revisit this
-    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53 
+    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53
     get_attr_deps(Rest, St, File, Acc);
 get_attr_deps([{attribute, _, behavior, _} | Rest], St, File, Acc) ->
     % in classic Erlang erlc, information about behaviors is read from the beam file by the compiler,
     % but in erlT we will likely get these from .defs files - if and when we revisit support of behaviors for erlT
-    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53 
+    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53
     get_attr_deps(Rest, St, File, Acc);
 get_attr_deps([_ | Rest], St, File, Acc) ->
     get_attr_deps(Rest, St, File, Acc).
@@ -507,7 +507,6 @@ resolve_defs_file(Loc, Mod, St) ->
             % are in the same application. Make it depend on the .beam file
             % next to the original target .beam
             DefsFilename0 = filename:join(St#compile.build_dir, DefsFileBasename),
-            %
             % NOTE: have to use the same shorten_filename() transformation as
             % on the TargetBeam in output_compile_deps()
             DefsFilename = shorten_filename(DefsFilename0),
@@ -1119,7 +1118,7 @@ get_erlt_deps(Forms, St0) ->
         end,
     F = St0#compile.ifile,
     io:format("about to resolve~n"),
-    [resolve_defs_file( {F, L}, M, St0) || {L, M} <- RawDeps].
+    [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
 
 erlt_typecheck(Code, St) ->
     case
