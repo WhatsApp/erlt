@@ -3382,7 +3382,7 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
                             Def = get_field_map_from_struct_def(StructDef),
                             pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
                         private ->
-                            {[], add_error(Line, {private_struct, {M, N}}, St1)};
+                            {[], [], add_error(Line, {private_struct, {M, N}}, St1)};
                         error ->
                             {[], [], add_error(Line, {undefined_struct, {M, N}}, St1)}
                     end
