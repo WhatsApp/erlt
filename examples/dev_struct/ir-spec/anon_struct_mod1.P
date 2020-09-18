@@ -22,8 +22,14 @@ test() ->
           (#{atom() => any()}) -> ok;
           (any()) -> not_ok.
 
+test(A) when A =:= #{a => 1, b => #{c => 2}} ->
+    closed_ok;
 test(#{a := 1, b := #{c := 2}}) ->
-    really_ok;
+    open_ok;
+test(A) when map_get(b, A) =:= 2 ->
+    ok;
+test(A) when A =:= (#{a => 1})#{b => 2} ->
+    ok;
 test(#{a := 1}) ->
     ok;
 test(#{}) ->

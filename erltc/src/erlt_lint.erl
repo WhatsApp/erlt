@@ -2434,6 +2434,13 @@ gexpr({record, Line, Name, Inits}, Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) ->
         ginit_fields(Inits, Line, Name, Dfs, Vt, St1)
     end);
+gexpr({anon_struct, _Line, Fields}, Vt, St) ->
+    check_anon_struct_fields(Fields, Vt, St, fun gexpr/3);
+gexpr({anon_struct_update, _Line, Expr, Fields}, Vt, St) ->
+    {Svt, St1} = gexpr(Expr, Vt, St),
+    check_anon_struct_fields(Fields, Svt, St1, fun gexpr/3);
+gexpr({anon_struct_field, _Line, Expr, _Field}, Vt, St) ->
+    gexpr(Expr, Vt, St);
 gexpr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(IsDef, St1) ->
         init_struct_fields_guard(Fields, Line, Name, IsDef, Vt, St1)
@@ -2716,10 +2723,10 @@ expr({map, _Line, Src, Es}, Vt, St) ->
 expr({record_index, Line, Name, Field}, _Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) -> record_field(Field, Name, Dfs, St1) end);
 expr({anon_struct, _Line, Fields}, Vt, St) ->
-    check_anon_struct_fields(Fields, Vt, St, []);
+    check_anon_struct_fields(Fields, Vt, St, fun expr/3);
 expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
     {Evt, St1} = expr(Expr, Vt, St0),
-    check_anon_struct_fields(Fields, Evt, St1, []);
+    check_anon_struct_fields(Fields, Evt, St1, fun expr/3);
 expr({anon_struct_field, _Line, Expr, _Field}, Vt, St0) ->
     expr(Expr, Vt, St0);
 expr({struct, Line, Name, Fields}, Vt, St) ->
@@ -3414,15 +3421,18 @@ ensure_all_field_values(Line, Seen, Definitions, St0) ->
     end,
     maps:fold(Fun, St0, Definitions).
 
-check_anon_struct_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, St, UsedFields) ->
+check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
+    check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
+
+check_anon_struct_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, St, CheckFun, UsedFields) ->
     case member(F, UsedFields) of
         true ->
             {[], add_error(Lf, {reuse_anon_struct_field, F}, St)};
         false ->
-            {Vt1, St1} = expr(Val, Vt, St),
-            check_anon_struct_fields(Fields, Vt1, St1, [F | UsedFields])
+            {Vt1, St1} = CheckFun(Val, Vt, St),
+            check_anon_struct_fields(Fields, Vt1, St1, CheckFun, [F | UsedFields])
     end;
-check_anon_struct_fields([], Vt, St, _) ->
+check_anon_struct_fields([], Vt, St, _CheckFun, _) ->
     {Vt,St}.
 
 check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, Old, Bvt, St, UsedFields) ->
