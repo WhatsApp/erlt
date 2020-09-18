@@ -202,7 +202,6 @@ do_file(File, Options0) ->
                         ?pass(maybe_save_binary)
                     ];
             compile ->
-                % normal .erl compilation -- for erl1, should be identical to erlc behavior
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
@@ -474,88 +473,55 @@ get_attr_deps([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
         end,
     % update the name of the current file
     get_attr_deps(Rest, St, NewFile, NewAcc);
-get_attr_deps([{attribute, _Line, import, Value} | Rest], St, File, Acc) ->
-    Deps = get_deps_from_import(Value, St),
-    get_attr_deps(Rest, St, File, Deps ++ Acc);
-get_attr_deps([{attribute, Line, compile, Value} | Rest], St, File, Acc) ->
-    Deps = get_deps_from_compile({File, Line}, Value, St),
-    get_attr_deps(Rest, St, File, Deps ++ Acc);
-get_attr_deps([{attribute, Line, behavior, Value} | Rest], St, File, Acc) ->
-    Deps = get_deps_from_behavior({File, Line}, Value, St),
-    get_attr_deps(Rest, St, File, Deps ++ Acc);
-get_attr_deps([{attribute, Line, behaviour, Value} | Rest], St, File, Acc) ->
-    Deps = get_deps_from_behavior({File, Line}, Value, St),
-    get_attr_deps(Rest, St, File, Deps ++ Acc);
+get_attr_deps([{attribute, _Line, import, _Value} | Rest], St, File, Acc) ->
+    % ignoring for now, since these are runtime, rather than compile-time dependencies
+    % Furthermore, imports could be circular, which is likely the reason for
+    % not handling them at compile time in the current implementation
+    get_attr_deps(Rest, St, File, Acc);
+get_attr_deps([{attribute, _Line, compile, _Value} | Rest], St, File, Acc) ->
+    % in classic Erlang erlc, information about parse transforms is read from the beam file by the compiler,
+    % we decided not to support parse transforms for the prototype - we may revisit this
+    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53 
+    get_attr_deps(Rest, St, File, Acc);
+get_attr_deps([{attribute, _, behavior, _} | Rest], St, File, Acc) ->
+    % in classic Erlang erlc, information about behaviors is read from the beam file by the compiler,
+    % but in erlT we will likely get these from .defs files - if and when we revisit support of behaviors for erlT
+    % to see how this was done before: b928e49f83bd7ab2dcad40e8f6efdefc19319f53 
+    get_attr_deps(Rest, St, File, Acc);
 get_attr_deps([_ | Rest], St, File, Acc) ->
     get_attr_deps(Rest, St, File, Acc).
 
 remove_dot_slash("./" ++ File) -> File;
 remove_dot_slash(Other) -> Other.
 
-get_deps_from_import({_Mod, _Funs}, _St) ->
-    % NOTE: not returning anything for now, as imported module is not a
-    % compile-time dependency, but rather a runtime one. That is erlc doesn't
-    % care about this, unlike in case of behaviors and parse_transforms
-    %
-    % Furthermore, imports could be circular, which is likely the reason for
-    % not handling them at compile time in the current implementation
-    [].
-
-get_deps_from_behavior(Loc, Mod, St) ->
-    [resolve_module_dependency(behavior, Loc, Mod, St)].
-
-get_deps_from_compile(Loc, Value, St) ->
-    case Value of
-        % list of values
-        L when is_list(L) ->
-            lists:foldl(
-                fun(X, Acc) -> get_deps_from_compile_item(Loc, X, St) ++ Acc end,
-                [],
-                L
-            );
-        % single value
-        _ ->
-            get_deps_from_compile_item(Loc, Value, St)
-    end.
-
-get_deps_from_compile_item(Loc, Value, St) ->
-    case Value of
-        {parse_transform, Mod} ->
-            [resolve_module_dependency(parse_transform, Loc, Mod, St)];
-        {core_transform, Mod} ->
-            [resolve_module_dependency(core_transform, Loc, Mod, St)];
-        _ ->
-            []
-    end.
-
-% ModuleDepType = behavior | parse_transform | core_transform | type_checking
-resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
+% not yet handling `ModuleDepType`s: behavior | parse_transform | core_transform
+% or dependencies from other directories.
+% see this file at b928e49f83bd7ab2dcad40e8f6efdefc19319f53 for an earlier take on how to handle those
+resolve_defs_file(Loc, Mod, St) ->
+    ModuleDepType = typed_dep,
     Erl = filename:join(St#compile.dir, module_to_erl(Mod)),
-    SpecsErl = filename:join(St#compile.dir, module_to_specs_erl(Mod)),
-    case {filelib:is_regular(Erl), filelib:is_regular(SpecsErl)} of
-        {true, _} ->
+    DefsFileBasename = module_to_defs_file(Mod),
+    case filelib:is_regular(Erl) of
+        true ->
             % Mod's .erl is next to the original source .erl file, i.e. they
             % are in the same application. Make it depend on the .beam file
             % next to the original target .beam
-            Beam0 = filename:join(filename:dirname(St#compile.ofile), module_to_beam(Mod)),
-
+            DefsFilename0 = filename:join(St#compile.build_dir, DefsFileBasename),
+            %
             % NOTE: have to use the same shorten_filename() transformation as
             % on the TargetBeam in output_compile_deps()
-            Beam = shorten_filename(Beam0),
+            DefsFilename = shorten_filename(DefsFilename0),
 
-            {ModuleDepType, Beam};
-        {_, true} ->
-            Beam0 = filename:join(
-                filename:dirname(St#compile.ofile),
-                module_to_specs_beam(Mod)
-            ),
-            Beam = shorten_filename(Beam0),
-            {ModuleDepType, Beam};
-        _ ->
+            {ModuleDepType, DefsFilename};
+        false ->
             % it has to be present somewhere for compilation to work
             case code:which(Mod) of
                 Path when is_list(Path) ->
-                    {ModuleDepType, Path};
+                    % one up from ebin
+                    ParentDir = filename:dirname(filename:dirname(Path)),
+                    % watch out: build dir might not always be called "build"
+                    DefsFilename = filename:join([ParentDir, "build", DefsFileBasename]),
+                    {ModuleDepType, DefsFilename};
                 _ ->
                     {ErrorFile, ErrorLine} = Loc,
                     Error =
@@ -571,14 +537,8 @@ resolve_module_dependency(ModuleDepType, Loc, Mod, St) ->
 module_to_erl(Mod) ->
     atom_to_list(Mod) ++ ".erl".
 
-module_to_specs_erl(Mod) ->
-    atom_to_list(Mod) ++ ".specs.erl".
-
-module_to_beam(Mod) ->
-    atom_to_list(Mod) ++ ".beam".
-
-module_to_specs_beam(Mod) ->
-    atom_to_list(Mod) ++ ".specs.beam".
+module_to_defs_file(Mod) ->
+    atom_to_list(Mod) ++ ?DefFileSuffix.
 
 fix_compile_options(Options, CompileMode) ->
     %% forcing to use nowarn_unused_record,
@@ -646,10 +606,10 @@ maybe_save_binary(Code, St) ->
 
 format_error({sterlang, ExitCode, Output}) ->
     io_lib:format("sterlang exited with error code ~w: ~n~s~n", [ExitCode, Output]);
-format_error({module_dependency, type_checking, Mod}) ->
-    io_lib:format("can't find ~s.beam", [Mod]);
+format_error({module_dependency, defs_dependency, Mod}) ->
+    io_lib:format("can't find ~s.~s", [Mod, ?DefFileSuffix]);
 format_error({module_dependency, ModuleDepType, Mod}) ->
-    io_lib:format("can't find ~s.beam from -~s(~s)", [Mod, ModuleDepType, Mod]);
+    io_lib:format("can't find ~s from -~s(~s)", [Mod, ModuleDepType, Mod]);
 format_error(X) ->
     % TODO: copy formatters for locally-generated errors from copy-pasted code
     % here to avoid problems with error format compatibility in the future
@@ -1158,7 +1118,8 @@ get_erlt_deps(Forms, St0) ->
             {_, _} -> erlt_deps:dt_deps(Forms)
         end,
     F = St0#compile.ifile,
-    [resolve_module_dependency(type_checking, {F, L}, M, St0) || {L, M} <- RawDeps].
+    io:format("about to resolve~n"),
+    [resolve_defs_file( {F, L}, M, St0) || {L, M} <- RawDeps].
 
 erlt_typecheck(Code, St) ->
     case
