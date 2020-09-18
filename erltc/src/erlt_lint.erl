@@ -3443,7 +3443,7 @@ check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fiel
             {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, Bvt, St),
             check_anon_struct_pattern_fields(Fields, Vt1, Old, Bvt1, St1, [F | UsedFields])
     end;
-check_anon_struct_pattern_fields([], Bvt, Vt, _Old, St, _) ->
+check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
 
 check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->

@@ -2,7 +2,7 @@
 
 -module(anon_struct_mod1).
 
--export([test/0]).
+-export([test/0,test_in_lc/1]).
 
 test() ->
     [ 
@@ -14,7 +14,10 @@ test() ->
               ((#{a => 1})#{b => 2})#{},
               (#{})#{a => 1, b => #{c => 2, d => 3}},
               map_get(a, #{a => 1, b => 2}),
-              map_get(a, (#{a => 1})#{b => 2})]
+              map_get(a, (#{a => 1})#{b => 2}),
+              (map_get(c,
+                       map_get(b,
+                               (#{})#{a => 1, b => #{c => 2, d => 3}})))#{e => 4}]
     ].
 
 -spec test(#{a := 1, b := #{c := 2, atom() => any()}, atom() => any()}) ->
@@ -36,6 +39,12 @@ test(#{}) ->
     ok;
 test(_) ->
     not_ok.
+
+test_in_lc(List) ->
+    [ 
+     Id ||
+         #{id := Id} <- List
+    ].
 
 
 
