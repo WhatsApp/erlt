@@ -1,16 +1,12 @@
 # 5. Structs Rationale
 
-ErlT introduces a new concept - structs. It re-uses the syntax
-of classic Erlang for maps, but gives it a different interpretation in
-the context of the typing discipline.
+ErlT introduces three new data structures - enums, structs, and anonymous structs. This document describes structs and anonymous structs
 
-## What are structs?
+A *struct* is a nominal record and requires an explicit named definition. Struct can be seen as a replacement for Erlang records.
 
-A struct is a lightweight labeled data structure, or:
-sturcts are maps with atomic keys.
-For now sturcts are represented as maps at runtime.
+An *anonymous struct* doesn’t require definition. The main use case it addresses is a generalization of a tuple, which allows names fields instead of only positional ones in a tuple. Intuitively, anonymous structs can be seen as Erlang map with atom keys with invariably more restricted semantics in ST model.
 
-> **The below is likely to be out of date. The [spec](https://fb.quip.com/olhzAKEm2Jqz) is the source of truth**
+> **The below is out of date. The [spec](https://fb.quip.com/olhzAKEm2Jqz) is the source of truth**. In particular, the below doesn't always distinguish between structs and anonymous structs
 
 **Similar constructs in other languages**
 
@@ -25,7 +21,7 @@ Some background
 
 ## Operations
 
-### Creating structs
+### Creating anonymous structs
 
 Just use map literals:
 
@@ -37,7 +33,7 @@ Point = #{x => 1, y => 1},
 
 ### Access
 
-ErlT introduces the "." - dot operator for accessing records.
+ErlT introduces the "." - dot operator for accessing fields of structs
 
 ```erlang
 Date.year
