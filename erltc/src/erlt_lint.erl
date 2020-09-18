@@ -3945,7 +3945,8 @@ check_anon_struct_types([{field_definition, Line, {atom, _, Name}, undefined, Ty
     SeenVars, St, FieldsAcc) ->
     case is_map_key(Name, FieldsAcc) of
         true -> 
-            {SeenVars, add_error(Line, {redefine_anon_struct_field, Name}, St)};
+            {SeenVars1, St1} = check_type(Type, SeenVars, St),
+            {SeenVars1, add_error(Line, {redefine_anon_struct_field, Name}, St1)};
         false -> 
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
             check_anon_struct_types(Rest, SeenVars1, St1, FieldsAcc#{Name => Type})

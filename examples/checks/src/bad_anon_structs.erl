@@ -6,6 +6,8 @@
 
 -spec test() -> #(a::integer(), a::float()).
 
+-type my_map(A, B) :: #(id :: A, id :: B).
+
 test() ->
     #(a=1,a=2).
 
