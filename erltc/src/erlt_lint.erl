@@ -443,11 +443,9 @@ format_error({enum_constructor_wrong_arity, E, A, N}) ->
 format_error({undefined_record, T}) ->
     io_lib:format("record ~tw undefined", [T]);
 format_error({undefined_struct, N}) ->
-    io_lib:format("struct ~tw undefined", [N]);
-format_error({undefined_struct, M, N}) ->
-    io_lib:format("struct ~tw:~tw undefined", [M, N]);
-format_error({private_struct, M, N}) ->
-    io_lib:format("struct ~tw:~tw is not exported", [M, N]);
+    io_lib:format("struct ~ts undefined", [format_name(N)]);
+format_error({private_struct, N}) ->
+    io_lib:format("struct ~ts is not exported", [format_name(N)]);
 format_error({redefine_record, T}) ->
     io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
@@ -456,12 +454,10 @@ format_error({reuse_anon_struct_field, F}) ->
     io_lib:format("field ~tw used more than once in anonymous struct", [F]);
 format_error({redefine_anon_struct_field, F}) ->
     io_lib:format("field ~tw already defined in anonymous struct type", [F]);
-format_error({redefine_struct_field, T, F}) ->
-    io_lib:format("field ~tw already defined in struct ~tw", [F, T]);
+format_error({redefine_struct_field, N, F}) ->
+    io_lib:format("field ~tw already defined in struct ~ts", [F, format_name(N)]);
 format_error({undefined_struct_field, N, F}) ->
-    io_lib:format("field ~tw undefined in struct ~tw", [F, N]);
-format_error({undefined_struct_field, M, N, F}) ->
-    io_lib:format("field ~tw undefined in struct ~tw:~tw", [F, M, N]);
+    io_lib:format("field ~tw undefined in struct ~ts", [F, format_name(N)]);
 format_error({recursive_struct_field, N, F}) ->
     io_lib:format("field ~tw of struct ~ts contains recursive default value", [F, format_name(N)]);
 format_error({no_field_value, M}) ->
@@ -3359,9 +3355,9 @@ check_struct(Line, RawName, St, CheckFun) ->
                             FieldMap = get_field_map_from_struct_def(StructDef),
                             CheckFun(FieldMap, St1);
                         private ->
-                            {[], add_error(Line, {private_struct, M, N}, St1)};
+                            {[], add_error(Line, {private_struct, {M, N}}, St1)};
                         error ->
-                            {[], add_error(Line, {undefined_struct, M, N}, St1)}
+                            {[], add_error(Line, {undefined_struct, {M, N}}, St1)}
                     end
             end
     end.
@@ -3386,9 +3382,9 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
                             Def = get_field_map_from_struct_def(StructDef),
                             pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
                         private ->
-                            {[], add_error(Line, {private_struct, M, N}, St1)};
+                            {[], add_error(Line, {private_struct, {M, N}}, St1)};
                         error ->
-                            {[], [], add_error(Line, {undefined_struct, M, N}, St1)}
+                            {[], [], add_error(Line, {undefined_struct, {M, N}}, St1)}
                     end
             end
     end.
@@ -3401,12 +3397,8 @@ struct_field({atom, La, F}, Name, Definitions, St) ->
         true ->
             {[], St};
         false ->
-            case Name of
-                {atom, _, N} ->
-                    {[], add_error(La, {undefined_struct_field, N, F}, St)};
-                {remote, _, {atom, _, M}, {atom, _, N}} ->
-                    {[], add_error(La, {undefined_struct_field, M, N, F}, St)}
-            end
+            Key = struct_name_to_key(Name),
+            {[], add_error(La, {undefined_struct_field, Key, F}, St)}
     end.
 
 init_struct_fields(Fields, Line, Name, Definitions, Vt0, St0) ->
@@ -3488,20 +3480,15 @@ check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     foldl(Fun, {[], [], St0}, Fields).
 
 check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, Definitions, Vt, St, Sfs, CheckFun) ->
+    Key = struct_name_to_key(Name),
     case member(F, Sfs) of
         true ->
-            {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
+            {Sfs, {[], add_error(Lf, {redefine_struct_field, Key, F}, St)}};
         false ->
             {[F | Sfs],
                 case Definitions =:= unavailable orelse is_map_key(F, Definitions) of
                     true -> CheckFun(Val, Vt, St);
-                    false ->
-                        case Name of
-                            {atom, _, N} ->
-                                {[], add_error(La, {undefined_struct_field, N, F}, St)};
-                            {remote, _, {atom, _, M}, {atom, _, N}} ->
-                                {[], add_error(La, {undefined_struct_field, M, N, F}, St)}
-                        end
+                    false -> {[], add_error(La, {undefined_struct_field, Key, F}, St)}
                 end}
     end.
 
