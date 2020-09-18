@@ -29,13 +29,13 @@ rewrite({type, Line, open_anon_struct, Fields}, type) ->
 rewrite({anon_struct, Line, Fields}, pattern) ->
     MapFields = to_map_fields(map_field_exact, Fields),
     {map, Line, MapFields};
-rewrite({anon_struct, Line, Fields}, expr) ->
+rewrite({anon_struct, Line, Fields}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
     MapFields = to_map_fields(map_field_assoc, Fields),
     {map, Line, MapFields};
-rewrite({anon_struct_update, Line, Expr, Fields}, expr) ->
+rewrite({anon_struct_update, Line, Expr, Fields}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
     MapFields = to_map_fields(map_field_assoc, Fields),
     {map, Line, Expr, MapFields};
-rewrite({anon_struct_field, Line, Expr, Field}, expr) ->
+rewrite({anon_struct_field, Line, Expr, Field}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
     {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [Field, Expr]};
 rewrite(Other, _) ->
     Other.

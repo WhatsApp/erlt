@@ -20,7 +20,10 @@ test() ->
           (any()) -> not_ok.
 
 
-test(#(a=1,b=#(c=2))) -> really_ok;
+test(A) when A =:= #(a=1,b=#(c=2)) -> closed_ok;
+test(#(a=1,b=#(c=2))) -> open_ok;
+test(A) when A#(b) =:= 2 -> ok;
+test(A) when A =:= #(a=1)#(b=2) -> ok;
 test(#(a=1)) -> ok;
 test(#()) -> ok;
 test(_) -> not_ok.
