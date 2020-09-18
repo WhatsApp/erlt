@@ -23,7 +23,7 @@ parse_transform(Forms, _Options) ->
 rewrite({type, Line, closed_anon_struct, Fields}, type) ->
     MapTypeFields = to_typed_map_fields(Fields),
     {type, Line, map, MapTypeFields};
-rewrite({type, Line, open_anon_struct, Fields}, type) ->
+rewrite({type, Line, open_anon_struct, Fields, _Var}, type) ->
     MapTypeFields = to_typed_map_fields(Fields),
     {type, Line, map, MapTypeFields ++ [generic_open_anon_record_field_type(Line)]};
 rewrite({anon_struct, Line, Fields}, pattern) ->

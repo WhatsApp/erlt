@@ -8,6 +8,8 @@
 
 -type my_map(A, B) :: #(id :: A, id :: B).
 
+-type bad_type() :: #(id :: atom() | A).
+
 test() ->
     #(a=1,a=2).
 
