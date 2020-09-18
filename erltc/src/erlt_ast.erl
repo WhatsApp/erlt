@@ -293,6 +293,10 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Default1, Acc2} = do_traverse(Default0, Acc1, Pre, Post, guard),
             {Type1, Acc3} = do_traverse(Type0, Acc2, Pre, Post, Ctx),
             Post({field_definition, Line, Name1, Default1, Type1}, Acc3, Ctx);
+        {type, Line, open_anon_struct, Args0, Var} ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
+            {Var1, Acc2} = do_traverse(Var, Acc1, Pre, Post, Ctx),
+            Post({type, Line, open_anon_struct, Args1, Var1}, Acc2, Ctx);
         {type, Line, Name, Args0} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             Post({type, Line, Name, Args1}, Acc1, Ctx);

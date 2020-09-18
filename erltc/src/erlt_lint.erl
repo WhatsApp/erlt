@@ -3872,8 +3872,9 @@ check_type({type, La, enum, C, As}, SeenVars, St) ->
 check_type({type, La, enum, E, C, As}, SeenVars, St) ->
     St1 = check_enum(E, C, As, St),
     check_type({type, La, product, As}, SeenVars, St1);
-check_type({type, _L, open_anon_struct, Fields}, SeenVars, St) ->
-    check_anon_struct_types(Fields, SeenVars, St);
+check_type({type, _L, open_anon_struct, Fields, Var}, SeenVars, St) ->
+    {SeenVars1, St1} = check_type(Var, SeenVars, St),
+    check_anon_struct_types(Fields, SeenVars1, St1);
 check_type({type, _L, closed_anon_struct, Fields}, SeenVars, St) ->
     check_anon_struct_types(Fields, SeenVars, St);
 check_type({type, La, struct, {atom, _, Tag}, Fields}, SeenVars, St) ->

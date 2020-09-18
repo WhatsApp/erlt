@@ -189,9 +189,9 @@ type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1','$5'),
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
 type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_anon_struct, []}.
-type -> '#' '(' var ')'                       : {type, ?anno('$1','$4'), open_anon_struct, []}.
+type -> '#' '(' var ')'                       : {type, ?anno('$1','$4'), open_anon_struct, [], '$3'}.
 type -> '#' '(' anon_field_defs ')'       : {type, ?anno('$1','$4'), closed_anon_struct, '$3'}.
-type -> '#' '(' anon_field_defs '|' var ')' : {type, ?anno('$1','$6'), open_anon_struct, '$3'}.
+type -> '#' '(' anon_field_defs '|' var ')' : {type, ?anno('$1','$6'), open_anon_struct, '$3', '$5'}.
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
