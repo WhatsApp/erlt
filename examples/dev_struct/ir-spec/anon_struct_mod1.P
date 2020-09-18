@@ -1,0 +1,33 @@
+-file("anon_struct_mod1.erl", 1).
+
+-module(anon_struct_mod1).
+
+-export([test/0]).
+
+test() ->
+    [ 
+     (test(X)) ||
+         X <-
+             [#{},
+              #{a => 1, b => 2},
+              (#{a => 1, b => 2})#{},
+              (#{})#{a => 1, b => #{c => 2, d => 3}},
+              map_get(a, #{a => 1, b => 2})]
+    ].
+
+-spec test(#{a := 1, b := #{c := 2, atom() => any()}, atom() => any()}) ->
+              really_ok;
+          (#{atom() => any()}) -> ok;
+          (any()) -> not_ok.
+
+test(#{a := 1, b := #{c := 2}}) ->
+    really_ok;
+test(#{a := 1}) ->
+    ok;
+test(#{}) ->
+    ok;
+test(_) ->
+    not_ok.
+
+
+

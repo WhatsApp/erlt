@@ -56,6 +56,13 @@ postwalk(Ast, Acc0, Fun) ->
         Kind =:= struct
 ).
 
+-define(IS_SPEC(Kind),
+    Kind =:= spec orelse
+        Kind =:= callback
+).
+
+
+
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
     (t(), any(), ctx()) -> {t(), any()}
 )) -> {t(), any()}.
@@ -85,6 +92,9 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, type),
             {Def1, Acc2} = do_traverse(Def0, Acc1, Pre, Post, type),
             Post({attribute, Line, Type, {Name, Def1, Args1}}, Acc2, Ctx);
+        {attribute, Line, Spec, {MFA, Types0}} when ?IS_SPEC(Spec) ->
+            {Types1, Acc1} = do_traverse_list(Types0, Acc0, Pre, Post, type),
+            Post({attribute, Line, Spec, {MFA, Types1}}, Acc1, Ctx);
         %% TODO: traverse other attributes that can have type defintions
         {attribute, _, _, _} ->
             Post(Node, Acc0, Ctx);
@@ -132,6 +142,17 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Key1, Acc1} = do_traverse(Key0, Acc0, Pre, Post, Ctx),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
             Post({map_field_assoc, Line, Key1, Value1}, Acc2, Ctx);
+        {anon_struct, Line, Fields0} ->
+            {Fields1, Acc1} = do_traverse_list(Fields0, Acc0, Pre, Post, Ctx),
+            Post({anon_struct, Line, Fields1}, Acc1, Ctx);
+        {anon_struct_update, Line, Expr0, Fields0} ->
+            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
+            Post({anon_struct_update, Line, Expr1, Fields1}, Acc2, Ctx);
+        {anon_struct_field, Line, Expr0, Field0} ->
+            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
+            {Field1, Acc2} = do_traverse(Field0, Acc1, Pre, Post, Ctx),
+            Post({anon_struct_field, Line, Expr1, Field1}, Acc2, Ctx);
         {struct, Line, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),

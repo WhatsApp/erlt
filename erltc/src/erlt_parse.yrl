@@ -29,11 +29,13 @@ function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_remote expr_max
 pat_expr pat_expr_max map_pat_expr record_pat_expr struct_pat_expr enum_pat_expr
+anon_struct_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr record_expr
+anon_struct_expr anon_struct_update_expr anon_struct_field_expr
 struct_expr struct_name struct_tuple struct_fields struct_field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
@@ -49,7 +51,7 @@ top_type top_types type typed_expr typed_attr_val
 type_sig type_sigs type_guard type_guards fun_type anon_fun_type binary_type
 type_spec spec_fun typed_exprs typed_record_fields field_types field_type
 map_pair_types map_pair_type bin_base_type bin_unit_type
-struct_def type_name vars field_defs field_def.
+struct_def type_name vars field_defs field_def anon_field_defs non_default_field_def.
 
 Terminals
 char integer float atom string var
@@ -119,8 +121,13 @@ vars -> var : ['$1'].
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
 
+anon_field_defs -> non_default_field_def ',' anon_field_defs : ['$1' | '$3'].
+anon_field_defs -> non_default_field_def : ['$1'].
+
 field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
+field_def -> non_default_field_def : '$1'.
+    
+non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
@@ -181,6 +188,10 @@ type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1','$5'),
                                              nonempty_list, ['$2']}.
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
+type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_anon_struct, []}.
+type -> '#' '(' var ')'                       : {type, ?anno('$1','$3'), open_anon_struct, []}.
+type -> '#' '(' anon_field_defs ')'       : {type, ?anno('$1','$4'), closed_anon_struct, '$3'}.
+type -> '#' '(' anon_field_defs '|' var ')' : {type, ?anno('$1','$4'), open_anon_struct, '$3'}.
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
@@ -267,6 +278,9 @@ expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
 expr -> record_expr : '$1'.
+expr -> anon_struct_update_expr : '$1'.
+expr -> anon_struct_expr : '$1'.
+expr -> anon_struct_field_expr : '$1'.
 expr -> struct_expr : '$1'.
 expr -> expr_remote : '$1'.
 
@@ -297,6 +311,7 @@ pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
 pat_expr -> map_pat_expr : '$1'.
 pat_expr -> record_pat_expr : '$1'.
+pat_expr -> anon_struct_pat_expr : '$1'.
 pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
@@ -313,6 +328,9 @@ enum_pat_expr -> enum_pat_expr '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_pat_expr -> pat_expr_max '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_pat_expr -> enum_pat_expr '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 enum_pat_expr -> pat_expr_max '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
+
+anon_struct_pat_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
+anon_struct_pat_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -379,6 +397,19 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 %% This is called from expr
 enum_expr -> expr_remote '{' '}' : build_enum('$1',[],?anno('$1','$3')).
 enum_expr -> expr_remote '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
+
+anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
+anon_struct_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+
+anon_struct_update_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
+anon_struct_update_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
+anon_struct_update_expr -> anon_struct_expr '#' '(' struct_fields ')' :
+    {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
+anon_struct_update_expr -> expr_max '#' '(' struct_fields ')' :
+    {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
+
+anon_struct_field_expr -> anon_struct_expr '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
+anon_struct_field_expr -> expr_max '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
 
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
