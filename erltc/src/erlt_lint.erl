@@ -450,6 +450,10 @@ format_error({redefine_record, T}) ->
     io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
     io_lib:format("field ~tw already defined in record ~tw", [F, T]);
+format_error({reuse_anon_struct_field, F}) ->
+    io_lib:format("field ~tw used more than once in anonymous struct", [F]);
+format_error({redefine_anon_struct_field, F}) ->
+    io_lib:format("field ~tw already defined in anonymous struct type", [F]);
 format_error({redefine_struct_field, T, F}) ->
     io_lib:format("field ~tw already defined in struct ~tw", [F, T]);
 format_error({undefined_struct_field, N, F}) ->
@@ -1924,6 +1928,8 @@ pattern({record, Line, Name, Pfs}, Vt, Old, Bvt, St) ->
         error ->
             {[], [], add_error(Line, {undefined_record, Name}, St)}
     end;
+pattern({anon_struct, _Line, Pfs}, Vt, Old, Bvt, St) ->
+    check_anon_struct_pattern_fields(Pfs, Vt, Old, Bvt, St, []);
 pattern({struct, Line, N, Pfs}, Vt, Old, Bvt, St) ->
     check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St);
 pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
@@ -2709,6 +2715,13 @@ expr({map, _Line, Src, Es}, Vt, St) ->
     {vtupdate(Svt, Fvt), St2};
 expr({record_index, Line, Name, Field}, _Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) -> record_field(Field, Name, Dfs, St1) end);
+expr({anon_struct, _Line, Fields}, Vt, St) ->
+    check_anon_struct_fields(Fields, Vt, St, []);
+expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
+    {Evt, St1} = expr(Expr, Vt, St0),
+    check_anon_struct_fields(Fields, Evt, St1, []);
+expr({anon_struct_field, _Line, Expr, _Field}, Vt, St0) ->
+    expr(Expr, Vt, St0);
 expr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(IsDef, St1) ->
         init_struct_fields(Fields, Line, Name, IsDef, Vt, St1)
@@ -3401,6 +3414,28 @@ ensure_all_field_values(Line, Seen, Definitions, St0) ->
     end,
     maps:fold(Fun, St0, Definitions).
 
+check_anon_struct_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, St, UsedFields) ->
+    case member(F, UsedFields) of
+        true ->
+            {[], add_error(Lf, {reuse_anon_struct_field, F}, St)};
+        false ->
+            {Vt1, St1} = expr(Val, Vt, St),
+            check_anon_struct_fields(Fields, Vt1, St1, [F | UsedFields])
+    end;
+check_anon_struct_fields([], Vt, St, _) ->
+    {Vt,St}.
+
+check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, Old, Bvt, St, UsedFields) ->
+    case member(F, UsedFields) of
+        true ->
+            {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
+        false ->
+            {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, Bvt, St),
+            check_anon_struct_pattern_fields(Fields, Vt1, Old, Bvt1, St1, [F | UsedFields])
+    end;
+check_anon_struct_pattern_fields([], Bvt, Vt, _Old, St, _) ->
+    {Vt, Bvt, St}.
+
 check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->
         {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun),
@@ -3827,6 +3862,10 @@ check_type({type, La, enum, C, As}, SeenVars, St) ->
 check_type({type, La, enum, E, C, As}, SeenVars, St) ->
     St1 = check_enum(E, C, As, St),
     check_type({type, La, product, As}, SeenVars, St1);
+check_type({type, _L, open_anon_struct, Fields}, SeenVars, St) ->
+    check_anon_struct_types(Fields, SeenVars, St);
+check_type({type, _L, closed_anon_struct, Fields}, SeenVars, St) ->
+    check_anon_struct_types(Fields, SeenVars, St);
 check_type({type, La, struct, {atom, _, Tag}, Fields}, SeenVars, St) ->
     check_struct_types(La, Tag, Fields, SeenVars, St);
 check_type({type, _L, Tag, Args}, SeenVars, St) when
@@ -3888,6 +3927,21 @@ check_type(I, SeenVars, St) ->
         {integer, _ILn, _Integer} -> {SeenVars, St};
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
     end.
+
+check_anon_struct_types(Fields, SeenVars, St) ->
+    check_anon_struct_types(Fields, SeenVars, St, #{}).
+
+check_anon_struct_types([{field_definition, Line, {atom, _, Name}, undefined, Type} | Rest],
+    SeenVars, St, FieldsAcc) ->
+    case is_map_key(Name, FieldsAcc) of
+        true -> 
+            {SeenVars, add_error(Line, {redefine_anon_struct_field, Name}, St)};
+        false -> 
+            {SeenVars1, St1} = check_type(Type, SeenVars, St),
+            check_anon_struct_types(Rest, SeenVars1, St1, FieldsAcc#{Name => Type})
+    end;
+check_anon_struct_types([], SeenVars, St, _Fields) ->
+    {SeenVars, St}.
 
 %% Struct types only appear in struct definitions
 check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->

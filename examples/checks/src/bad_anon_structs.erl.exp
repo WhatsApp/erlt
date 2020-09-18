@@ -1,0 +1,3 @@
+bad_anon_structs.erl:7:33: field a already defined in anonymous struct type
+bad_anon_structs.erl:10:11: field a used more than once in anonymous struct
+bad_anon_structs.erl:12:13: field a used more than once in anonymous struct
