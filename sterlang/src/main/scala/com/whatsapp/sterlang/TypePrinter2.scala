@@ -213,7 +213,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         }
       case A.NamedFnExp(name, clauses) =>
         // TODO: the source location is wrong, but I don't think it matters.
-        printPat(A.VarPat(name)(exp.typ, exp.p))
+        printPat(A.VarPat(name)(exp.typ, exp.r))
         clauses.foreach { clause =>
           clause.pats.foreach(printPat)
           printBody(clause.body)

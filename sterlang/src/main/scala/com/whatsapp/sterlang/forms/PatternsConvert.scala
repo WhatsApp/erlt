@@ -25,26 +25,26 @@ object PatternsConvert {
   def convertPat(term: ETerm): Pattern =
     term match {
       case ETuple(List(EAtom("match"), anno, ePat1, ePat2)) =>
-        MatchPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
+        MatchPattern(r(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
-        VariablePattern(sp(anno), name)
+        VariablePattern(r(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(ePats))) =>
-        TuplePattern(sp(anno), ePats.map(convertPat))
+        TuplePattern(r(anno), ePats.map(convertPat))
       case ETuple(List(EAtom("nil"), anno)) =>
-        NilPattern(sp(anno))
+        NilPattern(r(anno))
       case ETuple(List(EAtom("cons"), anno, ePat1, ePat2)) =>
-        ConsPattern(sp(anno), convertPat(ePat1), convertPat(ePat2))
+        ConsPattern(r(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertPatternBinElement)
-        BinPattern(sp(anno), binElements)
+        BinPattern(r(anno), binElements)
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1, ePat2)) =>
-        BinOpPattern(sp(anno), op, convertPat(ePat1), convertPat(ePat2))
+        BinOpPattern(r(anno), op, convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
-        UnOpPattern(sp(anno), op, convertPat(ePat1))
+        UnOpPattern(r(anno), op, convertPat(ePat1))
       case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
-        StructPattern(sp(anno), structName, eStructFieldPatterns.map(structFieldPattern))
+        StructPattern(r(anno), structName, eStructFieldPatterns.map(structFieldPattern))
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
-        MapPattern(sp(anno), eAssocs.map(convertMapFieldPattern))
+        MapPattern(r(anno), eAssocs.map(convertMapFieldPattern))
       case ETuple(
             List(
               EAtom("enum"),
@@ -54,7 +54,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtrPattern(sp(anno), enum, ctr, eArgs.map(convertPat))
+        LocalEnumCtrPattern(r(anno), enum, ctr, eArgs.map(convertPat))
       case ETuple(
             List(
               EAtom("enum"),
@@ -71,7 +71,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtrPattern(sp(anno), module, enum, ctr, eArgs.map(convertPat))
+        RemoteEnumCtrPattern(r(anno), module, enum, ctr, eArgs.map(convertPat))
       case _ =>
         ExprsConvert.maybeLiteral(term) match {
           case Some(literal) =>
@@ -89,7 +89,7 @@ object PatternsConvert {
           case other            => Some(ExprsConvert.convertExp(other))
         }
         BinElementPattern(
-          sp(anno),
+          r(anno),
           convertPat(ePat),
           size,
           ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers),
@@ -100,13 +100,13 @@ object PatternsConvert {
     term match {
       case ETuple(List(EAtom("struct_field"), anno, eName, ePat)) =>
         val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
-        StructFieldPattern(sp(anno), name, convertPat(ePat))
+        StructFieldPattern(r(anno), name, convertPat(ePat))
     }
 
   def convertMapFieldPattern(term: ETerm): MapFieldPattern =
     term match {
       case ETuple(List(EAtom("map_field"), anno, e1, e2)) =>
-        MapFieldPattern(sp(anno), convertPat(e1), convertPat(e2))
+        MapFieldPattern(r(anno), convertPat(e1), convertPat(e2))
     }
 
 }

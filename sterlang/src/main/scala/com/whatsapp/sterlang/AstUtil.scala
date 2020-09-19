@@ -303,22 +303,22 @@ object AstUtil {
         val name1 = module + ":" + name
         val cons1 = cons.map {
           case EnumCon(cName, tps) =>
-            EnumCon(cName, tps.map(globalizeType(module, names)))(Pos.NP)
+            EnumCon(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
         }
-        EnumDef(name1, params, cons1)(Pos.NP)
+        EnumDef(name1, params, cons1)(Doc.ZRange)
     }
     val aliases1 = program.typeAliases.collect {
       case TypeAlias(name, params, tp) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val tp1 = globalizeType(module, names)(tp)
-        TypeAlias(name1, params, tp1)(Pos.NP)
+        TypeAlias(name1, params, tp1)(Doc.ZRange)
     }
     val specs1 = program.specs.collect {
       case Spec(n: LocalFunName, ft @ FunType(argTypes, resType)) if program.exports((n.name, n.arity)) =>
         val name1 = new RemoteFunName(module, n.name, n.arity)
         val funType1 =
-          FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.p)
-        Spec(name1, funType1)(Pos.NP)
+          FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.r)
+        Spec(name1, funType1)(Doc.ZRange)
     }
     val opaques = program.opaques.collect {
       case Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
@@ -334,17 +334,17 @@ object AstUtil {
       case WildTypeVar() =>
         tp
       case TupleType(params) =>
-        TupleType(params.map(globalizeType(module, names)))(tp.p)
+        TupleType(params.map(globalizeType(module, names)))(tp.r)
       case RecordType(fields) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.p) }
-        RecordType(fields1)(tp.p)
+        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        RecordType(fields1)(tp.r)
       case OpenRecordType(fields, rt) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.p) }
-        OpenRecordType(fields1, rt)(tp.p)
+        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        OpenRecordType(fields1, rt)(tp.r)
       case FunType(argTypes, resType) =>
-        FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.p)
+        FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.r)
       case ListType(elemType) =>
-        ListType(globalizeType(module, names)(elemType))(tp.p)
+        ListType(globalizeType(module, names)(elemType))(tp.r)
       case UserType(name, params) =>
         val name1 = name match {
           case LocalName(name) =>
@@ -354,27 +354,27 @@ object AstUtil {
               LocalName(name)
           case _ => name
         }
-        UserType(name1, params.map(globalizeType(module, names)))(tp.p)
+        UserType(name1, params.map(globalizeType(module, names)))(tp.r)
       case StructType(_) =>
         tp
     }
 
   def normalizeTypes(program: Program): Program = {
     def normEnumCon(con: EnumCon): EnumCon =
-      con.copy(argTypes = con.argTypes.map(normalizeType(program)))(con.p)
+      con.copy(argTypes = con.argTypes.map(normalizeType(program)))(con.r)
     val enumDefs1 =
-      program.enumDefs.map { ed => ed.copy(cons = ed.cons.map(normEnumCon))(ed.p) }
+      program.enumDefs.map { ed => ed.copy(cons = ed.cons.map(normEnumCon))(ed.r) }
     val typeAliases1 =
-      program.typeAliases.map { ta => ta.copy(body = normalizeType(program)(ta.body))(ta.p) }
+      program.typeAliases.map { ta => ta.copy(body = normalizeType(program)(ta.body))(ta.r) }
     val opaques1 =
-      program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.p) }
+      program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.r) }
     val structDefs1 =
       program.structDefs.map { structDef =>
         structDef
-          .copy(fields = structDef.fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)))(structDef.p)
+          .copy(fields = structDef.fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(structDef.r)
       }
     val specs1 =
-      program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.p))
+      program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.r))
     program.copy(
       enumDefs = enumDefs1,
       typeAliases = typeAliases1,
@@ -388,15 +388,15 @@ object AstUtil {
     tp match {
       case WildTypeVar() | TypeVar(_) | StructType(_) => tp
       case TupleType(ts) =>
-        TupleType(ts.map(normalizeType(program)))(tp.p)
+        TupleType(ts.map(normalizeType(program)))(tp.r)
       case RecordType(fields) =>
-        RecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)))(tp.p)
+        RecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
       case OpenRecordType(fields, rt) =>
-        OpenRecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)), rt)(tp.p)
+        OpenRecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
       case FunType(args, res) =>
-        FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
+        FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.r)
       case ListType(et) =>
-        ListType(normalizeType(program)(et))(tp.p)
+        ListType(normalizeType(program)(et))(tp.r)
       case UserType(tName, ts) =>
         val arity = ts.size
         val name1 = tName match {
@@ -412,12 +412,12 @@ object AstUtil {
             if (module == program.module) LocalName(name)
             else tName
         }
-        UserType(name1, ts.map(normalizeType(program)))(tp.p)
+        UserType(name1, ts.map(normalizeType(program)))(tp.r)
     }
 
   private def normFunType(program: Program, tp: FunType): FunType = {
     val FunType(args, res) = tp
-    FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
+    FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.r)
   }
 
   def getDeps(program: Program): Set[String] = {

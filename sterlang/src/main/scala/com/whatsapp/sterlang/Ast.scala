@@ -139,64 +139,64 @@ object Ast {
     override val stringId: String = s"$module:$name/$arity"
   }
 
-  sealed trait Type { val p: Pos.P }
-  case class WildTypeVar()(val p: Pos.P) extends Type
-  case class TypeVar(name: String)(val p: Pos.P) extends Type
-  case class TupleType(params: List[Type])(val p: Pos.P) extends Type
-  case class RecordType(fields: List[Field[Type]])(val p: Pos.P) extends Type
-  case class OpenRecordType(fields: List[Field[Type]], extType: WildTypeVar)(val p: Pos.P) extends Type
-  case class FunType(argTypes: List[Type], resType: Type)(val p: Pos.P) extends Type
-  case class ListType(elemType: Type)(val p: Pos.P) extends Type
-  case class UserType(name: Name, params: List[Type])(val p: Pos.P) extends Type
-  case class StructType(name: String)(val p: Pos.P) extends Type
+  sealed trait Type { val r: Doc.Range }
+  case class WildTypeVar()(val r: Doc.Range) extends Type
+  case class TypeVar(name: String)(val r: Doc.Range) extends Type
+  case class TupleType(params: List[Type])(val r: Doc.Range) extends Type
+  case class RecordType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
+  case class OpenRecordType(fields: List[Field[Type]], extType: WildTypeVar)(val r: Doc.Range) extends Type
+  case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
+  case class ListType(elemType: Type)(val r: Doc.Range) extends Type
+  case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type
+  case class StructType(name: String)(val r: Doc.Range) extends Type
 
-  case class Spec(name: VarName, funType: FunType)(val p: Pos.P)
+  case class Spec(name: VarName, funType: FunType)(val r: Doc.Range)
 
-  case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
-  case class Opaque(name: String, params: List[TypeVar], body: Type)(val p: Pos.P)
-  case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val p: Pos.P)
-  case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val p: Pos.P)
-  case class EnumCon(name: String, argTypes: List[Type])(val p: Pos.P)
+  case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
+  case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
+  case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val r: Doc.Range)
+  case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val r: Doc.Range)
+  case class EnumCon(name: String, argTypes: List[Type])(val r: Doc.Range)
 
-  sealed trait Exp { val p: Pos.P }
-  case class BlockExpr(body: Body)(val p: Pos.P) extends Exp
-  case class RecordUpdateExp(exp: Exp, delta: RecordExp)(val p: Pos.P) extends Exp
-  case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val p: Pos.P) extends Exp
-  case class UOpExp(uOp: UOp, exp: Exp)(val p: Pos.P) extends Exp
-  case class AppExp(head: Exp, args: List[Exp])(val p: Pos.P) extends Exp
-  case class SelExp(exp: Exp, label: String)(val p: Pos.P) extends Exp
-  case class BoolExp(bool: Boolean)(val p: Pos.P) extends Exp
-  case class NumberExp(n: Int)(val p: Pos.P) extends Exp
-  case class CharExp(c: String)(val p: Pos.P) extends Exp
-  case class StringExp(s: String)(val p: Pos.P) extends Exp
-  case class VarExp(v: VarName)(val p: Pos.P) extends Exp
-  case class RecordExp(fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class TupleExp(elems: List[Exp])(val p: Pos.P) extends Exp
-  case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val p: Pos.P) extends Exp
-  case class ListExp(elems: List[Exp])(val p: Pos.P) extends Exp
-  case class Bin(elems: List[BinElement])(val p: Pos.P) extends Exp
-  case class ConsExp(head: Exp, tail: Exp)(val p: Pos.P) extends Exp
-  case class CaseExp(selector: Exp, rules: List[Rule])(val p: Pos.P) extends Exp
-  case class IfExp(ifClauses: List[IfClause])(val p: Pos.P) extends Exp
-  case class NamedFnExp(name: LocalVarName, clauses: List[Clause])(val p: Pos.P) extends Exp
-  case class FnExp(clauses: List[Clause])(val p: Pos.P) extends Exp
-  case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
-  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val p: Pos.P) extends Exp
-  case class StructCreate(name: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class StructUpdate(struct: Exp, structName: String, fields: List[Field[Exp]])(val p: Pos.P) extends Exp
-  case class StructSelect(struct: Exp, structName: String, fieldName: String)(val p: Pos.P) extends Exp
-  case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val p: Pos.P) extends Exp
+  sealed trait Exp { val r: Doc.Range }
+  case class BlockExpr(body: Body)(val r: Doc.Range) extends Exp
+  case class RecordUpdateExp(exp: Exp, delta: RecordExp)(val r: Doc.Range) extends Exp
+  case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val r: Doc.Range) extends Exp
+  case class UOpExp(uOp: UOp, exp: Exp)(val r: Doc.Range) extends Exp
+  case class AppExp(head: Exp, args: List[Exp])(val r: Doc.Range) extends Exp
+  case class SelExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
+  case class BoolExp(bool: Boolean)(val r: Doc.Range) extends Exp
+  case class NumberExp(n: Int)(val r: Doc.Range) extends Exp
+  case class CharExp(c: String)(val r: Doc.Range) extends Exp
+  case class StringExp(s: String)(val r: Doc.Range) extends Exp
+  case class VarExp(v: VarName)(val r: Doc.Range) extends Exp
+  case class RecordExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
+  case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val r: Doc.Range) extends Exp
+  case class ListExp(elems: List[Exp])(val r: Doc.Range) extends Exp
+  case class Bin(elems: List[BinElement])(val r: Doc.Range) extends Exp
+  case class ConsExp(head: Exp, tail: Exp)(val r: Doc.Range) extends Exp
+  case class CaseExp(selector: Exp, rules: List[Rule])(val r: Doc.Range) extends Exp
+  case class IfExp(ifClauses: List[IfClause])(val r: Doc.Range) extends Exp
+  case class NamedFnExp(name: LocalVarName, clauses: List[Clause])(val r: Doc.Range) extends Exp
+  case class FnExp(clauses: List[Clause])(val r: Doc.Range) extends Exp
+  case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
+  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
+  case class StructCreate(name: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructUpdate(struct: Exp, structName: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructSelect(struct: Exp, structName: String, fieldName: String)(val r: Doc.Range) extends Exp
+  case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val r: Doc.Range) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
-      val p: Pos.P
+      val r: Doc.Range
   ) extends Exp
-  case class ReceiveExp(rules: List[Rule], after: Option[AfterBody])(val p: Pos.P) extends Exp
+  case class ReceiveExp(rules: List[Rule], after: Option[AfterBody])(val r: Doc.Range) extends Exp
 
   case class Body(prelude: List[ValDef], main: ValDef)
   case class AfterBody(timeout: Exp, body: Body)
   case class ValDef(pat: Pat, exp: Exp)
-  case class Fun(name: LocalFunName, clauses: List[Clause])(val p: Pos.P)
+  case class Fun(name: LocalFunName, clauses: List[Clause])(val r: Doc.Range)
 
-  case class Field[A](label: String, value: A)(val p: Pos.P)
+  case class Field[A](label: String, value: A)(val r: Doc.Range)
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)
@@ -220,22 +220,20 @@ object Ast {
   case object Utf16BinElemType extends BinElemType
   case object Utf32BinElemType extends BinElemType
 
-  sealed trait Pat { val p: Pos.P }
-  case class WildPat()(val p: Pos.P) extends Pat
-  case class VarPat(v: String)(val p: Pos.P) extends Pat
-  case class TuplePat(pats: List[Pat])(val p: Pos.P) extends Pat
-  // it's always an "open record" - see
-  // https://forum.erl2.org/t/matching-anonymous-structs-in-erlt-open-by-default/74
-  case class RecordPat(fields: List[Field[Pat]])(val p: Pos.P) extends Pat
-  case class AndPat(p1: Pat, p2: Pat)(val p: Pos.P) extends Pat
-  case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val p: Pos.P) extends Pat
-  case class ListPat(pats: List[Pat])(val p: Pos.P) extends Pat
-  case class BinPat(pats: List[BinElementPat])(val p: Pos.P) extends Pat
-  case class ConsPat(hPat: Pat, tPat: Pat)(val p: Pos.P) extends Pat
-  case class BoolPat(bool: Boolean)(val p: Pos.P) extends Pat
-  case class NumberPat(n: Int)(val p: Pos.P) extends Pat
-  case class StringPat(s: String)(val p: Pos.P) extends Pat
-  case class StructPat(structName: String, fields: List[Field[Pat]])(val p: Pos.P) extends Pat
+  sealed trait Pat { val r: Doc.Range }
+  case class WildPat()(val r: Doc.Range) extends Pat
+  case class VarPat(v: String)(val r: Doc.Range) extends Pat
+  case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class RecordPat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
+  case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class ListPat(pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
+  case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat
+  case class BoolPat(bool: Boolean)(val r: Doc.Range) extends Pat
+  case class NumberPat(n: Int)(val r: Doc.Range) extends Pat
+  case class StringPat(s: String)(val r: Doc.Range) extends Pat
+  case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

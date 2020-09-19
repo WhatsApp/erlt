@@ -16,51 +16,51 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.Pos
+import com.whatsapp.sterlang.Doc
 
 object Types {
 
-  sealed trait Type { val p: Pos.P }
+  sealed trait Type { val r: Doc.Range }
   // For use cases like spec id(Input :: atom()) -> atom.
-  case class AnnotatedType(p: Pos.SP, tv: TypeVariable, tp: Type) extends Type
-  case class AtomType(p: Pos.SP, atom: String) extends Type
+  case class AnnotatedType(r: Doc.Range, tv: TypeVariable, tp: Type) extends Type
+  case class AtomType(r: Doc.Range, atom: String) extends Type
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
-  case class BitstringType(p: Pos.SP, types: List[SingletonIntegerType]) extends Type
-  case class EmptyListType(p: Pos.SP) extends Type
+  case class BitstringType(r: Doc.Range, types: List[SingletonIntegerType]) extends Type
+  case class EmptyListType(r: Doc.Range) extends Type
   sealed trait FunType extends Type
   // fun()
-  case class FunTypeAny(p: Pos.SP) extends FunType
-  case class FunTypeAnyArgs(p: Pos.SP, tp: Type) extends FunType
-  case class FunctionType(p: Pos.SP, args: List[Type], resType: Type) extends FunType with FunSpecType
-  case class IntegerRangeType(p: Pos.SP, t1: SingletonIntegerType, t2: SingletonIntegerType) extends Type
+  case class FunTypeAny(r: Doc.Range) extends FunType
+  case class FunTypeAnyArgs(r: Doc.Range, tp: Type) extends FunType
+  case class FunctionType(r: Doc.Range, args: List[Type], resType: Type) extends FunType with FunSpecType
+  case class IntegerRangeType(r: Doc.Range, t1: SingletonIntegerType, t2: SingletonIntegerType) extends Type
 
   sealed trait MapType extends Type
   // map()
-  case class AnyMap(p: Pos.SP) extends MapType
-  case class AssocMap(p: Pos.SP, assocs: List[Assoc]) extends MapType
-  case class OpenAssocMap(p: Pos.SP, assocs: List[Assoc], restType: Type) extends MapType
+  case class AnyMap(r: Doc.Range) extends MapType
+  case class AssocMap(r: Doc.Range, assocs: List[Assoc]) extends MapType
+  case class OpenAssocMap(r: Doc.Range, assocs: List[Assoc], restType: Type) extends MapType
 
-  case class Assoc(p: Pos.P, keyType: Type, valueType: Type)
+  case class Assoc(r: Doc.Range, keyType: Type, valueType: Type)
 
-  case class PredefinedType(p: Pos.SP, name: String, params: List[Type]) extends Type
-  case class StructType(p: Pos.SP, name: String, fieldTypes: List[StructFieldType]) extends Type
-  case class RemoteType(p: Pos.SP, module: String, name: String, params: List[Type]) extends Type
+  case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
+  case class StructType(r: Doc.Range, name: String, fieldTypes: List[StructFieldType]) extends Type
+  case class RemoteType(r: Doc.Range, module: String, name: String, params: List[Type]) extends Type
 
   sealed trait SingletonIntegerType extends Type
-  case class SinlgeInteger(p: Pos.SP, int: Int) extends SingletonIntegerType
-  case class SingleCharacter(p: Pos.SP, char: Char) extends SingletonIntegerType
-  case class UnaryOpIntegerType(p: Pos.SP, op: String, arg: SingletonIntegerType) extends SingletonIntegerType
-  case class BinaryOpIntegerType(p: Pos.SP, op: String, arg1: SingletonIntegerType, arg2: SingletonIntegerType)
+  case class SinlgeInteger(r: Doc.Range, int: Int) extends SingletonIntegerType
+  case class SingleCharacter(r: Doc.Range, char: Char) extends SingletonIntegerType
+  case class UnaryOpIntegerType(r: Doc.Range, op: String, arg: SingletonIntegerType) extends SingletonIntegerType
+  case class BinaryOpIntegerType(r: Doc.Range, op: String, arg1: SingletonIntegerType, arg2: SingletonIntegerType)
       extends SingletonIntegerType
 
   sealed trait TupleType extends Type
-  case class TupleTypeAny(p: Pos.SP) extends TupleType
-  case class TupleTypeTyped(p: Pos.SP, params: List[Type]) extends TupleType
+  case class TupleTypeAny(r: Doc.Range) extends TupleType
+  case class TupleTypeTyped(r: Doc.Range, params: List[Type]) extends TupleType
 
-  case class UnionType(p: Pos.SP, elems: List[Type]) extends Type
-  case class TypeVariable(p: Pos.SP, v: String) extends Type
-  case class UserType(p: Pos.SP, name: String, params: List[Type]) extends Type
-  case class EnumCtr(p: Pos.SP, ctr: String, types: List[Type]) extends Type
+  case class UnionType(r: Doc.Range, elems: List[Type]) extends Type
+  case class TypeVariable(r: Doc.Range, v: String) extends Type
+  case class UserType(r: Doc.Range, name: String, params: List[Type]) extends Type
+  case class EnumCtr(r: Doc.Range, ctr: String, types: List[Type]) extends Type
 
   case class StructFieldType(name: String, tp: Type)
 

@@ -28,7 +28,7 @@ package object sterlang {
   ) {
     def extend(program: Ast.Program): Context = {
       val opaqueAliases = program.opaques.map { opaque =>
-        Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.p)
+        Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.r)
       }
       Context(
         enumDefs ++ program.enumDefs,
@@ -82,7 +82,7 @@ package object sterlang {
 
   val nativeAliases: List[Ast.TypeAlias] =
     List(
-      Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.LocalName("atom"), List.empty)(Pos.NP))(Pos.NP),
-      Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.LocalName("none"), List.empty)(Pos.NP))(Pos.NP),
+      Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.LocalName("atom"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.LocalName("none"), List.empty)(Doc.ZRange))(Doc.ZRange),
     )
 }

@@ -16,55 +16,55 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.Pos
+import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.forms.Patterns._
 
 object Exprs {
 
-  case class Clause(p: Pos.SP, pats: List[Pattern], guards: List[Guard], body: List[Expr])
+  case class Clause(r: Doc.Range, pats: List[Pattern], guards: List[Guard], body: List[Expr])
   case class IfClause(guards: List[Guard], body: List[Expr])
 
-  sealed trait Expr { val p: Pos.SP }
+  sealed trait Expr { val r: Doc.Range }
 
-  sealed trait Literal extends Expr { val p: Pos.SP }
-  case class AtomLiteral(p: Pos.SP, atom: String) extends Literal
-  case class CharLiteral(p: Pos.SP, ch: Char) extends Literal
-  case class FloatLiteral(p: Pos.SP, fl: Double) extends Literal
-  case class IntLiteral(p: Pos.SP, i: Int) extends Literal
-  case class StringLiteral(p: Pos.SP, str: Option[String]) extends Literal
+  sealed trait Literal extends Expr { val r: Doc.Range }
+  case class AtomLiteral(r: Doc.Range, atom: String) extends Literal
+  case class CharLiteral(r: Doc.Range, ch: Char) extends Literal
+  case class FloatLiteral(r: Doc.Range, fl: Double) extends Literal
+  case class IntLiteral(r: Doc.Range, i: Int) extends Literal
+  case class StringLiteral(r: Doc.Range, str: Option[String]) extends Literal
 
-  case class Match(p: Pos.SP, pat: Pattern, arg: Expr) extends Expr
-  case class Variable(p: Pos.SP, name: String) extends Expr
-  case class Tuple(p: Pos.SP, elems: List[Expr]) extends Expr
-  case class Nil(p: Pos.SP) extends Expr
-  case class Cons(p: Pos.SP, hd: Expr, tl: Expr) extends Expr
-  case class Bin(p: Pos.SP, elems: List[BinElement]) extends Expr
-  case class BinaryOp(p: Pos.SP, op: String, exp1: Expr, exp2: Expr) extends Expr
-  case class UnaryOp(p: Pos.SP, op: String, exp1: Expr) extends Expr
-  case class StructCreate(p: Pos.SP, structName: String, fields: List[StructField]) extends Expr
-  case class StructUpdate(p: Pos.SP, rec: Expr, structName: String, fields: List[StructField]) extends Expr
-  case class StructSelect(p: Pos.SP, struct: Expr, structName: String, fieldName: String) extends Expr
-  case class MapFieldAccess(p: Pos.SP, map: Expr, fieldName: String) extends Expr
-  case class MapCreate(p: Pos.SP, entries: List[MapField]) extends Expr
-  case class MapUpdate(p: Pos.SP, exp: Expr, entries: List[MapField]) extends Expr
-  case class Catch(p: Pos.SP, exp: Expr) extends Expr
-  case class LocalCall(p: Pos.SP, fun: Expr, args: List[Expr]) extends Expr
-  case class RemoteCall(p: Pos.SP, module: Expr, fun: Expr, args: List[Expr]) extends Expr
-  case class LocalEnumCtr(p: Pos.SP, enum: String, ctr: String, args: List[Expr]) extends Expr
-  case class RemoteEnumCtr(p: Pos.SP, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
-  case class ListComprehension(p: Pos.SP, template: Expr, qualifiers: List[Qualifier]) extends Expr
-  case class BinaryComprehension(p: Pos.SP, template: Expr, qualifiers: List[Qualifier]) extends Expr
-  case class Block(p: Pos.SP, exprs: List[Expr]) extends Expr
-  case class Case(p: Pos.SP, expr: Expr, clauses: List[Clause]) extends Expr
-  case class If(p: Pos.SP, clauses: List[IfClause]) extends Expr
-  case class Try(p: Pos.SP, body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr])
+  case class Match(r: Doc.Range, pat: Pattern, arg: Expr) extends Expr
+  case class Variable(r: Doc.Range, name: String) extends Expr
+  case class Tuple(r: Doc.Range, elems: List[Expr]) extends Expr
+  case class Nil(r: Doc.Range) extends Expr
+  case class Cons(r: Doc.Range, hd: Expr, tl: Expr) extends Expr
+  case class Bin(r: Doc.Range, elems: List[BinElement]) extends Expr
+  case class BinaryOp(r: Doc.Range, op: String, exp1: Expr, exp2: Expr) extends Expr
+  case class UnaryOp(r: Doc.Range, op: String, exp1: Expr) extends Expr
+  case class StructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
+  case class StructUpdate(r: Doc.Range, rec: Expr, structName: String, fields: List[StructField]) extends Expr
+  case class StructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class MapFieldAccess(r: Doc.Range, map: Expr, fieldName: String) extends Expr
+  case class MapCreate(r: Doc.Range, entries: List[MapField]) extends Expr
+  case class MapUpdate(r: Doc.Range, exp: Expr, entries: List[MapField]) extends Expr
+  case class Catch(r: Doc.Range, exp: Expr) extends Expr
+  case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr
+  case class RemoteCall(r: Doc.Range, module: Expr, fun: Expr, args: List[Expr]) extends Expr
+  case class LocalEnumCtr(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class RemoteEnumCtr(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class ListComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
+  case class BinaryComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
+  case class Block(r: Doc.Range, exprs: List[Expr]) extends Expr
+  case class Case(r: Doc.Range, expr: Expr, clauses: List[Clause]) extends Expr
+  case class If(r: Doc.Range, clauses: List[IfClause]) extends Expr
+  case class Try(r: Doc.Range, body: List[Expr], clauses: List[Clause], catchClauses: List[Clause], after: List[Expr])
       extends Expr
-  case class Receive(p: Pos.SP, clauses: List[Clause]) extends Expr
-  case class ReceiveWithTimeout(p: Pos.SP, cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
-  case class LocalFun(p: Pos.SP, funName: String, arity: Int) extends Expr
-  case class RemoteFun(p: Pos.SP, module: Expr, funName: Expr, arity: Expr) extends Expr
-  case class Fun(p: Pos.SP, clauses: List[Clause]) extends Expr
-  case class NamedFun(p: Pos.SP, funName: String, clauses: List[Clause]) extends Expr
+  case class Receive(r: Doc.Range, clauses: List[Clause]) extends Expr
+  case class ReceiveWithTimeout(r: Doc.Range, cl: List[Clause], timeout: Expr, default: List[Expr]) extends Expr
+  case class LocalFun(r: Doc.Range, funName: String, arity: Int) extends Expr
+  case class RemoteFun(r: Doc.Range, module: Expr, funName: Expr, arity: Expr) extends Expr
+  case class Fun(r: Doc.Range, clauses: List[Clause]) extends Expr
+  case class NamedFun(r: Doc.Range, funName: String, clauses: List[Clause]) extends Expr
 
   case class Guard(elems: List[Expr])
 
@@ -77,8 +77,8 @@ object Exprs {
   case class TypeSpecifierId(id: String) extends TypeSpecifier
   case class TypeSpecifierUnit(int: Int) extends TypeSpecifier
 
-  case class StructField(p: Pos.SP, fieldName: String, value: Expr)
-  case class MapField(p: Pos.SP, k: Expr, v: Expr)
+  case class StructField(r: Doc.Range, fieldName: String, value: Expr)
+  case class MapField(r: Doc.Range, k: Expr, v: Expr)
 
   sealed trait Qualifier
   sealed trait Generator extends Qualifier

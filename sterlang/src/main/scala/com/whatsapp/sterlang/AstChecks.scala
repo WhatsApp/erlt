@@ -30,7 +30,7 @@ class AstChecks(val context: Context) {
     } catch {
       case Cycle(name) =>
         val typeAlias = program.typeAliases.find(_.name == name).get
-        throw new CyclicTypeAlias(typeAlias.p, name)
+        throw new CyclicTypeAlias(typeAlias.r, name)
     }
     checkSpecs(program)
   }
@@ -43,7 +43,7 @@ class AstChecks(val context: Context) {
     val unspeced: Set[VarName] =
       exported -- speced
     for (f <- program.funs)
-      if (unspeced(f.name)) throw new UnSpecedExportedFun(f.p, f.name.stringId)
+      if (unspeced(f.name)) throw new UnSpecedExportedFun(f.r, f.name.stringId)
   }
 
   private def checkSpecs(program: Program): Unit =
@@ -54,20 +54,20 @@ class AstChecks(val context: Context) {
   def checkUniqueTypes(program: Program): Unit = {
     var typeNames = Set.empty[String]
     for (ta <- program.typeAliases) {
-      if (typeNames(ta.name)) throw new DuplicateType(ta.p, ta.name)
+      if (typeNames(ta.name)) throw new DuplicateType(ta.r, ta.name)
       typeNames = typeNames + ta.name
     }
     for (ed <- program.enumDefs) {
-      if (typeNames(ed.name)) throw new DuplicateType(ed.p, ed.name)
+      if (typeNames(ed.name)) throw new DuplicateType(ed.r, ed.name)
       typeNames = typeNames + ed.name
     }
     for (op <- program.opaques) {
-      if (typeNames(op.name)) throw new DuplicateType(op.p, op.name)
+      if (typeNames(op.name)) throw new DuplicateType(op.r, op.name)
       typeNames = typeNames + op.name
     }
     var recNames = Set.empty[String]
     for (recDef <- program.structDefs) {
-      if (recNames(recDef.name)) throw new DuplicateRecord(recDef.p, recDef.name)
+      if (recNames(recDef.name)) throw new DuplicateRecord(recDef.r, recDef.name)
       recNames = recNames + recDef.name
     }
   }
@@ -75,19 +75,19 @@ class AstChecks(val context: Context) {
   def checkUniqueFuns(program: Program): Unit = {
     var funNames = Set.empty[String]
     for (fun <- program.funs) {
-      if (funNames(fun.name.stringId)) throw new DuplicateFun(fun.p, fun.name.stringId)
+      if (funNames(fun.name.stringId)) throw new DuplicateFun(fun.r, fun.name.stringId)
       funNames = funNames + fun.name.stringId
     }
   }
 
   private def checkUsage(bound: List[TypeVar], used: Set[TypeVar]): Unit =
-    for (b <- bound if !used(b)) throw new UselessTypeVar(b.p, b.name)
+    for (b <- bound if !used(b)) throw new UselessTypeVar(b.r, b.name)
 
   private def collectParams(vars: List[TypeVar]): Set[TypeVar] = {
     var result = Set.empty[TypeVar]
     for (v <- vars) {
       if (result(v)) {
-        throw new DuplicateTypeVar(v.p, v.name)
+        throw new DuplicateTypeVar(v.r, v.name)
       }
       result = result + v
     }
@@ -96,7 +96,7 @@ class AstChecks(val context: Context) {
 
   // This is for testing that there are no cycles only.
   private def checkTypeAlias(program: Program, alias: TypeAlias): Unit = {
-    val tp = UserType(LocalName(alias.name), alias.params)(Pos.NP)
+    val tp = UserType(LocalName(alias.name), alias.params)(Doc.ZRange)
     val bound = collectParams(alias.params)
     val used = collectTypeVars(bound)(alias.body)
     checkUsage(alias.params, used)
@@ -104,7 +104,7 @@ class AstChecks(val context: Context) {
   }
 
   private def checkOpaque(program: Program, opaque: Opaque): Unit = {
-    val tp = UserType(LocalName(opaque.name), opaque.params)(Pos.NP)
+    val tp = UserType(LocalName(opaque.name), opaque.params)(Doc.ZRange)
     val bound = collectParams(opaque.params)
     val used = collectTypeVars(bound)(opaque.body)
     checkUsage(opaque.params, used)
@@ -127,7 +127,7 @@ class AstChecks(val context: Context) {
     var defined = Set.empty[String]
     for (con <- cons) {
       if (defined(con.name)) {
-        throw new DuplicateEnumCon(con.p, con.name)
+        throw new DuplicateEnumCon(con.r, con.name)
       }
       defined = defined + con.name
     }
@@ -137,7 +137,7 @@ class AstChecks(val context: Context) {
     var fieldNames = Set.empty[String]
     for (f <- recordDef.fields) {
       if (fieldNames(f.label)) {
-        throw new DuplicateFields(f.p, List(f.label))
+        throw new DuplicateFields(f.r, List(f.label))
       }
       fieldNames = fieldNames + f.label
     }
@@ -169,7 +169,7 @@ class AstChecks(val context: Context) {
                     expandType(program, visited + name)(opaque.body)
                     params.foreach(expandType(program, visited))
                   case None =>
-                    throw new UnknownType(tp.p, name.stringId, params.size)
+                    throw new UnknownType(tp.r, name.stringId, params.size)
                 }
             }
         }
@@ -183,7 +183,7 @@ class AstChecks(val context: Context) {
                 expandType(program, visited)(alias.body)
                 params.foreach(expandType(program, visited))
               case None =>
-                throw new UnknownType(tp.p, name.stringId, params.size)
+                throw new UnknownType(tp.r, name.stringId, params.size)
             }
         }
       case _: TypeVar =>
@@ -209,14 +209,14 @@ class AstChecks(val context: Context) {
           case Some(eRec) =>
             eRec.kind match {
               case ExnStruct =>
-                throw new ExceptionType(tp.p, name)
+                throw new ExceptionType(tp.r, name)
               case MsgStruct =>
-                throw new MessageType(tp.p, name)
+                throw new MessageType(tp.r, name)
               case StrStruct =>
               // OK
             }
           case None =>
-            throw new UnknownStruct(tp.p, name)
+            throw new UnknownStruct(tp.r, name)
         }
     }
 
@@ -224,11 +224,11 @@ class AstChecks(val context: Context) {
     t match {
       case t: TypeVar =>
         if (!bound(t)) {
-          throw new UnboundTypeVariable(t.p, t.name)
+          throw new UnboundTypeVariable(t.r, t.name)
         }
         Set(t)
       case WildTypeVar() =>
-        throw new IllegalWildTypeVariable(t.p)
+        throw new IllegalWildTypeVariable(t.r)
       case UserType(_, args) =>
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>

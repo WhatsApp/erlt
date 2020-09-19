@@ -61,7 +61,7 @@ object Main {
         case error: ParseError =>
           printParseError(text, error)
           sys.exit(2)
-        case error: PositionedError =>
+        case error: RangedError =>
           printError(text, error)
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
@@ -87,7 +87,7 @@ object Main {
       // checking them in the very end - since it is possible to present inferred types here
       astChecks.checkPublicSpecs(program)
     } catch {
-      case error: PositionedError =>
+      case error: RangedError =>
         printError(text, error)
         sys.exit(2)
     }
@@ -95,18 +95,18 @@ object Main {
 
   private def printParseError(text: String, error: ParseError): Unit = {
     val ParseError(loc) = error
-    val locator = Pos.Locator(text, loc)
+    val locator = Doc.Locator(text, loc)
     val cTitle = ansi(s"@|bold,red Parse error at $loc|@")
     val cQuote = ansi(s"@|magenta,bold ${locator.longString}|@")
     Console.println(cTitle)
     Console.println(cQuote)
   }
 
-  private def printError(text: String, error: PositionedError): Unit = {
-    val PositionedError(pos: Pos.SP, title, description) = error
-    val ranger = Pos.Ranger(text, pos.start, pos.end)
+  private def printError(text: String, error: RangedError): Unit = {
+    val RangedError(range: Doc.Range, title, description) = error
+    val ranger = Doc.Ranger(text, range.start, range.end)
 
-    val cTitle = ansi(s"@|bold,red $title at ${pos.start}|@")
+    val cTitle = ansi(s"@|bold,red $title at ${range.start}|@")
     val cQuote = ansi(s"${ranger.prefix}@|magenta,bold ${ranger.text}|@${ranger.suffix}")
     Console.println(cTitle)
     Console.println(cQuote)

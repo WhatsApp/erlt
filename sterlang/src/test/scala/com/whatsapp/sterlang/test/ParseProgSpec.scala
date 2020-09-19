@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.test
 
 import com.whatsapp.sterlang.Ast._
-import com.whatsapp.sterlang.Pos.NP
+import com.whatsapp.sterlang.Doc.ZRange
 import com.whatsapp.sterlang.etf
 
 class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
@@ -42,61 +42,73 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
           |""".stripMargin,
         Program(
           enumDefs = List(
-            EnumDef("box", List(TypeVar("A")(NP)), List(EnumCon("box", List(TypeVar("A")(NP)))(NP)))(NP),
-            EnumDef("box2", List(TypeVar("A")(NP)), List(EnumCon("box2", List(TypeVar("A")(NP)))(NP)))(NP),
+            EnumDef("box", List(TypeVar("A")(ZRange)), List(EnumCon("box", List(TypeVar("A")(ZRange)))(ZRange)))(
+              ZRange
+            ),
+            EnumDef("box2", List(TypeVar("A")(ZRange)), List(EnumCon("box2", List(TypeVar("A")(ZRange)))(ZRange)))(
+              ZRange
+            ),
           ),
           structDefs = List.empty,
           typeAliases = List(
-            TypeAlias("boxAlias", List(TypeVar("A")(NP)), UserType(LocalName("box"), List(TypeVar("A")(NP)))(NP))(NP),
-            TypeAlias("boxAlias2", List(TypeVar("A")(NP)), UserType(LocalName("box2"), List(TypeVar("A")(NP)))(NP))(NP),
+            TypeAlias(
+              "boxAlias",
+              List(TypeVar("A")(ZRange)),
+              UserType(LocalName("box"), List(TypeVar("A")(ZRange)))(ZRange),
+            )(ZRange),
+            TypeAlias(
+              "boxAlias2",
+              List(TypeVar("A")(ZRange)),
+              UserType(LocalName("box2"), List(TypeVar("A")(ZRange)))(ZRange),
+            )(ZRange),
           ),
           specs = List(
             Spec(
               new LocalFunName("box_id", 1),
               FunType(
-                List(UserType(LocalName("boxAlias"), List(TypeVar("A")(NP)))(NP)),
-                UserType(LocalName("boxAlias"), List(TypeVar("A")(NP)))(NP),
-              )(NP),
-            )(NP)
+                List(UserType(LocalName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange)),
+                UserType(LocalName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange),
+              )(ZRange),
+            )(ZRange)
           ),
           funs = List(
             Fun(
               new LocalFunName("box_id", 1),
               List(
                 Clause(
-                  List(VarPat("X")(NP)),
+                  List(VarPat("X")(ZRange)),
                   List(),
-                  Body(List(), ValDef(WildPat()(NP), VarExp(new LocalVarName("X"))(NP))),
+                  Body(List(), ValDef(WildPat()(ZRange), VarExp(new LocalVarName("X"))(ZRange))),
                 )
               ),
-            )(NP),
+            )(ZRange),
             Fun(
               new LocalFunName("test", 1),
               List(
                 Clause(
-                  List(VarPat("X")(NP)),
+                  List(VarPat("X")(ZRange)),
                   List(),
                   Body(
                     List(),
                     ValDef(
-                      WildPat()(NP),
+                      WildPat()(ZRange),
                       IfExp(
                         List(
                           IfClause(
-                            List(Guard(List(VarExp(new LocalVarName("X"))(NP)))),
-                            Body(List(), ValDef(WildPat()(NP), BoolExp(true)(NP))),
+                            List(Guard(List(VarExp(new LocalVarName("X"))(ZRange)))),
+                            Body(List(), ValDef(WildPat()(ZRange), BoolExp(true)(ZRange))),
                           ),
                           IfClause(
-                            List(Guard(List(BoolExp(true)(NP)))),
-                            Body(List(), ValDef(WildPat()(NP), BoolExp(false)(NP))),
+                            List(Guard(List(BoolExp(true)(ZRange)))),
+                            Body(List(), ValDef(WildPat()(ZRange), BoolExp(false)(ZRange))),
                           ),
                         )
-                      )(NP),
+                      )(ZRange),
                     ),
                   ),
                 )
               ),
-            )(NP),
+            )(ZRange),
           ),
           opaques = List.empty,
           exports = Set.empty,

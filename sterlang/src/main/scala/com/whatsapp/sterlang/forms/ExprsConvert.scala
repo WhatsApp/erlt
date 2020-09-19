@@ -26,7 +26,7 @@ object ExprsConvert {
         val pats = ePats.map(PatternsConvert.convertPat)
         val guards = eGuards.map(convertGuard)
         val exps = eExps.map(convertExp)
-        Clause(sp(anno), pats, guards, exps)
+        Clause(r(anno), pats, guards, exps)
     }
 
   def convertIfClause(term: ETerm): IfClause =
@@ -40,46 +40,46 @@ object ExprsConvert {
   def convertExp(term: ETerm): Expr =
     term match {
       case ETuple(List(EAtom("match"), anno, ePat1, eExp)) =>
-        Match(sp(anno), PatternsConvert.convertPat(ePat1), convertExp(eExp))
+        Match(r(anno), PatternsConvert.convertPat(ePat1), convertExp(eExp))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
-        Variable(sp(anno), name)
+        Variable(r(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(eExps))) =>
-        Tuple(sp(anno), eExps.map(convertExp))
+        Tuple(r(anno), eExps.map(convertExp))
       case ETuple(List(EAtom("nil"), anno)) =>
-        Nil(sp(anno))
+        Nil(r(anno))
       case ETuple(List(EAtom("cons"), anno, eExp1, eExp2)) =>
         val hd = convertExp(eExp1)
         val tl = convertExp(eExp2)
-        Cons(sp(anno), hd, tl)
+        Cons(r(anno), hd, tl)
       case ETuple(List(EAtom("bin"), anno, EList(eBinElements))) =>
         val binElements = eBinElements.map(convertBinElement)
-        Bin(sp(anno), binElements)
+        Bin(r(anno), binElements)
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1, eExp2)) =>
-        BinaryOp(sp(anno), op, convertExp(eExp1), convertExp(eExp2))
+        BinaryOp(r(anno), op, convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
-        UnaryOp(sp(anno), op, convertExp(eExp1))
+        UnaryOp(r(anno), op, convertExp(eExp1))
       case ETuple(List(EAtom("struct"), anno, EAtom(name), EList(fields))) =>
-        StructCreate(sp(anno), name, fields.map(structField))
+        StructCreate(r(anno), name, fields.map(structField))
       case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
-        StructUpdate(sp(anno), convertExp(eExp), name, fields.map(structField))
+        StructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        StructSelect(sp(anno), convertExp(eExp), recordName, fieldName)
+        StructSelect(r(anno), convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
-        MapCreate(sp(anno), eAssocs.map(convertAssoc))
+        MapCreate(r(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
-        MapUpdate(sp(anno), convertExp(eExp), eAssocs.map(convertAssoc))
+        MapUpdate(r(anno), convertExp(eExp), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map_field"), anno, eExp, eFieldName)) =>
         val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
-        MapFieldAccess(sp(anno), convertExp(eExp), fieldName)
+        MapFieldAccess(r(anno), convertExp(eExp), fieldName)
       case ETuple(List(EAtom("catch"), anno, eExp)) =>
-        Catch(sp(anno), convertExp(eExp))
+        Catch(r(anno), convertExp(eExp))
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
           case ETuple(List(EAtom("remote"), _, eExp1, eExp2)) =>
-            RemoteCall(sp(anno), convertExp(eExp1), convertExp(eExp2), eArgs.map(convertExp))
+            RemoteCall(r(anno), convertExp(eExp1), convertExp(eExp2), eArgs.map(convertExp))
           case _ =>
-            LocalCall(sp(anno), convertExp(eExp), eArgs.map(convertExp))
+            LocalCall(r(anno), convertExp(eExp), eArgs.map(convertExp))
         }
       case ETuple(
             List(
@@ -90,7 +90,7 @@ object ExprsConvert {
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtr(sp(anno), enum, ctr, eArgs.map(convertExp))
+        LocalEnumCtr(r(anno), enum, ctr, eArgs.map(convertExp))
       case ETuple(
             List(
               EAtom("enum"),
@@ -107,17 +107,17 @@ object ExprsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtr(sp(anno), module, enum, ctr, eArgs.map(convertExp))
+        RemoteEnumCtr(r(anno), module, enum, ctr, eArgs.map(convertExp))
       case ETuple(List(EAtom("lc"), anno, eTemplate, EList(eQualifiers))) =>
-        ListComprehension(sp(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
+        ListComprehension(r(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), anno, eTemplate, EList(eQualifiers))) =>
-        BinaryComprehension(sp(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
+        BinaryComprehension(r(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("block"), anno, EList(eExps))) =>
-        Block(sp(anno), eExps.map(convertExp))
+        Block(r(anno), eExps.map(convertExp))
       case ETuple(List(EAtom("if"), anno, EList(eClauses))) =>
-        If(sp(anno), eClauses.map(convertIfClause))
+        If(r(anno), eClauses.map(convertIfClause))
       case ETuple(List(EAtom("case"), anno, eExp, EList(eClauses))) =>
-        Case(sp(anno), convertExp(eExp), eClauses.map(convertClause))
+        Case(r(anno), convertExp(eExp), eClauses.map(convertClause))
       case ETuple(
             List(
               EAtom("try"),
@@ -129,7 +129,7 @@ object ExprsConvert {
             )
           ) =>
         Try(
-          sp(anno),
+          r(anno),
           eExps1.map(convertExp),
           eClauses1.map(convertClause),
           eClauses2.map(convertClause),
@@ -137,22 +137,22 @@ object ExprsConvert {
         )
 
       case ETuple(List(EAtom("receive"), anno, EList(eClauses))) =>
-        Receive(sp(anno), eClauses.map(convertClause))
+        Receive(r(anno), eClauses.map(convertClause))
       case ETuple(List(EAtom("receive"), anno, EList(eClauses), eTimeout, EList(defaults))) =>
-        ReceiveWithTimeout(sp(anno), eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))
+        ReceiveWithTimeout(r(anno), eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))
 
       case ETuple(List(EAtom("fun"), anno, eFunction)) =>
         eFunction match {
           case ETuple(List(EAtom("function"), EAtom(name), ELong(arity))) =>
-            LocalFun(sp(anno), name, arity.intValue)
+            LocalFun(r(anno), name, arity.intValue)
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
-            RemoteFun(sp(anno), convertExp(eModule), convertExp(eName), convertExp(eArity))
+            RemoteFun(r(anno), convertExp(eModule), convertExp(eName), convertExp(eArity))
           case ETuple(List(EAtom("clauses"), EList(eClauses))) =>
-            Fun(sp(anno), eClauses.map(convertClause))
+            Fun(r(anno), eClauses.map(convertClause))
         }
 
       case ETuple(List(EAtom("named_fun"), anno, EAtom(fName), EList(eClauses))) =>
-        NamedFun(sp(anno), fName, eClauses.map(convertClause))
+        NamedFun(r(anno), fName, eClauses.map(convertClause))
       case _ =>
         maybeLiteral(term) match {
           case Some(exp) => exp
@@ -169,19 +169,19 @@ object ExprsConvert {
   def maybeLiteral(term: ETerm): Option[Literal] =
     term match {
       case ETuple(List(EAtom("atom"), anno, EAtom(value))) =>
-        Some(AtomLiteral(sp(anno), value))
+        Some(AtomLiteral(r(anno), value))
       case ETuple(List(EAtom("char"), anno, ELong(value))) =>
-        Some(CharLiteral(sp(anno), value.charValue))
+        Some(CharLiteral(r(anno), value.charValue))
       case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
-        Some(FloatLiteral(sp(anno), value))
+        Some(FloatLiteral(r(anno), value))
       case ETuple(List(EAtom("integer"), anno, ELong(value))) =>
-        Some(IntLiteral(sp(anno), value.intValue))
+        Some(IntLiteral(r(anno), value.intValue))
       case ETuple(List(EAtom("string"), anno, EString(value))) =>
-        Some(StringLiteral(sp(anno), Some(value)))
+        Some(StringLiteral(r(anno), Some(value)))
       case ETuple(List(EAtom("string"), anno, EList(List()))) =>
-        Some(StringLiteral(sp(anno), Some("")))
+        Some(StringLiteral(r(anno), Some("")))
       case ETuple(List(EAtom("string"), anno, EList(_))) =>
-        Some(StringLiteral(sp(anno), None))
+        Some(StringLiteral(r(anno), None))
       case _ => None
     }
 
@@ -223,13 +223,13 @@ object ExprsConvert {
             // TODO
             "_"
         }
-        StructField(sp(anno), name, convertExp(exp))
+        StructField(r(anno), name, convertExp(exp))
     }
 
   def convertAssoc(term: ETerm): MapField =
     term match {
       case ETuple(List(EAtom("map_field"), anno, eExp1, eExp2)) =>
-        MapField(sp(anno), convertExp(eExp1), convertExp(eExp2))
+        MapField(r(anno), convertExp(eExp1), convertExp(eExp2))
     }
 
   def convertQualifier(term: ETerm): Qualifier =

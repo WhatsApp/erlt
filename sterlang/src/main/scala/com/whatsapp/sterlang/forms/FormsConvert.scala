@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.Pos
+import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.etf._
 import com.whatsapp.sterlang.forms.Forms._
 
@@ -90,20 +90,20 @@ object FormsConvert {
         }
         val abstractType = TypesConvert.convertType(absType)
         val params = vars.map(TypesConvert.convertVar)
-        TypeDecl(sp(anno), typeAttr, typeName, params, abstractType)
+        TypeDecl(r(anno), typeAttr, typeName, params, abstractType)
       // af_record_decl
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        StructDecl(sp(anno), name, fields.map(structFieldDecl), StrStruct)
+        StructDecl(r(anno), name, fields.map(structFieldDecl), StrStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        StructDecl(sp(anno), name, fields.map(structFieldDecl), ExnStruct)
+        StructDecl(r(anno), name, fields.map(structFieldDecl), ExnStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(fields))))
           ) =>
-        StructDecl(sp(anno), name, fields.map(structFieldDecl), MsgStruct)
+        StructDecl(r(anno), name, fields.map(structFieldDecl), MsgStruct)
       // af_function_spec
       case ETuple(
             List(
@@ -119,19 +119,19 @@ object FormsConvert {
         }
         val funId = convertSpecFunId(eFunId)
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
-        FunctionSpec(sp(anno), specAttr, funId, typeList)
+        FunctionSpec(r(anno), specAttr, funId, typeList)
       // af_function_decl
       case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
-        FunctionDecl(sp(anno), name, arity.intValue, clauses)
+        FunctionDecl(r(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
       case ETuple(List(EAtom("attribute"), anno, EAtom(attrName), attrValue)) =>
-        WildAttribute(sp(anno), attrName)
+        WildAttribute(r(anno), attrName)
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
-        Error(Pos.Loc(line.toInt, column.toInt))
+        Error(Doc.Pos(line.toInt, column.toInt))
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
-        Error(Pos.Loc(line.toInt, column.toInt))
+        Error(Doc.Pos(line.toInt, column.toInt))
       case _ =>
         sys.error(s"unexpected term: $term")
     }
@@ -145,7 +145,7 @@ object FormsConvert {
   def structFieldDecl(term: ETerm): StructFieldDecl =
     term match {
       case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, eType)) =>
-        StructFieldTyped(sp(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
+        StructFieldTyped(r(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
     }
 
   def convertAtomLit(term: ETerm): String =

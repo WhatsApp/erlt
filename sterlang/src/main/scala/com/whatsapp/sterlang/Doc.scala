@@ -16,21 +16,18 @@
 
 package com.whatsapp.sterlang
 
-object Pos {
-  case class Loc(line: Int, column: Int) {
-    def <(that: Loc): Boolean = this.line < that.line || this.line == that.line && this.column < that.column
+object Doc {
+  case class Pos(line: Int, column: Int) {
+    def <(that: Pos): Boolean = this.line < that.line || this.line == that.line && this.column < that.column
   }
 
-  // Position
-  sealed trait P
-  // No position
-  case object NP extends P
-  // Some position
-  case class SP(start: Loc, end: Loc) extends P {
-    def !(other: SP): SP = mergeSP(this, other)
+  val ZRange: Range =
+    Range(start = Pos(0, 0), end = Pos(0, 0))
+  case class Range(start: Pos, end: Pos) {
+    def !(other: Range): Range = mergeNonZ(this, other)
   }
 
-  case class Ranger(source: String, start: Loc, end: Loc) {
+  case class Ranger(source: String, start: Pos, end: Pos) {
     import scala.collection.mutable.ArrayBuffer
     // An index that contains all line starts, including the first line, and eof
     private lazy val index: Array[Int] = {
@@ -58,7 +55,7 @@ object Pos {
       )
   }
 
-  case class Locator(source: String, loc: Loc) {
+  case class Locator(source: String, pos: Pos) {
     import scala.collection.mutable.ArrayBuffer
     private lazy val index: Array[Int] = {
       var lineStarts = new ArrayBuffer[Int]
@@ -69,8 +66,8 @@ object Pos {
       lineStarts.toArray
     }
     def lineContents: String = {
-      val lineStart = index(loc.line - 1)
-      val lineEnd = index(loc.line)
+      val lineStart = index(pos.line - 1)
+      val lineEnd = index(pos.line)
       val endIndex =
         if (lineStart < lineEnd - 1 && source.charAt(lineEnd - 2) == '\r' && source.charAt(lineEnd - 1) == '\n') {
           lineEnd - 2
@@ -82,21 +79,21 @@ object Pos {
       source.subSequence(lineStart, endIndex).toString
     }
     def longString: String =
-      lineContents + "\n" + lineContents.take(loc.column - 1).map { x => if (x == '\t') x else ' ' } + "^"
+      lineContents + "\n" + lineContents.take(pos.column - 1).map { x => if (x == '\t') x else ' ' } + "^"
   }
 
   /** Combines two ranges to create a range that spans both. */
-  def merge(pos1: P, pos2: P): P =
+  def merge(pos1: Range, pos2: Range): Range =
     (pos1, pos2) match {
-      case (NP, _)              => pos2
-      case (_, NP)              => pos1
-      case (pos1: SP, pos2: SP) => mergeSP(pos1, pos2)
+      case (`ZRange`, _)              => pos2
+      case (_, `ZRange`)              => pos1
+      case (pos1: Range, pos2: Range) => mergeNonZ(pos1, pos2)
     }
 
   /** Combines two ranges to create a range that spans both. */
-  private def mergeSP(pos1: SP, pos2: SP): SP = {
+  private def mergeNonZ(pos1: Range, pos2: Range): Range = {
     val start = if (pos1.start < pos2.start) pos1.start else pos2.start
     val end = if (pos1.end < pos2.end) pos2.end else pos1.end
-    SP(start, end)
+    Range(start, end)
   }
 }

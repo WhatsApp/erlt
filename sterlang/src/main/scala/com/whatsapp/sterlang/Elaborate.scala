@@ -26,7 +26,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private type PEnv = Set[String]
 
-  private case class Function(name: String, clauses: List[Ast.Clause])(val sourceLocation: Pos.P)
+  private case class Function(name: String, clauses: List[Ast.Clause])(val r: Doc.Range)
 
   private def freshTypeVar(d: T.Depth): T.Type =
     T.VarType(vars.tVar(T.Open(d)))
@@ -36,7 +36,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def freshRTypeVar(d: T.Depth)(kind: T.RtVarKind): T.RowTypeVar =
     vars.rVar(T.RowOpen(d, kind))
 
-  def unify(pos: Pos.P, t1: T.Type, t2: T.Type): Unit = {
+  def unify(pos: Doc.Range, t1: T.Type, t2: T.Type): Unit = {
     val required = TypePrinter2(vars, None).printType(t1)
     val found = TypePrinter2(vars, None).printType(t2)
     try {
@@ -63,7 +63,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabSccFuns(sccFuns: List[List[Ast.Fun]]): (List[List[AnnAst.Fun]], Env) = {
     var envAcc = context.env
     val sccFuns1 = for ((funs, d) <- sccFuns.zipWithIndex) yield {
-      val funClauses = funs.map(f => Function(f.name.stringId, f.clauses)(sourceLocation = f.p))
+      val funClauses = funs.map(f => Function(f.name.stringId, f.clauses)(r = f.r))
       val (funs1, env1) = elabFuns(funClauses, d, envAcc)
       envAcc = env1
       funs1
@@ -168,17 +168,17 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     // Attach type annotation to the pattern
     assert(p1.isInstanceOf[AnnAst.LiteralPat] || p1.typ == null)
     val p2 = p1 match {
-      case p: AnnAst.WildPat            => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.VarPat             => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.AndPat             => p.copy()(typ = t, p = p.p)
+      case p: AnnAst.WildPat            => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.VarPat             => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.AndPat             => p.copy()(typ = t, r = p.r)
       case p: AnnAst.LiteralPat         => p
-      case p: AnnAst.TuplePat           => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.ListPat            => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.RecordPat          => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.StructPat          => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.ConsPat            => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.EnumConstructorPat => p.copy()(typ = t, p = p.p)
-      case p: AnnAst.BinPat             => p.copy()(typ = t, p = p.p)
+      case p: AnnAst.TuplePat           => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.ListPat            => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.RecordPat          => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.StructPat          => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.ConsPat            => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.EnumConstructorPat => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.BinPat             => p.copy()(typ = t, r = p.r)
     }
     assert(p2.typ != null)
 
@@ -228,10 +228,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val (e1Elaborated, e2Elaborated) =
       op match {
         case Ast.BoolConnOp(_) =>
-          unify(exp.p, ty, MT.BoolType)
+          unify(exp.r, ty, MT.BoolType)
           (elab(e1, MT.BoolType, d, env), elab(e2, MT.BoolType, d, env))
         case Ast.Cmp(_) =>
-          unify(exp.p, ty, MT.BoolType)
+          unify(exp.r, ty, MT.BoolType)
           val operandType = freshTypeVar(d)
           (elab(e1, operandType, d, env), elab(e2, operandType, d, env))
         case Ast.ListOp(_) =>
@@ -239,27 +239,27 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
           val listType = MT.ListType(elemType)
           val res1 = elab(e1, listType, d, env)
           val res2 = elab(e2, listType, d, env)
-          unify(exp.p, ty, listType)
+          unify(exp.r, ty, listType)
           (res1, res2)
         case Ast.Arith(_) =>
-          unify(exp.p, ty, MT.IntType)
+          unify(exp.r, ty, MT.IntType)
           (elab(e1, MT.IntType, d, env), elab(e2, MT.IntType, d, env))
       }
 
-    AnnAst.BinOpExp(op, e1Elaborated, e2Elaborated)(typ = ty, p = exp.p)
+    AnnAst.BinOpExp(op, e1Elaborated, e2Elaborated)(typ = ty, r = exp.r)
   }
 
   private def elabUOpExp(exp: Ast.UOpExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.UOpExp(op: Ast.UOp, e1: Ast.Exp) = exp
     val e1Elaborated = op match {
       case Ast.UMinus | Ast.UPlus | Ast.BNot =>
-        unify(exp.p, ty, MT.IntType)
+        unify(exp.r, ty, MT.IntType)
         elab(e1, MT.IntType, d, env)
       case Ast.UNot =>
-        unify(exp.p, ty, MT.BoolType)
+        unify(exp.r, ty, MT.BoolType)
         elab(e1, MT.BoolType, d, env)
     }
-    AnnAst.UOpExp(op, e1Elaborated)(typ = ty, p = exp.p)
+    AnnAst.UOpExp(op, e1Elaborated)(typ = ty, r = exp.r)
   }
 
   private def elabCaseExp(exp: Ast.CaseExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -276,8 +276,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Branch(pat1, guards1, body1)
     }
 
-    unify(exp.p, ty, resType)
-    AnnAst.CaseExp(selector1, branches)(typ = ty, p = exp.p)
+    unify(exp.r, ty, resType)
+    AnnAst.CaseExp(selector1, branches)(typ = ty, r = exp.r)
   }
 
   private def elabTryCatchExp(exp: Ast.TryCatchExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -297,7 +297,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
               branch1 :: elabCatchRules(rest)
             case _ =>
-              throw new IllegalCatchPattern(pat.p)
+              throw new IllegalCatchPattern(pat.r)
           }
       }
 
@@ -305,9 +305,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val catchBranches = elabCatchRules(catchRules)
     val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
 
-    unify(exp.p, ty, resType)
+    unify(exp.r, ty, resType)
 
-    AnnAst.TryCatchExp(tryBody1, catchBranches, after1)(typ = ty, p = exp.p)
+    AnnAst.TryCatchExp(tryBody1, catchBranches, after1)(typ = ty, r = exp.r)
   }
 
   private def elabTryOfCatchExp(exp: Ast.TryOfCatchExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -328,7 +328,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
               branch1 :: elabCatchRules(rest)
             case _ =>
-              throw new IllegalCatchPattern(pat.p)
+              throw new IllegalCatchPattern(pat.r)
           }
       }
 
@@ -344,8 +344,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val catchBranches = elabCatchRules(catchRules)
     val after1 = after.map(elabBody(_, freshTypeVar(d), d, env))
 
-    unify(exp.p, ty, resType)
-    AnnAst.TryOfCatchExp(tryBody1, tryBranches, catchBranches, after1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, resType)
+    AnnAst.TryOfCatchExp(tryBody1, tryBranches, catchBranches, after1)(typ = ty, r = exp.r)
   }
 
   private def elabReceiveExp(exp: Ast.ReceiveExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -364,7 +364,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
               branch1 :: elabReceiveRules(rest)
             case _ =>
-              throw new IllegalReceivePattern(pat.p)
+              throw new IllegalReceivePattern(pat.r)
           }
       }
     val receiveBranches = elabReceiveRules(rules)
@@ -375,9 +375,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         AnnAst.AfterBody(timeout1, body1)
     }
 
-    unify(exp.p, ty, resType)
+    unify(exp.r, ty, resType)
 
-    AnnAst.ReceiveExp(receiveBranches, after1)(typ = ty, p = exp.p)
+    AnnAst.ReceiveExp(receiveBranches, after1)(typ = ty, r = exp.r)
   }
 
   private def elabIfExp(exp: Ast.IfExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -393,8 +393,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       elabBody(body, resType, d, env)
     }
 
-    unify(exp.p, ty, resType)
-    AnnAst.IfExp(bodies)(typ = ty, p = exp.p)
+    unify(exp.r, ty, resType)
+    AnnAst.IfExp(bodies)(typ = ty, r = exp.r)
   }
 
   private def elabComprehension(exp: Ast.Comprehension, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -424,9 +424,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val resType = MT.ListType(elemType)
     val template1 = elab(template, elemType, depth, envAcc)
 
-    unify(exp.p, ty, resType)
+    unify(exp.r, ty, resType)
 
-    AnnAst.Comprehension(template1, qualifiers1)(typ = ty, p = exp.p)
+    AnnAst.Comprehension(template1, qualifiers1)(typ = ty, r = exp.r)
   }
 
   private def elabBComprehension(exp: Ast.BComprehension, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -454,14 +454,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val template1 = elab(template, MT.BinaryType, depth, envAcc)
 
-    unify(exp.p, ty, MT.BinaryType)
+    unify(exp.r, ty, MT.BinaryType)
 
-    AnnAst.BComprehension(template1, qualifiers1)(typ = ty, p = exp.p)
+    AnnAst.BComprehension(template1, qualifiers1)(typ = ty, r = exp.r)
   }
 
   private def elabRecordUpdateExp(exp: Ast.RecordUpdateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.RecordUpdateExp(rec, delta) = exp
-    checkUniqueFields(delta.p, delta.fields.map(_.label))
+    checkUniqueFields(delta.r, delta.fields.map(_.label))
 
     val fields = delta.fields
     val (fieldTypes, fields1) = fields
@@ -480,18 +480,18 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val rec1 = elab(rec, recType, d, env)
 
-    unify(exp.p, ty, recType)
-    AnnAst.RecordUpdateExp(rec1, fields1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, recType)
+    AnnAst.RecordUpdateExp(rec1, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructCreate(name, fields) = exp
-    val structDef = getStructDef(exp.p, name)
+    val structDef = getStructDef(exp.r, name)
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
-    checkUniqueFields(exp.p, fields.map(_.label))
+    checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
-    checkStructInit(exp.p, fields, structDef)
+    checkStructInit(exp.r, fields, structDef)
 
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
@@ -506,27 +506,27 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Ast.MsgStruct => MT.MessageType
     }
 
-    unify(exp.p, ty, expType)
+    unify(exp.r, ty, expType)
 
-    AnnAst.StructCreate(name, fields1)(typ = ty, p = exp.p)
+    AnnAst.StructCreate(name, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructUpdate(exp: Ast.StructUpdate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructUpdate(struct, name, fields) = exp
-    val structDef = getStructDef(exp.p, name)
+    val structDef = getStructDef(exp.r, name)
 
     structDef.kind match {
       case Ast.StrStruct =>
       // OK
       case Ast.ExnStruct =>
-        throw new UnconditionalExceptionUpdate(exp.p, name)
+        throw new UnconditionalExceptionUpdate(exp.r, name)
       case Ast.MsgStruct =>
-        throw new UnconditionalMessageUpdate(exp.p, name)
+        throw new UnconditionalMessageUpdate(exp.r, name)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
-    checkUniqueFields(exp.p, fields.map(_.label))
+    checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
 
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
@@ -538,29 +538,29 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val structType = MT.StructType(name)
     val struct1 = elab(struct, structType, d, env)
-    unify(exp.p, ty, structType)
+    unify(exp.r, ty, structType)
 
-    AnnAst.StructUpdate(struct1, name, fields1)(typ = ty, p = exp.p)
+    AnnAst.StructUpdate(struct1, name, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructSelect(exp: Ast.StructSelect, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructSelect(struct, name, fieldName) = exp
-    val structDef = getStructDef(exp.p, name)
+    val structDef = getStructDef(exp.r, name)
 
     structDef.kind match {
       case Ast.StrStruct =>
       // OK
       case Ast.ExnStruct =>
-        throw new UnconditionalExceptionSelect(exp.p, name)
+        throw new UnconditionalExceptionSelect(exp.r, name)
       case Ast.MsgStruct =>
-        throw new UnconditionalMessageSelect(exp.p, name)
+        throw new UnconditionalMessageSelect(exp.r, name)
     }
 
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
     val fieldDef =
       structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
-        case None    => throw new UnknownStructField(exp.p, name, fieldName)
+        case None    => throw new UnknownStructField(exp.r, name, fieldName)
       }
 
     val structType = MT.StructType(name)
@@ -569,9 +569,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val fieldType = expander.mkType(fieldDef.value, Map.empty)
     val eFieldType = expander.expandType(fieldType)
 
-    unify(exp.p, ty, eFieldType)
+    unify(exp.r, ty, eFieldType)
 
-    AnnAst.StructSelect(struct1, name, fieldName)(typ = ty, p = exp.p)
+    AnnAst.StructSelect(struct1, name, fieldName)(typ = ty, r = exp.r)
   }
 
   private def elabAppExp(exp: Ast.AppExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -582,8 +582,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val exp1 = elab(head, MT.FunType(argTypes, resType), d, env)
     val args1 = (args zip argTypes).map { case (e, t) => elab(e, t, d, env) }
 
-    unify(exp.p, ty, resType)
-    AnnAst.AppExp(exp1, args1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, resType)
+    AnnAst.AppExp(exp1, args1)(typ = ty, r = exp.r)
   }
 
   private def elabSelExp(exp: Ast.SelExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -594,36 +594,36 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val recordType = MT.RecordType(T.RowFieldType(T.Field(label, fieldType), base))
     val record1 = elab(record, recordType, d, env)
 
-    unify(exp.p, ty, fieldType)
-    AnnAst.RecordSelectionExp(record1, label)(typ = ty, p = exp.p)
+    unify(exp.r, ty, fieldType)
+    AnnAst.RecordSelectionExp(record1, label)(typ = ty, r = exp.r)
   }
 
   private def elabBoolExp(exp: Ast.BoolExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.BoolExp(b) = exp
 
-    unify(exp.p, ty, MT.BoolType)
-    AnnAst.LiteralExp(Values.BooleanValue(b))(p = exp.p)
+    unify(exp.r, ty, MT.BoolType)
+    AnnAst.LiteralExp(Values.BooleanValue(b))(r = exp.r)
   }
 
   private def elabNumberExp(exp: Ast.NumberExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.NumberExp(n) = exp
 
-    unify(exp.p, ty, MT.IntType)
-    AnnAst.LiteralExp(Values.IntegerValue(n))(p = exp.p)
+    unify(exp.r, ty, MT.IntType)
+    AnnAst.LiteralExp(Values.IntegerValue(n))(r = exp.r)
   }
 
   private def elabCharExp(exp: Ast.CharExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.CharExp(n) = exp
 
-    unify(exp.p, ty, MT.CharType)
-    AnnAst.LiteralExp(Values.CharValue(n))(p = exp.p)
+    unify(exp.r, ty, MT.CharType)
+    AnnAst.LiteralExp(Values.CharValue(n))(r = exp.r)
   }
 
   private def elabStringExp(exp: Ast.StringExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StringExp(s) = exp
 
-    unify(exp.p, ty, MT.StringType)
-    AnnAst.LiteralExp(Values.StringValue(s))(p = exp.p)
+    unify(exp.r, ty, MT.StringType)
+    AnnAst.LiteralExp(Values.StringValue(s))(r = exp.r)
   }
 
   private def elabVarExp(exp: Ast.VarExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -634,17 +634,17 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Some(ts) =>
         val t = TU.instantiate(d, ts)
 
-        unify(exp.p, ty, t)
+        unify(exp.r, ty, t)
 
-        AnnAst.VarExp(nv.stringId)(typ = t, p = exp.p)
+        AnnAst.VarExp(nv.stringId)(typ = t, r = exp.r)
       case None =>
-        throw new UnboundVar(exp.p, nv.stringId)
+        throw new UnboundVar(exp.r, nv.stringId)
     }
   }
 
   private def elabRecordExp(exp: Ast.RecordExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.RecordExp(fields) = exp
-    checkUniqueFields(exp.p, fields.map(_.label))
+    checkUniqueFields(exp.r, fields.map(_.label))
 
     // elaborating fields
     val (fieldTypes, fields1) = fields
@@ -659,8 +659,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val baseType: T.RowType = T.RowEmptyType
     val recordType = MT.RecordType(fieldTypes.foldRight(baseType)(T.RowFieldType))
 
-    unify(exp.p, ty, recordType)
-    AnnAst.RecordExp(fields1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, recordType)
+    AnnAst.RecordExp(fields1)(typ = ty, r = exp.r)
   }
 
   private def elabTupleExp(exp: Ast.TupleExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -669,8 +669,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val elemTypes = elems.map(_ => freshTypeVar(d))
     val elems1 = (elems zip elemTypes).map { case (e, t) => elab(e, t, d, env) }
 
-    unify(exp.p, ty, MT.TupleType(elemTypes))
-    AnnAst.TupleExp(elems1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, MT.TupleType(elemTypes))
+    AnnAst.TupleExp(elems1)(typ = ty, r = exp.r)
   }
 
   private def elabFnExp(exp: Ast.FnExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -679,8 +679,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val fnType = freshTypeVar(d)
     val clauses1 = elabClauses(clauses, fnType, d, env)
 
-    unify(exp.p, ty, fnType)
-    AnnAst.FnExp(clauses1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, fnType)
+    AnnAst.FnExp(clauses1)(typ = ty, r = exp.r)
   }
 
   private def elabClauses(clauses: List[Ast.Clause], ty: T.Type, d: T.Depth, env: Env): List[AnnAst.Clause] = {
@@ -713,13 +713,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabNamedFnExp(exp: Ast.NamedFnExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.NamedFnExp(name, clauses) = exp
-    val funClause = Function(name.stringId, clauses)(sourceLocation = exp.p)
+    val funClause = Function(name.stringId, clauses)(r = exp.r)
     val (List(fun1: AnnAst.Fun), env1) = elabFuns(List(funClause), d, env)
     val tScheme = env1(name.stringId)
     val t = TU.instantiate(d, tScheme)
 
-    unify(exp.p, ty, t)
-    AnnAst.NamedFnExp(name.stringId, fun1.clauses)(typ = fun1.typ, p = exp.p)
+    unify(exp.r, ty, t)
+    AnnAst.NamedFnExp(name.stringId, fun1.clauses)(typ = fun1.typ, r = exp.r)
   }
 
   private def elabListExp(exp: Ast.ListExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -728,15 +728,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val elemType = freshTypeVar(d)
     val elems1 = elems.map(elab(_, elemType, d, env))
 
-    unify(exp.p, ty, MT.ListType(elemType))
-    AnnAst.ListExp(elems1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, MT.ListType(elemType))
+    AnnAst.ListExp(elems1)(typ = ty, r = exp.r)
   }
 
   private def elabBin(exp: Ast.Bin, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.Bin(elems) = exp
     val elems1 = elems.map(elabBinElement(_, d, env))
-    unify(exp.p, ty, MT.BinaryType)
-    AnnAst.BinExp(elems1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, MT.BinaryType)
+    AnnAst.BinExp(elems1)(typ = ty, r = exp.r)
   }
 
   private def elabBinElement(elem: Ast.BinElement, d: T.Depth, env: Env): AnnAst.BinElement = {
@@ -772,8 +772,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val h1 = elab(h, elemType, d, env)
     val t1 = elab(t, listType, d, env)
 
-    unify(exp.p, ty, listType)
-    AnnAst.ConsExp(h1, t1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, listType)
+    AnnAst.ConsExp(h1, t1)(typ = ty, r = exp.r)
   }
 
   private def elabEnumConExp(exp: Ast.EnumConExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -783,7 +783,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(ed) => ed
-      case None     => throw new UnknownEnum(exp.p, nName.stringId)
+      case None     => throw new UnknownEnum(exp.r, nName.stringId)
     }
     val sub: Map[String, T.Type] =
       enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
@@ -795,7 +795,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val enumCon = enumDef.cons.find(con => con.name == cName && con.argTypes.size == arity) match {
       case Some(ec) => ec
-      case None     => throw new UnknownEnumCon(exp.p, s"$cName/$arity")
+      case None     => throw new UnknownEnumCon(exp.r, s"$cName/$arity")
     }
 
     val args1 = for ((arg, argType) <- args.zip(enumCon.argTypes)) yield {
@@ -804,13 +804,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       elab(arg, eContentType, d, env)
     }
 
-    unify(exp.p, ty, eNamedType)
-    AnnAst.EnumConstructorExp(eName.stringId, cName, args1)(typ = ty, p = exp.p)
+    unify(exp.r, ty, eNamedType)
+    AnnAst.EnumConstructorExp(eName.stringId, cName, args1)(typ = ty, r = exp.r)
   }
 
   private def elabBlockExp(exp: Ast.BlockExpr, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val body1 = elabBody(exp.body, ty, d, env)
-    AnnAst.BlockExp(body1)(p = exp.p)
+    AnnAst.BlockExp(body1)(r = exp.r)
   }
 
   private def createTypeSchema(d: T.Depth)(fun: Function): ST.TypeSchema = {
@@ -840,7 +840,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val funs1: List[AnnAst.Fun] = (funs zip funTypes).map {
       case (fun, funType) =>
         val clauses1 = elabClauses(fun.clauses, funType, d, envWithFuns)
-        AnnAst.Fun(fun.name, clauses1, funType)(fun.sourceLocation)
+        AnnAst.Fun(fun.name, clauses1, funType)(fun.r)
     }
 
     // now the elaborated types are generalized back for future use
@@ -868,7 +868,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.WildPat() = p
 
-    (AnnAst.WildPat()(typ = null, p = p.p), env, penv)
+    (AnnAst.WildPat()(typ = null, r = p.r), env, penv)
   }
 
   private def elabVarPat(
@@ -884,10 +884,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     if (penv(v)) {
       val t1 = TU.instantiate(d, env(v))
       val t2 = TU.instantiate(d, ts)
-      unify(p.p, t1, t2)
-      (AnnAst.VarPat(v)(typ = null, p = p.p), env, penv)
+      unify(p.r, t1, t2)
+      (AnnAst.VarPat(v)(typ = null, r = p.r), env, penv)
     } else {
-      (AnnAst.VarPat(v)(typ = null, p = p.p), env + (v -> ts), penv + v)
+      (AnnAst.VarPat(v)(typ = null, r = p.r), env + (v -> ts), penv + v)
     }
   }
 
@@ -905,7 +905,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val (pp1, env1, penv1) = elpat(p1, t, d, env, penv, gen)
     val (pp2, env2, penv2) = elpat(p2, t, d, env1, penv1, gen)
 
-    (AnnAst.AndPat(pp1, pp2)(typ = null, p = p.p), env2, penv2)
+    (AnnAst.AndPat(pp1, pp2)(typ = null, r = p.r), env2, penv2)
   }
 
   private def elabTuplePat(
@@ -921,7 +921,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val pat2Type: List[(Ast.Pat, T.Type)] = pats.map(p => (p, freshTypeVar(d)))
 
-    unify(p.p, t, MT.TupleType(pat2Type.map(_._2)))
+    unify(p.r, t, MT.TupleType(pat2Type.map(_._2)))
 
     var envAcc = env
     var penvAcc = penv
@@ -931,7 +931,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penvAcc = penv1
       p1
     }
-    (AnnAst.TuplePat(pats1)(null, p = p.p), envAcc, penvAcc)
+    (AnnAst.TuplePat(pats1)(null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabBoolPat(
@@ -944,8 +944,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.BoolPat(b) = p
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.BoolType)
-    (AnnAst.LiteralPat(Values.BooleanValue(b))(p = p.p), env, penv)
+    unify(p.r, t, MT.BoolType)
+    (AnnAst.LiteralPat(Values.BooleanValue(b))(r = p.r), env, penv)
   }
 
   private def elabNumberPat(
@@ -958,8 +958,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.NumberPat(b) = p
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.IntType)
-    (AnnAst.LiteralPat(Values.IntegerValue(b))(p = p.p), env, penv)
+    unify(p.r, t, MT.IntType)
+    (AnnAst.LiteralPat(Values.IntegerValue(b))(r = p.r), env, penv)
   }
 
   private def elabStringPat(
@@ -972,8 +972,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.StringPat(b) = p
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.StringType)
-    (AnnAst.LiteralPat(Values.StringValue(b))(p = p.p), env, penv)
+    unify(p.r, t, MT.StringType)
+    (AnnAst.LiteralPat(Values.StringValue(b))(r = p.r), env, penv)
   }
 
   private def elabListPat(
@@ -988,7 +988,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t = TU.instantiate(d, ts)
     val elemType = freshTypeVar(d)
 
-    unify(p.p, t, MT.ListType(elemType))
+    unify(p.r, t, MT.ListType(elemType))
 
     var envAcc = env
     var penvAcc = penv
@@ -999,7 +999,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (AnnAst.ListPat(pats1)(typ = null, p = p.p), envAcc, penvAcc)
+    (AnnAst.ListPat(pats1)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabBinPat(
@@ -1012,7 +1012,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.BinPat(elems) = p
     val t = TU.instantiate(d, ts)
-    unify(p.p, t, MT.BinaryType)
+    unify(p.r, t, MT.BinaryType)
 
     var envAcc = env
     var penvAcc = penv
@@ -1024,7 +1024,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       elem1
     }
 
-    (AnnAst.BinPat(elems1)(typ = null, p = p.p), envAcc, penvAcc)
+    (AnnAst.BinPat(elems1)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabBinElementPat(
@@ -1071,11 +1071,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t = TU.instantiate(d, ts)
     val elemType = freshTypeVar(d)
 
-    unify(p.p, t, MT.ListType(elemType))
+    unify(p.r, t, MT.ListType(elemType))
 
     val (hPat1, env1, penv1) = elpat(hPat, elemType, d, env, penv, gen)
     val (tPat1, env2, penv2) = elpat(tPat, MT.ListType(elemType), d, env1, penv1, gen)
-    (AnnAst.ConsPat(hPat1, tPat1)(typ = null, p = p.p), env2, penv2)
+    (AnnAst.ConsPat(hPat1, tPat1)(typ = null, r = p.r), env2, penv2)
   }
 
   private def elabRecordPat(
@@ -1087,7 +1087,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.RecordPat(fieldPats) = p
-    checkUniqueFields(p.p, fieldPats.map(_.label))
+    checkUniqueFields(p.r, fieldPats.map(_.label))
 
     val t = TU.instantiate(d, ts)
 
@@ -1098,7 +1098,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rowType = labelPatTypes.foldRight(baseType) {
       case ((label, _, fieldType), acc) => T.RowFieldType(T.Field(label, fieldType), acc)
     }
-    unify(p.p, t, MT.RecordType(rowType))
+    unify(p.r, t, MT.RecordType(rowType))
 
     var envAcc = env
     var penvAcc = penv
@@ -1109,7 +1109,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(l, p1)
     }
 
-    (AnnAst.RecordPat(fields)(typ = null, p = p.p), envAcc, penvAcc)
+    (AnnAst.RecordPat(fields)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(
@@ -1127,18 +1127,18 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(definition) => definition
-      case None             => throw new UnknownEnum(p.p, nName.stringId)
+      case None             => throw new UnknownEnum(p.r, nName.stringId)
     }
     val sub = enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val typeConParams = enumDef.params.map(p => sub(p.name))
     val namedType = MT.NamedType(enumDef.name, typeConParams)
     val eNamedType = expander.expandType(namedType)
-    unify(p.p, t, eNamedType)
+    unify(p.r, t, eNamedType)
 
     val arity = pats.size
     val enumCon = enumDef.cons.find(con => con.name == cName && con.argTypes.size == arity) match {
       case Some(ec) => ec
-      case None     => throw new UnknownEnumCon(p.p, s"$cName/$arity")
+      case None     => throw new UnknownEnumCon(p.r, s"$cName/$arity")
     }
     var envAcc = env
     var penvAcc = penv
@@ -1151,7 +1151,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (AnnAst.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, p = p.p), envAcc, penvAcc)
+    (AnnAst.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabStructPat(
@@ -1163,10 +1163,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.StructPat(name, fields) = p
-    val structDef = getStructDef(p.p, name)
+    val structDef = getStructDef(p.r, name)
     val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
 
-    checkUniqueFields(p.p, fields.map(_.label))
+    checkUniqueFields(p.r, fields.map(_.label))
     checkStructFields(fields, structDef)
 
     val t = TU.instantiate(d, ts)
@@ -1180,7 +1180,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         MT.MessageType
     }
 
-    unify(p.p, t, expType)
+    unify(p.r, t, expType)
 
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     var envAcc = env
@@ -1194,7 +1194,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(field.label, pat1)
     }
 
-    (AnnAst.StructPat(name, fields1)(typ = null, p = p.p), envAcc, penvAcc)
+    (AnnAst.StructPat(name, fields1)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---
@@ -1215,12 +1215,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         new TypePrinter2(vars, None).printScheme(specScheme)
 
       if (specNormString != elabNormString) {
-        throw new SpecError(spec.p, fName, specNormString, elabNormString)
+        throw new SpecError(spec.r, fName, specNormString, elabNormString)
       }
     }
   }
 
-  private def checkUniqueFields(pos: Pos.P, fields: List[String]): Unit = {
+  private def checkUniqueFields(pos: Doc.Range, fields: List[String]): Unit = {
     val uniqueIds = fields.distinct
     if (fields != uniqueIds) {
       val duplicateIds = fields.groupBy(v => v).filter(_._2.size > 1).keys.toList.sorted
@@ -1232,11 +1232,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val structFields = structDef.fields.map(_.label).toSet
     for (f <- usedFields) {
       if (!structFields(f.label))
-        throw new UnknownStructField(f.p, structDef.name, f.label)
+        throw new UnknownStructField(f.r, structDef.name, f.label)
     }
   }
 
-  private def checkStructInit(pos: Pos.P, fields: List[Ast.Field[_]], structDef: Ast.StructDef): Unit = {
+  private def checkStructInit(pos: Doc.Range, fields: List[Ast.Field[_]], structDef: Ast.StructDef): Unit = {
     val initialized = fields.map(_.label).toSet
     for (f <- structDef.fields) {
       if (!initialized(f.label))
@@ -1263,7 +1263,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         else eName
     }
 
-  private def getStructDef(pos: Pos.P, name: String): Ast.StructDef =
+  private def getStructDef(pos: Doc.Range, name: String): Ast.StructDef =
     program.structDefs.find(_.name == name) match {
       case Some(structDef) => structDef
       case None            => throw new UnknownStruct(pos, name)

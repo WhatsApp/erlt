@@ -16,18 +16,18 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.{Pos, PositionedError}
+import com.whatsapp.sterlang.{Doc, RangedError}
 
-sealed trait PatternWarning extends PositionedError
+sealed trait PatternWarning extends RangedError
 
-final class MissingPatternsWarning(node: Pos.P, confident: Boolean, exampleClause: PatternMatrix.Vector)
-    extends PositionedError(
-      pos = node,
+final class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: PatternMatrix.Vector)
+    extends RangedError(
+      range = range,
       title = (if (confident) "" else "Possibly ") + "Missing Patterns",
       description = Some(s"missing: ${exampleClause.map(Pattern.show).mkString(sep = ", ")}"),
     )
     with PatternWarning
 
-final class UselessPatternWarning(clause: Pos.P)
-    extends PositionedError(pos = clause, title = "Useless Pattern", description = None)
+final class UselessPatternWarning(range: Doc.Range)
+    extends RangedError(range = range, title = "Useless Pattern", description = None)
     with PatternWarning

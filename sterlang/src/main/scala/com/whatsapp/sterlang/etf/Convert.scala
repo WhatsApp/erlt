@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.etf
 
-import com.whatsapp.sterlang.{Ast, ParseError, Pos, UnsupportedSyntaxError}
+import com.whatsapp.sterlang.{Ast, ParseError, Doc, UnsupportedSyntaxError}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Patterns, Types}
 
 object Convert {
@@ -126,7 +126,7 @@ object Convert {
       case Ast.WildPat() =>
       // we do not type "stack traces" yet
       case _ =>
-        throw new UnsupportedSyntaxError(stackTracePat.p)
+        throw new UnsupportedSyntaxError(stackTracePat.r)
     }
     val exnPat = convertPattern(exn)
     Ast.Rule(exnPat, catchClause.guards.map(convertGuard), convertBody(catchClause.body))
@@ -147,7 +147,7 @@ object Convert {
         Ast.ValDef(convertPattern(pat), convertExpr(exp))
       case e =>
         val exp = convertExpr(e)
-        Ast.ValDef(Ast.WildPat()(exp.p), exp)
+        Ast.ValDef(Ast.WildPat()(exp.r), exp)
     }
 
   private def convertPattern(p: Patterns.Pattern): Ast.Pat =
@@ -191,10 +191,10 @@ object Convert {
         val pats = assocs map { elem =>
           elem.key match {
             case Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) =>
-              Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.p)
+              Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.r)
             case other =>
               // we support only map pattern for polymorphic records
-              throw new UnsupportedSyntaxError(other.p)
+              throw new UnsupportedSyntaxError(other.r)
           }
         }
         Ast.RecordPat(pats)(p)
@@ -252,7 +252,7 @@ object Convert {
       case Exprs.MapUpdate(p, exp, entries) =>
         val recExp = convertExpr(exp)
         // this is not present in Erlang. Approximating
-        val updateRange = Pos.SP(recExp.p.asInstanceOf[Pos.SP].end, p.end)
+        val updateRange = Doc.Range(recExp.r.end, p.end)
         Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(convertRecordField))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
@@ -376,14 +376,14 @@ object Convert {
         Ast.Field(label, convertExpr(e))(p)
       case _ =>
         // "wrong anon struct syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
+        throw new UnsupportedSyntaxError(assoc.r)
     }
 
   private def convertStructField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
-    Ast.Field(field.fieldName, convertExpr(field.value))(field.p)
+    Ast.Field(field.fieldName, convertExpr(field.value))(field.r)
 
   private def convertStructFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
-    Ast.Field(field.fieldName, convertPattern(field.pat))(field.p)
+    Ast.Field(field.fieldName, convertPattern(field.pat))(field.r)
 
   private def convertType(tp: Types.Type): Ast.Type =
     tp match {
@@ -400,7 +400,7 @@ object Convert {
         Ast.RecordType(assocs.map(convertKeyValueType))(p)
       case Types.OpenAssocMap(p, assocs, restType) =>
         // TODO
-        Ast.OpenRecordType(assocs.map(convertKeyValueType), Ast.WildTypeVar()(restType.p))(p)
+        Ast.OpenRecordType(assocs.map(convertKeyValueType), Ast.WildTypeVar()(restType.r))(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
@@ -451,7 +451,7 @@ object Convert {
         throw new UnsupportedSyntaxError(p)
       case _: Types.SingletonIntegerType =>
         // banned
-        throw new UnsupportedSyntaxError(tp.p)
+        throw new UnsupportedSyntaxError(tp.r)
     }
 
   private def convertEnumCon(tp: Types.Type): Ast.EnumCon =
@@ -459,7 +459,7 @@ object Convert {
       case Types.EnumCtr(p, name, params) =>
         Ast.EnumCon(name, params.map(convertType))(p)
       case _ =>
-        throw new UnsupportedSyntaxError(tp.p)
+        throw new UnsupportedSyntaxError(tp.r)
     }
 
   private def convertKeyValueType(assoc: Types.Assoc): Ast.Field[Ast.Type] =
@@ -468,6 +468,6 @@ object Convert {
         Ast.Field(field, convertType(v))(p)
       case _ =>
         // wrong "record syntax"
-        throw new UnsupportedSyntaxError(assoc.p)
+        throw new UnsupportedSyntaxError(assoc.r)
     }
 }

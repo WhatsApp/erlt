@@ -30,52 +30,50 @@ object AnnAst {
     * but every expression is annotated with its type.
     */
   trait Node extends Product {
-    val p: Pos.P
+    val r: Doc.Range
   }
 
   case class Field[A](label: String, value: A)
 
   sealed trait Exp extends Node {
-
-    /** The type of the expression. */
     val typ: Type
   }
 
   // TODO: variableName, enumName, conName etc. should all be classes and have a source location.
 
-  case class VarExp(name: String)(val typ: Type, val p: Pos.P) extends Exp
+  case class VarExp(name: String)(val typ: Type, val r: Doc.Range) extends Exp
 
   // Begin TODO: these can be elaborated to constructor applications
-  case class LiteralExp(value: Value)(val p: Pos.P) extends Exp {
+  case class LiteralExp(value: Value)(val r: Doc.Range) extends Exp {
     override val typ: Type = value.typ
   }
-  case class TupleExp(elements: List[Exp])(val typ: Type, val p: Pos.P) extends Exp
-  case class ListExp(elements: List[Exp])(val typ: Type, val p: Pos.P) extends Exp
-  case class BinExp(elements: List[BinElement])(val typ: Type, val p: Pos.P) extends Exp
-  case class ConsExp(head: Exp, tail: Exp)(val typ: Type, val p: Pos.P) extends Exp
+  case class TupleExp(elements: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ListExp(elements: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
+  case class BinExp(elements: List[BinElement])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ConsExp(head: Exp, tail: Exp)(val typ: Type, val r: Doc.Range) extends Exp
   // End TODO
 
-  case class UOpExp(operator: UOp, argument: Exp)(val typ: Type, val p: Pos.P) extends Exp
-  case class BinOpExp(operator: BinOp, argument1: Exp, argument2: Exp)(val typ: Type, val p: Pos.P) extends Exp
-  case class CaseExp(selector: Exp, branches: List[Branch])(val typ: Type, val p: Pos.P) extends Exp
-  case class IfExp(bodies: List[Body])(val typ: Type, val p: Pos.P) extends Exp
-  case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val p: Pos.P) extends Exp
-  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val p: Pos.P) extends Exp
-  case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val p: Pos.P) extends Exp
+  case class UOpExp(operator: UOp, argument: Exp)(val typ: Type, val r: Doc.Range) extends Exp
+  case class BinOpExp(operator: BinOp, argument1: Exp, argument2: Exp)(val typ: Type, val r: Doc.Range) extends Exp
+  case class CaseExp(selector: Exp, branches: List[Branch])(val typ: Type, val r: Doc.Range) extends Exp
+  case class IfExp(bodies: List[Body])(val typ: Type, val r: Doc.Range) extends Exp
+  case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
+  case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
   case class StructUpdate(rec: Exp, structName: String, fields: List[Field[Exp]])(
       val typ: Type,
-      val p: Pos.P,
+      val r: Doc.Range,
   ) extends Exp
-  case class StructSelect(rec: Exp, structName: String, fieldName: String)(val typ: Type, val p: Pos.P) extends Exp
+  case class StructSelect(rec: Exp, structName: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
-      val p: Pos.P,
+      val r: Doc.Range,
   ) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryBranches: List[Branch], catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
-      val p: Pos.P,
+      val r: Doc.Range,
   ) extends Exp
-  case class ReceiveExp(branches: List[Branch], after: Option[AfterBody])(val typ: Type, val p: Pos.P) extends Exp
+  case class ReceiveExp(branches: List[Branch], after: Option[AfterBody])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class AfterBody(timeout: Exp, body: Body)
 
@@ -86,34 +84,34 @@ object AnnAst {
 
   case class BinElement(expr: Exp, size: Option[Exp], binElemType: Option[BinElemType])
 
-  case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val p: Pos.P) extends Exp
-  case class BlockExp(body: Body)(val p: Pos.P) extends Exp {
+  case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val r: Doc.Range) extends Exp
+  case class BlockExp(body: Body)(val r: Doc.Range) extends Exp {
     override val typ: Type = body.typ
   }
 
-  case class FnExp(clauses: List[Clause])(val typ: Type, val p: Pos.P) extends Exp
-  case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val p: Pos.P) extends Exp
-  case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val p: Pos.P) extends Exp
+  case class FnExp(clauses: List[Clause])(val typ: Type, val r: Doc.Range) extends Exp
+  case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val r: Doc.Range) extends Exp
+  case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
 
-  case class RecordExp(fields: List[Field[Exp]])(val typ: Type, val p: Pos.P) extends Exp
-  case class RecordSelectionExp(record: Exp, label: String)(val typ: Type, val p: Pos.P) extends Exp
-  case class RecordUpdateExp(record: Exp, fields: List[Field[Exp]])(val typ: Type, val p: Pos.P) extends Exp
+  case class RecordExp(fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class RecordSelectionExp(record: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class RecordUpdateExp(record: Exp, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class EnumConstructorExp(enum: String, constructor: String, arguments: List[Exp])(
       val typ: Type,
-      val p: Pos.P,
+      val r: Doc.Range,
   ) extends Exp
 
   case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type) extends Node {
-    override val p: Pos.P = Pos.merge(pat.p, value.p)
+    override val r: Doc.Range = Doc.merge(pat.r, value.r)
   }
   case class Body(prelude: List[ValDef], main: ValDef, typ: Type) extends Node {
-    override val p: Pos.P = {
+    override val r: Doc.Range = {
       val start = if (prelude.isEmpty) main else prelude.head
-      Pos.merge(start.p, main.p)
+      Doc.merge(start.r, main.r)
     }
   }
-  case class Fun(name: String, clauses: List[Clause], typ: Type)(val p: Pos.P) extends Node
+  case class Fun(name: String, clauses: List[Clause], typ: Type)(val r: Doc.Range) extends Node
 
   case class Clause(pats: List[Pat], guards: List[Guard], body: Body)
   case class Branch(pat: Pat, guards: List[Guard], body: Body)
@@ -123,26 +121,26 @@ object AnnAst {
     val typ: Type
   }
 
-  case class WildPat()(val typ: Type, val p: Pos.P) extends Pat
-  case class VarPat(name: String)(val typ: Type, val p: Pos.P) extends Pat
-  case class AndPat(p1: Pat, p2: Pat)(val typ: Type, val p: Pos.P) extends Pat
+  case class WildPat()(val typ: Type, val r: Doc.Range) extends Pat
+  case class VarPat(name: String)(val typ: Type, val r: Doc.Range) extends Pat
+  case class AndPat(p1: Pat, p2: Pat)(val typ: Type, val r: Doc.Range) extends Pat
 
-  case class LiteralPat(value: Value)(val p: Pos.P) extends Pat {
+  case class LiteralPat(value: Value)(val r: Doc.Range) extends Pat {
     override val typ: Type = value.typ
   }
-  case class TuplePat(elements: List[Pat])(val typ: Type, val p: Pos.P) extends Pat
-  case class ListPat(elements: List[Pat])(val typ: Type, val p: Pos.P) extends Pat
-  case class BinPat(elements: List[BinElementPat])(val typ: Type, val p: Pos.P) extends Pat
-  case class RecordPat(fields: List[Field[Pat]])(val typ: Type, val p: Pos.P) extends Pat
+  case class TuplePat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
+  case class ListPat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
+  case class BinPat(elements: List[BinElementPat])(val typ: Type, val r: Doc.Range) extends Pat
+  case class RecordPat(fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
 
-  case class ConsPat(head: Pat, tail: Pat)(val typ: Type, val p: Pos.P) extends Pat
+  case class ConsPat(head: Pat, tail: Pat)(val typ: Type, val r: Doc.Range) extends Pat
   case class EnumConstructorPat(enum: String, constructor: String, arguments: List[Pat])(
       val typ: Type,
-      val p: Pos.P,
+      val r: Doc.Range,
   ) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
-  case class StructPat(structName: String, fields: List[Field[Pat]])(val typ: Type, val p: Pos.P) extends Pat
+  case class StructPat(structName: String, fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
 
   /** Returns an iterator over all immediate children nodes. This is empty for leaf nodes. */
   def children(node: Node): Iterator[Node] = {

@@ -71,7 +71,7 @@ object SterlangTestUtil {
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
       false
     } catch {
-      case _: PositionedError =>
+      case _: RangedError =>
         true
     }
   }
@@ -87,7 +87,7 @@ object SterlangTestUtil {
       new PatternChecker(vars, context, program).check(annotatedFunctions)
       false
     } catch {
-      case _: PositionedError =>
+      case _: RangedError =>
         true
     }
   }

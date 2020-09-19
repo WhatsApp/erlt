@@ -101,8 +101,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
 
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         val location =
-          if (clause.patterns.isEmpty) Pos.NP
-          else Pos.merge(clause.patterns.head.p, clause.patterns.last.p)
+          if (clause.patterns.isEmpty) Doc.ZRange
+          else Doc.merge(clause.patterns.head.r, clause.patterns.last.r)
         warnings += new UselessPatternWarning(location)
       }
 
@@ -116,7 +116,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case None => // exhaustive
       case Some(clause) =>
         val confident = clauses.forall(countsTowardExhaustiveness)
-        warnings += new MissingPatternsWarning(node.p, confident, clause)
+        warnings += new MissingPatternsWarning(node.r, confident, clause)
     }
   }
 

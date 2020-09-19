@@ -18,7 +18,7 @@ package com.whatsapp.sterlang.test
 
 import java.io.StringWriter
 
-import com.whatsapp.sterlang.Pos.NP
+import com.whatsapp.sterlang.Doc.ZRange
 import com.whatsapp.sterlang._
 
 class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
@@ -53,7 +53,7 @@ class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
           |id(X) -> X.
           |""".stripMargin
       val expected =
-        new SpecError(NP, "call_id/1", "fun((A) -> B)", "fun((A) -> A)")
+        new SpecError(ZRange, "call_id/1", "fun((A) -> B)", "fun((A) -> A)")
       testSpecError(input, expected)
     }
   }

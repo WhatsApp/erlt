@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.Pos
+import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.etf.ETerm
 import com.whatsapp.sterlang.forms.Types._
 import com.whatsapp.sterlang.forms.Exprs._
@@ -50,15 +50,21 @@ object Forms {
   case class ImportType(module: String, ids: List[IdWithArity]) extends Form
   case class Compile(options: ETerm) extends Form
   case class File(file: String) extends Form
-  case class StructDecl(p: Pos.SP, name: String, fields: List[StructFieldDecl], kind: StructKind) extends Form
-  case class TypeDecl(p: Pos.SP, typeAttr: TypeAttr, typeName: String, params: List[TypeVariable], abstractType: Type)
-      extends Form
-  case class FunctionSpec(p: Pos.SP, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
-  case class FunctionDecl(p: Pos.SP, name: String, arity: Int, clauses: List[Clause]) extends Form
+  case class StructDecl(r: Doc.Range, name: String, fields: List[StructFieldDecl], kind: StructKind) extends Form
+  case class TypeDecl(
+      r: Doc.Range,
+      typeAttr: TypeAttr,
+      typeName: String,
+      params: List[TypeVariable],
+      abstractType: Type,
+  ) extends Form
+  case class FunctionSpec(r: Doc.Range, specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends Form
+  case class FunctionDecl(r: Doc.Range, name: String, arity: Int, clauses: List[Clause]) extends Form
   case object EOF extends Form
-  case class WildAttribute(p: Pos.SP, name: String) extends Form
-  case class Error(loc: Pos.Loc) extends Form
+  case class WildAttribute(r: Doc.Range, name: String) extends Form
+  case class Error(pos: Doc.Pos) extends Form
 
   sealed trait StructFieldDecl
-  case class StructFieldTyped(p: Pos.SP, name: String, initValue: Option[Exprs.Expr], tp: Type) extends StructFieldDecl
+  case class StructFieldTyped(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type)
+      extends StructFieldDecl
 }

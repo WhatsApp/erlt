@@ -3,7 +3,7 @@ package com.whatsapp.sterlang
 import com.whatsapp.sterlang.etf._
 
 package object forms {
-  def sp(term: ETerm): Pos.SP =
+  def r(term: ETerm): Doc.Range =
     term match {
       case ETuple(
             List(
@@ -11,13 +11,13 @@ package object forms {
               ETuple(List(ELong(line2), ELong(col2))),
             )
           ) =>
-        val loc1 = Pos.Loc(line1.toInt, col1.toInt)
-        val loc2 = Pos.Loc(line2.toInt, col2.toInt)
-        assert(loc1 != Pos.Loc(0, 0))
-        assert(loc2 != Pos.Loc(0, 0))
-        assert(loc1 != loc2)
-        Pos.SP(loc1, loc2)
+        val pos1 = Doc.Pos(line1.toInt, col1.toInt)
+        val pos2 = Doc.Pos(line2.toInt, col2.toInt)
+        assert(pos1 != Doc.Pos(0, 0))
+        assert(pos2 != Doc.Pos(0, 0))
+        assert(pos1 != pos2)
+        Doc.Range(pos1, pos2)
       case _ =>
-        sys.error(s"cannot parse location: $term")
+        sys.error(s"cannot parse position: $term")
     }
 }
