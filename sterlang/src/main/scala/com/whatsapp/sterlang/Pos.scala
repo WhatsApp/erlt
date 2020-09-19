@@ -99,9 +99,4 @@ object Pos {
     val end = if (pos1.end < pos2.end) pos2.end else pos1.end
     SP(start, end)
   }
-
-  /** An object that has a source location. */
-  trait HasSourceLocation {
-    val sourceLocation: P
-  }
 }

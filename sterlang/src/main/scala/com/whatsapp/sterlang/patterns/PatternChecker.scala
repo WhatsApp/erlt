@@ -16,7 +16,6 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang._
 
 import scala.collection.mutable.ListBuffer
@@ -88,7 +87,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     * @throws UselessPatternWarning if there is a clause that can never match
     */
   private def checkClauses(
-      node: HasSourceLocation,
+      node: AnnAst.Node,
       clauses: List[ClauseHead],
       warnings: ListBuffer[PatternWarning],
   ): Unit = {
@@ -103,7 +102,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
         val location =
           if (clause.patterns.isEmpty) Pos.NP
-          else Pos.merge(clause.patterns.head.sourceLocation, clause.patterns.last.sourceLocation)
+          else Pos.merge(clause.patterns.head.p, clause.patterns.last.p)
         warnings += new UselessPatternWarning(location)
       }
 
@@ -117,7 +116,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case None => // exhaustive
       case Some(clause) =>
         val confident = clauses.forall(countsTowardExhaustiveness)
-        warnings += new MissingPatternsWarning(node.sourceLocation, confident, clause)
+        warnings += new MissingPatternsWarning(node.p, confident, clause)
     }
   }
 
@@ -129,7 +128,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     * @throws UselessPatternWarning if there is a clause that can never match
     */
   private def checkRedundancy(
-      node: HasSourceLocation,
+      node: AnnAst.Node,
       clauses: List[ClauseHead],
       warnings: ListBuffer[PatternWarning],
   ) = {
