@@ -16,68 +16,67 @@
 
 package com.whatsapp.sterlang
 
-object SyntaxUtil {
-  val S = Ast
-  val A = Absyn
+object AstUtil {
+  import Ast._
 
-  private def collectPatVars(pat: S.Pat): List[String] =
+  private def collectPatVars(pat: Pat): List[String] =
     pat match {
-      case S.WildPat() =>
+      case WildPat() =>
         List.empty
-      case S.BoolPat(_) =>
+      case BoolPat(_) =>
         List.empty
-      case S.NumberPat(_) =>
+      case NumberPat(_) =>
         List.empty
-      case S.StringPat(_) =>
+      case StringPat(_) =>
         List.empty
-      case S.VarPat(v) =>
+      case VarPat(v) =>
         List(v)
-      case S.TuplePat(pats) =>
+      case TuplePat(pats) =>
         pats.flatMap(collectPatVars)
-      case S.RecordPat(fields) =>
+      case RecordPat(fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
-      case S.AndPat(p1, p2) =>
+      case AndPat(p1, p2) =>
         collectPatVars(p1) ++ collectPatVars(p2)
-      case S.EnumCtrPat(_, _, pats) =>
+      case EnumCtrPat(_, _, pats) =>
         pats.flatMap(collectPatVars)
-      case S.ListPat(pats) =>
+      case ListPat(pats) =>
         pats.flatMap(collectPatVars)
-      case S.ConsPat(hPat, tPat) =>
+      case ConsPat(hPat, tPat) =>
         collectPatVars(hPat) ++ collectPatVars(tPat)
-      case S.BinPat(elems) =>
+      case BinPat(elems) =>
         elems.flatMap(elem => collectPatVars(elem.pat))
-      case S.StructPat(_, fields) =>
+      case StructPat(_, fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
     }
 
-  def collectNamedTypeVars(t: S.Type): List[String] =
+  def collectNamedTypeVars(t: Type): List[String] =
     t match {
-      case S.TypeVar(n) =>
+      case TypeVar(n) =>
         List(n)
-      case S.WildTypeVar() =>
+      case WildTypeVar() =>
         List.empty
-      case S.UserType(_, params) =>
+      case UserType(_, params) =>
         params.flatMap(collectNamedTypeVars)
-      case S.TupleType(params) =>
+      case TupleType(params) =>
         params.flatMap(collectNamedTypeVars)
-      case S.RecordType(fields) =>
+      case RecordType(fields) =>
         fields.map(_.value).flatMap(collectNamedTypeVars)
-      case S.OpenRecordType(fields, _) =>
+      case OpenRecordType(fields, _) =>
         fields.map(_.value).flatMap(collectNamedTypeVars)
-      case S.FunType(params, res) =>
+      case FunType(params, res) =>
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
-      case S.ListType(elemType) =>
+      case ListType(elemType) =>
         collectNamedTypeVars(elemType)
-      case S.StructType(_) =>
+      case StructType(_) =>
         List.empty
     }
 
   @scala.annotation.tailrec
   private def freeVars(
-      defs: List[S.ValDef],
-      valDef: S.ValDef,
+      defs: List[ValDef],
+      valDef: ValDef,
       env: Set[String],
       acc: Set[String],
       module: String,
@@ -86,7 +85,7 @@ object SyntaxUtil {
       case Nil =>
         val thisFreeVars = freeVars(valDef.exp, module) -- env
         acc ++ thisFreeVars
-      case S.ValDef(pat, exp) :: defs1 =>
+      case ValDef(pat, exp) :: defs1 =>
         val thisFreeVars = freeVars(exp, module) -- env
         val deltaEnv = collectPatVars(pat)
         val env1 = env ++ deltaEnv
@@ -94,58 +93,58 @@ object SyntaxUtil {
         freeVars(defs1, valDef, env1, acc1, module)
     }
 
-  private def freeVars(body: S.Body, module: String): Set[String] = {
+  private def freeVars(body: Body, module: String): Set[String] = {
     freeVars(body.prelude, body.main, Set.empty, Set.empty, module)
   }
 
-  private def freeVars(expr: S.Exp, m: String): Set[String] =
+  private def freeVars(expr: Exp, m: String): Set[String] =
     expr match {
-      case S.RecordUpdateExp(exp, delta) =>
+      case RecordUpdateExp(exp, delta) =>
         freeVars(exp, m) ++ freeVars(delta, m)
-      case S.BinOpExp(binOp, exp1, exp2) =>
+      case BinOpExp(binOp, exp1, exp2) =>
         freeVars(exp1, m) ++ freeVars(exp2, m)
-      case S.UOpExp(uOp, exp) =>
+      case UOpExp(uOp, exp) =>
         freeVars(exp, m)
-      case S.AppExp(head, args) =>
+      case AppExp(head, args) =>
         freeVars(head, m) ++ args.flatMap(freeVars(_, m))
-      case S.SelExp(exp, label) =>
+      case SelExp(exp, label) =>
         freeVars(exp, m)
-      case S.BoolExp(bool) =>
+      case BoolExp(bool) =>
         Set.empty
-      case S.NumberExp(n) =>
+      case NumberExp(n) =>
         Set.empty
-      case S.CharExp(_) =>
+      case CharExp(_) =>
         Set.empty
-      case S.StringExp(s) =>
+      case StringExp(s) =>
         Set.empty
-      case S.VarExp(localVar: S.LocalVarName) =>
+      case VarExp(localVar: LocalVarName) =>
         Set(localVar.stringId)
-      case S.VarExp(localFun: S.LocalFunName) =>
+      case VarExp(localFun: LocalFunName) =>
         Set(localFun.stringId)
-      case S.VarExp(remote: S.RemoteFunName) =>
+      case VarExp(remote: RemoteFunName) =>
         if (remote.module == m)
-          Set(new S.LocalFunName(remote.name, remote.arity).stringId)
+          Set(new LocalFunName(remote.name, remote.arity).stringId)
         else
           Set.empty
-      case S.RecordExp(fields) =>
+      case RecordExp(fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
-      case S.StructCreate(_, fields) =>
+      case StructCreate(_, fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
-      case S.StructUpdate(struct, _, fields) =>
+      case StructUpdate(struct, _, fields) =>
         freeVars(struct, m) ++ fields.flatMap(f => freeVars(f.value, m))
-      case S.StructSelect(struct, _, _) =>
+      case StructSelect(struct, _, _) =>
         freeVars(struct, m)
-      case S.TupleExp(elems) =>
+      case TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
-      case S.EnumConExp(enumName, dataCon, args) =>
+      case EnumConExp(enumName, dataCon, args) =>
         args.flatMap(freeVars(_, m)).toSet
-      case S.ListExp(elems) =>
+      case ListExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
-      case S.Bin(elems) =>
+      case Bin(elems) =>
         elems.flatMap(elem => freeVars(elem.expr, m)).toSet
-      case S.ConsExp(h, t) =>
+      case ConsExp(h, t) =>
         freeVars(h, m) ++ freeVars(t, m)
-      case S.CaseExp(selector, rules) =>
+      case CaseExp(selector, rules) =>
         val rulesVars = rules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
@@ -153,39 +152,39 @@ object SyntaxUtil {
         }
         val selectorVars = freeVars(selector, m)
         selectorVars ++ rulesVars
-      case S.IfExp(ifClauses) =>
+      case IfExp(ifClauses) =>
         ifClauses.flatMap { ifClause =>
           freeVars(ifClause.exp, m)
         }.toSet
-      case S.Comprehension(elem, qualifiers) =>
+      case Comprehension(elem, qualifiers) =>
         var vars: Set[String] = Set.empty
         var patVars: Set[String] = Set.empty
         qualifiers.foreach {
-          case S.Filter(exp) =>
+          case Filter(exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
-          case S.Generator(pat, exp) =>
+          case Generator(pat, exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
             patVars ++= collectPatVars(pat)
-          case S.BGenerator(pat, exp) =>
+          case BGenerator(pat, exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
             patVars ++= collectPatVars(pat)
         }
         freeVars(elem, m) -- patVars
-      case S.BComprehension(elem, qualifiers) =>
+      case BComprehension(elem, qualifiers) =>
         var vars: Set[String] = Set.empty
         var patVars: Set[String] = Set.empty
         qualifiers.foreach {
-          case S.Filter(exp) =>
+          case Filter(exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
-          case S.Generator(pat, exp) =>
+          case Generator(pat, exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
             patVars ++= collectPatVars(pat)
-          case S.BGenerator(pat, exp) =>
+          case BGenerator(pat, exp) =>
             vars ++= (freeVars(exp, m) -- patVars)
             patVars ++= collectPatVars(pat)
         }
         freeVars(elem, m) -- patVars
-      case S.FnExp(clauses) =>
+      case FnExp(clauses) =>
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
@@ -193,7 +192,7 @@ object SyntaxUtil {
             bodyVars -- argVars
           }
           .reduce(_ ++ _)
-      case S.NamedFnExp(varName, clauses) =>
+      case NamedFnExp(varName, clauses) =>
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
@@ -201,9 +200,9 @@ object SyntaxUtil {
             bodyVars -- argVars
           }
           .reduce(_ ++ _) - varName.stringId
-      case S.BlockExpr(body) =>
+      case BlockExpr(body) =>
         freeVars(body, m)
-      case S.TryCatchExp(tryBody, catchRules, after) =>
+      case TryCatchExp(tryBody, catchRules, after) =>
         val tryBodyVars = freeVars(tryBody, m)
         val catchRulesVars = catchRules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
@@ -212,7 +211,7 @@ object SyntaxUtil {
         }
         val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
         tryBodyVars ++ catchRulesVars ++ afterVars
-      case S.TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
+      case TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
         val tryBodyVars = freeVars(tryBody, m)
         val tryRulesVars = tryRules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
@@ -227,7 +226,7 @@ object SyntaxUtil {
         val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
         tryBodyVars ++ tryRulesVars ++ catchRulesVars ++ afterVars
       //
-      case S.ReceiveExp(rules, after) =>
+      case ReceiveExp(rules, after) =>
         val rulesVars = rules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
@@ -235,12 +234,12 @@ object SyntaxUtil {
         }.toSet
         val afterVars =
           after
-            .map { case S.AfterBody(timeout, body) => freeVars(timeout, m) ++ freeVars(body, m) }
+            .map { case AfterBody(timeout, body) => freeVars(timeout, m) ++ freeVars(body, m) }
             .getOrElse(Set.empty)
         rulesVars ++ afterVars
     }
 
-  private def funFreeVars(fun: S.Fun, module: String): Set[String] = {
+  private def funFreeVars(fun: Fun, module: String): Set[String] = {
     fun.clauses
       .map { clause =>
         val funPatVars = clause.pats.flatMap(collectPatVars)
@@ -250,7 +249,7 @@ object SyntaxUtil {
       .reduce(_ ++ _)
   }
 
-  def buildSCC(funs: List[S.Fun], module: String): List[List[String]] = {
+  def buildSCC(funs: List[Fun], module: String): List[List[String]] = {
     if (funs.isEmpty) {
       return List()
     }
@@ -296,72 +295,72 @@ object SyntaxUtil {
         scc :: properSort(rest, usage)
     }
 
-  def moduleApi(module: String, program: S.Program): ModuleApi = {
+  def moduleApi(module: String, program: Program): ModuleApi = {
     val names =
       (program.enumDefs.map(_.name) ++ program.typeAliases.map(_.name) ++ program.opaques.map(_.name)).toSet
     val enumDefs1 = program.enumDefs.collect {
-      case S.EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
+      case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val cons1 = cons.map {
-          case S.EnumCon(cName, tps) =>
-            S.EnumCon(cName, tps.map(globalizeType(module, names)))(Pos.NP)
+          case EnumCon(cName, tps) =>
+            EnumCon(cName, tps.map(globalizeType(module, names)))(Pos.NP)
         }
-        S.EnumDef(name1, params, cons1)(Pos.NP)
+        EnumDef(name1, params, cons1)(Pos.NP)
     }
     val aliases1 = program.typeAliases.collect {
-      case S.TypeAlias(name, params, tp) if program.exportTypes((name, params.size)) =>
+      case TypeAlias(name, params, tp) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val tp1 = globalizeType(module, names)(tp)
-        S.TypeAlias(name1, params, tp1)(Pos.NP)
+        TypeAlias(name1, params, tp1)(Pos.NP)
     }
     val specs1 = program.specs.collect {
-      case S.Spec(n: S.LocalFunName, ft @ S.FunType(argTypes, resType)) if program.exports((n.name, n.arity)) =>
-        val name1 = new S.RemoteFunName(module, n.name, n.arity)
+      case Spec(n: LocalFunName, ft @ FunType(argTypes, resType)) if program.exports((n.name, n.arity)) =>
+        val name1 = new RemoteFunName(module, n.name, n.arity)
         val funType1 =
-          S.FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.p)
-        S.Spec(name1, funType1)(Pos.NP)
+          FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.p)
+        Spec(name1, funType1)(Pos.NP)
     }
     val opaques = program.opaques.collect {
-      case S.Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
-        S.TypeId(S.RemoteName(module, name), params.size)
+      case Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
+        TypeId(RemoteName(module, name), params.size)
     }
     ModuleApi(enumDefs1, aliases1, specs1, opaques)
   }
 
-  private def globalizeType(module: String, names: Set[String])(tp: S.Type): S.Type =
+  private def globalizeType(module: String, names: Set[String])(tp: Type): Type =
     tp match {
-      case S.TypeVar(_) =>
+      case TypeVar(_) =>
         tp
-      case S.WildTypeVar() =>
+      case WildTypeVar() =>
         tp
-      case S.TupleType(params) =>
-        S.TupleType(params.map(globalizeType(module, names)))(tp.p)
-      case S.RecordType(fields) =>
-        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value))(f.p) }
-        S.RecordType(fields1)(tp.p)
-      case S.OpenRecordType(fields, rt) =>
-        val fields1 = fields.map { f => S.Field(f.label, globalizeType(module, names)(f.value))(f.p) }
-        S.OpenRecordType(fields1, rt)(tp.p)
-      case S.FunType(argTypes, resType) =>
-        S.FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.p)
-      case S.ListType(elemType) =>
-        S.ListType(globalizeType(module, names)(elemType))(tp.p)
-      case S.UserType(name, params) =>
+      case TupleType(params) =>
+        TupleType(params.map(globalizeType(module, names)))(tp.p)
+      case RecordType(fields) =>
+        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.p) }
+        RecordType(fields1)(tp.p)
+      case OpenRecordType(fields, rt) =>
+        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.p) }
+        OpenRecordType(fields1, rt)(tp.p)
+      case FunType(argTypes, resType) =>
+        FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.p)
+      case ListType(elemType) =>
+        ListType(globalizeType(module, names)(elemType))(tp.p)
+      case UserType(name, params) =>
         val name1 = name match {
-          case S.LocalName(name) =>
+          case LocalName(name) =>
             if (names(name))
-              S.RemoteName(module, name)
+              RemoteName(module, name)
             else
-              S.LocalName(name)
+              LocalName(name)
           case _ => name
         }
-        S.UserType(name1, params.map(globalizeType(module, names)))(tp.p)
-      case S.StructType(_) =>
+        UserType(name1, params.map(globalizeType(module, names)))(tp.p)
+      case StructType(_) =>
         tp
     }
 
-  def normalizeTypes(program: S.Program): S.Program = {
-    def normEnumCon(con: S.EnumCon): S.EnumCon =
+  def normalizeTypes(program: Program): Program = {
+    def normEnumCon(con: EnumCon): EnumCon =
       con.copy(argTypes = con.argTypes.map(normalizeType(program)))(con.p)
     val enumDefs1 =
       program.enumDefs.map { ed => ed.copy(cons = ed.cons.map(normEnumCon))(ed.p) }
@@ -372,7 +371,7 @@ object SyntaxUtil {
     val structDefs1 =
       program.structDefs.map { structDef =>
         structDef
-          .copy(fields = structDef.fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(structDef.p)
+          .copy(fields = structDef.fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)))(structDef.p)
       }
     val specs1 =
       program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.p))
@@ -385,43 +384,43 @@ object SyntaxUtil {
     )
   }
 
-  private def normalizeType(program: S.Program)(tp: S.Type): S.Type =
+  private def normalizeType(program: Program)(tp: Type): Type =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) | S.StructType(_) => tp
-      case S.TupleType(ts) =>
-        S.TupleType(ts.map(normalizeType(program)))(tp.p)
-      case S.RecordType(fields) =>
-        S.RecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)))(tp.p)
-      case S.OpenRecordType(fields, rt) =>
-        S.OpenRecordType(fields.map(f => S.Field(f.label, normalizeType(program)(f.value))(f.p)), rt)(tp.p)
-      case S.FunType(args, res) =>
-        S.FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
-      case S.ListType(et) =>
-        S.ListType(normalizeType(program)(et))(tp.p)
-      case S.UserType(tName, ts) =>
+      case WildTypeVar() | TypeVar(_) | StructType(_) => tp
+      case TupleType(ts) =>
+        TupleType(ts.map(normalizeType(program)))(tp.p)
+      case RecordType(fields) =>
+        RecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)))(tp.p)
+      case OpenRecordType(fields, rt) =>
+        OpenRecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.p)), rt)(tp.p)
+      case FunType(args, res) =>
+        FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
+      case ListType(et) =>
+        ListType(normalizeType(program)(et))(tp.p)
+      case UserType(tName, ts) =>
         val arity = ts.size
         val name1 = tName match {
-          case S.LocalName(n) =>
-            val t = new S.LocalFunName(n, arity)
+          case LocalName(n) =>
+            val t = new LocalFunName(n, arity)
             program.importTypes.get(t) match {
               case Some(rem) =>
-                S.RemoteName(rem.module, rem.name)
+                RemoteName(rem.module, rem.name)
               case None =>
                 tName
             }
-          case S.RemoteName(module, name) =>
-            if (module == program.module) S.LocalName(name)
+          case RemoteName(module, name) =>
+            if (module == program.module) LocalName(name)
             else tName
         }
-        S.UserType(name1, ts.map(normalizeType(program)))(tp.p)
+        UserType(name1, ts.map(normalizeType(program)))(tp.p)
     }
 
-  private def normFunType(program: S.Program, tp: S.FunType): S.FunType = {
-    val S.FunType(args, res) = tp
-    S.FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
+  private def normFunType(program: Program, tp: FunType): FunType = {
+    val FunType(args, res) = tp
+    FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.p)
   }
 
-  def getDeps(program: S.Program): Set[String] = {
+  def getDeps(program: Program): Set[String] = {
     var result = Set.empty[String]
     program.enumDefs.foreach {
       result ++= getDepEnumDef(_)
@@ -444,25 +443,25 @@ object SyntaxUtil {
     result
   }
 
-  private def getDepEnumDef(enumDef: S.EnumDef): Set[String] =
+  private def getDepEnumDef(enumDef: EnumDef): Set[String] =
     enumDef.cons.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
-  private def getDepTypeAlias(typeAlias: S.TypeAlias): Set[String] =
+  private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
 
-  private def getDepOpaque(opaque: S.Opaque): Set[String] =
+  private def getDepOpaque(opaque: Opaque): Set[String] =
     getDepType(opaque.body)
 
-  private def getDepSpec(spec: S.Spec): Set[String] =
+  private def getDepSpec(spec: Spec): Set[String] =
     getDepType(spec.funType)
 
-  private def getDepImports(imports: Map[S.LocalFunName, S.RemoteFunName]): Set[String] =
+  private def getDepImports(imports: Map[LocalFunName, RemoteFunName]): Set[String] =
     imports.values.map(_.module).toSet
 
-  private def getDepFun(fun: S.Fun): Set[String] =
+  private def getDepFun(fun: Fun): Set[String] =
     fun.clauses.map(getDepClause).foldLeft(Set.empty[String])(_ ++ _)
 
-  private def getDepClause(clause: S.Clause): Set[String] = {
+  private def getDepClause(clause: Clause): Set[String] = {
     var result = Set.empty[String]
     clause.pats.foreach {
       result ++= getDepPat(_)
@@ -474,95 +473,95 @@ object SyntaxUtil {
     result
   }
 
-  private def getDepBody(body: S.Body): Set[String] =
+  private def getDepBody(body: Body): Set[String] =
     body.prelude.map(getDepValDef).foldLeft(getDepValDef(body.main))(_ ++ _)
 
-  private def getDepValDef(valDef: S.ValDef): Set[String] =
+  private def getDepValDef(valDef: ValDef): Set[String] =
     getDepPat(valDef.pat) ++ getDepExp(valDef.exp)
 
-  private def getDepPat(pat: S.Pat): Set[String] =
+  private def getDepPat(pat: Pat): Set[String] =
     pat match {
-      case S.WildPat() =>
+      case WildPat() =>
         Set.empty[String]
-      case S.VarPat(v) =>
+      case VarPat(v) =>
         Set.empty[String]
-      case S.TuplePat(pats) =>
+      case TuplePat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
-      case S.RecordPat(fields) =>
+      case RecordPat(fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case S.StructPat(_, fields) =>
+      case StructPat(_, fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case S.AndPat(p1, p2) =>
+      case AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
-      case S.EnumCtrPat(enumName, _, pats) =>
+      case EnumCtrPat(enumName, _, pats) =>
         val ctrDep = enumName match {
-          case S.LocalName(_) =>
+          case LocalName(_) =>
             Set.empty[String]
-          case S.RemoteName(module, _) =>
+          case RemoteName(module, _) =>
             Set(module)
         }
         pats.map(getDepPat).foldLeft(ctrDep)(_ ++ _)
-      case S.ListPat(pats) =>
+      case ListPat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
-      case S.BinPat(elems) =>
+      case BinPat(elems) =>
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
-      case S.ConsPat(hPat, tPat) =>
+      case ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
-      case S.BoolPat(_) | S.NumberPat(_) | S.StringPat(_) =>
+      case BoolPat(_) | NumberPat(_) | StringPat(_) =>
         Set.empty[String]
     }
 
-  private def getDepExp(expr: S.Exp): Set[String] =
+  private def getDepExp(expr: Exp): Set[String] =
     expr match {
-      case S.RecordUpdateExp(exp, delta) =>
+      case RecordUpdateExp(exp, delta) =>
         getDepExp(exp) ++ getDepExp(delta)
-      case S.BinOpExp(binOp, exp1, exp2) =>
+      case BinOpExp(binOp, exp1, exp2) =>
         getDepExp(exp1) ++ getDepExp(exp2)
-      case S.UOpExp(uOp, exp) =>
+      case UOpExp(uOp, exp) =>
         getDepExp(exp)
-      case S.AppExp(head, args) =>
+      case AppExp(head, args) =>
         getDepExp(head) ++ args.flatMap(getDepExp)
-      case S.SelExp(exp, label) =>
+      case SelExp(exp, label) =>
         getDepExp(exp)
-      case S.BoolExp(bool) =>
+      case BoolExp(bool) =>
         Set.empty
-      case S.NumberExp(n) =>
+      case NumberExp(n) =>
         Set.empty
-      case S.CharExp(_) =>
+      case CharExp(_) =>
         Set.empty
-      case S.StringExp(s) =>
+      case StringExp(s) =>
         Set.empty
-      case S.VarExp(_: S.LocalVarName) =>
+      case VarExp(_: LocalVarName) =>
         Set.empty
-      case S.VarExp(_: S.LocalFunName) =>
+      case VarExp(_: LocalFunName) =>
         Set.empty
-      case S.VarExp(remote: S.RemoteFunName) =>
+      case VarExp(remote: RemoteFunName) =>
         Set(remote.module)
-      case S.RecordExp(fields) =>
+      case RecordExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
-      case S.StructCreate(_, fields) =>
+      case StructCreate(_, fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
-      case S.StructUpdate(struct, _, fields) =>
+      case StructUpdate(struct, _, fields) =>
         getDepExp(struct) ++ fields.flatMap(f => getDepExp(f.value))
-      case S.StructSelect(struct, _, _) =>
+      case StructSelect(struct, _, _) =>
         getDepExp(struct)
-      case S.TupleExp(elems) =>
+      case TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
-      case S.EnumConExp(enumName, dataCon, args) =>
+      case EnumConExp(enumName, dataCon, args) =>
         val ctrDep = enumName match {
-          case S.LocalName(_) =>
+          case LocalName(_) =>
             Set.empty[String]
-          case S.RemoteName(module, _) =>
+          case RemoteName(module, _) =>
             Set(module)
         }
         args.map(getDepExp).foldLeft(ctrDep)(_ ++ _)
-      case S.ListExp(elems) =>
+      case ListExp(elems) =>
         elems.flatMap(getDepExp).toSet
-      case S.Bin(elems) =>
+      case Bin(elems) =>
         elems.flatMap(elem => getDepExp(elem.expr)).toSet
-      case S.ConsExp(h, t) =>
+      case ConsExp(h, t) =>
         getDepExp(h) ++ getDepExp(t)
-      case S.CaseExp(selector, rules) =>
+      case CaseExp(selector, rules) =>
         val rulesDeps = rules.flatMap { rule =>
           val patDeps = getDepPat(rule.pat)
           val bodyDeps = getDepBody(rule.exp)
@@ -571,41 +570,41 @@ object SyntaxUtil {
         }
         val selectorDeps = getDepExp(selector)
         selectorDeps ++ rulesDeps
-      case S.IfExp(ifClauses) =>
+      case IfExp(ifClauses) =>
         ifClauses.flatMap { ifClause =>
           val bodyDeps = getDepBody(ifClause.exp)
           val guardDeps = ifClause.guards.flatMap(_.exprs).flatMap(getDepExp)
           bodyDeps ++ guardDeps
         }.toSet
-      case S.Comprehension(elem, qualifiers) =>
+      case Comprehension(elem, qualifiers) =>
         val elemDeps = getDepExp(elem)
         val qualifierDeps = qualifiers.flatMap {
-          case S.Filter(exp) =>
+          case Filter(exp) =>
             getDepExp(exp)
-          case S.Generator(pat, exp) =>
+          case Generator(pat, exp) =>
             getDepPat(pat) ++ getDepExp(exp)
-          case S.BGenerator(pat, exp) =>
+          case BGenerator(pat, exp) =>
             getDepPat(pat) ++ getDepExp(exp)
         }
         elemDeps ++ qualifierDeps
-      case S.BComprehension(elem, qualifiers) =>
+      case BComprehension(elem, qualifiers) =>
         val elemDeps = getDepExp(elem)
         val qualifierDeps = qualifiers.flatMap {
-          case S.Filter(exp) =>
+          case Filter(exp) =>
             getDepExp(exp)
-          case S.Generator(pat, exp) =>
+          case Generator(pat, exp) =>
             getDepPat(pat) ++ getDepExp(exp)
-          case S.BGenerator(pat, exp) =>
+          case BGenerator(pat, exp) =>
             getDepPat(pat) ++ getDepExp(exp)
         }
         elemDeps ++ qualifierDeps
-      case S.FnExp(clauses) =>
+      case FnExp(clauses) =>
         clauses.map(getDepClause).reduce(_ ++ _)
-      case S.NamedFnExp(varName, clauses) =>
+      case NamedFnExp(varName, clauses) =>
         clauses.map(getDepClause).reduce(_ ++ _)
-      case S.BlockExpr(body) =>
+      case BlockExpr(body) =>
         getDepBody(body)
-      case S.TryCatchExp(tryBody, catchRules, after) =>
+      case TryCatchExp(tryBody, catchRules, after) =>
         val tryBodyDeps = getDepBody(tryBody)
         val catchRulesDeps = catchRules.flatMap { rule =>
           val patDeps = getDepPat(rule.pat)
@@ -615,7 +614,7 @@ object SyntaxUtil {
         }
         val afterDeps = after.map(getDepBody).getOrElse(Set.empty)
         tryBodyDeps ++ catchRulesDeps ++ afterDeps
-      case S.TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
+      case TryOfCatchExp(tryBody, tryRules, catchRules, after) =>
         val tryBodyDeps = getDepBody(tryBody)
         val tryRulesDeps = tryRules.flatMap { rule =>
           val patDeps = getDepPat(rule.pat)
@@ -631,7 +630,7 @@ object SyntaxUtil {
         }
         val afterDeps = after.map(getDepBody).getOrElse(Set.empty)
         tryBodyDeps ++ tryRulesDeps ++ catchRulesDeps ++ afterDeps
-      case S.ReceiveExp(rules, after) =>
+      case ReceiveExp(rules, after) =>
         val rulesDeps = rules.flatMap { rule =>
           val patDeps = getDepPat(rule.pat)
           val bodyDeps = getDepBody(rule.exp)
@@ -640,30 +639,30 @@ object SyntaxUtil {
         }.toSet
         val afterDeps =
           after
-            .map { case S.AfterBody(timeout, body) => getDepExp(timeout) ++ getDepBody(body) }
+            .map { case AfterBody(timeout, body) => getDepExp(timeout) ++ getDepBody(body) }
             .getOrElse(Set.empty)
         rulesDeps ++ afterDeps
     }
 
-  private def getDepType(tp: S.Type): Set[String] =
+  private def getDepType(tp: Type): Set[String] =
     tp match {
-      case S.WildTypeVar() | S.TypeVar(_) | S.StructType(_) =>
+      case WildTypeVar() | TypeVar(_) | StructType(_) =>
         Set.empty[String]
-      case S.TupleType(params) =>
+      case TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
-      case S.RecordType(fields) =>
+      case RecordType(fields) =>
         fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case S.OpenRecordType(fields, extType) =>
+      case OpenRecordType(fields, extType) =>
         fields.map(f => getDepType(f.value)).foldLeft(getDepType(extType))(_ ++ _)
-      case S.FunType(argTypes, resType) =>
+      case FunType(argTypes, resType) =>
         argTypes.map(getDepType).foldLeft(getDepType(resType))(_ ++ _)
-      case S.ListType(elemType) =>
+      case ListType(elemType) =>
         getDepType(elemType)
-      case S.UserType(name, params) =>
+      case UserType(name, params) =>
         val nameDep = name match {
-          case S.LocalName(_) =>
+          case LocalName(_) =>
             Set.empty[String]
-          case S.RemoteName(module, _) =>
+          case RemoteName(module, _) =>
             Set(module)
         }
         params.map(getDepType).foldLeft(nameDep)(_ ++ _)

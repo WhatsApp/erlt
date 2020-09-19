@@ -16,13 +16,13 @@
 
 package com.whatsapp.sterlang.test
 
-import com.whatsapp.sterlang.{SyntaxUtil, etf}
+import com.whatsapp.sterlang.{AstUtil, etf}
 
 class SccSpec extends org.scalatest.funspec.AnyFunSpec {
   def testScc(input: String, expSccs: List[List[String]]): Unit = {
     it(expSccs.toString()) {
       val prog = etf.programFromString(input)
-      val sccs = SyntaxUtil.buildSCC(prog.funs, prog.module)
+      val sccs = AstUtil.buildSCC(prog.funs, prog.module)
       assert(sccs === expSccs)
     }
   }

@@ -19,69 +19,68 @@ package com.whatsapp.sterlang
 class Expander(
     val aliases: List[Ast.TypeAlias],
     val tGen: () => Types.Type,
-    val rtGen: (Set[String]) => Types.RowTypeVar,
+    val rtGen: Set[String] => Types.RowTypeVar,
 ) {
   val T = Types
   val MT = METypes
   val ST = STypes
   val MST = MESTypes
-  val S = Ast
 
-  def mkType(t: S.Type, sub: Map[String, T.Type]): T.Type =
+  def mkType(t: Ast.Type, sub: Map[String, T.Type]): T.Type =
     t match {
-      case S.TypeVar(n) =>
+      case Ast.TypeVar(n) =>
         sub(n)
-      case S.WildTypeVar() =>
+      case Ast.WildTypeVar() =>
         tGen()
-      case S.UserType(name, params) =>
+      case Ast.UserType(name, params) =>
         MT.NamedType(name.stringId, params.map(mkType(_, sub)))
-      case S.TupleType(params) =>
+      case Ast.TupleType(params) =>
         MT.TupleType(params.map(mkType(_, sub)))
-      case S.RecordType(fields) =>
-        val tFields = fields.map { case S.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
+      case Ast.RecordType(fields) =>
+        val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero: T.RowType = T.RowEmptyType
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
         MT.RecordType(rowType)
-      case S.OpenRecordType(fields, _) =>
+      case Ast.OpenRecordType(fields, _) =>
         val lbls = fields.map(_.label).toSet
-        val tFields = fields.map { case S.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
+        val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero: T.RowType = T.RowVarType(rtGen(lbls))
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
         MT.RecordType(rowType)
-      case S.FunType(params, res) =>
+      case Ast.FunType(params, res) =>
         MT.FunType(params.map(mkType(_, sub)), mkType(res, sub))
-      case S.ListType(elemType) =>
+      case Ast.ListType(elemType) =>
         MT.ListType(mkType(elemType, sub))
-      case S.StructType(name) =>
+      case Ast.StructType(name) =>
         MT.StructType(name)
     }
 
-  def mkSType(t: S.Type, sub: Map[String, ST.Type]): ST.Type =
+  def mkSType(t: Ast.Type, sub: Map[String, ST.Type]): ST.Type =
     t match {
-      case S.TypeVar(n) =>
+      case Ast.TypeVar(n) =>
         sub(n)
-      case S.WildTypeVar() =>
+      case Ast.WildTypeVar() =>
         ST.PlainType(tGen())
-      case S.UserType(name, params) =>
+      case Ast.UserType(name, params) =>
         MST.EnumType(name.stringId, params.map(mkSType(_, sub)))
-      case S.TupleType(params) =>
+      case Ast.TupleType(params) =>
         MST.TupleType(params.map(mkSType(_, sub)))
-      case S.RecordType(fields) =>
-        val tFields = fields.map { case S.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
+      case Ast.RecordType(fields) =>
+        val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero: ST.RowType = ST.RowEmptyType
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
-      case S.OpenRecordType(fields, _) =>
+      case Ast.OpenRecordType(fields, _) =>
         val lbls = fields.map(_.label).toSet
-        val tFields = fields.map { case S.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
+        val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero: ST.RowType = ST.RowVarType(rtGen(lbls))
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
-      case S.FunType(params, res) =>
+      case Ast.FunType(params, res) =>
         MST.FunType(params.map(mkSType(_, sub)), mkSType(res, sub))
-      case S.ListType(elemType) =>
+      case Ast.ListType(elemType) =>
         MST.ListType(mkSType(elemType, sub))
-      case S.StructType(name) =>
+      case Ast.StructType(name) =>
         MST.StructType(name)
     }
 

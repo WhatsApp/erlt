@@ -16,7 +16,6 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.Absyn.ValDef
 import com.whatsapp.sterlang.Pos.HasSourceLocation
 import com.whatsapp.sterlang._
 
@@ -27,13 +26,12 @@ import scala.collection.mutable.ListBuffer
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
   */
 class PatternChecker(private val vars: Vars, private val context: Context, val program: Ast.Program) {
-  private val A = Absyn
 
-  /** Like [[A.Clause]] but without the body. */
-  private case class ClauseHead(patterns: List[A.Pat], guards: List[A.Guard])
+  /** Like [[AnnAst.Clause]] but without the body. */
+  private case class ClauseHead(patterns: List[AnnAst.Pat], guards: List[AnnAst.Guard])
 
   /** Returns a list of all pattern matching related issues in the given functions and their subexpressions. */
-  def warnings(functions: List[A.Fun]): List[PatternWarning] = {
+  def warnings(functions: List[AnnAst.Fun]): List[PatternWarning] = {
     val warnings = ListBuffer[PatternWarning]()
     functions.foreach(f => checkNode(f, warnings))
     warnings.toList
@@ -43,42 +41,42 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     *
     * @throws PatternWarning if {{{warning(functions)}}} is not empty.
     */
-  def check(functions: List[A.Fun]): Unit = {
+  def check(functions: List[AnnAst.Fun]): Unit = {
     warnings(functions) match {
       case Nil        => // no warnings
       case first :: _ => throw first
     }
   }
 
-  private def checkNode(node: A.Node, warnings: ListBuffer[PatternWarning]): Unit = {
-    def clauseHead(clause: A.Clause) = ClauseHead(clause.pats, clause.guards)
-    def clauseHeads(clauses: List[A.Clause]) = clauses.map(clauseHead)
-    def branchHeads(branches: List[A.Branch]) = branches.map(b => ClauseHead(List(b.pat), b.guards))
+  private def checkNode(node: AnnAst.Node, warnings: ListBuffer[PatternWarning]): Unit = {
+    def clauseHead(clause: AnnAst.Clause) = ClauseHead(clause.pats, clause.guards)
+    def clauseHeads(clauses: List[AnnAst.Clause]) = clauses.map(clauseHead)
+    def branchHeads(branches: List[AnnAst.Branch]) = branches.map(b => ClauseHead(List(b.pat), b.guards))
 
     // Check this node
     node match {
-      case node: A.Fun =>
+      case node: AnnAst.Fun =>
         checkClauses(node, clauseHeads(node.clauses), warnings)
-      case node: A.FnExp =>
+      case node: AnnAst.FnExp =>
         checkClauses(node, clauseHeads(node.clauses), warnings)
-      case node: A.NamedFnExp =>
+      case node: AnnAst.NamedFnExp =>
         checkClauses(node, clauseHeads(node.clauses), warnings)
-      case node: A.CaseExp =>
+      case node: AnnAst.CaseExp =>
         checkClauses(node, branchHeads(node.branches), warnings)
-      case node: A.TryCatchExp =>
+      case node: AnnAst.TryCatchExp =>
         checkRedundancy(node, branchHeads(node.catchBranches), warnings)
-      case node: A.TryOfCatchExp =>
+      case node: AnnAst.TryOfCatchExp =>
         checkClauses(node, branchHeads(node.tryBranches), warnings)
         checkRedundancy(node, branchHeads(node.catchBranches), warnings)
-      case node: A.ReceiveExp =>
+      case node: AnnAst.ReceiveExp =>
         checkRedundancy(node, branchHeads(node.branches), warnings)
-      case _: ValDef => // ignore
-      case _         => // nothing to check
+      case _: AnnAst.ValDef => // ignore
+      case _                => // nothing to check
     }
 
     // Recursively check all children nodes
-    if (!node.isInstanceOf[A.Pat]) { // No need to recurse into patterns
-      A.children(node).foreach(child => checkNode(child, warnings))
+    if (!node.isInstanceOf[AnnAst.Pat]) { // No need to recurse into patterns
+      AnnAst.children(node).foreach(child => checkNode(child, warnings))
     }
   }
 
@@ -140,7 +138,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     warnings.appendAll(allWarnings.filter { !_.isInstanceOf[MissingPatternsWarning] })
   }
 
-  /** Returns true if the clause contributes to exhaustiveness. A clause does not contribute to exhaustiveness if it
+  /** Returns true if the clause contributes to exhaustiveness. AnnAst clause does not contribute to exhaustiveness if it
     * uses features (like nonlinear patterns and pattern guards) that we cannot reason about.
     */
   private def countsTowardExhaustiveness(clause: ClauseHead): Boolean =
@@ -153,12 +151,12 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   private def isLinear(clause: ClauseHead): Boolean = {
     var variables: ListBuffer[String] = ListBuffer()
 
-    def addVariables(node: A.Node): Unit =
+    def addVariables(node: AnnAst.Node): Unit =
       node match {
-        case variable: Absyn.VarPat =>
+        case variable: AnnAst.VarPat =>
           variables += variable.name
         case _ =>
-          A.children(node).foreach(addVariables)
+          AnnAst.children(node).foreach(addVariables)
       }
 
     clause.patterns.foreach(addVariables)
@@ -166,7 +164,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   }
 
   /** Returns true if the clause is useful with respect to the pattern matrix.
-    * A clause is useful if there is a value vector matched by the clause but not by the pattern matrix.
+    * AnnAst clause is useful if there is a value vector matched by the clause but not by the pattern matrix.
     *
     * Corresponds to the U_rec function in the paper.
     */

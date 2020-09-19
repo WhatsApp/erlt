@@ -35,22 +35,21 @@ class AstChecks(val context: Context) {
     checkSpecs(program)
   }
 
-  def checkPublicSpecs(program: S.Program): Unit = {
-    val speced: Set[S.VarName] =
+  def checkPublicSpecs(program: Program): Unit = {
+    val speced: Set[VarName] =
       program.specs.map(_.name).toSet
-    val exported: Set[S.VarName] =
-      program.exports.map { e => new Ast.LocalFunName(e._1, e._2) }
-    val unspeced: Set[S.VarName] =
+    val exported: Set[VarName] =
+      program.exports.map { e => new LocalFunName(e._1, e._2) }
+    val unspeced: Set[VarName] =
       exported -- speced
     for (f <- program.funs)
       if (unspeced(f.name)) throw new UnSpecedExportedFun(f.p, f.name.stringId)
   }
 
-  private def checkSpecs(program: Program): Unit = {
+  private def checkSpecs(program: Program): Unit =
     program.specs.foreach { spec =>
       expandType(program, Set.empty)(spec.funType)
     }
-  }
 
   def checkUniqueTypes(program: Program): Unit = {
     var typeNames = Set.empty[String]
@@ -81,13 +80,8 @@ class AstChecks(val context: Context) {
     }
   }
 
-  private def checkUsage(bound: List[TypeVar], used: Set[TypeVar]): Unit = {
-    for (b <- bound) {
-      if (!used(b)) {
-        throw new UselessTypeVar(b.p, b.name)
-      }
-    }
-  }
+  private def checkUsage(bound: List[TypeVar], used: Set[TypeVar]): Unit =
+    for (b <- bound if !used(b)) throw new UselessTypeVar(b.p, b.name)
 
   private def collectParams(vars: List[TypeVar]): Set[TypeVar] = {
     var result = Set.empty[TypeVar]

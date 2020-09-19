@@ -25,7 +25,7 @@ object TypePrinter2 {
 }
 
 case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
-  val A = Absyn
+  val A = AnnAst
   val ST = STypes
   val printer = new TypePrinter(vars, new TypesUtil(vars))
 

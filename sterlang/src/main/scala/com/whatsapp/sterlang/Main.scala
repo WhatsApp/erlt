@@ -67,7 +67,7 @@ object Main {
           error.printStackTrace(Console.err)
           sys.exit(2)
       }
-    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val depContext = loadContext(mainFile, program, vars)
     val context = depContext.extend(program)
@@ -119,13 +119,13 @@ object Main {
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
-  def loadContext(mainFile: String, program: S.Program, vars: Vars): Context = {
+  def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context = {
     val ext = mainFile.takeRight(4)
     val dir = Paths.get(mainFile).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
     val queue = mutable.Queue.empty[String]
-    SyntaxUtil.getDeps(program).foreach(queue.enqueue)
+    AstUtil.getDeps(program).foreach(queue.enqueue)
     var api = List.empty[ModuleApi]
 
     while (queue.nonEmpty) {
@@ -133,9 +133,9 @@ object Main {
       val file = dir.resolve(module + ext).toFile
       if (file.exists()) {
         val rawProgram = loadProgram(file.getPath)
-        val program = SyntaxUtil.normalizeTypes(rawProgram)
-        api = SyntaxUtil.moduleApi(module, program) :: api
-        val moduleDeps = SyntaxUtil.getDeps(program)
+        val program = AstUtil.normalizeTypes(rawProgram)
+        api = AstUtil.moduleApi(module, program) :: api
+        val moduleDeps = AstUtil.getDeps(program)
         loaded += module
         moduleDeps.filterNot(loaded).foreach(queue.enqueue)
       } else {
@@ -151,7 +151,7 @@ object Main {
     val env = specs.map { spec =>
       val name = spec.name.stringId
       val funType = spec.funType
-      val sVars = SyntaxUtil.collectNamedTypeVars(funType)
+      val sVars = AstUtil.collectNamedTypeVars(funType)
       val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
       val specType = expander.mkType(funType, sub)
       val schema = TU.generalize(0)(specType)
@@ -160,7 +160,7 @@ object Main {
     Context(enumDefs, List.empty, aliases, opaques, env)
   }
 
-  def loadProgram(file: String): S.Program = {
+  def loadProgram(file: String): Ast.Program = {
     etf.programFromFile(file)
   }
 }

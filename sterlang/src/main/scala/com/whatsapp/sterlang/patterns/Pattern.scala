@@ -111,16 +111,16 @@ private[patterns] object Pattern {
   }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
-  def simplify(vars: Vars, program: Ast.Program)(pattern: Absyn.Pat): Pat =
+  def simplify(vars: Vars, program: Ast.Program)(pattern: AnnAst.Pat): Pat =
     pattern match {
-      case Absyn.WildPat() =>
+      case AnnAst.WildPat() =>
         Wildcard
 
-      case Absyn.VarPat(_) =>
+      case AnnAst.VarPat(_) =>
         // Variable names are irrelevant for pattern checking
         Pattern.Wildcard
 
-      case Absyn.AndPat(p1, p2) =>
+      case AnnAst.AndPat(p1, p2) =>
         (simplify(vars, program)(p1), simplify(vars, program)(p2)) match {
           case (Wildcard, p2Simple) => p2Simple
           case (p1Simple, Wildcard) => p1Simple
@@ -130,13 +130,13 @@ private[patterns] object Pattern {
             ???
         }
 
-      case Absyn.LiteralPat(value) =>
+      case AnnAst.LiteralPat(value) =>
         ConstructorApplication(Literal(value), Nil)
 
-      case Absyn.TuplePat(elements) =>
+      case AnnAst.TuplePat(elements) =>
         ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars, program)))
 
-      case Absyn.RecordPat(patternFields) =>
+      case AnnAst.RecordPat(patternFields) =>
         val recordType = resolveRecordType(vars)(pattern.typ)
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val allFieldNames: List[String] = getFieldNames(recordType).sorted
@@ -145,7 +145,7 @@ private[patterns] object Pattern {
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
-      case Absyn.StructPat(name, patternFields) =>
+      case AnnAst.StructPat(name, patternFields) =>
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val structDef = program.structDefs.find(_.name == name).get
         val allFieldNames = structDef.fields.map(_.label).sorted
@@ -155,18 +155,18 @@ private[patterns] object Pattern {
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
-      case _: Absyn.BinPat =>
+      case _: AnnAst.BinPat =>
         ConstructorApplication(new AbstractConstructor(), Nil)
 
-      case Absyn.ListPat(elements) =>
+      case AnnAst.ListPat(elements) =>
         elements.foldRight(ConstructorApplication(EmptyList, Nil)) {
           case (head, tail) => ConstructorApplication(Cons, List(simplify(vars, program)(head), tail))
         }
 
-      case Absyn.ConsPat(head, tail) =>
+      case AnnAst.ConsPat(head, tail) =>
         ConstructorApplication(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
 
-      case Absyn.EnumConstructorPat(enum, constructor, arguments) =>
+      case AnnAst.EnumConstructorPat(enum, constructor, arguments) =>
         ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars, program)))
     }
 

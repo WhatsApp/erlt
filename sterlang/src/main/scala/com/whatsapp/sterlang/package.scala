@@ -18,19 +18,17 @@ package com.whatsapp
 
 package object sterlang {
   type Env = Map[String, STypes.TypeSchema]
-  @inline
-  val S = Ast
 
   case class Context(
-      enumDefs: List[S.EnumDef],
-      specs: List[S.Spec],
-      aliases: List[S.TypeAlias],
-      opaques: Set[S.TypeId],
+      enumDefs: List[Ast.EnumDef],
+      specs: List[Ast.Spec],
+      aliases: List[Ast.TypeAlias],
+      opaques: Set[Ast.TypeId],
       env: Env,
   ) {
-    def extend(program: S.Program): Context = {
+    def extend(program: Ast.Program): Context = {
       val opaqueAliases = program.opaques.map { opaque =>
-        S.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.p)
+        Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.p)
       }
       Context(
         enumDefs ++ program.enumDefs,
@@ -43,48 +41,48 @@ package object sterlang {
   }
 
   case class ModuleApi(
-      enumDefs: List[S.EnumDef],
-      aliases: List[S.TypeAlias],
-      specs: List[S.Spec],
-      opaques: List[S.TypeId],
+      enumDefs: List[Ast.EnumDef],
+      aliases: List[Ast.TypeAlias],
+      specs: List[Ast.Spec],
+      opaques: List[Ast.TypeId],
   )
 
-  val nativeOpaques: Set[S.TypeId] =
+  val nativeOpaques: Set[Ast.TypeId] =
     Set(
-      S.TypeId(S.LocalName("any"), 0),
-      S.TypeId(S.LocalName("atom"), 0),
-      S.TypeId(S.LocalName("binary"), 0),
-      S.TypeId(S.LocalName("bitstring"), 0),
-      S.TypeId(S.LocalName("byte"), 0),
-      S.TypeId(S.LocalName("exception"), 0),
-      S.TypeId(S.LocalName("identifier"), 0),
-      S.TypeId(S.LocalName("iodata"), 0),
-      S.TypeId(S.LocalName("iolist"), 0),
-      S.TypeId(S.LocalName("map"), 2),
-      S.TypeId(S.LocalName("message"), 0),
-      S.TypeId(S.LocalName("neg_integer"), 0),
-      S.TypeId(S.LocalName("none"), 0),
-      S.TypeId(S.LocalName("non_neg_integer"), 0),
-      S.TypeId(S.LocalName("number"), 0),
-      S.TypeId(S.LocalName("pid"), 0),
-      S.TypeId(S.LocalName("port"), 0),
-      S.TypeId(S.LocalName("pos_integer"), 0),
-      S.TypeId(S.LocalName("reference"), 0),
-      S.TypeId(S.LocalName("term"), 0),
-      S.TypeId(S.LocalName("timeout"), 0),
-      S.TypeId(S.LocalName("node"), 0),
-      S.TypeId(S.LocalName("no_return"), 0),
-      S.TypeId(S.LocalName("integer"), 0),
-      S.TypeId(S.LocalName("char"), 0),
-      S.TypeId(S.LocalName("float"), 0),
-      S.TypeId(S.LocalName("boolean"), 0),
-      S.TypeId(S.LocalName("list"), 1),
-      S.TypeId(S.LocalName("string"), 0),
+      Ast.TypeId(Ast.LocalName("any"), 0),
+      Ast.TypeId(Ast.LocalName("atom"), 0),
+      Ast.TypeId(Ast.LocalName("binary"), 0),
+      Ast.TypeId(Ast.LocalName("bitstring"), 0),
+      Ast.TypeId(Ast.LocalName("byte"), 0),
+      Ast.TypeId(Ast.LocalName("exception"), 0),
+      Ast.TypeId(Ast.LocalName("identifier"), 0),
+      Ast.TypeId(Ast.LocalName("iodata"), 0),
+      Ast.TypeId(Ast.LocalName("iolist"), 0),
+      Ast.TypeId(Ast.LocalName("map"), 2),
+      Ast.TypeId(Ast.LocalName("message"), 0),
+      Ast.TypeId(Ast.LocalName("neg_integer"), 0),
+      Ast.TypeId(Ast.LocalName("none"), 0),
+      Ast.TypeId(Ast.LocalName("non_neg_integer"), 0),
+      Ast.TypeId(Ast.LocalName("number"), 0),
+      Ast.TypeId(Ast.LocalName("pid"), 0),
+      Ast.TypeId(Ast.LocalName("port"), 0),
+      Ast.TypeId(Ast.LocalName("pos_integer"), 0),
+      Ast.TypeId(Ast.LocalName("reference"), 0),
+      Ast.TypeId(Ast.LocalName("term"), 0),
+      Ast.TypeId(Ast.LocalName("timeout"), 0),
+      Ast.TypeId(Ast.LocalName("node"), 0),
+      Ast.TypeId(Ast.LocalName("no_return"), 0),
+      Ast.TypeId(Ast.LocalName("integer"), 0),
+      Ast.TypeId(Ast.LocalName("char"), 0),
+      Ast.TypeId(Ast.LocalName("float"), 0),
+      Ast.TypeId(Ast.LocalName("boolean"), 0),
+      Ast.TypeId(Ast.LocalName("list"), 1),
+      Ast.TypeId(Ast.LocalName("string"), 0),
     )
 
-  val nativeAliases: List[S.TypeAlias] =
+  val nativeAliases: List[Ast.TypeAlias] =
     List(
-      S.TypeAlias("node", List.empty, S.UserType(S.LocalName("atom"), List.empty)(Pos.NP))(Pos.NP),
-      S.TypeAlias("no_return", List.empty, S.UserType(S.LocalName("none"), List.empty)(Pos.NP))(Pos.NP),
+      Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.LocalName("atom"), List.empty)(Pos.NP))(Pos.NP),
+      Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.LocalName("none"), List.empty)(Pos.NP))(Pos.NP),
     )
 }

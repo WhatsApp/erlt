@@ -28,7 +28,7 @@ object SterlangTestUtil {
 
   def processFile(erlPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
-    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
@@ -63,7 +63,7 @@ object SterlangTestUtil {
 
   def processIllTyped(erlPath: String, etfPath: String): Boolean = {
     val rawProgram = Main.loadProgram(etfPath)
-    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val program = AstUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
       val context = Main.loadContext(etfPath, program, vars).extend(program)
@@ -78,7 +78,7 @@ object SterlangTestUtil {
 
   def processIllPatterns(erlPath: String, etfPath: String): Boolean = {
     val rawProgram = Main.loadProgram(etfPath)
-    val program = SyntaxUtil.normalizeTypes(rawProgram)
+    val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)

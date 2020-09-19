@@ -21,12 +21,9 @@ import com.whatsapp.sterlang.Values.Value
 
 import scala.collection.mutable.ListBuffer
 
-object Absyn {
-  type Type = Types.Type
-  type RowType = Types.RowType
-  type BinOp = Ast.BinOp
-  type UOp = Ast.UOp
-  type BinElemType = Ast.BinElemType
+object AnnAst {
+  import Types.Type
+  import Ast.{BinElemType, BinOp, UOp}
 
   /** A node in the intermediate language abstract syntax tree.
     *
@@ -129,8 +126,6 @@ object Absyn {
   case class Guard(expressions: List[Exp])
 
   sealed trait Pat extends Node {
-
-    /** The type of values this pattern can match. */
     val typ: Type
   }
 
