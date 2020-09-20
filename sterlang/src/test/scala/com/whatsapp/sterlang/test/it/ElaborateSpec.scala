@@ -16,12 +16,15 @@
 
 package com.whatsapp.sterlang.test.it
 
-import java.io.File
+import java.io.{BufferedWriter, File, FileWriter, StringWriter}
 import java.nio.file.Files
 
-import com.whatsapp.sterlang.TypePrinter2.{TypeSchemes, Types}
+import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.patterns.PatternChecker
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
+
+  val generateOut = false
 
   testDir("examples/pos")
   testDir("examples/elm-core")
@@ -50,7 +53,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFile(erlPath: String, etfPath: String): Unit = {
-    SterlangTestUtil.processFile(erlPath, etfPath, TypeSchemes, "_ty", "ty")
+    processFile(erlPath, etfPath, TypePrinter2.TypeSchemes, "_ty", "ty")
 
     val myOutput = fileContent(erlPath + "._ty")
     val expectedOut = fileContent(erlPath + ".ty")
@@ -60,7 +63,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFileVerbose(erlPath: String, etfPath: String): Unit = {
-    SterlangTestUtil.processFile(erlPath, etfPath, Types, "_vt", "vt")
+    processFile(erlPath, etfPath, TypePrinter2.Types, "_vt", "vt")
 
     val myOutput = fileContent(erlPath + "._vt")
     val expectedOut = fileContent(erlPath + ".vt")
@@ -74,5 +77,40 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     val content = source.mkString
     source.close()
     content
+  }
+
+  def processFile(erlPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
+    val rawProgram = Main.loadProgram(etfPath)
+    val program = AstUtil.normalizeTypes(rawProgram)
+    val vars = new Vars()
+    val context = Main.loadContext(etfPath, program, vars).extend(program)
+    new AstChecks(context).check(program)
+    val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+
+    val sw = new StringWriter
+    val printer = TypePrinter2(vars, Some(sw))
+    mode match {
+      case TypePrinter2.TypeSchemes =>
+        printer.printFunsTypeSchemes(annDefs, env)
+      case TypePrinter2.Types =>
+        printer.printFuns(annDefs)
+    }
+
+    {
+      val w2 = new BufferedWriter(new FileWriter(erlPath + "." + tmpExt))
+      w2.write(sw.toString)
+      w2.close()
+    }
+
+    if (generateOut) {
+      val w = new BufferedWriter(new FileWriter(erlPath + "." + outExt))
+      w.write(sw.toString)
+      w.close()
+    }
+
+    // Check pattern matching
+    // TODO: apply to all files when ready.
+    if (new File(erlPath).getParent == "examples/pattern")
+      new PatternChecker(vars, context, program).check(annDefs)
   }
 }

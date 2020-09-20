@@ -19,11 +19,14 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 import java.nio.file.Files
 
+import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.patterns.PatternChecker
+
 class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   testDir("examples/pattern-error")
 
-  def testDir(iDirPath: String): Unit = {
+  private def testDir(iDirPath: String): Unit = {
     import sys.process._
     describe(iDirPath) {
       val oDirPath = Files.createTempDirectory("sterlang")
@@ -37,9 +40,25 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
         it(erlPath) {
-          assert(SterlangTestUtil.processIllPatterns(erlPath, etfPath))
+          assert(processIllPatterns(erlPath, etfPath))
         }
       }
+    }
+  }
+
+  private def processIllPatterns(erlPath: String, etfPath: String): Boolean = {
+    val rawProgram = Main.loadProgram(etfPath)
+    val program = AstUtil.normalizeTypes(rawProgram)
+    val vars = new Vars()
+    val context = Main.loadContext(etfPath, program, vars).extend(program)
+    new AstChecks(context).check(program)
+    val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+    try {
+      new PatternChecker(vars, context, program).check(annotatedFunctions)
+      false
+    } catch {
+      case _: RangedError =>
+        true
     }
   }
 }

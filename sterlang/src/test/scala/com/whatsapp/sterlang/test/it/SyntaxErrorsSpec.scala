@@ -19,6 +19,8 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 import java.nio.file.Files
 
+import com.whatsapp.sterlang._
+
 class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/err-syntax")
 
@@ -36,9 +38,18 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
         it(erlPath) {
-          SterlangTestUtil.processIllSyntax(etfPath)
+          processIllSyntax(etfPath)
         }
       }
+    }
+  }
+
+  def processIllSyntax(path: String): Boolean = {
+    try {
+      Main.loadProgram(path)
+      false
+    } catch {
+      case _: UnsupportedSyntaxError => true
     }
   }
 }

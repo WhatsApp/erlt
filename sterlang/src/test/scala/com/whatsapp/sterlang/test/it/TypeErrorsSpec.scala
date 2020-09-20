@@ -19,6 +19,8 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 import java.nio.file.Files
 
+import com.whatsapp.sterlang._
+
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/neg")
   testDir("examples/err")
@@ -42,10 +44,25 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
           ignore(erlPath) {}
         } else {
           it(erlPath) {
-            assert(SterlangTestUtil.processIllTyped(erlPath, etfPath))
+            assert(processIllTyped(erlPath, etfPath))
           }
         }
       }
+    }
+  }
+
+  def processIllTyped(erlPath: String, etfPath: String): Boolean = {
+    val rawProgram = Main.loadProgram(etfPath)
+    val program = AstUtil.normalizeTypes(rawProgram)
+    try {
+      val vars = new Vars()
+      val context = Main.loadContext(etfPath, program, vars).extend(program)
+      new AstChecks(context).check(program)
+      new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      false
+    } catch {
+      case _: RangedError =>
+        true
     }
   }
 }
