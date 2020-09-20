@@ -16,9 +16,11 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.{Doc, RangedError}
+import com.whatsapp.sterlang.{Doc, RangedError, Severity, Warning}
 
-sealed trait PatternWarning extends RangedError
+sealed trait PatternWarning extends RangedError {
+  override val severity: Severity = Warning
+}
 
 final class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: PatternMatrix.Vector)
     extends RangedError(

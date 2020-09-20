@@ -62,7 +62,7 @@ object Main {
           printParseError(text, error)
           sys.exit(2)
         case error: RangedError =>
-          printError(text, error)
+          displayError(erlFile, text, error)
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
           sys.exit(2)
@@ -81,37 +81,16 @@ object Main {
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
         val warnings = new PatternChecker(vars, context, program).warnings(annFuns)
-        warnings.foreach(printError(text, _))
+        warnings.foreach(displayError(erlFile, text, _))
       }
 
       // checking them in the very end - since it is possible to present inferred types here
       astChecks.checkPublicSpecs(program)
     } catch {
       case error: RangedError =>
-        printError(text, error)
+        displayError(erlFile, text, error)
         sys.exit(2)
     }
-  }
-
-  private def printParseError(text: String, error: ParseError): Unit = {
-    val ParseError(loc) = error
-    val locator = Doc.Locator(text, loc)
-    val cTitle = ansi(s"@|bold,red Parse error at $loc|@")
-    val cQuote = ansi(s"@|magenta,bold ${locator.longString}|@")
-    Console.println(cTitle)
-    Console.println(cQuote)
-  }
-
-  private def printError(text: String, error: RangedError): Unit = {
-    val RangedError(range: Doc.Range, title, description) = error
-    val ranger = Doc.Ranger(text, range.start, range.end)
-
-    val cTitle = ansi(s"@|bold,red $title at ${range.start}|@")
-    val cQuote = ansi(s"${ranger.prefix}@|magenta,bold ${ranger.text}|@${ranger.suffix}")
-    Console.println(cTitle)
-    Console.println(cQuote)
-    description.foreach(Console.println)
-    Console.println()
   }
 
   private def freshTypeVar(vars: Vars): Types.Type =
@@ -162,5 +141,26 @@ object Main {
 
   def loadProgram(file: String): Ast.Program = {
     etf.programFromFile(file)
+  }
+
+  private def printParseError(text: String, error: ParseError): Unit = {
+    val ParseError(loc) = error
+    val locator = Doc.Locator(text, loc)
+    val cTitle = ansi(s"@|bold,red Parse error at $loc|@")
+    val cQuote = ansi(s"@|magenta,bold ${locator.longString}|@")
+    Console.println(cTitle)
+    Console.println(cQuote)
+  }
+
+  private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit = {
+    Console.println(errorString(inputPath, inputContent, error))
+  }
+
+  def errorString(inputPath: String, inputContent: String, error: RangedError): String = {
+    val RangedError(range: Doc.Range, title, description) = error
+    val ranger = Doc.Ranger(inputContent, range.start, range.end)
+    val msgTitle = ranger.title(error.severity, inputPath)
+    val descText = description.map(_ ++ "\n").getOrElse("")
+    msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
   }
 }

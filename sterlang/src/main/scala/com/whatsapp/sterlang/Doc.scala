@@ -38,21 +38,65 @@ object Doc {
       lineStarts += source.length
       lineStarts.toArray
     }
-    def prefix: String =
+    lazy val prefix: String =
       source.substring(
         index(start.line - 1),
         index(start.line - 1) + start.column - 1,
       )
-    def text: String =
+    lazy val text: String =
       source.substring(
         index(start.line - 1) + start.column - 1,
         index(end.line - 1) + end.column - 1,
       )
-    def suffix: String =
+    lazy val suffix: String =
       source.substring(
         index(end.line - 1) + end.column - 1,
         index(end.line),
       )
+
+    def decorated: String = {
+      val underline = if (text.length > 2) '~' else '^'
+      def space(c: Char): Char = ' '
+      def under(c: Char): Char = underline
+      def line(pos: Pos): String = pos.line.toString.reverse.padTo(3, ' ').reverse
+      val textLines = text.split('\n').toList
+
+      val suffix1 =
+        if (suffix.endsWith("\n")) suffix.dropRight(1) else suffix
+
+      textLines match {
+        case t1 :: Nil =>
+          List(
+            line(start) ++ "| " ++ prefix ++ t1 ++ suffix1,
+            "...| " ++ prefix.map(space) ++ t1.map(under),
+          ).mkString("\n")
+
+        case t1 :: tail =>
+          val t2 = tail.last
+          val between = tail.dropRight(1)
+
+          List(
+            List(
+              line(start) ++ "| " ++ prefix ++ t1,
+              "...| " ++ prefix.map(space) ++ t1.map(under),
+            ),
+            between.flatMap(l => List("...| " ++ l, "...| " ++ l.map(under))),
+            List(
+              line(end) ++ "| " ++ t2 + suffix1,
+              "...| " ++ t2.map(under),
+            ),
+          ).flatten.mkString("\n")
+      }
+    }
+
+    def title(severity: Severity, pathFile: String): String = {
+      val titleSuffix = s" $pathFile:${start.line}:${start.column}"
+      val sevString = severity.toString.map(_.toUpper)
+      val titlePrexif = s"-- $sevString "
+      val rest = 80 - titlePrexif.length - titleSuffix.length
+      val titleMiddle = "-" * rest
+      s"$titlePrexif$titleMiddle$titleSuffix"
+    }
   }
 
   case class Locator(source: String, pos: Pos) {

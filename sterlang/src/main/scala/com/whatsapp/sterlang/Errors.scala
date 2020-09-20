@@ -27,7 +27,13 @@ class TypeError(msg: String) extends Exception(msg)
 
 case class Cycle(aliasName: String) extends Exception(s"The type alias $aliasName is cyclic")
 
-case class RangedError(range: Doc.Range, title: String, description: Option[String]) extends Exception(title)
+sealed trait Severity
+case object Error extends Severity
+case object Warning extends Severity
+
+case class RangedError(range: Doc.Range, title: String, description: Option[String]) extends Exception(title) {
+  val severity: Severity = Error
+}
 class InfiniteTypeError(range: Doc.Range, t1: String, t2: String)
     extends RangedError(range, s"Infinite type", Some(s"$t1 <> $t2"))
 class TypeMismatchError(range: Doc.Range, required: String, found: String)
