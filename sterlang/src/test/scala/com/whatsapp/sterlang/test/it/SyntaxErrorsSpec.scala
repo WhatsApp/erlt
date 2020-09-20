@@ -16,14 +16,29 @@
 
 package com.whatsapp.sterlang.test.it
 
-class SyntaxErrorsSpec extends DirSpec {
+import java.io.File
+import java.nio.file.Files
+
+class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/err-syntax")
 
-  override def testFile(erlPath: String, etfPath: String): Unit = {
-    assert(SterlangTestUtil.processIllSyntax(etfPath))
-  }
+  def testDir(iDirPath: String): Unit = {
+    import sys.process._
+    describe(iDirPath) {
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./parser -idir $iDirPath -odir $oDirPath".!!
 
-  override def testFileVerbose(erlPath: String, etfPath: String): Unit = {
-    // doing nothing
+      val file = new File(iDirPath)
+      val moduleNames =
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
+
+      moduleNames.foreach { p =>
+        val erlPath = s"$iDirPath/$p.erl"
+        val etfPath = s"$oDirPath/$p.etf"
+        it(erlPath) {
+          SterlangTestUtil.processIllSyntax(etfPath)
+        }
+      }
+    }
   }
 }

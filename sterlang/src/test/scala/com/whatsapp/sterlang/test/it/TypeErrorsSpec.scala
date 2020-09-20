@@ -19,9 +19,10 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 import java.nio.file.Files
 
-class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
-
-  testDir("examples/pattern-error")
+class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
+  testDir("examples/neg")
+  testDir("examples/err")
+  testDir("examples/err2")
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._
@@ -36,8 +37,13 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       moduleNames.foreach { p =>
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
-        it(erlPath) {
-          assert(SterlangTestUtil.processIllPatterns(erlPath, etfPath))
+
+        if (erlPath.endsWith("core.erl")) {
+          ignore(erlPath) {}
+        } else {
+          it(erlPath) {
+            assert(SterlangTestUtil.processIllTyped(erlPath, etfPath))
+          }
         }
       }
     }

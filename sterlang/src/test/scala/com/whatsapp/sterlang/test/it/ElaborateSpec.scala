@@ -16,12 +16,17 @@
 
 package com.whatsapp.sterlang.test.it
 
+import java.io.File
 import java.nio.file.Files
 
 import com.whatsapp.sterlang.TypePrinter2.{TypeSchemes, Types}
 
-abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
-  import java.io.File
+class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
+
+  testDir("examples/pos")
+  testDir("examples/elm-core")
+  testDir("examples/dev")
+  testDir("examples/pattern")
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._
@@ -31,7 +36,7 @@ abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
 
       val file = new File(iDirPath)
       val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4))
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
 
       moduleNames.foreach { p =>
         val erlPath = s"$iDirPath/$p.erl"
@@ -54,14 +59,14 @@ abstract class DirSpec extends org.scalatest.funspec.AnyFunSpec {
     new File(erlPath + "._ty").delete()
   }
 
-  def testFileVerbose(f: String, etfPath: String): Unit = {
-    SterlangTestUtil.processFile(f, etfPath, Types, "_vt", "vt")
+  def testFileVerbose(erlPath: String, etfPath: String): Unit = {
+    SterlangTestUtil.processFile(erlPath, etfPath, Types, "_vt", "vt")
 
-    val myOutput = fileContent(f + "._vt")
-    val expectedOut = fileContent(f + ".vt")
+    val myOutput = fileContent(erlPath + "._vt")
+    val expectedOut = fileContent(erlPath + ".vt")
     assert(myOutput == expectedOut)
 
-    new File(f + "._vt").delete()
+    new File(erlPath + "._vt").delete()
   }
 
   def fileContent(path: String): String = {
