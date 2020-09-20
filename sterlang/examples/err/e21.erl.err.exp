@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------------- examples/err/e21.erl:20:12
+Type Mismatch
+Found:    boolean()
+Required: integer()
+ 20|     double(R#(x)).
+...|            ~~~~~

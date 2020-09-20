@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------------- examples/err/e29.erl:17:43
+Type Mismatch
+Found:    list(string())
+Required: list(integer())
+ 17| foo(C) -> case C of true -> [0]; false -> [""] end.
+...|                                           ~~~~

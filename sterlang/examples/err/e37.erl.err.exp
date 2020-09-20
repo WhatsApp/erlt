@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------------- examples/err/e37.erl:18:28
+Type Mismatch
+Found:    boolean()
+Required: list(boolean())
+ 18|     case X of [true] -> 2; false -> 1 end.
+...|                            ~~~~~

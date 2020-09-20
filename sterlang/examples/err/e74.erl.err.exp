@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------------- examples/err/e74.erl:19:1
+Duplicate type: unit1
+ 19| -enum unit1(A) :: ctr{A}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~

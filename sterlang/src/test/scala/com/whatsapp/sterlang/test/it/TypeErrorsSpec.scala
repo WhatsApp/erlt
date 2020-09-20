@@ -17,11 +17,14 @@
 package com.whatsapp.sterlang.test.it
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
 
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
+
+  val generateOut = false
+
   testDir("examples/neg")
   testDir("examples/err")
   testDir("examples/err2")
@@ -44,14 +47,14 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
           ignore(erlPath) {}
         } else {
           it(erlPath) {
-            assert(processIllTyped(erlPath, etfPath))
+            processIllTyped(erlPath, etfPath)
           }
         }
       }
     }
   }
 
-  def processIllTyped(erlPath: String, etfPath: String): Boolean = {
+  private def processIllTyped(erlPath: String, etfPath: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
@@ -59,10 +62,27 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val context = Main.loadContext(etfPath, program, vars).extend(program)
       new AstChecks(context).check(program)
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
-      false
+      fail(s"$erlPath should not type-check")
     } catch {
-      case _: RangedError =>
-        true
+      case error: RangedError =>
+        val actualErr = Main.errorString(erlPath, fileContent(erlPath), error)
+        if (generateOut) {
+          val expPath = Paths.get(erlPath + ".err.exp")
+          Files.write(expPath, actualErr.getBytes)
+        }
+
+        val tmpPath = Paths.get(erlPath + "_err")
+        Files.write(tmpPath, actualErr.getBytes)
+        val expectedErr = fileContent(erlPath + ".err.exp")
+        assert(expectedErr === actualErr)
+        Files.delete(tmpPath)
     }
+  }
+
+  private def fileContent(path: String): String = {
+    val source = scala.io.Source.fromFile(path)
+    val content = source.mkString
+    source.close()
+    content
   }
 }

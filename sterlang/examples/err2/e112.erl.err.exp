@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------- examples/err2/e112.erl:27:9
+Type Mismatch
+Found:    exception()
+Required: message()
+ 27|         #foo{}  -> "foo";
+...|         ~~~~~~

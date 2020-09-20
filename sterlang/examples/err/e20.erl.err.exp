@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------------- examples/err/e20.erl:19:12
+Type Mismatch
+Found:    boolean()
+Required: integer()
+ 19|     double(X orelse Y).
+...|            ~~~~~~~~~~

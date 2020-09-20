@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------------- examples/err/e01.erl:17:14
+Type Mismatch
+Found:    boolean()
+Required: integer()
+ 17| foo() -> 1 + true.
+...|              ~~~~

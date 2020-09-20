@@ -1,0 +1,5 @@
+-- ERROR -------------------------------------------- examples/err/e31.erl:17:33
+Infinite type
+list(list(A)) <> A
+ 17| foo(C) -> case C of [H|T] -> [T|H] end.
+...|                                 ^

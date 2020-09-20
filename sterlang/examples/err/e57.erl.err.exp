@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------------- examples/err/e57.erl:18:3
+Duplicate fields: x
+ 18| f(#(x = XVal, x = YVal)) -> {XVal, YVal}.
+...|   ~~~~~~~~~~~~~~~~~~~~~

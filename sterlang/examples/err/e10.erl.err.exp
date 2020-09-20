@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------------- examples/err/e10.erl:17:11
+Unbound variable: Y
+ 17| foo(X) -> Y.
+...|           ^
