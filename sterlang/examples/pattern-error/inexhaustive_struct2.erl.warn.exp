@@ -1,0 +1,7 @@
+-- WARNING ---------------- examples/pattern-error/inexhaustive_struct2.erl:22:1
+Missing Patterns
+missing: #r{a = true, b = false}
+ 22| test1(#r{a = false}) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 23| test1(#r{b = true}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,0 +1,4 @@
+-- WARNING ------------------- examples/pattern-error/redundant_struct1.erl:23:7
+Useless Pattern
+ 23| test1(#r{a = true}) -> {}.
+...|       ~~~~~~~~~~~~

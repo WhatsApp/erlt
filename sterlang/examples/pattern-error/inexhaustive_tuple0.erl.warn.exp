@@ -1,0 +1,5 @@
+-- WARNING ----------------- examples/pattern-error/inexhaustive_tuple0.erl:22:1
+Missing Patterns
+missing: {ab.b{}}
+ 22| test1({ab.a{}}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~

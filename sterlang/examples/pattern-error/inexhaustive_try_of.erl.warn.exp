@@ -1,0 +1,13 @@
+-- WARNING ----------------- examples/pattern-error/inexhaustive_try_of.erl:22:3
+Missing Patterns
+missing: true
+ 22|   try X of
+...|   ~~~~~~~~
+...|     false -> {}
+...| ~~~~~~~~~~~~~~~
+...|   catch
+...| ~~~~~~~
+...|     _ -> {}
+...| ~~~~~~~~~~~
+ 26|   end.
+...| ~~~~~

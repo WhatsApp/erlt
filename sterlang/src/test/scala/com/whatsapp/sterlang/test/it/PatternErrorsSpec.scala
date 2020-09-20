@@ -17,12 +17,14 @@
 package com.whatsapp.sterlang.test.it
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
 import com.whatsapp.sterlang.patterns.PatternChecker
 
 class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
+
+  val generateOut = false
 
   testDir("examples/pattern-error")
 
@@ -39,26 +41,44 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       moduleNames.foreach { p =>
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
-        it(erlPath) {
-          assert(processIllPatterns(erlPath, etfPath))
-        }
+        if (erlPath.endsWith("redundant_empty.erl")) {
+          // TODO
+          ignore(erlPath) {}
+        } else
+          it(erlPath) {
+            processIllPatterns(erlPath, etfPath)
+          }
       }
     }
   }
 
-  private def processIllPatterns(erlPath: String, etfPath: String): Boolean = {
+  private def processIllPatterns(erlPath: String, etfPath: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
     val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
-    try {
-      new PatternChecker(vars, context, program).check(annotatedFunctions)
-      false
-    } catch {
-      case _: RangedError =>
-        true
+    val warnings = new PatternChecker(vars, context, program).warnings(annotatedFunctions)
+    assert(warnings.nonEmpty)
+
+    val actualErr = warnings.map(Main.errorString(erlPath, fileContent(erlPath), _)).mkString("\n")
+    if (generateOut) {
+      val expPath = Paths.get(erlPath + ".warn.exp")
+      Files.write(expPath, actualErr.getBytes)
     }
+
+    val tmpPath = Paths.get(erlPath + "_err")
+    Files.write(tmpPath, actualErr.getBytes)
+    val expectedErr = fileContent(erlPath + ".warn.exp")
+    assert(expectedErr === actualErr)
+    Files.delete(tmpPath)
+  }
+
+  private def fileContent(path: String): String = {
+    val source = scala.io.Source.fromFile(path)
+    val content = source.mkString
+    source.close()
+    content
   }
 }

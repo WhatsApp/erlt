@@ -1,0 +1,4 @@
+-- WARNING ------------------ examples/pattern-error/redundant_receive1.erl:25:5
+Useless Pattern
+ 25|     #m0{} -> {}
+...|     ~~~~~

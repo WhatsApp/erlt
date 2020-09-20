@@ -1,0 +1,9 @@
+-- WARNING ------------- examples/pattern-error/inexhaustive_exception0.erl:24:1
+Missing Patterns
+missing: _
+ 24| test(#e0{}) -> {};
+...| ~~~~~~~~~~~~~~~~~~
+...| test(#e1{a = true}) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 26| test(#e1{a = false}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

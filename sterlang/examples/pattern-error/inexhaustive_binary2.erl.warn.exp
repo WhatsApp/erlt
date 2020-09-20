@@ -1,0 +1,5 @@
+-- WARNING ---------------- examples/pattern-error/inexhaustive_binary2.erl:21:1
+Missing Patterns
+missing: false, _
+ 21| test(true, _) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~

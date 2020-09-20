@@ -1,0 +1,4 @@
+-- WARNING ------------------- examples/pattern-error/redundant_guarded.erl:21:7
+Useless Pattern
+ 21| test1(X, Y) when X =:= Y -> {}.
+...|       ~~~~
