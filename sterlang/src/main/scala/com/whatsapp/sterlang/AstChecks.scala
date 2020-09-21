@@ -94,7 +94,15 @@ class AstChecks(val context: Context) {
     result
   }
 
-  // This is for testing that there are no cycles only.
+  // TODO - move to erlT compiler in the first place.
+  // The following conditions should hold for a well-formed type alias:
+  // - All type params on RHS should be used in LHS (no "useless type param")
+  // - All type variable on RHS should be bound (no "unbound type var")
+  // - The type alias should not have cycles: ie - it is possible to fully expand it.
+  //   See `expandType` implementation - it tries to expand the RHS of the type alias
+  //   recursively, tracking all the already expanded aliases, - if it encounters
+  //   an already expanded alias, it reports an error.
+  // - RHS cannot have wild type variables (`_`) - this is a difference from erl1!
   private def checkTypeAlias(program: Program, alias: TypeAlias): Unit = {
     val tp = UserType(LocalName(alias.name), alias.params)(Doc.ZRange)
     val bound = collectParams(alias.params)
