@@ -4,6 +4,6 @@
 -export_type([str2/0]).
 -export([mk_str1/0]).
 
--struct str2 :: ().
+-struct str2 :: (str1 = #str1:str1{} :: str1:str1()).
 mk_str1() -> #str1:str1{}.
 

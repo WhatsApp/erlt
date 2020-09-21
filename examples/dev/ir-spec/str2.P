@@ -6,10 +6,10 @@
 
 -export([mk_str1/0]).
 
--type str2() :: {'$#str2:str2'}.
+-type str2() :: {'$#str2:str2', str1:str1()}.
 
 mk_str1() ->
-    {'$#str1:str1'}.
+    {'$#str1:str1', 0}.
 
 
 
