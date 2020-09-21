@@ -710,7 +710,7 @@ parse_chars(Chars, Location) ->
     end.
 
 norm_loc_token(Tok) ->
-    [{text, Text}, {location, {L1, C1}}] = erlang:element(2, Tok),
+    [{text, Text}, {location, {L1, C1}}] = erl_anno:to_term(erlang:element(2, Tok)),
     {L2, C2} = end_text_location(Text, L1, C1),
     erlang:setelement(2, Tok, {{L1, C1}, {L2, C2}}).
 
