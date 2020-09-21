@@ -452,7 +452,8 @@ get_attr_deps([{attribute, _, file, {NewFile0, _}} | Rest], St, _File, Acc) ->
 get_attr_deps([{attribute, _Line, import, _Value} | Rest], St, File, Acc) ->
     % ignoring for now, since these are runtime, rather than compile-time dependencies
     % Furthermore, imports could be circular, which is likely the reason for
-    % not handling them at compile time in the current implementation
+    % not handling them at compile time in the current implementation.
+    % Note that *usages* of types from other modules are treated as dependencies.
     get_attr_deps(Rest, St, File, Acc);
 get_attr_deps([{attribute, _Line, compile, _Value} | Rest], St, File, Acc) ->
     % in classic Erlang erlc, information about parse transforms is read from the beam file by the compiler,
