@@ -17,19 +17,22 @@
 
 -export_type([foo/0, bar/0]).
 
--export([expr/0, pattern/1, guard/1, field/1, update/1]).
+-export([expr/0, pattern/3, guard/3, field/1, update/1]).
 
 -struct foo :: ().
 
 -struct bar :: (a :: integer(), b :: integer()).
 
 expr() ->
-    #?MODULE:foo{}.
+    {
+        #?MODULE:foo{},
+        #?MODULE:bar{a = 1, b = 2}
+    }.
 
-pattern(#?MODULE:foo{}) ->
-    ok.
+pattern(#?MODULE:foo{}, #?MODULE:bar{a = 1, b = B}, B) ->
+    B.
 
-guard(Value) when Value =:= #?MODULE:foo{} ->
+guard(Value1, Value2, B) when Value1 =:= #?MODULE:foo{}, Value2 =:= #?MODULE:bar{a = 1, b = B} ->
     ok.
 
 field(Value) when Value#?MODULE:bar.a =:= 1 ->

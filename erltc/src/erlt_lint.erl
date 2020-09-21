@@ -3375,7 +3375,7 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
             case St1#lint.defs_db of
                 undefined ->
-                    pattern_struct_fields(Pfs, N, unavailable, Vt, Old, Bvt, St1);
+                    pattern_struct_fields(Pfs, RawName, unavailable, Vt, Old, Bvt, St1);
                 GlobalDefs ->
                     case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
