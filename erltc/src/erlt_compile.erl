@@ -192,6 +192,7 @@ do_file(File, Options0) ->
                         ?pass(maybe_save_binary)
                     ];
             compile ->
+                % normal .erl compilation -- for erl1, should be identical to erlc behavior
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
