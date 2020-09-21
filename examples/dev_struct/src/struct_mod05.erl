@@ -15,7 +15,7 @@
 -lang([erlt]).
 -module(struct_mod05).
 
--export([expr/0, pattern/1, guard/1, field/1, update/1, remote_with_defaults/0]).
+-export([expr/0, pattern/3, guard/3, field/1, update/1, remote_with_defaults/0]).
 
 -export_type([with_imported_default/0]).
 
@@ -24,12 +24,15 @@
 -struct with_imported_default :: (foo = #foo{} :: foo()).
 
 expr() ->
-    #foo{}.
+    {
+        #foo{},
+        #bar{a = 1, b = 2}
+    }.
 
-pattern(#foo{}) ->
-    ok.
+pattern(#foo{}, #bar{a = 1, b = B}, B) ->
+    B.
 
-guard(Value) when Value =:= #foo{} ->
+guard(Value1, Value2, B) when Value1 =:= #foo{}, Value2 =:= #bar{a = 1, b = B} ->
     ok.
 
 field(Value) when Value#bar.a =:= 1 ->

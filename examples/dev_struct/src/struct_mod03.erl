@@ -15,15 +15,18 @@
 -lang([erlt]).
 -module(struct_mod03).
 
--export([expr/0, pattern/1, guard/1, field/1, update/1]).
+-export([expr/0, pattern/3, guard/3, field/1, update/1]).
 
 expr() ->
-    #struct_mod02:foo{}.
+    {
+        #struct_mod02:foo{},
+        #struct_mod02:bar{a = 1, b = 2}
+    }.
 
-pattern(#struct_mod02:foo{}) ->
-    ok.
+pattern(#struct_mod02:foo{}, #struct_mod02:bar{a = 1, b = B}, B) ->
+    B.
 
-guard(Value) when Value =:= #struct_mod02:foo{} ->
+guard(Value1, Value2, B) when Value1 =:= #struct_mod02:foo{}, Value2 =:= #struct_mod02:bar{a = 1, b = B} ->
     ok.
 
 field(Value) when Value#struct_mod02:bar.a =:= 1 ->
