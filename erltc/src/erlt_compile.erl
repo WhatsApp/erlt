@@ -48,18 +48,11 @@
 
 %Macro to avoid misspellings.
 -define(STDERR, standard_error).
+-define(SOURCE_FILE_EXTENSION, ".erl").
 
 -type err_warn_info() :: tuple().
 
 -type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
-
-% type of compile-time .erl dependency
-%
-% here, 'file' typically means file included by -include or -include_lib, but
-% in theory, it could be something injected by a parse transform
--type compile_dep_type() :: file | behavior | parse_transform | core_transform.
-
--type compile_dep() :: {compile_dep_type(), file:filename()}.
 
 % NOTE: slimmed down version of the original compile state
 -record(compile, {
@@ -74,7 +67,6 @@
     encoding = none :: none | erlt_epp:source_encoding(),
     errors = [] :: [err_warn_info()],
     warnings = [] :: [err_warn_info()],
-    compile_deps = [] :: [compile_dep()],
     build_dir :: undefined | file:filename(),
     % indicator of Erlang language flavor; valid combinations are
     %
@@ -173,7 +165,6 @@ do_file(File, Options0) ->
                 % this mode exists mainly for testing the new dependency scanner
                 base_passes() ++
                     [
-                        ?pass(collect_compile_deps),
                         ?pass(output_compile_deps)
                     ];
             build_scan ->
@@ -182,7 +173,6 @@ do_file(File, Options0) ->
                 base_passes() ++
                     [
                         ?pass(output_declarations),
-                        ?pass(collect_compile_deps),
                         ?pass(output_compile_deps)
                     ];
             build_compile ->
@@ -254,18 +244,21 @@ optionally(true, F, X) -> F(X);
 optionally(false, _F, X) -> X.
 
 % TODO: add a mode for printing deps in JSON format (-MJSON ?)
-output_compile_deps(_Forms, St) ->
+output_compile_deps(Forms, St) ->
+    Deps0 = get_compile_deps(Forms, St),
+
     OptionSet = fun(Option) -> member(Option, St#compile.options) end,
     TargetBeam = shorten_filename(St#compile.ofile),
 
-    Deps = optionally(OptionSet(makedep), fun keep_relative_paths/1, St#compile.compile_deps),
+    Deps = optionally(OptionSet(makedep), fun keep_relative_paths/1, Deps0),
     DepsFilenames = deps_to_unique_filenames(Deps),
     RuleCode = gen_make_rule(TargetBeam, DepsFilenames),
 
     DefsRuleCode =
         case St#compile.has_written_defs_file of
             true ->
-                gen_make_rule(shorten_filename(St#compile.defs_file), DepsFilenames);
+                Erls = lists:filter(fun can_be_dep_of_defs_file/1, DepsFilenames),
+                gen_make_rule(shorten_filename(St#compile.defs_file), Erls);
             false ->
                 ""
         end,
@@ -436,24 +429,6 @@ get_parse_errors([{error, Error} | Rest], File, Acc) ->
     get_parse_errors(Rest, File, [CompileError | Acc]);
 get_parse_errors([_ | Rest], File, Acc) ->
     get_parse_errors(Rest, File, Acc).
-
-append_compile_deps(Deps, St0) ->
-    St0#compile{
-        compile_deps = lists_append_uniq(St0#compile.compile_deps, Deps)
-    }.
-
-lists_append_uniq(From, To) ->
-    lists_append_uniq(From, To, _Acc = []).
-
-lists_append_uniq([], To, Acc) ->
-    To ++ lists:reverse(Acc);
-lists_append_uniq([H | T], To, Acc) ->
-    NewAcc =
-        case member(H, Acc) orelse member(H, To) of
-            true -> Acc;
-            false -> [H | Acc]
-        end,
-    lists_append_uniq(T, To, NewAcc).
 
 get_attr_deps(Forms, St0) ->
     get_attr_deps(Forms, St0, _File = St0#compile.ifile, _Acc = []).
@@ -1104,10 +1079,14 @@ get_lang(St) ->
         2 -> lists:nth(2, lists:usort(St#compile.lang))
     end.
 
-collect_compile_deps(Forms, St0) ->
-    AttrDeps = get_attr_deps(Forms, St0),
-    TypedDeps = get_erlt_deps(Forms, St0),
-    {ok, Forms, append_compile_deps(AttrDeps ++ TypedDeps, St0)}.
+% defs files only depend on source_file
+can_be_dep_of_defs_file(Filename) ->
+    filename:extension(Filename) =:= ?SOURCE_FILE_EXTENSION.
+
+get_compile_deps(Forms, St) ->
+    AttrDeps = get_attr_deps(Forms, St),
+    TypedDeps = get_erlt_deps(Forms, St),
+    AttrDeps ++ TypedDeps.
 
 get_erlt_deps(Forms, St0) ->
     RawDeps =
@@ -1117,7 +1096,6 @@ get_erlt_deps(Forms, St0) ->
             {_, _} -> erlt_deps:dt_deps(Forms)
         end,
     F = St0#compile.ifile,
-    io:format("about to resolve~n"),
     [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
 
 erlt_typecheck(Code, St) ->
