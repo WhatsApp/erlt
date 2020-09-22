@@ -73,18 +73,5 @@ erltc knows how to invoke stErlang in either format, but [(temporarily)](https:/
 
 stErlang can be run and tested standalone. See the main README for how.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 1c80242... more notes on sterlang
-### design and type system
+Our checks for pattern matching are based on [http://moscova.inria.fr/~maranget/papers/warn/warn.pdf](Warnings for pattern matching).
 
-- The best resource is https://fb.quip.com/zyy6ABoAWutb. See esp. the section on type inference.
-- See also the [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]] for how our pattern matching warnings work.
-
-
-<<<<<<< HEAD
-=======
->>>>>>> 53ae049... update README
-=======
->>>>>>> 1c80242... more notes on sterlang

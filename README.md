@@ -3,8 +3,8 @@
 This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
 - ./erltc: erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
 - ./sterlang: stErlang is standalone type-checker for ST
-- ./analyzer:  this tool gets information about properties of an Erlang project. It can be used standalone, but is also is [used by other tools in this repo](./doc/08_compiler_architecture.md) and may be integrated into [erlang_ls](https://github.com/erlang-ls/erlang_ls) in future. **MAX TODO: accurate?**
-- ./erlbuild: this is an experimental low-level classic Erlang build tool that is currently not used. Parts of this were adapted for erltc. The inline documentation is a useful reference for how dependency-tracking works in erltc. **MAD TODO: is this description accurate?**
+- ./analyzer:  this tool gets information about properties of an Erlang project. It can be used standalone, but is also is [used by other tools in this repo](./doc/08_compiler_architecture.md).
+- ./erlbuild: erltc only handles one file at a time. erlbuild compiles a collection of ErlT files in the same directory. See [the erlbuild docs](./erlbuild/README.md) for more information.
 
 > See ./doc/08_compiler_architecture.md for more information about how these parts work together
 > See the top-level READMEs for each of these sub-directories for more information about a particular tool
@@ -23,9 +23,7 @@ There are only few differences:
   (Right now it does it by forbidding ambiguity)
 * ErlT DT is explicit about already bound and free variables in patterns.
   (Right now it does it by forbidding ambiguity)
-* It replaces records with new constructs: enums and structs 
-  (see [struct and enum design](https://fb.quip.com/8vXhAaloq2xw)) and
-  (see [Enum rationale](04_enums.md))
+* It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and anonymous structs](./doc/05_structs.md).
 * The new [`import_type`](07_import_type.md) construct allows using types from
   remote modules via short names.
 
@@ -73,8 +71,6 @@ cd sterlang; sbt assembly
 The tests for erltc come in these two flavors:
 - the tests under `./examples/check` verify compiler errors against .exp files
 - the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST. See [erltc_architecutre](./doc/08_compiler_architecture.md) for more information.
-
-**MAX TODO**: what does 'elm-core' stand for in ./examples/elm-core
 
 ### stErlang tests
 
