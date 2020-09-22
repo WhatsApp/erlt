@@ -153,9 +153,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %Actually imported types
     imported_types = [],
     %Used type definitions
-    used_types = dict:new() :: dict:dict(ta(), line()),
-    % Used struct definitons
-    used_structs = #{} :: #{atom() => []}
+    used_types = dict:new() :: dict:dict(ta(), line())
 }).
 
 %% Define the lint state record.
@@ -841,8 +839,8 @@ pre_scan([{attribute, L, compile, C} | Fs], St) ->
     end;
 %% structs can appear in any order, scan for definitions before
 %% actual checking begins
-pre_scan([{attribute, _, struct, {_, TypeDef, _}} | Fs], St) ->
-    pre_scan(Fs, struct_def(TypeDef, St));
+pre_scan([{attribute, Loc, struct, {_, TypeDef, Args}} | Fs], St) ->
+    pre_scan(Fs, struct_def(Loc, TypeDef, length(Args), St));
 pre_scan([_ | Fs], St) ->
     pre_scan(Fs, St);
 pre_scan([], St) ->
@@ -975,8 +973,7 @@ function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
     St2#lint{enum = []};
 function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    St1 = struct_def(TypeDef, St),
-    type_def(struct, L, TypeName, TypeDef, Args, St1);
+    type_def(struct, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
@@ -1473,7 +1470,7 @@ export_type(Line, ETs, #lint{usage = Usage, exp_types = ETs0} = St0) ->
     UTs0 = Usage#usage.used_types,
     try
         foldl(
-            fun({T, A} = TA, {E, U, St2}) when is_atom(T), is_integer(A) ->
+            fun({T, A} = TA, {E, UTs, St2}) when is_atom(T), is_integer(A) ->
                 St =
                     case gb_sets:is_element(TA, E) of
                         true ->
@@ -1482,7 +1479,7 @@ export_type(Line, ETs, #lint{usage = Usage, exp_types = ETs0} = St0) ->
                         false ->
                             St2
                     end,
-                {gb_sets:add_element(TA, E), dict:store(TA, Line, U), St}
+                {gb_sets:add_element(TA, E), dict:store(TA, Line, UTs), St}
             end,
             {ETs0, UTs0, St0},
             ETs
@@ -2988,7 +2985,7 @@ check_struct(Line, RawName, St, CheckFun) ->
     case handle_imported_struct(RawName, St) of
         {{atom, _, N}, St1} ->
             case maps:find(N, St1#lint.structs) of
-                {ok, Def} -> CheckFun(Def, used_struct(N, St1));
+                {ok, {_Loc, Arity, Def}} -> CheckFun(Def, used_struct(Line, N, Arity, St1));
                 error -> {[], add_error(Line, {undefined_struct, N}, St1)}
             end;
         {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
@@ -3012,8 +3009,8 @@ check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
     case handle_imported_struct(RawName, St) of
         {{atom, _, N}, St1} ->
             case maps:find(N, St1#lint.structs) of
-                {ok, Def} ->
-                    St2 = used_struct(N, St1),
+                {ok, {_Loc, Arity, Def}} ->
+                    St2 = used_struct(Line, N, Arity, St1),
                     pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St2);
                 error ->
                     {[], [], add_error(Line, {undefined_struct, N}, St)}
@@ -3158,9 +3155,9 @@ check_struct_field(
                 end}
     end.
 
-used_struct(Name, #lint{usage = Usage} = St) ->
-    UsedRecs = (Usage#usage.used_structs)#{Name => []},
-    St#lint{usage = Usage#usage{used_structs = UsedRecs}}.
+used_struct(Line, Name, TypeArity, #lint{usage = Usage} = St) ->
+    Types = dict:store({Name, TypeArity}, Line, Usage#usage.used_types),
+    St#lint{usage = Usage#usage{used_types = Types}}.
 
 pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
@@ -3180,8 +3177,8 @@ pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     {Uvt, Bvt1, St1}.
 
 %% Does not do any checking, this is done in check_type
-struct_def({type, _Line, struct, {atom, _, Name}, _Fields} = Type, St) ->
-    St#lint{structs = (St#lint.structs)#{Name => struct_fields_map(Type)}}.
+struct_def(Loc, {type, _, struct, {atom, _, Name}, _Fields} = Type, TypeArity, St) ->
+    St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, struct_fields_map(Type)}}}.
 
 struct_fields_map({type, _, struct, _, Fields}) ->
     maps:from_list([

@@ -1,0 +1,2 @@
+erlt_compile: warnings being treated as errors
+unused_struct.erl:8:1: type unused() is unused

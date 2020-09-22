@@ -23,10 +23,10 @@ main([ErltFile]) ->
     ExpOutputFile = ErltFile ++ ".exp",
     {ok, ExpOutput} =  file:read_file(ExpOutputFile),
     ExpOutPutStr = binary_to_list(ExpOutput),
-    {ExitCode, ActualOutPut} = eunit_lib:command(Erltc ++ " +brief --build-dir ../deps " ++ ErltFile),
+    {ExitCode, ActualOutPut} = eunit_lib:command(Erltc ++ " +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile),
     case ExitCode of
         0 ->
-            io:format("`erltc ~s` has not failed", [ErltFile]),
+            io:format("`erltc ~s` has not failed~n", [ErltFile]),
             halt(2);
         _ ->
             ok
