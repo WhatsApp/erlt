@@ -517,17 +517,8 @@ module_to_defs_file(Mod) ->
     atom_to_list(Mod) ++ ?DefFileSuffix.
 
 fix_compile_options(Options, CompileMode) ->
-    %% forcing to use nowarn_unused_record,
-    %% motivation: unfolding of -module_alias(m1, some_module) brings ALL the records from some_module
-    %% as they were defined (textually) in the current module.
-    %% If any of them is unused then erl_lint:check_unused_records will produce a warning,
-    %% which can be bad in the settings when warnings are errors.
     Options1 = lists:filter(
         fun
-            (warn_unused_record) ->
-                false;
-            (nowarn_unused_record) ->
-                false;
             (report_warnings) ->
                 CompileMode =:= build_compile orelse
                     CompileMode =:= compile;
@@ -536,7 +527,7 @@ fix_compile_options(Options, CompileMode) ->
         end,
         Options
     ),
-    [nowarn_unused_record, no_error_module_mismatch | Options1].
+    [no_error_module_mismatch | Options1].
 
 compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
@@ -1597,8 +1588,6 @@ restore_expand_module([{attribute, Line, spec, [Arg]} | Fs]) ->
     [{attribute, Line, spec, Arg} | restore_expand_module(Fs)];
 restore_expand_module([{attribute, Line, callback, [Arg]} | Fs]) ->
     [{attribute, Line, callback, Arg} | restore_expand_module(Fs)];
-restore_expand_module([{attribute, Line, record, [R]} | Fs]) ->
-    [{attribute, Line, record, R} | restore_expand_module(Fs)];
 restore_expand_module([F | Fs]) ->
     [F | restore_expand_module(Fs)];
 restore_expand_module([]) ->

@@ -37,7 +37,6 @@
 ]).
 
 -export([interpret_file_attribute/1]).
--export([normalize_typed_record_fields/1, restore_typed_record_fields/1]).
 
 %%------------------------------------------------------------------------
 
@@ -513,36 +512,6 @@ com_encoding(_) ->
 
 lowercase(S) ->
     unicode:characters_to_list(string:lowercase(S)).
-
-normalize_typed_record_fields([]) ->
-    {typed, []};
-normalize_typed_record_fields(Fields) ->
-    normalize_typed_record_fields(Fields, [], false).
-
-normalize_typed_record_fields([], NewFields, Typed) ->
-    case Typed of
-        true -> {typed, lists:reverse(NewFields)};
-        false -> not_typed
-    end;
-normalize_typed_record_fields([{typed_record_field, Field, _} | Rest], NewFields, _Typed) ->
-    normalize_typed_record_fields(Rest, [Field | NewFields], true);
-normalize_typed_record_fields([Field | Rest], NewFields, Typed) ->
-    normalize_typed_record_fields(Rest, [Field | NewFields], Typed).
-
-restore_typed_record_fields([]) ->
-    [];
-restore_typed_record_fields([
-    {attribute, La, record, {Record, _NewFields}},
-    {attribute, La, type, {{record, Record}, Fields, []}}
-    | Forms
-]) ->
-    [{attribute, La, record, {Record, Fields}} | restore_typed_record_fields(Forms)];
-restore_typed_record_fields([{attribute, La, type, {{record, Record}, Fields, []}} | Forms]) ->
-    %% This clause is due to the compiler's 'E' option.
-    %% Record information kept by erl_expand_records.
-    [{attribute, La, record, {Record, Fields}} | restore_typed_record_fields(Forms)];
-restore_typed_record_fields([Form | Forms]) ->
-    [Form | restore_typed_record_fields(Forms)].
 
 server(Pid, Name, Options, #epp{pre_opened = PreOpened} = St) ->
     process_flag(trap_exit, true),

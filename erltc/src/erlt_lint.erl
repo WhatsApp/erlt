@@ -152,8 +152,6 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     imported = [],
     %Actually imported types
     imported_types = [],
-    %Used record definitions
-    used_records = sets:new() :: sets:set(atom()),
     %Used type definitions
     used_types = dict:new() :: dict:dict(ta(), line()),
     % Used struct definitons
@@ -175,9 +173,6 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     imports = [] :: orddict:orddict(fa(), module()),
     %Compile flags
     compile = [],
-    %Record definitions
-    records = dict:new() ::
-        dict:dict(atom(), {line(), Fields :: term()}),
     % Struct definitions
     structs = #{} :: #{atom() => Def :: term()},
     %All defined functions (prescanned)
@@ -215,10 +210,6 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     warnings = [],
     %From last file attribute
     file = "" :: string(),
-    recdef_top = false :: boolean(),
-    %true in record initialisation
-    %outside any fun or lc
-
     %true if qlc.hrl included
     xqlc = false :: boolean(),
     %Called functions
@@ -273,8 +264,6 @@ format_error(non_latin1_module_unsupported) ->
     "module names with non-latin1 characters are not supported";
 format_error(invalid_call) ->
     "invalid function call";
-format_error(invalid_record) ->
-    "invalid record expression";
 format_error({attribute, A}) ->
     io_lib:format("attribute ~tw after function definitions", [A]);
 format_error({missing_qlc_hrl, A}) ->
@@ -439,15 +428,11 @@ format_error({enum_constructor_wrong_arity, {M, E}, A, N}) ->
     io_lib:format("wrong number of arguments for constructor ~tw.~tw.~tw/~tw", [M, E, A, N]);
 format_error({enum_constructor_wrong_arity, E, A, N}) ->
     io_lib:format("wrong number of arguments for constructor ~tw.~tw/~tw", [E, A, N]);
-%% --- records ---
-format_error({undefined_record, T}) ->
-    io_lib:format("record ~tw undefined", [T]);
+%% --- structs ---
 format_error({undefined_struct, N}) ->
     io_lib:format("struct ~ts undefined", [format_name(N)]);
 format_error({private_struct, N}) ->
     io_lib:format("struct ~ts is not exported", [format_name(N)]);
-format_error({redefine_record, T}) ->
-    io_lib:format("record ~tw already defined", [T]);
 format_error({redefine_field, T, F}) ->
     io_lib:format("field ~tw already defined in record ~tw", [F, T]);
 format_error({reuse_anon_struct_field, F}) ->
@@ -466,18 +451,6 @@ format_error({illegal_struct_default_call, {F, A}}) ->
     io_lib:format("call to local/imported function ~tw/~w is illegal in struct defaults", [F, A]);
 format_error(illegal_struct_default) ->
     "illegal struct default expression";
-format_error({undefined_field, T, F}) ->
-    io_lib:format("field ~tw undefined in record ~tw", [F, T]);
-format_error(illegal_record_info) ->
-    "illegal record info";
-format_error({field_name_is_variable, T, F}) ->
-    io_lib:format("field ~tw is not an atom or _ in record ~tw", [F, T]);
-format_error({wildcard_in_update, T}) ->
-    io_lib:format("meaningless use of _ in update of record ~tw", [T]);
-format_error({unused_record, T}) ->
-    io_lib:format("record ~tw is unused", [T]);
-format_error({untyped_record, T}) ->
-    io_lib:format("record ~tw has field(s) without type information", [T]);
 %% --- variables ----
 format_error({unbound_var, V}) ->
     io_lib:format("variable ~w is unbound", [V]);
@@ -489,8 +462,6 @@ format_error({shadowed_var, V, In}) ->
     io_lib:format("variable ~w shadowed in ~w", [V, In]);
 format_error({unused_var, V}) ->
     io_lib:format("variable ~w is unused", [V]);
-format_error({variable_in_record_def, V}) ->
-    io_lib:format("variable ~w in record definition", [V]);
 format_error({stacktrace_guard, V}) ->
     io_lib:format("stacktrace variable ~w must not be used in a guard", [V]);
 format_error({stacktrace_bound, V}) ->
@@ -720,7 +691,6 @@ start(File, DefsDB, Opts) ->
         {unused_function, bool_option(warn_unused_function, nowarn_unused_function, true, Opts)},
         {unused_type, bool_option(warn_unused_type, nowarn_unused_type, true, Opts)},
         {bif_clash, bool_option(warn_bif_clash, nowarn_bif_clash, true, Opts)},
-        {unused_record, bool_option(warn_unused_record, nowarn_unused_record, true, Opts)},
         {deprecated_function,
             bool_option(
                 warn_deprecated_function,
@@ -730,7 +700,6 @@ start(File, DefsDB, Opts) ->
             )},
         {deprecated_type, bool_option(warn_deprecated_type, nowarn_deprecated_type, true, Opts)},
         {obsolete_guard, bool_option(warn_obsolete_guard, nowarn_obsolete_guard, true, Opts)},
-        {untyped_record, bool_option(warn_untyped_record, nowarn_untyped_record, false, Opts)},
         {missing_spec, bool_option(warn_missing_spec, nowarn_missing_spec, false, Opts)},
         {missing_spec_all,
             bool_option(warn_missing_spec_all, nowarn_missing_spec_all, false, Opts)},
@@ -963,8 +932,6 @@ attribute_state({attribute, L, import, Is}, St) ->
     import(L, Is, St);
 attribute_state({attribute, L, import_type, Is}, St) ->
     import_type(L, Is, St);
-attribute_state({attribute, L, record, {Name, Fields}}, St) ->
-    record_def(L, Name, Fields, St);
 attribute_state({attribute, La, behaviour, Behaviour}, St) ->
     St#lint{behaviour = St#lint.behaviour ++ [{La, Behaviour}]};
 attribute_state({attribute, La, behavior, Behaviour}, St) ->
@@ -995,12 +962,10 @@ attribute_state(Form, St) ->
 
 %% function_state(Form, State) ->
 %%      State'
-%%  Allow for record, type and opaque type definitions and spec
+%%  Allow for type and opaque type definitions and spec
 %%  declarations to be intersperced within function definitions.
 %%  Dialyzer attributes are also allowed everywhere.
 
-function_state({attribute, L, record, {Name, Fields}}, St) ->
-    record_def(L, Name, Fields, St);
 function_state({attribute, L, type, {TypeName, TypeDef, Args}}, St) ->
     type_def(type, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, opaque, {TypeName, TypeDef, Args}}, St) ->
@@ -1125,10 +1090,8 @@ post_traversal_check(Forms, St0) ->
     St9 = check_functions_without_spec(Forms, St8),
     StA = check_undefined_types(St9),
     StB = check_unused_types(Forms, StA),
-    StC = check_untyped_records(Forms, StB),
-    StD = check_on_load(StC),
-    StE = check_unused_records(Forms, StD),
-    StF = check_local_opaque_types(StE),
+    StD = check_on_load(StB),
+    StF = check_local_opaque_types(StD),
     StG = check_dialyzer_attribute(Forms, StF),
     check_callback_information(StG).
 
@@ -1449,72 +1412,6 @@ func_line_warning(Type, Fs, St) ->
 
 func_line_error(Type, Fs, St) ->
     foldl(fun({F, Line}, St0) -> add_error(Line, {Type, F}, St0) end, St, Fs).
-
-check_untyped_records(Forms, St0) ->
-    case is_warn_enabled(untyped_record, St0) of
-        true ->
-            %% Use the names of all records *defined* in the module (not used)
-            RecNames = dict:fetch_keys(St0#lint.records),
-            %% these are the records with field(s) containing type info
-            TRecNames = [
-                Name
-                || {attribute, _, record, {Name, Fields}} <- Forms,
-                   lists:all(
-                       fun
-                           ({typed_record_field, _, _}) -> true;
-                           (_) -> false
-                       end,
-                       Fields
-                   )
-            ],
-            foldl(
-                fun(N, St) ->
-                    {L, Fields} = dict:fetch(N, St0#lint.records),
-                    case Fields of
-                        % exclude records with no fields
-                        [] ->
-                            St;
-                        [_ | _] ->
-                            add_warning(L, {untyped_record, N}, St)
-                    end
-                end,
-                St0,
-                ordsets:subtract(ordsets:from_list(RecNames), ordsets:from_list(TRecNames))
-            );
-        false ->
-            St0
-    end.
-
-check_unused_records(Forms, St0) ->
-    AttrFiles = [File || {attribute, _L, file, {File, _Line}} <- Forms],
-    case {is_warn_enabled(unused_record, St0), AttrFiles} of
-        {true, [FirstFile | _]} ->
-            %% The check is a bit imprecise in that uses from unused
-            %% functions count.
-            Usage = St0#lint.usage,
-            UsedRecords = sets:to_list(Usage#usage.used_records),
-            URecs = foldl(
-                fun(Used, Recs) ->
-                    dict:erase(Used, Recs)
-                end,
-                St0#lint.records,
-                UsedRecords
-            ),
-            Unused = [
-                {Name, FileLine}
-                || {Name, {FileLine, _Fields}} <- dict:to_list(URecs),
-                   element(1, loc(FileLine, St0)) =:= FirstFile
-            ],
-            foldl(
-                fun({N, L}, St) ->
-                    add_warning(L, {unused_record, N}, St)
-                end,
-                St0,
-                Unused
-            );
-        _ ->
-            St0
-    end.
 
 check_callback_information(
     #lint{callbacks = Callbacks, optional_callbacks = OptionalCbs, defined = Defined} = St0
@@ -1924,20 +1821,6 @@ pattern({enum, _Line, E, C, Ps}, Vt, Old, Bvt, St) ->
     pattern_list([E, C | Ps], Vt, Old, Bvt, check_enum(E, C, Ps, St));
 pattern({map, _Line, Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
-pattern({record_index, Line, Name, Field}, _Vt, _Old, _Bvt, St) ->
-    {Vt1, St1} =
-        check_record(Line, Name, St, fun(Dfs, St1) ->
-            pattern_field(Field, Name, Dfs, St1)
-        end),
-    {Vt1, [], St1};
-pattern({record, Line, Name, Pfs}, Vt, Old, Bvt, St) ->
-    case dict:find(Name, St#lint.records) of
-        {ok, {_Line, Fields}} ->
-            St1 = used_record(Name, St),
-            pattern_fields(Pfs, Name, Fields, Vt, Old, Bvt, St1);
-        error ->
-            {[], [], add_error(Line, {undefined_record, Name}, St)}
-    end;
 pattern({anon_struct, _Line, Pfs}, Vt, Old, Bvt, St) ->
     check_anon_struct_pattern_fields(Pfs, Vt, Old, Bvt, St, []);
 pattern({struct, Line, N, Pfs}, Vt, Old, Bvt, St) ->
@@ -2034,20 +1917,6 @@ reject_invalid_alias({cons, _, H1, T1}, {cons, _, H2, T2}, Vt, St0) ->
     reject_invalid_alias(T1, T2, Vt, St);
 reject_invalid_alias({tuple, _, Es1}, {tuple, _, Es2}, Vt, St) ->
     reject_invalid_alias_list(Es1, Es2, Vt, St);
-reject_invalid_alias(
-    {record, _, Name1, Pfs1},
-    {record, _, Name2, Pfs2},
-    Vt,
-    #lint{records = Recs} = St
-) ->
-    case {dict:find(Name1, Recs), dict:find(Name2, Recs)} of
-        {{ok, {_Line1, Fields1}}, {ok, {_Line2, Fields2}}} ->
-            reject_invalid_alias_rec(Pfs1, Pfs2, Fields1, Fields2, Vt, St);
-        {_, _} ->
-            %% One or more non-existing records. (An error messages has
-            %% already been generated, so we are done here.)
-            St
-    end;
 reject_invalid_alias({match, _, P1, P2}, P, Vt, St0) ->
     St = reject_invalid_alias(P1, P, Vt, St0),
     reject_invalid_alias(P2, P, Vt, St);
@@ -2061,34 +1930,6 @@ reject_invalid_alias_list([E1 | Es1], [E2 | Es2], Vt, St0) ->
     reject_invalid_alias_list(Es1, Es2, Vt, St);
 reject_invalid_alias_list(_, _, _, St) ->
     St.
-
-reject_invalid_alias_rec(PfsA0, PfsB0, FieldsA0, FieldsB0, Vt, St) ->
-    %% We treat records as if they have been converted to tuples.
-    PfsA1 = rbia_field_vars(PfsA0),
-    PfsB1 = rbia_field_vars(PfsB0),
-    FieldsA1 = rbia_fields(lists:reverse(FieldsA0), 0, []),
-    FieldsB1 = rbia_fields(lists:reverse(FieldsB0), 0, []),
-    FieldsA = sofs:relation(FieldsA1),
-    PfsA = sofs:relation(PfsA1),
-    A = sofs:join(FieldsA, 1, PfsA, 1),
-    FieldsB = sofs:relation(FieldsB1),
-    PfsB = sofs:relation(PfsB1),
-    B = sofs:join(FieldsB, 1, PfsB, 1),
-    C = sofs:join(A, 2, B, 2),
-    D = sofs:projection({external, fun({_, _, P1, _, P2}) -> {P1, P2} end}, C),
-    E = sofs:to_external(D),
-    {Ps1, Ps2} = lists:unzip(E),
-    reject_invalid_alias_list(Ps1, Ps2, Vt, St).
-
-rbia_field_vars(Fs) ->
-    [{Name, Pat} || {record_field, _, {atom, _, Name}, Pat} <- Fs].
-
-rbia_fields([{record_field, _, {atom, _, Name}, _} | Fs], I, Acc) ->
-    rbia_fields(Fs, I + 1, [{Name, I} | Acc]);
-rbia_fields([_ | Fs], I, Acc) ->
-    rbia_fields(Fs, I + 1, Acc);
-rbia_fields([], _, Acc) ->
-    Acc.
 
 %% is_pattern_expr(Expression) -> boolean().
 %%  Test if a general expression is a valid pattern expression.
@@ -2279,8 +2120,7 @@ bit_size({atom, _Line, all}, _Vt, St, _Check) ->
 bit_size(Size, Vt, St, Check) ->
     %% Try to safely evaluate Size if constant to get size,
     %% otherwise just treat it as an expression.
-    Info = is_guard_test2_info(St),
-    case is_gexpr(Size, Info) of
+    case is_gexpr(Size, St) of
         true ->
             case erl_eval:partial_eval(Size) of
                 {integer, _ILn, I} ->
@@ -2383,9 +2223,6 @@ guard_test(G, Vt, St0) ->
     St1 = obsolete_guard(G, St0),
     guard_test2(G, Vt, St1).
 
-%% Specially handle record type test here.
-guard_test2({call, Line, {atom, Lr, record}, [E, A]}, Vt, St0) ->
-    gexpr({call, Line, {atom, Lr, is_record}, [E, A]}, Vt, St0);
 guard_test2({call, Line, {atom, _La, F}, As} = G, Vt, St0) ->
     %Always check this.
     {Asvt, St1} = gexpr_list(As, Vt, St0),
@@ -2437,19 +2274,6 @@ gexpr({map, _Line, Src, Es}, Vt, St) ->
     {Svt, St1} = gexpr(Src, Vt, St),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun gexpr_list/3),
     {vtmerge(Svt, Fvt), St2};
-gexpr({record_index, Line, Name, Field}, _Vt, St) ->
-    check_record(Line, Name, St, fun(Dfs, St1) -> record_field(Field, Name, Dfs, St1) end);
-gexpr({record_field, Line, Rec, Name, Field}, Vt, St0) ->
-    {Rvt, St1} = gexpr(Rec, Vt, St0),
-    {Fvt, St2} =
-        check_record(Line, Name, St1, fun(Dfs, St) ->
-            record_field(Field, Name, Dfs, St)
-        end),
-    {vtmerge(Rvt, Fvt), St2};
-gexpr({record, Line, Name, Inits}, Vt, St) ->
-    check_record(Line, Name, St, fun(Dfs, St1) ->
-        ginit_fields(Inits, Line, Name, Dfs, Vt, St1)
-    end);
 gexpr({anon_struct, _Line, Fields}, Vt, St) ->
     check_anon_struct_fields(Fields, Vt, St, fun gexpr/3);
 gexpr({anon_struct_update, _Line, Expr, Fields}, Vt, St) ->
@@ -2474,39 +2298,14 @@ gexpr({struct_index, Line, Name, Field}, _Vt, St0) ->
     end);
 gexpr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun gexpr/3);
-gexpr({call, _Line, {atom, _Lr, is_record}, [E, {atom, Ln, Name}]}, Vt, St0) ->
-    {Rvt, St1} = gexpr(E, Vt, St0),
-    {Rvt, exist_record(Ln, Name, St1)};
-gexpr({call, Line, {atom, _Lr, is_record}, [E, R]}, Vt, St0) ->
-    {Asvt, St1} = gexpr_list([E, R], Vt, St0),
-    {Asvt, add_error(Line, illegal_guard_expr, St1)};
-gexpr(
-    {call, Line, {remote, _Lr, {atom, _Lm, erlang}, {atom, Lf, is_record}}, [E, A]},
-    Vt,
-    St0
-) ->
-    gexpr({call, Line, {atom, Lf, is_record}, [E, A]}, Vt, St0);
-gexpr(
-    {call, Line, {atom, _Lr, is_record}, [E0, {atom, _, _Name}, {integer, _, _}]},
-    Vt,
-    St0
-) ->
-    {E, St1} = gexpr(E0, Vt, St0),
-    case no_guard_bif_clash(St0, {is_record, 3}) of
-        true ->
-            {E, St1};
-        false ->
-            {E, add_error(Line, {illegal_guard_local_call, {is_record, 3}}, St1)}
-    end;
-gexpr({call, Line, {atom, _Lr, is_record}, [_, _, _] = Asvt0}, Vt, St0) ->
-    {Asvt, St1} = gexpr_list(Asvt0, Vt, St0),
-    {Asvt, add_error(Line, illegal_guard_expr, St1)};
-gexpr(
-    {call, Line, {remote, _, {atom, _, erlang}, {atom, _, is_record} = Isr}, [_, _, _] = Args},
-    Vt,
-    St0
-) ->
-    gexpr({call, Line, Isr, Args}, Vt, St0);
+gexpr({call, Line, {atom, _, is_record}, [_, _]}, _Vt, St) ->
+    {[], add_error(Line, unsupported_is_record, St)};
+gexpr({call, Line, {remote, _, {atom, _, erlang}, {atom, _, is_record}}, [_, _]}, _Vt, St) ->
+    {[], add_error(Line, unsupported_is_record, St)};
+gexpr({call, Line, {atom, _Lr, is_record}, [_, _, _]}, _Vt, St) ->
+    {[], add_error(Line, unsupported_is_record, St)};
+gexpr({call, Line, {remote, _, {atom, _, erlang}, {atom, _, is_record}}, [_, _, _]}, _Vt, St) ->
+    {[], add_error(Line, unsupported_is_record, St)};
 gexpr({call, Line, {atom, _La, F}, As}, Vt, St0) ->
     {Asvt, St1} = gexpr_list(As, Vt, St0),
     A = length(As),
@@ -2573,86 +2372,84 @@ gexpr_list(Es, Vt, St) ->
         Es
     ).
 
-%% is_guard_test2(Expression, RecordDefs :: dict:dict()) -> boolean().
-is_guard_test2({call, Line, {atom, Lr, record}, [E, A]}, Info) ->
-    is_gexpr({call, Line, {atom, Lr, is_record}, [E, A]}, Info);
-is_guard_test2({call, _Line, {atom, _La, Test}, As} = Call, {_, IsOverridden} = Info) ->
+%% is_guard_test2(Expression, St :: #lint{}) -> boolean().
+is_guard_test2({call, Line, {atom, Lr, record}, [E, A]}, St) ->
+    is_gexpr({call, Line, {atom, Lr, is_record}, [E, A]}, St);
+is_guard_test2({call, _Line, {atom, _La, Test}, As} = Call, St) ->
+    #lint{locals = Locals, imports = Imports} = St,
     A = length(As),
-    not IsOverridden({Test, A}) andalso
+    FA = {Test, A},
+    IsOverridden = is_local_function(Locals, FA) orelse is_imported_function(Imports, FA),
+    not IsOverridden andalso
         case erl_internal:type_test(Test, A) of
-            true -> is_gexpr_list(As, Info);
-            false -> is_gexpr(Call, Info)
+            true -> is_gexpr_list(As, St);
+            false -> is_gexpr(Call, St)
         end;
-is_guard_test2(G, Info) ->
+is_guard_test2(G, St) ->
     %%Everything else is a guard expression.
-    is_gexpr(G, Info).
+    is_gexpr(G, St).
 
 %% is_guard_expr(Expression) -> boolean().
 %%  Test if an expression is a guard expression.
 
 is_guard_expr(E) -> is_gexpr(E, []).
 
-is_gexpr({var, _L, _V}, _Info) ->
+is_gexpr({var, _L, _V}, _St) ->
     true;
-is_gexpr({char, _L, _C}, _Info) ->
+is_gexpr({char, _L, _C}, _St) ->
     true;
-is_gexpr({integer, _L, _I}, _Info) ->
+is_gexpr({integer, _L, _I}, _St) ->
     true;
-is_gexpr({float, _L, _F}, _Info) ->
+is_gexpr({float, _L, _F}, _St) ->
     true;
-is_gexpr({atom, _L, _A}, _Info) ->
+is_gexpr({atom, _L, _A}, _St) ->
     true;
-is_gexpr({string, _L, _S}, _Info) ->
+is_gexpr({string, _L, _S}, _St) ->
     true;
-is_gexpr({nil, _L}, _Info) ->
+is_gexpr({nil, _L}, _St) ->
     true;
-is_gexpr({cons, _L, H, T}, Info) ->
-    is_gexpr_list([H, T], Info);
-is_gexpr({tuple, _L, Es}, Info) ->
-    is_gexpr_list(Es, Info);
-is_gexpr({enum, _L, {remote, _, M, E}, C, Es}, Info) ->
-    is_gexpr_list([M, E, C | Es], Info);
-is_gexpr({enum, _L, E, C, Es}, Info) ->
-    is_gexpr_list([E, C | Es], Info);
-%%is_gexpr({struct,_L,_Tag,Es}, Info) ->
-%%    is_gexpr_list(Es, Info);
-is_gexpr({map, _L, Es}, Info) ->
-    is_map_fields(Es, Info);
-is_gexpr({map, _L, Src, Es}, Info) ->
-    is_gexpr(Src, Info) andalso is_map_fields(Es, Info);
-is_gexpr({record_index, _L, _Name, Field}, Info) ->
-    is_gexpr(Field, Info);
-is_gexpr({record_field, _L, Rec, _Name, Field}, Info) ->
-    is_gexpr_list([Rec, Field], Info);
-is_gexpr({record, L, Name, Inits}, Info) ->
-    is_gexpr_fields(Inits, L, Name, Info);
-is_gexpr({bin, _L, Fs}, Info) ->
+is_gexpr({cons, _L, H, T}, St) ->
+    is_gexpr_list([H, T], St);
+is_gexpr({tuple, _L, Es}, St) ->
+    is_gexpr_list(Es, St);
+is_gexpr({enum, _L, {remote, _, M, E}, C, Es}, St) ->
+    is_gexpr_list([M, E, C | Es], St);
+is_gexpr({enum, _L, E, C, Es}, St) ->
+    is_gexpr_list([E, C | Es], St);
+%%is_gexpr({struct,_L,_Tag,Es}, St) ->
+%%    is_gexpr_list(Es, St);
+is_gexpr({map, _L, Es}, St) ->
+    is_map_fields(Es, St);
+is_gexpr({map, _L, Src, Es}, St) ->
+    is_gexpr(Src, St) andalso is_map_fields(Es, St);
+is_gexpr({bin, _L, Fs}, St) ->
     all(
         fun({bin_element, _Line, E, Sz, _Ts}) ->
-            is_gexpr(E, Info) and (Sz =:= default orelse is_gexpr(Sz, Info))
+            is_gexpr(E, St) and (Sz =:= default orelse is_gexpr(Sz, St))
         end,
         Fs
     );
-is_gexpr({call, _L, {atom, _Lf, F}, As}, {_, IsOverridden} = Info) ->
+is_gexpr({call, _L, {atom, _Lf, F}, As}, St) ->
+    #lint{locals = Locals, imports = Imports} = St,
     A = length(As),
-    not IsOverridden({F, A}) andalso
-        erl_internal:guard_bif(F, A) andalso
-        is_gexpr_list(As, Info);
-is_gexpr({call, _L, {remote, _Lr, {atom, _Lm, erlang}, {atom, _Lf, F}}, As}, Info) ->
+    FA = {F, A},
+    IsOverridden = is_local_function(Locals, FA) orelse is_imported_function(Imports, FA),
+    not IsOverridden andalso erl_internal:guard_bif(F, A) andalso is_gexpr_list(As, St);
+is_gexpr({call, _L, {remote, _Lr, {atom, _Lm, erlang}, {atom, _Lf, F}}, As}, St) ->
     A = length(As),
     (erl_internal:guard_bif(F, A) orelse is_gexpr_op(F, A)) andalso
-        is_gexpr_list(As, Info);
-is_gexpr({call, L, {tuple, Lt, [{atom, Lm, erlang}, {atom, Lf, F}]}, As}, Info) ->
-    is_gexpr({call, L, {remote, Lt, {atom, Lm, erlang}, {atom, Lf, F}}, As}, Info);
-is_gexpr({op, _L, Op, A}, Info) ->
-    is_gexpr_op(Op, 1) andalso is_gexpr(A, Info);
-is_gexpr({op, _L, 'andalso', A1, A2}, Info) ->
-    is_gexpr_list([A1, A2], Info);
-is_gexpr({op, _L, 'orelse', A1, A2}, Info) ->
-    is_gexpr_list([A1, A2], Info);
-is_gexpr({op, _L, Op, A1, A2}, Info) ->
-    is_gexpr_op(Op, 2) andalso is_gexpr_list([A1, A2], Info);
-is_gexpr(_Other, _Info) ->
+        is_gexpr_list(As, St);
+is_gexpr({call, L, {tuple, Lt, [{atom, Lm, erlang}, {atom, Lf, F}]}, As}, St) ->
+    is_gexpr({call, L, {remote, Lt, {atom, Lm, erlang}, {atom, Lf, F}}, As}, St);
+is_gexpr({op, _L, Op, A}, St) ->
+    is_gexpr_op(Op, 1) andalso is_gexpr(A, St);
+is_gexpr({op, _L, 'andalso', A1, A2}, St) ->
+    is_gexpr_list([A1, A2], St);
+is_gexpr({op, _L, 'orelse', A1, A2}, St) ->
+    is_gexpr_list([A1, A2], St);
+is_gexpr({op, _L, Op, A1, A2}, St) ->
+    is_gexpr_op(Op, 2) andalso is_gexpr_list([A1, A2], St);
+is_gexpr(_Other, _St) ->
     false.
 
 is_gexpr_op(Op, A) ->
@@ -2666,30 +2463,16 @@ is_gexpr_op(Op, A) ->
         _:_ -> false
     end.
 
-is_gexpr_list(Es, Info) -> all(fun(E) -> is_gexpr(E, Info) end, Es).
+is_gexpr_list(Es, St) -> all(fun(E) -> is_gexpr(E, St) end, Es).
 
-is_map_fields([{Tag, _, K, V} | Fs], Info) when Tag =:= map_field_assoc; Tag =:= map_field_exact ->
-    is_gexpr(K, Info) andalso
-        is_gexpr(V, Info) andalso
-        is_map_fields(Fs, Info);
-is_map_fields([], _Info) ->
+is_map_fields([{Tag, _, K, V} | Fs], St) when Tag =:= map_field_assoc; Tag =:= map_field_exact ->
+    is_gexpr(K, St) andalso
+        is_gexpr(V, St) andalso
+        is_map_fields(Fs, St);
+is_map_fields([], _St) ->
     true;
-is_map_fields(_T, _Info) ->
+is_map_fields(_T, _St) ->
     false.
-
-is_gexpr_fields(Fs, L, Name, {RDs, _} = Info) ->
-    IFs =
-        case dict:find(Name, RDs) of
-            {ok, {_Line, Fields}} -> Fs ++ init_fields(Fs, L, Fields);
-            error -> Fs
-        end,
-    all(
-        fun
-            ({record_field, _Lf, _Name, V}) -> is_gexpr(V, Info);
-            (_Other) -> false
-        end,
-        IFs
-    ).
 
 %% exprs(Sequence, VarTable, State) ->
 %%      {UsedVarTable,State'}
@@ -2740,8 +2523,6 @@ expr({map, _Line, Src, Es}, Vt, St) ->
     {Svt, St1} = expr(Src, Vt, St),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun expr_list/3),
     {vtupdate(Svt, Fvt), St2};
-expr({record_index, Line, Name, Field}, _Vt, St) ->
-    check_record(Line, Name, St, fun(Dfs, St1) -> record_field(Field, Name, Dfs, St1) end);
 expr({anon_struct, _Line, Fields}, Vt, St) ->
     check_anon_struct_fields(Fields, Vt, St, fun expr/3);
 expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
@@ -2773,27 +2554,6 @@ expr({struct_index, Line, Name, Field}, _Vt, St0) ->
     check_struct(Line, Name, St0, fun(IsDef, St) ->
         struct_field(Field, Name, IsDef, St)
     end);
-expr({record, Line, Name, Inits}, Vt, St) ->
-    check_record(Line, Name, St, fun(Dfs, St1) ->
-        init_fields(Inits, Line, Name, Dfs, Vt, St1)
-    end);
-expr({record_field, Line, Rec, Name, Field}, Vt, St0) ->
-    {Rvt, St1} = record_expr(Line, Rec, Vt, St0),
-    {Fvt, St2} =
-        check_record(Line, Name, St1, fun(Dfs, St) ->
-            record_field(Field, Name, Dfs, St)
-        end),
-    {vtmerge(Rvt, Fvt), St2};
-expr({record, Line, Rec, Name, Upds}, Vt, St0) ->
-    {Rvt, St1} = record_expr(Line, Rec, Vt, St0),
-    {Usvt, St2} =
-        check_record(Line, Name, St1, fun(Dfs, St) ->
-            update_fields(Upds, Name, Dfs, Vt, St)
-        end),
-    case has_wildcard_field(Upds) of
-        true -> {[], add_error(Line, {wildcard_in_update, Name}, St2)};
-        false -> {vtmerge(Rvt, Usvt), St2}
-    end;
 expr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun expr/3);
 expr({block, _Line, Es}, Vt, St) ->
@@ -2821,9 +2581,6 @@ expr({'fun', Line, Body}, Vt, St) ->
     case Body of
         {clauses, Cs} ->
             fun_clauses(Cs, Vt, St);
-        {function, record_info, 2} ->
-            %% It is illegal to call record_info/2 with unknown arguments.
-            {[], add_error(Line, illegal_record_info, St)};
         {function, F, A} ->
             %% BifClash - Fun expression
             %% N.B. Only allows BIFs here as well, NO IMPORTS!!
@@ -2851,20 +2608,11 @@ expr({named_fun, Line, Name, Cs}, Vt, St0) ->
     {Csvt, St2} = fun_clauses(Cs, Nvt1, St1),
     {_, St3} = check_unused_vars(vtupdate(Csvt, Nvt0), [], St2),
     {vtold(Csvt, Vt), St3};
-expr({call, _Line, {atom, _Lr, is_record}, [E, {atom, Ln, Name}]}, Vt, St0) ->
-    {Rvt, St1} = expr(E, Vt, St0),
-    {Rvt, exist_record(Ln, Name, St1)};
 expr({call, Line, {op, _, '.', {atom, _, ''}, F}, As}, Vt, St) ->
     %% a '.'-prefixed call may have a dotted atom on the right hand side
     expr({call, Line, F, As}, Vt, St);
-expr(
-    {call, Line, {remote, _Lr, {atom, _Lm, erlang}, {atom, Lf, is_record}}, [E, A]},
-    Vt,
-    St0
-) ->
-    expr({call, Line, {atom, Lf, is_record}, [E, A]}, Vt, St0);
-expr({call, L, {tuple, Lt, [{atom, Lm, erlang}, {atom, Lf, is_record}]}, As}, Vt, St) ->
-    expr({call, L, {remote, Lt, {atom, Lm, erlang}, {atom, Lf, is_record}}, As}, Vt, St);
+expr({call, Line, {remote, _, {atom, _, erlang}, {atom, _, is_record}}, [_, _]}, _Vt, St) ->
+    {[], add_error(Line, unsupported_is_record, St)};
 expr({call, Line, {remote, _Lr, {atom, _Lm, M}, {atom, Lf, F}}, As}, Vt, St0) ->
     St1 = keyword_warning(Lf, F, St0),
     St2 = check_remote_function(Line, M, F, As, St1),
@@ -2909,39 +2657,35 @@ expr({call, Line, {atom, La, F}, As}, Vt, St0) ->
                         Imp = ordsets:add_element({{F, A}, M}, U0#usage.imported),
                         St3#lint{usage = U0#usage{imported = Imp}};
                     no ->
-                        case {F, A} of
-                            {record_info, 2} ->
-                                check_record_info_call(Line, La, As, St2);
-                            N ->
-                                %% BifClash - function call
-                                %% Issue these warnings/errors even if it's a recursive call
-                                St3 =
-                                    if
-                                        (not AutoSuppressed) andalso IsAutoBif andalso Warn ->
-                                            case erl_internal:old_bif(F, A) of
-                                                true ->
-                                                    add_error(
-                                                        Line,
-                                                        {call_to_redefined_old_bif, {F, A}},
-                                                        St2
-                                                    );
-                                                false ->
-                                                    add_warning(
-                                                        Line,
-                                                        {call_to_redefined_bif, {F, A}},
-                                                        St2
-                                                    )
-                                            end;
+                        N = {F, A},
+                        %% BifClash - function call
+                        %% Issue these warnings/errors even if it's a recursive call
+                        St3 =
+                            if
+                                (not AutoSuppressed) andalso IsAutoBif andalso Warn ->
+                                    case erl_internal:old_bif(F, A) of
                                         true ->
-                                            St2
-                                    end,
-                                %% ...but don't lint recursive calls
-                                if
-                                    N =:= St3#lint.func ->
-                                        St3;
-                                    true ->
-                                        call_function(Line, F, A, St3)
-                                end
+                                            add_error(
+                                                Line,
+                                                {call_to_redefined_old_bif, {F, A}},
+                                                St2
+                                            );
+                                        false ->
+                                            add_warning(
+                                                Line,
+                                                {call_to_redefined_bif, {F, A}},
+                                                St2
+                                            )
+                                    end;
+                                true ->
+                                    St2
+                            end,
+                        %% ...but don't lint recursive calls
+                        if
+                            N =:= St3#lint.func ->
+                                St3;
+                            true ->
+                                call_function(Line, F, A, St3)
                         end
                 end}
     end;
@@ -3010,10 +2754,6 @@ expr_list(Es, Vt, St) ->
         {[], St},
         Es
     ).
-
-record_expr(Line, Rec, Vt, St0) ->
-    St1 = warn_invalid_record(Line, Rec, St0),
-    expr(Rec, Vt, St1).
 
 check_assoc_fields([{map_field_exact, Line, _, _} | Fs], St) ->
     check_assoc_fields(Fs, add_error(Line, illegal_map_construction, St));
@@ -3090,33 +2830,6 @@ check_constructor_and_arity({ok, Cs}, L, Enum, A, Args, St) ->
             add_error(L, {undefined_enum_constructor, Enum, A, N}, St)
     end.
 
-%% warn_invalid_record(Line, Record, State0) -> State
-%% Adds warning if the record is invalid.
-
-warn_invalid_record(Line, R, St) ->
-    case is_valid_record(R) of
-        true -> St;
-        false -> add_warning(Line, invalid_record, St)
-    end.
-
-%% is_valid_record(Record) -> boolean().
-
-is_valid_record(Rec) ->
-    case Rec of
-        {char, _, _} -> false;
-        {integer, _, _} -> false;
-        {float, _, _} -> false;
-        {atom, _, _} -> false;
-        {string, _, _} -> false;
-        {cons, _, _, _} -> false;
-        {nil, _} -> false;
-        {lc, _, _, _} -> false;
-        {record_index, _, _, _} -> false;
-        {'fun', _, _} -> false;
-        {named_fun, _, _, _} -> false;
-        _ -> true
-    end.
-
 %% warn_invalid_struct(Line, Struct, State0) -> State
 %% Adds warning if the struct is invalid.
 
@@ -3164,7 +2877,6 @@ is_valid_call(Call) ->
         {cons, _, _, _} -> false;
         {nil, _} -> false;
         {lc, _, _, _} -> false;
-        {record_index, _, _, _} -> false;
         {tuple, _, Exprs} when length(Exprs) =/= 2 -> false;
         {enum, _, _, _, _} -> false;
         _ -> true
@@ -3243,16 +2955,6 @@ is_valid_map_key_value(K) ->
                 true,
                 Ps
             );
-        {record, _, _, Fs} ->
-            foldl(
-                fun({record_field, _, Ke, Ve}, B) ->
-                    B andalso
-                        is_valid_map_key_value(Ke) andalso
-                        is_valid_map_key_value(Ve)
-                end,
-                true,
-                Fs
-            );
         {bin, _, Es} ->
             % only check for value expressions to be valid
             % invalid binary expressions are later checked in
@@ -3267,76 +2969,6 @@ is_valid_map_key_value(K) ->
         Val ->
             is_pattern_expr(Val)
     end.
-
-%% record_def(Line, RecordName, [RecField], State) -> State.
-%%  Add a record definition if it does not already exist. Normalise
-%%  so that all fields have explicit initial value.
-
-record_def(Line, Name, Fs0, St0) ->
-    case dict:is_key(Name, St0#lint.records) of
-        true ->
-            add_error(Line, {redefine_record, Name}, St0);
-        false ->
-            {Fs1, St1} = def_fields(normalise_fields(Fs0), Name, St0),
-            St2 = St1#lint{records = dict:store(Name, {Line, Fs1}, St1#lint.records)},
-            Types = [T || {typed_record_field, _, T} <- Fs0],
-            check_type_in_def({type, nowarn(), product, Types}, St2)
-    end.
-
-%% def_fields([RecDef], RecordName, State) -> {[DefField],State}.
-%%  Check (normalised) fields for duplicates.  Return unduplicated
-%%  record and set State.
-
-def_fields(Fs0, Name, St0) ->
-    foldl(
-        fun({record_field, Lf, {atom, La, F}, V}, {Fs, St}) ->
-            case exist_field(F, Fs) of
-                true ->
-                    {Fs, add_error(Lf, {redefine_field, Name, F}, St)};
-                false ->
-                    St1 = St#lint{recdef_top = true},
-                    {_, St2} = expr(V, [], St1),
-                    %% Warnings and errors found are kept, but
-                    %% updated calls, records, etc. are discarded.
-                    St3 = St1#lint{
-                        warnings = St2#lint.warnings,
-                        errors = St2#lint.errors,
-                        called = St2#lint.called,
-                        recdef_top = false
-                    },
-                    %% This is one way of avoiding a loop for
-                    %% "recursive" definitions.
-                    NV =
-                        case St2#lint.errors =:= St1#lint.errors of
-                            true -> V;
-                            false -> {atom, La, undefined}
-                        end,
-                    {[{record_field, Lf, {atom, La, F}, NV} | Fs], St3}
-            end
-        end,
-        {[], St0},
-        Fs0
-    ).
-
-%% normalise_fields([RecDef]) -> [Field].
-%%  Normalise the field definitions to always have a default value. If
-%%  none has been given then use 'undefined'.
-%%  Also, strip type information from typed record fields.
-
-normalise_fields(Fs) ->
-    map(
-        fun
-            ({record_field, Lf, Field}) ->
-                {record_field, Lf, Field, {atom, Lf, undefined}};
-            ({typed_record_field, {record_field, Lf, Field}, _Type}) ->
-                {record_field, Lf, Field, {atom, Lf, undefined}};
-            ({typed_record_field, Field, _Type}) ->
-                Field;
-            (F) ->
-                F
-        end,
-        Fs
-    ).
 
 handle_imported_struct({atom, Line, Name} = N0, St) ->
     case imported_type(Name, St) of
@@ -3510,95 +3142,6 @@ used_struct(Name, #lint{usage = Usage} = St) ->
     UsedRecs = (Usage#usage.used_structs)#{Name => []},
     St#lint{usage = Usage#usage{used_structs = UsedRecs}}.
 
-%% exist_record(Line, RecordName, State) -> State.
-%%  Check if a record exists.  Set State.
-
-exist_record(Line, Name, St) ->
-    case dict:is_key(Name, St#lint.records) of
-        true -> used_record(Name, St);
-        false -> add_error(Line, {undefined_record, Name}, St)
-    end.
-
-%% check_record(Line, RecordName, State, CheckFun) ->
-%%      {UpdVarTable, State}.
-%%  The generic record checking function, first checks that the record
-%%  exists then calls the specific check function.  N.B. the check
-%%  function can safely assume that the record exists.
-%%
-%%  The check function is called:
-%%      CheckFun(RecordDefFields, State)
-%%  and must return
-%%      {UpdatedVarTable,State}
-
-check_record(Line, Name, St, CheckFun) ->
-    case dict:find(Name, St#lint.records) of
-        {ok, {_Line, Fields}} -> CheckFun(Fields, used_record(Name, St));
-        error -> {[], add_error(Line, {undefined_record, Name}, St)}
-    end.
-
-used_record(Name, #lint{usage = Usage} = St) ->
-    UsedRecs = sets:add_element(Name, Usage#usage.used_records),
-    St#lint{usage = Usage#usage{used_records = UsedRecs}}.
-
-%%% Record check functions.
-
-%% check_fields([ChkField], RecordName, [RecDefField], VarTable, State, CheckFun) ->
-%%      {UpdVarTable,State}.
-
-check_fields(Fs, Name, Fields, Vt, St0, CheckFun) ->
-    {_SeenFields, Uvt, St1} =
-        foldl(
-            fun(Field, {Sfsa, Vta, Sta}) ->
-                {Sfsb, {Vtb, Stb}} = check_field(
-                    Field,
-                    Name,
-                    Fields,
-                    Vt,
-                    Sta,
-                    Sfsa,
-                    CheckFun
-                ),
-                {Sfsb, vtmerge_pat(Vta, Vtb), Stb}
-            end,
-            {[], [], St0},
-            Fs
-        ),
-    {Uvt, St1}.
-
-check_field({record_field, Lf, {atom, La, F}, Val}, Name, Fields, Vt, St, Sfs, CheckFun) ->
-    case member(F, Sfs) of
-        true ->
-            {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
-        false ->
-            {[F | Sfs],
-                case find_field(F, Fields) of
-                    {ok, _I} -> CheckFun(Val, Vt, St);
-                    error -> {[], add_error(La, {undefined_field, Name, F}, St)}
-                end}
-    end;
-check_field(
-    {record_field, _Lf, {var, _La, '_'}, Val},
-    _Name,
-    _Fields,
-    Vt,
-    St,
-    Sfs,
-    CheckFun
-) ->
-    {Sfs, CheckFun(Val, Vt, St)};
-check_field({record_field, _Lf, {var, La, V}, _Val}, Name, _Fields, Vt, St, Sfs, _CheckFun) ->
-    {Sfs, {Vt, add_error(La, {field_name_is_variable, Name, V}, St)}}.
-
-%% pattern_field(Field, RecordName, [RecDefField], State) ->
-%%      {UpdVarTable,State}.
-%%  Test if record RecordName has field Field. Set State.
-
-pattern_field({atom, La, F}, Name, Fields, St) ->
-    case find_field(F, Fields) of
-        {ok, _I} -> {[], St};
-        error -> {[], add_error(La, {undefined_field, Name, F}, St)}
-    end.
-
 pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
     {_SeenFields, Uvt, Bvt1, St1} =
@@ -3615,92 +3158,6 @@ pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
             Fs
         ),
     {Uvt, Bvt1, St1}.
-
-%% pattern_fields([PatField],RecordName,[RecDefField],
-%%                VarTable,Old,Bvt,State) ->
-%%      {UpdVarTable,UpdBinVarTable,State}.
-
-pattern_fields(Fs, Name, Fields, Vt0, Old, Bvt, St0) ->
-    CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
-    {_SeenFields, Uvt, Bvt1, St1} =
-        foldl(
-            fun(Field, {Sfsa, Vta, Bvt1, Sta}) ->
-                case check_field(Field, Name, Fields, Vt0, Sta, Sfsa, CheckFun) of
-                    {Sfsb, {Vtb, Stb}} ->
-                        {Sfsb, vtmerge_pat(Vta, Vtb), [], Stb};
-                    {Sfsb, {Vtb, Bvt2, Stb}} ->
-                        {Sfsb, vtmerge_pat(Vta, Vtb), vtmerge_pat(Bvt1, Bvt2), Stb}
-                end
-            end,
-            {[], [], [], St0},
-            Fs
-        ),
-    {Uvt, Bvt1, St1}.
-
-%% record_field(Field, RecordName, [RecDefField], State) ->
-%%      {UpdVarTable,State}.
-%%  Test if record RecordName has field Field. Set State.
-
-record_field({atom, La, F}, Name, Fields, St) ->
-    case find_field(F, Fields) of
-        {ok, _I} -> {[], St};
-        error -> {[], add_error(La, {undefined_field, Name, F}, St)}
-    end.
-
-%% init_fields([InitField], InitLine, RecordName, [DefField], VarTable, State) ->
-%%      {UpdVarTable,State}.
-%% ginit_fields([InitField], InitLine, RecordName, [DefField], VarTable, State) ->
-%%      {UpdVarTable,State}.
-%%  Check record initialisation. Explicit initialisations are checked
-%%  as is, while default values are checked only if there are no
-%%  explicit inititialisations of the fields. Be careful not to
-%%  duplicate warnings (and possibly errors, but def_fields
-%%  substitutes 'undefined' for bogus inititialisations) from when the
-%%  record definitions were checked. Usage of records, imports, and
-%%  functions is collected.
-
-init_fields(Ifs, Line, Name, Dfs, Vt0, St0) ->
-    {Vt1, St1} = check_fields(Ifs, Name, Dfs, Vt0, St0, fun expr/3),
-    Defs = init_fields(Ifs, Line, Dfs),
-    {_, St2} = check_fields(Defs, Name, Dfs, Vt1, St1, fun expr/3),
-    {Vt1, St1#lint{usage = St2#lint.usage}}.
-
-ginit_fields(Ifs, Line, Name, Dfs, Vt0, St0) ->
-    {Vt1, St1} = check_fields(Ifs, Name, Dfs, Vt0, St0, fun gexpr/3),
-    Defs = init_fields(Ifs, Line, Dfs),
-    St2 = St1#lint{errors = []},
-    {_, St3} = check_fields(Defs, Name, Dfs, Vt1, St2, fun gexpr/3),
-    #lint{usage = Usage, errors = Errors} = St3,
-    IllErrs = [E || {_File, {_Line, erlt_lint, illegal_guard_expr}} = E <- Errors],
-    St4 = St1#lint{usage = Usage, errors = IllErrs ++ St1#lint.errors},
-    {Vt1, St4}.
-
-%% Default initializations to be carried out
-init_fields(Ifs, Line, Dfs) ->
-    [
-        {record_field, Lf, {atom, La, F}, copy_expr(Di, Line)}
-        || {record_field, Lf, {atom, La, F}, Di} <- Dfs, not exist_field(F, Ifs)
-    ].
-
-%% update_fields(UpdFields, RecordName, RecDefFields, VarTable, State) ->
-%%      {UpdVarTable,State}
-
-update_fields(Ufs, Name, Dfs, Vt, St) ->
-    check_fields(Ufs, Name, Dfs, Vt, St, fun expr/3).
-
-%% exist_field(FieldName, [Field]) -> boolean().
-%%  Find a record field in a field list.
-
-exist_field(F, [{record_field, _Lf, {atom, _La, F}, _Val} | _Fs]) -> true;
-exist_field(F, [_ | Fs]) -> exist_field(F, Fs);
-exist_field(_F, []) -> false.
-
-%% find_field(FieldName, [Field]) -> {ok,Val} | error.
-%%  Find a record field in a field list.
-
-find_field(_F, [{record_field, _Lf, {atom, _La, _F}, Val} | _Fs]) -> {ok, Val};
-find_field(F, [_ | Fs]) -> find_field(F, Fs);
-find_field(_F, []) -> error.
 
 %% Does not do any checking, this is done in check_type
 
@@ -3914,14 +3371,6 @@ check_type({type, L, binary, [Base, Unit]}, SeenVars, St) ->
                 add_error(L, {type_syntax, binary}, St)
         end,
     {SeenVars, St1};
-check_type({type, L, record, [Name | Fields]}, SeenVars, St) ->
-    case Name of
-        {atom, _, Atom} ->
-            St1 = used_record(Atom, St),
-            check_record_types(L, Atom, Fields, SeenVars, St1);
-        _ ->
-            {SeenVars, add_error(L, {type_syntax, record}, St)}
-    end;
 check_type({type, La, enum, C, As}, SeenVars, St) ->
     St1 = check_enum(none, C, As, St),
     check_type({type, La, product, As}, SeenVars, St1);
@@ -4040,54 +3489,6 @@ translate_struct_default_error({File, {Loc, Mod, {illegal_guard_local_call, Call
     {File, {Loc, Mod, {illegal_strtuct_default_local_call, Call}}};
 translate_struct_default_error(Other) ->
     Other.
-
-check_record_types(Line, Name, Fields, SeenVars, St) ->
-    case dict:find(Name, St#lint.records) of
-        {ok, {_L, DefFields}} ->
-            case
-                lists:all(
-                    fun
-                        ({type, _, field_type, _}) -> true;
-                        (_) -> false
-                    end,
-                    Fields
-                )
-            of
-                true ->
-                    check_record_types(Fields, Name, DefFields, SeenVars, St, []);
-                false ->
-                    {SeenVars, add_error(Line, {type_syntax, record}, St)}
-            end;
-        error ->
-            {SeenVars, add_error(Line, {undefined_record, Name}, St)}
-    end.
-
-check_record_types(
-    [{type, _, field_type, [{atom, AL, FName}, Type]} | Left],
-    Name,
-    DefFields,
-    SeenVars,
-    St,
-    SeenFields
-) ->
-    %% Check that the field name is valid
-    St1 =
-        case exist_field(FName, DefFields) of
-            true -> St;
-            false -> add_error(AL, {undefined_field, Name, FName}, St)
-        end,
-    %% Check for duplicates
-    St2 =
-        case ordsets:is_element(FName, SeenFields) of
-            true -> add_error(AL, {redefine_field, Name, FName}, St1);
-            false -> St1
-        end,
-    %% Check Type
-    {NewSeenVars, St3} = check_type(Type, SeenVars, St2),
-    NewSeenFields = ordsets:add_element(FName, SeenFields),
-    check_record_types(Left, Name, DefFields, NewSeenVars, St3, NewSeenFields);
-check_record_types([], _Name, _DefFields, SeenVars, St, _SeenFields) ->
-    {SeenVars, St}.
 
 used_type(TypePair, L, #lint{usage = Usage, file = File} = St) ->
     OldUsed = Usage#usage.used_types,
@@ -4578,9 +3979,7 @@ handle_comprehension(E, Qs, Vt0, St0) ->
 %%  in ShadowVarTable (these are local variables that are not global variables).
 
 lc_quals(Qs, Vt0, St0) ->
-    OldRecDef = St0#lint.recdef_top,
-    {Vt, Uvt, St} = lc_quals(Qs, Vt0, [], St0#lint{recdef_top = false}),
-    {Vt, Uvt, St#lint{recdef_top = OldRecDef}}.
+    lc_quals(Qs, Vt0, [], St0).
 
 lc_quals([{generate, _Line, P, E} | Qs], Vt0, Uvt0, St0) ->
     {Vt, Uvt, St} = handle_generator(P, E, Vt0, Uvt0, St0),
@@ -4590,9 +3989,8 @@ lc_quals([{b_generate, _Line, P, E} | Qs], Vt0, Uvt0, St0) ->
     {Vt, Uvt, St} = handle_generator(P, E, Vt0, Uvt0, St1),
     lc_quals(Qs, Vt, Uvt, St);
 lc_quals([F | Qs], Vt, Uvt, St0) ->
-    Info = is_guard_test2_info(St0),
     {Fvt, St1} =
-        case is_guard_test2(F, Info) of
+        case is_guard_test2(F, St0) of
             true -> guard_test(F, Vt, St0);
             false -> expr(F, Vt, St0)
         end,
@@ -4600,11 +3998,6 @@ lc_quals([F | Qs], Vt, Uvt, St0) ->
 lc_quals([], Vt, Uvt, St) ->
     {Vt, Uvt, St}.
 
-is_guard_test2_info(#lint{records = RDs, locals = Locals, imports = Imports}) ->
-    {RDs, fun(FA) ->
-        is_local_function(Locals, FA) orelse
-            is_imported_function(Imports, FA)
-    end}.
 
 handle_generator(P, E, Vt, Uvt, St0) ->
     {Evt, St1} = expr(E, Vt, St0),
@@ -4646,22 +4039,17 @@ handle_bitstring_gen_pat(_, St) ->
 %%      {UsedVars, State}.
 %%  Fun's cannot export any variables.
 
-%% It is an error if variable is bound inside a record definition
-%% unless it was introduced in a fun or an lc. Only if pat_var finds
-%% such variables can the correct line number be given.
-
 fun_clauses(Cs, Vt, St) ->
-    OldRecDef = St#lint.recdef_top,
     {Bvt, St2} = foldl(
         fun(C, {Bvt0, St0}) ->
             {Cvt, St1} = fun_clause(C, Vt, St0),
             {vtmerge(Cvt, Bvt0), St1}
         end,
-        {[], St#lint{recdef_top = false}},
+        {[], St},
         Cs
     ),
     Uvt = vt_no_unsafe(vt_no_unused(vtold(Bvt, Vt))),
-    {Uvt, St2#lint{recdef_top = OldRecDef}}.
+    {Uvt, St2}.
 
 fun_clause({clause, _Line, H, G, B}, Vt0, St0) ->
     % No imported pattern variables
@@ -4735,9 +4123,6 @@ pat_var(V, Line, Vt, Bvt, St) ->
                         add_warning(Line, {exported_var, V, From}, St)};
                 {ok, {stacktrace, _Usage, Ls}} ->
                     {[{V, {bound, used, Ls}}], [], add_error(Line, {stacktrace_bound, V}, St)};
-                error when St#lint.recdef_top ->
-                    {[], [{V, {bound, unused, [Line]}}],
-                        add_error(Line, {variable_in_record_def, V}, St)};
                 error ->
                     {[], [{V, {bound, unused, [Line]}}], St}
             end
@@ -4976,21 +4361,6 @@ vt_no_unused(Vt) -> [V || {_, {_, U, _L}} = V <- Vt, U =/= unused].
 
 copy_expr(Expr, Anno) ->
     erlt_parse:map_anno(fun(_A) -> Anno end, Expr).
-
-%% Check a record_info call. We have already checked that it is not
-%% shadowed by an import.
-
-check_record_info_call(_Line, La, [{atom, Li, Info}, {atom, _Ln, Name}], St) ->
-    case member(Info, [fields, size]) of
-        true -> exist_record(La, Name, St);
-        false -> add_error(Li, illegal_record_info, St)
-    end;
-check_record_info_call(Line, _La, _As, St) ->
-    add_error(Line, illegal_record_info, St).
-
-has_wildcard_field([{record_field, _Lf, {var, _La, '_'}, _Val} | _Fs]) -> true;
-has_wildcard_field([_ | Fs]) -> has_wildcard_field(Fs);
-has_wildcard_field([]) -> false.
 
 %% check_remote_function(Line, ModuleName, FuncName, [Arg], State) -> State.
 %%  Perform checks on known remote calls.
