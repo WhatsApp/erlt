@@ -20,14 +20,10 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang.patterns.PatternChecker
-import org.fusesource.jansi.Ansi
 
 import scala.collection.mutable
 
 object Main {
-  def ansi(s: String): String =
-    Ansi.ansi.render(s).toString
-
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))
@@ -51,7 +47,7 @@ object Main {
   }
 
   private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
-    Console.println(ansi(s"@|bold ${erlFile}|@"))
+    Console.println(erlFile)
     lazy val text = new String(Files.readAllBytes(Paths.get(erlFile)))
     val mainFile = etfFile.getOrElse(erlFile)
     val rawProgram =
@@ -59,7 +55,7 @@ object Main {
         loadProgram(mainFile)
       } catch {
         case error: ParseError =>
-          printParseError(text, error)
+          displayParseError(erlFile, text, error)
           sys.exit(2)
         case error: RangedError =>
           displayError(erlFile, text, error)
@@ -143,24 +139,26 @@ object Main {
     etf.programFromFile(file)
   }
 
-  private def printParseError(text: String, error: ParseError): Unit = {
-    val ParseError(loc) = error
-    val locator = Doc.Locator(text, loc)
-    val cTitle = ansi(s"@|bold,red Parse error at $loc|@")
-    val cQuote = ansi(s"@|magenta,bold ${locator.longString}|@")
-    Console.println(cTitle)
-    Console.println(cQuote)
-  }
-
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit = {
     Console.println(errorString(inputPath, inputContent, error))
   }
 
   def errorString(inputPath: String, inputContent: String, error: RangedError): String = {
-    val RangedError(range: Doc.Range, title, description) = error
+    val RangedError(range, title, description) = error
     val ranger = Doc.Ranger(inputContent, range.start, range.end)
-    val msgTitle = ranger.title(error.severity, inputPath)
+    val msgTitle = Doc.title(error.severity, inputPath, range.start)
     val descText = description.map(_ ++ "\n").getOrElse("")
     msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
+  }
+
+  private def displayParseError(inputPath: String, inputContent: String, error: ParseError): Unit = {
+    Console.println(parseErrorString(inputPath, inputContent, error))
+  }
+
+  def parseErrorString(inputPath: String, inputContent: String, error: ParseError): String = {
+    val ParseError(pos) = error
+    val locator = Doc.Locator(inputContent, pos)
+    val msgTitle = Doc.title(Error, inputPath, pos)
+    s"$msgTitle\nParse Error\n${locator.longString}"
   }
 }

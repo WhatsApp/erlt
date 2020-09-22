@@ -58,7 +58,6 @@ object Doc {
       val underline = if (text.length > 2) '~' else '^'
       def space(c: Char): Char = ' '
       def under(c: Char): Char = underline
-      def line(pos: Pos): String = pos.line.toString.reverse.padTo(3, ' ').reverse
       val textLines = text.split('\n').toList
 
       val suffix1 =
@@ -88,15 +87,6 @@ object Doc {
           ).flatten.mkString("\n")
       }
     }
-
-    def title(severity: Severity, pathFile: String): String = {
-      val titleSuffix = s" $pathFile:${start.line}:${start.column}"
-      val sevString = severity.toString.map(_.toUpper)
-      val titlePrexif = s"-- $sevString "
-      val rest = 80 - titlePrexif.length - titleSuffix.length
-      val titleMiddle = "-" * rest
-      s"$titlePrexif$titleMiddle$titleSuffix"
-    }
   }
 
   case class Locator(source: String, pos: Pos) {
@@ -109,7 +99,7 @@ object Doc {
       lineStarts += source.length
       lineStarts.toArray
     }
-    def lineContents: String = {
+    private def lineContents: String = {
       val lineStart = index(pos.line - 1)
       val lineEnd = index(pos.line)
       val endIndex =
@@ -122,9 +112,18 @@ object Doc {
         }
       source.subSequence(lineStart, endIndex).toString
     }
-    def longString: String =
-      lineContents + "\n" + lineContents.take(pos.column - 1).map { x => if (x == '\t') x else ' ' } + "^"
+    def longString: String = {
+      val line1 = lineContents
+      val line2 = lineContents.take(pos.column - 1).map { x => if (x == '\t') x else ' ' } + "^"
+      List(
+        line(pos) ++ "| " ++ line1,
+        "...| " ++ line2,
+      ).mkString("\n")
+    }
   }
+
+  private def line(pos: Pos): String =
+    pos.line.toString.reverse.padTo(3, ' ').reverse
 
   /** Combines two ranges to create a range that spans both. */
   def merge(pos1: Range, pos2: Range): Range =
@@ -139,5 +138,14 @@ object Doc {
     val start = if (pos1.start < pos2.start) pos1.start else pos2.start
     val end = if (pos1.end < pos2.end) pos2.end else pos1.end
     Range(start, end)
+  }
+
+  def title(severity: Severity, pathFile: String, pos: Pos): String = {
+    val titleSuffix = s" $pathFile:${pos.line}:${pos.column}"
+    val sevString = severity.toString.map(_.toUpper)
+    val titlePrexif = s"-- $sevString "
+    val rest = 80 - titlePrexif.length - titleSuffix.length
+    val titleMiddle = "-" * rest
+    s"$titlePrexif$titleMiddle$titleSuffix"
   }
 }
