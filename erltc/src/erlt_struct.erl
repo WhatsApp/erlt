@@ -108,6 +108,9 @@ rewrite({struct_field, Line, Expr, Name, Field}, Context, guard) ->
     Check = struct_field_guard_check(Line, Expr, RuntimeTag, Def),
     Context1 = Context#context{extra_guard_checks = [Check | Context#context.extra_guard_checks]},
     {struct_field_guard(Line, Expr, Def, Field), Context1};
+rewrite({struct_index, Line, Name, {atom, _, Field}}, Context, _) ->
+    {_RuntimeTag, Def} = get_definition(Name, Context),
+    {{integer, Line, find_index(Field, Def, 2)}, Context};
 rewrite(Other, Context, _) ->
     {Other, Context}.
 

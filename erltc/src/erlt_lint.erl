@@ -1942,6 +1942,12 @@ pattern({anon_struct, _Line, Pfs}, Vt, Old, Bvt, St) ->
     check_anon_struct_pattern_fields(Pfs, Vt, Old, Bvt, St, []);
 pattern({struct, Line, N, Pfs}, Vt, Old, Bvt, St) ->
     check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St);
+pattern({struct_index, Line, Name, Field}, _Vt, _Old, _Bvt, St0) ->
+    {Vt1, St1} =
+        check_struct(Line, Name, St0, fun(IsDef, St) ->
+            struct_field(Field, Name, IsDef, St)
+        end),
+    {Vt1, [], St1};
 pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
     pattern_bin(Fs, Vt, Old, Bvt, St);
 pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, Bvt, St) ->
@@ -2462,6 +2468,10 @@ gexpr({struct_field, Line, Rec, Name, Field}, Vt, St0) ->
             struct_field(Field, Name, Dfs, St)
         end),
     {vtmerge(Rvt, Fvt), St2};
+gexpr({struct_index, Line, Name, Field}, _Vt, St0) ->
+    check_struct(Line, Name, St0, fun(IsDef, St) ->
+        struct_field(Field, Name, IsDef, St)
+    end);
 gexpr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun gexpr/3);
 gexpr({call, _Line, {atom, _Lr, is_record}, [E, {atom, Ln, Name}]}, Vt, St0) ->
@@ -2759,6 +2769,10 @@ expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
             struct_field(Field, Name, IsDef, St)
         end),
     {vtmerge(Evt, Fvt), St3};
+expr({struct_index, Line, Name, Field}, _Vt, St0) ->
+    check_struct(Line, Name, St0, fun(IsDef, St) ->
+        struct_field(Field, Name, IsDef, St)
+    end);
 expr({record, Line, Name, Inits}, Vt, St) ->
     check_record(Line, Name, St, fun(Dfs, St1) ->
         init_fields(Inits, Line, Name, Dfs, Vt, St1)

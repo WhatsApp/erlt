@@ -15,7 +15,7 @@
 -lang([erlt]).
 -module(struct_mod03).
 
--export([expr/0, pattern/3, guard/3, field/1, update/1]).
+-export([expr/0, pattern/3, guard/3, field/1, update/1, index/1]).
 
 expr() ->
     {
@@ -34,3 +34,6 @@ field(Value) when Value#struct_mod02:bar.a =:= 1 ->
 
 update(Value) ->
     Value#struct_mod02:bar{a = 2}.
+
+index(#struct_mod02:bar.a) when #struct_mod02:bar.a =:= 2 ->
+    #struct_mod02:bar.b.

@@ -286,7 +286,6 @@ pattern({record, Line0, Name, Pfs}, St0) ->
     {TMs, St1} = pattern_list(pattern_fields(Fs, Pfs), St0),
     Line = mark_record(Line0, St1),
     {{tuple, Line, [{atom, Line0, Name} | TMs]}, St1};
-
 pattern({anon_struct, Line0, Pfs}, St0) ->
     {Pfs1, St1} = pattern_list(Pfs, St0),
     {{anon_struct, Line0, Pfs1}, St1};
@@ -298,6 +297,10 @@ pattern({struct_field, Line, Name0, Value0}, St0) ->
     {Name1, St1} = pattern(Name0, St0),
     {Value1, St2} = pattern(Value0, St1),
     {{struct_field, Line, Name1, Value1}, St2};
+pattern({struct_index, Line, Name0, Field0}, St0) ->
+    {Name1, St1} = pattern(Name0, St0),
+    {Field1, St2} = pattern(Field0, St1),
+    {{struct_index, Line, Name1, Field1}, St2};
 pattern({bin, Line, Es0}, St0) ->
     {Es1, St1} = pattern_bin(Es0, St0),
     {{bin, Line, Es1}, St1};
@@ -550,6 +553,10 @@ expr({struct_field, Line, Expr0, Name0, Value0}, St0) ->
     {Name1, St2} = expr(Name0, St1),
     {Value1, St3} = expr(Value0, St2),
     {{struct_field, Line, Expr1, Name1, Value1}, St3};
+expr({struct_index, Line, Name0, Field0}, St0) ->
+    {Name1, St1} = expr(Name0, St0),
+    {Field1, St2} = expr(Field0, St1),
+    {{struct_index, Line, Name1, Field1}, St2};
 expr({bin, Line, Es0}, St0) ->
     {Es1, St1} = expr_bin(Es0, St0),
     {{bin, Line, Es1}, St1};

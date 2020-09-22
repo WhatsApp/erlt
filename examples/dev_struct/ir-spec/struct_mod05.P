@@ -7,6 +7,7 @@
          guard/3,
          field/1,
          update/1,
+         index/1,
          remote_with_defaults/0]).
 
 -export_type([with_imported_default/0]).
@@ -48,6 +49,9 @@ update(Value) ->
         _ ->
             error({badstruct, '$#struct_mod02:bar'})
     end.
+
+index(2) when 2 =:= 2 ->
+    3.
 
 remote_with_defaults() ->
     {{'$#struct_mod01:default_with_default',
