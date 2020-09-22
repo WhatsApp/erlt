@@ -1,7 +1,6 @@
 # 2. General Syntax
 
-> The specs in Quip are the source of truth for this information
-
+> the nformation below may be out of date
 
 There are two layers/languages: the language of expressions and the language of
 types. They are different in different modes.

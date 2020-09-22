@@ -6,7 +6,7 @@ A *struct* is a nominal record and requires an explicit named definition. Struct
 
 An *anonymous struct* doesn’t require definition. The main use case it addresses is a generalization of a tuple, which allows names fields instead of only positional ones in a tuple. Intuitively, anonymous structs can be seen as Erlang map with atom keys with invariably more restricted semantics in ST model.
 
-> **The below is out of date. The [spec](https://fb.quip.com/olhzAKEm2Jqz) is the source of truth**. In particular, the below doesn't always distinguish between structs and anonymous structs
+> **The below is **out of date**. In particular, the below doesn't always distinguish between structs and anonymous structs.
 
 **Similar constructs in other languages**
 
