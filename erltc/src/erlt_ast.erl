@@ -177,23 +177,6 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Field1, Acc2} = do_traverse(Field0, Acc1, Pre, Post, Ctx),
             Post({struct_index, Line, Name1, Field1}, Acc2, Ctx);
-        {record, Line, Name, Fields0} ->
-            {Fields1, Acc1} = do_traverse_list(Fields0, Acc0, Pre, Post, Ctx),
-            Post({record, Line, Name, Fields1}, Acc1, Ctx);
-        {record, Line, Expr0, Name, Fields0} ->
-            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
-            Post({record, Line, Expr1, Name, Fields1}, Acc2, Ctx);
-        {record_index, Line, Name, Field0} ->
-            {Field1, Acc1} = do_traverse(Field0, Acc0, Pre, Post, Ctx),
-            Post({record_index, Line, Name, Field1}, Acc1, Ctx);
-        {record_field, Line, Value0, Name, Field0} ->
-            {Value1, Acc1} = do_traverse(Value0, Acc0, Pre, Post, Ctx),
-            {Field1, Acc2} = do_traverse(Field0, Acc1, Pre, Post, Ctx),
-            Post({record_field, Line, Value1, Name, Field1}, Acc2, Ctx);
-        {record_field, Line, Name, Field0} ->
-            {Field1, Acc1} = do_traverse(Field0, Acc0, Pre, Post, Ctx),
-            Post({record_field, Line, Name, Field1}, Acc1, Ctx);
         {op, Line, Op, Expr0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
             Post({op, Line, Op, Expr1}, Acc1, Ctx);
@@ -308,10 +291,6 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post({type, Line, Name, Args1}, Acc1, Ctx);
         {type, _, any} ->
             Post(Node, Acc0, Ctx);
-        {qualified_record, M0, N0} ->
-            {M1, Acc1} = do_traverse(M0, Acc0, Pre, Post, Ctx),
-            {N1, Acc2} = do_traverse(N0, Acc1, Pre, Post, Ctx),
-            Post({qualified_record, M1, N1}, Acc2, Ctx);
         {ann_type, Line, Args0} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             Post({ann_type, Line, Args1}, Acc1, Ctx);

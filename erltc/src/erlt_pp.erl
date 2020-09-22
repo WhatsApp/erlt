@@ -324,9 +324,6 @@ lattribute(optional_callbacks, Falist, Opts) ->
     end;
 lattribute(file, {Name, Line}, _Opts) ->
     attr(file, [{string, a0(), Name}, {integer, a0(), Line}]);
-lattribute(record, {Name, Is}, Opts) ->
-    Nl = [leaf("-record("), {atom, Name}, $,],
-    [{first, Nl, record_fields(Is, Opts)}, $)];
 lattribute(Name, Arg, Options) ->
     attr(Name, [abstract(Arg, Options)]).
 
@@ -611,38 +608,6 @@ lexpr({struct, _, Tag, Elts}, Prec, Opts) ->
     {P, R} = preop_prec('#'),
     El = {first, "#", {first, lexpr(Tag, R, Opts), struct_fields(Elts, Opts)}},
     maybe_paren(P, Prec, El);
-lexpr({record_index, _, Name, F}, Prec, Opts) ->
-    {P, R} = preop_prec('#'),
-    Nl = record_name(Name),
-    El = [Nl, $., lexpr(F, R, Opts)],
-    maybe_paren(P, Prec, El);
-lexpr({record, _, Name, Fs}, Prec, Opts) ->
-    {P, _R} = preop_prec('#'),
-    Nl = record_name(Name),
-    El = {first, Nl, record_fields(Fs, Opts)},
-    maybe_paren(P, Prec, El);
-lexpr({record_field, _, Rec, Name, F}, Prec, Opts) ->
-    {L, P, R} = inop_prec('#'),
-    Rl = lexpr(Rec, L, Opts),
-    Sep = hash_after_integer(Rec, [$#]),
-    Nl = [Sep, {atom, Name}, $.],
-    El = [Rl, Nl, lexpr(F, R, Opts)],
-    maybe_paren(P, Prec, El);
-lexpr({record, _, Rec, Name, Fs}, Prec, Opts) ->
-    {L, P, _R} = inop_prec('#'),
-    Rl = lexpr(Rec, L, Opts),
-    Sep = hash_after_integer(Rec, []),
-    Nl = record_name(Name),
-    El = {first, [Rl, Sep, Nl], record_fields(Fs, Opts)},
-    maybe_paren(P, Prec, El);
-lexpr({record_field, _, {atom, _, ''}, F}, Prec, Opts) ->
-    {_L, P, R} = inop_prec('.'),
-    El = [$., lexpr(F, R, Opts)],
-    maybe_paren(P, Prec, El);
-lexpr({record_field, _, Rec, F}, Prec, Opts) ->
-    {L, P, R} = inop_prec('.'),
-    El = [lexpr(Rec, L, Opts), $., lexpr(F, R, Opts)],
-    maybe_paren(P, Prec, El);
 lexpr({map, _, Fs}, Prec, Opts) ->
     {P, _R} = preop_prec('#'),
     El = {first, $#, map_fields(Fs, Opts)},
@@ -859,24 +824,6 @@ bit_elem_type(T) ->
 %% end of BITS
 record_name(Name) ->
     [$#, {atom, Name}].
-
-record_fields(Fs, Opts) ->
-    tuple(Fs, fun record_field/2, Opts).
-
-record_field({record_field, _, F, Val}, Opts) ->
-    {L, _P, R} = inop_prec('='),
-    Fl = lexpr(F, L, Opts),
-    Vl = lexpr(Val, R, Opts),
-    {list, [{cstep, [Fl, ' ='], Vl}]};
-record_field({typed_record_field, {record_field, _, F, Val}, Type}, Opts) ->
-    {L, _P, R} = inop_prec('='),
-    Fl = lexpr(F, L, Opts),
-    Vl = typed(lexpr(Val, R, Opts), Type, Opts),
-    {list, [{cstep, [Fl, ' ='], Vl}]};
-record_field({typed_record_field, Field, Type}, Opts) ->
-    typed(record_field(Field, Opts), Type, Opts);
-record_field({record_field, _, F}, Opts) ->
-    lexpr(F, 0, Opts).
 
 map_fields(Fs, Opts) ->
     tuple(Fs, fun map_field/2, Opts).

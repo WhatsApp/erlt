@@ -693,7 +693,6 @@ Erlang code.
     af_export_type() |
     af_compile() |
     af_file() |
-    af_record_decl() |
     af_type_decl() |
     af_function_spec() |
     af_wild_attribute() |
@@ -711,16 +710,6 @@ Erlang code.
 -type af_ta_list() :: [{type_name(), arity()}].
 -type af_compile() :: {'attribute', anno(), 'compile', any()}.
 -type af_file() :: {'attribute', anno(), 'file', {string(), anno()}}.
--type af_record_decl() ::
-    {'attribute', anno(), 'record', {record_name(), [af_field_decl()]}}.
-
--type af_field_decl() :: af_typed_field() | af_field().
--type af_typed_field() ::
-    {'typed_record_field', af_field(), abstract_type()}.
-
--type af_field() ::
-    {'record_field', anno(), af_field_name()} |
-    {'record_field', anno(), af_field_name(), abstract_expr()}.
 
 -type af_type_decl() ::
     {'attribute', anno(), type_attr(), {type_name(), abstract_type(), [af_variable()]}}.
@@ -747,10 +736,6 @@ Erlang code.
     af_bin(abstract_expr()) |
     af_binary_op(abstract_expr()) |
     af_unary_op(abstract_expr()) |
-    af_record_creation(abstract_expr()) |
-    af_record_update(abstract_expr()) |
-    af_record_index() |
-    af_record_field_access(abstract_expr()) |
     af_map_creation(abstract_expr()) |
     af_map_update(abstract_expr()) |
     af_catch() |
@@ -767,9 +752,6 @@ Erlang code.
     af_remote_fun() |
     af_fun() |
     af_named_fun().
-
--type af_record_update(T) ::
-    {'record', anno(), abstract_expr(), record_name(), [af_record_field(T)]}.
 
 -type af_catch() :: {'catch', anno(), abstract_expr()}.
 -type af_local_call() :: {'call', anno(), af_local_function(), af_args()}.
@@ -832,16 +814,10 @@ Erlang code.
     af_bin(af_guard_test()) |
     af_binary_op(af_guard_test()) |
     af_unary_op(af_guard_test()) |
-    af_record_creation(af_guard_test()) |
-    af_record_index() |
-    af_record_field_access(af_guard_test()) |
     af_map_creation(af_guard_test()) |
     af_map_update(af_guard_test()) |
     af_guard_call() |
     af_remote_guard_call().
-
--type af_record_field_access(T) ::
-    {'record_field', anno(), T, record_name(), af_field_name()}.
 
 -type af_map_creation(T) :: {'map', anno(), [af_assoc(T)]}.
 -type af_map_update(T) :: {'map', anno(), T, [af_assoc(T)]}.
@@ -866,17 +842,8 @@ Erlang code.
     af_bin(af_pattern()) |
     af_binary_op(af_pattern()) |
     af_unary_op(af_pattern()) |
-    af_record_creation(af_pattern()) |
-    af_record_index() |
     af_map_pattern().
 
--type af_record_index() ::
-    {'record_index', anno(), record_name(), af_field_name()}.
-
--type af_record_creation(T) ::
-    {'record', anno(), record_name(), [af_record_field(T)]}.
-
--type af_record_field(T) :: {'record_field', anno(), af_field_name(), T}.
 -type af_map_pattern() ::
     {'map', anno(), [af_assoc_exact(af_pattern())]}.
 
@@ -1290,7 +1257,6 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,export,Exports}
 %%	{attribute,Anno,import,Imports}
 %%	{attribute,Anno,import_type,Imports}
-%%	{attribute,Anno,record,{Name,Inits}}
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
@@ -1325,27 +1291,6 @@ build_attribute({atom, Aa, import_type}, Val) ->
             {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
         _Other ->
             error_bad_decl(Aa, import_type)
-    end;
-build_attribute({atom, Aa, exception}, Val) ->
-    case Val of
-        [{atom, _An, Record}, RecTuple] ->
-            {attribute, Aa, exception, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, exception)
-    end;
-build_attribute({atom, Aa, message}, Val) ->
-    case Val of
-        [{atom, _An, Record}, RecTuple] ->
-            {attribute, Aa, message, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, message)
-    end;
-build_attribute({atom, Aa, record}, Val) ->
-    case Val of
-        [{atom, _An, Record}, RecTuple] ->
-            {attribute, Aa, record, {Record, record_tuple(RecTuple)}};
-        _Other ->
-            error_bad_decl(Aa, record)
     end;
 build_attribute({atom, Aa, file}, Val) ->
     case Val of
@@ -1400,23 +1345,6 @@ farity_list({nil, _An}) ->
     [];
 farity_list(Other) ->
     ret_err(?anno(Other), "bad function arity").
-
-record_tuple({tuple, _At, Fields}) ->
-    record_fields(Fields);
-record_tuple(Other) ->
-    ret_err(?anno(Other), "bad record declaration").
-
-record_fields([{atom, Aa, A} | Fields]) ->
-    [{record_field, Aa, {atom, Aa, A}} | record_fields(Fields)];
-record_fields([{match, _Am, {atom, Aa, A}, Expr} | Fields]) ->
-    [{record_field, Aa, {atom, Aa, A}, Expr} | record_fields(Fields)];
-record_fields([{typed, Expr, TypeInfo} | Fields]) ->
-    [Field] = record_fields([Expr]),
-    [{typed_record_field, Field, TypeInfo} | record_fields(Fields)];
-record_fields([Other | _Fields]) ->
-    ret_err(?anno(Other), "bad record field");
-record_fields([]) ->
-    [].
 
 term(Expr) ->
     try normalise(Expr)
@@ -1953,10 +1881,6 @@ modify_anno1({function, M, F, A}, Ac, Mf) ->
     {F1, Ac2} = modify_anno1(F, Ac1, Mf),
     {A1, Ac3} = modify_anno1(A, Ac2, Mf),
     {{function, M1, F1, A1}, Ac3};
-modify_anno1({attribute, A, record, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, record, {Name, Fields1}}, Ac2};
 modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
@@ -2001,10 +1925,6 @@ modify_anno1({eof, L}, Ac, _Mf) ->
 modify_anno1({clauses, Cs}, Ac, Mf) ->
     {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
     {{clauses, Cs1}, Ac1};
-modify_anno1({typed_record_field, Field, Type}, Ac, Mf) ->
-    {Field1, Ac1} = modify_anno1(Field, Ac, Mf),
-    {Type1, Ac2} = modify_anno1(Type, Ac1, Mf),
-    {{typed_record_field, Field1, Type1}, Ac2};
 modify_anno1({Tag, A}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {{Tag, A1}, Ac1};

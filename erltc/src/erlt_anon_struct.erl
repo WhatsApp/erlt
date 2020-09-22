@@ -25,7 +25,7 @@ rewrite({type, Line, closed_anon_struct, Fields}, type) ->
     {type, Line, map, MapTypeFields};
 rewrite({type, Line, open_anon_struct, Fields, _Var}, type) ->
     MapTypeFields = to_typed_map_fields(Fields),
-    {type, Line, map, MapTypeFields ++ [generic_open_anon_record_field_type(Line)]};
+    {type, Line, map, MapTypeFields ++ [generic_open_anon_struct_field_type(Line)]};
 rewrite({anon_struct, Line, Fields}, pattern) ->
     MapFields = to_map_fields(map_field_exact, Fields),
     {map, Line, MapFields};
@@ -40,7 +40,7 @@ rewrite({anon_struct_field, Line, Expr, Field}, Ctx) when Ctx =:= expr orelse Ct
 rewrite(Other, _) ->
     Other.
 
-generic_open_anon_record_field_type(Line) ->
+generic_open_anon_struct_field_type(Line) ->
     {type, Line, map_field_assoc, [{type, Line, atom, []}, {type, Line, any, []}]}.
 
 to_typed_map_fields(Fields) ->
