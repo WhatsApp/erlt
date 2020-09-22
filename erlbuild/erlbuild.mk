@@ -174,7 +174,7 @@ $(BEAMS): erlbuild-compile
 # NOTE: checking that all source files are present just in case
 erlbuild-compile: $(ERLBUILD) $(SOURCES)
 	$(ECHO_2) "=== erlbuild.mk: $@"
-	$(QUIET)$(ERLBUILD) compile --gen-only --makefile $(ERLBUILD_MK) $(ERLBUILD_FLAGS) $(SOURCES)
+	$(QUIET)$(ERLBUILD) compile --gen-only --incremental --makefile $(ERLBUILD_MK) $(ERLBUILD_FLAGS) $(SOURCES)
 	$(QUIET)$(MAKE) --no-print-directory -f $(ERLBUILD_MK)
 
 

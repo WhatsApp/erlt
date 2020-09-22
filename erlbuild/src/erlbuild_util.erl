@@ -90,3 +90,13 @@ return_port_output_acc(CurrentLine, Acc) ->
             FinalAcc = [CurrentLine || CurrentLine =/= <<>>] ++ Acc,
             lists:reverse(FinalAcc)
     end.
+
+throw_error(Format, Args) ->
+    Str = format(Format, Args),
+    throw_error(Str).
+
+throw_error(Str) ->
+    throw({error, Str}).
+
+format(Format, Args) ->
+    lists:flatten(io_lib:format(Format, Args)).

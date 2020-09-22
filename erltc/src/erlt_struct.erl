@@ -51,7 +51,8 @@ local_rewriter(Forms) ->
     end.
 
 init_context(Forms, DefDb) ->
-    [Module] = [M || {attribute, _, module, M} <- Forms],
+    Res = [M || {attribute, _, module, M} <- Forms],
+[Module] = Res,
     Structs = [Def || {attribute, _, struct, Def} <- Forms],
     #context{
         module = Module,
