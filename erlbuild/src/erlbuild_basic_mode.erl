@@ -14,7 +14,7 @@ invoke(#args{command = compile} = Args) ->
 invoke(#args{command = clean, build_dir = undefined}) ->
     erlbuild_util:throw_error("I don't know which directory to clean");
 invoke(#args{command = clean, build_dir = BuildDir}) ->
-    del_dir_r(BuildDir).
+    file:del_dir_r(BuildDir).
 
 % calls erltc Phase on InputFiles in parallel 
 do_phase(Phase, #args{input_files = InputFiles} = Args) ->
@@ -85,36 +85,6 @@ mkdirp(Dirname) ->
     % because built-in `ensure_dir(F)` only ensures the *parent* of F exists
     Dummy = "__never_created",
     filelib:ensure_dir(filename:join(Dirname, Dummy)).
-
-% replace with file:del_dir_r when our min OTP is 23
-del_dir_r(Dir) ->
-    {ok, RawFilesAndDirs} = file:list_dir_all(Dir),
-    FilesAndDirs = [filename:join(Dir, Path) || Path <- RawFilesAndDirs],
-    {Dirnames, Filenames} = lists:partition(fun filelib:is_dir/1, FilesAndDirs),
-    lists:foreach(fun del_dir_r/1, Dirnames),
-    [
-        case file:delete(Filename) of
-            ok ->
-                ok;
-            {error, Reason} ->
-                erlbuild_util:throw_error("Could not clean: error deleting file ~p. Reason: ~p", [
-                    Filename,
-                    Reason
-                ])
-        end
-        || Filename <- Filenames
-    ],
-
-    case file:del_dir(Dir) of
-        ok ->
-            ok;
-        {error, Reason} ->
-            erlbuild_util:throw_error("Could not clean: error deleting directory ~p. Reason: ~p", [
-                Dir,
-                Reason
-            ])
-    end,
-    ok.
 
 safe_split(N, List) when length(List) < N ->
     {List, []};

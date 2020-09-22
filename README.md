@@ -45,7 +45,7 @@ See the [examples](examples/) folder.
 
 ## Requirements
 
-- [erlang](https://www.erlang.org/)
+- [erlang](https://www.erlang.org/) with OTP 23 or higher
 - [sbt](https://www.scala-sbt.org/)
 
 ## Building
