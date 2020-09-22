@@ -142,7 +142,7 @@ term_to_ast(LINE, L = [H | T]) when is_list(L) ->
     {cons, LINE, term_to_ast(LINE, H), term_to_ast(LINE, T)};
 term_to_ast(LINE, M) when is_map(M) ->
     Folded = maps:fold(
-        fun (K, V, Acc) ->
+        fun(K, V, Acc) ->
             [{map_field_assoc, LINE, term_to_ast(LINE, K), term_to_ast(LINE, V)} | Acc]
         end,
         [],

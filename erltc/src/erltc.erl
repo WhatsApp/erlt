@@ -23,7 +23,10 @@
 % NOTE: what you see below is based on copy-pasted erlang/lib/stdlib-3.7/src/erl_compile.erl (R21)
 -include_lib("kernel/include/file.hrl").
 
--export([main/1]).
+-export([
+     main/1, % escript entry point
+     api/1 % programmatic entrypoint. Distinct from compile:file because takes stringy args instead of structured
+]).
 
 %Macro to avoid misspellings.
 -define(STDERR, standard_error).
@@ -114,17 +117,8 @@ make_erl_options(Opts) ->
         Specific.
 
 % Escript entry point
-main(Args0) ->
-    % handle -pa, -pz and remove them from the original args
-    %
-    % NOTE, TODO: for now, only handling well-formed args, if things happen to
-    % be misplaced things won't be handled correctly, e.g. -o -pa ...
-    Args = handle_path_args(Args0),
-
-    %io:format("Args0: ~tp\n", [Args0]),
-    %io:format("Args: ~tp\n", [Args]),
-
-    case compile(Args) of
+main(Args) ->
+    case api(Args) of
         ok -> my_halt(0);
         error -> my_halt(1);
         _ -> my_halt(2)
@@ -149,9 +143,14 @@ my_halt(Reason) ->
 
 %% Run the the compiler in a separate process, trapping EXITs.
 
-compile(List) ->
+api(Args0) ->
+    % handle -pa, -pz and remove them from the original args
+    %
+    % NOTE, TODO: for now, only handling well-formed args, if things happen to
+    % be misplaced things won't be handled correctly, e.g. -o -pa ...
+    Args = handle_path_args(Args0),
     process_flag(trap_exit, true),
-    Pid = spawn_link(compiler_runner(List)),
+    Pid = spawn_link(compiler_runner(Args)),
     receive
         {'EXIT', Pid, {compiler_result, Result}} ->
             Result;

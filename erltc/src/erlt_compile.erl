@@ -20,6 +20,8 @@
 %% Purpose: Run the ErlT compiler.
 -module(erlt_compile).
 
+-define(SOURCE_FILE_EXTENSION, ".erl").
+
 %% High-level interface.
 %%
 %% TODO: implement forms() and potentialy other APIs supported by the standard compile.erl
@@ -48,7 +50,6 @@
 
 %Macro to avoid misspellings.
 -define(STDERR, standard_error).
--define(SOURCE_FILE_EXTENSION, ".erl").
 
 -type err_warn_info() :: tuple().
 

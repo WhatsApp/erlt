@@ -2,7 +2,7 @@
     {description, "erlbuild"},
     {vsn, "0.1"},
     {registered, []},
-    {applications, [kernel, stdlib]},
+    {applications, [kernel, stdlib, erltc]},
     {env, []},
     {modules, []},
     {licenses, ["Apache-2.0"]},

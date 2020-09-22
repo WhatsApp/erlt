@@ -32,6 +32,10 @@
 % evaluate erlbuild_template_mk() at compile time
 -compile({parse_transform, erlbuild_pt_util}).
 
+-include("erlbuild_types.hrl").
+-define(SOURCE_FILE_EXTENSION, ".erl").
+
+
 -const([erlbuild_template_mk]).
 
 command_name() ->
@@ -57,6 +61,7 @@ print_usage() ->
             "\n"
             "\n"
             "erlbuild options:\n"
+            "  --incremental            do an incremental build. Defaults to false\n"
             "  -o <output_dir>          directory where the compiler is to place the output files. Defaults to ../ebin\n"
             "  --build-dir <build_dir>  directory for storing intermediate compilation state. Defaults to <output_dir>/../build\n"
             "  --src-dir <build_dir>    source directory. Defaults to the current working directory\n"
@@ -86,36 +91,6 @@ print_usage() ->
         ]
     ]).
 
-% command-line args
--record(args, {
-    % erlbuild <command>
-    command :: compile | clean,
-    % -j
-    jobs :: undefined | string(),
-    % -v
-    verbose = 0 :: non_neg_integer(),
-    % -o
-    output_dir :: undefined | string(),
-    % --build-dir
-    build_dir :: undefined | string(),
-    % --src-dir
-    src_dir :: undefined | string(),
-    % --makefile
-    makefile :: undefined | string(),
-    % --erlbuild
-    erlbuild = "erlbuild",
-    % --gen-only
-    gen_only = false,
-    % --erlc
-    erlc,
-    % --erlbuild-erlc
-    erlbuild_erlc,
-    % input file names
-    input_files = [] :: [string()],
-    % argv to pass to erlc
-    erlc_argv = [] :: [string()]
-}).
-
 % API entry point
 %
 % returns ok | {error, string()}
@@ -139,13 +114,14 @@ main(Argv) ->
     end.
 
 run_command_as_api_function(Name, Fun, Argv) ->
-    try Fun(Argv)
+    try
+        Fun(Argv)
     catch
         {error, Reason} when is_list(Reason) ->
             {error, Reason};
         Class:Error:Stacktrace ->
             ErrorStr =
-                format(
+                erlbuild_util:format(
                     "internal error while running erlbuild:~s(~p):~n~p~nStacktrace:~n~p~n",
                     [
                         Name,
@@ -158,14 +134,15 @@ run_command_as_api_function(Name, Fun, Argv) ->
     end.
 
 run_command(Argv) ->
-    try do_run_command(Argv)
+    try
+        do_run_command(Argv)
     catch
         % thrown by throw_error()
         {error, Reason} when is_list(Reason) ->
             {error, Reason};
         Class:Error:Stacktrace ->
             ErrorStr =
-                format("internal error while running ~s:~n\t~p~nStacktrace:~n~p~n", [
+                erlbuild_util:format("internal error while running ~s:~n\t~p~nStacktrace:~n~p~n", [
                     command_name(),
                     {Class, Error},
                     Stacktrace
@@ -184,7 +161,7 @@ do_run_command(Argv0) ->
         "clean" ->
             run_clean_command(Argv);
         _ ->
-            throw_error("unknown command '~s'; see '~s -h' for list of commands", [
+            erlbuild_util:throw_error("unknown command '~s'; see '~s -h' for list of commands", [
                 Command,
                 command_name()
             ])
@@ -218,6 +195,8 @@ run_clean_command(Argv) ->
 
 parse_command_args(Command, Args) ->
     Args0 = parse_args(Args, #args{command = Command}),
+    check_option_compat(Args0),
+    ensure_input_filenames_valid(Args0),
 
     Args1 = update_args_output_dir(Args0),
     Args2 = update_args_build_dir(Args1),
@@ -262,6 +241,11 @@ update_args_makefile(Args) ->
             Args
     end.
 
+parse_args(["--incremental" | T], Args) ->
+    NewArgs = Args#args{
+        incremental = true
+    },
+    parse_args(T, NewArgs);
 parse_args(["-v" ++ Value | T], Args) ->
     Level =
         case Value of
@@ -355,8 +339,8 @@ parse_args(Argv, Args) when Args#args.command =:= clean ->
     % at this point all valid 'erlbuild clean' options should be parsed
     case Argv of
         [] -> Args;
-        ["-" ++ _ = Option | _] -> throw_error("unknown option: '~s'", [Option]);
-        [Arg | _] -> throw_error("unexpected positional argument: '~s'", [Arg])
+        ["-" ++ _ = Option | _] -> erlbuild_util:throw_error("unknown option: '~s'", [Option]);
+        [Arg | _] -> erlbuild_util:throw_error("unexpected positional argument: '~s'", [Arg])
     end;
 % all options below are erlc options
 parse_args(["-I" ++ _ | _] = Argv, Args) ->
@@ -402,7 +386,7 @@ parse_args(["--" = Arg | T], Args) ->
     },
     parse_file_args(T, NewArgs);
 parse_args(["-" ++ _ = Option | _], _Args) ->
-    throw_error("unknown option: '~s'", [Option]);
+    erlbuild_util:throw_error("unknown option: '~s'", [Option]);
 parse_args(Argv, Args) ->
     % following erlc behavior here
     parse_file_args(Argv, Args).
@@ -413,7 +397,7 @@ parse_file_args(_Argv = InputFiles, Args) ->
 
     case InputFiles =:= [] of
         false -> ok;
-        true -> throw_error("no input files were given")
+        true -> erlbuild_util:throw_error("no input files were given")
     end,
 
     Args#args{
@@ -428,11 +412,13 @@ check_file_arg(Filename) ->
         false ->
             ok;
         true ->
-            throw_error("invalid input file name '~s'. Name can't contain '/'", [Filename])
+            erlbuild_util:throw_error("invalid input file name '~s'. Name can't contain '/'", [
+                Filename
+            ])
     end,
     case Filename of
         "-" ++ _ ->
-            throw_error("invalid input file name '~s'. Name can't start with '-'", [
+            erlbuild_util:throw_error("invalid input file name '~s'. Name can't start with '-'", [
                 Filename
             ]);
         _ ->
@@ -446,7 +432,7 @@ check_file_arg(Filename) ->
         ".xrl" ->
             ok;
         _ ->
-            throw_error(
+            erlbuild_util:throw_error(
                 "invalid input file name '~s'. Extension must be one of .erl, .xrl, .yrl",
                 [Filename]
             )
@@ -470,7 +456,7 @@ get_letter_option_value([[$-, Letter | Value] = Arg | T]) ->
     {Value, _Copy = [Arg], T}.
 
 get_option_value(Name, []) ->
-    throw_error("no value given for option ~s", [Name]);
+    erlbuild_util:throw_error("no value given for option ~s", [Name]);
 get_option_value(Name, [Value | T]) ->
     check_option_value(Name, Value),
     {Value, _Copy = [Value, Name], T}.
@@ -494,12 +480,48 @@ check_option_value(Name, Value) ->
             ok
     end.
 
-args_value_error(Name, Value, ErrorStr) ->
-    throw_error("invalid value for option ~s: '~s'. ~s", [Name, Value, ErrorStr]).
+check_option_compat(#args{incremental = false, makefile = Makefile}) when Makefile =/= undefined ->
+    throw_needs_incremental("--makefile");
+check_option_compat(#args{incremental = false, erlbuild_erlc = ErlbuildErlc}) when
+    ErlbuildErlc =/= undefined
+->
+    throw_needs_incremental("--erlbuild-erlc");
+check_option_compat(#args{incremental = false, jobs = Jobs}) when Jobs =/= undefined ->
+    throw_needs_incremental("--jobs");
+check_option_compat(#args{incremental = false, gen_only = true}) ->
+    throw_needs_incremental("--gen-only");
+check_option_compat(_) ->
+    ok.
 
-do_compile(Args) ->
+% in non-incremental mode, we are currently only supporting source erlt files: no yrl, xrl, etc.
+ensure_input_filenames_valid(#args{incremental = false, input_files = InputFiles}) ->
+    BadFilenames = [
+        Filename
+        || Filename <- InputFiles, filename:extension(Filename) =/= ?SOURCE_FILE_EXTENSION
+    ],
+    case length(BadFilenames) of
+        0 ->
+            ok;
+        _ ->
+            erlbuild_util:throw_error(
+                "All input files must have extension ~p. Please try again without: ~p",
+                [?SOURCE_FILE_EXTENSION, BadFilenames]
+            )
+    end;
+ensure_input_filenames_valid(_) ->
+    ok.
+
+throw_needs_incremental(Opt) ->
+    erlbuild_util:throw_error("to use option '~s', you must also use option --incremental", [Opt]).
+
+args_value_error(Name, Value, ErrorStr) ->
+    erlbuild_util:throw_error("invalid value for option ~s: '~s'. ~s", [Name, Value, ErrorStr]).
+
+do_compile(#args{incremental = false} = Args) ->
+    erlbuild_basic_mode:invoke(Args);
+do_compile(#args{incremental = true, makefile = Makefile, gen_only = GenOnly} = Args) ->
     Makefile = generate_makefile(Args),
-    case Args#args.gen_only orelse Args#args.makefile =:= "-" of
+    case GenOnly orelse Makefile =:= "-" of
         true ->
             ok;
         false ->
@@ -512,6 +534,8 @@ do_compile(Args) ->
             run_make(Makefile, Args, _Goal = undefined)
     end.
 
+do_clean(#args{incremental = false} = Args) ->
+    erlbuild_basic_mode:invoke(Args);
 do_clean(Args) ->
     Makefile = Args#args.makefile,
     case filelib:is_regular(Makefile) of
@@ -606,7 +630,7 @@ run_make(Makefile, Args, Goal) ->
             {unix, _} ->
                 "make";
             OsType ->
-                throw_error("unsupported os type for running GNU make: ~w", [OsType])
+                erlbuild_util:throw_error("unsupported os type for running GNU make: ~w", [OsType])
         end,
 
     VerboseOption =
@@ -656,7 +680,7 @@ run_make(Makefile, Args, Goal) ->
             ok;
         _ ->
             % TODO, XXX: print Command that failed when running in non-verbose mode
-            throw_error("make failed with code ~w", [ReturnCode])
+            erlbuild_util:throw_error("make failed with code ~w", [ReturnCode])
     end.
 
 % produce a ' '-separated string from Argv
@@ -708,13 +732,3 @@ print_log(Str) ->
 
 print_log(Format, Args) ->
     io:format(standard_io, Format ++ "\n", Args).
-
-throw_error(Format, Args) ->
-    Str = format(Format, Args),
-    throw_error(Str).
-
-throw_error(Str) ->
-    throw({error, Str}).
-
-format(Format, Args) ->
-    lists:flatten(io_lib:format(Format, Args)).
