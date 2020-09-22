@@ -1,0 +1,5 @@
+-- ERROR ------------------------------------- examples/err-syntax/e01.erl:18:12
+Unsupported Syntax
+Atom literal
+ 18| -spec test(atom) -> atom.
+...|            ~~~~

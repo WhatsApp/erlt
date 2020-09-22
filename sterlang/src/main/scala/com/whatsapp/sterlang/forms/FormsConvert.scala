@@ -21,31 +21,10 @@ import com.whatsapp.sterlang.etf._
 import com.whatsapp.sterlang.forms.Forms._
 
 object FormsConvert {
-  val reservedAttrNames = Set(
-    "module",
-    "behavior",
-    "behaviour",
-    "export",
-    "import",
-    "export_type",
-    "import_type",
-    "compile",
-    "type",
-    "opaque",
-    "struct",
-    "message",
-    "exception",
-    "spec",
-    "callback",
-  )
-
-  def fromEtf(term: ETerm): List[Form] =
-    term match {
-      case EList(eforms) =>
-        eforms.map(convertForm)
-      case _ =>
-        sys.error(s"Unexpected: $term")
-    }
+  def fromEtf(term: ETerm): List[Form] = {
+    val EList(eforms) = term
+    eforms.map(convertForm)
+  }
 
   def convertForm(term: ETerm): Form =
     term match {
@@ -54,9 +33,6 @@ object FormsConvert {
       // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
         Module(name)
-      // af_behaviour
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("behavior" | "behaviour"), EAtom(name))) =>
-        Behaviour(name)
       // af_export
       case ETuple(List(EAtom("attribute"), _anno, EAtom("export"), EList(ids))) =>
         Export(ids.map(convertIdWithArity))
@@ -68,12 +44,6 @@ object FormsConvert {
       // export_type
       case ETuple(List(EAtom("attribute"), _anno, EAtom("export_type"), EList(typesIds))) =>
         ExportType(typesIds.map(convertIdWithArity))
-      // af_compile - TODO - clarify options
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("compile"), options)) =>
-        Compile(options)
-      // af_file
-      case ETuple(List(EAtom("attribute"), _anno1, EAtom("file"), ETuple(List(EString(file), _anno2)))) =>
-        File(file)
       // af_type_decl
       case ETuple(
             List(
@@ -109,31 +79,21 @@ object FormsConvert {
             List(
               EAtom("attribute"),
               anno,
-              EAtom(attr @ ("spec" | "callback")),
+              EAtom("spec"),
               ETuple(List(eFunId, EList(eTypeList))),
             )
           ) =>
-        val specAttr: SpecAttr = attr match {
-          case "spec"     => Spec
-          case "callback" => Callback
-        }
         val funId = convertSpecFunId(eFunId)
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
-        FunctionSpec(r(anno), specAttr, funId, typeList)
+        FunctionSpec(r(anno), funId, typeList)
       // af_function_decl
       case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
         FunctionDecl(r(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
-      case ETuple(List(EAtom("attribute"), anno, EAtom(attrName), attrValue)) =>
-        WildAttribute(r(anno), attrName)
-      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
-        Error(Doc.Pos(line.toInt, column.toInt))
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
         Error(Doc.Pos(line.toInt, column.toInt))
-      case _ =>
-        sys.error(s"unexpected term: $term")
     }
 
   def convertIdWithArity(term: ETerm): IdWithArity =
@@ -145,7 +105,7 @@ object FormsConvert {
   def structFieldDecl(term: ETerm): StructFieldDecl =
     term match {
       case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, eType)) =>
-        StructFieldTyped(r(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
+        StructFieldDecl(r(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
     }
 
   def convertAtomLit(term: ETerm): String =
@@ -154,11 +114,8 @@ object FormsConvert {
         atomVal
     }
 
-  def convertSpecFunId(term: ETerm): IdWithArity =
-    term match {
-      case ETuple(List(EAtom(fName), ELong(value))) =>
-        (fName, value.intValue)
-      case ETuple(List(EAtom(_mName), EAtom(fName), ELong(value))) =>
-        (fName, value.intValue)
-    }
+  def convertSpecFunId(term: ETerm): IdWithArity = {
+    val ETuple(List(EAtom(fName), ELong(value))) = term
+    (fName, value.intValue)
+  }
 }

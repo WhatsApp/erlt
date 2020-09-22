@@ -55,7 +55,6 @@ private[patterns] object Pattern {
 
     p match {
       case Wildcard                                                         => "_"
-      case ConstructorApplication(Literal(Values.UnitValue), Nil)           => tuple(Nil)
       case ConstructorApplication(Literal(Values.BooleanValue(value)), Nil) => value.toString
       case ConstructorApplication(Literal(_), _)                            => throw new IllegalArgumentException()
       case ConstructorApplication(Tuple(_), arguments)                      => tuple(arguments)

@@ -2,3 +2,4 @@
 -spec get_target(exception()) -> option(exception()).
 -spec get_message(fun(() -> string())) -> string().
 -spec get_other(fun((integer()) -> {string()}), integer()) -> string().
+-spec get_message_with_guard(fun(() -> string())) -> string().

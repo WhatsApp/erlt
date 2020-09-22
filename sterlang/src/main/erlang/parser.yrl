@@ -540,8 +540,6 @@ build_attribute({atom, _, import}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import, {Mod, farity_list(ImpList)}};
 build_attribute({atom, _, import_type}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
-build_attribute({atom, _, file}, [{string, _, Name}, {integer, _, Line}], Aa) ->
-    {attribute, Aa, file, {Name, Line}};
 build_attribute({atom, _, lang}, {atom, _, Lang}, Aa) when Lang == ffi; Lang == st ->
     {attribute, Aa, lang, Lang};
 build_attribute(_, _, Aa) ->

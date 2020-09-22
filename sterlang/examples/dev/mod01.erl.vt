@@ -218,3 +218,6 @@ val X: {neg_integer(), non_neg_integer(), pos_integer()}
 val mk_my_pair/2: fun((T_62, T_62) -> {T_62, T_62})
 val A: T_62
 val B: T_62
+val float_as_int/0: fun(() -> integer())
+val float_pat/1: fun((integer()) -> string())
+val char_pat/1: fun((char()) -> char())

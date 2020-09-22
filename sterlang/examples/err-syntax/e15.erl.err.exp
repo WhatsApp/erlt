@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e15.erl:20:34
+Parse Error
+ 20| -spec any_fun_is_no_fun() -> fun().
+...|                                  ^

@@ -92,8 +92,6 @@ object METypes {
     ConType(NamedTyCon("list"), List(t), List())
   def RecordType(rt: RowType): ConType =
     ConType(RecordTyCon, List(), List(rt))
-  val UnitType: ConType =
-    TupleType(List())
   def TupleType(ts: List[Type]): ConType =
     ConType(TupleCon(ts.size), ts, List())
   def NamedType(name: String, ts: List[Type]): ConType =

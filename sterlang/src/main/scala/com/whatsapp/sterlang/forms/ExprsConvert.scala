@@ -63,17 +63,15 @@ object ExprsConvert {
       case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
         StructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
-        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         StructSelect(r(anno), convertExp(eExp), recordName, fieldName)
       case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
         MapCreate(r(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
         MapUpdate(r(anno), convertExp(eExp), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("map_field"), anno, eExp, eFieldName)) =>
-        val Some(AtomLiteral(p, fieldName)) = ExprsConvert.maybeLiteral(eFieldName)
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         MapFieldAccess(r(anno), convertExp(eExp), fieldName)
-      case ETuple(List(EAtom("catch"), anno, eExp)) =>
-        Catch(r(anno), convertExp(eExp))
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
           case ETuple(List(EAtom("remote"), _, eExp1, eExp2)) =>
@@ -154,11 +152,7 @@ object ExprsConvert {
       case ETuple(List(EAtom("named_fun"), anno, EAtom(fName), EList(eClauses))) =>
         NamedFun(r(anno), fName, eClauses.map(convertClause))
       case _ =>
-        maybeLiteral(term) match {
-          case Some(exp) => exp
-          case None      => sys.error(s"cannot parse exp: $term")
-        }
-
+        literal(term)
     }
 
   def convertGuard(term: ETerm): Guard = {
@@ -166,23 +160,21 @@ object ExprsConvert {
     Guard(tests.map(ExprsConvert.convertExp))
   }
 
-  def maybeLiteral(term: ETerm): Option[Literal] =
+  def literal(term: ETerm): Literal =
     term match {
       case ETuple(List(EAtom("atom"), anno, EAtom(value))) =>
-        Some(AtomLiteral(r(anno), value))
+        AtomLiteral(r(anno), value)
       case ETuple(List(EAtom("char"), anno, ELong(value))) =>
-        Some(CharLiteral(r(anno), value.charValue))
-      case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
-        Some(FloatLiteral(r(anno), value))
+        CharLiteral(r(anno), value.charValue)
       case ETuple(List(EAtom("integer"), anno, ELong(value))) =>
-        Some(IntLiteral(r(anno), value.intValue))
+        IntLiteral(r(anno), value.intValue)
       case ETuple(List(EAtom("string"), anno, EString(value))) =>
-        Some(StringLiteral(r(anno), Some(value)))
+        StringLiteral(r(anno), value)
       case ETuple(List(EAtom("string"), anno, EList(List()))) =>
-        Some(StringLiteral(r(anno), Some("")))
-      case ETuple(List(EAtom("string"), anno, EList(_))) =>
-        Some(StringLiteral(r(anno), None))
-      case _ => None
+        // empty strings are parsed this way for some reason
+        StringLiteral(r(anno), "")
+      case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
+        FloatLiteral(r(anno), value)
     }
 
   def convertBinElement(term: ETerm): BinElement =
@@ -201,30 +193,18 @@ object ExprsConvert {
         DefaultTypeSpecifier
       case EList(specifiers) =>
         TypeSpecifierList(specifiers.map(convertTypeSpecifier))
-      case _ =>
-        ???
     }
 
-  def convertTypeSpecifier(term: ETerm): TypeSpecifier =
-    term match {
-      case EAtom(spec) =>
-        TypeSpecifierId(spec)
-      case ETuple(List(EAtom("unit"), ELong(value))) =>
-        TypeSpecifierUnit(value.intValue)
-    }
+  def convertTypeSpecifier(term: ETerm): TypeSpecifier = {
+    val EAtom(spec) = term
+    TypeSpecifier(spec)
+  }
 
-  def structField(term: ETerm): StructField =
-    term match {
-      case ETuple(List(EAtom("struct_field"), anno, eName, exp)) =>
-        val name = eName match {
-          case ETuple(List(EAtom("atom"), _anno, EAtom(value))) =>
-            value
-          case ETuple(List(EAtom("var"), _anno, EAtom("_"))) =>
-            // TODO
-            "_"
-        }
-        StructField(r(anno), name, convertExp(exp))
-    }
+  def structField(term: ETerm): StructField = {
+    val ETuple(List(EAtom("struct_field"), anno, eName, exp)) = term
+    val ETuple(List(EAtom("atom"), _, EAtom(name))) = eName
+    StructField(r(anno), name, convertExp(exp))
+  }
 
   def convertAssoc(term: ETerm): MapField =
     term match {

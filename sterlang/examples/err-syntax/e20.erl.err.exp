@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e20.erl:20:23
+Parse Error
+ 20| -spec single_int() -> - (-1).
+...|                       ^

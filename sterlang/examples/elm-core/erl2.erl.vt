@@ -1,3 +1,0 @@
-val multi_clause_local_fun/0: fun(() -> fun((boolean()) -> boolean()))
-val multi_clause_named_local_fun/0: fun(() -> fun((boolean()) -> boolean()))
-val Loc: fun((boolean()) -> boolean())

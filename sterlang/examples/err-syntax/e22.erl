@@ -12,9 +12,10 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e22).
 -lang(st).
--module(e07enum_ctr_type).
 
--spec test(test{integer()}) -> integer().
-test(X) ->
-    1.
+-export([bitstring2/0]).
+
+-spec bitstring2() -> <<_:5>>.
+bitstring2() -> <<>>.

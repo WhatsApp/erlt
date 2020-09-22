@@ -12,8 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e02).
 -lang(st).
--module(e24char_pattern).
 
-test($c) ->
+-spec test(tuple()) -> integer().
+test(X) ->
     1.

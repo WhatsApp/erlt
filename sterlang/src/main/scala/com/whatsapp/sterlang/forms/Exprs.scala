@@ -31,7 +31,7 @@ object Exprs {
   case class CharLiteral(r: Doc.Range, ch: Char) extends Literal
   case class FloatLiteral(r: Doc.Range, fl: Double) extends Literal
   case class IntLiteral(r: Doc.Range, i: Int) extends Literal
-  case class StringLiteral(r: Doc.Range, str: Option[String]) extends Literal
+  case class StringLiteral(r: Doc.Range, str: String) extends Literal
 
   case class Match(r: Doc.Range, pat: Pattern, arg: Expr) extends Expr
   case class Variable(r: Doc.Range, name: String) extends Expr
@@ -47,7 +47,6 @@ object Exprs {
   case class MapFieldAccess(r: Doc.Range, map: Expr, fieldName: String) extends Expr
   case class MapCreate(r: Doc.Range, entries: List[MapField]) extends Expr
   case class MapUpdate(r: Doc.Range, exp: Expr, entries: List[MapField]) extends Expr
-  case class Catch(r: Doc.Range, exp: Expr) extends Expr
   case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(r: Doc.Range, module: Expr, fun: Expr, args: List[Expr]) extends Expr
   case class LocalEnumCtr(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
@@ -73,9 +72,7 @@ object Exprs {
   sealed trait TypeSpecifiers
   case object DefaultTypeSpecifier extends TypeSpecifiers
   case class TypeSpecifierList(specifiers: List[TypeSpecifier]) extends TypeSpecifiers
-  sealed trait TypeSpecifier
-  case class TypeSpecifierId(id: String) extends TypeSpecifier
-  case class TypeSpecifierUnit(int: Int) extends TypeSpecifier
+  case class TypeSpecifier(id: String)
 
   case class StructField(r: Doc.Range, fieldName: String, value: Expr)
   case class MapField(r: Doc.Range, k: Expr, v: Expr)

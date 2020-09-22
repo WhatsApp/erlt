@@ -49,3 +49,12 @@ get_other(F, G) ->
     after
         F(G)
     end.
+
+
+get_message_with_guard(M) ->
+    try
+        M()
+    catch
+        #message_error{message = Msg} when Msg =/= "" -> Msg;
+        _ -> "Sorry"
+    end.

@@ -1,0 +1,5 @@
+-- ERROR ------------------------------------- examples/err-syntax/e02.erl:18:12
+Unsupported Syntax
+Bad tuple type
+ 18| -spec test(tuple()) -> integer().
+...|            ~~~~~~~

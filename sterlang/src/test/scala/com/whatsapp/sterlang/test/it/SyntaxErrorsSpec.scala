@@ -17,11 +17,13 @@
 package com.whatsapp.sterlang.test.it
 
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
 
 class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
+  val generateOut = false
+
   testDir("examples/err-syntax")
 
   def testDir(iDirPath: String): Unit = {
@@ -38,18 +40,49 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
         it(erlPath) {
-          processIllSyntax(etfPath)
+          processIllSyntax(erlPath, etfPath)
         }
       }
     }
   }
 
-  def processIllSyntax(path: String): Boolean = {
+  def processIllSyntax(erlPath: String, etfPath: String): Unit = {
     try {
-      Main.loadProgram(path)
-      false
+      import sys.process._
+      if (!erlPath.contains("_erlt.")) {
+        //  `.erlt` is a marker that a module uses some erlT specific syntax
+        // and we are not able to compare it with erl1 in the first place.
+        val oDirPath = Files.createTempDirectory("sterlang-syntax")
+        s"erlc -o $oDirPath $erlPath".!!
+      }
+      Main.loadProgram(etfPath)
+      fail(s"$erlPath should generate an UnsupportedSyntaxError")
     } catch {
-      case _: UnsupportedSyntaxError => true
+      case error: UnsupportedSyntaxError =>
+        val errMsg = Main.errorString(erlPath, fileContent(erlPath), error)
+        checkMsg(erlPath, errMsg)
+      case error: ParseError =>
+        val errMsg = Main.parseErrorString(erlPath, fileContent(erlPath), error)
+        checkMsg(erlPath, errMsg)
     }
+  }
+
+  private def checkMsg(erlPath: String, actualErrMsg: String): Unit = {
+    if (generateOut) {
+      val expPath = Paths.get(erlPath + ".err.exp")
+      Files.write(expPath, actualErrMsg.getBytes)
+    }
+    val tmpPath = Paths.get(erlPath + "_err")
+    Files.write(tmpPath, actualErrMsg.getBytes)
+    val expectedErr = fileContent(erlPath + ".err.exp")
+    assert(expectedErr === actualErrMsg)
+    Files.delete(tmpPath)
+  }
+
+  private def fileContent(path: String): String = {
+    val source = scala.io.Source.fromFile(path)
+    val content = source.mkString
+    source.close()
+    content
   }
 }

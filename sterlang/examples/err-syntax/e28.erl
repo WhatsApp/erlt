@@ -12,8 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e28).
 -lang(st).
--module(e19binop_pattern).
 
-test(40 / 2) ->
-    1.
+-export([remote_dynamic_call1/1]).
+
+remote_dynamic_call1(Mod) -> Mod:foo().

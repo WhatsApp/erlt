@@ -59,9 +59,8 @@ object Doc {
       def space(c: Char): Char = ' '
       def under(c: Char): Char = underline
       val textLines = text.split('\n').toList
-
-      val suffix1 =
-        if (suffix.endsWith("\n")) suffix.dropRight(1) else suffix
+      // dropping the last \n
+      val suffix1 = suffix.dropRight(1)
 
       textLines match {
         case t1 :: Nil =>
@@ -102,14 +101,7 @@ object Doc {
     private def lineContents: String = {
       val lineStart = index(pos.line - 1)
       val lineEnd = index(pos.line)
-      val endIndex =
-        if (lineStart < lineEnd - 1 && source.charAt(lineEnd - 2) == '\r' && source.charAt(lineEnd - 1) == '\n') {
-          lineEnd - 2
-        } else if (lineStart < lineEnd && (source.charAt(lineEnd - 1) == '\r' || source.charAt(lineEnd - 1) == '\n')) {
-          lineEnd - 1
-        } else {
-          lineEnd
-        }
+      val endIndex = lineEnd - 1
       source.subSequence(lineStart, endIndex).toString
     }
     def longString: String = {

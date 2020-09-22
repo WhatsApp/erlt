@@ -84,4 +84,5 @@ class UnSpecedExportedFun(range: Doc.Range, name: String)
     extends RangedError(range, s"Fun: $name is exported, but lacks a spec", None)
 
 case class ParseError(pos: Doc.Pos) extends Exception(s"Parse error at ${pos.line}:${pos.column}")
-class UnsupportedSyntaxError(range: Doc.Range) extends RangedError(range, s"Unsupported Syntax", None)
+class UnsupportedSyntaxError(range: Doc.Range, reason: String)
+    extends RangedError(range, s"Unsupported Syntax", Some(reason))

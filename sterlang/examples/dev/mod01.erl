@@ -404,3 +404,8 @@ ints_id(X) -> X.
 
 -spec mk_my_pair(A, A) -> mod01:my_pair2(A).
 mk_my_pair(A,B) -> {A, B}.
+
+float_as_int() -> 3.14.
+float_pat(3.14) -> "pi".
+
+char_pat($a) -> $b.

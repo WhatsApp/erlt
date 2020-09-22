@@ -79,3 +79,6 @@
 -spec timeout_id(timeout()) -> timeout().
 -spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
 -spec mk_my_pair(A, A) -> {A, A}.
+-spec float_as_int() -> integer().
+-spec float_pat(integer()) -> string().
+-spec char_pat(char()) -> char().

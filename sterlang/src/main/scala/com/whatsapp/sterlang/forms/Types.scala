@@ -25,14 +25,8 @@ object Types {
   case class AnnotatedType(r: Doc.Range, tv: TypeVariable, tp: Type) extends Type
   case class AtomType(r: Doc.Range, atom: String) extends Type
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
-  case class BitstringType(r: Doc.Range, types: List[SingletonIntegerType]) extends Type
-  case class EmptyListType(r: Doc.Range) extends Type
-  sealed trait FunType extends Type
-  // fun()
-  case class FunTypeAny(r: Doc.Range) extends FunType
-  case class FunTypeAnyArgs(r: Doc.Range, tp: Type) extends FunType
-  case class FunctionType(r: Doc.Range, args: List[Type], resType: Type) extends FunType with FunSpecType
-  case class IntegerRangeType(r: Doc.Range, t1: SingletonIntegerType, t2: SingletonIntegerType) extends Type
+  case class BitstringType(r: Doc.Range) extends Type
+  case class FunType(r: Doc.Range, args: List[Type], resType: Type) extends Type
 
   sealed trait MapType extends Type
   // map()
@@ -43,15 +37,8 @@ object Types {
   case class Assoc(r: Doc.Range, keyType: Type, valueType: Type)
 
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
-  case class StructType(r: Doc.Range, name: String, fieldTypes: List[StructFieldType]) extends Type
+  case class StructType(r: Doc.Range, name: String) extends Type
   case class RemoteType(r: Doc.Range, module: String, name: String, params: List[Type]) extends Type
-
-  sealed trait SingletonIntegerType extends Type
-  case class SinlgeInteger(r: Doc.Range, int: Int) extends SingletonIntegerType
-  case class SingleCharacter(r: Doc.Range, char: Char) extends SingletonIntegerType
-  case class UnaryOpIntegerType(r: Doc.Range, op: String, arg: SingletonIntegerType) extends SingletonIntegerType
-  case class BinaryOpIntegerType(r: Doc.Range, op: String, arg1: SingletonIntegerType, arg2: SingletonIntegerType)
-      extends SingletonIntegerType
 
   sealed trait TupleType extends Type
   case class TupleTypeAny(r: Doc.Range) extends TupleType
@@ -63,10 +50,6 @@ object Types {
   case class EnumCtr(r: Doc.Range, ctr: String, types: List[Type]) extends Type
 
   case class StructFieldType(name: String, tp: Type)
-
-  sealed trait FunSpecType
-  case class AF_ContrainedFunctionType(functionType: FunctionType, constraints: List[Constraint]) extends FunSpecType
-  case class Constraint(tVar: TypeVariable, tp: Type)
 
   val predefinedTypes = Set(
     "any",

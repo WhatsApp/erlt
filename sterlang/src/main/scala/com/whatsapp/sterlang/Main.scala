@@ -158,6 +158,6 @@ object Main {
     val ParseError(pos) = error
     val locator = Doc.Locator(inputContent, pos)
     val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\nParse Error\n${locator.longString}"
+    s"$msgTitle\nParse Error\n${locator.longString}\n"
   }
 }

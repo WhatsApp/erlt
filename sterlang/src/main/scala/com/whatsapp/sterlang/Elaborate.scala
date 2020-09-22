@@ -204,6 +204,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabTuplePat(tuplePat, ts, d, env, penv, gen)
       case boolPat: Ast.BoolPat =>
         elabBoolPat(boolPat, ts, d, env, penv, gen)
+      case charPat: Ast.CharPat =>
+        elabCharPat(charPat, ts, d, env, penv, gen)
       case numberPat: Ast.NumberPat =>
         elabNumberPat(numberPat, ts, d, env, penv, gen)
       case stringPat: Ast.StringPat =>
@@ -946,6 +948,20 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.BoolType)
     (AnnAst.LiteralPat(Values.BooleanValue(b))(r = p.r), env, penv)
+  }
+
+  private def elabCharPat(
+      p: Ast.CharPat,
+      ts: ST.TypeSchema,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (AnnAst.Pat, Env, PEnv) = {
+    val Ast.CharPat(c) = p
+    val t = TU.instantiate(d, ts)
+    unify(p.r, t, MT.CharType)
+    (AnnAst.LiteralPat(Values.CharValue(c))(r = p.r), env, penv)
   }
 
   private def elabNumberPat(

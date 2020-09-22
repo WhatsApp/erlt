@@ -283,8 +283,6 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     */
   private def allConstructors(constructor: Pattern.Constructor): Option[Set[Pattern.Constructor]] =
     constructor match {
-      case Pattern.Literal(Values.UnitValue) =>
-        Some(Set(constructor))
       case Pattern.Literal(_: Values.BooleanValue) =>
         Some(Set(true, false).map(b => Pattern.Literal(Values.BooleanValue(b))))
       case Pattern.Literal(_: Values.IntegerValue) => None

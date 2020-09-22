@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e24.erl:20:23
+Parse Error
+ 20| -spec bitstring4() -> <<_:10, _:_*5>>.
+...|                       ^

@@ -30,6 +30,25 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/elm-core")
   testDir("examples/dev")
   testDir("examples/pattern")
+  smokeTestFile("examples/elm-core", "basics")
+  smokeTestDir("examples/dir")
+
+  private def smokeTestDir(iDirPath: String): Unit = {
+    it(s"smoke test: $iDirPath") {
+      Main.main(Array(iDirPath))
+    }
+  }
+
+  private def smokeTestFile(iDirPath: String, module: String): Unit = {
+    import sys.process._
+    it(s"smoke test: $iDirPath/$module.erl") {
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./parser -idir $iDirPath -odir $oDirPath".!!
+      Main.main(Array(s"$iDirPath/$module.erl"))
+      Main.main(Array(s"$iDirPath/$module.erl", s"$oDirPath/$module.etf"))
+      Main.main(Array(s"$iDirPath/$module.erl", s"$oDirPath/$module.etf", "--check-patterns"))
+    }
+  }
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._

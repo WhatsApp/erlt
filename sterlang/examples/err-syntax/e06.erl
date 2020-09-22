@@ -12,8 +12,8 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e06).
 -lang(st).
--module(e23atom_pattern).
 
-test(atom) ->
+test(-(-4)) ->
     1.

@@ -23,15 +23,12 @@ import com.ericsson.otp.erlang._
 import com.whatsapp.sterlang.forms.FormsConvert
 
 package object etf {
-  private val debug = false
 
   sealed trait ETerm
   case class EAtom(atom: String) extends ETerm
-  case class EBitStr(bin: Array[Byte], pad_bits: Int) extends ETerm
   case class EDouble(d: Double) extends ETerm
   case class EList(elems: List[ETerm]) extends ETerm
   case class ELong(value: BigInt) extends ETerm
-  case class EMap(entries: List[(ETerm, ETerm)]) extends ETerm
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
 
@@ -54,9 +51,7 @@ package object etf {
       if (path.endsWith(".etf")) {
         Paths.get(path)
       } else {
-        val tmp =
-          if (debug) Paths.get(path.substring(0, path.length - 3) + "etf")
-          else Files.createTempFile("sterlang", ".etf")
+        val tmp = Files.createTempFile("sterlang", ".etf")
         s"./parser -ifile $path -ofile $tmp".!!
         tmp
       }
@@ -80,30 +75,20 @@ package object etf {
 
   private def fromJava(jObject: OtpErlangObject): ETerm =
     jObject match {
+      case otpTuple: OtpErlangTuple =>
+        val elems = otpTuple.elements().toList.map(fromJava)
+        ETuple(elems)
       case otpAtom: OtpErlangAtom =>
         EAtom(otpAtom.atomValue())
-      case otpBitstr: OtpErlangBitstr =>
-        EBitStr(otpBitstr.binaryValue(), otpBitstr.pad_bits())
-      case otpDouble: OtpErlangDouble =>
-        EDouble(otpDouble.doubleValue())
       case otpList: OtpErlangList =>
         val elems = otpList.elements().toList.map(fromJava)
         assert(otpList.getLastTail == null)
         EList(elems)
       case otpLong: OtpErlangLong =>
         ELong(otpLong.bigIntegerValue())
-      case otpMap: OtpErlangMap =>
-        val otpKeys = otpMap.keys()
-        val otpValues = otpKeys.map(k => otpMap.get(k))
-        val eKeys = otpKeys.toList.map(fromJava)
-        val eValues = otpValues.toList.map(fromJava)
-        EMap(eKeys.zip(eValues))
+      case otpDouble: OtpErlangDouble =>
+        EDouble(otpDouble.doubleValue())
       case otpString: OtpErlangString =>
         EString(otpString.stringValue())
-      case otpTuple: OtpErlangTuple =>
-        val elems = otpTuple.elements().toList.map(fromJava)
-        ETuple(elems)
-      case _ =>
-        sys.error(s"${jObject.getClass} is not expected")
     }
 }

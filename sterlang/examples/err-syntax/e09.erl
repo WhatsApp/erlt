@@ -12,9 +12,13 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e09).
 -lang(st).
--module(e06any_map).
 
--spec test(map()) -> integer().
-test(X) ->
-    1.
+test() ->
+    try 1
+    catch
+        % no pattern matching on "exception" class
+        error:Err ->
+            2
+    end.

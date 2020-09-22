@@ -1,2 +1,0 @@
--spec multi_clause_local_fun() -> fun((boolean()) -> boolean()).
--spec multi_clause_named_local_fun() -> fun((boolean()) -> boolean()).

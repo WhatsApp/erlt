@@ -11,10 +11,6 @@ object Values {
     def typ: ConType
   }
 
-  case object UnitValue extends Value {
-    override def typ: ConType = METypes.UnitType
-  }
-
   case class BooleanValue(value: Boolean) extends Value {
     override def typ: ConType = METypes.BoolType
   }
@@ -23,7 +19,7 @@ object Values {
     override def typ: ConType = METypes.IntType
   }
 
-  case class CharValue(value: String) extends Value {
+  case class CharValue(value: Char) extends Value {
     override def typ: ConType = METypes.CharType
   }
 

@@ -12,9 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e27).
 -lang(st).
--module(e08union_type).
 
--spec test(integer() | boolean()) -> integer().
-test(X) ->
-    1.
+mk_atom() -> atom.

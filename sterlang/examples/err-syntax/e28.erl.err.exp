@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e28.erl:20:33
+Parse Error
+ 20| remote_dynamic_call1(Mod) -> Mod:foo().
+...|                                 ^

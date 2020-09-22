@@ -12,9 +12,10 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e17).
 -lang(st).
--module(e05any_tuple).
 
--spec test(tuple()) -> integer().
-test(X) ->
-    1.
+-export([range/0]).
+
+-spec range() -> 1..2.
+range() -> 1.

@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e11.erl:19:21
+Parse Error
+ 19| -spec foo({X}) -> X when X :: integer().
+...|                     ^

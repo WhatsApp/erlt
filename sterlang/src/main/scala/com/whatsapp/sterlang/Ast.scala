@@ -167,7 +167,7 @@ object Ast {
   case class SelExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
   case class BoolExp(bool: Boolean)(val r: Doc.Range) extends Exp
   case class NumberExp(n: Int)(val r: Doc.Range) extends Exp
-  case class CharExp(c: String)(val r: Doc.Range) extends Exp
+  case class CharExp(c: Char)(val r: Doc.Range) extends Exp
   case class StringExp(s: String)(val r: Doc.Range) extends Exp
   case class VarExp(v: VarName)(val r: Doc.Range) extends Exp
   case class RecordExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
@@ -231,6 +231,7 @@ object Ast {
   case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat
   case class BoolPat(bool: Boolean)(val r: Doc.Range) extends Pat
+  case class CharPat(char: Char)(val r: Doc.Range) extends Pat
   case class NumberPat(n: Int)(val r: Doc.Range) extends Pat
   case class StringPat(s: String)(val r: Doc.Range) extends Pat
   case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat

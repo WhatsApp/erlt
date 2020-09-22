@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err-syntax/e21.erl:20:23
+Parse Error
+ 20| -spec bitstring1() -> <<>>.
+...|                       ^

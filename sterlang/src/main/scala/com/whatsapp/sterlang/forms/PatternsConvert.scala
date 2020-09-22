@@ -73,12 +73,8 @@ object PatternsConvert {
           ) =>
         RemoteEnumCtrPattern(r(anno), module, enum, ctr, eArgs.map(convertPat))
       case _ =>
-        ExprsConvert.maybeLiteral(term) match {
-          case Some(literal) =>
-            LiteralPattern(literal)
-          case None =>
-            sys.error(s"cannot parse pattern: $term")
-        }
+        val literal = ExprsConvert.literal(term)
+        LiteralPattern(literal)
     }
 
   def convertPatternBinElement(term: ETerm): BinElementPattern =
@@ -99,7 +95,7 @@ object PatternsConvert {
   def structFieldPattern(term: ETerm): StructFieldPattern =
     term match {
       case ETuple(List(EAtom("struct_field"), anno, eName, ePat)) =>
-        val Some(AtomLiteral(_, name)) = ExprsConvert.maybeLiteral(eName)
+        val AtomLiteral(_, name) = ExprsConvert.literal(eName)
         StructFieldPattern(r(anno), name, convertPat(ePat))
     }
 

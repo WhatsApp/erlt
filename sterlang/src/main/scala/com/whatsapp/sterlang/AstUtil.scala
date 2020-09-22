@@ -25,6 +25,8 @@ object AstUtil {
         List.empty
       case BoolPat(_) =>
         List.empty
+      case CharPat(_) =>
+        List.empty
       case NumberPat(_) =>
         List.empty
       case StringPat(_) =>
@@ -507,7 +509,7 @@ object AstUtil {
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
-      case BoolPat(_) | NumberPat(_) | StringPat(_) =>
+      case BoolPat(_) | NumberPat(_) | StringPat(_) | CharPat(_) =>
         Set.empty[String]
     }
 

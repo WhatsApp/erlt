@@ -12,9 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e38_erlt).
 -lang(st).
--module(e01atom_type).
 
--spec test(atom) -> atom.
-test(X) ->
-    X.
+-enum box() :: integer().

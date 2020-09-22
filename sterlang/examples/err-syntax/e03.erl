@@ -12,8 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e03).
 -lang(st).
--module(e18unop_pattern).
 
-test(-(-4)) ->
+-spec test(map()) -> integer().
+test(X) ->
     1.

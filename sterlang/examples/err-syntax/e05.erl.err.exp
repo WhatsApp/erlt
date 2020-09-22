@@ -1,0 +1,5 @@
+-- ERROR ------------------------------------- examples/err-syntax/e05.erl:18:12
+Unsupported Syntax
+Union type
+ 18| -spec test(integer() | boolean()) -> integer().
+...|            ~~~~~~~~~
