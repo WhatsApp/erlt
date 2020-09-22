@@ -537,7 +537,9 @@ compile_erl1_forms(Forms, St0) ->
     % NOTE: using forms_noenv() instead of forms(), because we've already
     % appended env_compiler_options() above
     % Make the compiler return errors and warnings instead of printing them
-    Opts0 = St0#compile.options -- [report_warnings, report_errors],
+    %% suppress some warnings in standard compiler because we have already
+    %% warned about them in our custom lint pass.
+    Opts0 = St0#compile.options -- [nowarn_unused_type, report_warnings, report_errors],
     Forms1 =
         case get_lang(St0) of
             specs -> [{attribute, L, module, M} || {attribute, L, module, M} <- Forms];
@@ -546,6 +548,7 @@ compile_erl1_forms(Forms, St0) ->
     Ret = compile:noenv_forms(Forms1, [
         return_errors,
         return_warnings,
+        nowarn_unused_type,
         {source, St0#compile.filename}
         | Opts0
     ]),
@@ -924,9 +927,7 @@ erlt_lint(Code, St) ->
     end.
 
 do_erlt_lint(Code, St) ->
-    %% suppress some warnings in standard compiler because we have already
-    %% warned about them in our custom lint pass.
-    Opts = [nowarn_unused_type | St#compile.options],
+    Opts = St#compile.options,
     case erlt_lint:module(Code, St#compile.ifile, St#compile.global_defs, Opts) of
         {ok, Ws} ->
             {ok, Code, St#compile{warnings = St#compile.warnings ++ Ws}};
