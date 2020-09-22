@@ -2,7 +2,7 @@
 
 -module(struct_mod03).
 
--export([expr/0,pattern/3,guard/3,field/1,update/1]).
+-export([expr/0,pattern/3,guard/3,field/1,update/1,index/1]).
 
 expr() ->
     {{'$#struct_mod02:foo'}, {'$#struct_mod02:bar', 1, 2}}.
@@ -36,6 +36,9 @@ update(Value) ->
         _ ->
             error({badstruct, '$#struct_mod02:bar'})
     end.
+
+index(2) when 2 =:= 2 ->
+    3.
 
 
 

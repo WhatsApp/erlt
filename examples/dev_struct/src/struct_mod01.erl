@@ -17,7 +17,7 @@
 
 -export_type([foo/0, bar/1, default_with_default/0]).
 
--export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1]).
+-export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1, index/1]).
 
 -struct bar(A) :: (a :: A, b :: foo()).
 
@@ -48,3 +48,6 @@ field(Value) when Value#bar.a =:= 1 ->
 
 update(Value) ->
     Value#bar{a = 2}.
+
+index(#bar.a) when #bar.a =:= 2 ->
+    #bar.b.
