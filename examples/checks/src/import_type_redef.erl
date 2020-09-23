@@ -7,6 +7,8 @@
 
 -export([f/0]).
 
--spec f() -> foo:f(atom(), atom()).
+-type f() :: integer().
+
+-spec f() -> foo:f(f(), atom()).
 f() ->
     ok.

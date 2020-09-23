@@ -46,8 +46,6 @@ keep_error(illegal_enum, _Def) ->
     true;
 keep_error({redefine_enum, _T, _C}, _Def) ->
     true;
-keep_error({redefine_struct, _N}, _Def) ->
-    true;
 keep_error({undefined_enum, _E}, _Def) ->
     true;
 keep_error({undefined_enum_constructor, _E, _A, _N}, _Def) ->
@@ -63,6 +61,8 @@ keep_error({redefine_builtin_type_import, {_F, _A}}, _Def) ->
 %% standard checks that need to trigger before erlt->erl1 or erlt->ocaml
 %% (possibly modified by us to be stricter)
 keep_error({redefine_type, {_T, _A}}, _Def) ->
+    true;
+keep_error({redefine_imported_type, {_T, _A}}, _Def) ->
     true;
 keep_error({undefined_type, {_T, _A}}, _Def) ->
     true;
@@ -412,8 +412,6 @@ format_error(unqualified_enum) ->
     "unqualified enum constructors may only be used in an enum definition";
 format_error({redefine_enum, T, C}) ->
     io_lib:format("constructor ~tw already defined in enum ~tw", [C, T]);
-format_error({redefine_struct, N}) ->
-    io_lib:format("struct ~tw already defined", [N]);
 format_error({private_enum, {M, E}}) ->
     io_lib:format("enum ~tw:~tw is not exported", [M, E]);
 format_error({undefined_enum, {M, E}}) ->
@@ -556,6 +554,8 @@ format_error({renamed_type, OldName, NewName}) ->
     );
 format_error({redefine_type, {TypeName, _Arity}}) ->
     io_lib:format("type ~tw already defined", [TypeName]);
+format_error({redefine_imported_type, {TypeName, _Arity}}) ->
+    io_lib:format("type ~tw already imported", [TypeName]);
 format_error({type_syntax, Constr}) ->
     io_lib:format("bad ~tw type", [Constr]);
 format_error(old_abstract_code) ->
@@ -3180,14 +3180,8 @@ pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     {Uvt, Bvt1, St1}.
 
 %% Does not do any checking, this is done in check_type
-
-struct_def({type, Line, struct, {atom, _, Name}, _Fields} = Type, St) ->
-    case is_map_key(Name, St#lint.structs) of
-        true ->
-            add_error(Line, {redefine_struct, Name}, St);
-        false ->
-            St#lint{structs = (St#lint.structs)#{Name => struct_fields_map(Type)}}
-    end.
+struct_def({type, _Line, struct, {atom, _, Name}, _Fields} = Type, St) ->
+    St#lint{structs = (St#lint.structs)#{Name => struct_fields_map(Type)}}.
 
 struct_fields_map({type, _, struct, _, Fields}) ->
     maps:from_list([
@@ -3253,24 +3247,28 @@ type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
                     end
             end;
         false ->
-            %% erlt modification: don't allow types overloaded on arity
-            Names = [N || {N, _} <- dict:fetch_keys(TypeDefs)],
-            case lists:member(TypeName, Names) of
+            St2 =
+                case Attr =:= opaque andalso is_underspecified(ProtoType, Arity) of
+                    true ->
+                        Warn = {underspecified_opaque, TypePair},
+                        add_warning(Line, Warn, St1);
+                    false ->
+                        St1
+                end,
+            StoreType(check_redefined_type(Line, TypeName, Arity, St2))
+    end.
+
+%% erlt modification: don't allow types overloaded on arity
+check_redefined_type(Line, Name, Arity, #lint{types = Types, imp_types = Imports} = St) ->
+    case lists:any(fun({N, _}) -> N =:= Name end, dict:fetch_keys(Types)) of
+        true ->
+            add_error(Line, {redefine_type, {Name, Arity}}, St);
+        false ->
+            case lists:any(fun({{N, _}, _}) -> N =:= Name end, Imports) of
                 true ->
-                    add_error(Line, {redefine_type, TypePair}, St1);
+                    add_error(Line, {redefine_imported_type, {Name, Arity}}, St);
                 false ->
-                    St2 =
-                        case
-                            Attr =:= opaque andalso
-                                is_underspecified(ProtoType, Arity)
-                        of
-                            true ->
-                                Warn = {underspecified_opaque, TypePair},
-                                add_warning(Line, Warn, St1);
-                            false ->
-                                St1
-                        end,
-                    StoreType(St2)
+                    St
             end
     end.
 
