@@ -14,6 +14,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-mode(compile).
 
 main([ErltFile]) ->
     {ok, Cwd} = file:get_cwd(),
