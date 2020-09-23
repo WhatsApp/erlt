@@ -6,7 +6,7 @@
 
 -type definition_map() :: #{{atom(), atom()} => erl_parse:abstract_form() | private}.
 
--type exports_map() :: #{atom() => cerl_sets:set({atom(), integer()})}.
+-type exports_map() :: cerl_sets:set({atom(), atom()}).
 
 -record(defs, {
     enums = #{} :: definition_map(),
@@ -38,28 +38,29 @@ find_struct(Module, Name, #defs{structs = Structs}) ->
 -spec add_definitions([erlt_parse:abstract_form()], defs()) -> defs().
 add_definitions(Forms, Defs0) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
-    Exports = gather_exported_types(Forms),
-    Defs = Defs0#defs{exported_types = maps:put(Module, Exports, Defs0#defs.exported_types)},
+    Exports = gather_exported_types(Module, Forms),
+    Defs = Defs0#defs{exported_types = maps:merge(Exports, Defs0#defs.exported_types)},
     lists:foldl(fun(Form, Acc) -> add_definition(Form, Module, Acc) end, Defs, Forms).
 
-add_definition({attribute, _Loc, enum, {Name, _Type, Vs}} = Enum, Module, Defs) ->
-    add_exported(#defs.enums, Module, Name, length(Vs), Enum, Defs);
-add_definition({attribute, _Loc, struct, {Name, _Type, Vs}} = Struct, Module, Defs) ->
-    add_exported(#defs.structs, Module, Name, length(Vs), Struct, Defs);
+add_definition({attribute, _Loc, enum, {Name, _Type, _Vs}} = Enum, Module, Defs) ->
+    add_exported(#defs.enums, Module, Name, Enum, Defs);
+add_definition({attribute, _Loc, struct, {Name, _Type, _Vs}} = Struct, Module, Defs) ->
+    add_exported(#defs.structs, Module, Name, Struct, Defs);
 add_definition(_, _, Defs) ->
     Defs.
 
-add_exported(Index, Module, Name, Arity, Value, Defs) ->
-    case cerl_sets:is_element({Name, Arity}, map_get(Module, Defs#defs.exported_types)) of
+add_exported(Index, Module, Name, Value, Defs) ->
+    ExportedTypes = Defs#defs.exported_types,
+    case cerl_sets:is_element({Module, Name}, ExportedTypes) of
         true ->
             setelement(Index, Defs, maps:put({Module, Name}, Value, element(Index, Defs)));
         false ->
             setelement(Index, Defs, maps:put({Module, Name}, private, element(Index, Defs)))
     end.
 
-gather_exported_types(Forms) ->
+gather_exported_types(Module, Forms) ->
     Fun = fun
-        ({attribute, _, export_type, List}) -> List;
+        ({attribute, _, export_type, List}) -> [{Module, Name} || {Name, _Arity} <- List];
         (_) -> []
     end,
     cerl_sets:from_list(lists:flatmap(Fun, Forms)).
