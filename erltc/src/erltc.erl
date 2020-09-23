@@ -24,8 +24,10 @@
 -include_lib("kernel/include/file.hrl").
 
 -export([
-     main/1, % escript entry point
-     api/1 % programmatic entrypoint. Distinct from compile:file because takes stringy args instead of structured
+    % escript entry point
+    main/1,
+    % programmatic entrypoint. Distinct from compile:file because takes stringy args instead of structured
+    api/1
 ]).
 
 %Macro to avoid misspellings.

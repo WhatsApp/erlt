@@ -31,4 +31,3 @@
     % whether to use incremental compilation
     incremental = false :: boolean()
 }).
-

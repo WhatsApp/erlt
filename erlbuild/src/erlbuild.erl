@@ -33,8 +33,8 @@
 -compile({parse_transform, erlbuild_pt_util}).
 
 -include("erlbuild_types.hrl").
--define(SOURCE_FILE_EXTENSION, ".erl").
 
+-define(SOURCE_FILE_EXTENSION, ".erl").
 
 -const([erlbuild_template_mk]).
 
