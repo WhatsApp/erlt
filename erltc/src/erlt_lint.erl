@@ -3095,7 +3095,13 @@ struct_name_to_key({remote, _, {atom, _, Module}, {atom, _, Name}}) -> {Module, 
 check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
     check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
 
-check_anon_struct_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, St, CheckFun, UsedFields) ->
+check_anon_struct_fields(
+    [{struct_field, Lf, {atom, _La, F}, Val} | Fields],
+    Vt,
+    St,
+    CheckFun,
+    UsedFields
+) ->
     case member(F, UsedFields) of
         true ->
             {[], add_error(Lf, {reuse_anon_struct_field, F}, St)};
@@ -3104,9 +3110,16 @@ check_anon_struct_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt,
             check_anon_struct_fields(Fields, Vt1, St1, CheckFun, [F | UsedFields])
     end;
 check_anon_struct_fields([], Vt, St, _CheckFun, _) ->
-    {Vt,St}.
+    {Vt, St}.
 
-check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fields], Vt, Old, Bvt, St, UsedFields) ->
+check_anon_struct_pattern_fields(
+    [{struct_field, Lf, {atom, _La, F}, Val} | Fields],
+    Vt,
+    Old,
+    Bvt,
+    St,
+    UsedFields
+) ->
     case member(F, UsedFields) of
         true ->
             {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
@@ -3117,7 +3130,6 @@ check_anon_struct_pattern_fields([{struct_field, Lf, {atom, _La, F}, Val} | Fiel
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
 
-
 check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->
         {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun),
@@ -3125,7 +3137,15 @@ check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
     end,
     foldl(Fun, {[], [], St0}, Fields).
 
-check_struct_field({struct_field, Lf, {atom, La, F}, Val}, Name, Definitions, Vt, St, Sfs, CheckFun) ->
+check_struct_field(
+    {struct_field, Lf, {atom, La, F}, Val},
+    Name,
+    Definitions,
+    Vt,
+    St,
+    Sfs,
+    CheckFun
+) ->
     Key = struct_name_to_key(Name),
     case member(F, Sfs) of
         true ->
@@ -3447,8 +3467,12 @@ check_type(I, SeenVars, St) ->
 check_anon_struct_types(Fields, SeenVars, St) ->
     check_anon_struct_types(Fields, SeenVars, St, #{}).
 
-check_anon_struct_types([{field_definition, Line, {atom, _, Name}, undefined, Type} | Rest],
-    SeenVars, St, FieldsAcc) ->
+check_anon_struct_types(
+    [{field_definition, Line, {atom, _, Name}, undefined, Type} | Rest],
+    SeenVars,
+    St,
+    FieldsAcc
+) ->
     case is_map_key(Name, FieldsAcc) of
         true ->
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
@@ -3997,7 +4021,6 @@ lc_quals([F | Qs], Vt, Uvt, St0) ->
     lc_quals(Qs, vtupdate(Fvt, Vt), Uvt, St1);
 lc_quals([], Vt, Uvt, St) ->
     {Vt, Uvt, St}.
-
 
 handle_generator(P, E, Vt, Uvt, St0) ->
     {Evt, St1} = expr(E, Vt, St0),

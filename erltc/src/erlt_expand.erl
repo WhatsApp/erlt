@@ -523,7 +523,6 @@ expr({record_field, Line, R, Name, F}, St) ->
 expr({record, _, R, Name, Us}, St0) ->
     {Ue, St1} = record_update(R, Name, record_fields(Name, St0), Us, St0),
     expr(Ue, St1);
-
 expr({anon_struct, Line0, Pfs}, St0) ->
     {Pfs1, St1} = expr_list(Pfs, St0),
     {{anon_struct, Line0, Pfs1}, St1};

@@ -44,7 +44,10 @@ generic_open_anon_struct_field_type(Line) ->
     {type, Line, map_field_assoc, [{type, Line, atom, []}, {type, Line, any, []}]}.
 
 to_typed_map_fields(Fields) ->
-    [{type, Line, map_field_exact, [Key, Value]} || {field_definition, Line, Key, undefined, Value} <- Fields].
+    [
+        {type, Line, map_field_exact, [Key, Value]}
+        || {field_definition, Line, Key, undefined, Value} <- Fields
+    ].
 
 to_map_fields(TypeOfMapField, Fields) ->
     [{TypeOfMapField, Line, Key, Value} || {struct_field, Line, Key, Value} <- Fields].
