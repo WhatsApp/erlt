@@ -166,6 +166,7 @@ do_file(File, Options0) ->
                 % this mode exists mainly for testing the new dependency scanner
                 base_passes() ++
                     [
+                        ?pass(erlt_import),
                         ?pass(output_compile_deps)
                     ];
             build_scan ->
@@ -173,6 +174,7 @@ do_file(File, Options0) ->
                 % extract declarations from parsed module, and cache the parse tree
                 base_passes() ++
                     [
+                        ?pass(erlt_import),
                         ?pass(output_declarations),
                         ?pass(output_compile_deps)
                     ];
@@ -187,6 +189,7 @@ do_file(File, Options0) ->
                     base_passes() ++
                     [
                         ?pass(erlt_typecheck),
+                        ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
                         ?pass(transform_module),
                         ?pass(compile_erl1_forms),
@@ -203,6 +206,7 @@ do_file(File, Options0) ->
                     [
                         {iff, 'B', {src_listing, "B"}},
                         {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
+                        ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
                         ?pass(transform_module),
                         ?pass(compile_erl1_forms),
@@ -232,8 +236,7 @@ base_passes() ->
         ?pass(erlt_exception),
         ?pass(erlt_message),
         ?pass(erlt_lint),
-        ?pass(erlt_track_vars),
-        ?pass(erlt_expand)
+        ?pass(erlt_track_vars)
     ].
 
 is_makedep2_mode(Options) ->
@@ -903,10 +906,10 @@ erlt_track_vars(Code, St) ->
     VarState = erlt_vars:initialize_vars(Code),
     {ok, Code, St#compile{variable_state = VarState}}.
 
-erlt_expand(Code, St) ->
+erlt_import(Code, St) ->
     case is_lang_erlt(St) of
         true ->
-            Code1 = erlt_expand:module(Code, St#compile.options),
+            Code1 = erlt_import:module(Code),
             {ok, Code1, St};
         false ->
             {ok, Code, St}
