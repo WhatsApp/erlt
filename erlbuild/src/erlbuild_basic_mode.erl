@@ -12,9 +12,12 @@ invoke(#args{command = compile} = Args) ->
     do_phase("compile", Args),
     ok;
 invoke(#args{command = clean, build_dir = undefined}) ->
-    erlbuild_util:throw_error("I don't know which directory to clean");
-invoke(#args{command = clean, build_dir = BuildDir}) ->
-    file:del_dir_r(BuildDir).
+    erlbuild_util:throw_error("internal error: I don't know which build directory to clean");
+invoke(#args{command = clean, output_dir = undefined}) ->
+    erlbuild_util:throw_error("internal error: I don't know which output directory to clean");
+invoke(#args{command = clean, build_dir = BuildDir, output_dir = OutputDir}) ->
+    rmrf(BuildDir),
+    rmrf(OutputDir).
 
 % calls erltc Phase on InputFiles in parallel
 do_phase(Phase, #args{input_files = InputFiles} = Args) ->
@@ -82,6 +85,17 @@ mkdirp(Dirname) ->
     % because built-in `ensure_dir(F)` only ensures the *parent* of F exists
     Dummy = "__never_created",
     filelib:ensure_dir(filename:join(Dirname, Dummy)).
+
+rmrf(Dir) ->
+    case file:del_dir_r(Dir) of
+        ok ->
+            ok;
+        {error, enoent} ->
+            ok;
+        {error, Reason} ->
+            io:format(standard_error, "could not remove directory ~p: ~p~n", [Dir, Reason]),
+            erlang:halt(1)
+    end.
 
 safe_split(N, List) when length(List) < N ->
     {List, []};
