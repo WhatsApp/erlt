@@ -3,7 +3,7 @@
 This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
 - ./erltc: erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
 - ./sterlang: stErlang is standalone type-checker for ST
-- ./analyzer:  this tool gets information about properties of an Erlang project. It can be used standalone, but is also is [used by other tools in this repo](./doc/08_compiler_architecture.md).
+- ./analyzer:  this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
 - ./erlbuild: erltc only handles one file at a time. erlbuild compiles a collection of ErlT files in the same directory. See [the erlbuild docs](./erlbuild/README.md) for more information.
 
 > See ./doc/08_compiler_architecture.md for more information about how these parts work together
