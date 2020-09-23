@@ -77,10 +77,6 @@ normalise_definition({attribute, Loc, struct, {Name, Type0, Vs}}, StructRewriter
 normalise_definition(Other, _StructRewriter) ->
     Other.
 
-%% Expand local guard calls to fully qualified erlang: calls
-%% in case the including module uses no_auto_import
-normalise_locals({call, Line0, {atom, _, _} = Name, Args}, _StructRewriter, guard) ->
-    {call, Line0, {remote, Line0, {atom, Line0, erlang}, Name}, Args};
 %% Expand local structs, so that we don't encounter scoping issues
 %% in the importing module
 normalise_locals({struct, _, {atom, _, _}, _} = Struct, StructRewriter, guard) ->

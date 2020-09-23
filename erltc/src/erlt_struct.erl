@@ -21,7 +21,6 @@
     module :: atom(),
     structs = #{},
     def_db :: erlt_defs:def_db(),
-    imported :: #{atom() => atom()},
     extra_guard_checks = []
 }).
 
@@ -57,7 +56,6 @@ init_context(Forms, DefDb) ->
     #context{
         module = Module,
         structs = init_structs(Structs, Module),
-        imported = imported(Forms),
         def_db = DefDb
     }.
 
@@ -73,16 +71,6 @@ struct_info(Module, {type, _, struct, {atom, _, Tag}, Fields}) ->
         || {field_definition, _, {atom, _, Name}, Default, _Type} <- Fields
     ],
     {{atom, Anno, RuntimeTag}, FieldsMap}.
-
-imported(Forms) ->
-    Fun = fun
-        ({attribute, _, import_type, {Mod, ImportList}}) ->
-            [{Name, Mod} || {Name, _Arity} <- ImportList];
-        (_) ->
-            []
-    end,
-    Imports = lists:flatmap(Fun, Forms),
-    maps:from_list(Imports).
 
 rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) ->
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
@@ -115,15 +103,10 @@ rewrite({struct_index, Line, Name, {atom, _, Field}}, Context, _) ->
 rewrite(Other, Context, _) ->
     {Other, Context}.
 
-rewrite_local({struct, Line, {atom, _, Name} = FullName, Fields}, Context) ->
-    case maps:find(Name, Context#context.imported) of
-        {ok, Module} ->
-            {struct, Line, {remote, Line, {atom, Line, Module}, FullName}, Fields};
-        error ->
-            {RuntimeTag, Def} = map_get(Name, Context#context.structs),
-            Constructor = struct_init(Fields, Def),
-            {tuple, Line, [RuntimeTag | Constructor]}
-    end.
+rewrite_local({struct, Line, {atom, _, Name}, Fields}, Context) ->
+    {RuntimeTag, Def} = map_get(Name, Context#context.structs),
+    Constructor = struct_init(Fields, Def),
+    {tuple, Line, [RuntimeTag | Constructor]}.
 
 post({guard_and, Line, Exprs}, Context, _) ->
     Context1 = Context#context{extra_guard_checks = []},
@@ -132,10 +115,7 @@ post(Other, Context, _) ->
     {Other, Context}.
 
 get_definition({atom, _, Name}, Context) ->
-    case maps:find(Name, Context#context.imported) of
-        {ok, Module} -> get_remote_definition(Module, Name, Context);
-        error -> map_get(Name, Context#context.structs)
-    end;
+    map_get(Name, Context#context.structs);
 get_definition({remote, _, {atom, _, Module}, {atom, _, Name}}, Context) ->
     get_remote_definition(Module, Name, Context).
 
