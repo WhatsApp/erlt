@@ -205,7 +205,11 @@ struct_field_guard(Line, Expr, Def, {atom, _, FieldRaw}) ->
 
 struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->
     GenLine = erl_anno:set_generated(true, Line),
-    Check = ?CALL(GenLine, erlang, is_record, [Expr, RuntimeTag, {integer, GenLine, length(Def) + 1}]),
+    Check = ?CALL(GenLine, erlang, is_record, [
+        Expr,
+        RuntimeTag,
+        {integer, GenLine, length(Def) + 1}
+    ]),
     %% Force guard crash by evaluating to non-boolean
     {op, GenLine, 'orelse', Check, {atom, GenLine, fail}}.
 

@@ -139,7 +139,8 @@ main(Argv) ->
     end.
 
 run_command_as_api_function(Name, Fun, Argv) ->
-    try Fun(Argv)
+    try
+        Fun(Argv)
     catch
         {error, Reason} when is_list(Reason) ->
             {error, Reason};
@@ -158,7 +159,8 @@ run_command_as_api_function(Name, Fun, Argv) ->
     end.
 
 run_command(Argv) ->
-    try do_run_command(Argv)
+    try
+        do_run_command(Argv)
     catch
         % thrown by throw_error()
         {error, Reason} when is_list(Reason) ->

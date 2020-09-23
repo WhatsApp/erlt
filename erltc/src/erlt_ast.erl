@@ -61,8 +61,6 @@ postwalk(Ast, Acc0, Fun) ->
         Kind =:= callback
 ).
 
-
-
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
     (t(), any(), ctx()) -> {t(), any()}
 )) -> {t(), any()}.
