@@ -184,9 +184,6 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         }
         printExp(template)
 
-      case A.SeqExp(e1, e2) =>
-        printExp(e1)
-        printExp(e2)
       case A.BlockExp(body) =>
         printBody(body)
 

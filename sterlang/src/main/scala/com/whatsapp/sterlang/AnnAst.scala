@@ -84,7 +84,6 @@ object AnnAst {
 
   case class BinElement(expr: Exp, size: Option[Exp], binElemType: Option[BinElemType])
 
-  case class SeqExp(e1: Exp, e2: Exp)(val typ: Type, val r: Doc.Range) extends Exp
   case class BlockExp(body: Body)(val r: Doc.Range) extends Exp {
     override val typ: Type = body.typ
   }
