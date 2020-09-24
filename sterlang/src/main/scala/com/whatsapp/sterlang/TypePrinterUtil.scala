@@ -17,7 +17,6 @@
 package com.whatsapp.sterlang
 
 class TypePrinterUtil {
-  val T = Types
 
   private var ftcounter = 0
   private var frcounter = 0
@@ -25,32 +24,31 @@ class TypePrinterUtil {
   private var brCounter = 0
 
   def nextSchematicTypeName(): String = {
-    val prefix = ""
     val n = btCounter
     btCounter = btCounter + 1
-    prefix + (if (n < 26) ('A' + n).toChar.toString else "t_" + n)
+    str("", n)
   }
 
   def nextSchematicRowTypeName(): String = {
-    val prefix = "'"
     val n = brCounter
     brCounter = brCounter + 1
-    prefix + (if (n < 26) ('A' + n).toChar.toString else "t_" + n)
+    str("'", n)
   }
 
   // free type
   def nextftname(): String = {
-    val prefix = ""
     val n = ftcounter
     ftcounter = ftcounter + 1
-    prefix + (if (n < 26) ('A' + n).toChar.toString else "T_" + n)
+    str("", n)
   }
 
   // row type
   def nextfrname(): String = {
-    val prefix = ""
     val n = frcounter
     frcounter = frcounter + 1
-    prefix + (if (n < 26) ('A' + n).toChar.toString else "T_" + n)
+    str("", n)
   }
+
+  private def str(prefix: String, n: Int): String =
+    prefix + (if (n < 26) ('A' + n).toChar.toString else "T_" + n)
 }

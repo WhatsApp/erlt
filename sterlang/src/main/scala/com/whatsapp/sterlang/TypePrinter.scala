@@ -129,8 +129,6 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
       sType match {
         case ST.PlainType(T.VarType(typeVar)) =>
           freeTypeVarNames(typeVar)
-        case ST.PlainType(_) =>
-          sys.error("unexpected PlainTys")
         case ST.ConType(tyCon, types, rowTypes) =>
           conType(tyCon, types, rowTypes)
         case ST.RefType(sTypeVar) =>
@@ -151,7 +149,6 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
           ts.map(typ).mkString("{", ", ", "}")
         case (TC.StructTyCon(name), Nil, Nil) =>
           s"#$name{}"
-        case _ => sys.error("ill-formed Contys")
       }
 
     def recordStr(sRowType: ST.RowType): String =

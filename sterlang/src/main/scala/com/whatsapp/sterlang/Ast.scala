@@ -120,14 +120,13 @@ object Ast {
     override val stringId: String = module + ":" + name
   }
 
+  // TODO - refactor this hierarchy
   sealed trait VarName {
     val stringId: String
-    override def equals(obj: Any): Boolean =
-      obj match {
-        case vn: VarName => this.stringId == vn.stringId
-        case _           => false
-      }
-    override def toString: String = stringId
+    override def equals(obj: Any): Boolean = {
+      require(obj.isInstanceOf[VarName])
+      this.stringId == obj.asInstanceOf[VarName].stringId
+    }
   }
   class LocalVarName(private val name: String) extends VarName {
     override val stringId: String = name
