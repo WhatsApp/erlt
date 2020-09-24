@@ -39,3 +39,6 @@ h(X) ->
 
 i(Elem, List) ->
     [found || ^Elem <- List].
+
+j(Elem, List) ->
+    lists:filter(fun(^Elem) -> true; (_) -> false end, List).
