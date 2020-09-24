@@ -167,78 +167,68 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
 %% the other function collections contain {Function, Arity}.
 -record(lint, {
     state = start :: 'start' | 'attribute' | 'function',
-    %Module
+    % Module
     module = '',
-    %Behaviour
+    % Behaviour
     behaviour = [],
-    %Exports
+    % Exports
     exports = gb_sets:empty() :: gb_sets:set(fa()),
-    %Imports
+    % Imports
     imports = [] :: orddict:orddict(fa(), module()),
-    %Compile flags
+    % Compile flags
     compile = [],
     % Struct definitions
     structs = #{} :: #{atom() => Def :: term()},
-    %All defined functions (prescanned)
-    locals = gb_sets:empty() ::
-        gb_sets:set(fa()),
-    %Functions explicitly not autoimported
-    no_auto = gb_sets:empty() ::
-        gb_sets:set(fa()) | 'all',
-    %Defined fuctions
-    defined = gb_sets:empty() ::
-        gb_sets:set(fa()),
-    %On-load function
+    % All defined functions (prescanned)
+    locals = gb_sets:empty() :: gb_sets:set(fa()),
+    % Functions explicitly not autoimported
+    no_auto = gb_sets:empty() :: gb_sets:set(fa()) | 'all',
+    % Defined fuctions
+    defined = gb_sets:empty() :: gb_sets:set(fa()),
+    % On-load function
     on_load = [] :: [fa()],
-    %Line for on_load
-    on_load_line = erl_anno:new(0) ::
-        erl_anno:anno(),
-    %Exported functions named as BIFs
+    % Line for on_load
+    on_load_line = erl_anno:new(0) :: erl_anno:anno(),
+    % Exported functions named as BIFs
     clashes = [],
-    %Not considered deprecated
+    % Not considered deprecated
     not_deprecated = [],
-    %Not considered removed
-    not_removed = gb_sets:empty() ::
-        gb_sets:set(module_or_mfa()),
-    %Current function
+    % Not considered removed
+    not_removed = gb_sets:empty() :: gb_sets:set(module_or_mfa()),
+    % Current function
     func = [],
-    %Warn format calls
+    % Warn format calls
     warn_format = 0,
-    %All enabled warnings (ordset).
+    % All enabled warnings (ordset).
     enabled_warnings = [],
-    %All no warn bif clashes (ordset).
+    % All no warn bif clashes (ordset).
     nowarn_bif_clash = [],
-    %Current errors
+    % Current errors
     errors = [],
-    %Current warnings
+    % Current warnings
     warnings = [],
-    %From last file attribute
+    % From last file attribute
     file = "" :: string(),
-    %true if qlc.hrl included
+    % true if qlc.hrl included
     xqlc = false :: boolean(),
-    %Called functions
+    % Called functions
     called = [] :: [{fa(), line()}],
     usage = #usage{} :: #usage{},
-    %Type specifications
-    specs = dict:new() ::
-        dict:dict(mfa(), line()),
-    %Callback types
-    callbacks = dict:new() ::
-        dict:dict(mfa(), line()),
-    %Optional callbacks
-    optional_callbacks = dict:new() ::
-        dict:dict(mfa(), line()),
-    %Type definitions
-    types = dict:new() ::
-        dict:dict(ta(), #typeinfo{}),
-    %Imported types
+    % Type specifications
+    specs = dict:new() :: dict:dict(mfa(), line()),
+    % Callback types
+    callbacks = dict:new() :: dict:dict(mfa(), line()),
+    % Optional callbacks
+    optional_callbacks = dict:new() :: dict:dict(mfa(), line()),
+    % Type definitions
+    types = dict:new() :: dict:dict(ta(), #typeinfo{}),
+    % Imported types
     imp_types = [] :: orddict:orddict(fa(), module()),
-    %Exported types
-    exp_types = gb_sets:empty() ::
-        gb_sets:set(ta()),
-    %Enum definitions
+    % Exported types
+    exp_types = gb_sets:empty() :: gb_sets:set(ta()),
+    % Enum definitions
     enums = #{},
-    %Current enum
+    % Current enum
     enum = [] :: atom() | [],
     % Global definition database
     defs_db :: erlt_defs:defs(),
