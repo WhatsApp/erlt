@@ -28,6 +28,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private case class Function(name: String, clauses: List[Ast.Clause])(val r: Doc.Range)
 
+  private def dExpander(d: T.Depth): Expander =
+    new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+
   private def freshTypeVar(d: T.Depth): T.Type =
     T.VarType(vars.tVar(T.Open(d)))
 
@@ -489,7 +492,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructCreate(name, fields) = exp
     val structDef = getStructDef(exp.r, name)
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -526,7 +529,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         throw new UnconditionalMessageUpdate(exp.r, name)
     }
 
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -558,7 +561,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         throw new UnconditionalMessageSelect(exp.r, name)
     }
 
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
     val fieldDef =
       structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
@@ -780,7 +783,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabEnumConExp(exp: Ast.EnumConExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.EnumConExp(eName, cName, args) = exp
     val nName = normalizeEnumName(eName)
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(ed) => ed
@@ -815,7 +818,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def createTypeSchema(d: T.Depth)(fun: Function): ST.TypeSchema = {
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
     def freshSType(): ST.Type = ST.PlainType(freshTypeVar(d))
     val sFunType = context.specs.find(_.name.stringId == fun.name) match {
       case Some(spec) =>
@@ -1125,7 +1128,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penv: PEnv,
       gen: Boolean,
   ): (AnnAst.Pat, Env, PEnv) = {
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
     val Ast.EnumCtrPat(eName, cName, pats) = p
     val nName = normalizeEnumName(eName)
     val t = TU.instantiate(d, ts)
@@ -1169,7 +1172,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (AnnAst.Pat, Env, PEnv) = {
     val Ast.StructPat(name, fields) = p
     val structDef = getStructDef(p.r, name)
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
 
     checkUniqueFields(p.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -1205,7 +1208,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   // --- Some additional checks ---
 
   private def checkSpec(fName: String, elabSchemaType: ST.TypeSchema, d: Int): Unit = {
-    val expander = new Expander(context.aliases, () => freshTypeVar(d), freshRTypeVar(d))
+    val expander = dExpander(d)
     context.specs.find(_.name.stringId == fName).foreach { spec =>
       val specFType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(specFType)
