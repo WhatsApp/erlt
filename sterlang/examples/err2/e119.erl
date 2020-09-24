@@ -13,26 +13,9 @@
 %% limitations under the License.
 
 -lang(st).
--module(messages).
+-module(e119).
 
--message ping :: {from :: pid()}.
--message pong :: {in_answer_to :: message()}.
+-exception my_exn :: {message :: string()}.
 
-get_from(#ping{from = From}) -> From.
-
-mk_pong(Ask) ->
-    #pong{in_answer_to = Ask}.
-
-loop_step(TimeOut, Default) ->
-    receive
-        #ping{} -> "ping";
-        #pong{} -> "pong";
-        _       -> "something else"
-    after
-        TimeOut -> Default
-    end.
-
-receive_guard(Pid) ->
-    receive
-        #ping{from = Pid1} when Pid1 == Pid -> "ping"
-    end.
+exn_select(E) ->
+    E#my_exn.message.

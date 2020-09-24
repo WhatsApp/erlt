@@ -25,3 +25,5 @@
 -spec b24(binary()) -> {}.
 -spec b25(binary(), integer(), binary(), integer()) -> boolean().
 -spec b26(binary(), integer(), binary(), integer()) -> boolean().
+-spec b27(binary()) -> binary().
+-spec b28(binary()) -> {float()}.

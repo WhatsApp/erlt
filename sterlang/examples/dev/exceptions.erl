@@ -51,10 +51,29 @@ get_other(F, G) ->
     end.
 
 
+get_other_with_guard(F, G, X) ->
+    try
+        F(1)
+    of
+        {Res} when Res =/= X -> Res
+    catch
+        #message_error{message = Msg} when Msg =/= X -> Msg
+    after
+        F(G)
+    end.
+
+
 get_message_with_guard(M) ->
     try
         M()
     catch
         #message_error{message = Msg} when Msg =/= "" -> Msg;
         _ -> "Sorry"
+    end.
+
+get_or_default(M, Default, Test) ->
+    try
+        Test == M()
+    after
+        Test == Default
     end.

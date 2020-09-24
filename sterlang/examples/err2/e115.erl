@@ -13,26 +13,12 @@
 %% limitations under the License.
 
 -lang(st).
--module(messages).
+-module(e115).
 
--message ping :: {from :: pid()}.
--message pong :: {in_answer_to :: message()}.
-
-get_from(#ping{from = From}) -> From.
-
-mk_pong(Ask) ->
-    #pong{in_answer_to = Ask}.
-
-loop_step(TimeOut, Default) ->
-    receive
-        #ping{} -> "ping";
-        #pong{} -> "pong";
-        _       -> "something else"
-    after
-        TimeOut -> Default
-    end.
-
-receive_guard(Pid) ->
-    receive
-        #ping{from = Pid1} when Pid1 == Pid -> "ping"
+get_message(M) ->
+    try
+        M()
+    catch
+        % not an exception
+        {IllegalPattern} -> IllegalPattern
     end.

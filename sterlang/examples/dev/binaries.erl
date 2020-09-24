@@ -89,3 +89,8 @@ b26(Binary1, Size1, Binary2, Size2) ->
         <<Binary1:Size1/binary>> == <<Binary2:Size2/binary>> -> true;
         true -> false
     end.
+
+b27(Binary) ->
+    << <<X>> || <<X>> <= Binary, X > 100 >>.
+
+b28(<<Float/float>>) -> {Float}.
