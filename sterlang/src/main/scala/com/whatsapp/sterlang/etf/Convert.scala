@@ -164,7 +164,7 @@ object Convert {
       case Patterns.TuplePattern(p, elems) =>
         Ast.TuplePat(elems.map(convertPattern))(p)
       case Patterns.NilPattern(p) =>
-        Ast.ListPat(List())(p)
+        Ast.NilPat()(p)
       case Patterns.ConsPattern(p, hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
       case Patterns.LocalEnumCtrPattern(p, enum, ctr, args) =>
@@ -219,7 +219,7 @@ object Convert {
       case Exprs.Tuple(p, elems) =>
         Ast.TupleExp(elems.map(convertExpr))(p)
       case Exprs.Nil(p) =>
-        Ast.ListExp(List())(p)
+        Ast.NilExp()(p)
       case Exprs.Cons(p, hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
       case Exprs.LocalEnumCtr(p, enum, ctr, args) =>

@@ -42,8 +42,8 @@ object AstUtil {
         collectPatVars(p1) ++ collectPatVars(p2)
       case EnumCtrPat(_, _, pats) =>
         pats.flatMap(collectPatVars)
-      case ListPat(pats) =>
-        pats.flatMap(collectPatVars)
+      case NilPat() =>
+        List.empty
       case ConsPat(hPat, tPat) =>
         collectPatVars(hPat) ++ collectPatVars(tPat)
       case BinPat(elems) =>
@@ -140,8 +140,8 @@ object AstUtil {
         elems.flatMap(freeVars(_, m)).toSet
       case EnumConExp(enumName, dataCon, args) =>
         args.flatMap(freeVars(_, m)).toSet
-      case ListExp(elems) =>
-        elems.flatMap(freeVars(_, m)).toSet
+      case NilExp() =>
+        Set.empty
       case Bin(elems) =>
         elems.flatMap(elem => freeVars(elem.expr, m)).toSet
       case ConsExp(h, t) =>
@@ -503,8 +503,8 @@ object AstUtil {
             Set(module)
         }
         pats.map(getDepPat).foldLeft(ctrDep)(_ ++ _)
-      case ListPat(pats) =>
-        pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
+      case NilPat() =>
+        Set.empty[String]
       case BinPat(elems) =>
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case ConsPat(hPat, tPat) =>
@@ -557,8 +557,8 @@ object AstUtil {
             Set(module)
         }
         args.map(getDepExp).foldLeft(ctrDep)(_ ++ _)
-      case ListExp(elems) =>
-        elems.flatMap(getDepExp).toSet
+      case NilExp() =>
+        Set.empty
       case Bin(elems) =>
         elems.flatMap(elem => getDepExp(elem.expr)).toSet
       case ConsExp(h, t) =>

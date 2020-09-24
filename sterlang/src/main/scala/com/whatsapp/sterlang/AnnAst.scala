@@ -48,7 +48,7 @@ object AnnAst {
     override val typ: Type = value.typ
   }
   case class TupleExp(elements: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
-  case class ListExp(elements: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
+  case class NilExp()(val typ: Type, val r: Doc.Range) extends Exp
   case class BinExp(elements: List[BinElement])(val typ: Type, val r: Doc.Range) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val typ: Type, val r: Doc.Range) extends Exp
   // End TODO
@@ -129,7 +129,7 @@ object AnnAst {
     override val typ: Type = value.typ
   }
   case class TuplePat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
-  case class ListPat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
+  case class NilPat()(val typ: Type, val r: Doc.Range) extends Pat
   case class BinPat(elements: List[BinElementPat])(val typ: Type, val r: Doc.Range) extends Pat
   case class RecordPat(fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
 

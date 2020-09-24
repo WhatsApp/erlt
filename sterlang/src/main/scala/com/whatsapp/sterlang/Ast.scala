@@ -172,7 +172,7 @@ object Ast {
   case class RecordExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
   case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val r: Doc.Range) extends Exp
-  case class ListExp(elems: List[Exp])(val r: Doc.Range) extends Exp
+  case class NilExp()(val r: Doc.Range) extends Exp
   case class Bin(elems: List[BinElement])(val r: Doc.Range) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val r: Doc.Range) extends Exp
   case class CaseExp(selector: Exp, rules: List[Rule])(val r: Doc.Range) extends Exp
@@ -226,7 +226,7 @@ object Ast {
   case class RecordPat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
   case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val r: Doc.Range) extends Pat
-  case class ListPat(pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class NilPat()(val r: Doc.Range) extends Pat
   case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat
   case class BoolPat(bool: Boolean)(val r: Doc.Range) extends Pat

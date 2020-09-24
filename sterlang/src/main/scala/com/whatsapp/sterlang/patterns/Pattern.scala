@@ -157,10 +157,8 @@ private[patterns] object Pattern {
       case _: AnnAst.BinPat =>
         ConstructorApplication(new AbstractConstructor(), Nil)
 
-      case AnnAst.ListPat(elements) =>
-        elements.foldRight(ConstructorApplication(EmptyList, Nil)) {
-          case (head, tail) => ConstructorApplication(Cons, List(simplify(vars, program)(head), tail))
-        }
+      case AnnAst.NilPat() =>
+        ConstructorApplication(EmptyList, Nil)
 
       case AnnAst.ConsPat(head, tail) =>
         ConstructorApplication(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))

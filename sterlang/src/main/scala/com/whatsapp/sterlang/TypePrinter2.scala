@@ -100,8 +100,8 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       //
       case A.TuplePat(pats) =>
         pats.foreach(printPat)
-      case A.ListPat(pats) =>
-        pats.foreach(printPat)
+      case A.NilPat() =>
+      //
       case A.RecordPat(fields) =>
         fields.foreach { f => printPat(f.value) }
 
@@ -135,8 +135,8 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       // Nothing
       case A.TupleExp(elems) =>
         elems.foreach(printExp)
-      case A.ListExp(elems) =>
-        elems.foreach(printExp)
+      case A.NilExp() =>
+      // Nothing
       case A.BinExp(elems) =>
         elems.foreach { elem =>
           printExp(elem.expr)

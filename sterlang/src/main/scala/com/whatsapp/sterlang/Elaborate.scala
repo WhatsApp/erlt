@@ -137,7 +137,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabFnExp(fnExp, ty, d, env)
       case namedFnExp: Ast.NamedFnExp =>
         elabNamedFnExp(namedFnExp, ty, d, env)
-      case listExp: Ast.ListExp =>
+      case listExp: Ast.NilExp =>
         elabListExp(listExp, ty, d, env)
       case consExp: Ast.ConsExp =>
         elabConsExp(consExp, ty, d, env)
@@ -173,7 +173,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case p: AnnAst.AndPat             => p.copy()(typ = t, r = p.r)
       case p: AnnAst.LiteralPat         => p
       case p: AnnAst.TuplePat           => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.ListPat            => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.NilPat             => p.copy()(typ = t, r = p.r)
       case p: AnnAst.RecordPat          => p.copy()(typ = t, r = p.r)
       case p: AnnAst.StructPat          => p.copy()(typ = t, r = p.r)
       case p: AnnAst.ConsPat            => p.copy()(typ = t, r = p.r)
@@ -216,7 +216,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
       case eRecordPat: Ast.StructPat =>
         elabStructPat(eRecordPat, ts, d, env, penv, gen)
-      case listPat: Ast.ListPat =>
+      case listPat: Ast.NilPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
       case binPat: Ast.BinPat =>
         elabBinPat(binPat, ts, d, env, penv, gen)
@@ -724,14 +724,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.NamedFnExp(name.stringId, fun1.clauses)(typ = fun1.typ, r = exp.r)
   }
 
-  private def elabListExp(exp: Ast.ListExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.ListExp(elems) = exp
+  private def elabListExp(exp: Ast.NilExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.NilExp() = exp
 
     val elemType = freshTypeVar(d)
-    val elems1 = elems.map(elab(_, elemType, d, env))
 
     unify(exp.r, ty, MT.ListType(elemType))
-    AnnAst.ListExp(elems1)(typ = ty, r = exp.r)
+    AnnAst.NilExp()(typ = ty, r = exp.r)
   }
 
   private def elabBin(exp: Ast.Bin, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -993,29 +992,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabListPat(
-      p: Ast.ListPat,
+      p: Ast.NilPat,
       ts: ST.TypeSchema,
       d: T.Depth,
       env: Env,
       penv: PEnv,
       gen: Boolean,
   ): (AnnAst.Pat, Env, PEnv) = {
-    val Ast.ListPat(pats) = p
+    val Ast.NilPat() = p
     val t = TU.instantiate(d, ts)
     val elemType = freshTypeVar(d)
 
     unify(p.r, t, MT.ListType(elemType))
-
-    var envAcc = env
-    var penvAcc = penv
-    val pats1 = for { pat <- pats } yield {
-      val (pat1, env1, penv1) = elpat(pat, elemType, d, envAcc, penvAcc, gen)
-      envAcc = env1
-      penvAcc = penv1
-      pat1
-    }
-
-    (AnnAst.ListPat(pats1)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.NilPat()(typ = null, r = p.r), env, penv)
   }
 
   private def elabBinPat(
