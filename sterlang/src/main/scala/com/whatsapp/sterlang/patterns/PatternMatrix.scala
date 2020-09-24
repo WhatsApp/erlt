@@ -26,19 +26,7 @@ private[patterns] object PatternMatrix {
   def wildcards(length: Int): Vector = List.fill(length)(Pattern.Wildcard)
 
   /** A two dimensional grid of patterns. */
-  case class Matrix(rows: List[Vector]) {
-    require(rows.forall(row => row.length == rows.head.length))
-
-    /** The number of rows in the matrix. */
-    def height: Int = rows.length
-
-    /** The number of columns in the matrix. */
-    def width: Int =
-      rows match {
-        case Nil    => 0
-        case h :: _ => h.length
-      }
-  }
+  case class Matrix(rows: List[Vector])
 
   object Empty {
     def unapply(matrix: Matrix): Boolean =
@@ -52,13 +40,9 @@ private[patterns] object PatternMatrix {
 
     /** Strip the first column in the matrix. */
     def unapply(matrix: Matrix): Option[(Vector, Matrix)] = {
-      if (matrix.height == 0 || matrix.width == 0) {
-        None
-      } else {
-        val firstColumn = matrix.rows.map(_.head)
-        val rest = Matrix(matrix.rows.map(_.tail))
-        Some((firstColumn, rest))
-      }
+      val firstColumn = matrix.rows.map(_.head)
+      val rest = Matrix(matrix.rows.map(_.tail))
+      Some((firstColumn, rest))
     }
   }
 }

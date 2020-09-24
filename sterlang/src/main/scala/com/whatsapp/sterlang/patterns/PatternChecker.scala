@@ -167,9 +167,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     *
     * Corresponds to the U_rec function in the paper.
     */
-  private def isUseful(matrix: PatternMatrix.Matrix, clause: PatternMatrix.Vector): Boolean = {
-    require(matrix.height == 0 || matrix.width == clause.length)
-
+  private def isUseful(matrix: PatternMatrix.Matrix, clause: PatternMatrix.Vector): Boolean =
     (matrix, clause) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
@@ -186,7 +184,6 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case (_, (p: Pattern.ConstructorApplication) :: ps) =>
         isUseful(specialize(matrix, p.constructor), p.arguments ++ ps)
     }
-  }
 
   /** Returns a pattern vector that matches (some of the) values not matched by the matrix.
     * Returns [[None]] if the matrix matches all possible values.
@@ -236,13 +233,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     }
 
   /** Corresponds to the D function in the paper. */
-  private def defaultMatrix(matrix: PatternMatrix.Matrix): PatternMatrix.Matrix = {
-    require(matrix.width > 0)
-
-    PatternMatrix.Matrix(matrix.rows.collect {
-      case Pattern.Wildcard :: tail => tail
-    })
-  }
+  private def defaultMatrix(matrix: PatternMatrix.Matrix): PatternMatrix.Matrix =
+    PatternMatrix.Matrix(matrix.rows.collect { case Pattern.Wildcard :: tail => tail })
 
   /** Used as the result type of [[missingConstructors]]. */
   private trait MissingConstructors
