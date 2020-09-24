@@ -8,26 +8,42 @@
 -export([invoke/1]).
 
 invoke(#args{command = compile} = Args) ->
-    do_phase("scan", Args),
-    do_phase("compile", Args),
+    clean(Args),
+    try
+        do_phase("scan", Args),
+        do_phase("compile", Args)
+    catch
+        Class:Reason:Stacktrace ->
+            clean(Args),
+            erlang:raise(Class, Reason, Stacktrace)
+    end,
     ok;
 invoke(#args{command = clean, build_dir = undefined}) ->
     erlbuild_util:throw_error("internal error: I don't know which build directory to clean");
 invoke(#args{command = clean, output_dir = undefined}) ->
     erlbuild_util:throw_error("internal error: I don't know which output directory to clean");
-invoke(#args{command = clean, build_dir = BuildDir, output_dir = OutputDir}) ->
+invoke(#args{command = clean} = Args) ->
+    clean(Args).
+
+clean(#args{build_dir = BuildDir, output_dir = OutputDir}) ->
     rmrf(BuildDir),
     rmrf(OutputDir).
 
 % calls erltc Phase on InputFiles in parallel
 do_phase(Phase, #args{input_files = InputFiles} = Args) ->
-    p_each(
-        fun(InputFile) -> do_file(Phase, Args, InputFile) end,
-        Phase,
-        InputFiles,
-        concurrency(),
-        ?TIMEOUT_FOR_FILE
-    ).
+    F = fun(InputFile) -> do_file(Phase, Args, InputFile) end,
+    case p_each(F, InputFiles) of
+        ok ->
+            ok;
+        {timeout, TimedOutFiles} ->
+            clean(Args),
+            io:format(
+                standard_error,
+                "Internal error: following files timed out during the ~s phase: ~p~n",
+                [Phase, TimedOutFiles]
+            ),
+            erlang:halt(3)
+    end.
 
 do_file(
     Phase,
@@ -57,22 +73,40 @@ do_file(
 
 % Errors are not handled (nocatch)
 % and we ignore return values
-p_each(_, _, [], _, _) ->
+-spec p_each(Cb, list(Key)) -> ok | {timeout, list(Key)} when
+    Cb :: fun((Key) -> Ret), Ret :: term().
+p_each(_, []) ->
     ok;
-p_each(F, DisplayName, List, Concurrency, TimeoutForFile) ->
-    {L1, L2} = safe_split(Concurrency, List),
-    Pid = self(),
-    [spawn_link(fun() -> Pid ! {Item, F(Item)} end) || Item <- L1],
-    [
+p_each(F, List) ->
+    {L1, L2} = safe_split(concurrency(), List),
+    [work(F, Key) || Key <- L1],
+    Results = [
         receive
-            {Item, _Res} ->
-                ok
-        after TimeoutForFile ->
-            erlbuild_util:throw_error("timed out waiting for ~p of ~p ~n", [DisplayName, Item])
+            {Key, Res} -> {Key, Res}
         end
-        || Item <- L1
+        || Key <- L1
     ],
-    p_each(F, DisplayName, L2, Concurrency, TimeoutForFile).
+    TimedOutKeys = [Key || {Key, timeout} <- Results],
+    case length(TimedOutKeys) of
+        0 ->
+            p_each(F, L2);
+        _ ->
+            {timeout, TimedOutKeys}
+    end.
+
+work(F, Key) ->
+    Self = self(),
+    spawn_link(fun() ->
+        TimeoutHandler = self(),
+        Child = spawn_link(fun() -> TimeoutHandler ! {Key, {ok, F(Key)}} end),
+        receive
+            {Key, {ok, Val}} ->
+                Self ! {Key, {ok, Val}}
+        after ?TIMEOUT_FOR_FILE ->
+            exit(Child, kill),
+            Self ! {Key, timeout}
+        end
+    end).
 
 concurrency() ->
     case erlang:system_info(logical_processors) of
