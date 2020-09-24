@@ -47,7 +47,6 @@ object Main {
   }
 
   private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
-    Console.println(erlFile)
     lazy val text = new String(Files.readAllBytes(Paths.get(erlFile)))
     val mainFile = etfFile.getOrElse(erlFile)
     val rawProgram =
