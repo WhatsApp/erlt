@@ -36,6 +36,8 @@
 %% keeping only our added errors and warnings; the real linter will run later
 
 %% our added checks
+keep_error({unpinned_var, _V, _In}, _Def) ->
+    true;
 keep_error(dotted_module_name, _Def) ->
     true;
 keep_error(illegal_dot, _Def) ->
@@ -454,6 +456,8 @@ format_error({unsafe_var, V, {What, Where}}) ->
     io_lib:format("variable ~w unsafe in ~w ~s", [V, What, format_where(Where)]);
 format_error({exported_var, V, {What, Where}}) ->
     io_lib:format("variable ~w exported from ~w ~s", [V, What, format_where(Where)]);
+format_error({unpinned_var, V}) ->
+    io_lib:format("variable ~w is already bound - must write '^~s' to use value in pattern", [V, V]);
 format_error({shadowed_var, V, In}) ->
     io_lib:format("variable ~w shadowed in ~w", [V, In]);
 format_error({unused_var, V}) ->
@@ -683,8 +687,7 @@ start(File, DefsDB, Opts) ->
         {export_all, bool_option(warn_export_all, nowarn_export_all, true, Opts)},
         % not optional here
         {export_vars, true},
-        % not optional here
-        {shadow_vars, true},
+        {shadow_vars, bool_option(warn_shadow_vars, nowarn_shadow_vars, true, Opts)},
         {unused_import, bool_option(warn_unused_import, nowarn_unused_import, false, Opts)},
         {unused_function, bool_option(warn_unused_function, nowarn_unused_function, true, Opts)},
         {unused_type, bool_option(warn_unused_type, nowarn_unused_type, true, Opts)},
@@ -2712,7 +2715,7 @@ expr({'catch', Line, E}, Vt, St0) ->
 expr({match, _Line, P, E}, Vt, St0) ->
     {Evt, St1} = expr(E, Vt, St0),
     {Pvt, Bvt, St2} = pattern(P, vtupdate(Evt, Vt), St1),
-    St3 = shadow_vars(Bvt, Vt, 'match', St2),
+    St3 = unpinned_vars(Bvt, Vt, St2),
     St = reject_invalid_alias_expr(P, E, Vt, St3),
     {vtupdate(Bvt, vtmerge(Evt, Pvt)), St};
 %% No comparison or boolean operators yet.
@@ -3867,7 +3870,7 @@ icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
     Vt1 = taint_stack_var(Vt0, H, St0),
     {Hvt, Binvt, St1} = head(H, Vt1, St0),
     Vt2 = vtupdate(Hvt, Binvt),
-    St1_1 = shadow_vars(Binvt, Vt0, 'pattern', St1),
+    St1_1 = unpinned_vars(Binvt, Vt0, St1),
     Vt3 = taint_stack_var(Vt2, H, St1_1),
     {Gvt, St2} = guard(G, vtupdate(Vt3, Vt0), St1_1#lint{in_try_head = false}),
     Vt4 = vtupdate(Gvt, Vt2),
@@ -4203,6 +4206,18 @@ exported_var(Line, V, From, St) ->
         true -> add_error(Line, {exported_var, V, From}, St);
         false -> St
     end.
+
+unpinned_vars(Vt, Vt0, St0) ->
+    foldl(
+        fun
+            ({V, {_, _, [L | _]}}, St) ->
+                add_error(L, {unpinned_var, V}, St);
+            (_, St) ->
+                St
+        end,
+        St0,
+        vtold(Vt, vt_no_unsafe(Vt0))
+    ).
 
 shadow_vars(Vt, Vt0, In, St0) ->
     case is_warn_enabled(shadow_vars, St0) of
