@@ -35,7 +35,7 @@ object AstUtil {
         List(v)
       case TuplePat(pats) =>
         pats.flatMap(collectPatVars)
-      case RecordPat(fields) =>
+      case ShapePat(fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
       case AndPat(p1, p2) =>
@@ -63,9 +63,9 @@ object AstUtil {
         params.flatMap(collectNamedTypeVars)
       case TupleType(params) =>
         params.flatMap(collectNamedTypeVars)
-      case RecordType(fields) =>
+      case ShapeType(fields) =>
         fields.map(_.value).flatMap(collectNamedTypeVars)
-      case OpenRecordType(fields, _) =>
+      case OpenShapeType(fields, _) =>
         fields.map(_.value).flatMap(collectNamedTypeVars)
       case FunType(params, res) =>
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
@@ -101,7 +101,7 @@ object AstUtil {
 
   private def freeVars(expr: Exp, m: String): Set[String] =
     expr match {
-      case RecordUpdateExp(exp, delta) =>
+      case ShapeUpdateExp(exp, delta) =>
         freeVars(exp, m) ++ freeVars(delta, m)
       case BinOpExp(binOp, exp1, exp2) =>
         freeVars(exp1, m) ++ freeVars(exp2, m)
@@ -109,7 +109,7 @@ object AstUtil {
         freeVars(exp, m)
       case AppExp(head, args) =>
         freeVars(head, m) ++ args.flatMap(freeVars(_, m))
-      case SelExp(exp, label) =>
+      case ShapeSelectExp(exp, label) =>
         freeVars(exp, m)
       case BoolExp(bool) =>
         Set.empty
@@ -128,7 +128,7 @@ object AstUtil {
           Set(new LocalFunName(remote.name, remote.arity).stringId)
         else
           Set.empty
-      case RecordExp(fields) =>
+      case ShapeCreateExp(fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
       case StructCreate(_, fields) =>
         fields.flatMap(f => freeVars(f.value, m)).toSet
@@ -346,12 +346,12 @@ object AstUtil {
         tp
       case TupleType(params) =>
         TupleType(params.map(globalizeType(module, names)))(tp.r)
-      case RecordType(fields) =>
+      case ShapeType(fields) =>
         val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
-        RecordType(fields1)(tp.r)
-      case OpenRecordType(fields, rt) =>
+        ShapeType(fields1)(tp.r)
+      case OpenShapeType(fields, rt) =>
         val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
-        OpenRecordType(fields1, rt)(tp.r)
+        OpenShapeType(fields1, rt)(tp.r)
       case FunType(argTypes, resType) =>
         FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.r)
       case ListType(elemType) =>
@@ -400,10 +400,10 @@ object AstUtil {
       case WildTypeVar() | TypeVar(_) | StructType(_) => tp
       case TupleType(ts) =>
         TupleType(ts.map(normalizeType(program)))(tp.r)
-      case RecordType(fields) =>
-        RecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
-      case OpenRecordType(fields, rt) =>
-        OpenRecordType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
+      case ShapeType(fields) =>
+        ShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
+      case OpenShapeType(fields, rt) =>
+        OpenShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
       case FunType(args, res) =>
         FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.r)
       case ListType(et) =>
@@ -498,7 +498,7 @@ object AstUtil {
         Set.empty[String]
       case TuplePat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
-      case RecordPat(fields) =>
+      case ShapePat(fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case StructPat(_, fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
@@ -524,7 +524,7 @@ object AstUtil {
 
   private def getDepExp(expr: Exp): Set[String] =
     expr match {
-      case RecordUpdateExp(exp, delta) =>
+      case ShapeUpdateExp(exp, delta) =>
         getDepExp(exp) ++ getDepExp(delta)
       case BinOpExp(binOp, exp1, exp2) =>
         getDepExp(exp1) ++ getDepExp(exp2)
@@ -532,7 +532,7 @@ object AstUtil {
         getDepExp(exp)
       case AppExp(head, args) =>
         getDepExp(head) ++ args.flatMap(getDepExp)
-      case SelExp(exp, label) =>
+      case ShapeSelectExp(exp, label) =>
         getDepExp(exp)
       case BoolExp(bool) =>
         Set.empty
@@ -548,7 +548,7 @@ object AstUtil {
         Set.empty
       case VarExp(remote: RemoteFunName) =>
         Set(remote.module)
-      case RecordExp(fields) =>
+      case ShapeCreateExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
       case StructCreate(_, fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
@@ -661,9 +661,9 @@ object AstUtil {
         Set.empty[String]
       case TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
-      case RecordType(fields) =>
+      case ShapeType(fields) =>
         fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case OpenRecordType(fields, extType) =>
+      case OpenShapeType(fields, extType) =>
         fields.map(f => getDepType(f.value)).foldLeft(getDepType(extType))(_ ++ _)
       case FunType(argTypes, resType) =>
         argTypes.map(getDepType).foldLeft(getDepType(resType))(_ ++ _)

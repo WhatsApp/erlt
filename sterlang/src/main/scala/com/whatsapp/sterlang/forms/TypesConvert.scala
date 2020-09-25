@@ -55,10 +55,10 @@ object TypesConvert {
       case ETuple(List(EAtom("type"), anno, EAtom("map"), EAtom("any"))) =>
         AnyMap(r(anno))
       // af_map_type
-      case ETuple(List(EAtom("type"), anno, EAtom("map"), EList(assocTypes))) =>
-        AssocMap(r(anno), assocTypes.map(convertAssocType))
-      case ETuple(List(EAtom("type"), anno, EAtom("open_map"), EList(assocTypes), restType)) =>
-        OpenAssocMap(r(anno), assocTypes.map(convertAssocType), convertType(restType))
+      case ETuple(List(EAtom("type"), anno, EAtom("shape"), EList(assocTypes))) =>
+        Shape(r(anno), assocTypes.map(convertShapeField))
+      case ETuple(List(EAtom("type"), anno, EAtom("open_shape"), EList(assocTypes), restType)) =>
+        OpenShape(r(anno), assocTypes.map(convertShapeField), convertType(restType))
       // af_record_type
       case ETuple(List(EAtom("type"), anno, EAtom("struct"), EList(List(structName)))) =>
         StructType(r(anno), FormsConvert.convertAtomLit(structName))
@@ -96,10 +96,10 @@ object TypesConvert {
         Types.TypeVariable(r(anno), name)
     }
 
-  def convertAssocType(term: ETerm): Assoc =
+  def convertShapeField(term: ETerm): ShapeField =
     term match {
-      case ETuple(List(EAtom("type"), anno, EAtom("map_field"), EList(List(kType, vType)))) =>
-        Assoc(r(anno), convertType(kType), convertType(vType))
+      case ETuple(List(EAtom("type"), anno, EAtom("shape_field"), EList(List(kType, vType)))) =>
+        ShapeField(r(anno), convertType(kType), convertType(vType))
     }
 
   def convertFunSpecType(term: ETerm): FunType =

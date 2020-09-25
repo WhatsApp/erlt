@@ -141,8 +141,8 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
           val args = ts.init
           val result = ts.last
           "fun(" + args.map(typ).mkString("(", ", ", ")") + " -> " + typ(result) + ")"
-        case (TC.RecordTyCon, Nil, List(rts)) =>
-          recordStr(rts)
+        case (TC.ShapeTyCon, Nil, List(rts)) =>
+          shapeStr(rts)
         case (TC.NamedTyCon(name), ts, Nil) =>
           ts.map(typ).mkString(name + "(", ", ", ")")
         case (TC.TupleCon(_), ts, Nil) =>
@@ -151,7 +151,7 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
           s"#$name{}"
       }
 
-    def recordStr(sRowType: ST.RowType): String =
+    def shapeStr(sRowType: ST.RowType): String =
       sRowType match {
         case ST.RowEmptyType => "#()"
         case _               => rowtype(sRowType, lb = "#( ", rb = " )")

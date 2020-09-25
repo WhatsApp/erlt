@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.TyCons.RecordTyCon
+import com.whatsapp.sterlang.TyCons.ShapeTyCon
 import com.whatsapp.sterlang.Values.Value
 import com.whatsapp.sterlang._
 
@@ -131,10 +131,10 @@ private[patterns] object Pattern {
       case AnnAst.TuplePat(elements) =>
         ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars, program)))
 
-      case AnnAst.RecordPat(patternFields) =>
-        val recordType = resolveRecordType(vars)(pattern.typ)
+      case AnnAst.ShapePat(patternFields) =>
+        val shapeType = resolveShapeType(vars)(pattern.typ)
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
-        val allFieldNames: List[String] = getFieldNames(recordType).sorted
+        val allFieldNames: List[String] = getFieldNames(shapeType).sorted
         ConstructorApplication(
           Record(allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
@@ -170,16 +170,16 @@ private[patterns] object Pattern {
       case Types.RowFieldType(f, rest)              => f.label :: getFieldNames(rest)
     }
 
-  /** Resolves a type to a record type and resolves any row variables in the record type. */
-  private def resolveRecordType(vars: Vars)(typ: Types.Type): Types.RowType =
+  /** Resolves a type to a shape type and resolves any row variables in the shape type. */
+  private def resolveShapeType(vars: Vars)(typ: Types.Type): Types.RowType =
     typ match {
       case Types.VarType(typeVar) =>
         vars.tGet(typeVar) match {
-          case Types.Instance(constructor) => resolveRecordType(vars)(constructor)
+          case Types.Instance(constructor) => resolveShapeType(vars)(constructor)
           case _: Types.Open               => throw new IllegalStateException()
         }
-      case Types.ConType(RecordTyCon, List(), List(rowType)) => resolveRowVariable(vars)(rowType)
-      case _: Types.ConType                                  => throw new IllegalStateException()
+      case Types.ConType(ShapeTyCon, List(), List(rowType)) => resolveRowVariable(vars)(rowType)
+      case _: Types.ConType                                 => throw new IllegalStateException()
     }
 
   /** Resolves any row variables in a row type if possible. */

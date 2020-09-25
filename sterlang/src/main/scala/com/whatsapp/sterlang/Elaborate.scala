@@ -106,8 +106,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabComprehension(comprehension, ty, d, env)
       case bComprehension: Ast.BComprehension =>
         elabBComprehension(bComprehension, ty, d, env)
-      case recordUpdateExp: Ast.RecordUpdateExp =>
-        elabRecordUpdateExp(recordUpdateExp, ty, d, env)
+      case shapeUpdateExp: Ast.ShapeUpdateExp =>
+        elabShapeUpdateExp(shapeUpdateExp, ty, d, env)
       case structCreate: Ast.StructCreate =>
         elabStructCreate(structCreate, ty, d, env)
       case structUpdate: Ast.StructUpdate =>
@@ -120,8 +120,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabUOpExp(uopExp, ty, d, env)
       case appExp: Ast.AppExp =>
         elabAppExp(appExp, ty, d, env)
-      case selExp: Ast.SelExp =>
-        elabSelExp(selExp, ty, d, env)
+      case shapeSelectExp: Ast.ShapeSelectExp =>
+        elabShapeSelectExp(shapeSelectExp, ty, d, env)
       case boolExp: Ast.BoolExp =>
         elabBoolExp(boolExp, ty, d, env)
       case numberExp: Ast.NumberExp =>
@@ -132,8 +132,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabStringExp(stringExp, ty, d, env)
       case varExp: Ast.VarExp =>
         elabVarExp(varExp, ty, d, env)
-      case recordExp: Ast.RecordExp =>
-        elabRecordExp(recordExp, ty, d, env)
+      case shapeCreateExp: Ast.ShapeCreateExp =>
+        elabShapeCreateExp(shapeCreateExp, ty, d, env)
       case tupleExp: Ast.TupleExp =>
         elabTupleExp(tupleExp, ty, d, env)
       case fnExp: Ast.FnExp =>
@@ -177,7 +177,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case p: AnnAst.LiteralPat         => p
       case p: AnnAst.TuplePat           => p.copy()(typ = t, r = p.r)
       case p: AnnAst.NilPat             => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.RecordPat          => p.copy()(typ = t, r = p.r)
+      case p: AnnAst.ShapePat           => p.copy()(typ = t, r = p.r)
       case p: AnnAst.StructPat          => p.copy()(typ = t, r = p.r)
       case p: AnnAst.ConsPat            => p.copy()(typ = t, r = p.r)
       case p: AnnAst.EnumConstructorPat => p.copy()(typ = t, r = p.r)
@@ -213,8 +213,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabNumberPat(numberPat, ts, d, env, penv, gen)
       case stringPat: Ast.StringPat =>
         elabStringPat(stringPat, ts, d, env, penv, gen)
-      case recordPat: Ast.RecordPat =>
-        elabRecordPat(recordPat, ts, d, env, penv, gen)
+      case shapePat: Ast.ShapePat =>
+        elabShapePat(shapePat, ts, d, env, penv, gen)
       case enumCtrPat: Ast.EnumCtrPat =>
         elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
       case eRecordPat: Ast.StructPat =>
@@ -464,8 +464,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.BComprehension(template1, qualifiers1)(typ = ty, r = exp.r)
   }
 
-  private def elabRecordUpdateExp(exp: Ast.RecordUpdateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.RecordUpdateExp(rec, delta) = exp
+  private def elabShapeUpdateExp(exp: Ast.ShapeUpdateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.ShapeUpdateExp(rec, delta) = exp
     checkUniqueFields(delta.r, delta.fields.map(_.label))
 
     val fields = delta.fields
@@ -481,12 +481,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rt = freshRowTypeVar(d, fieldTypes.map(_.label).toSet)
 
     val recType =
-      MT.RecordType(fieldTypes.foldRight(rt) { T.RowFieldType })
+      MT.ShapeType(fieldTypes.foldRight(rt) { T.RowFieldType })
 
     val rec1 = elab(rec, recType, d, env)
 
     unify(exp.r, ty, recType)
-    AnnAst.RecordUpdateExp(rec1, fields1)(typ = ty, r = exp.r)
+    AnnAst.ShapeUpdateExp(rec1, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -591,16 +591,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.AppExp(exp1, args1)(typ = ty, r = exp.r)
   }
 
-  private def elabSelExp(exp: Ast.SelExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.SelExp(record, label) = exp
+  private def elabShapeSelectExp(exp: Ast.ShapeSelectExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.ShapeSelectExp(shape, label) = exp
 
     val fieldType = freshTypeVar(d)
     val base = freshRowTypeVar(d, T.single(label))
-    val recordType = MT.RecordType(T.RowFieldType(T.Field(label, fieldType), base))
-    val record1 = elab(record, recordType, d, env)
+    val shapeType = MT.ShapeType(T.RowFieldType(T.Field(label, fieldType), base))
+    val shape1 = elab(shape, shapeType, d, env)
 
     unify(exp.r, ty, fieldType)
-    AnnAst.RecordSelectionExp(record1, label)(typ = ty, r = exp.r)
+    AnnAst.ShapeSelectExp(shape1, label)(typ = ty, r = exp.r)
   }
 
   private def elabBoolExp(exp: Ast.BoolExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -647,8 +647,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
-  private def elabRecordExp(exp: Ast.RecordExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.RecordExp(fields) = exp
+  private def elabShapeCreateExp(exp: Ast.ShapeCreateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.ShapeCreateExp(fields) = exp
     checkUniqueFields(exp.r, fields.map(_.label))
 
     // elaborating fields
@@ -662,10 +662,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       .unzip
     // elaborating ellipsis
     val baseType: T.RowType = T.RowEmptyType
-    val recordType = MT.RecordType(fieldTypes.foldRight(baseType)(T.RowFieldType))
+    val shapeType = MT.ShapeType(fieldTypes.foldRight(baseType)(T.RowFieldType))
 
-    unify(exp.r, ty, recordType)
-    AnnAst.RecordExp(fields1)(typ = ty, r = exp.r)
+    unify(exp.r, ty, shapeType)
+    AnnAst.ShapeCreateExp(fields1)(typ = ty, r = exp.r)
   }
 
   private def elabTupleExp(exp: Ast.TupleExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -1086,15 +1086,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     (AnnAst.ConsPat(hPat1, tPat1)(typ = null, r = p.r), env2, penv2)
   }
 
-  private def elabRecordPat(
-      p: Ast.RecordPat,
+  private def elabShapePat(
+      p: Ast.ShapePat,
       ts: ST.TypeSchema,
       d: T.Depth,
       env: Env,
       penv: PEnv,
       gen: Boolean,
   ): (AnnAst.Pat, Env, PEnv) = {
-    val Ast.RecordPat(fieldPats) = p
+    val Ast.ShapePat(fieldPats) = p
     checkUniqueFields(p.r, fieldPats.map(_.label))
 
     val t = TU.instantiate(d, ts)
@@ -1106,7 +1106,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val rowType = labelPatTypes.foldRight(baseType) {
       case ((label, _, fieldType), acc) => T.RowFieldType(T.Field(label, fieldType), acc)
     }
-    unify(p.r, t, MT.RecordType(rowType))
+    unify(p.r, t, MT.ShapeType(rowType))
 
     var envAcc = env
     var penvAcc = penv
@@ -1117,7 +1117,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(l, p1)
     }
 
-    (AnnAst.RecordPat(fields)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.ShapePat(fields)(typ = null, r = p.r), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(

@@ -200,10 +200,10 @@ class AstChecks(val context: Context) {
       // OK
       case TupleType(params) =>
         params.foreach(expandType(program, visited))
-      case RecordType(fields) =>
+      case ShapeType(fields) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
-      case OpenRecordType(fields, rt) =>
+      case OpenShapeType(fields, rt) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
         expandType(program, visited)(rt)
@@ -241,9 +241,9 @@ class AstChecks(val context: Context) {
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      case RecordType(fields) =>
+      case ShapeType(fields) =>
         fields.map(f => collectTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      case OpenRecordType(fields, _) =>
+      case OpenShapeType(fields, _) =>
         sys.error("Unexpected to see it here")
       case FunType(args, res) =>
         (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)

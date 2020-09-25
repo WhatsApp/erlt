@@ -19,7 +19,7 @@ package com.whatsapp.sterlang
 object TyCons {
   sealed trait TyCon
   case class FunTyCon(arity: Int) extends TyCon
-  case object RecordTyCon extends TyCon
+  case object ShapeTyCon extends TyCon
   case class TupleCon(arity: Int) extends TyCon
   case class NamedTyCon(name: String) extends TyCon
   case class StructTyCon(name: String) extends TyCon
@@ -90,8 +90,8 @@ object METypes {
     ConType(FunTyCon(argTypes.length), argTypes ++ List(resultType), List())
   def ListType(t: Type): ConType =
     ConType(NamedTyCon("list"), List(t), List())
-  def RecordType(rt: RowType): ConType =
-    ConType(RecordTyCon, List(), List(rt))
+  def ShapeType(rt: RowType): ConType =
+    ConType(ShapeTyCon, List(), List(rt))
   def TupleType(ts: List[Type]): ConType =
     ConType(TupleCon(ts.size), ts, List())
   def NamedType(name: String, ts: List[Type]): ConType =
@@ -148,7 +148,7 @@ object MESTypes {
   def ListType(t: Type): ConType =
     ConType(NamedTyCon("list"), List(t), List())
   def RecordType(rt: RowType): ConType =
-    ConType(RecordTyCon, List(), List(rt))
+    ConType(ShapeTyCon, List(), List(rt))
   val UnitType: ConType =
     TupleType(List())
   def TupleType(ts: List[Type]): ConType =

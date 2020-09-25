@@ -36,17 +36,17 @@ class Expander(
         MT.NamedType(name.stringId, params.map(mkType(_, sub)))
       case Ast.TupleType(params) =>
         MT.TupleType(params.map(mkType(_, sub)))
-      case Ast.RecordType(fields) =>
+      case Ast.ShapeType(fields) =>
         val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero: T.RowType = T.RowEmptyType
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
-        MT.RecordType(rowType)
-      case Ast.OpenRecordType(fields, _) =>
+        MT.ShapeType(rowType)
+      case Ast.OpenShapeType(fields, _) =>
         val lbls = fields.map(_.label).toSet
         val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero: T.RowType = T.RowVarType(rtGen(lbls))
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
-        MT.RecordType(rowType)
+        MT.ShapeType(rowType)
       case Ast.FunType(params, res) =>
         MT.FunType(params.map(mkType(_, sub)), mkType(res, sub))
       case Ast.ListType(elemType) =>
@@ -65,12 +65,12 @@ class Expander(
         MST.EnumType(name.stringId, params.map(mkSType(_, sub)))
       case Ast.TupleType(params) =>
         MST.TupleType(params.map(mkSType(_, sub)))
-      case Ast.RecordType(fields) =>
+      case Ast.ShapeType(fields) =>
         val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero: ST.RowType = ST.RowEmptyType
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
-      case Ast.OpenRecordType(fields, _) =>
+      case Ast.OpenShapeType(fields, _) =>
         val lbls = fields.map(_.label).toSet
         val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero: ST.RowType = ST.RowVarType(rtGen(lbls))

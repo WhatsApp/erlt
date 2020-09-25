@@ -28,14 +28,14 @@ attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_max
-pat_expr pat_expr_max map_pat_expr struct_pat_expr enum_pat_expr
+pat_expr pat_expr_max shape_pat_expr struct_pat_expr enum_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
 struct_expr struct_tuple struct_field struct_fields
-map_expr map_tuple map_field map_fields
+shape_expr shape_tuple shape_field shape_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
 try_expr try_catch try_clause try_clauses
@@ -49,7 +49,7 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type field_defs field_def
 fun_type
 type_spec
-map_field_types map_field_type struct_kind var_list vars.
+shape_field_types shape_field_type struct_kind var_list vars.
 
 Terminals
 char integer float atom string var
@@ -133,8 +133,8 @@ type -> atom '(' top_types ')'                : build_type('$1', '$3', anno('$1'
 type -> atom ':' atom '(' ')'                 : {remote_type, anno('$1','$5'), ['$1', '$3', []]}.
 type -> atom ':' atom '(' top_types ')'       : {remote_type, anno('$1','$6'), ['$1', '$3', '$5']}.
 type -> '[' top_type ']'                      : {type, anno('$1','$3'), list, ['$2']}.
-type -> '#' '(' ')'                           : {type, anno('$1','$3'), map, []}.
-type -> '#' '(' map_field_types ')'           : build_map_type(anno('$1', '$4'), '$3').
+type -> '#' '(' ')'                           : {type, anno('$1','$3'), shape, []}.
+type -> '#' '(' shape_field_types ')'         : build_shape_type(anno('$1', '$4'), '$3').
 type -> '{' '}'                               : {type, anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                     : {type, anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom '{' '}'                      : {type, anno('$1','$4'), struct, ['$2']}.
@@ -145,11 +145,11 @@ fun_type -> '(' ')' '->' top_type :
 fun_type -> '(' top_types ')' '->' top_type :
     {type, anno('$1','$5'), 'fun', [{type, anno('$1','$5'), product, '$2'},'$5']}.
 
-map_field_types -> type                               : {[], '$1'}.
-map_field_types -> map_field_type                     : ['$1'].
-map_field_types -> map_field_type ',' map_field_types : build_map_internals_type('$1', '$3').
+shape_field_types -> type                                   : {[], '$1'}.
+shape_field_types -> shape_field_type                       : ['$1'].
+shape_field_types -> shape_field_type ',' shape_field_types : build_shape_internals_type('$1', '$3').
 
-map_field_type -> atom '::' top_type  : {type, anno('$1', '$3'), map_field, ['$1', '$3']}.
+shape_field_type -> atom '::' top_type                      : {type, anno('$1', '$3'), shape_field, ['$1', '$3']}.
 
 attr_val -> expr             : '$1'.
 attr_val -> expr ',' exprs   : ['$1' | '$3'].
@@ -178,7 +178,7 @@ expr -> expr list_op expr : ?mkop2('$1', '$2', '$3').
 expr -> expr add_op expr : ?mkop2('$1', '$2', '$3').
 expr -> expr mult_op expr : ?mkop2('$1', '$2', '$3').
 expr -> prefix_op expr : ?mkop1('$1', '$2').
-expr -> map_expr : '$1'.
+expr -> shape_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
 expr -> struct_expr : '$1'.
@@ -186,7 +186,7 @@ expr -> expr_max : '$1'.
 
 remote_id -> atom ':' atom : {remote, anno('$1','$3'), '$1', '$3'}.
 
-expr_max -> expr_max '#' '(' atom ')' : {map_field, anno('$1','$5'), '$1', '$4'}.
+expr_max -> expr_max '#' '(' atom ')' : {shape_field, anno('$1','$5'), '$1', '$4'}.
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
@@ -208,7 +208,7 @@ pat_expr -> pat_expr list_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr add_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
-pat_expr -> map_pat_expr : '$1'.
+pat_expr -> shape_pat_expr : '$1'.
 pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
@@ -229,10 +229,10 @@ enum_pat_expr -> remote_id '.' atom '{' '}' :
 enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
-map_pat_expr -> '#' map_tuple :
-	{map, anno('$1','$2'),strip_map_tuple('$2')}.
-map_pat_expr -> pat_expr_max '#' map_tuple :
-	{map, anno('$1','$3'),'$1',strip_map_tuple('$3')}.
+shape_pat_expr -> '#' shape_tuple :
+	{shape, anno('$1','$2'),strip_shape_tuple('$2')}.
+shape_pat_expr -> pat_expr_max '#' shape_tuple :
+	{shape, anno('$1','$3'),'$1',strip_shape_tuple('$3')}.
 
 struct_pat_expr -> '#' atom struct_tuple :
 	{struct, anno('$1', '$3'), element(3, '$2'), element(1, '$3')}.
@@ -295,20 +295,20 @@ enum_expr -> remote_id '.' atom '{' '}' :
 enum_expr -> remote_id '.' atom '{' exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
-map_expr -> '#' map_tuple :
-	{map, anno('$1','$2'),strip_map_tuple('$2')}.
-map_expr -> expr_max '#' map_tuple :
-	{map, anno('$1','$3'),'$1',strip_map_tuple('$3')}.
-map_expr -> map_expr '#' map_tuple :
-	{map, anno('$1','$3'),'$1',strip_map_tuple('$3')}.
+shape_expr -> '#' shape_tuple :
+	{shape, anno('$1','$2'),strip_shape_tuple('$2')}.
+shape_expr -> expr_max '#' shape_tuple :
+	{shape, anno('$1','$3'),'$1',strip_shape_tuple('$3')}.
+shape_expr -> shape_expr '#' shape_tuple :
+	{shape, anno('$1','$3'),'$1',strip_shape_tuple('$3')}.
 
-map_tuple -> '(' ')' : {map_tuple, anno('$1','$2'), []}.
-map_tuple -> '(' map_fields ')' : {map_tuple, anno('$1','$3'), '$2'}.
+shape_tuple -> '(' ')' : {shape_tuple, anno('$1','$2'), []}.
+shape_tuple -> '(' shape_fields ')' : {shape_tuple, anno('$1','$3'), '$2'}.
 
-map_fields -> map_field : ['$1'].
-map_fields -> map_field ',' map_fields : ['$1' | '$3'].
+shape_fields -> shape_field : ['$1'].
+shape_fields -> shape_field ',' shape_fields : ['$1' | '$3'].
 
-map_field -> atom '=' expr : {map_field, anno('$1','$3'), '$1', '$3'}.
+shape_field -> atom '=' expr : {shape_field, anno('$1','$3'), '$1', '$3'}.
 
 struct_expr -> '#' atom struct_tuple :
 	{struct, anno('$1','$3'), element(3, '$2'), element(1, '$3')}.
@@ -510,15 +510,15 @@ build_gen_type({atom, _, map}, Aa) ->
 build_gen_type(Name, Aa) ->
     build_type(Name, [], Aa).
 
-build_map_internals_type(This, {Fields, Rest}) ->
+build_shape_internals_type(This, {Fields, Rest}) ->
     {[This | Fields], Rest};
-build_map_internals_type(This, Rest) when is_list(Rest) ->
+build_shape_internals_type(This, Rest) when is_list(Rest) ->
     [This | Rest].
 
-build_map_type(Anno, {Fields, RowType}) ->
-    {type, Anno, open_map, Fields, RowType};
-build_map_type(Anno, Fields) when is_list(Fields) ->
-    {type, Anno, map, Fields}.
+build_shape_type(Anno, {Fields, RowType}) ->
+    {type, Anno, open_shape, Fields, RowType};
+build_shape_type(Anno, Fields) when is_list(Fields) ->
+    {type, Anno, shape, Fields}.
 
 build_type({atom, _, Name}, Types, A) ->
     Tag = type_tag(Name, length(Types)),
@@ -596,7 +596,7 @@ strip_bit_type_list([]) ->
 strip_bit_type_list(default) ->
     default.
 
-strip_map_tuple({map_tuple, _Anno, List}) ->
+strip_shape_tuple({shape_tuple, _Anno, List}) ->
     List.
 
 build_try(Try, Es, Scs, {Ccs, As, End}) ->

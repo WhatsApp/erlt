@@ -65,13 +65,13 @@ object ExprsConvert {
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         StructSelect(r(anno), convertExp(eExp), recordName, fieldName)
-      case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
-        MapCreate(r(anno), eAssocs.map(convertAssoc))
-      case ETuple(List(EAtom("map"), anno, eExp, EList(eAssocs))) =>
-        MapUpdate(r(anno), convertExp(eExp), eAssocs.map(convertAssoc))
-      case ETuple(List(EAtom("map_field"), anno, eExp, eFieldName)) =>
+      case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
+        ShapeCreate(r(anno), eAssocs.map(convertAssoc))
+      case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>
+        ShapeUpdate(r(anno), convertExp(eExp), eAssocs.map(convertAssoc))
+      case ETuple(List(EAtom("shape_field"), anno, eExp, eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
-        MapFieldAccess(r(anno), convertExp(eExp), fieldName)
+        ShapeSelect(r(anno), convertExp(eExp), fieldName)
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
           case ETuple(List(EAtom("remote"), _, eExp1, eExp2)) =>
@@ -206,10 +206,10 @@ object ExprsConvert {
     StructField(r(anno), name, convertExp(exp))
   }
 
-  def convertAssoc(term: ETerm): MapField =
+  def convertAssoc(term: ETerm): ShapeField =
     term match {
-      case ETuple(List(EAtom("map_field"), anno, eExp1, eExp2)) =>
-        MapField(r(anno), convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(EAtom("shape_field"), anno, eExp1, eExp2)) =>
+        ShapeField(r(anno), convertExp(eExp1), convertExp(eExp2))
     }
 
   def convertQualifier(term: ETerm): Qualifier =

@@ -171,12 +171,12 @@ object Convert {
         Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
       case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
         Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
-      case Patterns.MapPattern(p, assocs) =>
-        val pats = assocs map { elem =>
+      case Patterns.ShapePattern(p, fields) =>
+        val pats = fields map { elem =>
           val Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) = elem.key
           Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.r)
         }
-        Ast.RecordPat(pats)(p)
+        Ast.ShapePat(pats)(p)
       case Patterns.BinPattern(p, elems) =>
         Ast.BinPat(elems.map(convertBinElemPattern))(p)
       case Patterns.BinOpPattern(p, op, pat1, pat2) =>
@@ -226,13 +226,14 @@ object Convert {
         Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(p)
       case Exprs.RemoteEnumCtr(p, module, enum, ctr, args) =>
         Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
-      case Exprs.MapCreate(p, entries) =>
-        Ast.RecordExp(entries.map(convertRecordField))(p)
-      case Exprs.MapUpdate(p, exp, entries) =>
+      case Exprs.ShapeCreate(p, entries) =>
+        Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
+      case Exprs.ShapeUpdate(p, exp, entries) =>
         val recExp = convertExpr(exp)
         // this is not present in Erlang. Approximating
+        // TODO - it should be just fields in AST!
         val updateRange = Doc.Range(recExp.r.end, p.end)
-        Ast.RecordUpdateExp(recExp, Ast.RecordExp(entries.map(convertRecordField))(updateRange))(p)
+        Ast.ShapeUpdateExp(recExp, Ast.ShapeCreateExp(entries.map(convertShapeField))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>
@@ -255,8 +256,8 @@ object Convert {
         Ast.NamedFnExp(new Ast.LocalVarName(funName), clauses.map(convertFunClause))(p)
       case Exprs.UnaryOp(p, op, exp1) =>
         Ast.UOpExp(Ast.unOps(op), convertExpr(exp1))(p)
-      case Exprs.MapFieldAccess(p, map, fieldName) =>
-        Ast.SelExp(convertExpr(map), fieldName)(p)
+      case Exprs.ShapeSelect(p, map, fieldName) =>
+        Ast.ShapeSelectExp(convertExpr(map), fieldName)(p)
       case Exprs.BinaryOp(p, op, exp1, exp2) =>
         Ast.BinOpExp(Ast.binOps(op), convertExpr(exp1), convertExpr(exp2))(p)
       case Exprs.ListComprehension(p, template, qualifiers) =>
@@ -325,8 +326,8 @@ object Convert {
         specifiers.flatMap(s => typeSpecifiersMapping.get(s.id)).headOption
     }
 
-  private def convertRecordField(assoc: Exprs.MapField): Ast.Field[Ast.Exp] = {
-    val Exprs.MapField(p, Exprs.AtomLiteral(_, label), e) = assoc
+  private def convertShapeField(assoc: Exprs.ShapeField): Ast.Field[Ast.Exp] = {
+    val Exprs.ShapeField(p, Exprs.AtomLiteral(_, label), e) = assoc
     Ast.Field(label, convertExpr(e))(p)
   }
 
@@ -344,11 +345,11 @@ object Convert {
         Ast.UserType(Ast.LocalName("binary"), List())(p)
       case Types.FunType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
-      case Types.AssocMap(p, assocs) =>
-        Ast.RecordType(assocs.map(convertKeyValueType))(p)
-      case Types.OpenAssocMap(p, assocs, restType) =>
+      case Types.Shape(p, fieldTypes) =>
+        Ast.ShapeType(fieldTypes.map(convertKeyValueType))(p)
+      case Types.OpenShape(p, fieldType, extType) =>
         // TODO
-        Ast.OpenRecordType(assocs.map(convertKeyValueType), Ast.WildTypeVar()(restType.r))(p)
+        Ast.OpenShapeType(fieldType.map(convertKeyValueType), Ast.WildTypeVar()(extType.r))(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
@@ -390,8 +391,8 @@ object Convert {
         throw new UnsupportedSyntaxError(tp.r, "Enum ctr is expected")
     }
 
-  private def convertKeyValueType(assoc: Types.Assoc): Ast.Field[Ast.Type] = {
-    val Types.Assoc(p, Types.AtomType(_, field), v) = assoc
+  private def convertKeyValueType(assoc: Types.ShapeField): Ast.Field[Ast.Type] = {
+    val Types.ShapeField(p, Types.AtomType(_, field), v) = assoc
     Ast.Field(field, convertType(v))(p)
   }
 }

@@ -27,14 +27,11 @@ object Types {
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class BitstringType(r: Doc.Range) extends Type
   case class FunType(r: Doc.Range, args: List[Type], resType: Type) extends Type
+  case class AnyMap(r: Doc.Range) extends Type
 
-  sealed trait MapType extends Type
-  // map()
-  case class AnyMap(r: Doc.Range) extends MapType
-  case class AssocMap(r: Doc.Range, assocs: List[Assoc]) extends MapType
-  case class OpenAssocMap(r: Doc.Range, assocs: List[Assoc], restType: Type) extends MapType
-
-  case class Assoc(r: Doc.Range, keyType: Type, valueType: Type)
+  case class Shape(r: Doc.Range, assocs: List[ShapeField]) extends Type
+  case class OpenShape(r: Doc.Range, assocs: List[ShapeField], restType: Type) extends Type
+  case class ShapeField(r: Doc.Range, keyType: Type, valueType: Type)
 
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
   case class StructType(r: Doc.Range, name: String) extends Type

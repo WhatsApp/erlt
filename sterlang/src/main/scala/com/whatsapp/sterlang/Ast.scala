@@ -142,8 +142,8 @@ object Ast {
   case class WildTypeVar()(val r: Doc.Range) extends Type
   case class TypeVar(name: String)(val r: Doc.Range) extends Type
   case class TupleType(params: List[Type])(val r: Doc.Range) extends Type
-  case class RecordType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
-  case class OpenRecordType(fields: List[Field[Type]], extType: WildTypeVar)(val r: Doc.Range) extends Type
+  case class ShapeType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
+  case class OpenShapeType(fields: List[Field[Type]], extType: WildTypeVar)(val r: Doc.Range) extends Type
   case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
   case class ListType(elemType: Type)(val r: Doc.Range) extends Type
   case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type
@@ -159,17 +159,20 @@ object Ast {
 
   sealed trait Exp { val r: Doc.Range }
   case class BlockExpr(body: Body)(val r: Doc.Range) extends Exp
-  case class RecordUpdateExp(exp: Exp, delta: RecordExp)(val r: Doc.Range) extends Exp
   case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val r: Doc.Range) extends Exp
   case class UOpExp(uOp: UOp, exp: Exp)(val r: Doc.Range) extends Exp
   case class AppExp(head: Exp, args: List[Exp])(val r: Doc.Range) extends Exp
-  case class SelExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
   case class BoolExp(bool: Boolean)(val r: Doc.Range) extends Exp
   case class NumberExp(n: Int)(val r: Doc.Range) extends Exp
   case class CharExp(c: Char)(val r: Doc.Range) extends Exp
   case class StringExp(s: String)(val r: Doc.Range) extends Exp
   case class VarExp(v: VarName)(val r: Doc.Range) extends Exp
-  case class RecordExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+
+  case class ShapeCreateExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class ShapeSelectExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
+  // TODO delta should be fields
+  case class ShapeUpdateExp(exp: Exp, delta: ShapeCreateExp)(val r: Doc.Range) extends Exp
+
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
   case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val r: Doc.Range) extends Exp
   case class NilExp()(val r: Doc.Range) extends Exp
@@ -223,7 +226,7 @@ object Ast {
   case class WildPat()(val r: Doc.Range) extends Pat
   case class VarPat(v: String)(val r: Doc.Range) extends Pat
   case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
-  case class RecordPat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
   case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val r: Doc.Range) extends Pat
   case class NilPat()(val r: Doc.Range) extends Pat

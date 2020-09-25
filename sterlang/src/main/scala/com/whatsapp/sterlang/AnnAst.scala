@@ -92,9 +92,9 @@ object AnnAst {
   case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val r: Doc.Range) extends Exp
   case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
 
-  case class RecordExp(fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class RecordSelectionExp(record: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
-  case class RecordUpdateExp(record: Exp, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeCreateExp(fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeSelectExp(exp: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class EnumConstructorExp(enum: String, constructor: String, arguments: List[Exp])(
       val typ: Type,
@@ -130,7 +130,7 @@ object AnnAst {
   case class TuplePat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
   case class NilPat()(val typ: Type, val r: Doc.Range) extends Pat
   case class BinPat(elements: List[BinElementPat])(val typ: Type, val r: Doc.Range) extends Pat
-  case class RecordPat(fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
+  case class ShapePat(fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
 
   case class ConsPat(head: Pat, tail: Pat)(val typ: Type, val r: Doc.Range) extends Pat
   case class EnumConstructorPat(enum: String, constructor: String, arguments: List[Pat])(

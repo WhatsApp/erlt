@@ -43,8 +43,8 @@ object PatternsConvert {
         UnOpPattern(r(anno), op, convertPat(ePat1))
       case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
         StructPattern(r(anno), structName, eStructFieldPatterns.map(structFieldPattern))
-      case ETuple(List(EAtom("map"), anno, EList(eAssocs))) =>
-        MapPattern(r(anno), eAssocs.map(convertMapFieldPattern))
+      case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
+        ShapePattern(r(anno), eAssocs.map(convertShapeFieldPattern))
       case ETuple(
             List(
               EAtom("enum"),
@@ -99,10 +99,10 @@ object PatternsConvert {
         StructFieldPattern(r(anno), name, convertPat(ePat))
     }
 
-  def convertMapFieldPattern(term: ETerm): MapFieldPattern =
+  def convertShapeFieldPattern(term: ETerm): ShapeFieldPattern =
     term match {
-      case ETuple(List(EAtom("map_field"), anno, e1, e2)) =>
-        MapFieldPattern(r(anno), convertPat(e1), convertPat(e2))
+      case ETuple(List(EAtom("shape_field"), anno, e1, e2)) =>
+        ShapeFieldPattern(r(anno), convertPat(e1), convertPat(e2))
     }
 
 }

@@ -44,9 +44,9 @@ object Exprs {
   case class StructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
   case class StructUpdate(r: Doc.Range, rec: Expr, structName: String, fields: List[StructField]) extends Expr
   case class StructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
-  case class MapFieldAccess(r: Doc.Range, map: Expr, fieldName: String) extends Expr
-  case class MapCreate(r: Doc.Range, entries: List[MapField]) extends Expr
-  case class MapUpdate(r: Doc.Range, exp: Expr, entries: List[MapField]) extends Expr
+  case class ShapeSelect(r: Doc.Range, map: Expr, fieldName: String) extends Expr
+  case class ShapeCreate(r: Doc.Range, entries: List[ShapeField]) extends Expr
+  case class ShapeUpdate(r: Doc.Range, exp: Expr, entries: List[ShapeField]) extends Expr
   case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(r: Doc.Range, module: Expr, fun: Expr, args: List[Expr]) extends Expr
   case class LocalEnumCtr(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
@@ -75,7 +75,7 @@ object Exprs {
   case class TypeSpecifier(id: String)
 
   case class StructField(r: Doc.Range, fieldName: String, value: Expr)
-  case class MapField(r: Doc.Range, k: Expr, v: Expr)
+  case class ShapeField(r: Doc.Range, k: Expr, v: Expr)
 
   sealed trait Qualifier
   sealed trait Generator extends Qualifier

@@ -102,7 +102,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
         pats.foreach(printPat)
       case A.NilPat() =>
       //
-      case A.RecordPat(fields) =>
+      case A.ShapePat(fields) =>
         fields.foreach { f => printPat(f.value) }
 
       case A.ConsPat(hPat, tPat) =>
@@ -187,11 +187,11 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       case A.BlockExp(body) =>
         printBody(body)
 
-      case A.RecordExp(fields) =>
+      case A.ShapeCreateExp(fields) =>
         fields.foreach(f => printExp(f.value))
-      case A.RecordSelectionExp(exp, _) =>
+      case A.ShapeSelectExp(exp, _) =>
         printExp(exp)
-      case A.RecordUpdateExp(exp, fields) =>
+      case A.ShapeUpdateExp(exp, fields) =>
         printExp(exp)
         fields.foreach(f => printExp(f.value))
 
