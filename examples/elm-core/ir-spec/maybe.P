@@ -1,4 +1,4 @@
--file("maybe.erl", 1).
+-file("maybe.erlt", 1).
 
 -module(maybe).
 

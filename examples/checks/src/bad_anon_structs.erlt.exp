@@ -1,0 +1,5 @@
+bad_anon_structs.erlt:7:33: field a already defined in anonymous struct type
+bad_anon_structs.erlt:9:34: field id already defined in anonymous struct type
+bad_anon_structs.erlt:11:38: type variable 'A' is only used once (is unbound)
+bad_anon_structs.erlt:14:11: field a used more than once in anonymous struct
+bad_anon_structs.erlt:16:13: field a used more than once in anonymous struct

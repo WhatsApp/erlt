@@ -1,0 +1,2 @@
+unqualified_enum.erlt:7:14: unqualified enum constructors may only be used in an enum definition
+unqualified_enum.erlt:7:20: unqualified enum constructors may only be used in an enum definition

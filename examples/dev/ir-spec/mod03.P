@@ -1,4 +1,4 @@
--file("mod03.erl", 1).
+-file("mod03.erlt", 1).
 
 -module(mod03).
 

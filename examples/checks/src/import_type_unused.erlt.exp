@@ -1,0 +1,2 @@
+erlt_compile: warnings being treated as errors
+import_type_unused.erlt:5:1: imported type foo:t/0 is unused

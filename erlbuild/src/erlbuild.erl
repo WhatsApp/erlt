@@ -16,7 +16,7 @@
 %
 % 'erlbuild' can be called as a command-line tool, or using Erlang API.
 %
-% - it builds several .erl, .xrl, .yrl files in one Erlang src directory
+% - it builds several .erlt files in one Erlang src directory
 % - it does this correctly, incrementally, and in parallel (if requested)
 % - it supports the same command-line options as 'erlc'
 % - the logic and the implementation are very simple and robust
@@ -32,7 +32,7 @@
 
 -include("erlbuild_types.hrl").
 
--define(SOURCE_FILE_EXTENSION, ".erl").
+-define(SOURCE_FILE_EXTENSION, ".erlt").
 
 command_name() ->
     "erlbuild".
@@ -421,15 +421,11 @@ check_file_arg(Filename) ->
             ok
     end,
     case filename:extension(Filename) of
-        ".erl" ->
-            ok;
-        ".yrl" ->
-            ok;
-        ".xrl" ->
+        ?SOURCE_FILE_EXTENSION ->
             ok;
         _ ->
             erlbuild_util:throw_error(
-                "invalid input file name '~s'. Extension must be one of .erl, .xrl, .yrl",
+                "invalid input file name '~s'. Extension must be " ++ ?SOURCE_FILE_EXTENSION,
                 [Filename]
             )
     end.

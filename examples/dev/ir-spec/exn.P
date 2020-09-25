@@ -1,4 +1,4 @@
--file("exn.erl", 1).
+-file("exn.erlt", 1).
 
 -module(exn).
 

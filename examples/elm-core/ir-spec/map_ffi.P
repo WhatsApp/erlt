@@ -1,4 +1,4 @@
--file("map_ffi.erl", 1).
+-file("map_ffi.erlt", 1).
 
 -module(map_ffi).
 

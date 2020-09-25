@@ -1,4 +1,4 @@
--file("st_mapping.erl", 1).
+-file("st_mapping.erlt", 1).
 
 -module(st_mapping).
 

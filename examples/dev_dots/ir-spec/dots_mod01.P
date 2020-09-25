@@ -1,4 +1,4 @@
--file("dots_mod01.erl", 1).
+-file("dots_mod01.erlt", 1).
 
 -module(dots_mod01).
 

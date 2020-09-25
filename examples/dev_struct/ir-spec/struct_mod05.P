@@ -1,4 +1,4 @@
--file("struct_mod05.erl", 1).
+-file("struct_mod05.erlt", 1).
 
 -module(struct_mod05).
 

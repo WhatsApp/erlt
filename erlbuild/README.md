@@ -7,7 +7,7 @@ For an example on how to use 'erlbuild' from make, see './erlbuild.mk'.
 
 'erlbuild' has the following properties:
 
-- it builds several .erl, .xrl, .yrl files in one Erlang src directory
+- it builds several .erlt files in one Erlang src directory
 - it does this correctly, incrementally, and in parallel (if requested)
 - it supports the same command-line options as 'erlc'
 - the logic and the implementation are very simple and robust. The core logic
@@ -16,15 +16,15 @@ For an example on how to use 'erlbuild' from make, see './erlbuild.mk'.
   and can be reproduced manually from the commmand-line
 
 Looking at 'erlbuild' from interface standpoint, is a drop-in replacement
-for 'erlc' compiling multiple .erl files.
+for 'erlc' compiling multiple .erlt files.
 
 For instance, calling
 
-    erlbuild <flags> *.erl
+    erlbuild <flags> *.erlt
 
 Is equivalent to
 
-    erlc <flags> *.erl
+    erlc <flags> *.erlt
 
 The difference are:
 
@@ -37,8 +37,6 @@ The difference are:
 
 - 'erlbuild' compiles in parallel (controlled by -j option)
 
-- 'erlbuild' compiles .xrl and .yrl files to .beam (if .xrl/yrl files are given as input)
-
 
 Details of how it works:
 
@@ -50,40 +48,34 @@ Details of how it works:
     logic is implemented in 6 lines of 'make'.
 
 
-2.  The build process is divided into 3 non-overlapping phases:
+2.  The build process is divided into 2 non-overlapping phases:
 
-    - "generate"     -- generation of .erl files from .xrl and .yrl (if .xrl/yrl files are given as input)
     - "scan"         -- scanning of .erl files to build or update the dependency graph, and extract metadata
     - "compile"      -- compiling or recompiling .erl files into .beam files
-
-    "scan" and "compile" are the main build phases.
-
-    "generate" was introduced mainly to simplify integration of 'erlbuild'
-    with the existing build systems (i.e. rebar3 and app.mk).
 
     Importantly, each phase is incremental and fully parallelizable.
 
 
 3.  "scan" builds or updates an exhaustive graph of compile-time dependencies
 
-    Compiled .beam files depend on source .erl files, .hrl files, and also
+    Compiled .beam files depend on source .erlt files, .hrl files, and also
     behavior and parse transform .beams.
 
     The dependency graph is then used for three things:
 
-    - determining the order in which .erl files should be compiled
+    - determining the order in which .erlt files should be compiled
     - triggering rebuild of .beam files if their dependencies change
     - triggering incremental rebuild of the dependency graph itself on change of
       its dependencies
 
     The dependency graph is cached in the filesystem as *.d files, one per
-    source .erl file. This allows building/updating the dependency graph in
+    source .erlt file. This allows building/updating the dependency graph in
     parallel.
 
-    Note that the dependency graph (i.e. *.d) files depend on source .erl files,
+    Note that the dependency graph (i.e. *.d) files depend on source .erlt files,
     and .hrl files, but *not* on behavior and parse transform .beams.
 
-    Dependency scan of individual .erl files is performed by calling
+    Dependency scan of individual .erlt files is performed by calling
     'erlbuild-erlc --build-phase scan ...'. See "erlbuild dependency scanner"
     section below for details.
 
@@ -93,60 +85,37 @@ Details of how it works:
     ```
         DEPFILES := $(ERLS:%.erl=$(BUILD_DIR)/%.d)
 
-        $(BUILD_DIR)/%.d: %.erl
+        $(BUILD_DIR)/%.d: %.erlt
                 erlbuild-erlc --build-phase scan -M -MP -MF $@ $(ERLC_FLAGS) $<
 
         include $(wildcard $(DEPFILES))
     ```
 
 
-4.  "compile" phase compiles .erl files into .beam files
+4.  "compile" phase compiles .erlt files into .beam files
 
-    Compilation is performed by calling 'erlc' for individual .erl files.
+    Compilation is performed by calling 'erlc' for individual .erlt files.
 
-    Compilation of an .erl file is triggered if target .beam file is missing, or
+    Compilation of an .erlt file is triggered if target .beam file is missing, or
     if some of its dependencies have been updated.
 
     These are the exact 'make' directives implementing this logic. See
     './erlbuild.template.mk' for details.
 
     ```
-        $(EBIN)/%.beam: %.erl
+        $(EBIN)/%.beam: %.erlt
                 erlbuild-erlc --build-phase compile $(ERLC_FLAGS) $<
 
         include $(DEPFILES)
     ```
 
 
-5.  "generate" phase generates of .erl files from .xrl and .yrl
-
-    Generation is performed by calling 'erlc' for individual .xrl and .yrl files.
-
-    Normally, code generation step should be run as a separate build module. In
-    the 'erlbuild' world view, it would correspond to a separate
-    'erlbuild generate' step.
-
-    But because of a very simple model for building .yrl and .xrl files (each
-    corresponding to a single .erl and target .beam) it is safe to include them.
-
-    These are the exact 'make' directives implementing this logic. See
-    './erlbuild.template.mk' for details.
-
-    ```
-        %.erl: %.xrl
-                erlc $<
-
-        %.erl: %.yrl
-                erlc $<
-    ```
-
-
-6.  The generated 'erlbuild.mk' files, intermediate compilation state, and
+5.  The generated 'erlbuild.mk' files, intermediate compilation state, and
     the dependency graph are kept in a separate directory. See 'erlbuild-erlc
     --build-dir' option for details.
 
 
-7.  'erlbuild' passes most of command-line options unchanged to 'erlc'. There
+6.  'erlbuild' passes most of command-line options unchanged to 'erlc'. There
     are several options specific to 'erlbuild' -- see 'erlbuild -h' for a
     complete list.
 

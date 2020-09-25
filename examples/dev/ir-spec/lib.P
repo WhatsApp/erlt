@@ -1,4 +1,4 @@
--file("lib.erl", 1).
+-file("lib.erlt", 1).
 
 -module(lib).
 

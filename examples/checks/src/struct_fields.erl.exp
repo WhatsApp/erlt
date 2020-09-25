@@ -1,7 +1,0 @@
-struct_fields.erl:10:39: field a already defined in struct duplicate
-struct_fields.erl:14:9: field b has no initializer or default value
-struct_fields.erl:15:9: field b has no initializer or default value
-struct_fields.erl:16:26: field does_not_exist undefined in struct struct
-struct_fields.erl:17:17: field does_not_exist undefined in struct struct
-struct_fields.erl:20:26: field a already defined in struct struct
-struct_fields.erl:21:20: field a already defined in struct struct

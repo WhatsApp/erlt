@@ -1,4 +1,4 @@
--file("import_enum_in_enum.erl", 1).
+-file("import_enum_in_enum.erlt", 1).
 
 -module(import_enum_in_enum).
 

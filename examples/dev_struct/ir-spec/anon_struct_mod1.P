@@ -1,4 +1,4 @@
--file("anon_struct_mod1.erl", 1).
+-file("anon_struct_mod1.erlt", 1).
 
 -module(anon_struct_mod1).
 

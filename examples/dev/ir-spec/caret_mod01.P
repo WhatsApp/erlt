@@ -1,4 +1,4 @@
--file("caret_mod01.erl", 1).
+-file("caret_mod01.erlt", 1).
 
 -module(caret_mod01).
 

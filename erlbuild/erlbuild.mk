@@ -15,10 +15,10 @@
 
 # erlbuild.mk -- a simple build system for Erlang based on 'erlbuild'
 #
-# It builds .erl, .yrl, and .xrl files in one src directory. It does this
+# It builds .erlt files in one src directory. It does this
 # correctly, incrementally, and in parallel.
 #
-# Source files are discovered automatically as *.{erl,xrl,yrl}
+# Source files are discovered automatically as *.erlt
 #
 # To use erlbuild.mk, include or call this file from src/Makefile.
 #
@@ -35,7 +35,7 @@
 #                               It's ok to omit -o $(EBIN), -pa $(EBIN), and -I ../include. They will be added
 #                               automatically.
 #
-#         - SOURCES          -- explicitly proivided list of source files to build: .erl, .xrl, .yrl files without directory names
+#         - SOURCES          -- explicitly proivided list of source files to build: .erlt files without directory names
 #         - EXCLUDE_SOURCES  -- when sources are discovered automatically, list of source files that should not be built
 #
 #         - ERLC             -- erlc command. Defaults to 'erlc'.
@@ -53,10 +53,10 @@
 #
 # Implementation notes:
 #
-# 1. The essense of building *.erl/yrl/xrl files in one src directory is
+# 1. The essense of building *.erlt files in one src directory is
 #    captured in one step:
 #
-#        erlbuild $(ERLC_FLAGS) *.{erl,yrl,xrl}
+#        erlbuild $(ERLC_FLAGS) *.erlt
 #
 #    'erlbuild' generates a makefile and calls make to execute correct,
 #    incremental, and parallel build. See erlbuild/README.md for details.
@@ -137,22 +137,20 @@ QUIET := @
 ECHO_2 := @true
 endif
 
-
 # discover sources unless explicitly specified in SOURCES
 #
 # NOTE: this is not the same as SOURCES ?=, because we want := (i.e. simple
 # expansion), and ?= is equivalent to = (i.e. recursive expansion)
 ifndef SOURCES
-SOURCES := $(filter-out $(EXCLUDE_SOURCES), $(wildcard *.erl *.xrl *.yrl))
+SOURCES := $(filter-out $(EXCLUDE_SOURCES), $(wildcard *.erlt))
 endif
 
-
-# full list of .erl and .beam files, incuding those generated from .xrl and .yrl files
+# full list of .erlt and .beam files
 #
 # NOTE: using sort to remove duplicates from .erl and .yrl/.xrl
 BASENAMES   := $(sort $(basename $(SOURCES)))
-ERLS        := $(addsuffix .erl,$(BASENAMES))
-BEAMS       := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
+ERLS        := $(addsuffix .erlt,$(BASENAMES))
+BEAMS       := $(addprefix $(EBIN)/,$(ERLS:.erlt=.beam))
 
 
 ERLBUILD_MK := $(BUILD_DIR)/erlbuild.mk

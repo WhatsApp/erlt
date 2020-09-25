@@ -34,8 +34,9 @@ jobs:
         run:  make -C examples/dev_enum/src
       - name: "examples/dev_struct/src: make"
         run:  make -C examples/dev_struct/src
-      - name: "examples/calc/src: make"
-        run:  make -C examples/calc/src
+      # TODO: restore the calc example in #186
+      # - name: "examples/calc/src: make"
+      #   run:  make -C examples/calc/src
       - name: "examples/dev/src: test-ir"
         run:  make test-ir -C examples/dev/src
       - name: "examples/doc/src: test-ir"
@@ -46,8 +47,9 @@ jobs:
         run:  make test-ir -C examples/dev_dots/src
       - name: "examples/dev_enum/src: test-ir"
         run:  make test-ir -C examples/dev_enum/src
-      - name: "examples/calc/src: test-ir"
-        run:  make test-ir -C examples/calc/src
+      # TODO: restore the calc example in #186
+      # - name: "examples/calc/src: test-ir"
+      #   run:  make test-ir -C examples/calc/src
       - name: "examples/dev_struct/src: test-ir"
         run:  make test-ir -C examples/dev_struct/src
       - name: "examples/checks/src: test"

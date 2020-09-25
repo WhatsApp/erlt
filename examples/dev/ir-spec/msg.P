@@ -1,4 +1,4 @@
--file("msg.erl", 1).
+-file("msg.erlt", 1).
 
 -module(msg).
 
