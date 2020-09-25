@@ -29,14 +29,10 @@
 
 -compile(export_all).
 -compile(nowarn_export_all).
-% evaluate erlbuild_template_mk() at compile time
--compile({parse_transform, erlbuild_pt_util}).
 
 -include("erlbuild_types.hrl").
 
 -define(SOURCE_FILE_EXTENSION, ".erl").
-
--const([erlbuild_template_mk]).
 
 command_name() ->
     "erlbuild".
@@ -595,7 +591,7 @@ generate_makefile(Args) ->
         "\n"
     ],
 
-    write_file(Makefile, [InputParameters, erlbuild_template_mk()]),
+    write_file(Makefile, [InputParameters, erlbuild_template_mk:get_template()]),
     Makefile.
 
 quote_shell_arg(("+" ++ _) = Arg) ->
@@ -687,10 +683,6 @@ run_make(Makefile, Args, Goal) ->
 make_shell_command_line(Argv) ->
     % NOTE: skipping undefined Args
     lists:join(" ", [X || X <- Argv, X =/= 'undefined']).
-
-erlbuild_template_mk() ->
-    {ok, Bytes} = file:read_file("erlbuild/src/erlbuild.template.mk"),
-    Bytes.
 
 write_file(File, Body) when File =:= standard_io; File =:= standard_error ->
     ok = file:write(File, iolist_to_binary(Body));
