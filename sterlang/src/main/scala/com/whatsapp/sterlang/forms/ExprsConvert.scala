@@ -62,9 +62,9 @@ object ExprsConvert {
         StructCreate(r(anno), name, fields.map(structField))
       case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
         StructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
-      case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(recordName), eFieldName)) =>
+      case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(structName), eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
-        StructSelect(r(anno), convertExp(eExp), recordName, fieldName)
+        StructSelect(r(anno), convertExp(eExp), structName, fieldName)
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>

@@ -188,8 +188,8 @@ object Convert {
         // - This should be fixed in parser in the first place.
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p, "Calculation in patterns")
-      case Patterns.StructPattern(p, recordName, fields) =>
-        Ast.StructPat(recordName, fields.map(convertStructFieldPattern))(p)
+      case Patterns.StructPattern(p, structName, fields) =>
+        Ast.StructPat(structName, fields.map(convertStructFieldPattern))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -229,11 +229,11 @@ object Convert {
       case Exprs.ShapeCreate(p, entries) =>
         Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
       case Exprs.ShapeUpdate(p, exp, entries) =>
-        val recExp = convertExpr(exp)
+        val shapeExp = convertExpr(exp)
         // this is not present in Erlang. Approximating
         // TODO - it should be just fields in AST!
-        val updateRange = Doc.Range(recExp.r.end, p.end)
-        Ast.ShapeUpdateExp(recExp, Ast.ShapeCreateExp(entries.map(convertShapeField))(updateRange))(p)
+        val updateRange = Doc.Range(shapeExp.r.end, p.end)
+        Ast.ShapeUpdateExp(shapeExp, Ast.ShapeCreateExp(entries.map(convertShapeField))(updateRange))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>
@@ -282,10 +282,10 @@ object Convert {
         Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.StructCreate(p, structName, fields) =>
         Ast.StructCreate(structName, fields.map(convertStructField))(p)
-      case Exprs.StructUpdate(p, rec, structName, fields) =>
-        Ast.StructUpdate(convertExpr(rec), structName, fields.map(convertStructField))(p)
-      case Exprs.StructSelect(p, rec, structName, fieldName) =>
-        Ast.StructSelect(convertExpr(rec), structName, fieldName)(p)
+      case Exprs.StructUpdate(p, struct, structName, fields) =>
+        Ast.StructUpdate(convertExpr(struct), structName, fields.map(convertStructField))(p)
+      case Exprs.StructSelect(p, struct, structName, fieldName) =>
+        Ast.StructSelect(convertExpr(struct), structName, fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)

@@ -35,8 +35,8 @@ private[patterns] object Pattern {
   case class Tuple(length: Int) extends Constructor
   case object EmptyList extends Constructor
   case object Cons extends Constructor
-  case class Record(fields: List[String]) extends Constructor
-  case class ClassicStruct(structName: String, fields: List[String]) extends Constructor
+  case class Shape(fields: List[String]) extends Constructor
+  case class Struct(structName: String, fields: List[String]) extends Constructor
   case class OpenVariantStruct(structName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
 
@@ -82,20 +82,20 @@ private[patterns] object Pattern {
         result.toString()
       case ConstructorApplication(EmptyList, _) | ConstructorApplication(Cons, _) =>
         throw new IllegalArgumentException()
-      case ConstructorApplication(Record(fieldNames), arguments) =>
+      case ConstructorApplication(Shape(fieldNames), arguments) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
         fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = "#{", sep = ", ", end = "}")
 
-      case ConstructorApplication(ClassicStruct(recordName, fieldNames), arguments) =>
+      case ConstructorApplication(Struct(structName, fieldNames), arguments) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
 
         // TODO: quote field names when necessary
-        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$recordName{", sep = ", ", end = "}")
+        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$structName{", sep = ", ", end = "}")
 
-      case ConstructorApplication(OpenVariantStruct(recordName, fieldNames), arguments) =>
-        show(ConstructorApplication(ClassicStruct(recordName, fieldNames), arguments))
+      case ConstructorApplication(OpenVariantStruct(structName, fieldNames), arguments) =>
+        show(ConstructorApplication(Struct(structName, fieldNames), arguments))
 
       case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
         s"$enum.$constructor${tuple(arguments)}"
@@ -136,7 +136,7 @@ private[patterns] object Pattern {
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val allFieldNames: List[String] = getFieldNames(shapeType).sorted
         ConstructorApplication(
-          Record(allFieldNames),
+          Shape(allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
@@ -144,7 +144,7 @@ private[patterns] object Pattern {
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val structDef = program.structDefs.find(_.name == name).get
         val allFieldNames = structDef.fields.map(_.label).sorted
-        val constructor = if (structDef.kind == Ast.StrStruct) ClassicStruct else OpenVariantStruct
+        val constructor = if (structDef.kind == Ast.StrStruct) Struct else OpenVariantStruct
         ConstructorApplication(
           constructor(name, allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),

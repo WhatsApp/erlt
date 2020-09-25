@@ -60,11 +60,11 @@ object AnnAst {
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
   case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class StructUpdate(rec: Exp, structName: String, fields: List[Field[Exp]])(
+  case class StructUpdate(exp: Exp, structName: String, fields: List[Field[Exp]])(
       val typ: Type,
       val r: Doc.Range,
   ) extends Exp
-  case class StructSelect(rec: Exp, structName: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructSelect(exp: Exp, structName: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
       val r: Doc.Range,

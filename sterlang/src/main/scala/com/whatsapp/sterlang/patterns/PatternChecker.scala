@@ -282,8 +282,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.Literal(_: Values.StringValue)  => None
       case Pattern.Tuple(_)                        => Some(Set(constructor))
       case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
-      case Pattern.Record(_)                       => Some(Set(constructor))
-      case Pattern.ClassicStruct(_, _)             => Some(Set(constructor))
+      case Pattern.Shape(_)                        => Some(Set(constructor))
+      case Pattern.Struct(_, _)                    => Some(Set(constructor))
       case Pattern.OpenVariantStruct(_, _)         => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
@@ -299,8 +299,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.Tuple(arity)                 => arity
       case Pattern.EmptyList                    => 0
       case Pattern.Cons                         => 2
-      case Pattern.Record(fields)               => fields.length
-      case Pattern.ClassicStruct(_, fields)     => fields.length
+      case Pattern.Shape(fields)                => fields.length
+      case Pattern.Struct(_, fields)            => fields.length
       case Pattern.OpenVariantStruct(_, fields) => fields.length
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get

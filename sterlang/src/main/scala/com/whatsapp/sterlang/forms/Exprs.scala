@@ -42,9 +42,9 @@ object Exprs {
   case class BinaryOp(r: Doc.Range, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(r: Doc.Range, op: String, exp1: Expr) extends Expr
   case class StructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
-  case class StructUpdate(r: Doc.Range, rec: Expr, structName: String, fields: List[StructField]) extends Expr
+  case class StructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[StructField]) extends Expr
   case class StructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
-  case class ShapeSelect(r: Doc.Range, map: Expr, fieldName: String) extends Expr
+  case class ShapeSelect(r: Doc.Range, exp: Expr, fieldName: String) extends Expr
   case class ShapeCreate(r: Doc.Range, entries: List[ShapeField]) extends Expr
   case class ShapeUpdate(r: Doc.Range, exp: Expr, entries: List[ShapeField]) extends Expr
   case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr

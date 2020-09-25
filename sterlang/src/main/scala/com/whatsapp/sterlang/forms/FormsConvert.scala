@@ -61,7 +61,6 @@ object FormsConvert {
         val abstractType = TypesConvert.convertType(absType)
         val params = vars.map(TypesConvert.convertVar)
         TypeDecl(r(anno), typeAttr, typeName, params, abstractType)
-      // af_record_decl
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(fields))))
           ) =>

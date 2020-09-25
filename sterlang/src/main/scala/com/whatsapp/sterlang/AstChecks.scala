@@ -65,10 +65,10 @@ class AstChecks(val context: Context) {
       if (typeNames(op.name)) throw new DuplicateType(op.r, op.name)
       typeNames = typeNames + op.name
     }
-    var recNames = Set.empty[String]
-    for (recDef <- program.structDefs) {
-      if (recNames(recDef.name)) throw new DuplicateRecord(recDef.r, recDef.name)
-      recNames = recNames + recDef.name
+    var structNames = Set.empty[String]
+    for (structDef <- program.structDefs) {
+      if (structNames(structDef.name)) throw new DuplicateStruct(structDef.r, structDef.name)
+      structNames = structNames + structDef.name
     }
   }
 
@@ -141,15 +141,15 @@ class AstChecks(val context: Context) {
     }
   }
 
-  private def checkStructDef(program: Program, recordDef: StructDef): Unit = {
+  private def checkStructDef(program: Program, structDef: StructDef): Unit = {
     var fieldNames = Set.empty[String]
-    for (f <- recordDef.fields) {
+    for (f <- structDef.fields) {
       if (fieldNames(f.label)) {
         throw new DuplicateFields(f.r, List(f.label))
       }
       fieldNames = fieldNames + f.label
     }
-    recordDef.fields.foreach { f =>
+    structDef.fields.foreach { f =>
       expandType(program, Set.empty)(f.value)
       collectTypeVars(Set.empty)(f.value)
     }

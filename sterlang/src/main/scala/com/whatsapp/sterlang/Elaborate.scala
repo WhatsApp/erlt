@@ -465,7 +465,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabShapeUpdateExp(exp: Ast.ShapeUpdateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.ShapeUpdateExp(rec, delta) = exp
+    val Ast.ShapeUpdateExp(shape, delta) = exp
     checkUniqueFields(delta.r, delta.fields.map(_.label))
 
     val fields = delta.fields
@@ -480,13 +480,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val rt = freshRowTypeVar(d, fieldTypes.map(_.label).toSet)
 
-    val recType =
+    val shapeType =
       MT.ShapeType(fieldTypes.foldRight(rt) { T.RowFieldType })
 
-    val rec1 = elab(rec, recType, d, env)
+    val shape1 = elab(shape, shapeType, d, env)
 
-    unify(exp.r, ty, recType)
-    AnnAst.ShapeUpdateExp(rec1, fields1)(typ = ty, r = exp.r)
+    unify(exp.r, ty, shapeType)
+    AnnAst.ShapeUpdateExp(shape1, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
