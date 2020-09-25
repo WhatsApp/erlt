@@ -1,4 +1,4 @@
--file("tuple.erl", 1).
+-file("tuple.erlt", 1).
 
 -module(tuple).
 

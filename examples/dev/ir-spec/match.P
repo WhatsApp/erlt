@@ -1,4 +1,4 @@
--file("match.erl", 1).
+-file("match.erlt", 1).
 
 -module(match).
 

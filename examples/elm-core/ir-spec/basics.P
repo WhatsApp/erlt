@@ -1,4 +1,4 @@
--file("basics.erl", 1).
+-file("basics.erlt", 1).
 
 -module(basics).
 

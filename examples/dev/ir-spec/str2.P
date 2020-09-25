@@ -1,4 +1,4 @@
--file("str2.erl", 1).
+-file("str2.erlt", 1).
 
 -module(str2).
 

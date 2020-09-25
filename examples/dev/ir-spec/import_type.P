@@ -1,4 +1,4 @@
--file("import_type.erl", 1).
+-file("import_type.erlt", 1).
 
 -module(import_type).
 

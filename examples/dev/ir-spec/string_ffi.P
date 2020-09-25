@@ -1,4 +1,4 @@
--file("string_ffi.erl", 1).
+-file("string_ffi.erlt", 1).
 
 -module(string_ffi).
 

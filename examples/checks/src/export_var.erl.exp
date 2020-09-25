@@ -1,1 +1,0 @@
-export_var.erl:12:10: variable 'Y' exported from 'case' (line 8, column 5)

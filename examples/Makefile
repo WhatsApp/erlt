@@ -1,4 +1,5 @@
-DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src dev_struct/src calc/src
+# TODO: restore calc/src example in #186
+DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src dev_struct/src # calc/src
 
 -include ../dir.mk
 
@@ -19,7 +20,8 @@ test-ir:
 	$(MAKE) -C elm-core/src test-ir
 	$(MAKE) -C dev_dots/src test-ir
 	$(MAKE) -C dev_enum/src test-ir
-	$(MAKE) -C calc/src test-ir
+	# TODO: restore calc/src example in #186
+	# $(MAKE) -C calc/src test-ir
 	$(MAKE) -C dev_struct/src test-ir
 
 test-others:

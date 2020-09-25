@@ -1,4 +1,4 @@
--file("list.erl", 1).
+-file("list.erlt", 1).
 
 -module(list).
 

@@ -20,7 +20,7 @@
 %% Purpose: Run the ErlT compiler.
 -module(erlt_compile).
 
--define(SOURCE_FILE_EXTENSION, ".erl").
+-include("erlt_common.hrl").
 
 %% High-level interface.
 %%
@@ -226,7 +226,7 @@ do_file(File, Options0) ->
         options = Options,
         build_dir = BuildDir
     },
-    internal_comp(Passes1, _Code0 = unused, File, _Suffix = ".erl", St0).
+    internal_comp(Passes1, _Code0 = unused, File, _Suffix = ?SOURCE_FILE_EXTENSION, St0).
 
 base_passes() ->
     [
@@ -515,7 +515,7 @@ resolve_defs_file(Loc, Mod, St) ->
     end.
 
 module_to_erl(Mod) ->
-    atom_to_list(Mod) ++ ".erl".
+    atom_to_list(Mod) ++ ?SOURCE_FILE_EXTENSION.
 
 module_to_defs_file(Mod) ->
     atom_to_list(Mod) ++ ?DefFileSuffix.

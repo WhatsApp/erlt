@@ -23,7 +23,7 @@
 #
 #     input parameters:
 #
-#         - SOURCES -- .erl, .xrl, .yrl files
+#         - SOURCES -- .erlt files
 #
 #         - ERLC
 #         - ERLBUILD_ERLC
@@ -97,27 +97,16 @@ ECHO_2 := @true
 endif
 
 
-ERL_SOURCES := $(filter %.erl,$(SOURCES))
-XRL_SOURCES := $(filter %.xrl,$(SOURCES))
-YRL_SOURCES := $(filter %.yrl,$(SOURCES))
-
-LEEX_ERLS := $(XRL_SOURCES:.xrl=.erl)
-YECC_ERLS := $(YRL_SOURCES:.yrl=.erl)
-GENERATED_ERLS := $(LEEX_ERLS) $(YECC_ERLS)
-
-ERLS := $(ERL_SOURCES) $(GENERATED_ERLS)
+ERLS := $(filter %.erlt,$(SOURCES))
 
 # .beam files
-BEAMS := $(addprefix $(EBIN)/,$(ERLS:.erl=.beam))
+BEAMS := $(addprefix $(EBIN)/,$(ERLS:.erlt=.beam))
 
 # compile-time dependencies
-DEPFILES := $(ERLS:%.erl=$(BUILD_DIR)/%.d)
+DEPFILES := $(ERLS:%.erlt=$(BUILD_DIR)/%.d)
 
 # declaration files
-DEFS := $(ERLS:%.erl=$(BUILD_DIR)/%.defs)
-
-ENABLE_GENERATE := true
-
+DEFS := $(ERLS:%.erlt=$(BUILD_DIR)/%.defs)
 
 # NOTE: Erlang compilation and dependency scans are executed as recursive make
 # invocations, because I couldn't figure out how to trick "make compile" into
@@ -133,12 +122,9 @@ all: compile_erls
 
 # NOTE: using -C $(CURDIR) to make it easier to reproduce individual steps
 # by copy-pasting the command from the output listing
-compile_erls: generate_erls
+compile_erls:
 	$(QUIET)$(MAKE) -C $(CURDIR) --no-print-directory -f $(THIS_MAKEFILE) scan
 	$(QUIET)$(MAKE) -C $(CURDIR) --no-print-directory -f $(THIS_MAKEFILE) compile
-
-
-generate_erls: generate
 
 
 $(EBIN):
@@ -150,10 +136,7 @@ $(BUILD_DIR):
 
 ifeq ($(MAKECMDGOALS),compile)
 
-# prevent implicit generation of .erl from .xrl/yrl
-ENABLE_GENERATE :=
-
-# NOTE: checking that all .erl files are present and up-to-date (some of them may be generated from .xrl/.yrl)
+# NOTE: checking that all .erl files are present and up-to-date
 #
 # NOTE: using @: action to silence "Nothing to be done for `...' message
 compile: do_compile $(ERLS)
@@ -161,7 +144,7 @@ compile: do_compile $(ERLS)
 
 do_compile: $(BEAMS)
 
-$(EBIN)/%.beam: %.erl $(ERLBUILD_ERLC) | $(EBIN)
+$(EBIN)/%.beam: %.erlt $(ERLBUILD_ERLC) | $(EBIN)
 	$(ECHO_1) "compile $<"
 	$(QUIET)$(ERLBUILD_ERLC) --build-phase compile --build-dir $(BUILD_DIR) $(ERLC_FLAGS) $<
 
@@ -178,10 +161,7 @@ endif  # compile
 # for details on how this works: http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
 ifeq ($(MAKECMDGOALS),scan)
 
-# prevent implicit generation of .erl from .xrl/yrl
-ENABLE_GENERATE :=
-
-# NOTE: checking that all .erl files are present and up-to-date (some of them may be generated from .xrl/.yrl)
+# NOTE: checking that all .erl files are present and up-to-date
 #
 # NOTE: using @: action to silence "Nothing to be done for `...' message
 scan: do_scan $(ERLS)
@@ -207,7 +187,7 @@ do_scan: $(DEPFILES)
 # dependencies, this would trigger compilation error in non-incremental CI
 # builds.
 
-$(BUILD_DIR)/%.d: %.erl $(ERLBUILD_ERLC) | $(BUILD_DIR) $(EBIN)
+$(BUILD_DIR)/%.d: %.erlt $(ERLBUILD_ERLC) | $(BUILD_DIR) $(EBIN)
 	$(ECHO_1) "scan $<"
 	$(QUIET)$(ERLBUILD_ERLC) --build-phase scan --build-dir $(BUILD_DIR) -M -MP -MF $@ $(ERLC_FLAGS) $<
 
@@ -229,56 +209,14 @@ include $(wildcard $(DEPFILES))
 
 endif  # scan
 
-
-ifdef ENABLE_GENERATE
-# NOTE: using @: action to silence "Nothing to be done for `...' message
-generate: do_generate
-	@:
-
-do_generate: $(GENERATED_ERLS)
-
-
-$(LEEX_ERLS): %.erl: %.xrl
-	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC) $<
-
-$(YECC_ERLS): %.erl: %.yrl
-	$(ECHO_1) "generating .erl from $<"
-	$(QUIET)$(ERLC) $<
-
-endif  # ENABLE_GENERATE
-
-
 # XXX: should we simply rm -rf $(BUILD_DIR) here? It comes down to whether the
 # build directory could used for other build modules or other functionality
 clean:
 	$(QUIET)rm -f $(BEAMS)
 	$(QUIET)rm -f $(DEPFILES)
 	$(QUIET)rm -f $(DEFS)
-ifneq ($(strip $(GENERATED_ERLS)),)
-	$(QUIET)rm -f $(GENERATED_ERLS)
-endif
 	$(QUIET)rmdir $(BUILD_DIR) 2>/dev/null || true
 
-
-# One of the supported modes is when generation of .erl from .xrl/.yrl files
-# runs inline during compile or scan. In such case, they are triggered
-# by implicit rules. Adding such generated .erl files as .SECONDARY ensures
-# that they don't get automatically deleted by make. Specifically, if they are
-# automatically generated during scan phase, they need to be kept
-# around through compile phase.
-#
-# NOTE: preventing empty .SECONDARY as it badly interferes with the dependency
-# graph which has phony targets in it (see above). Basically, if .SECONDARY is
-# empty, updating any dependency with a phony target would not trigger a
-# rebuild
-#
-# NOTE: being extra cautious here and using $(strip ...) to remove whitespace
-ifneq ($(strip $(GENERATED_ERLS)),)
-.SECONDARY: $(GENERATED_ERLS)
-endif
-
-
-.PHONY: all clean generate_erls compile_erls \
-	generate compile scan \
-        do_generate do_compile do_scan
+.PHONY: all clean compile_erls \
+	compile scan \
+        do_compile do_scan

@@ -1,4 +1,4 @@
--file("polymorphic_records.erl", 1).
+-file("polymorphic_records.erlt", 1).
 
 -module(polymorphic_records).
 

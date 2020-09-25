@@ -23,6 +23,8 @@
 % NOTE: what you see below is based on copy-pasted erlang/lib/stdlib-3.7/src/erl_compile.erl (R21)
 -include_lib("kernel/include/file.hrl").
 
+-include("erlt_common.hrl").
+
 -export([
     % escript entry point
     main/1,
@@ -412,11 +414,10 @@ compile3(File, Cwd, Options) ->
     % erl_compile.erl code
     Root = filename:rootname(File),
     InFile = filename:absname(Root, Cwd),
-
     % invoke the Erlang compiler on .erl, use the original erlc code path for
     % any other file
     case filename:extension(File) of
-        ".erl" ->
+        ?SOURCE_FILE_EXTENSION ->
             CompileOptions = make_erl_options(Options),
             case catch erlt_compile:compile(InFile, CompileOptions) of
                 ok ->
@@ -441,7 +442,7 @@ compile3(File, Cwd, Options) ->
             % One thing we could do to make this compatible throughout is,
             % instead of escript, use a shell script or modified erlc.c to call
             % erltc
-            io:put_chars(?STDERR, "erltc does not support compiling non .erl files yet\n"),
+            io:put_chars(?STDERR, "erltc does not support compiling non .erlt files\n"),
             error
     end.
 
