@@ -35,7 +35,7 @@ private[patterns] object Pattern {
   case class Tuple(length: Int) extends Constructor
   case object EmptyList extends Constructor
   case object Cons extends Constructor
-  case class Record(fields: List[String], open: Boolean) extends Constructor
+  case class Record(fields: List[String]) extends Constructor
   case class ClassicStruct(structName: String, fields: List[String]) extends Constructor
   case class OpenVariantStruct(structName: String, fields: List[String]) extends Constructor
   case class EnumConstructor(enum: String, constructor: String) extends Constructor
@@ -82,14 +82,10 @@ private[patterns] object Pattern {
         result.toString()
       case ConstructorApplication(EmptyList, _) | ConstructorApplication(Cons, _) =>
         throw new IllegalArgumentException()
-      case ConstructorApplication(Record(fieldNames, open), arguments) =>
+      case ConstructorApplication(Record(fieldNames), arguments) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
-
-        // We need to display closed records as open if we dropped any fields above
-        val start = (if (open || arguments.contains(Wildcard)) "#" else "") + "#{"
-        // TODO: quote field names when necessary (better yet, add generic function to print atoms)
-        fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = start, sep = ", ", end = "}")
+        fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = "#{", sep = ", ", end = "}")
 
       case ConstructorApplication(ClassicStruct(recordName, fieldNames), arguments) =>
         // Remove fields mapped to wildcards to reduce clutter
@@ -140,7 +136,7 @@ private[patterns] object Pattern {
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val allFieldNames: List[String] = getFieldNames(recordType).sorted
         ConstructorApplication(
-          Record(allFieldNames, isOpen(recordType)),
+          Record(allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
@@ -172,14 +168,6 @@ private[patterns] object Pattern {
     rowType match {
       case _: Types.RowVarType | Types.RowEmptyType => Nil
       case Types.RowFieldType(f, rest)              => f.label :: getFieldNames(rest)
-    }
-
-  /** Returns true if the given row type has a row variable. */
-  private def isOpen(rowType: Types.RowType): Boolean =
-    rowType match {
-      case _: Types.RowVarType         => true
-      case Types.RowEmptyType          => false
-      case Types.RowFieldType(_, rest) => isOpen(rest)
     }
 
   /** Resolves a type to a record type and resolves any row variables in the record type. */
