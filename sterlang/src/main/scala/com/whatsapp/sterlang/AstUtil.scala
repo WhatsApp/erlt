@@ -150,13 +150,16 @@ object AstUtil {
         val rulesVars = rules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
-          bodyVars -- patVars
+          val guardVars = rule.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
+          bodyVars ++ guardVars -- patVars
         }
         val selectorVars = freeVars(selector, m)
         selectorVars ++ rulesVars
       case IfExp(ifClauses) =>
         ifClauses.flatMap { ifClause =>
-          freeVars(ifClause.exp, m)
+          val guardVars = ifClause.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
+          val expVars = freeVars(ifClause.exp, m)
+          expVars ++ guardVars
         }.toSet
       case Comprehension(elem, qualifiers) =>
         var vars: Set[String] = Set.empty
@@ -190,16 +193,18 @@ object AstUtil {
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
+            val guardVars = clause.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
             val bodyVars = freeVars(clause.exp, m)
-            bodyVars -- argVars
+            bodyVars ++ guardVars -- argVars
           }
           .reduce(_ ++ _)
       case NamedFnExp(varName, clauses) =>
         clauses
           .map { clause =>
             val argVars = clause.pats.flatMap(collectPatVars)
+            val guardVars = clause.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
             val bodyVars = freeVars(clause.exp, m)
-            bodyVars -- argVars
+            bodyVars ++ guardVars -- argVars
           }
           .reduce(_ ++ _) - varName.stringId
       case BlockExpr(body) =>
@@ -208,8 +213,9 @@ object AstUtil {
         val tryBodyVars = freeVars(tryBody, m)
         val catchRulesVars = catchRules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
+          val guardVars = rule.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
           val bodyVars = freeVars(rule.exp, m)
-          bodyVars -- patVars
+          bodyVars ++ guardVars -- patVars
         }
         val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
         tryBodyVars ++ catchRulesVars ++ afterVars
@@ -218,21 +224,23 @@ object AstUtil {
         val tryRulesVars = tryRules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
-          bodyVars -- patVars
+          val guardVars = rule.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
+          bodyVars ++ guardVars -- patVars
         }
         val catchRulesVars = catchRules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
-          bodyVars -- patVars
+          val guardVars = rule.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
+          bodyVars ++ guardVars -- patVars
         }
         val afterVars = after.map(freeVars(_, m)).getOrElse(Set.empty)
         tryBodyVars ++ tryRulesVars ++ catchRulesVars ++ afterVars
-      //
       case ReceiveExp(rules, after) =>
         val rulesVars = rules.flatMap { rule =>
           val patVars = collectPatVars(rule.pat)
           val bodyVars = freeVars(rule.exp, m)
-          bodyVars -- patVars
+          val guardVars = rule.guards.flatMap(_.exprs).flatMap(freeVars(_, m))
+          bodyVars ++ guardVars -- patVars
         }.toSet
         val afterVars =
           after
@@ -246,7 +254,8 @@ object AstUtil {
       .map { clause =>
         val funPatVars = clause.pats.flatMap(collectPatVars)
         val bodyVars = freeVars(clause.exp, module)
-        bodyVars -- funPatVars
+        val guardVars = clause.guards.flatMap(_.exprs).flatMap(freeVars(_, module))
+        bodyVars ++ guardVars -- funPatVars
       }
       .reduce(_ ++ _)
   }

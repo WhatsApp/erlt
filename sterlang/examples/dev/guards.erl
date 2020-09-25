@@ -15,6 +15,12 @@
 -lang(st).
 -module(guards).
 
+is_even(N) -> N rem 2 == 0.
+
+any_even_or_empty([]) -> true;
+any_even_or_empty(L) when any(fun is_even/1, L) -> true;
+any_even_or_empty(_) -> false.
+
 any(Pred, [Hd|Tail]) ->
     case Pred(Hd) of
         true -> true;
@@ -22,9 +28,15 @@ any(Pred, [Hd|Tail]) ->
     end;
 any(Pred, []) -> false.
 
-is_even(N) -> N rem 2 == 0.
 
-any_even_or_empty([]) -> true;
-any_even_or_empty(L) when any(fun is_even/1, L) -> true;
-any_even_or_empty(_) -> false.
+client1(X) ->
+    F = fun (Y) when api1(Y) == Y -> true end,
+    F.
 
+api1(X) -> X.
+
+client2(X) ->
+    F = fun Fun(Y) when api3(Y) == Y -> true end,
+    F.
+
+api3(X) -> X.
