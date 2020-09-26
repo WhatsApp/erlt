@@ -86,3 +86,17 @@ class UnSpecedExportedFun(range: Doc.Range, name: String)
 case class ParseError(pos: Doc.Pos) extends Exception(s"Parse error at ${pos.line}:${pos.column}")
 class UnsupportedSyntaxError(range: Doc.Range, reason: String)
     extends RangedError(range, s"Unsupported Syntax", Some(reason))
+
+sealed trait PatternWarning extends RangedError {
+  override val severity: Severity = Warning
+}
+class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: String)
+    extends RangedError(
+      range = range,
+      title = (if (confident) "" else "Possibly ") + "Missing Patterns",
+      description = Some(s"missing: $exampleClause"),
+    )
+    with PatternWarning
+class UselessPatternWarning(range: Doc.Range)
+    extends RangedError(range = range, title = "Useless Pattern", description = None)
+    with PatternWarning

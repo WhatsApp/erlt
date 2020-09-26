@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.patterns.PatternChecker
 
 class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 

@@ -20,7 +20,6 @@ import java.io.{BufferedWriter, File, FileWriter, StringWriter}
 import java.nio.file.Files
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.patterns.PatternChecker
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 

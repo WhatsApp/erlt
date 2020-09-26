@@ -19,8 +19,6 @@ package com.whatsapp.sterlang
 import java.io.File
 import java.nio.file.{Files, Paths}
 
-import com.whatsapp.sterlang.patterns.PatternChecker
-
 import scala.collection.mutable
 
 object Main {
