@@ -37,8 +37,6 @@ private[patterns] object PatternMatrix {
   }
 
   object AddColumn {
-
-    /** Strip the first column in the matrix. */
     def unapply(matrix: Matrix): Option[(Vector, Matrix)] = {
       val firstColumn = matrix.rows.map(_.head)
       val rest = Matrix(matrix.rows.map(_.tail))

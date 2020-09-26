@@ -27,47 +27,48 @@ private[patterns] object Pattern {
   case object Wildcard extends Pat
 
   /** A constructor applied to the correct number of arguments. */
-  case class ConstructorApplication(constructor: Constructor, arguments: List[Pat]) extends Pat
+  case class CtrApp(ctr: Ctr, args: List[Pat]) extends Pat
 
-  sealed trait Constructor
-  case class Literal(value: Ast.Val) extends Constructor
-  case class Tuple(length: Int) extends Constructor
-  case object EmptyList extends Constructor
-  case object Cons extends Constructor
-  case class Shape(fields: List[String]) extends Constructor
-  case class Struct(structName: String, fields: List[String]) extends Constructor
-  case class OpenVariantStruct(structName: String, fields: List[String]) extends Constructor
-  case class EnumConstructor(enum: String, constructor: String) extends Constructor
+  sealed trait Ctr
+  case class Literal(value: Ast.Val) extends Ctr
+  case class Tuple(length: Int) extends Ctr
+  case object EmptyList extends Ctr
+  case object Cons extends Ctr
+  case class Shape(fields: List[String]) extends Ctr
+  case class Struct(struct: String, fields: List[String]) extends Ctr
+  case class OpenStruct(struct: String, fields: List[String]) extends Ctr
+  case class EnumCtr(enum: String, ctr: String) extends Ctr
 
   /** An unknown constructor of some/any data type.
     *
     * Intuitively, this constructor will match some unknown subset of the value space.
     * We compile patterns we cannot reason about to this class.
     *
-    * Note that this isn't a case class because we want every instance to be unique.
+    * Constructors corresponding to different patterns should be different.
+    * So, we use the range of the original pattern as an identity of ActractCtr
     */
-  class AbstractConstructor() extends Constructor
+  case class AbstractCtr(r: Doc.Range) extends Ctr
 
   def show(p: Pat): String = {
-    def tuple(arguments: List[Pat]): String =
-      arguments.map(show).mkString(start = "{", sep = ", ", end = "}")
+    def tuple(args: List[Pat]): String =
+      args.map(show).mkString("{", ", ", "}")
 
     p match {
-      case Wildcard                                                    => "_"
-      case ConstructorApplication(Literal(Ast.BooleanVal(value)), Nil) => value.toString
-      case ConstructorApplication(Literal(_), _)                       => throw new IllegalArgumentException()
-      case ConstructorApplication(Tuple(_), arguments)                 => tuple(arguments)
-      case ConstructorApplication(EmptyList, Nil)                      => "[]"
-      case ConstructorApplication(Cons, List(head, tail))              =>
+      case Wildcard                                    => "_"
+      case CtrApp(Literal(Ast.BooleanVal(value)), Nil) => value.toString
+      case CtrApp(Literal(_), _)                       => throw new IllegalArgumentException()
+      case CtrApp(Tuple(_), args)                      => tuple(args)
+      case CtrApp(EmptyList, Nil)                      => "[]"
+      case CtrApp(Cons, List(head, tail))              =>
         // Logic for displaying multi element lists nicely, e.g., [E1, E2, E3 | T].
         val result = new StringBuilder("[")
         result ++= show(head)
 
         def processTail(tail: Pat): Unit =
           tail match {
-            case ConstructorApplication(EmptyList, Nil) =>
+            case CtrApp(EmptyList, Nil) =>
               result += ']'
-            case ConstructorApplication(Cons, h :: t :: Nil) =>
+            case CtrApp(Cons, h :: t :: Nil) =>
               result ++= ", "
               result ++= show(h)
               processTail(t)
@@ -79,27 +80,27 @@ private[patterns] object Pattern {
 
         processTail(tail)
         result.toString()
-      case ConstructorApplication(EmptyList, _) | ConstructorApplication(Cons, _) =>
+      case CtrApp(EmptyList, _) | CtrApp(Cons, _) =>
         throw new IllegalArgumentException()
-      case ConstructorApplication(Shape(fieldNames), arguments) =>
+      case CtrApp(Shape(fieldNames), args) =>
         // Remove fields mapped to wildcards to reduce clutter
-        val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
+        val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
         fields.map(f => s"${f._1} := ${show(f._2)}").mkString(start = "#{", sep = ", ", end = "}")
 
-      case ConstructorApplication(Struct(structName, fieldNames), arguments) =>
+      case CtrApp(Struct(struct, fieldNames), args) =>
         // Remove fields mapped to wildcards to reduce clutter
-        val fields = fieldNames.zip(arguments).filter(_._2 != Wildcard)
+        val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
 
         // TODO: quote field names when necessary
-        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$structName{", sep = ", ", end = "}")
+        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$struct{", sep = ", ", end = "}")
 
-      case ConstructorApplication(OpenVariantStruct(structName, fieldNames), arguments) =>
-        show(ConstructorApplication(Struct(structName, fieldNames), arguments))
+      case CtrApp(OpenStruct(struct, fieldNames), args) =>
+        show(CtrApp(Struct(struct, fieldNames), args))
 
-      case ConstructorApplication(EnumConstructor(enum, constructor), arguments) =>
-        s"$enum.$constructor${tuple(arguments)}"
+      case CtrApp(EnumCtr(enum, ctr), args) =>
+        s"$enum.$ctr${tuple(args)}"
 
-      case ConstructorApplication(_: AbstractConstructor, _) =>
+      case CtrApp(AbstractCtr(_), _) =>
         "_"
     }
   }
@@ -125,16 +126,16 @@ private[patterns] object Pattern {
         }
 
       case AnnAst.LiteralPat(value) =>
-        ConstructorApplication(Literal(value), Nil)
+        CtrApp(Literal(value), Nil)
 
       case AnnAst.TuplePat(elements) =>
-        ConstructorApplication(Tuple(elements.length), elements.map(simplify(vars, program)))
+        CtrApp(Tuple(elements.length), elements.map(simplify(vars, program)))
 
       case AnnAst.ShapePat(patternFields) =>
         val shapeType = resolveShapeType(vars)(pattern.typ)
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val allFieldNames: List[String] = getFieldNames(shapeType).sorted
-        ConstructorApplication(
+        CtrApp(
           Shape(allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
@@ -143,29 +144,29 @@ private[patterns] object Pattern {
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
         val structDef = program.structDefs.find(_.name == name).get
         val allFieldNames = structDef.fields.map(_.label).sorted
-        val constructor = if (structDef.kind == Ast.StrStruct) Struct else OpenVariantStruct
-        ConstructorApplication(
-          constructor(name, allFieldNames),
+        val ctr = if (structDef.kind == Ast.StrStruct) Struct else OpenStruct
+        CtrApp(
+          ctr(name, allFieldNames),
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
         )
 
       case _: AnnAst.BinPat =>
-        ConstructorApplication(new AbstractConstructor(), Nil)
+        CtrApp(AbstractCtr(pattern.r), Nil)
 
       case AnnAst.NilPat() =>
-        ConstructorApplication(EmptyList, Nil)
+        CtrApp(EmptyList, Nil)
 
       case AnnAst.ConsPat(head, tail) =>
-        ConstructorApplication(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
+        CtrApp(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
 
-      case AnnAst.EnumPat(enum, constructor, arguments) =>
-        ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars, program)))
+      case AnnAst.EnumPat(enum, ctr, args) =>
+        CtrApp(EnumCtr(enum, ctr), args.map(simplify(vars, program)))
     }
 
   /** Returns all field names present in a row type. */
   private def getFieldNames(rowType: Types.RowType): List[String] =
     rowType match {
-      case _: Types.RowVarType | Types.RowEmptyType => Nil
+      case Types.RowVarType(_) | Types.RowEmptyType => Nil
       case Types.RowFieldType(f, rest)              => f.label :: getFieldNames(rest)
     }
 
@@ -174,8 +175,8 @@ private[patterns] object Pattern {
     typ match {
       case Types.VarType(typeVar) =>
         vars.tGet(typeVar) match {
-          case Types.Instance(constructor) => resolveShapeType(vars)(constructor)
-          case _: Types.Open               => throw new IllegalStateException()
+          case Types.Instance(conType) => resolveShapeType(vars)(conType)
+          case _: Types.Open           => throw new IllegalStateException()
         }
       case Types.ConType(ShapeTyCon, List(), List(rowType)) => resolveRowVariable(vars)(rowType)
       case _: Types.ConType                                 => throw new IllegalStateException()

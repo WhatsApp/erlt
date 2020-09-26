@@ -171,18 +171,14 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     (matrix, clause) match {
       case (PatternMatrix.Empty(), _) => true
       case (_, Nil)                   => false
-      case (PatternMatrix.AddColumn(col1, _), Pattern.Wildcard :: ps) =>
-        val constructors = col1.collect { case x: Pattern.ConstructorApplication => x.constructor }.toSet
-
-        if (missingConstructors(constructors) == MissingNone) {
-          constructors.exists { constructor =>
-            isUseful(specialize(matrix, constructor), specializeRow(clause, constructor).get)
-          }
-        } else {
-          isUseful(defaultMatrix(matrix), ps)
+      case (PatternMatrix.AddColumn(col, _), Pattern.Wildcard :: ps) =>
+        val ctrs = col.collect { case x: Pattern.CtrApp => x.ctr }.toSet
+        missingCtrs(ctrs) match {
+          case MissingNone => ctrs.exists { ctr => isUseful(specialize(matrix, ctr), specializeRow(clause, ctr).get) }
+          case _           => isUseful(defaultMatrix(matrix), ps)
         }
-      case (_, (p: Pattern.ConstructorApplication) :: ps) =>
-        isUseful(specialize(matrix, p.constructor), p.arguments ++ ps)
+      case (_, Pattern.CtrApp(ctr, args) :: ps) =>
+        isUseful(specialize(matrix, ctr), args ++ ps)
     }
 
   /** Returns a pattern vector that matches (some of the) values not matched by the matrix.
@@ -195,19 +191,19 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case (PatternMatrix.Empty(), _) => Some(PatternMatrix.wildcards(width))
       case (_, 0)                     => None
       case (PatternMatrix.AddColumn(col, _), _) =>
-        val constructors = col.collect { case x: Pattern.ConstructorApplication => x.constructor }.toSet
+        val ctrs = col.collect { case x: Pattern.CtrApp => x.ctr }.toSet
 
-        missingConstructors(constructors) match {
+        missingCtrs(ctrs) match {
           case MissingNone | MissingAbstract =>
-            def tryConstructor(c: Pattern.Constructor) = {
-              val constructorArity = arity(c)
-              missingClause(specialize(matrix, c), constructorArity + width - 1)
-                .map(ps => Pattern.ConstructorApplication(c, ps.take(constructorArity)) :: ps.drop(constructorArity))
+            def tryConstructor(ctr: Pattern.Ctr) = {
+              val ctrArity = arity(ctr)
+              missingClause(specialize(matrix, ctr), ctrArity + width - 1)
+                .map(ps => Pattern.CtrApp(ctr, ps.take(ctrArity)) :: ps.drop(ctrArity))
             }
-            constructors.to(LazyList).flatMap(tryConstructor).headOption
-          case MissingAtLeast(constructor) =>
+            ctrs.to(LazyList).flatMap(tryConstructor).headOption
+          case MissingAtLeast(ctr) =>
             missingClause(defaultMatrix(matrix), width - 1)
-              .map(ps => Pattern.ConstructorApplication(constructor, PatternMatrix.wildcards(arity(constructor))) :: ps)
+              .map(ps => Pattern.CtrApp(ctr, PatternMatrix.wildcards(arity(ctr))) :: ps)
           case MissingAll =>
             missingClause(defaultMatrix(matrix), width - 1).map(ps => Pattern.Wildcard :: ps)
         }
@@ -217,18 +213,18 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     *
     * Corresponds to the S function in the paper.
     */
-  private def specialize(matrix: PatternMatrix.Matrix, constructor: Pattern.Constructor): PatternMatrix.Matrix = {
-    PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, constructor)))
+  private def specialize(matrix: PatternMatrix.Matrix, ctr: Pattern.Ctr): PatternMatrix.Matrix = {
+    PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, ctr)))
   }
 
   /** Like [[specialize]] but takes a single row. */
-  private def specializeRow(row: PatternMatrix.Vector, constructor: Pattern.Constructor): Option[PatternMatrix.Vector] =
+  private def specializeRow(row: PatternMatrix.Vector, ctr: Pattern.Ctr): Option[PatternMatrix.Vector] =
     row match {
       case Pattern.Wildcard :: rest =>
-        Some(PatternMatrix.wildcards(arity(constructor)) ++ rest)
-      case Pattern.ConstructorApplication(c1, arguments1) :: rest if c1 == constructor =>
-        Some(arguments1 ++ rest)
-      case Pattern.ConstructorApplication(_, _) :: _ =>
+        Some(PatternMatrix.wildcards(arity(ctr)) ++ rest)
+      case Pattern.CtrApp(`ctr`, args) :: rest =>
+        Some(args ++ rest)
+      case _ =>
         None
     }
 
@@ -236,26 +232,26 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   private def defaultMatrix(matrix: PatternMatrix.Matrix): PatternMatrix.Matrix =
     PatternMatrix.Matrix(matrix.rows.collect { case Pattern.Wildcard :: tail => tail })
 
-  /** Used as the result type of [[missingConstructors]]. */
+  /** Used as the result type of [[missingCtrs]]. */
   private trait MissingConstructors
 
   /** No missing constructors. */
   private case object MissingNone extends MissingConstructors
 
   /** At least the specified constructor is missing. There may be others. */
-  private case class MissingAtLeast(constructor: Pattern.Constructor) extends MissingConstructors
+  private case class MissingAtLeast(ctr: Pattern.Ctr) extends MissingConstructors
 
-  /** There were [[Pattern.AbstractConstructor]]s, so an unknown set of constructors is missing. */
+  /** There were [[Pattern.AbstractCtr]]s, so an unknown set of constructors is missing. */
   private case object MissingAbstract extends MissingConstructors
 
   /** All constructors are missing, or the data type has (effectively) infinitely many constructors. */
   private case object MissingAll extends MissingConstructors
 
   /** Returns a pattern describing the set of constructors missing from the given set. */
-  private def missingConstructors(presentConstructors: Set[Pattern.Constructor]): MissingConstructors = {
-    val concreteConstructors = presentConstructors.filter(!_.isInstanceOf[Pattern.AbstractConstructor])
-    val hasAbstract = concreteConstructors.size < presentConstructors.size
-    val missingOption = concreteConstructors.headOption.flatMap(allConstructors).map(_.diff(concreteConstructors))
+  private def missingCtrs(ctrs: Set[Pattern.Ctr]): MissingConstructors = {
+    val concreteCtrs = ctrs.filter(!_.isInstanceOf[Pattern.AbstractCtr])
+    val hasAbstract = concreteCtrs.size < ctrs.size
+    val missingOption = concreteCtrs.headOption.flatMap(allCtrs).map(_.diff(concreteCtrs))
     missingOption match {
       case Some(missing) if missing.isEmpty =>
         MissingNone
@@ -273,38 +269,38 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     * The data type is specified by giving one of its constructors. This works because each constructor can belong
     * to only one data type.
     */
-  private def allConstructors(constructor: Pattern.Constructor): Option[Set[Pattern.Constructor]] =
-    constructor match {
+  private def allCtrs(ctr: Pattern.Ctr): Option[Set[Pattern.Ctr]] =
+    ctr match {
       case Pattern.Literal(_: Ast.BooleanVal) =>
         Some(Set(true, false).map(b => Pattern.Literal(Ast.BooleanVal(b))))
       case Pattern.Literal(_: Ast.IntVal)    => None
       case Pattern.Literal(_: Ast.CharVal)   => None
       case Pattern.Literal(_: Ast.StringVal) => None
-      case Pattern.Tuple(_)                  => Some(Set(constructor))
+      case Pattern.Tuple(_)                  => Some(Set(ctr))
       case Pattern.EmptyList | Pattern.Cons  => Some(Set(Pattern.EmptyList, Pattern.Cons))
-      case Pattern.Shape(_)                  => Some(Set(constructor))
-      case Pattern.Struct(_, _)              => Some(Set(constructor))
-      case Pattern.OpenVariantStruct(_, _)   => None
-      case Pattern.EnumConstructor(enum, _) =>
+      case Pattern.Shape(_)                  => Some(Set(ctr))
+      case Pattern.Struct(_, _)              => Some(Set(ctr))
+      case Pattern.OpenStruct(_, _)          => None
+      case Pattern.EnumCtr(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
-        val constructors = enumDef.ctrs.map(c => Pattern.EnumConstructor(enum, c.name))
-        Some(constructors.toSet)
-      case _: Pattern.AbstractConstructor => throw new IllegalArgumentException()
+        val ctrs = enumDef.ctrs.map(c => Pattern.EnumCtr(enum, c.name))
+        Some(ctrs.toSet)
+      case Pattern.AbstractCtr(_) => throw new IllegalArgumentException()
     }
 
   /** Returns the number of arguments the given constructor takes. */
-  private def arity(constructor: Pattern.Constructor): Int =
-    constructor match {
-      case _: Pattern.Literal                   => 0
-      case Pattern.Tuple(arity)                 => arity
-      case Pattern.EmptyList                    => 0
-      case Pattern.Cons                         => 2
-      case Pattern.Shape(fields)                => fields.length
-      case Pattern.Struct(_, fields)            => fields.length
-      case Pattern.OpenVariantStruct(_, fields) => fields.length
-      case Pattern.EnumConstructor(enum, constructorName) =>
+  private def arity(ctr: Pattern.Ctr): Int =
+    ctr match {
+      case _: Pattern.Literal            => 0
+      case Pattern.Tuple(arity)          => arity
+      case Pattern.EmptyList             => 0
+      case Pattern.Cons                  => 2
+      case Pattern.Shape(fields)         => fields.length
+      case Pattern.Struct(_, fields)     => fields.length
+      case Pattern.OpenStruct(_, fields) => fields.length
+      case Pattern.EnumCtr(enum, ctrName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
-        enumDef.ctrs.find(_.name == constructorName).get.argTypes.length
-      case _: Pattern.AbstractConstructor => 0
+        enumDef.ctrs.find(_.name == ctrName).get.argTypes.length
+      case Pattern.AbstractCtr(_) => 0
     }
 }
