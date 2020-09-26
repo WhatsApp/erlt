@@ -20,11 +20,23 @@ import com.whatsapp.sterlang._
 
 import scala.collection.mutable.ListBuffer
 
+object PatternChecker {
+  type Vector = List[Pattern.Pat]
+  type Matrix = List[Vector]
+
+  /** Returns a pattern vector of the given length containing wildcards. */
+  def wildcards(length: Int): Vector =
+    List.fill(length)(Pattern.Wildcard)
+  def firstColumn(rows: List[Vector]): Option[Vector] =
+    if (rows.isEmpty) None else Some(rows.map(_.head))
+}
+
 /** Generates warnings for missing and redundant clauses in pattern matching.
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
   */
 class PatternChecker(private val vars: Vars, private val context: Context, val program: Ast.Program) {
+  import PatternChecker._
 
   /** Like [[AnnAst.Clause]] but without the body. */
   private case class ClauseHead(patterns: List[AnnAst.Pat], guards: List[AnnAst.Guard])
@@ -93,13 +105,13 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
   ): Unit = {
     require(clauses.nonEmpty)
 
-    var previousRows: List[PatternMatrix.Vector] = List()
+    var previousRows: List[Vector] = List()
 
     // Check for redundancy
     for (clause <- clauses) {
       val simpleClause = clause.patterns.map(Pattern.simplify(vars, program))
 
-      if (!isUseful(PatternMatrix.Matrix(previousRows), simpleClause)) {
+      if (!isUseful(previousRows, simpleClause)) {
         val location =
           if (clause.patterns.isEmpty) Doc.ZRange
           else Doc.merge(clause.patterns.head.r, clause.patterns.last.r)
@@ -112,7 +124,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     }
 
     // Check for exhaustiveness
-    missingClause(PatternMatrix.Matrix(previousRows), clauses.head.patterns.length) match {
+    missingClause(previousRows, clauses.head.patterns.length) match {
       case None => // exhaustive
       case Some(clause) =>
         val confident = clauses.forall(countsTowardExhaustiveness)
@@ -167,61 +179,65 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     *
     * Corresponds to the U_rec function in the paper.
     */
-  private def isUseful(matrix: PatternMatrix.Matrix, clause: PatternMatrix.Vector): Boolean =
-    (matrix, clause) match {
-      case (PatternMatrix.Empty(), _) => true
-      case (_, Nil)                   => false
-      case (PatternMatrix.AddColumn(col, _), Pattern.Wildcard :: ps) =>
-        val ctrs = col.collect { case x: Pattern.CtrApp => x.ctr }.toSet
-        missingCtrs(ctrs) match {
-          case MissingNone => ctrs.exists { ctr => isUseful(specialize(matrix, ctr), specializeRow(clause, ctr).get) }
-          case _           => isUseful(defaultMatrix(matrix), ps)
-        }
-      case (_, Pattern.CtrApp(ctr, args) :: ps) =>
-        isUseful(specialize(matrix, ctr), args ++ ps)
-    }
+  private def isUseful(matrix: Matrix, clause: Vector): Boolean =
+    if (matrix.isEmpty) true
+    else
+      clause match {
+        case Nil => false
+        case p :: ps =>
+          (firstColumn(matrix), p) match {
+            case (Some(col), Pattern.Wildcard) =>
+              val ctrs = col.collect { case x: Pattern.CtrApp => x.ctr }.toSet
+              missingCtrs(ctrs) match {
+                case MissingNone =>
+                  ctrs.exists { ctr => isUseful(specialize(matrix, ctr), specializeRow(clause, ctr).get) }
+                case _ => isUseful(defaultMatrix(matrix), ps)
+              }
+            case (_, Pattern.CtrApp(ctr, args)) =>
+              isUseful(specialize(matrix, ctr), args ++ ps)
+          }
+      }
 
   /** Returns a pattern vector that matches (some of the) values not matched by the matrix.
     * Returns [[None]] if the matrix matches all possible values.
     *
     * This is used to generate example clauses to help people debug inexhaustive match errors.
     */
-  private def missingClause(matrix: PatternMatrix.Matrix, width: Int): Option[PatternMatrix.Vector] =
-    (matrix, width) match {
-      case (PatternMatrix.Empty(), _) => Some(PatternMatrix.wildcards(width))
-      case (_, 0)                     => None
-      case (PatternMatrix.AddColumn(col, _), _) =>
-        val ctrs = col.collect { case x: Pattern.CtrApp => x.ctr }.toSet
-
-        missingCtrs(ctrs) match {
-          case MissingNone | MissingAbstract =>
-            def tryConstructor(ctr: Pattern.Ctr) = {
-              val ctrArity = arity(ctr)
-              missingClause(specialize(matrix, ctr), ctrArity + width - 1)
-                .map(ps => Pattern.CtrApp(ctr, ps.take(ctrArity)) :: ps.drop(ctrArity))
-            }
-            ctrs.to(LazyList).flatMap(tryConstructor).headOption
-          case MissingAtLeast(ctr) =>
-            missingClause(defaultMatrix(matrix), width - 1)
-              .map(ps => Pattern.CtrApp(ctr, PatternMatrix.wildcards(arity(ctr))) :: ps)
-          case MissingAll =>
-            missingClause(defaultMatrix(matrix), width - 1).map(ps => Pattern.Wildcard :: ps)
-        }
+  private def missingClause(matrix: Matrix, width: Int): Option[Vector] = {
+    if (matrix.isEmpty) Some(wildcards(width))
+    else if (width == 0) None
+    else {
+      val Some(col) = firstColumn(matrix)
+      val ctrs = col.collect { case Pattern.CtrApp(ctr, _) => ctr }.toSet
+      missingCtrs(ctrs) match {
+        case MissingNone | MissingAbstract =>
+          def tryConstructor(ctr: Pattern.Ctr) = {
+            val ctrArity = arity(ctr)
+            missingClause(specialize(matrix, ctr), ctrArity + width - 1)
+              .map(ps => Pattern.CtrApp(ctr, ps.take(ctrArity)) :: ps.drop(ctrArity))
+          }
+          ctrs.to(LazyList).flatMap(tryConstructor).headOption
+        case MissingAtLeast(ctr) =>
+          missingClause(defaultMatrix(matrix), width - 1)
+            .map(ps => Pattern.CtrApp(ctr, wildcards(arity(ctr))) :: ps)
+        case MissingAll =>
+          missingClause(defaultMatrix(matrix), width - 1).map(ps => Pattern.Wildcard :: ps)
+      }
     }
+  }
 
   /** Specializes the pattern matrix to the case where the first pattern matches the given constructor.
     *
     * Corresponds to the S function in the paper.
     */
-  private def specialize(matrix: PatternMatrix.Matrix, ctr: Pattern.Ctr): PatternMatrix.Matrix = {
-    PatternMatrix.Matrix(matrix.rows.flatMap(row => specializeRow(row, ctr)))
-  }
+  private def specialize(matrix: Matrix, ctr: Pattern.Ctr): Matrix =
+    matrix.flatMap(row => specializeRow(row, ctr))
 
   /** Like [[specialize]] but takes a single row. */
-  private def specializeRow(row: PatternMatrix.Vector, ctr: Pattern.Ctr): Option[PatternMatrix.Vector] =
+  private def specializeRow(row: Vector, ctr: Pattern.Ctr): Option[Vector] =
     row match {
       case Pattern.Wildcard :: rest =>
-        Some(PatternMatrix.wildcards(arity(ctr)) ++ rest)
+        Some(wildcards(arity(ctr)) ++ rest)
       case Pattern.CtrApp(`ctr`, args) :: rest =>
         Some(args ++ rest)
       case _ =>
@@ -229,8 +245,8 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     }
 
   /** Corresponds to the D function in the paper. */
-  private def defaultMatrix(matrix: PatternMatrix.Matrix): PatternMatrix.Matrix =
-    PatternMatrix.Matrix(matrix.rows.collect { case Pattern.Wildcard :: tail => tail })
+  private def defaultMatrix(matrix: Matrix): Matrix =
+    matrix.collect { case Pattern.Wildcard :: tail => tail }
 
   /** Used as the result type of [[missingCtrs]]. */
   private trait MissingConstructors

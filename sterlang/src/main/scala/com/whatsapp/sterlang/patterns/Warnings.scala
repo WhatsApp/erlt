@@ -22,7 +22,7 @@ sealed trait PatternWarning extends RangedError {
   override val severity: Severity = Warning
 }
 
-final class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: PatternMatrix.Vector)
+final class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: PatternChecker.Vector)
     extends RangedError(
       range = range,
       title = (if (confident) "" else "Possibly ") + "Missing Patterns",
