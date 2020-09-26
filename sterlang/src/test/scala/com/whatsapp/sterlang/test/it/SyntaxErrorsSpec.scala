@@ -36,6 +36,11 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val moduleNames =
         file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
 
+      val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
+      val erlcOutDir = Files.createTempDirectory("erlc-out")
+      val erlcInputs = erlCompatModules.map(m => s"$iDirPath/$m.erl").mkString(" ")
+      s"erlc -o $erlcOutDir $erlcInputs".!!
+
       moduleNames.foreach { p =>
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
@@ -48,13 +53,6 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def processIllSyntax(erlPath: String, etfPath: String): Unit = {
     try {
-      import sys.process._
-      if (!erlPath.contains("_erlt.")) {
-        //  `.erlt` is a marker that a module uses some erlT specific syntax
-        // and we are not able to compare it with erl1 in the first place.
-        val oDirPath = Files.createTempDirectory("sterlang-syntax")
-        s"erlc -o $oDirPath $erlPath".!!
-      }
       Main.loadProgram(etfPath)
       fail(s"$erlPath should generate an UnsupportedSyntaxError")
     } catch {
