@@ -24,8 +24,8 @@ object PatternChecker {
 
   private def wildcards(length: Int): Vector =
     List.fill(length)(Wildcard)
-  private def firstColumn(rows: List[Vector]): Option[Vector] =
-    if (rows.isEmpty) None else Some(rows.map(_.head))
+  private def firstColumn(rows: List[Vector]): Vector =
+    rows.map(_.head)
 
   private sealed trait Pat
   private case object Wildcard extends Pat
@@ -146,12 +146,10 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
         Wildcard
       case AnnAst.AndPat(p1, p2) =>
         (simplify(p1), simplify(p2)) match {
-          case (Wildcard, p2Simple) => p2Simple
-          case (p1Simple, Wildcard) => p1Simple
-          case _                    =>
-            // For now, we only reason about "and" patterns that are used to name the overall value.
-            // For example, `{5, Y} = Z` is OK, whereas `{5, Y} = {X, "string"}` isn't.
-            ???
+          // For now, we only reason about "and" patterns that are used to name the overall value.
+          // For example, `{5, Y} = Z` is OK, whereas `{5, Y} = {X, "string"}` isn't.
+          case (Wildcard, simple) => simple
+          case (simple, Wildcard) => simple
         }
       case AnnAst.LiteralPat(value) =>
         CtrApp(Literal(value), Nil)
@@ -300,17 +298,14 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
     else
       clause match {
         case Nil => false
-        case p :: ps =>
-          (firstColumn(matrix), p) match {
-            case (Some(col), Wildcard) =>
-              val ctrs = col.collect { case x: CtrApp => x.ctr }.toSet
-              missingCtrs(ctrs) match {
-                case MissingNone =>
-                  ctrs.exists { ctr => isUseful(specialize(matrix, ctr), specializeRow(clause, ctr).get) }
-                case _ => isUseful(defaultMatrix(matrix), ps)
-              }
-            case (_, CtrApp(ctr, args)) =>
-              isUseful(specialize(matrix, ctr), args ++ ps)
+        case CtrApp(ctr, args) :: ps =>
+          isUseful(specialize(matrix, ctr), args ++ ps)
+        case Wildcard :: ps =>
+          val ctrs = firstColumn(matrix).collect { case x: CtrApp => x.ctr }.toSet
+          missingCtrs(ctrs) match {
+            case MissingNone =>
+              ctrs.exists { ctr => isUseful(specialize(matrix, ctr), specializeRow(clause, ctr).get) }
+            case _ => isUseful(defaultMatrix(matrix), ps)
           }
       }
 
@@ -323,8 +318,7 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
     if (matrix.isEmpty) Some(wildcards(width))
     else if (width == 0) None
     else {
-      val Some(col) = firstColumn(matrix)
-      val ctrs = col.collect { case CtrApp(ctr, _) => ctr }.toSet
+      val ctrs = firstColumn(matrix).collect { case CtrApp(ctr, _) => ctr }.toSet
       missingCtrs(ctrs) match {
         case MissingNone | MissingAbstract =>
           def tryConstructor(ctr: Ctr) = {
