@@ -64,6 +64,12 @@ object Ast {
   case object ExnStruct extends StructKind
   case object MsgStruct extends StructKind
 
+  sealed trait Val
+  case class BooleanVal(value: Boolean) extends Val
+  case class IntVal(value: Int) extends Val
+  case class CharVal(value: Char) extends Val
+  case class StringVal(value: String) extends Val
+
   val unOps1: Map[String, UOp] =
     Map("not" -> UNot, "bnot" -> BNot)
   val unOps2: Map[String, UOp] =

@@ -17,7 +17,6 @@
 package com.whatsapp.sterlang.patterns
 
 import com.whatsapp.sterlang.TyCons.ShapeTyCon
-import com.whatsapp.sterlang.Values.Value
 import com.whatsapp.sterlang._
 
 /** Provides a simplified pattern syntax used during exhaustiveness checking. */
@@ -31,7 +30,7 @@ private[patterns] object Pattern {
   case class ConstructorApplication(constructor: Constructor, arguments: List[Pat]) extends Pat
 
   sealed trait Constructor
-  case class Literal(value: Value) extends Constructor
+  case class Literal(value: Ast.Val) extends Constructor
   case class Tuple(length: Int) extends Constructor
   case object EmptyList extends Constructor
   case object Cons extends Constructor
@@ -54,12 +53,12 @@ private[patterns] object Pattern {
       arguments.map(show).mkString(start = "{", sep = ", ", end = "}")
 
     p match {
-      case Wildcard                                                         => "_"
-      case ConstructorApplication(Literal(Values.BooleanValue(value)), Nil) => value.toString
-      case ConstructorApplication(Literal(_), _)                            => throw new IllegalArgumentException()
-      case ConstructorApplication(Tuple(_), arguments)                      => tuple(arguments)
-      case ConstructorApplication(EmptyList, Nil)                           => "[]"
-      case ConstructorApplication(Cons, List(head, tail))                   =>
+      case Wildcard                                                    => "_"
+      case ConstructorApplication(Literal(Ast.BooleanVal(value)), Nil) => value.toString
+      case ConstructorApplication(Literal(_), _)                       => throw new IllegalArgumentException()
+      case ConstructorApplication(Tuple(_), arguments)                 => tuple(arguments)
+      case ConstructorApplication(EmptyList, Nil)                      => "[]"
+      case ConstructorApplication(Cons, List(head, tail))              =>
         // Logic for displaying multi element lists nicely, e.g., [E1, E2, E3 | T].
         val result = new StringBuilder("[")
         result ++= show(head)

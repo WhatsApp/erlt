@@ -275,16 +275,16 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
     */
   private def allConstructors(constructor: Pattern.Constructor): Option[Set[Pattern.Constructor]] =
     constructor match {
-      case Pattern.Literal(_: Values.BooleanValue) =>
-        Some(Set(true, false).map(b => Pattern.Literal(Values.BooleanValue(b))))
-      case Pattern.Literal(_: Values.IntegerValue) => None
-      case Pattern.Literal(_: Values.CharValue)    => None
-      case Pattern.Literal(_: Values.StringValue)  => None
-      case Pattern.Tuple(_)                        => Some(Set(constructor))
-      case Pattern.EmptyList | Pattern.Cons        => Some(Set(Pattern.EmptyList, Pattern.Cons))
-      case Pattern.Shape(_)                        => Some(Set(constructor))
-      case Pattern.Struct(_, _)                    => Some(Set(constructor))
-      case Pattern.OpenVariantStruct(_, _)         => None
+      case Pattern.Literal(_: Ast.BooleanVal) =>
+        Some(Set(true, false).map(b => Pattern.Literal(Ast.BooleanVal(b))))
+      case Pattern.Literal(_: Ast.IntVal)    => None
+      case Pattern.Literal(_: Ast.CharVal)   => None
+      case Pattern.Literal(_: Ast.StringVal) => None
+      case Pattern.Tuple(_)                  => Some(Set(constructor))
+      case Pattern.EmptyList | Pattern.Cons  => Some(Set(Pattern.EmptyList, Pattern.Cons))
+      case Pattern.Shape(_)                  => Some(Set(constructor))
+      case Pattern.Struct(_, _)              => Some(Set(constructor))
+      case Pattern.OpenVariantStruct(_, _)   => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
         val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))

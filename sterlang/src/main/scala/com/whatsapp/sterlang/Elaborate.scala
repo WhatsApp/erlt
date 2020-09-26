@@ -607,28 +607,28 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.BoolExp(b) = exp
 
     unify(exp.r, ty, MT.BoolType)
-    AnnAst.LiteralExp(Values.BooleanValue(b))(r = exp.r)
+    AnnAst.LiteralExp(Ast.BooleanVal(b))(typ = ty, r = exp.r)
   }
 
   private def elabNumberExp(exp: Ast.NumberExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.NumberExp(n) = exp
 
     unify(exp.r, ty, MT.IntType)
-    AnnAst.LiteralExp(Values.IntegerValue(n))(r = exp.r)
+    AnnAst.LiteralExp(Ast.IntVal(n))(typ = ty, r = exp.r)
   }
 
   private def elabCharExp(exp: Ast.CharExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.CharExp(n) = exp
 
     unify(exp.r, ty, MT.CharType)
-    AnnAst.LiteralExp(Values.CharValue(n))(r = exp.r)
+    AnnAst.LiteralExp(Ast.CharVal(n))(typ = ty, r = exp.r)
   }
 
   private def elabStringExp(exp: Ast.StringExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StringExp(s) = exp
 
     unify(exp.r, ty, MT.StringType)
-    AnnAst.LiteralExp(Values.StringValue(s))(r = exp.r)
+    AnnAst.LiteralExp(Ast.StringVal(s))(typ = ty, r = exp.r)
   }
 
   private def elabVarExp(exp: Ast.VarExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -949,7 +949,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.BoolPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.BoolType)
-    (AnnAst.LiteralPat(Values.BooleanValue(b))(r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.BooleanVal(b))(typ = t, r = p.r), env, penv)
   }
 
   private def elabCharPat(
@@ -963,7 +963,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.CharPat(c) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.CharType)
-    (AnnAst.LiteralPat(Values.CharValue(c))(r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.CharVal(c))(typ = t, r = p.r), env, penv)
   }
 
   private def elabNumberPat(
@@ -977,7 +977,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.NumberPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.IntType)
-    (AnnAst.LiteralPat(Values.IntegerValue(b))(r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.IntVal(b))(typ = t, r = p.r), env, penv)
   }
 
   private def elabStringPat(
@@ -991,7 +991,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.StringPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.StringType)
-    (AnnAst.LiteralPat(Values.StringValue(b))(r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.StringVal(b))(typ = t, r = p.r), env, penv)
   }
 
   private def elabListPat(

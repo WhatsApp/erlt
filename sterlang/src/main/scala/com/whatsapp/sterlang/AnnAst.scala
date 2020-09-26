@@ -16,8 +16,6 @@
 
 package com.whatsapp.sterlang
 
-import com.whatsapp.sterlang.Values.Value
-
 import scala.collection.mutable.ListBuffer
 
 object AnnAst {
@@ -40,18 +38,13 @@ object AnnAst {
   }
 
   // TODO: variableName, enumName, conName etc. should all be classes and have a source location.
-
   case class VarExp(name: String)(val typ: Type, val r: Doc.Range) extends Exp
 
-  // Begin TODO: these can be elaborated to constructor applications
-  case class LiteralExp(value: Value)(val r: Doc.Range) extends Exp {
-    override val typ: Type = value.typ
-  }
+  case class LiteralExp(value: Ast.Val)(val typ: Type, val r: Doc.Range) extends Exp
   case class TupleExp(elements: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
   case class NilExp()(val typ: Type, val r: Doc.Range) extends Exp
   case class BinExp(elements: List[BinElement])(val typ: Type, val r: Doc.Range) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val typ: Type, val r: Doc.Range) extends Exp
-  // End TODO
 
   case class UOpExp(operator: UOp, argument: Exp)(val typ: Type, val r: Doc.Range) extends Exp
   case class BinOpExp(operator: BinOp, argument1: Exp, argument2: Exp)(val typ: Type, val r: Doc.Range) extends Exp
@@ -124,9 +117,7 @@ object AnnAst {
   case class VarPat(name: String)(val typ: Type, val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val typ: Type, val r: Doc.Range) extends Pat
 
-  case class LiteralPat(value: Value)(val r: Doc.Range) extends Pat {
-    override val typ: Type = value.typ
-  }
+  case class LiteralPat(value: Ast.Val)(val typ: Type, val r: Doc.Range) extends Pat
   case class TuplePat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
   case class NilPat()(val typ: Type, val r: Doc.Range) extends Pat
   case class BinPat(elements: List[BinElementPat])(val typ: Type, val r: Doc.Range) extends Pat
