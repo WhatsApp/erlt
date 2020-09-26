@@ -113,24 +113,21 @@ object AnnAst {
     val typ: Type
   }
 
-  case class WildPat()(val typ: Type, val r: Doc.Range) extends Pat
-  case class VarPat(name: String)(val typ: Type, val r: Doc.Range) extends Pat
-  case class AndPat(p1: Pat, p2: Pat)(val typ: Type, val r: Doc.Range) extends Pat
-
-  case class LiteralPat(value: Ast.Val)(val typ: Type, val r: Doc.Range) extends Pat
-  case class TuplePat(elements: List[Pat])(val typ: Type, val r: Doc.Range) extends Pat
-  case class NilPat()(val typ: Type, val r: Doc.Range) extends Pat
-  case class BinPat(elements: List[BinElementPat])(val typ: Type, val r: Doc.Range) extends Pat
-  case class ShapePat(fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
-
-  case class ConsPat(head: Pat, tail: Pat)(val typ: Type, val r: Doc.Range) extends Pat
-  case class EnumConstructorPat(enum: String, constructor: String, arguments: List[Pat])(
-      val typ: Type,
-      val r: Doc.Range,
+  case class WildPat()(val r: Doc.Range)(val typ: Type) extends Pat
+  case class LiteralPat(value: Ast.Val)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class VarPat(name: String)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class TuplePat(elements: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class NilPat()(val r: Doc.Range)(val typ: Type) extends Pat
+  case class BinPat(elements: List[BinElementPat])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class ConsPat(head: Pat, tail: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class EnumConstructorPat(enum: String, constructor: String, arguments: List[Pat])(val r: Doc.Range)(
+      val typ: Type
   ) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
-  case class StructPat(structName: String, fields: List[Field[Pat]])(val typ: Type, val r: Doc.Range) extends Pat
 
   /** Returns an iterator over all immediate children nodes. This is empty for leaf nodes. */
   def children(node: Node): Iterator[Node] = {

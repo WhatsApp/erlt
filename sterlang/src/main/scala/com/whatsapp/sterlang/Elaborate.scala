@@ -17,6 +17,7 @@
 package com.whatsapp.sterlang
 
 class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) {
+  private type PreAnnPat = Types.Type => AnnAst.Pat
   private val T = Types
   private val MT = METypes
   private val ST = STypes
@@ -165,27 +166,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       else
         // dummy type scheme
         ST.TypeSchema(0, List(), ST.PlainType(t))
-
-    val (p1, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
-
-    // Attach type annotation to the pattern
-    assert(p1.isInstanceOf[AnnAst.LiteralPat] || p1.typ == null)
-    val p2 = p1 match {
-      case p: AnnAst.WildPat            => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.VarPat             => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.AndPat             => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.LiteralPat         => p
-      case p: AnnAst.TuplePat           => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.NilPat             => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.ShapePat           => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.StructPat          => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.ConsPat            => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.EnumConstructorPat => p.copy()(typ = t, r = p.r)
-      case p: AnnAst.BinPat             => p.copy()(typ = t, r = p.r)
-    }
-    assert(p2.typ != null)
-
-    (p2, env1, penv1)
+    val (prePat, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
+    (prePat(t), env1, penv1)
   }
 
   private def elpat1(
@@ -195,7 +177,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) =
+  ): (PreAnnPat, Env, PEnv) =
     p match {
       case wildPat: Ast.WildPat =>
         elabWildPat(wildPat, ts, d, env, penv, gen)
@@ -869,10 +851,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.WildPat() = p
 
-    (AnnAst.WildPat()(typ = null, r = p.r), env, penv)
+    (AnnAst.WildPat()(p.r), env, penv)
   }
 
   private def elabVarPat(
@@ -882,16 +864,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.VarPat(v) = p
 
     if (penv(v)) {
       val t1 = TU.instantiate(d, env(v))
       val t2 = TU.instantiate(d, ts)
       unify(p.r, t1, t2)
-      (AnnAst.VarPat(v)(typ = null, r = p.r), env, penv)
+      (AnnAst.VarPat(v)(p.r), env, penv)
     } else {
-      (AnnAst.VarPat(v)(typ = null, r = p.r), env + (v -> ts), penv + v)
+      (AnnAst.VarPat(v)(p.r), env + (v -> ts), penv + v)
     }
   }
 
@@ -902,14 +884,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.AndPat(p1, p2) = p
     val t = TU.instantiate(d, ts)
 
     val (pp1, env1, penv1) = elpat(p1, t, d, env, penv, gen)
     val (pp2, env2, penv2) = elpat(p2, t, d, env1, penv1, gen)
 
-    (AnnAst.AndPat(pp1, pp2)(typ = null, r = p.r), env2, penv2)
+    (AnnAst.AndPat(pp1, pp2)(p.r), env2, penv2)
   }
 
   private def elabTuplePat(
@@ -919,7 +901,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.TuplePat(pats) = p
     val t = TU.instantiate(d, ts)
 
@@ -935,7 +917,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penvAcc = penv1
       p1
     }
-    (AnnAst.TuplePat(pats1)(null, r = p.r), envAcc, penvAcc)
+    (AnnAst.TuplePat(pats1)(p.r), envAcc, penvAcc)
   }
 
   private def elabBoolPat(
@@ -945,11 +927,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.BoolPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.BoolType)
-    (AnnAst.LiteralPat(Ast.BooleanVal(b))(typ = t, r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.BooleanVal(b))(p.r), env, penv)
   }
 
   private def elabCharPat(
@@ -959,11 +941,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.CharPat(c) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.CharType)
-    (AnnAst.LiteralPat(Ast.CharVal(c))(typ = t, r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.CharVal(c))(p.r), env, penv)
   }
 
   private def elabNumberPat(
@@ -973,11 +955,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.NumberPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.IntType)
-    (AnnAst.LiteralPat(Ast.IntVal(b))(typ = t, r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.IntVal(b))(p.r), env, penv)
   }
 
   private def elabStringPat(
@@ -987,11 +969,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.StringPat(b) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.StringType)
-    (AnnAst.LiteralPat(Ast.StringVal(b))(typ = t, r = p.r), env, penv)
+    (AnnAst.LiteralPat(Ast.StringVal(b))(p.r), env, penv)
   }
 
   private def elabListPat(
@@ -1001,13 +983,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.NilPat() = p
     val t = TU.instantiate(d, ts)
     val elemType = freshTypeVar(d)
 
     unify(p.r, t, MT.ListType(elemType))
-    (AnnAst.NilPat()(typ = null, r = p.r), env, penv)
+    (AnnAst.NilPat()(p.r), env, penv)
   }
 
   private def elabBinPat(
@@ -1017,7 +999,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.BinPat(elems) = p
     val t = TU.instantiate(d, ts)
     unify(p.r, t, MT.BinaryType)
@@ -1032,7 +1014,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       elem1
     }
 
-    (AnnAst.BinPat(elems1)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.BinPat(elems1)(p.r), envAcc, penvAcc)
   }
 
   private def elabBinElementPat(
@@ -1074,7 +1056,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.ConsPat(hPat, tPat) = p
     val t = TU.instantiate(d, ts)
     val elemType = freshTypeVar(d)
@@ -1083,7 +1065,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val (hPat1, env1, penv1) = elpat(hPat, elemType, d, env, penv, gen)
     val (tPat1, env2, penv2) = elpat(tPat, MT.ListType(elemType), d, env1, penv1, gen)
-    (AnnAst.ConsPat(hPat1, tPat1)(typ = null, r = p.r), env2, penv2)
+    (AnnAst.ConsPat(hPat1, tPat1)(p.r), env2, penv2)
   }
 
   private def elabShapePat(
@@ -1093,7 +1075,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.ShapePat(fieldPats) = p
     checkUniqueFields(p.r, fieldPats.map(_.label))
 
@@ -1117,7 +1099,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(l, p1)
     }
 
-    (AnnAst.ShapePat(fields)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.ShapePat(fields)(r = p.r), envAcc, penvAcc)
   }
 
   private def elabEnumCtrPat(
@@ -1127,7 +1109,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val expander = dExpander(d)
     val Ast.EnumCtrPat(eName, cName, pats) = p
     val nName = normalizeEnumName(eName)
@@ -1159,7 +1141,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (AnnAst.EnumConstructorPat(nName.stringId, cName, argPats1)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.EnumConstructorPat(nName.stringId, cName, argPats1)(r = p.r), envAcc, penvAcc)
   }
 
   private def elabStructPat(
@@ -1169,7 +1151,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       env: Env,
       penv: PEnv,
       gen: Boolean,
-  ): (AnnAst.Pat, Env, PEnv) = {
+  ): (PreAnnPat, Env, PEnv) = {
     val Ast.StructPat(name, fields) = p
     val structDef = getStructDef(p.r, name)
     val expander = dExpander(d)
@@ -1202,7 +1184,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(field.label, pat1)
     }
 
-    (AnnAst.StructPat(name, fields1)(typ = null, r = p.r), envAcc, penvAcc)
+    (AnnAst.StructPat(name, fields1)(p.r), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---
