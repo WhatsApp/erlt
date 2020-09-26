@@ -40,7 +40,7 @@ object AstUtil {
         allPats.flatMap(collectPatVars)
       case AndPat(p1, p2) =>
         collectPatVars(p1) ++ collectPatVars(p2)
-      case EnumCtrPat(_, _, pats) =>
+      case EnumPat(_, _, pats) =>
         pats.flatMap(collectPatVars)
       case NilPat() =>
         List.empty
@@ -138,7 +138,7 @@ object AstUtil {
         freeVars(struct, m)
       case TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
-      case EnumConExp(enumName, dataCon, args) =>
+      case EnumExp(enumName, dataCon, args) =>
         args.flatMap(freeVars(_, m)).toSet
       case NilExp() =>
         Set.empty
@@ -313,8 +313,8 @@ object AstUtil {
       case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val cons1 = cons.map {
-          case EnumCon(cName, tps) =>
-            EnumCon(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
+          case EnumCtr(cName, tps) =>
+            EnumCtr(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
         }
         EnumDef(name1, params, cons1)(Doc.ZRange)
     }
@@ -371,10 +371,10 @@ object AstUtil {
     }
 
   def normalizeTypes(program: Program): Program = {
-    def normEnumCon(con: EnumCon): EnumCon =
-      con.copy(argTypes = con.argTypes.map(normalizeType(program)))(con.r)
+    def normEnumCtr(ctr: EnumCtr): EnumCtr =
+      ctr.copy(argTypes = ctr.argTypes.map(normalizeType(program)))(ctr.r)
     val enumDefs1 =
-      program.enumDefs.map { ed => ed.copy(cons = ed.cons.map(normEnumCon))(ed.r) }
+      program.enumDefs.map { ed => ed.copy(ctrs = ed.ctrs.map(normEnumCtr))(ed.r) }
     val typeAliases1 =
       program.typeAliases.map { ta => ta.copy(body = normalizeType(program)(ta.body))(ta.r) }
     val opaques1 =
@@ -455,7 +455,7 @@ object AstUtil {
   }
 
   private def getDepEnumDef(enumDef: EnumDef): Set[String] =
-    enumDef.cons.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
+    enumDef.ctrs.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
   private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
@@ -504,7 +504,7 @@ object AstUtil {
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
-      case EnumCtrPat(enumName, _, pats) =>
+      case EnumPat(enumName, _, pats) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]
@@ -558,7 +558,7 @@ object AstUtil {
         getDepExp(struct)
       case TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
-      case EnumConExp(enumName, dataCon, args) =>
+      case EnumExp(enumName, ctr, args) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]

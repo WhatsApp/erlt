@@ -54,7 +54,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtrPattern(r(anno), enum, ctr, eArgs.map(convertPat))
+        LocalEnumPattern(r(anno), enum, ctr, eArgs.map(convertPat))
       case ETuple(
             List(
               EAtom("enum"),
@@ -71,7 +71,7 @@ object PatternsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtrPattern(r(anno), module, enum, ctr, eArgs.map(convertPat))
+        RemoteEnumPattern(r(anno), module, enum, ctr, eArgs.map(convertPat))
       case _ =>
         val literal = ExprsConvert.literal(term)
         LiteralPattern(literal)

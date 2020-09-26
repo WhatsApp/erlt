@@ -54,9 +54,9 @@ object Convert {
             val enumCons =
               body match {
                 case Types.UnionType(_, elems) =>
-                  elems.map(convertEnumCon)
+                  elems.map(convertEnumCtr)
                 case single =>
-                  List(convertEnumCon(single))
+                  List(convertEnumCtr(single))
               }
             val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(p)
             Some(Ast.EnumElem(enumDef))
@@ -167,10 +167,10 @@ object Convert {
         Ast.NilPat()(p)
       case Patterns.ConsPattern(p, hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
-      case Patterns.LocalEnumCtrPattern(p, enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
-      case Patterns.RemoteEnumCtrPattern(p, module, enum, ctr, args) =>
-        Ast.EnumCtrPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
+      case Patterns.LocalEnumPattern(p, enum, ctr, args) =>
+        Ast.EnumPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
+      case Patterns.RemoteEnumPattern(p, module, enum, ctr, args) =>
+        Ast.EnumPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
       case Patterns.ShapePattern(p, fields) =>
         val pats = fields map { elem =>
           val Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) = elem.key
@@ -222,10 +222,10 @@ object Convert {
         Ast.NilExp()(p)
       case Exprs.Cons(p, hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
-      case Exprs.LocalEnumCtr(p, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(p)
-      case Exprs.RemoteEnumCtr(p, module, enum, ctr, args) =>
-        Ast.EnumConExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
+      case Exprs.LocalEnum(p, enum, ctr, args) =>
+        Ast.EnumExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(p)
+      case Exprs.RemoteEnum(p, module, enum, ctr, args) =>
+        Ast.EnumExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
       case Exprs.ShapeCreate(p, entries) =>
         Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
       case Exprs.ShapeUpdate(p, exp, entries) =>
@@ -383,10 +383,10 @@ object Convert {
         throw new UnsupportedSyntaxError(p, "Union type")
     }
 
-  private def convertEnumCon(tp: Types.Type): Ast.EnumCon =
+  private def convertEnumCtr(tp: Types.Type): Ast.EnumCtr =
     tp match {
       case Types.EnumCtr(p, name, params) =>
-        Ast.EnumCon(name, params.map(convertType))(p)
+        Ast.EnumCtr(name, params.map(convertType))(p)
       case _ =>
         throw new UnsupportedSyntaxError(tp.r, "Enum ctr is expected")
     }

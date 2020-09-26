@@ -49,8 +49,8 @@ object Exprs {
   case class ShapeUpdate(r: Doc.Range, exp: Expr, entries: List[ShapeField]) extends Expr
   case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(r: Doc.Range, module: Expr, fun: Expr, args: List[Expr]) extends Expr
-  case class LocalEnumCtr(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
-  case class RemoteEnumCtr(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class LocalEnum(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class RemoteEnum(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
   case class ListComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class Block(r: Doc.Range, exprs: List[Expr]) extends Expr

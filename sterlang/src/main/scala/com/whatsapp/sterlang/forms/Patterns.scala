@@ -32,8 +32,8 @@ object Patterns {
   case class UnOpPattern(r: Doc.Range, op: String, pat1: Pattern) extends Pattern
   case class StructPattern(r: Doc.Range, structName: String, fields: List[StructFieldPattern]) extends Pattern
   case class ShapePattern(r: Doc.Range, elems: List[ShapeFieldPattern]) extends Pattern
-  case class LocalEnumCtrPattern(r: Doc.Range, enum: String, ctr: String, args: List[Pattern]) extends Pattern
-  case class RemoteEnumCtrPattern(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Pattern])
+  case class LocalEnumPattern(r: Doc.Range, enum: String, ctr: String, args: List[Pattern]) extends Pattern
+  case class RemoteEnumPattern(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Pattern])
       extends Pattern
 
   case class BinElementPattern(r: Doc.Range, pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)

@@ -108,7 +108,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       case A.ConsPat(hPat, tPat) =>
         printPat(hPat)
         printPat(tPat)
-      case A.EnumConstructorPat(_, _, pats) =>
+      case A.EnumPat(_, _, pats) =>
         pats.foreach(printPat)
 
       case A.BinPat(elems) =>
@@ -222,7 +222,7 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
       case A.ConsExp(h, t) =>
         printExp(h)
         printExp(t)
-      case A.EnumConstructorExp(_, _, exprs) =>
+      case A.EnumExp(_, _, exprs) =>
         exprs.foreach(printExp)
 
       case A.TryCatchExp(tryBody, catchBranches, after) =>

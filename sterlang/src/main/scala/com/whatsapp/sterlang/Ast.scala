@@ -159,9 +159,9 @@ object Ast {
 
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
-  case class EnumDef(name: String, params: List[TypeVar], cons: List[EnumCon])(val r: Doc.Range)
+  case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
   case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val r: Doc.Range)
-  case class EnumCon(name: String, argTypes: List[Type])(val r: Doc.Range)
+  case class EnumCtr(name: String, argTypes: List[Type])(val r: Doc.Range)
 
   sealed trait Exp { val r: Doc.Range }
   case class BlockExpr(body: Body)(val r: Doc.Range) extends Exp
@@ -180,7 +180,7 @@ object Ast {
   case class ShapeUpdateExp(exp: Exp, delta: ShapeCreateExp)(val r: Doc.Range) extends Exp
 
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
-  case class EnumConExp(enumName: Name, dataCon: String, args: List[Exp])(val r: Doc.Range) extends Exp
+  case class EnumExp(enumName: Name, ctr: String, args: List[Exp])(val r: Doc.Range) extends Exp
   case class NilExp()(val r: Doc.Range) extends Exp
   case class Bin(elems: List[BinElement])(val r: Doc.Range) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val r: Doc.Range) extends Exp
@@ -234,7 +234,7 @@ object Ast {
   case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
   case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
-  case class EnumCtrPat(enumName: Name, conLabel: String, pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class EnumPat(enumName: Name, ctr: String, pats: List[Pat])(val r: Doc.Range) extends Pat
   case class NilPat()(val r: Doc.Range) extends Pat
   case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat

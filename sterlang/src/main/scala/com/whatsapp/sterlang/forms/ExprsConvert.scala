@@ -88,7 +88,7 @@ object ExprsConvert {
               EList(eArgs),
             )
           ) =>
-        LocalEnumCtr(r(anno), enum, ctr, eArgs.map(convertExp))
+        LocalEnum(r(anno), enum, ctr, eArgs.map(convertExp))
       case ETuple(
             List(
               EAtom("enum"),
@@ -105,7 +105,7 @@ object ExprsConvert {
               EList(eArgs),
             )
           ) =>
-        RemoteEnumCtr(r(anno), module, enum, ctr, eArgs.map(convertExp))
+        RemoteEnum(r(anno), module, enum, ctr, eArgs.map(convertExp))
       case ETuple(List(EAtom("lc"), anno, eTemplate, EList(eQualifiers))) =>
         ListComprehension(r(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), anno, eTemplate, EList(eQualifiers))) =>

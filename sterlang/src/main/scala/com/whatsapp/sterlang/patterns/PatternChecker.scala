@@ -287,7 +287,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.OpenVariantStruct(_, _)   => None
       case Pattern.EnumConstructor(enum, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
-        val constructors = enumDef.cons.map(c => Pattern.EnumConstructor(enum, c.name))
+        val constructors = enumDef.ctrs.map(c => Pattern.EnumConstructor(enum, c.name))
         Some(constructors.toSet)
       case _: Pattern.AbstractConstructor => throw new IllegalArgumentException()
     }
@@ -304,7 +304,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
       case Pattern.OpenVariantStruct(_, fields) => fields.length
       case Pattern.EnumConstructor(enum, constructorName) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
-        enumDef.cons.find(_.name == constructorName).get.argTypes.length
+        enumDef.ctrs.find(_.name == constructorName).get.argTypes.length
       case _: Pattern.AbstractConstructor => 0
     }
 }

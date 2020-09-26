@@ -158,7 +158,7 @@ private[patterns] object Pattern {
       case AnnAst.ConsPat(head, tail) =>
         ConstructorApplication(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
 
-      case AnnAst.EnumConstructorPat(enum, constructor, arguments) =>
+      case AnnAst.EnumPat(enum, constructor, arguments) =>
         ConstructorApplication(EnumConstructor(enum, constructor), arguments.map(simplify(vars, program)))
     }
 

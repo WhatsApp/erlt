@@ -145,8 +145,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabListExp(listExp, ty, d, env)
       case consExp: Ast.ConsExp =>
         elabConsExp(consExp, ty, d, env)
-      case enumConExp: Ast.EnumConExp =>
-        elabEnumConExp(enumConExp, ty, d, env)
+      case enumExp: Ast.EnumExp =>
+        elabEnumExp(enumExp, ty, d, env)
       case blockExp: Ast.BlockExpr =>
         elabBlockExp(blockExp, ty, d, env)
       case binExp: Ast.Bin =>
@@ -197,10 +197,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabStringPat(stringPat, ts, d, env, penv, gen)
       case shapePat: Ast.ShapePat =>
         elabShapePat(shapePat, ts, d, env, penv, gen)
-      case enumCtrPat: Ast.EnumCtrPat =>
-        elabEnumCtrPat(enumCtrPat, ts, d, env, penv, gen)
-      case eRecordPat: Ast.StructPat =>
-        elabStructPat(eRecordPat, ts, d, env, penv, gen)
+      case enumPat: Ast.EnumPat =>
+        elabEnumPat(enumPat, ts, d, env, penv, gen)
+      case structPat: Ast.StructPat =>
+        elabStructPat(structPat, ts, d, env, penv, gen)
       case listPat: Ast.NilPat =>
         elabListPat(listPat, ts, d, env, penv, gen)
       case binPat: Ast.BinPat =>
@@ -762,8 +762,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.ConsExp(h1, t1)(typ = ty, r = exp.r)
   }
 
-  private def elabEnumConExp(exp: Ast.EnumConExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.EnumConExp(eName, cName, args) = exp
+  private def elabEnumExp(exp: Ast.EnumExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.EnumExp(eName, cName, args) = exp
     val nName = normalizeEnumName(eName)
     val expander = dExpander(d)
 
@@ -779,19 +779,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val eNamedType = expander.expandType(namedType)
     val arity = args.size
 
-    val enumCon = enumDef.cons.find(con => con.name == cName && con.argTypes.size == arity) match {
+    val enumCtr = enumDef.ctrs.find(con => con.name == cName && con.argTypes.size == arity) match {
       case Some(ec) => ec
       case None     => throw new UnknownEnumCon(exp.r, s"$cName/$arity")
     }
 
-    val args1 = for ((arg, argType) <- args.zip(enumCon.argTypes)) yield {
+    val args1 = for ((arg, argType) <- args.zip(enumCtr.argTypes)) yield {
       val contentType = expander.mkType(argType, sub)
       val eContentType = expander.expandType(contentType)
       elab(arg, eContentType, d, env)
     }
 
     unify(exp.r, ty, eNamedType)
-    AnnAst.EnumConstructorExp(eName.stringId, cName, args1)(typ = ty, r = exp.r)
+    AnnAst.EnumExp(eName.stringId, cName, args1)(typ = ty, r = exp.r)
   }
 
   private def elabBlockExp(exp: Ast.BlockExpr, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -1102,8 +1102,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     (AnnAst.ShapePat(fields)(r = p.r), envAcc, penvAcc)
   }
 
-  private def elabEnumCtrPat(
-      p: Ast.EnumCtrPat,
+  private def elabEnumPat(
+      p: Ast.EnumPat,
       ts: ST.TypeSchema,
       d: T.Depth,
       env: Env,
@@ -1111,7 +1111,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (PreAnnPat, Env, PEnv) = {
     val expander = dExpander(d)
-    val Ast.EnumCtrPat(eName, cName, pats) = p
+    val Ast.EnumPat(eName, cName, pats) = p
     val nName = normalizeEnumName(eName)
     val t = TU.instantiate(d, ts)
 
@@ -1126,13 +1126,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     unify(p.r, t, eNamedType)
 
     val arity = pats.size
-    val enumCon = enumDef.cons.find(con => con.name == cName && con.argTypes.size == arity) match {
+    val enumCtr = enumDef.ctrs.find(con => con.name == cName && con.argTypes.size == arity) match {
       case Some(ec) => ec
       case None     => throw new UnknownEnumCon(p.r, s"$cName/$arity")
     }
     var envAcc = env
     var penvAcc = penv
-    val argPats1 = for ((argType, pat) <- enumCon.argTypes.zip(pats)) yield {
+    val argPats1 = for ((argType, pat) <- enumCtr.argTypes.zip(pats)) yield {
       val contentType = expander.mkType(argType, sub)
       val eContentType = expander.expandType(contentType)
       val (pat1, env1, penv1) = elpat(pat, eContentType, d, envAcc, penvAcc, gen)
@@ -1141,7 +1141,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       pat1
     }
 
-    (AnnAst.EnumConstructorPat(nName.stringId, cName, argPats1)(r = p.r), envAcc, penvAcc)
+    (AnnAst.EnumPat(nName.stringId, cName, argPats1)(r = p.r), envAcc, penvAcc)
   }
 
   private def elabStructPat(

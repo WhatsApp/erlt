@@ -120,24 +120,24 @@ class AstChecks(val context: Context) {
   }
 
   private def checkEnumDef(program: Program, enumDef: EnumDef): Unit = {
-    checkUniqueCons(enumDef.cons)
+    checkUniqueCtrs(enumDef.ctrs)
     val bound = collectParams(enumDef.params)
-    val used = enumDef.cons
+    val used = enumDef.ctrs
       .map { con =>
         con.argTypes.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       }
       .foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(enumDef.params, used)
-    enumDef.cons.foreach { con => con.argTypes.foreach(expandType(program, Set.empty)) }
+    enumDef.ctrs.foreach { con => con.argTypes.foreach(expandType(program, Set.empty)) }
   }
 
-  private def checkUniqueCons(cons: List[EnumCon]): Unit = {
+  private def checkUniqueCtrs(ctrs: List[EnumCtr]): Unit = {
     var defined = Set.empty[String]
-    for (con <- cons) {
-      if (defined(con.name)) {
-        throw new DuplicateEnumCon(con.r, con.name)
+    for (ctr <- ctrs) {
+      if (defined(ctr.name)) {
+        throw new DuplicateEnumCon(ctr.r, ctr.name)
       }
-      defined = defined + con.name
+      defined = defined + ctr.name
     }
   }
 
