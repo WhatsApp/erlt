@@ -35,7 +35,7 @@ object PatternChecker {
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
   */
-class PatternChecker(private val vars: Vars, private val context: Context, val program: Ast.Program) {
+class PatternChecker(private val tu: TypesUtil, private val context: Context, val program: Ast.Program) {
   import PatternChecker._
 
   /** Like [[AnnAst.Clause]] but without the body. */
@@ -109,7 +109,7 @@ class PatternChecker(private val vars: Vars, private val context: Context, val p
 
     // Check for redundancy
     for (clause <- clauses) {
-      val simpleClause = clause.patterns.map(Pattern.simplify(vars, program))
+      val simpleClause = clause.patterns.map(Pattern.simplify(tu, program))
 
       if (!isUseful(previousRows, simpleClause)) {
         val location =

@@ -130,6 +130,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     // Check pattern matching
     // TODO: apply to all files when ready.
     if (new File(erlPath).getParent == "examples/pattern")
-      new PatternChecker(vars, context, program).check(annDefs)
+      new PatternChecker(new TypesUtil(vars), context, program).check(annDefs)
   }
 }

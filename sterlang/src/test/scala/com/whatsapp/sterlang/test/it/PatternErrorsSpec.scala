@@ -59,7 +59,7 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
-    val warnings = new PatternChecker(vars, context, program).warnings(annotatedFunctions)
+    val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annotatedFunctions)
     assert(warnings.nonEmpty)
 
     val actualErr = warnings.map(Main.errorString(erlPath, fileContent(erlPath), _)).mkString("\n")

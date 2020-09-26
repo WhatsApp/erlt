@@ -156,4 +156,25 @@ class TypesUtil(val vars: Vars) {
     tSub(tMap)(typSchema.body)
   }
 
+  def labels(typ: T.Type): List[String] =
+    typ match {
+      case T.ConType(_, _, rs) =>
+        rs.flatMap(rLabels)
+      case T.VarType(typeVar) =>
+        val T.Instance(conType) = vars.tGet(typeVar)
+        labels(conType)
+    }
+
+  private def rLabels(rowType: T.RowType): List[String] =
+    rowType match {
+      case T.RowEmptyType =>
+        Nil
+      case T.RowFieldType(f, r) =>
+        f.label :: rLabels(r)
+      case T.RowVarType(rtv) =>
+        vars.rGet(rtv) match {
+          case T.RowInstance(r) => rLabels(r)
+          case T.RowOpen(_, _)  => Nil
+        }
+    }
 }

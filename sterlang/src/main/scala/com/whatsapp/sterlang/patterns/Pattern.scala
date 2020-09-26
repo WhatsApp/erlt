@@ -16,7 +16,6 @@
 
 package com.whatsapp.sterlang.patterns
 
-import com.whatsapp.sterlang.TyCons.ShapeTyCon
 import com.whatsapp.sterlang._
 
 /** Provides a simplified pattern syntax used during exhaustiveness checking. */
@@ -45,7 +44,7 @@ private[patterns] object Pattern {
     * We compile patterns we cannot reason about to this class.
     *
     * Constructors corresponding to different patterns should be different.
-    * So, we use the range of the original pattern as an identity of ActractCtr
+    * So, we use the range of the original pattern as an identity of AbstractCtr
     */
   case class AbstractCtr(r: Doc.Range) extends Ctr
 
@@ -106,7 +105,7 @@ private[patterns] object Pattern {
   }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
-  def simplify(vars: Vars, program: Ast.Program)(pattern: AnnAst.Pat): Pat =
+  def simplify(tu: TypesUtil, program: Ast.Program)(pattern: AnnAst.Pat): Pat =
     pattern match {
       case AnnAst.WildPat() =>
         Wildcard
@@ -116,7 +115,7 @@ private[patterns] object Pattern {
         Pattern.Wildcard
 
       case AnnAst.AndPat(p1, p2) =>
-        (simplify(vars, program)(p1), simplify(vars, program)(p2)) match {
+        (simplify(tu, program)(p1), simplify(tu, program)(p2)) match {
           case (Wildcard, p2Simple) => p2Simple
           case (p1Simple, Wildcard) => p1Simple
           case _                    =>
@@ -129,15 +128,14 @@ private[patterns] object Pattern {
         CtrApp(Literal(value), Nil)
 
       case AnnAst.TuplePat(elements) =>
-        CtrApp(Tuple(elements.length), elements.map(simplify(vars, program)))
+        CtrApp(Tuple(elements.length), elements.map(simplify(tu, program)))
 
       case AnnAst.ShapePat(patternFields) =>
-        val shapeType = resolveShapeType(vars)(pattern.typ)
         val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
-        val allFieldNames: List[String] = getFieldNames(shapeType).sorted
+        val allFieldNames: List[String] = tu.labels(pattern.typ).sorted
         CtrApp(
           Shape(allFieldNames),
-          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
+          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(tu, program)).getOrElse(Wildcard)),
         )
 
       case AnnAst.StructPat(name, patternFields) =>
@@ -147,7 +145,7 @@ private[patterns] object Pattern {
         val ctr = if (structDef.kind == Ast.StrStruct) Struct else OpenStruct
         CtrApp(
           ctr(name, allFieldNames),
-          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(vars, program)).getOrElse(Wildcard)),
+          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify(tu, program)).getOrElse(Wildcard)),
         )
 
       case _: AnnAst.BinPat =>
@@ -157,40 +155,9 @@ private[patterns] object Pattern {
         CtrApp(EmptyList, Nil)
 
       case AnnAst.ConsPat(head, tail) =>
-        CtrApp(Cons, List(simplify(vars, program)(head), simplify(vars, program)(tail)))
+        CtrApp(Cons, List(simplify(tu, program)(head), simplify(tu, program)(tail)))
 
       case AnnAst.EnumPat(enum, ctr, args) =>
-        CtrApp(EnumCtr(enum, ctr), args.map(simplify(vars, program)))
-    }
-
-  /** Returns all field names present in a row type. */
-  private def getFieldNames(rowType: Types.RowType): List[String] =
-    rowType match {
-      case Types.RowVarType(_) | Types.RowEmptyType => Nil
-      case Types.RowFieldType(f, rest)              => f.label :: getFieldNames(rest)
-    }
-
-  /** Resolves a type to a shape type and resolves any row variables in the shape type. */
-  private def resolveShapeType(vars: Vars)(typ: Types.Type): Types.RowType =
-    typ match {
-      case Types.VarType(typeVar) =>
-        vars.tGet(typeVar) match {
-          case Types.Instance(conType) => resolveShapeType(vars)(conType)
-          case _: Types.Open           => throw new IllegalStateException()
-        }
-      case Types.ConType(ShapeTyCon, List(), List(rowType)) => resolveRowVariable(vars)(rowType)
-      case _: Types.ConType                                 => throw new IllegalStateException()
-    }
-
-  /** Resolves any row variables in a row type if possible. */
-  private def resolveRowVariable(vars: Vars)(rowType: Types.RowType): Types.RowType =
-    rowType match {
-      case Types.RowVarType(typeVar) =>
-        vars.rGet(typeVar) match {
-          case Types.RowInstance(resolvedRowType) => resolvedRowType
-          case _: Types.RowOpen                   => rowType
-        }
-      case Types.RowEmptyType              => Types.RowEmptyType
-      case Types.RowFieldType(field, rest) => Types.RowFieldType(field, resolveRowVariable(vars)(rest))
+        CtrApp(EnumCtr(enum, ctr), args.map(simplify(tu, program)))
     }
 }

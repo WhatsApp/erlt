@@ -75,7 +75,7 @@ object Main {
 
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
-        val warnings = new PatternChecker(vars, context, program).warnings(annFuns)
+        val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
         warnings.foreach(displayError(erlFile, text, _))
       }
 
