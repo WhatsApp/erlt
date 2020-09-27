@@ -35,7 +35,9 @@ class Vars() {
   def rSet(key: Var[RV], value: RV): Unit = rVars.set(key, value)
 
   def tEq(key1: Var[TV], key2: Var[TV]): Boolean = tVars.eq(key1, key2)
+  // $COVERAGE-OFF$ extensible-shapes
   def rEq(key1: Var[RV], key2: Var[RV]): Boolean = rVars.eq(key1, key2)
+  // $COVERAGE-ON$
 
   def tLink(key1: Var[TV], key2: Var[TV]): Boolean = tVars.link(key1, key2)
 

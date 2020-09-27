@@ -65,8 +65,10 @@ class Unify(val vars: Vars) {
             case T.RowOpen(d1, k) =>
               vars.rSet(rtv1, T.RowOpen(Integer.min(d, d1), k))
               v match {
+                // $COVERAGE-OFF$ extensible-shapes
                 case URowTypeVar(rtv) if vars.rEq(rtv, rtv1) =>
                   throw RowCircularity
+                // $COVERAGE-ON$
                 case _ =>
                 // OK
               }
@@ -126,8 +128,9 @@ class Unify(val vars: Vars) {
 
     def inst(v: T.RowTypeVar, open: T.RowOpen, fields: List[T.Field], base: T.RowType): Unit = {
       fields.foreach { f => adjust(URowTypeVar(v), open.d, f.value) }
+      // $COVERAGE-OFF$ extensible-shapes
       fields.find { f => open.kind(f.label) } foreach { f => throw FieldMismatch(f.label) }
-
+      // $COVERAGE-ON$
       vars.rSet(v, T.RowInstance(fields.foldRight(base)(T.RowFieldType)))
     }
 

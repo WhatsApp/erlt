@@ -51,6 +51,7 @@ object Main {
       try {
         loadProgram(mainFile)
       } catch {
+        // $COVERAGE-OFF$ interactive
         case error: ParseError =>
           displayParseError(erlFile, text, error)
           sys.exit(2)
@@ -59,6 +60,7 @@ object Main {
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
           sys.exit(2)
+        // $COVERAGE-ON$
       }
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -74,15 +76,19 @@ object Main {
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
         val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
+        // $COVERAGE-OFF$ interactive
         warnings.foreach(displayError(erlFile, text, _))
+        // $COVERAGE-ON$
       }
 
       // checking them in the very end - since it is possible to present inferred types here
       astChecks.checkPublicSpecs(program)
     } catch {
+      // $COVERAGE-OFF$ interactive
       case error: RangedError =>
         displayError(erlFile, text, error)
         sys.exit(2)
+      // $COVERAGE-ON$
     }
   }
 
@@ -136,9 +142,13 @@ object Main {
     etf.programFromFile(file)
   }
 
-  private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit = {
+  // $COVERAGE-OFF$ interactive
+  private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =
     Console.println(errorString(inputPath, inputContent, error))
-  }
+
+  private def displayParseError(inputPath: String, inputContent: String, error: ParseError): Unit =
+    Console.println(parseErrorString(inputPath, inputContent, error))
+  // $COVERAGE-ON$ interactive
 
   def errorString(inputPath: String, inputContent: String, error: RangedError): String = {
     val RangedError(range, title, description) = error
@@ -146,10 +156,6 @@ object Main {
     val msgTitle = Doc.title(error.severity, inputPath, range.start)
     val descText = description.map(_ ++ "\n").getOrElse("")
     msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
-  }
-
-  private def displayParseError(inputPath: String, inputContent: String, error: ParseError): Unit = {
-    Console.println(parseErrorString(inputPath, inputContent, error))
   }
 
   def parseErrorString(inputPath: String, inputContent: String, error: ParseError): String = {
