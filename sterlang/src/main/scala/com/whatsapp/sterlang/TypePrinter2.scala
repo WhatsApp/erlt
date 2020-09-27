@@ -34,18 +34,13 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
   }
 
   private def printTypeScheme(env: Env, v: String): Unit = {
-    env.get(v) match {
-      case Some(typeSchema) =>
-        /// "fun(...)"
-        val raw = printer.typeSchema(typeSchema, TypePrinter2.TypeSchemes)
-        val inner = raw.substring(4, raw.length - 1)
-        val slashIndex = v.lastIndexOf('/')
-        val normV = v.substring(0, slashIndex)
-        val pp = "-spec " + normV + inner + "."
-        output(pp)
-      case None =>
-        sys.error("showvar: variable not found")
-    }
+    val typeSchema = env(v)
+    val raw = printer.typeSchema(typeSchema, TypePrinter2.TypeSchemes)
+    val inner = raw.substring(4, raw.length - 1)
+    val slashIndex = v.lastIndexOf('/')
+    val normV = v.substring(0, slashIndex)
+    val pp = "-spec " + normV + inner + "."
+    output(pp)
   }
 
   def printValDefsTypes(defs: List[A.ValDef]): Unit = {
@@ -257,12 +252,8 @@ case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
     }
 
   private def output(pp: String): Unit = {
-    sw match {
-      case Some(w) =>
-        w.append(pp)
-        w.append("\n")
-      case None =>
-        println(pp)
-    }
+    val Some(w) = sw
+    w.append(pp)
+    w.append("\n")
   }
 }

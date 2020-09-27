@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------- examples/err2/e123.erl:21:1
+Spec mismatch for test_l/1
+Specified:  `fun(({list(A), list(B)}) -> {list(B), list(A)})`
+Elaborated: `fun(({list(A), list(A)}) -> {list(A), list(A)})`
+ 21| -spec test_l(l(A, B)) -> l(B, A).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -60,8 +60,12 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     try {
       val vars = new Vars()
       val context = Main.loadContext(etfPath, program, vars).extend(program)
-      new AstChecks(context).check(program)
+      val astChecks = new AstChecks(context)
+      astChecks.check(program)
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      if (erlPath.contains("_unspeced")) {
+        astChecks.checkPublicSpecs(program)
+      }
       fail(s"$erlPath should not type-check")
     } catch {
       case error: RangedError =>

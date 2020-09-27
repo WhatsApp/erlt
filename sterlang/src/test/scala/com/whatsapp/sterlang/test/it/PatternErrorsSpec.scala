@@ -40,13 +40,9 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       moduleNames.foreach { p =>
         val erlPath = s"$iDirPath/$p.erl"
         val etfPath = s"$oDirPath/$p.etf"
-        if (erlPath.endsWith("redundant_empty.erl")) {
-          // TODO
-          ignore(erlPath) {}
-        } else
-          it(erlPath) {
-            processIllPatterns(erlPath, etfPath)
-          }
+        it(erlPath) {
+          processIllPatterns(erlPath, etfPath)
+        }
       }
     }
   }

@@ -64,7 +64,6 @@ object PatternChecker {
     p match {
       case Wildcard                                    => "_"
       case CtrApp(Literal(Ast.BooleanVal(value)), Nil) => value.toString
-      case CtrApp(Literal(_), _)                       => throw new IllegalArgumentException()
       case CtrApp(Tuple(_), args)                      => tuple(args)
       case CtrApp(EmptyList, Nil)                      => "[]"
       case CtrApp(Cons, List(head, tail))              =>
@@ -88,8 +87,16 @@ object PatternChecker {
 
         processTail(tail)
         result.toString()
+
+      // $COVERAGE-OFF$ unreachable
       case CtrApp(EmptyList, _) | CtrApp(Cons, _) =>
         throw new IllegalArgumentException()
+      case CtrApp(Literal(_), _) =>
+        throw new IllegalArgumentException()
+      case CtrApp(OpenStruct(_, _), _) =>
+        throw new IllegalArgumentException()
+      // $COVERAGE-ON$
+
       case CtrApp(Shape(fieldNames), args) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
@@ -98,12 +105,7 @@ object PatternChecker {
       case CtrApp(Struct(struct, fieldNames), args) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
-
-        // TODO: quote field names when necessary
         fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$struct{", sep = ", ", end = "}")
-
-      case CtrApp(OpenStruct(struct, fieldNames), args) =>
-        show(CtrApp(Struct(struct, fieldNames), args))
 
       case CtrApp(EnumCtr(enum, ctr), args) =>
         s"$enum.$ctr${tuple(args)}"
@@ -126,17 +128,6 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
     val warnings = ListBuffer[PatternWarning]()
     functions.foreach(f => checkNode(f, warnings))
     warnings.toList
-  }
-
-  /** Throws the first warning returned by [[warnings]], if any.
-    *
-   * @throws PatternWarning if {{{warning(functions)}}} is not empty.
-    */
-  def check(functions: List[AnnAst.Fun]): Unit = {
-    warnings(functions) match {
-      case Nil        => // no warnings
-      case first :: _ => throw first
-    }
   }
 
   /** Converts a surface syntax pattern to the simplified representation here. */
@@ -226,10 +217,8 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
     // Check for redundancy
     for (clause <- clauses) {
       val simpleClause = clause.patterns.map(simplify)
-      if (!isUseful(previousRows, simpleClause)) {
-        val location =
-          if (clause.patterns.isEmpty) Doc.ZRange
-          else Doc.merge(clause.patterns.head.r, clause.patterns.last.r)
+      if (clause.patterns.nonEmpty && !isUseful(previousRows, simpleClause)) {
+        val location = Doc.merge(clause.patterns.head.r, clause.patterns.last.r)
         warnings += new UselessPatternWarning(location)
       }
       if (countsTowardExhaustiveness(clause)) {
@@ -410,7 +399,9 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
         val enumDef = context.enumDefs.find(_.name == enum).get
         val ctrs = enumDef.ctrs.map(c => EnumCtr(enum, c.name))
         Some(ctrs.toSet)
+      // $COVERAGE-OFF$ unreachable
       case AbstractCtr(_) => throw new IllegalArgumentException()
+      // $COVERAGE-ON$
     }
 
   /** Returns the number of arguments the given constructor takes. */

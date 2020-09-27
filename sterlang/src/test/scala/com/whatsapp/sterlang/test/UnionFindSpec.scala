@@ -4,7 +4,7 @@ import com.whatsapp.sterlang.UnionFind
 
 class UnionFindSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
-  "UnionFind" should "should create unique vars" in {
+  "UnionFind" should "create unique vars" in {
     val uf = new UnionFind[Int]
     val var1 = uf.make(1)
     val var2 = uf.make(1)
@@ -70,7 +70,7 @@ class UnionFindSpec extends org.scalatest.flatspec.AnyFlatSpec {
     assert(uf.eq(var2, var1) === true)
   }
 
-  it should "should link transitively" in {
+  it should "link transitively" in {
     val uf = new UnionFind[String]
 
     val var1 = uf.make("1")
@@ -89,4 +89,5 @@ class UnionFindSpec extends org.scalatest.flatspec.AnyFlatSpec {
 
     assert(uf.eq(var1, var4) === true)
   }
+
 }
