@@ -95,8 +95,11 @@ class Expander(
         expandSType(t1)
       case ST.ConType(tyCon, typs, rtys) =>
         ST.ConType(tyCon, typs.map(expandSType), rtys.map(expandRSType))
-      case ST.RefType(sTypeVar) =>
-        ST.RefType(sTypeVar)
+      // $COVERAGE-OFF$ unreachable
+      /** expandSType takes the result of [[mkSType]], so there is no [[ST.RefType]] */
+      case ST.RefType(_) =>
+        throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   private def expandRSType(rts: ST.RowType): ST.RowType =
@@ -107,8 +110,11 @@ class Expander(
         ST.RowEmptyType
       case ST.RowFieldType(ST.Field(l, st), rTyps) =>
         ST.RowFieldType(ST.Field(l, expandSType(st)), expandRSType(rTyps))
+      // $COVERAGE-OFF$ unreachable
+      /** expandRSType takes the result of [[mkSType]], so there is no [[ST.RefType]] */
       case ST.RowRefType(sRowTypeVar) =>
-        ST.RowRefType(sRowTypeVar)
+        throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   def expandType(t: T.Type): T.Type =

@@ -241,15 +241,17 @@ class AstChecks(val context: Context) {
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>
         args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      case ShapeType(fields) =>
-        fields.map(f => collectTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      case OpenShapeType(fields, _) =>
-        sys.error("Unexpected to see it here")
       case FunType(args, res) =>
         (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
         collectTypeVars(bound)(elemType)
       case StructType(_) =>
         Set.empty
+      case ShapeType(fields) =>
+        fields.map(f => collectTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+      // $COVERAGE-OFF$ TODO
+      case OpenShapeType(fields, _) =>
+        ???
+      // $COVERAGE-ON$
     }
 }
