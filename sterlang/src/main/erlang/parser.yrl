@@ -602,6 +602,7 @@ strip_shape_tuple({shape_tuple, _Anno, List}) ->
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', anno(Try, End), Es, Scs, Ccs, As}.
 
+-spec ret_err(_, _) -> no_return().
 ret_err({{Start, End}, _}, S) ->
     return_error({Start, End}, S);
 ret_err(Loc, S) ->
