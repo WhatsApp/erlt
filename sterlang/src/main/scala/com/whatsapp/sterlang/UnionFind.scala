@@ -65,12 +65,11 @@ object UnionFind {
 final class UnionFind[A] {
   import UnionFind._
 
-  private var tNext = 0
+  private var count = 0
 
   def make(a: A): Var[A] = {
-    val i = tNext
-    tNext = tNext + 1
-    UnionFind.uRef((a, i))
+    count = count + 1
+    UnionFind.uRef((a, count))
   }
 
   def get(tv: Var[A]): A =
