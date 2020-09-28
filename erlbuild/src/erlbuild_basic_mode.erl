@@ -47,9 +47,14 @@ do_phase(Phase, #args{input_files = InputFiles} = Args) ->
 
 do_file(
     Phase,
-    #args{build_dir = BuildDir, output_dir = OutputDir, erlc_argv = ErlcArgv},
+    #args{src_dir = SrcDir0, build_dir = BuildDir, output_dir = OutputDir, erlc_argv = ErlcArgv},
     InputFile
 ) ->
+    SrcDir =
+        case SrcDir0 of
+            undefined -> ".";
+            Dir -> Dir
+        end,
     mkdirp(BuildDir),
     mkdirp(OutputDir),
     Args =
@@ -57,8 +62,10 @@ do_file(
             "--build-phase",
             Phase,
             "--build-dir",
-            BuildDir
-        ] ++ ErlcArgv ++ [InputFile],
+            BuildDir,
+            "-o",
+            OutputDir
+        ] ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
     case erltc:api(Args) of
         ok ->
             ok;
