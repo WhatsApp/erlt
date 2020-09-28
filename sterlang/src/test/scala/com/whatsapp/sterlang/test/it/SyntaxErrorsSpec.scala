@@ -36,11 +36,14 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val moduleNames =
         file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
 
-      // TODO resurrect testing of Erlang subtleties: copy and rename *.erlt -> *erl under the hood
-      // val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
-      // val erlcOutDir = Files.createTempDirectory("erlc-out")
-      // val erlcInputs = erlCompatModules.map(m => s"$iDirPath/$m.erlt").mkString(" ")
-      // s"erlc -o $erlcOutDir $erlcInputs".!!
+      val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
+      val erlcTmpDir = Files.createTempDirectory("erlc-in")
+      erlCompatModules.foreach { m =>
+        Files.copy(Paths.get(s"$iDirPath/$m.erlt"), erlcTmpDir.resolve(s"$m.erl"))
+      }
+      val erlcInputs = erlCompatModules.map(m => s"$erlcTmpDir/$m.erl").mkString(" ")
+      val cmd = s"erlc -o $erlcTmpDir $erlcInputs"
+      s"erlc -o $erlcTmpDir $erlcInputs".!!
 
       moduleNames.foreach { p =>
         val erltPath = s"$iDirPath/$p.erlt"
