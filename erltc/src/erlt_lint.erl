@@ -2278,7 +2278,7 @@ gexpr({anon_struct, _Line, Fields}, Vt, St) ->
     check_anon_struct_fields(Fields, Vt, St, fun gexpr/3);
 gexpr({anon_struct_update, _Line, Expr, Fields}, Vt, St) ->
     {Svt, St1} = gexpr(Expr, Vt, St),
-    check_anon_struct_fields(Fields, Svt, St1, fun gexpr/3);
+    check_anon_struct_fields(Fields, vtmerge(Vt, Svt), St1, fun gexpr/3);
 gexpr({anon_struct_field, _Line, Expr, _Field}, Vt, St) ->
     gexpr(Expr, Vt, St);
 gexpr({struct, Line, Name, Fields}, Vt, St) ->
@@ -2527,7 +2527,7 @@ expr({anon_struct, _Line, Fields}, Vt, St) ->
     check_anon_struct_fields(Fields, Vt, St, fun expr/3);
 expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
     {Evt, St1} = expr(Expr, Vt, St0),
-    check_anon_struct_fields(Fields, Evt, St1, fun expr/3);
+    check_anon_struct_fields(Fields, vtmerge(Vt, Evt), St1, fun expr/3);
 expr({anon_struct_field, _Line, Expr, _Field}, Vt, St0) ->
     expr(Expr, Vt, St0);
 expr({struct, Line, Name, Fields}, Vt, St) ->
@@ -3107,7 +3107,7 @@ check_anon_struct_fields(
             {[], add_error(Lf, {reuse_anon_struct_field, F}, St)};
         false ->
             {Vt1, St1} = CheckFun(Val, Vt, St),
-            check_anon_struct_fields(Fields, Vt1, St1, CheckFun, [F | UsedFields])
+            check_anon_struct_fields(Fields, vtmerge(Vt, Vt1), St1, CheckFun, [F | UsedFields])
     end;
 check_anon_struct_fields([], Vt, St, _CheckFun, _) ->
     {Vt, St}.
@@ -3125,7 +3125,7 @@ check_anon_struct_pattern_fields(
             {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
         false ->
             {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, Bvt, St),
-            check_anon_struct_pattern_fields(Fields, Vt1, Old, Bvt1, St1, [F | UsedFields])
+            check_anon_struct_pattern_fields(Fields, vtmerge_pat(Vt, Vt1), Old, Bvt1, St1, [F | UsedFields])
     end;
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
