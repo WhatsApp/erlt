@@ -3129,7 +3129,7 @@ check_anon_struct_pattern_fields(
                 Fields,
                 vtmerge_pat(Vt, Vt1),
                 Old,
-                Bvt1,
+                vtmerge_pat(Bvt, Bvt1),
                 St1,
                 [F | UsedFields]
             )
