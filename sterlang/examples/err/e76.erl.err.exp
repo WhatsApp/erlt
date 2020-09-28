@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e76.erl:18:16
-Unknown type: super_type/0
- 18| -spec foo() -> super_type().
-...|                ~~~~~~~~~~~~

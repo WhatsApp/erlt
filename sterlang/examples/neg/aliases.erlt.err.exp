@@ -1,0 +1,6 @@
+-- ERROR ----------------------------------------- examples/neg/aliases.erlt:5:1
+Spec mismatch for mk_pair/1
+Specified:  `fun((A) -> {A, B})`
+Elaborated: `fun((A) -> {A, A})`
+  5| -spec mk_pair(A) -> pair(A, B).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

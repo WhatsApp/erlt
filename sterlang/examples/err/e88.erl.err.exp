@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e88.erl:19:14
-Unknown struct: #unknown_struct{}
- 19|     field :: #unknown_struct{}
-...|              ~~~~~~~~~~~~~~~~~

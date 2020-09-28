@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------ examples/err2/e111.erl:20:17
-#foo{} is not a type. Did you mean `exception()`?
- 20| -spec test() -> #foo{}.
-...|                 ~~~~~~

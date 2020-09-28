@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err2/e106.erl:22:8
-Type Mismatch
-Found:    integer()
-Required: string()
- 22|     Foo#foo.id.
-...|        ~~~~~~~

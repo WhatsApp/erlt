@@ -1,4 +1,0 @@
--- ERROR ------------------------------------- examples/err-syntax/e14.erl:21:22
-Parse Error
- 21| -spec make_nil() -> [].
-...|                      ^

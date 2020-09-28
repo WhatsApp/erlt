@@ -1,5 +1,0 @@
--- ERROR -------------------------------- examples/err-syntax/e39_erlt.erl:18:24
-Unsupported Syntax
-Enum ctr is expected
- 18| -enum box() :: box{} | boolean().
-...|                        ~~~~~~~~~

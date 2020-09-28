@@ -1,4 +1,0 @@
--- WARNING ------------------- examples/pattern-error/redundant_record2.erl:22:7
-Useless Pattern
- 22| test1(#()) -> {}.
-...|       ~~~

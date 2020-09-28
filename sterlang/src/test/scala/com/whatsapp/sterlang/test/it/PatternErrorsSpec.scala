@@ -35,19 +35,19 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
       val file = new File(iDirPath)
       val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
 
       moduleNames.foreach { p =>
-        val erlPath = s"$iDirPath/$p.erl"
+        val erltPath = s"$iDirPath/$p.erlt"
         val etfPath = s"$oDirPath/$p.etf"
-        it(erlPath) {
-          processIllPatterns(erlPath, etfPath)
+        it(erltPath) {
+          processIllPatterns(erltPath, etfPath)
         }
       }
     }
   }
 
-  private def processIllPatterns(erlPath: String, etfPath: String): Unit = {
+  private def processIllPatterns(erltPath: String, etfPath: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -57,15 +57,15 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annotatedFunctions)
     assert(warnings.nonEmpty)
 
-    val actualErr = warnings.map(Main.errorString(erlPath, fileContent(erlPath), _)).mkString("\n")
+    val actualErr = warnings.map(Main.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
     if (generateOut) {
-      val expPath = Paths.get(erlPath + ".warn.exp")
+      val expPath = Paths.get(erltPath + ".warn.exp")
       Files.write(expPath, actualErr.getBytes)
     }
 
-    val tmpPath = Paths.get(erlPath + "_err")
+    val tmpPath = Paths.get(erltPath + "_err")
     Files.write(tmpPath, actualErr.getBytes)
-    val expectedErr = fileContent(erlPath + ".warn.exp")
+    val expectedErr = fileContent(erltPath + ".warn.exp")
     assert(expectedErr === actualErr)
     Files.delete(tmpPath)
   }

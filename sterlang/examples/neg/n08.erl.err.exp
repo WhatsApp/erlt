@@ -1,5 +1,0 @@
--- ERROR -------------------------------------------- examples/neg/n08.erl:26:24
-Infinite type
-A <> recRec1(A)
- 26|   getOrElse(next(Rec), Rec).
-...|                        ~~~

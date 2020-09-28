@@ -34,45 +34,46 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
       val file = new File(iDirPath)
       val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
 
-      val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
-      val erlcOutDir = Files.createTempDirectory("erlc-out")
-      val erlcInputs = erlCompatModules.map(m => s"$iDirPath/$m.erl").mkString(" ")
-      s"erlc -o $erlcOutDir $erlcInputs".!!
+      // TODO resurrect testing of Erlang subtleties: copy and rename *.erlt -> *erl under the hood
+      // val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
+      // val erlcOutDir = Files.createTempDirectory("erlc-out")
+      // val erlcInputs = erlCompatModules.map(m => s"$iDirPath/$m.erlt").mkString(" ")
+      // s"erlc -o $erlcOutDir $erlcInputs".!!
 
       moduleNames.foreach { p =>
-        val erlPath = s"$iDirPath/$p.erl"
+        val erltPath = s"$iDirPath/$p.erlt"
         val etfPath = s"$oDirPath/$p.etf"
-        it(erlPath) {
-          processIllSyntax(erlPath, etfPath)
+        it(erltPath) {
+          processIllSyntax(erltPath, etfPath)
         }
       }
     }
   }
 
-  def processIllSyntax(erlPath: String, etfPath: String): Unit = {
+  def processIllSyntax(erltPath: String, etfPath: String): Unit = {
     try {
       Main.loadProgram(etfPath)
-      fail(s"$erlPath should generate an UnsupportedSyntaxError")
+      fail(s"$erltPath should generate an UnsupportedSyntaxError")
     } catch {
       case error: UnsupportedSyntaxError =>
-        val errMsg = Main.errorString(erlPath, fileContent(erlPath), error)
-        checkMsg(erlPath, errMsg)
+        val errMsg = Main.errorString(erltPath, fileContent(erltPath), error)
+        checkMsg(erltPath, errMsg)
       case error: ParseError =>
-        val errMsg = Main.parseErrorString(erlPath, fileContent(erlPath), error)
-        checkMsg(erlPath, errMsg)
+        val errMsg = Main.parseErrorString(erltPath, fileContent(erltPath), error)
+        checkMsg(erltPath, errMsg)
     }
   }
 
-  private def checkMsg(erlPath: String, actualErrMsg: String): Unit = {
+  private def checkMsg(erltPath: String, actualErrMsg: String): Unit = {
     if (generateOut) {
-      val expPath = Paths.get(erlPath + ".err.exp")
+      val expPath = Paths.get(erltPath + ".err.exp")
       Files.write(expPath, actualErrMsg.getBytes)
     }
-    val tmpPath = Paths.get(erlPath + "_err")
+    val tmpPath = Paths.get(erltPath + "_err")
     Files.write(tmpPath, actualErrMsg.getBytes)
-    val expectedErr = fileContent(erlPath + ".err.exp")
+    val expectedErr = fileContent(erltPath + ".err.exp")
     assert(expectedErr === actualErrMsg)
     Files.delete(tmpPath)
   }

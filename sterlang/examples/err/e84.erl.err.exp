@@ -1,6 +1,0 @@
--- ERROR --------------------------------------------- examples/err/e84.erl:19:7
-Type Mismatch
-Found:    integer()
-Required: binary()
- 19|     <<Y:(Y + Z)/binary>>.
-...|       ^

@@ -1,0 +1,5 @@
+-- ERROR ------------------------------- examples/err-syntax/e40_erlt.erlt:18:20
+Unsupported Syntax
+Enum ctr used as a type
+ 18| -enum box() :: box{box{}}.
+...|                    ~~~~~

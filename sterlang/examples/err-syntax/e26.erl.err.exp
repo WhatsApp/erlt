@@ -1,5 +1,0 @@
--- ERROR ------------------------------------- examples/err-syntax/e26.erl:23:15
-Unsupported Syntax
-Match expression
- 23|     Res = foo(Bind = get(0)),
-...|               ~~~~~~~~~~~~~

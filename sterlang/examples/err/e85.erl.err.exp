@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e85.erl:18:22
-Unknown struct: #unknown_record{}
- 18| -spec unknown_record(#unknown_record{}) -> integer().
-...|                      ~~~~~~~~~~~~~~~~~

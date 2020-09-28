@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e43.erl:18:35
-Type Mismatch
-Found:    e2()
-Required: e1()
- 18| foo(E) -> case E of e1.e1{} -> 1; e2.e2{} -> 2 end.
-...|                                   ~~~~~~~

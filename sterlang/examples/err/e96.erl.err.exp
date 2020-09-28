@@ -1,4 +1,0 @@
--- ERROR --------------------------------------------- examples/err/e96.erl:21:5
-Uninitialized field #my_record.id
- 21|     #my_record{hash = 1}.
-...|     ~~~~~~~~~~~~~~~~~~~~

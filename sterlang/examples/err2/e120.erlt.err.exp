@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------------ examples/err2/e120.erlt:21:6
+Unconditional select. my_msg is message()
+ 21|     M#my_msg.message.
+...|      ~~~~~~~~~~~~~~~

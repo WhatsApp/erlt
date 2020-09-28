@@ -1,0 +1,24 @@
+-- WARNING -------------------- examples/pattern-error/multiple_errors.erlt:22:1
+Missing Patterns
+missing: ab.b{}
+ 22| test1(ab.a{}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~
+
+-- WARNING -------------------- examples/pattern-error/multiple_errors.erlt:25:1
+Missing Patterns
+missing: ab.a{}
+ 25| test2(ab.b{}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~
+
+-- WARNING -------------------- examples/pattern-error/multiple_errors.erlt:29:7
+Useless Pattern
+ 29| test3(ab.a{}) -> {}.
+...|       ~~~~~~
+
+-- WARNING -------------------- examples/pattern-error/multiple_errors.erlt:28:1
+Missing Patterns
+missing: ab.b{}
+ 28| test3(ab.a{}) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~
+ 29| test3(ab.a{}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~

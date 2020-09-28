@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e46.erl:17:32
-Type Mismatch
-Found:    integer()
-Required: boolean()
- 17| foo(E) -> case E of true -> 1; 2 -> 3 end.
-...|                                ^

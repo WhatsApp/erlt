@@ -1,4 +1,0 @@
--- ERROR ------------------------------------- examples/err-syntax/e18.erl:21:13
-Parse Error
- 21| -spec range(10 * 10) -> 1 + 2.
-...|             ^

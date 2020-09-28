@@ -1,6 +1,0 @@
--- ERROR --------------------------------------------- examples/neg/n09.erl:5:12
-Type Mismatch
-Found:    #( n :: integer() )
-Required: #( n :: string(), A )
-  5|     Rec2 = Rec1 #(n = "String"),
-...|            ~~~~

@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------- examples/err/e47.erlt:17:32
+Type Mismatch
+Found:    string()
+Required: boolean()
+ 17| foo(E) -> case E of true -> 1; "false" -> 3 end.
+...|                                ~~~~~~~

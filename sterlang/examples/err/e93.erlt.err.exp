@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------------- examples/err/e93.erlt:21:16
+Unknown field #my_struct.unknown_field
+ 21|     #my_struct{unknown_field = 1}.
+...|                ~~~~~~~~~~~~~~~~~

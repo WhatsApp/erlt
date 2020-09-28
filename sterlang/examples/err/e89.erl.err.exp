@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e89.erl:19:14
-Unbound type variable: TypeVar
- 19|     field :: TypeVar
-...|              ~~~~~~~
