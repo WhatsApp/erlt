@@ -1,4 +1,4 @@
--file("calc.erl", 1).
+-file("calc.erlt", 1).
 
 -module(calc).
 

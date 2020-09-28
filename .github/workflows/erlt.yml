@@ -20,37 +20,33 @@ jobs:
         run:  rebar3 fmt --check || (echo "please run 'rebar3 fmt --write'" && $(exit 1))
       - name: erltc and erlbuild
         run:  rebar3 compile
-      # - name: build sterlang backend
-      #   run:  cd sterlang; sbt assembly
-      - name: "examples/dev/src: make"
-        run:  make -C examples/dev/src
-      - name: "examples/doc/src: make"
-        run:  make -C examples/doc/src
-      - name: "examples/elm-core/src: make"
-        run:  make -C examples/elm-core/src
-      - name: "examples/dev_dots/src: make"
-        run:  make -C examples/dev_dots/src
-      - name: "examples/dev_enum/src: make"
-        run:  make -C examples/dev_enum/src
-      - name: "examples/dev_struct/src: make"
-        run:  make -C examples/dev_struct/src
-      # TODO: restore the calc example in #186
-      # - name: "examples/calc/src: make"
-      #   run:  make -C examples/calc/src
-      - name: "examples/dev/src: test-ir"
-        run:  make test-ir -C examples/dev/src
-      - name: "examples/doc/src: test-ir"
-        run:  make test-ir -C examples/doc/src
-      - name: "examples/elm-core/src: test-ir"
-        run:  make test-ir -C examples/elm-core/src
-      - name: "examples/dev_dots/src: test-ir"
-        run:  make test-ir -C examples/dev_dots/src
-      - name: "examples/dev_enum/src: test-ir"
-        run:  make test-ir -C examples/dev_enum/src
-      # TODO: restore the calc example in #186
-      # - name: "examples/calc/src: test-ir"
-      #   run:  make test-ir -C examples/calc/src
-      - name: "examples/dev_struct/src: test-ir"
-        run:  make test-ir -C examples/dev_struct/src
-      - name: "examples/checks/src: test"
-        run:  make test -C examples/checks/src
+      - name: "compile examples/calc"
+        run: "cd ./examples && rebar3 erlt calc"
+      - name: "compile examples/dev"
+        run: "cd ./examples && rebar3 erlt dev"
+      - name: "compile examples/dev_dots"
+        run: "cd ./examples && rebar3 erlt dev_dots"
+      - name: "compile examples/dev_enum"
+        run: "cd ./examples && rebar3 erlt dev_enum"
+      - name: "compile examples/dev_struct"
+        run: "cd ./examples && rebar3 erlt dev_struct"
+      - name: "compile examples/doc"
+        run: "cd ./examples && rebar3 erlt doc"
+      - name: "compile examples/elm_core"
+        run: "cd ./examples && rebar3 erlt elm_core"
+      - name: "test-ir for examples/calc"
+
+        run: "cd ./examples && make test-ir/calc"
+      - name: "test-ir for examples/dev"
+        run: "cd ./examples && make test-ir/dev"
+      - name: "test-ir for examples/dev_dots"
+        run: "cd ./examples && make test-ir/dev_dots"
+      - name: "test-ir for examples/dev_enum"
+        run: "cd ./examples && make test-ir/dev_enum"
+      - name: "test-ir for examples/dev_struct"
+        run: "cd ./examples && make test-ir/dev_struct"
+      - name: "test-ir for examples/doc"
+        run: "cd ./examples && make test-ir/doc"
+      - name: "test-ir for examples/elm_core"
+        run: "cd ./examples && make test-ir/elm_core"
+

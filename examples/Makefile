@@ -1,49 +1,35 @@
-# TODO: restore calc/src example in #186
-DIRS := dev/src doc/src elm-core/src dev_dots/src dev_enum/src dev_struct/src # calc/src
+DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core
 
--include ../dir.mk
+build:
+	rebar3 erlt
 
+clean:
+	rm -rf _build
 
-TEST_DIRS := $(DIRS)
+test-ir: $(DIRS:%=test-ir/%)
 
+ir: $(DIRS:%=.ir/%)
 
-ir: $(TEST_DIRS:%=.ir/%)
+.ir/%:
+	rm -rf _build/ir/lib/$*
+	rebar3 as ir erlt $*
 
-# commenting generic iterator out as there's some custom handling depending on a
-# dir
-#
-#test-ir: $(TEST_DIRS:%=.test-ir/%)
+test-ir/%: .ir/%
+	diff -x '*.beam' -x '*.app' -r _build/ir/lib/$*/ebin $*/ir-spec
 
-test-ir:
-	$(MAKE) -C dev/src test-ir
-	$(MAKE) -C doc/src test-ir
-	$(MAKE) -C elm-core/src test-ir
-	$(MAKE) -C dev_dots/src test-ir
-	$(MAKE) -C dev_enum/src test-ir
-	# TODO: restore calc/src example in #186
-	# $(MAKE) -C calc/src test-ir
-	$(MAKE) -C dev_struct/src test-ir
+update-ir-spec/%: .ir/%
+	rm -rf $*/ir-spec
+	mkdir -p $*/ir-spec
+	cp -r _build/ir/lib/$*/ebin/*.P $*/ir-spec
+
+update-ir-spec: $(DIRS:%=update-ir-spec/%)
 
 test-others:
 	# TODO: port to remote structs and re-enable
 	# $(MAKE) -C dev_module_record/src erl2c-records
 	$(MAKE) -C checks/src test
 
-update-ir-spec: $(TEST_DIRS:%=.update-ir-spec/%)
+test: test-ir test-others
 
+.PHONY: build clean ir test-ir update-ir-spec
 
-.ir/%: %
-	$(MAKE) -C $< ir
-
-.test-ir/%: %
-	$(MAKE) -C $< test-ir
-
-.update-ir-spec/%: %
-	$(MAKE) -C $< update-ir-spec
-
-test:
-	$(MAKE)
-	$(MAKE) test-ir
-	$(MAKE) test-others
-
-.PHONY: $(TEST_DIRS) test test-others
