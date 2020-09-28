@@ -66,11 +66,19 @@ cd sterlang; sbt assembly
 
 ### erltc tests
 
-    make -C examples test # runs the tests in ./examples
+``` sh
+make -C examples test # runs the tests in ./examples
+
+make -C examples/<example-dir> # build the example in <example-dir>
+make -C examples/elm-core # build the example based on the Elm standard library
+```
 
 The tests for erltc come in these two flavors:
-- the tests under `./examples/check` verify compiler errors against .exp files
-- the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST. See [erltc_architecutre](./doc/08_compiler_architecture.md) for more information.
+- the tests under `./examples/check` verify compiler errors against .exp files. Run these with `make -C examples/check/src`
+- the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST.
+    - See [./examples/README.md]( ./examples/README.md )for more information about running and updating these tests
+    - See also [erltc_architecutre](./doc/08_compiler_architecture.md).
+
 
 ### stErlang tests
 

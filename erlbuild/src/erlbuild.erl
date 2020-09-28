@@ -32,8 +32,6 @@
 
 -include("erlbuild_types.hrl").
 
--define(SOURCE_FILE_EXTENSION, ".erlt").
-
 command_name() ->
     "erlbuild".
 
@@ -108,6 +106,10 @@ main(Argv) ->
             print_error(ErrorStr),
             erlang:halt(1)
     end.
+
+% rebar3 entry point
+init(RebarState) ->
+    rebar3_erlt_prv:init(RebarState).
 
 run_command_as_api_function(Name, Fun, Argv) ->
     try

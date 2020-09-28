@@ -1,4 +1,4 @@
--file("calc_parser_ffi.erl", 1).
+-file("calc_parser_ffi.erlt", 1).
 
 -module(calc_parser_ffi).
 

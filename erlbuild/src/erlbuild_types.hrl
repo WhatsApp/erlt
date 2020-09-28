@@ -1,5 +1,7 @@
 % private types and constants shared between modules in this app
 
+-define(SOURCE_FILE_EXTENSION, ".erlt").
+
 % command-line args
 -record(args, {
     % erlbuild <command>
