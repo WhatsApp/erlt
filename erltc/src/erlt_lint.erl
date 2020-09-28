@@ -3125,7 +3125,10 @@ check_anon_struct_pattern_fields(
             {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
         false ->
             {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, Bvt, St),
-            check_anon_struct_pattern_fields(Fields, vtmerge_pat(Vt, Vt1), Old, Bvt1, St1, [F | UsedFields])
+            check_anon_struct_pattern_fields(Fields, vtmerge_pat(Vt, Vt1), Old, Bvt1, St1, [
+                F
+                | UsedFields
+            ])
     end;
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
