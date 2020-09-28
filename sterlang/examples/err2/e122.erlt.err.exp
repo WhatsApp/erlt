@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------ examples/err2/e122.erlt:21:1
+Spec mismatch for test_f/1
+Specified:  `fun((fun((A) -> B)) -> fun((B) -> A))`
+Elaborated: `fun((fun((A) -> A)) -> fun((A) -> A))`
+ 21| -spec test_f(f(A, B)) -> f(B, A).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

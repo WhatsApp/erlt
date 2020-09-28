@@ -1,0 +1,8 @@
+-- ERROR -------------------------------------------- examples/err/e35.erlt:19:5
+Type Mismatch
+Found:    list(fun(({}) -> A))
+Required: list(fun((boolean()) -> A))
+ 19|     fun Foo({}) -> Foo({}) end
+...|     ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 20| ].
+...| ~

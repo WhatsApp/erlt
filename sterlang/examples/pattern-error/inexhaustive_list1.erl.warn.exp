@@ -1,5 +1,0 @@
--- WARNING ------------------ examples/pattern-error/inexhaustive_list1.erl:20:1
-Missing Patterns
-missing: [_ | _]
- 20| test1([]) -> {}.
-...| ~~~~~~~~~~~~~~~

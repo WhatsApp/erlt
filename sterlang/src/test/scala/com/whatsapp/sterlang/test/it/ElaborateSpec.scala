@@ -40,12 +40,12 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
     import sys.process._
-    it(s"smoke test: $iDirPath/$module.erl") {
+    it(s"smoke test: $iDirPath/$module.erlt") {
       val oDirPath = Files.createTempDirectory("sterlang")
       s"./parser -idir $iDirPath -odir $oDirPath".!!
-      Main.main(Array(s"$iDirPath/$module.erl"))
-      Main.main(Array(s"$iDirPath/$module.erl", s"$oDirPath/$module.etf"))
-      Main.main(Array(s"$iDirPath/$module.erl", s"$oDirPath/$module.etf", "--check-patterns"))
+      Main.main(Array(s"$iDirPath/$module.erlt"))
+      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf"))
+      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf", "--check-patterns"))
     }
   }
 
@@ -57,37 +57,37 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
       val file = new File(iDirPath)
       val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
 
       moduleNames.foreach { p =>
-        val erlPath = s"$iDirPath/$p.erl"
+        val erltPath = s"$iDirPath/$p.erlt"
         val etfPath = s"$oDirPath/$p.etf"
-        it(erlPath) {
-          testFile(erlPath, etfPath)
-          testFileVerbose(erlPath, etfPath)
+        it(erltPath) {
+          testFile(erltPath, etfPath)
+          testFileVerbose(erltPath, etfPath)
         }
       }
     }
   }
 
-  def testFile(erlPath: String, etfPath: String): Unit = {
-    processFile(erlPath, etfPath, TypePrinter2.TypeSchemes, "_ty", "ty")
+  def testFile(erltPath: String, etfPath: String): Unit = {
+    processFile(erltPath, etfPath, TypePrinter2.TypeSchemes, "_ty", "ty")
 
-    val myOutput = fileContent(erlPath + "._ty")
-    val expectedOut = fileContent(erlPath + ".ty")
+    val myOutput = fileContent(erltPath + "._ty")
+    val expectedOut = fileContent(erltPath + ".ty")
     assert(myOutput == expectedOut)
 
-    new File(erlPath + "._ty").delete()
+    new File(erltPath + "._ty").delete()
   }
 
-  def testFileVerbose(erlPath: String, etfPath: String): Unit = {
-    processFile(erlPath, etfPath, TypePrinter2.Types, "_vt", "vt")
+  def testFileVerbose(erltPath: String, etfPath: String): Unit = {
+    processFile(erltPath, etfPath, TypePrinter2.Types, "_vt", "vt")
 
-    val myOutput = fileContent(erlPath + "._vt")
-    val expectedOut = fileContent(erlPath + ".vt")
+    val myOutput = fileContent(erltPath + "._vt")
+    val expectedOut = fileContent(erltPath + ".vt")
     assert(myOutput == expectedOut)
 
-    new File(erlPath + "._vt").delete()
+    new File(erltPath + "._vt").delete()
   }
 
   def fileContent(path: String): String = {
@@ -97,7 +97,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     content
   }
 
-  def processFile(erlPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
+  def processFile(erltPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -115,20 +115,20 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     }
 
     {
-      val w2 = new BufferedWriter(new FileWriter(erlPath + "." + tmpExt))
+      val w2 = new BufferedWriter(new FileWriter(erltPath + "." + tmpExt))
       w2.write(sw.toString)
       w2.close()
     }
 
     if (generateOut) {
-      val w = new BufferedWriter(new FileWriter(erlPath + "." + outExt))
+      val w = new BufferedWriter(new FileWriter(erltPath + "." + outExt))
       w.write(sw.toString)
       w.close()
     }
 
     // Check pattern matching
     // TODO: apply to all files when ready.
-    if (new File(erlPath).getParent == "examples/pattern") {
+    if (new File(erltPath).getParent == "examples/pattern") {
       val patternWarnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annDefs)
       assert(patternWarnings.isEmpty)
     }

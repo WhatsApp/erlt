@@ -59,10 +59,10 @@ package object etf {
   }
 
   private def etfFromString(text: String): ETerm = {
-    val tmpErl = Files.createTempFile("sterlang", ".erl")
-    Files.write(tmpErl, text.getBytes)
+    val tmpErlT = Files.createTempFile("sterlang", ".erlt")
+    Files.write(tmpErlT, text.getBytes)
     val tmpEtf = Files.createTempFile("sterlang", ".etf")
-    s"./parser -ifile $tmpErl -ofile $tmpEtf".!!
+    s"./parser -ifile $tmpErlT -ofile $tmpEtf".!!
     readEtf(tmpEtf)
   }
 

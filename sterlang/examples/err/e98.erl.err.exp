@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e98.erl:24:17
-Type Mismatch
-Found:    #bar{}
-Required: #foo{}
- 24|         true -> #bar{}
-...|                 ~~~~~~

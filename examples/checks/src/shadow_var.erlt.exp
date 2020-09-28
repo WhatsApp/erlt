@@ -1,2 +1,2 @@
-shadow_var.erlt:8:10: variable 'Y' shadowed in match
-shadow_var.erlt:10:14: variable 'Y' shadowed in pattern
+shadow_var.erlt:12:10: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:14:14: variable 'Y' is already bound - must write '^Y' to use value in pattern

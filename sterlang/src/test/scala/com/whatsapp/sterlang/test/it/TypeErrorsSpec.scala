@@ -37,24 +37,24 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
       val file = new File(iDirPath)
       val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl")).map(_.getName).map(_.dropRight(4)).sorted
+        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
 
       moduleNames.foreach { p =>
-        val erlPath = s"$iDirPath/$p.erl"
+        val erltPath = s"$iDirPath/$p.erlt"
         val etfPath = s"$oDirPath/$p.etf"
 
-        if (erlPath.endsWith("core.erl")) {
-          ignore(erlPath) {}
+        if (erltPath.endsWith("core.erlt")) {
+          ignore(erltPath) {}
         } else {
-          it(erlPath) {
-            processIllTyped(erlPath, etfPath)
+          it(erltPath) {
+            processIllTyped(erltPath, etfPath)
           }
         }
       }
     }
   }
 
-  private def processIllTyped(erlPath: String, etfPath: String): Unit = {
+  private def processIllTyped(erltPath: String, etfPath: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
@@ -63,21 +63,21 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborateFuns(program.funs)
-      if (erlPath.contains("_unspeced")) {
+      if (erltPath.contains("_unspeced")) {
         astChecks.checkPublicSpecs(program)
       }
-      fail(s"$erlPath should not type-check")
+      fail(s"$erltPath should not type-check")
     } catch {
       case error: RangedError =>
-        val actualErr = Main.errorString(erlPath, fileContent(erlPath), error)
+        val actualErr = Main.errorString(erltPath, fileContent(erltPath), error)
         if (generateOut) {
-          val expPath = Paths.get(erlPath + ".err.exp")
+          val expPath = Paths.get(erltPath + ".err.exp")
           Files.write(expPath, actualErr.getBytes)
         }
 
-        val tmpPath = Paths.get(erlPath + "_err")
+        val tmpPath = Paths.get(erltPath + "_err")
         Files.write(tmpPath, actualErr.getBytes)
-        val expectedErr = fileContent(erlPath + ".err.exp")
+        val expectedErr = fileContent(erltPath + ".err.exp")
         assert(expectedErr === actualErr)
         Files.delete(tmpPath)
     }

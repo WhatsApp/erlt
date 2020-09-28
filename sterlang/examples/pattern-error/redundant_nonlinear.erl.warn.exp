@@ -1,4 +1,0 @@
--- WARNING ----------------- examples/pattern-error/redundant_nonlinear.erl:21:7
-Useless Pattern
- 21| test1(X, X) -> {}.
-...|       ~~~~

@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e54.erl:19:12
-Unknown enum constructor: ctr/1
- 19| test() -> [my_enum.ctr{1}].
-...|            ~~~~~~~~~~~~~~

@@ -1,12 +1,23 @@
 -lang([erl2, st]).
 -module(shadow_var).
 
--export([f/2]).
+%% Don't warn about normal shadowing in funs and comprehensions
+-compile(nowarn_shadow_vars).
 
-%% Error: variable shadowing not allowed even in normal patterns
+-export([f/2, g/2]).
+
+%% Error: bound variables without caret implies shadowing -
+%% this is not allowed in normal patterns
 f(X, Y) ->
     {ok, Y} = X,
     case X of
         {ok, Y} -> true;
         _ -> false
     end.
+
+g(X, Y) ->
+    %% List comprehension generators may shadow variables
+    L = [X || {foo, X} <- Y],
+    %% Fun heads may shadow variables
+    F = fun(X, Y) -> X + Y end,
+    lists:foldl(F, L, X).

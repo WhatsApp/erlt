@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e97.erl:21:31
-Type Mismatch
-Found:    string()
-Required: integer()
- 21|     #my_record{hash = 1, id = "test"}.
-...|                               ~~~~~~

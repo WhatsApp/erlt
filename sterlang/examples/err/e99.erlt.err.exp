@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------- examples/err/e99.erlt:21:14
+Type Mismatch
+Found:    boolean()
+Required: #foo{}
+ 21| mk(false) -> false.
+...|              ~~~~~

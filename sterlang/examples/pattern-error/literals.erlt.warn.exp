@@ -1,0 +1,29 @@
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:31:1
+Missing Patterns
+missing: false
+ 31| my_boolean(true) -> true.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:34:1
+Missing Patterns
+missing: _
+ 34| my_char($a) -> true.
+...| ~~~~~~~~~~~~~~~~~~~
+
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:37:1
+Missing Patterns
+missing: _
+ 37| my_integer(0) -> true.
+...| ~~~~~~~~~~~~~~~~~~~~~
+
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:40:1
+Missing Patterns
+missing: [_ | _]
+ 40| my_list([]) -> true.
+...| ~~~~~~~~~~~~~~~~~~~
+
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:43:1
+Missing Patterns
+missing: _
+ 43| my_string("") -> true.
+...| ~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,0 @@
--- ERROR --------------------------------------------- examples/err/e13.erl:19:5
-Type Mismatch
-Found:    #( id1 :: integer() )
-Required: #( id2 :: integer(), A )
- 19|     Y #(id2 = 2).
-...|     ^

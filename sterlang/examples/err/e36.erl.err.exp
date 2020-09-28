@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e36.erl:19:15
-Type Mismatch
-Found:    boolean()
-Required: integer()
- 19|     case X of false -> 1 end.
-...|               ~~~~~

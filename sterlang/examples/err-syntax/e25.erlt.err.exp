@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------ examples/err-syntax/e25.erlt:20:23
+Parse Error
+ 20| -spec single_int() -> 100.
+...|                       ^

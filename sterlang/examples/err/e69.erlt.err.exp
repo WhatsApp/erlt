@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------------- examples/err/e69.erlt:18:19
+Unbound type variable: B
+ 18| -type t(A) :: {A, B}.
+...|                   ^

@@ -1,6 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e99.erl:21:14
-Type Mismatch
-Found:    boolean()
-Required: #foo{}
- 21| mk(false) -> false.
-...|              ~~~~~

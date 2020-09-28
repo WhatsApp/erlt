@@ -636,12 +636,12 @@ main(["-idir", IDir, "-odir", ODir]) ->
     {ok, Files} = file:list_dir(IDir),
     SortedFiles = lists:sort(Files),
     ErlFiles = lists:filter(
-        fun(Name) -> filename:extension(Name) == ".erl" end,
+        fun(Name) -> filename:extension(Name) == ".erlt" end,
         SortedFiles
     ),
     lists:foreach(
         fun(ErlFile) ->
-            EtfFile = filename:basename(ErlFile, ".erl") ++ ".etf",
+            EtfFile = filename:basename(ErlFile, ".erlt") ++ ".etf",
             IFile = filename:join(IDir, ErlFile),
             OFile = filename:join(ODir, EtfFile),
             ok = main(["-ifile", IFile, "-ofile", OFile])

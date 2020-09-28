@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------------ examples/err2/e101.erlt:23:5
+Type Mismatch
+Found:    #foo{}
+Required: #bar{}
+ 23|     Foo#bar{id = 2}.
+...|     ~~~

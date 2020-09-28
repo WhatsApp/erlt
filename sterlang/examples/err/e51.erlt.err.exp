@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------------- examples/err/e51.erlt:18:6
+Unknown enum: unknown_enum
+ 18| test(unknown_enum.ctr{}) -> 1.
+...|      ~~~~~~~~~~~~~~~~~~

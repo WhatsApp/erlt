@@ -34,29 +34,29 @@ object Main {
         val file = new File(p)
         assert(file.exists())
         if (file.isDirectory) {
-          val files: Array[File] = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erl"))
+          val files: Array[File] = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt"))
           files.sortBy(_.getPath).foreach(f => processFile(options, f.getPath, None))
         } else {
           processFile(options, p, None)
         }
-      case List(erlFile, etfFile) =>
-        processFile(options, erlFile, Some(etfFile))
+      case List(erltFile, etfFile) =>
+        processFile(options, erltFile, Some(etfFile))
     }
   }
 
-  private def processFile(options: Set[String], erlFile: String, etfFile: Option[String]): Unit = {
-    lazy val text = new String(Files.readAllBytes(Paths.get(erlFile)))
-    val mainFile = etfFile.getOrElse(erlFile)
+  private def processFile(options: Set[String], erltFile: String, etfFile: Option[String]): Unit = {
+    lazy val text = new String(Files.readAllBytes(Paths.get(erltFile)))
+    val mainFile = etfFile.getOrElse(erltFile)
     val rawProgram =
       try {
         loadProgram(mainFile)
       } catch {
         // $COVERAGE-OFF$ interactive
         case error: ParseError =>
-          displayParseError(erlFile, text, error)
+          displayParseError(erltFile, text, error)
           sys.exit(2)
         case error: RangedError =>
-          displayError(erlFile, text, error)
+          displayError(erltFile, text, error)
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
           sys.exit(2)
@@ -77,7 +77,7 @@ object Main {
       if (options.contains("--check-patterns")) {
         val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
         // $COVERAGE-OFF$ interactive
-        warnings.foreach(displayError(erlFile, text, _))
+        warnings.foreach(displayError(erltFile, text, _))
         // $COVERAGE-ON$
       }
 
@@ -86,7 +86,7 @@ object Main {
     } catch {
       // $COVERAGE-OFF$ interactive
       case error: RangedError =>
-        displayError(erlFile, text, error)
+        displayError(erltFile, text, error)
         sys.exit(2)
       // $COVERAGE-ON$
     }

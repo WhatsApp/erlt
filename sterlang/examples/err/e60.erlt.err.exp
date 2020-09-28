@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------------- examples/err/e60.erlt:18:1
+Cyclic type alias: cyclic
+ 18| -type cyclic() :: cyclic().
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
