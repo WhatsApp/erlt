@@ -145,7 +145,7 @@ fun_type -> '(' ')' '->' top_type :
 fun_type -> '(' top_types ')' '->' top_type :
     {type, anno('$1','$5'), 'fun', [{type, anno('$1','$5'), product, '$2'},'$5']}.
 
-shape_field_types -> type                                   : {[], '$1'}.
+shape_field_types -> var                                    : {[], '$1'}.
 shape_field_types -> shape_field_type                       : ['$1'].
 shape_field_types -> shape_field_type ',' shape_field_types : build_shape_internals_type('$1', '$3').
 

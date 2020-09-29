@@ -12,13 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(e41_erlt).
+-module(e42_erlt).
 -lang(st).
 
-
--spec id_shape1(#(key :: boolean())) -> #(key :: boolean()).
+%% the shape extension should be a type variable, not a concrete type
+-spec id_shape1(#(id :: integer(), integer())) -> #(id :: integer(), integer()).
 id_shape1(X) -> X.
-
-% the fields should be "atoms", not any other types
--spec id_shape2(#(integer() :: boolean())) -> #(integer() :: boolean()).
-id_shape2(X) -> X.

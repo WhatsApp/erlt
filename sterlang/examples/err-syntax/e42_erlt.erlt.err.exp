@@ -1,0 +1,4 @@
+-- ERROR ------------------------------- examples/err-syntax/e42_erlt.erlt:19:43
+Parse Error
+ 19| -spec id_shape1(#(id :: integer(), integer())) -> #(id :: integer(), integer()).
+...|                                           ^
