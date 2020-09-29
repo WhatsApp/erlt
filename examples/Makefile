@@ -1,4 +1,4 @@
-DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core erltodo
+DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
 
 build:
 	rebar3 compile
@@ -46,4 +46,3 @@ test-others:
 test: test-ir test-beam test-others
 
 .PHONY: build clean ir test-ir update-ir-spec test-beam
-
