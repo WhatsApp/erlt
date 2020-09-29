@@ -2519,7 +2519,7 @@ expr({tuple, _Line, Es}, Vt, St) ->
     expr_list(Es, Vt, St);
 expr({enum, Line, Name, Variant, Fields}, Vt, St) ->
     check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
-        init_fields(Fields, Line, ResolvedName, Def,  Vt, St1)
+        init_fields(Fields, Line, ResolvedName, Def, Vt, St1)
     end);
 expr({map, _Line, Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
@@ -3088,7 +3088,6 @@ check_anon_struct_pattern_fields(
     end;
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
-
 
 check_fields(Fields, Name, Defs, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->

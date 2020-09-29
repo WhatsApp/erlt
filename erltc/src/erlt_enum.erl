@@ -58,7 +58,8 @@ enum_info(Mod, {type, _, enum, {atom, _, Name}, Variants}) ->
     maps:from_list(VariantsMap).
 
 variant_info(Mod, Enum, {variant, _, {atom, Line, Tag}, Fields}) ->
-    RuntimeTag = list_to_atom("$#" ++ atom_to_list(Mod) ++ ":" ++ atom_to_list(Enum) ++ "." ++ atom_to_list(Tag)),
+    String = "$#" ++ atom_to_list(Mod) ++ ":" ++ atom_to_list(Enum) ++ "." ++ atom_to_list(Tag),
+    RuntimeTag = list_to_atom(String),
     Anno = erl_anno:set_generated(true, Line),
     FieldsMap = [
         {Name, Default}
