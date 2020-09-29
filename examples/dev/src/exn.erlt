@@ -21,7 +21,7 @@
 -exception error1 :: ().
 -exception error2 :: (name :: string()).
 
--enum my_error() :: my_error{exception()}.
+-enum my_error() :: (my_error{exp :: exception()}).
 
 [unchecked]
 mk_error1() ->

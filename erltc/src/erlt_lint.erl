@@ -227,13 +227,11 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     % Exported types
     exp_types = gb_sets:empty() :: gb_sets:set(ta()),
     % Enum definitions
-    enums = #{},
-    % Current enum
-    enum = [] :: atom() | [],
+    enums = #{} :: #{atom() => #{atom() => term()}},
     % Global definition database
     defs_db :: erlt_defs:defs(),
-    % Used to track recursive struct defaults
-    struct_expansion = skip :: skip | cerl_sets:set(atom() | {atom(), atom()})
+    % Used to track recursive struct & enum defaults
+    default_expansion = skip :: skip | cerl_sets:set(atom() | {atom(), atom()})
 }).
 
 -type lint_state() :: #lint{}.
@@ -404,43 +402,35 @@ format_error(unqualified_enum) ->
     "unqualified enum constructors may only be used in an enum definition";
 format_error({redefine_enum, T, C}) ->
     io_lib:format("constructor ~tw already defined in enum ~tw", [C, T]);
-format_error({private_enum, {M, E}}) ->
-    io_lib:format("enum ~tw:~tw is not exported", [M, E]);
-format_error({undefined_enum, {M, E}}) ->
-    io_lib:format("enum ~tw.~tw undefined", [M, E]);
-format_error({undefined_enum, E}) ->
-    io_lib:format("enum ~tw undefined", [E]);
-format_error({undefined_enum_constructor, {M, E}, A, N}) ->
-    io_lib:format("enum ~tw.~tw has no constructor ~tw/~tw", [M, E, A, N]);
-format_error({undefined_enum_constructor, E, A, N}) ->
-    io_lib:format("enum ~tw has no constructor ~tw/~tw", [E, A, N]);
-format_error({enum_constructor_wrong_arity, {M, E}, A, N}) ->
-    io_lib:format("wrong number of arguments for constructor ~tw.~tw.~tw/~tw", [M, E, A, N]);
-format_error({enum_constructor_wrong_arity, E, A, N}) ->
-    io_lib:format("wrong number of arguments for constructor ~tw.~tw/~tw", [E, A, N]);
+format_error({private_enum, N}) ->
+    io_lib:format("enum ~ts is not exported", [format_name(N)]);
+format_error({undefined_enum, N}) ->
+    io_lib:format("enum ~ts undefined", [format_name(N)]);
+format_error({undefined_enum_variant, N, V}) ->
+    io_lib:format("enum ~ts has no variant ~tw", [format_name(N), V]);
+format_error(invalid_name) ->
+    "only fully qualified remote 'module:name' or local 'name' references are supported";
 %% --- structs ---
 format_error({undefined_struct, N}) ->
     io_lib:format("struct ~ts undefined", [format_name(N)]);
 format_error({private_struct, N}) ->
     io_lib:format("struct ~ts is not exported", [format_name(N)]);
-format_error({redefine_field, T, F}) ->
-    io_lib:format("field ~tw already defined in record ~tw", [F, T]);
 format_error({reuse_anon_struct_field, F}) ->
     io_lib:format("field ~tw used more than once in anonymous struct", [F]);
 format_error({redefine_anon_struct_field, F}) ->
     io_lib:format("field ~tw already defined in anonymous struct type", [F]);
-format_error({redefine_struct_field, N, F}) ->
-    io_lib:format("field ~tw already defined in struct ~ts", [F, format_name(N)]);
-format_error({undefined_struct_field, N, F}) ->
-    io_lib:format("field ~tw undefined in struct ~ts", [F, format_name(N)]);
-format_error({recursive_struct_field, N, F}) ->
-    io_lib:format("field ~tw of struct ~ts contains recursive default value", [F, format_name(N)]);
-format_error({no_field_value, M}) ->
-    io_lib:format("field ~tw has no initializer or default value", [M]);
-format_error({illegal_struct_default_call, {F, A}}) ->
-    io_lib:format("call to local/imported function ~tw/~w is illegal in struct defaults", [F, A]);
-format_error(illegal_struct_default) ->
-    "illegal struct default expression";
+format_error({redefine_field, R, F}) ->
+    io_lib:format("field ~tw already defined in ~ts", [F, format_reference(R)]);
+format_error({undefined_field, R, F}) ->
+    io_lib:format("field ~tw undefined in ~ts", [F, format_reference(R)]);
+format_error({recursive_field, R, F}) ->
+    io_lib:format("field ~tw of ~ts contains recursive default value", [F, format_reference(R)]);
+format_error({no_field_value, R, F}) ->
+    io_lib:format("field ~tw of ~ts has no initializer or default value", [F, format_reference(R)]);
+format_error({illegal_field_default_call, {F, A}}) ->
+    io_lib:format("call to local/imported function ~tw/~w is illegal in defaults", [F, A]);
+format_error(illegal_field_default) ->
+    "illegal default expression";
 %% --- variables ----
 format_error({unbound_var, V}) ->
     io_lib:format("variable ~w is unbound", [V]);
@@ -616,6 +606,9 @@ format_error({bad_dialyzer_option, Term}) ->
 %% --- obsolete? unused? ---
 format_error({format_error, {Fmt, Args}}) ->
     io_lib:format(Fmt, Args).
+
+format_reference({enum, N, C}) -> io_lib:format("enum ~ts.~ts", [format_name(N), C]);
+format_reference({struct, N}) -> io_lib:format("struct ~ts", [format_name(N)]).
 
 format_name({M, N}) -> io_lib:format("~tw:~tw", [M, N]);
 format_name(N) -> io_lib:format("~tw", [N]).
@@ -838,10 +831,12 @@ pre_scan([{attribute, L, compile, C} | Fs], St) ->
         false ->
             pre_scan(Fs, St)
     end;
-%% structs can appear in any order, scan for definitions before
+%% structs and enums can appear in any order, scan for definitions before
 %% actual checking begins
 pre_scan([{attribute, Loc, struct, {_, TypeDef, Args}} | Fs], St) ->
     pre_scan(Fs, struct_def(Loc, TypeDef, length(Args), St));
+pre_scan([{attribute, Loc, enum, {_, TypeDef, Args}} | Fs], St) ->
+    pre_scan(Fs, enum_def(Loc, TypeDef, length(Args), St));
 pre_scan([_ | Fs], St) ->
     pre_scan(Fs, St);
 pre_scan([], St) ->
@@ -942,9 +937,7 @@ attribute_state({attribute, L, opaque, {TypeName, TypeDef, Args}}, St) ->
 attribute_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St) ->
     type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
-    St1 = enum_def(TypeName, TypeDef, St),
-    St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
-    St2#lint{enum = []};
+    type_def(enum, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
     type_def(struct, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, spec, {Fun, Types}}, St) ->
@@ -974,9 +967,7 @@ function_state({attribute, L, opaque, {TypeName, TypeDef, Args}}, St) ->
 function_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St) ->
     type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
-    St1 = enum_def(TypeName, TypeDef, St),
-    St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
-    St2#lint{enum = []};
+    type_def(enum, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
     type_def(struct, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
@@ -1817,22 +1808,25 @@ pattern({cons, _Line, H, T}, Vt, Old, Bvt, St0) ->
     {vtmerge_pat(Hvt, Tvt), vtmerge_pat(Bvt1, Bvt2), St2};
 pattern({tuple, _Line, Ps}, Vt, Old, Bvt, St) ->
     pattern_list(Ps, Vt, Old, Bvt, St);
-pattern({enum, _Line, {remote, _, M, E} = E0, C, Ps}, Vt, Old, Bvt, St) ->
-    pattern_list([M, E, C | Ps], Vt, Old, Bvt, check_enum(E0, C, Ps, St));
-pattern({enum, _Line, E, C, Ps}, Vt, Old, Bvt, St) ->
-    pattern_list([E, C | Ps], Vt, Old, Bvt, check_enum(E, C, Ps, St));
+pattern({enum, Line, Name, Variant, Fields}, Old, Vt, Bvt, St0) ->
+    Result = check_enum(Line, Name, Variant, St0, fun(ResolvedName, Defs, St) ->
+        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, Bvt, St)
+    end),
+    expr_check_result_in_pattern(Result);
 pattern({map, _Line, Ps}, Vt, Old, Bvt, St) ->
     pattern_map(Ps, Vt, Old, Bvt, St);
 pattern({anon_struct, _Line, Pfs}, Vt, Old, Bvt, St) ->
     check_anon_struct_pattern_fields(Pfs, Vt, Old, Bvt, St, []);
-pattern({struct, Line, N, Pfs}, Vt, Old, Bvt, St) ->
-    check_struct_pattern(Line, N, Pfs, Vt, Old, Bvt, St);
+pattern({struct, Line, Name, Fields}, Vt, Old, Bvt, St0) ->
+    Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, Bvt, St)
+    end),
+    expr_check_result_in_pattern(Result);
 pattern({struct_index, Line, Name, Field}, _Vt, _Old, _Bvt, St0) ->
-    {Vt1, St1} =
-        check_struct(Line, Name, St0, fun(IsDef, St) ->
-            struct_field(Field, Name, IsDef, St)
-        end),
-    {Vt1, [], St1};
+    Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+        field(Field, ResolvedName, Defs, St)
+    end),
+    expr_check_result_in_pattern(Result);
 pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
     pattern_bin(Fs, Vt, Old, Bvt, St);
 pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, Bvt, St) ->
@@ -1872,6 +1866,9 @@ pattern_list(Ps, Vt, Old, Bvt0, St) ->
         {[], [], St},
         Ps
     ).
+
+expr_check_result_in_pattern({Vt, St}) -> {Vt, [], St};
+expr_check_result_in_pattern({Vt, Bvt, St}) -> {Vt, Bvt, St}.
 
 %% reject_invalid_alias(Pat, Expr, Vt, St) -> St'
 %%  Reject aliases for binary patterns at the top level.
@@ -2271,10 +2268,10 @@ gexpr({cons, _Line, H, T}, Vt, St) ->
     gexpr_list([H, T], Vt, St);
 gexpr({tuple, _Line, Es}, Vt, St) ->
     gexpr_list(Es, Vt, St);
-gexpr({enum, _Line, {remote, _, M, E} = E0, C, Es}, Vt, St) ->
-    gexpr_list([M, E, C | Es], Vt, check_enum(E0, C, Es, St));
-gexpr({enum, _Line, E, C, Es}, Vt, St) ->
-    gexpr_list([E, C | Es], Vt, check_enum(E, C, Es, St));
+gexpr({enum, Line, Name, Variant, Fields}, Vt, St) ->
+    check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
+        init_fields_guard(Fields, Line, ResolvedName, Def, Vt, St1)
+    end);
 gexpr({map, _Line, Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
 gexpr({map, _Line, Src, Es}, Vt, St) ->
@@ -2289,19 +2286,19 @@ gexpr({anon_struct_update, _Line, Expr, Fields}, Vt, St) ->
 gexpr({anon_struct_field, _Line, Expr, _Field}, Vt, St) ->
     gexpr(Expr, Vt, St);
 gexpr({struct, Line, Name, Fields}, Vt, St) ->
-    check_struct(Line, Name, St, fun(IsDef, St1) ->
-        init_struct_fields_guard(Fields, Line, Name, IsDef, Vt, St1)
+    check_struct(Line, Name, St, fun(ResolvedName, Defs, St1) ->
+        init_fields_guard(Fields, Line, ResolvedName, Defs, Vt, St1)
     end);
 gexpr({struct_field, Line, Rec, Name, Field}, Vt, St0) ->
     {Rvt, St1} = gexpr(Rec, Vt, St0),
     {Fvt, St2} =
-        check_struct(Line, Name, St1, fun(Dfs, St) ->
-            struct_field(Field, Name, Dfs, St)
+        check_struct(Line, Name, St1, fun(ResolvedName, Defs, St) ->
+            field(Field, ResolvedName, Defs, St)
         end),
     {vtmerge(Rvt, Fvt), St2};
 gexpr({struct_index, Line, Name, Field}, _Vt, St0) ->
-    check_struct(Line, Name, St0, fun(IsDef, St) ->
-        struct_field(Field, Name, IsDef, St)
+    check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+        field(Field, ResolvedName, Defs, St)
     end);
 gexpr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun gexpr/3);
@@ -2520,10 +2517,10 @@ expr({bc, _Line, E, Qs}, Vt, St) ->
     handle_comprehension(E, Qs, Vt, St);
 expr({tuple, _Line, Es}, Vt, St) ->
     expr_list(Es, Vt, St);
-expr({enum, _Line, {remote, _, M, E} = E0, C, Es}, Vt, St) ->
-    expr_list([M, E, C | Es], Vt, check_enum(E0, C, Es, St));
-expr({enum, _Line, E, C, Es}, Vt, St) ->
-    expr_list([E, C | Es], Vt, check_enum(E, C, Es, St));
+expr({enum, Line, Name, Variant, Fields}, Vt, St) ->
+    check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
+        init_fields(Fields, Line, ResolvedName, Def,  Vt, St1)
+    end);
 expr({map, _Line, Es}, Vt, St) ->
     map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
 expr({map, _Line, Src, Es}, Vt, St) ->
@@ -2538,28 +2535,28 @@ expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
 expr({anon_struct_field, _Line, Expr, _Field}, Vt, St0) ->
     expr(Expr, Vt, St0);
 expr({struct, Line, Name, Fields}, Vt, St) ->
-    check_struct(Line, Name, St, fun(IsDef, St1) ->
-        init_struct_fields(Fields, Line, Name, IsDef, Vt, St1)
+    check_struct(Line, Name, St, fun(ResolvedName, Defs, St1) ->
+        init_fields(Fields, Line, ResolvedName, Defs, Vt, St1)
     end);
 expr({struct, Line, Expr, Name, Fields}, Vt, St0) ->
     St1 = warn_invalid_struct(Line, Expr, St0),
     {Evt, St2} = expr(Expr, Vt, St1),
     {Uvt, St3} =
-        check_struct(Line, Name, St2, fun(IsDef, St) ->
-            update_struct_fields(Fields, Line, Name, IsDef, Vt, St)
+        check_struct(Line, Name, St2, fun(ResolvedName, Defs, St) ->
+            update_fields(Fields, Line, ResolvedName, Defs, Vt, St)
         end),
     {vtmerge(Evt, Uvt), St3};
 expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
     St1 = warn_invalid_struct(Line, Expr, St0),
     {Evt, St2} = expr(Expr, Vt, St1),
     {Fvt, St3} =
-        check_struct(Line, Name, St2, fun(IsDef, St) ->
-            struct_field(Field, Name, IsDef, St)
+        check_struct(Line, Name, St2, fun(ResolvedName, Defs, St) ->
+            field(Field, ResolvedName, Defs, St)
         end),
     {vtmerge(Evt, Fvt), St3};
 expr({struct_index, Line, Name, Field}, _Vt, St0) ->
-    check_struct(Line, Name, St0, fun(IsDef, St) ->
-        struct_field(Field, Name, IsDef, St)
+    check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+        field(Field, ResolvedName, Defs, St)
     end);
 expr({bin, _Line, Fs}, Vt, St) ->
     expr_bin(Fs, Vt, St, fun expr/3);
@@ -2778,65 +2775,6 @@ map_fields([{Tag, _, K, V} | Fs], Vt, St, F) when
 map_fields([], _, St, _) ->
     {[], St}.
 
-%% check enum constructor uses
-check_enum({atom, L, E} = E0, {atom, _, A} = A0, Args, St) ->
-    case imported_type(E, St) of
-        {yes, M, Arity} ->
-            %% actually a remote enum (note: we only know the arity of the data
-            %% type here, as given by import_type, not of the constructors)
-            TypePair = {E, Arity},
-            U0 = St#lint.usage,
-            Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-            St1 = St#lint{usage = U0#usage{imported_types = Imp}},
-            check_enum({remote, L, {atom, L, M}, E0}, A0, Args, St1);
-        no ->
-            %% enum e must exist and define c with right arity
-            check_constructor_and_arity(maps:find(E, St#lint.enums), L, E, A, Args, St)
-    end;
-check_enum({remote, L, {atom, _, M}, {atom, _, E}}, {atom, _, A}, Args, St) ->
-    case St#lint.defs_db of
-        %If we do not have a global definition table, for example in the scan phase,
-        % assume that remote enum is correct.
-        undefined ->
-            St;
-        GlobalDefs ->
-            EnumDef = convert_to_constructor_list(erlt_defs:find_enum(M, E, GlobalDefs)),
-            check_constructor_and_arity(EnumDef, L, {M, E}, A, Args, St)
-    end;
-check_enum(none, C, _Args, St) ->
-    %% unqualified
-    case St#lint.enum of
-        [] ->
-            add_error(element(2, C), unqualified_enum, St);
-        Atom when is_atom(Atom) ->
-            %% in definition, not a use
-            St
-    end.
-
-convert_to_constructor_list({ok, {attribute, _, enum, {_, {type, _, union, Cs}, _}}}) ->
-    {ok, [{C, length(Args)} || {type, _, enum, {atom, _, C}, Args} <- Cs]};
-convert_to_constructor_list(
-    {ok, {attribute, _, enum, {_, {type, _, enum, {atom, _, C}, Args}, _}}}
-) ->
-    {ok, [{C, length(Args)}]};
-convert_to_constructor_list(Error) ->
-    Error.
-
-check_constructor_and_arity(error, L, Enum, _A, _Args, St) ->
-    add_error(L, {undefined_enum, Enum}, St);
-check_constructor_and_arity(private, L, Enum, _A, _Args, St) ->
-    add_error(L, {private_enum, Enum}, St);
-check_constructor_and_arity({ok, Cs}, L, Enum, A, Args, St) ->
-    N = length(Args),
-    case lists:keyfind(A, 1, Cs) of
-        {_, N} ->
-            St;
-        {_, N1} ->
-            add_error(L, {enum_constructor_wrong_arity, Enum, A, N1}, St);
-        false ->
-            add_error(L, {undefined_enum_constructor, Enum, A, N}, St)
-    end.
-
 %% warn_invalid_struct(Line, Struct, State0) -> State
 %% Adds warning if the struct is invalid.
 
@@ -2977,36 +2915,58 @@ is_valid_map_key_value(K) ->
             is_pattern_expr(Val)
     end.
 
-handle_imported_struct({atom, Line, Name} = N0, St) ->
-    case imported_type(Name, St) of
-        {yes, M, Arity} ->
-            %% actually a remote struct
-            TypePair = {Name, Arity},
-            U0 = St#lint.usage,
-            Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-            {{remote, Line, {atom, Line, M}, N0}, St#lint{usage = U0#usage{imported_types = Imp}}};
-        no ->
-            {N0, St}
-    end;
-handle_imported_struct(N, St) ->
-    {N, St}.
-
-check_struct(Line, RawName, St, CheckFun) ->
-    case handle_imported_struct(RawName, St) of
-        {{atom, _, N}, St1} ->
-            case maps:find(N, St1#lint.structs) of
-                {ok, {_Loc, Arity, Def}} -> CheckFun(Def, used_struct(Line, N, Arity, St1));
-                error -> {[], add_error(Line, {undefined_struct, N}, St1)}
+check_enum(Line, RawName, {atom, _, V}, St, CheckFun) ->
+    case resolve_importable_name(RawName, St) of
+        {local, N, St1} ->
+            case maps:find(N, St1#lint.enums) of
+                {ok, {_Loc, Arity, #{V := Defs}}} ->
+                    CheckFun({enum, N, V}, Defs, used_type({N, Arity}, Line, St1));
+                {ok, {_Loc, _Arity, _}} ->
+                    {[], add_error(Line, {undefined_enum_variant, N, V}, St1)};
+                error ->
+                    {[], add_error(Line, {undefined_enum, N}, St1)}
             end;
-        {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
+        {remote, M, N, St1} ->
             case St1#lint.defs_db of
                 undefined ->
-                    CheckFun(unavailable, St1);
+                    CheckFun({enum, {M, N}, V}, unavailable, St1);
+                GlobalDefs ->
+                    case erlt_defs:find_enum(M, N, GlobalDefs) of
+                        {ok, EnumDef} ->
+                            case remote_enum_variants_map(EnumDef) of
+                                #{V := Defs} ->
+                                    CheckFun({enum, {M, N}, V}, Defs, St1);
+                                _ ->
+                                    {[], add_error(Line, {undefined_enum_variant, {M, N}, V}, St1)}
+                            end;
+                        private ->
+                            {[], add_error(Line, {private_enum, {M, N}}, St1)};
+                        error ->
+                            {[], add_error(Line, {undefined_enum, {M, N}}, St1)}
+                    end
+            end;
+        {invalid, St1} ->
+            {[], St1}
+    end.
+
+check_struct(Line, RawName, St, CheckFun) ->
+    case resolve_importable_name(RawName, St) of
+        {local, N, St1} ->
+            case maps:find(N, St1#lint.structs) of
+                {ok, {_Loc, Arity, Defs}} ->
+                    CheckFun({struct, N}, Defs, used_type({N, Arity}, Line, St1));
+                error ->
+                    {[], add_error(Line, {undefined_struct, N}, St1)}
+            end;
+        {remote, M, N, St1} ->
+            case St1#lint.defs_db of
+                undefined ->
+                    CheckFun({struct, {M, N}}, unavailable, St1);
                 GlobalDefs ->
                     case erlt_defs:find_struct(M, N, GlobalDefs) of
                         {ok, StructDef} ->
-                            FieldMap = get_field_map_from_struct_def(StructDef),
-                            CheckFun(FieldMap, St1);
+                            Defs = remote_struct_field_map(StructDef),
+                            CheckFun({struct, {M, N}}, Defs, St1);
                         private ->
                             {[], add_error(Line, {private_struct, {M, N}}, St1)};
                         error ->
@@ -3015,55 +2975,44 @@ check_struct(Line, RawName, St, CheckFun) ->
             end
     end.
 
-check_struct_pattern(Line, RawName, Pfs, Vt, Old, Bvt, St) ->
-    case handle_imported_struct(RawName, St) of
-        {{atom, _, N}, St1} ->
-            case maps:find(N, St1#lint.structs) of
-                {ok, {_Loc, Arity, Def}} ->
-                    St2 = used_struct(Line, N, Arity, St1),
-                    pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St2);
-                error ->
-                    {[], [], add_error(Line, {undefined_struct, N}, St)}
-            end;
-        {{remote, _, {atom, _, M}, {atom, _, N}}, St1} ->
-            case St1#lint.defs_db of
-                undefined ->
-                    pattern_struct_fields(Pfs, RawName, unavailable, Vt, Old, Bvt, St1);
-                GlobalDefs ->
-                    case erlt_defs:find_struct(M, N, GlobalDefs) of
-                        {ok, StructDef} ->
-                            Def = get_field_map_from_struct_def(StructDef),
-                            pattern_struct_fields(Pfs, RawName, Def, Vt, Old, Bvt, St1);
-                        private ->
-                            {[], [], add_error(Line, {private_struct, {M, N}}, St1)};
-                        error ->
-                            {[], [], add_error(Line, {undefined_struct, {M, N}}, St1)}
-                    end
-            end
-    end.
+resolve_importable_name({atom, _, Name}, St) ->
+    case imported_type(Name, St) of
+        {yes, Mod, Arity} ->
+            Usage = ordsets:add_element({{Name, Arity}, Mod}, St#lint.usage#usage.imported_types),
+            St1 = St#lint{usage = (St#lint.usage)#usage{imported_types = Usage}},
+            {remote, Mod, Name, St1};
+        no ->
+            {local, Name, St}
+    end;
+resolve_importable_name({remote, _, {atom, _, Mod}, {atom, _, Name}}, St) ->
+    {remote, Mod, Name, St};
+resolve_importable_name(Other, St) ->
+    {invalid, add_error(element(2, Other), invalid_name, St)}.
 
-get_field_map_from_struct_def({attribute, _Loc, struct, {_Name, TypeDef, _Vs}}) ->
-    struct_fields_map(TypeDef).
+remote_struct_field_map({attribute, _, struct, {_, {type, _, struct, _, Fields}, _}}) ->
+    fields_map(Fields).
 
-struct_field({atom, La, F}, Name, Definitions, St) ->
-    case Definitions =:= unavailable orelse is_map_key(F, Definitions) of
+remote_enum_variants_map({attribute, _, enum, {_, {type, _, enum, _, Variants}, _}}) ->
+    enum_variants_map(Variants).
+
+field({atom, La, F}, Name, Defs, St) ->
+    case Defs =:= unavailable orelse is_map_key(F, Defs) of
         true ->
             {[], St};
         false ->
-            Key = struct_name_to_key(Name),
-            {[], add_error(La, {undefined_struct_field, Key, F}, St)}
+            {[], add_error(La, {undefined_field, Name, F}, St)}
     end.
 
-init_struct_fields(Fields, Line, Name, Definitions, Vt0, St0) ->
-    {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun expr/3),
-    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Definitions, fun expr/3, Uvt, St)}.
+init_fields(Fields, Line, Name, Defs, Vt0, St0) ->
+    {SeenFields, Uvt, St} = check_fields(Fields, Name, Defs, Vt0, St0, fun expr/3),
+    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Defs, fun expr/3, Uvt, St)}.
 
-init_struct_fields_guard(Fields, Line, Name, Definitions, Vt0, St0) ->
-    {SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
+init_fields_guard(Fields, Line, Name, Definitions, Vt0, St0) ->
+    {SeenFields, Uvt, St} = check_fields(Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
     {Uvt, ensure_all_field_values(Line, Name, SeenFields, Definitions, fun gexpr/3, Uvt, St)}.
 
-update_struct_fields(Fields, _Line, Name, Definitions, Vt, St) ->
-    {_SeenFields, Uvt, St} = check_struct_fields(Fields, Name, Definitions, Vt, St, fun expr/3),
+update_fields(Fields, _Line, Name, Defs, Vt0, St0) ->
+    {_SeenFields, Uvt, St} = check_fields(Fields, Name, Defs, Vt0, St0, fun expr/3),
     {Uvt, St}.
 
 ensure_all_field_values(_Line, _Name, _SeenFields, unavailable, _Expand, _Vt, St) ->
@@ -3077,27 +3026,23 @@ ensure_all_field_values(Line, Name, SeenFields, Definitions, Expand, Vt, St0) ->
                 Default = copy_expr(Default0, Line),
                 verify_no_recursive_defaults(Line, Default, Name, Field, Expand, Vt, St);
             false when Default0 =:= undefined ->
-                add_error(Line, {no_field_value, Field}, St)
+                add_error(Line, {no_field_value, Name, Field}, St)
         end
     end,
     maps:fold(Fun, St0, Definitions).
 
-verify_no_recursive_defaults(_, _, _, _, _, _, #lint{struct_expansion = skip} = St) ->
+verify_no_recursive_defaults(_, _, _, _, _, _, #lint{default_expansion = skip} = St) ->
     St;
 verify_no_recursive_defaults(Line, Expr, Name, Field, Expand, Vt, St) ->
-    Key = struct_name_to_key(Name),
-    ExpansionState = St#lint.struct_expansion,
-    case cerl_sets:is_element(Key, ExpansionState) of
+    ExpansionState = St#lint.default_expansion,
+    case cerl_sets:is_element(Name, ExpansionState) of
         true ->
-            add_error(Line, {recursive_struct_field, Key, Field}, St);
+            add_error(Line, {recursive_field, Name, Field}, St);
         false ->
-            St1 = St#lint{struct_expansion = cerl_sets:add_element(Key, ExpansionState)},
+            St1 = St#lint{default_expansion = cerl_sets:add_element(Name, ExpansionState)},
             {_, St2} = Expand(Expr, Vt, St1),
-            St2#lint{struct_expansion = ExpansionState}
+            St2#lint{default_expansion = ExpansionState}
     end.
-
-struct_name_to_key({atom, _, Name}) -> Name;
-struct_name_to_key({remote, _, {atom, _, Module}, {atom, _, Name}}) -> {Module, Name}.
 
 check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
     check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
@@ -3144,44 +3089,32 @@ check_anon_struct_pattern_fields(
 check_anon_struct_pattern_fields([], Vt, _Old, Bvt, St, _) ->
     {Vt, Bvt, St}.
 
-check_struct_fields(Fields, Name, Definitions, Vt0, St0, CheckFun) ->
+
+check_fields(Fields, Name, Defs, Vt0, St0, CheckFun) ->
     Fun = fun(Field, {Sfsa, Vta, Sta}) ->
-        {Sfsb, {Vtb, Stb}} = check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun),
+        {Sfsb, {Vtb, Stb}} = check_field(Field, Name, Defs, Vt0, Sta, Sfsa, CheckFun),
         {Sfsb, vtmerge_pat(Vta, Vtb), Stb}
     end,
     foldl(Fun, {[], [], St0}, Fields).
 
-check_struct_field(
-    {struct_field, Lf, {atom, La, F}, Val},
-    Name,
-    Definitions,
-    Vt,
-    St,
-    Sfs,
-    CheckFun
-) ->
-    Key = struct_name_to_key(Name),
+check_field({struct_field, Lf, {atom, La, F}, Val}, Name, Defs, Vt, St, Sfs, CheckFun) ->
     case member(F, Sfs) of
         true ->
-            {Sfs, {[], add_error(Lf, {redefine_struct_field, Key, F}, St)}};
+            {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
         false ->
             {[F | Sfs],
-                case Definitions =:= unavailable orelse is_map_key(F, Definitions) of
+                case Defs =:= unavailable orelse is_map_key(F, Defs) of
                     true -> CheckFun(Val, Vt, St);
-                    false -> {[], add_error(La, {undefined_struct_field, Key, F}, St)}
+                    false -> {[], add_error(La, {undefined_field, Name, F}, St)}
                 end}
     end.
 
-used_struct(Line, Name, TypeArity, #lint{usage = Usage} = St) ->
-    Types = dict:store({Name, TypeArity}, Line, Usage#usage.used_types),
-    St#lint{usage = Usage#usage{used_types = Types}}.
-
-pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
+pattern_fields(Fs, Name, Defs, Vt0, Old, Bvt, St0) ->
     CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
     {_SeenFields, Uvt, Bvt1, St1} =
         foldl(
             fun(Field, {Sfsa, Vta, Bvt1, Sta}) ->
-                case check_struct_field(Field, Name, Definitions, Vt0, Sta, Sfsa, CheckFun) of
+                case check_field(Field, Name, Defs, Vt0, Sta, Sfsa, CheckFun) of
                     {Sfsb, {Vtb, Stb}} ->
                         {Sfsb, vtmerge_pat(Vta, Vtb), [], Stb};
                     {Sfsb, {Vtb, Bvt2, Stb}} ->
@@ -3194,38 +3127,24 @@ pattern_struct_fields(Fs, Name, Definitions, Vt0, Old, Bvt, St0) ->
     {Uvt, Bvt1, St1}.
 
 %% Does not do any checking, this is done in check_type
-struct_def(Loc, {type, _, struct, {atom, _, Name}, _Fields} = Type, TypeArity, St) ->
-    St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, struct_fields_map(Type)}}}.
+struct_def(Loc, {type, _, struct, {atom, _, Name}, Fields}, TypeArity, St) ->
+    St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, fields_map(Fields)}}}.
 
-struct_fields_map({type, _, struct, _, Fields}) ->
+fields_map(Fields) ->
     maps:from_list([
         {Field, Default}
         || {field_definition, _, {atom, _, Field}, Default, _Type} <- Fields
     ]).
 
-%% Checks that constructors of an enum are valid
-%% - only a single constructor or a union of constructors
-%% - no reuse of constructor names within an enum even with different arities
-%% - redefinitions of the enum type name itself are handled by type/opaque/enum
+%% Does not do any checking, this is done in check type
+enum_def(Loc, {type, _, enum, {atom, _, Name}, Variants}, TypeArity, St) ->
+    St#lint{enums = (St#lint.enums)#{Name => {Loc, TypeArity, enum_variants_map(Variants)}}}.
 
-enum_def(TypeName, {type, _, union, Cs}, St) ->
-    enum_def_1(TypeName, Cs, [], [], St);
-enum_def(TypeName, {type, _, enum, _, _} = C, St) ->
-    enum_def_1(TypeName, [C], [], [], St);
-enum_def(_TypeName, TypeDef, St) ->
-    add_error(element(2, TypeDef), illegal_enum, St).
-
-enum_def_1(TypeName, [{type, _, enum, {atom, L, C}, As} | Ts], Ns, NAs, St) ->
-    St1 =
-        case lists:member(C, Ns) of
-            false -> St;
-            true -> add_error(L, {redefine_enum, TypeName, C}, St)
-        end,
-    enum_def_1(TypeName, Ts, [C | Ns], [{C, length(As)} | NAs], St1);
-enum_def_1(_TypeName, [T | _Ts], _Ns, _NAs, St) ->
-    add_error(element(2, T), illegal_enum, St);
-enum_def_1(TypeName, [], _Ns, NAs, #lint{enums = Map} = St) ->
-    St#lint{enums = Map#{TypeName => NAs}}.
+enum_variants_map(Variants) ->
+    maps:from_list([
+        {Name, fields_map(Fields)}
+        || {variant, _, {atom, _, Name}, Fields} <- Variants
+    ]).
 
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
 %%    Attr :: 'type' | 'opaque' | 'enum' | 'struct'
@@ -3431,12 +3350,8 @@ check_type({type, L, binary, [Base, Unit]}, SeenVars, St) ->
                 add_error(L, {type_syntax, binary}, St)
         end,
     {SeenVars, St1};
-check_type({type, La, enum, C, As}, SeenVars, St) ->
-    St1 = check_enum(none, C, As, St),
-    check_type({type, La, product, As}, SeenVars, St1);
-check_type({type, La, enum, E, C, As}, SeenVars, St) ->
-    St1 = check_enum(E, C, As, St),
-    check_type({type, La, product, As}, SeenVars, St1);
+check_type({type, La, enum, {atom, _, Name}, Variants}, SeenVars, St) ->
+    check_enum_types(La, Name, Variants, SeenVars, St);
 check_type({type, _L, open_anon_struct, Fields, Var}, SeenVars, St) ->
     {SeenVars1, St1} = check_type(Var, SeenVars, St),
     check_anon_struct_types(Fields, SeenVars1, St1);
@@ -3499,6 +3414,7 @@ check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
 check_type([{typed_record_field, Field, _T} | _], SeenVars, St) ->
     {SeenVars, add_error(element(2, Field), old_abstract_code, St)};
 check_type(I, SeenVars, St) ->
+    io:format("~p~n", [I]),
     case erl_eval:partial_eval(I) of
         {integer, _ILn, _Integer} -> {SeenVars, St};
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
@@ -3524,34 +3440,52 @@ check_anon_struct_types(
 check_anon_struct_types([], SeenVars, St, _Fields) ->
     {SeenVars, St}.
 
+%% Enum types only appear in enum definitions
+check_enum_types(_EnumLine, EnumName, Variants, SeenVars, St) ->
+    check_variants(Variants, EnumName, _SeenVariants = #{}, SeenVars, St).
+
+check_variants([{variant, Line, {atom, _, Name}, Fields} | Rest], Enum, Seen, SeenVars, St) ->
+    case is_map_key(Name, Seen) of
+        true ->
+            add_error(Line, {redefine_enum, Enum, Name}, St);
+        false ->
+            {SeenVars1, St1} = check_field_defs(Fields, {enum, Enum, Name}, SeenVars, St),
+            check_variants(Rest, Enum, Seen#{Name => []}, SeenVars1, St1)
+    end;
+check_variants([], _Enum, _Seen, SeenVars, St) ->
+    {SeenVars, St}.
+
 %% Struct types only appear in struct definitions
-check_struct_types(_StructLine, StructName, Fields, SeenVars0, St0) ->
+check_struct_types(_StructLine, StructName, Fields, SeenVars, St) ->
+    check_field_defs(Fields, {struct, StructName}, SeenVars, St).
+
+check_field_defs(Fields, ParentName, SeenVars0, St0) ->
     Fun = fun({field_definition, Line, {atom, _, Name}, Default, Type}, {SeenVars, St, FieldsAcc}) ->
         St1 =
             case is_map_key(Name, FieldsAcc) of
-                true -> add_error(Line, {redefine_struct_field, StructName, Name}, St);
+                true -> add_error(Line, {redefine_field, ParentName, Name}, St);
                 false -> St
             end,
-        St2 = check_struct_default(Default, StructName, St1),
+        St2 = check_field_default(Default, ParentName, St1),
         {SeenVars1, St3} = check_type(Type, SeenVars, St2),
         {SeenVars1, St3, FieldsAcc#{Name => Type}}
     end,
     {SeenVars, St, _} = lists:foldl(Fun, {SeenVars0, St0, #{}}, Fields),
     {SeenVars, St}.
 
-check_struct_default(undefined, _StructName, St) ->
+check_field_default(undefined, _StructName, St) ->
     St;
-check_struct_default(Expr, StructName, St = #lint{errors = OriginalErrors}) ->
-    St1 = St#lint{errors = [], struct_expansion = cerl_sets:from_list([StructName])},
+check_field_default(Expr, Name, St = #lint{errors = OriginalErrors}) ->
+    St1 = St#lint{errors = [], default_expansion = cerl_sets:from_list([Name])},
     {_, St2 = #lint{errors = NewErrors}} = gexpr(Expr, [], St1),
-    Errors = lists:map(fun translate_struct_default_error/1, NewErrors) ++ OriginalErrors,
-    St2#lint{errors = Errors, struct_expansion = skip}.
+    Errors = lists:map(fun translate_field_default_error/1, NewErrors) ++ OriginalErrors,
+    St2#lint{errors = Errors, default_expansion = skip}.
 
-translate_struct_default_error({File, {Loc, Mod, illegal_guard_expr}}) ->
-    {File, {Loc, Mod, illegal_struct_default}};
-translate_struct_default_error({File, {Loc, Mod, {illegal_guard_local_call, Call}}}) ->
-    {File, {Loc, Mod, {illegal_strtuct_default_local_call, Call}}};
-translate_struct_default_error(Other) ->
+translate_field_default_error({File, {Loc, Mod, illegal_guard_expr}}) ->
+    {File, {Loc, Mod, illegal_field_default}};
+translate_field_default_error({File, {Loc, Mod, {illegal_guard_local_call, Call}}}) ->
+    {File, {Loc, Mod, {illegal_field_default_local_call, Call}}};
+translate_field_default_error(Other) ->
     Other.
 
 used_type(TypePair, L, #lint{usage = Usage, file = File} = St) ->
@@ -4748,7 +4682,7 @@ extract_sequence(4, Fmt, Need) ->
     extract_sequence(5, Fmt, Need);
 extract_sequence(5, [C | Fmt], Need0) ->
     case control_type(C, Need0) of
-        error -> {error, "invalid control ~" ++ [C]};
+        error -> {error, "invalid control \~" ++ [C]};
         Need1 -> {ok, Need1, Fmt}
     end;
 extract_sequence(_, [], _Need) ->

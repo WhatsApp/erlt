@@ -22,70 +22,102 @@
 %% N.B. if this module is to be used as a basis for transforms then
 %% all the error cases must be handled otherwise this module just crashes!
 
--export([parse_transform/2]).
+-export([module/2]).
 
 -record(context, {
     module :: atom(),
-    enum = [],
-    enums = #{}
+    enums = #{},
+    defs_db :: erlt_defs:def_db()
 }).
 
--define(ENUM_COOKIE, 969696).
+module(Forms, DefDb) ->
+    Context = init_context(Forms, DefDb),
+    erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Context, Ctx) end).
 
-parse_transform(Forms, _Options) ->
-    Context = init_context(Forms),
-    element(1, erlt_ast:prewalk(Forms, Context, fun rewrite/3)).
 
-init_context(Forms) ->
+init_context(Forms, DefsDb) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
     Enums = [E || {attribute, _, enum, E} <- Forms],
     #context{
         module = Module,
-        enums = init_enums(Enums, #{})
+        enums = init_enums(Enums, Module),
+        defs_db = DefsDb
     }.
 
-init_enums([{N, {type, _, enum, {atom, _, C}, _}, _Vs} | Es], Map) ->
-    init_enums(Es, add_enum(C, N, Map));
-init_enums([{N, {type, _, union, Cs}, _Vs} | Es], Map) ->
-    Map1 = lists:foldl(fun(C, M) -> add_enum(C, N, M) end, Map, constrs(Cs)),
-    init_enums(Es, Map1);
-init_enums([], Map) ->
-    Map.
+init_enums(Defs, Module) ->
+    Map = [{Name, enum_info(Module, Type)} || {Name, Type, _Args} <- Defs],
+    maps:from_list(Map).
 
-add_enum(C, E, Map) ->
-    case maps:find(C, Map) of
-        {ok, Enums} ->
-            Map#{C := ordsets:add_element(E, Enums)};
-        error ->
-            #{C => [E]}
-    end.
+enum_info(Mod, {type, _, enum, {atom, _, Name}, Variants}) ->
+    VariantsMap = [variant_info(Mod, Name, Variant) || Variant <- Variants],
+    maps:from_list(VariantsMap).
 
-constrs([{type, _, enum, {atom, _, C}, _} | Cs]) ->
-    [C | constrs(Cs)];
-constrs([]) ->
-    [].
+variant_info(Mod, Enum, {variant, _, {atom, Line, Tag}, Fields}) ->
+    RuntimeTag = list_to_atom("$#" ++ atom_to_list(Mod) ++ ":" ++ atom_to_list(Enum) ++ "." ++ atom_to_list(Tag)),
+    Anno = erl_anno:set_generated(true, Line),
+    FieldsMap = [
+        {Name, Default}
+        || {field_definition, _, {atom, _, Name}, Default, _Type} <- Fields
+    ],
+    {Tag, {{atom, Anno, RuntimeTag}, FieldsMap}}.
 
-rewrite({attribute, Line, enum, {N, T, Vs}}, Context, form) ->
-    {{attribute, Line, type, {N, T, Vs}}, Context#context{enum = N}};
-rewrite({enum, Line, {remote, _L, M, E}, A, Ps}, Context, _Ctx) ->
-    %% remote enum reference Mod.Enum.Constructor{...}
-    {{tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E, A | Ps]}, Context};
-rewrite({enum, Line, E, A, Ps}, Context, _Ctx) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    {{tuple, Line, [{integer, Line, ?ENUM_COOKIE}, M, E, A | Ps]}, Context};
-rewrite({type, Line, enum, {remote, _, M, E}, A, Ts}, Context, type) ->
-    %% remote enum reference Mod.Enum.Constructor{...}
-    {{type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A | Ts]}, Context};
-rewrite({type, Line, enum, E, A, Ts}, Context, type) ->
-    %% local qualified enum reference Enum.Constructor{...}
-    M = {atom, Line, Context#context.module},
-    {{type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A | Ts]}, Context};
-rewrite({type, Line, enum, A, Ts}, Context, type) ->
-    %% unqualified use can only happen in an enum def, so the
-    %% enum name should be given by the context
-    E = {atom, Line, Context#context.enum},
-    M = {atom, Line, Context#context.module},
-    {{type, Line, tuple, [{integer, Line, ?ENUM_COOKIE}, M, E, A | Ts]}, Context};
-rewrite(Other, Context, _Ctx) ->
-    {Other, Context}.
+rewrite({attribute, Line, enum, {Name, Type, Vars}}, Context, form) ->
+    Union = build_type_union(Type, Context),
+    {attribute, Line, type, {Name, Union, Vars}};
+rewrite({enum, Line, Name, Variant, Fields}, Context, pattern) ->
+    {RuntimeTag, Def} = get_definition(Name, Variant, Context),
+    Pattern = variant_pattern(Fields, Def),
+    {tuple, Line, [RuntimeTag | Pattern]};
+rewrite({enum, Line, Name, Variant, Fields}, Context, _Ctx) ->
+    {RuntimeTag, Def} = get_definition(Name, Variant, Context),
+    Constructor = variant_init(Fields, Def),
+    {tuple, Line, [RuntimeTag | Constructor]};
+rewrite(Other, _Context, _Ctx) ->
+    Other.
+
+get_definition({atom, _, Name}, {atom, _, Variant}, Context) ->
+    map_get(Variant, map_get(Name, Context#context.enums));
+get_definition({remote, _, {atom, _, Module}, {atom, _, Name}}, {atom, _, Variant}, Context) ->
+    map_get(Variant, get_remote_definition(Module, Name, Context)).
+
+get_remote_definition(Module, Name, Context) ->
+    {ok, {attribute, _, _, {_, Type, _}}} =
+        erlt_defs:find_enum(Module, Name, Context#context.defs_db),
+    enum_info(Module, Type).
+
+variant_init(Fields, Defs) ->
+    Fun = fun({Name, Default}) ->
+        case find_field(Name, Fields) of
+            {struct_field, _, _, Value} -> Value;
+            error when Default =/= undefined -> Default
+        end
+    end,
+    lists:map(Fun, Defs).
+
+variant_pattern(Fields, Defs) ->
+    Fun = fun({Name, _Default}) ->
+        case find_field(Name, Fields) of
+            {struct_field, _, _, Value} ->
+                Value;
+            error ->
+                Anno = erl_anno:set_generated(true, erl_anno:new(1)),
+                {var, Anno, '_'}
+        end
+    end,
+    lists:map(Fun, Defs).
+
+find_field(Name, [{struct_field, _, {atom, _, Name}, _} = Field | _]) ->
+    Field;
+find_field(Name, [_ | Rest]) ->
+    find_field(Name, Rest);
+find_field(_Name, []) ->
+    error.
+
+build_type_union({type, Line, enum, {atom, _, Name}, Variants}, Context) ->
+    Defs = map_get(Name, Context#context.enums),
+    {type, Line, union, [variant_type(Variant, Defs) || Variant <- Variants]}.
+
+variant_type({variant, Line, {atom, _, Name}, Fields}, Defs) ->
+    {RuntimeTag, _} = map_get(Name, Defs),
+    FieldTypes = [Type || {field_definition, _, _Name, _Default, Type} <- Fields],
+    {type, Line, tuple, [RuntimeTag | FieldTypes]}.

@@ -35,7 +35,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr anon_struct_expr
-struct_expr struct_name struct_tuple struct_fields struct_field
+struct_expr local_or_remote_name struct_tuple struct_fields struct_field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses atom_or_var integer_or_var
@@ -50,7 +50,8 @@ type_def top_type top_types type
 type_sig type_sigs type_guard type_guards fun_type anon_fun_type binary_type
 type_spec spec_fun field_types field_type
 map_pair_types map_pair_type bin_base_type bin_unit_type
-struct_def type_name vars field_defs field_def anon_field_defs non_default_field_def.
+struct_def type_name vars field_defs field_def anon_field_defs non_default_field_def
+enum_def variant_defs variant_def.
 
 Terminals
 char integer float atom string var
@@ -65,7 +66,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' struct_like type_like % helper
+'spec' 'callback' struct_like enum_like type_like % helper
 dot.
 
 Expect 0.
@@ -85,7 +86,6 @@ Left 500 mult_op.
 Unary 600 prefix_op.
 Nonassoc 700 '#'.
 Nonassoc 800 ':'.
-Left 900 '.'.
 
 %% Types
 
@@ -108,14 +108,13 @@ attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' enum_like atom enum_def     : build_enum_def(?anno('$1', '$4'), '$3', '$4').
 attribute -> '-' type_like atom type_def     : build_type_def(?anno('$1', '$4'), '$3', '$4').
-
-dot_atom -> atom : '$1'.
-dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
-dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
 
 struct_def -> type_name '::' '(' ')' : {struct_def, ?anno('$1', '$4'), '$1', []}.
 struct_def -> type_name '::' '(' field_defs ')' : {struct_def, ?anno('$1', '$5'), '$1', '$4'}.
+
+enum_def -> type_name '::' '(' variant_defs ')' : {enum_def, ?anno('$1', '$5'), '$1', '$4'}.
 
 type_name -> atom : {call, ?anno('$1'), '$1', []}.
 type_name -> atom '(' ')' : {call, ?anno('$1', '$3'), '$1', []}.
@@ -123,6 +122,12 @@ type_name -> atom '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
 
 vars -> var ',' vars : ['$1' | '$3'].
 vars -> var : ['$1'].
+
+variant_defs -> variant_def ',' variant_defs : ['$1' | '$3'].
+variant_defs -> variant_def : ['$1'].
+
+variant_def -> atom : {variant, ?anno('$1'), '$1', []}.
+variant_def -> atom '{' field_defs '}' : {variant, ?anno('$1', '$4'), '$1', '$3'}.
 
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
@@ -139,8 +144,8 @@ non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
 
-spec_fun ->                       dot_atom : fold_dots('$1').
-spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
+spec_fun ->                       atom : fold_dots('$1').
+spec_fun ->              atom ':' atom : {fold_dots('$1'), '$3'}.
 
 type_def -> type_name '::' top_type : {type_def, ?anno('$1', '$3'), '$1', '$3'}.
 
@@ -170,14 +175,12 @@ type -> type mult_op type                 : ?mkop2('$1', '$2', '$3').
 type -> prefix_op type                    : ?mkop1('$1', '$2').
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> dot_atom                          : fold_dots('$1').
-type -> dot_atom '{' '}'                  : ?set_anno(build_enum_type('$1', []), ?anno('$1', '$3')).
-type -> dot_atom '{' top_types '}'        : ?set_anno(build_enum_type('$1', '$3'), ?anno('$1', '$4')).
-type -> dot_atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
-type -> dot_atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
-type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
+type -> atom                          : fold_dots('$1').
+type -> atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
+type -> atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
+type -> atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
                                              [fold_dots('$1'), '$3', []]}.
-type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
+type -> atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
                                              [fold_dots('$1'), '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
@@ -279,7 +282,6 @@ expr -> expr_remote : '$1'.
 expr_remote -> expr_max ':' expr_max : {remote,?anno('$1','$3'),'$1','$3'}.
 expr_remote -> expr_max : '$1'.
 
-expr_max -> expr_max '.' expr_max : ?mkop2('$1', '$2', '$3').
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
@@ -307,18 +309,12 @@ pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
-pat_expr_max -> pat_expr_max '.' pat_expr_max : ?mkop2('$1', '$2', '$3').
 pat_expr_max -> var : '$1'.
 pat_expr_max -> atomic : '$1'.
 pat_expr_max -> list : '$1'.
 pat_expr_max -> binary : '$1'.
 pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
-
-enum_pat_expr -> enum_pat_expr '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_pat_expr -> pat_expr_max '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_pat_expr -> enum_pat_expr '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
-enum_pat_expr -> pat_expr_max '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
 
 anon_struct_pat_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
 anon_struct_pat_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
@@ -330,10 +326,15 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-struct_pat_expr -> '#' struct_name '.' atom :
+struct_pat_expr -> '#' local_or_remote_name '.' atom :
 	{struct_index, ?anno('$1', '$4'), '$2', '$4'}.
-struct_pat_expr -> '#' struct_name struct_tuple :
+struct_pat_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
+
+enum_pat_expr -> local_or_remote_name '.' atom :
+    {enum, ?anno('$1', '$3'), '$1', '$3', []}.
+enum_pat_expr -> local_or_remote_name '.' atom '{' struct_fields '}' :
+    {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
 list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
@@ -341,7 +342,6 @@ list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
 tail -> ']' : {nil,?anno('$1')}.
 tail -> '|' expr ']' : ?set_anno('$2',?anno('$1','$3')).
 tail -> ',' expr tail : {cons,?anno('$2','$3'),'$2','$3'}.
-
 
 binary -> '<<' '>>' : {bin,?anno('$1','$2'),[]}.
 binary -> '<<' bin_elements '>>' : {bin,?anno('$1','$3'),'$2'}.
@@ -369,7 +369,6 @@ bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
 
-
 list_comprehension -> '[' expr '||' lc_exprs ']' :
 	{lc,?anno('$1','$5'),'$2','$4'}.
 binary_comprehension -> '<<' expr_max '||' lc_exprs '>>' :
@@ -384,9 +383,12 @@ lc_expr -> binary '<=' expr : {b_generate,?anno('$1','$3'),'$1','$3'}.
 tuple -> '{' '}' : {tuple,?anno('$1','$2'),[]}.
 tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 
-%% This is called from expr
-enum_expr -> expr_remote '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_expr -> expr_remote '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
+%% ideally this would use local_or_remote_name, but it causes conflicts with
+%% function call syntax
+enum_expr -> expr_remote '.' atom :
+    {enum, ?anno('$1', '$3'), '$1', '$3', []}.
+enum_expr -> expr_remote '.' atom '{' struct_fields '}' :
+    {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
 anon_struct_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
@@ -423,21 +425,21 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-struct_expr -> '#' struct_name '.' atom :
+struct_expr -> '#' local_or_remote_name '.' atom :
     {struct_index, ?anno('$1', '$4'), '$2', '$4'}.
-struct_expr -> '#' struct_name struct_tuple :
+struct_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
-struct_expr -> expr_max '#' struct_name '.' atom :
+struct_expr -> expr_max '#' local_or_remote_name '.' atom :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> struct_expr '#' struct_name '.' atom :
+struct_expr -> struct_expr '#' local_or_remote_name '.' atom :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> expr_max '#' struct_name struct_tuple :
+struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
-struct_expr -> struct_expr '#' struct_name struct_tuple :
+struct_expr -> struct_expr '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
 
-struct_name -> atom : '$1'.
-struct_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+local_or_remote_name -> atom : '$1'.
+local_or_remote_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
 struct_tuple -> '{' '}' : [].
 struct_tuple -> '{' struct_fields '}' : '$2'.
@@ -493,7 +495,7 @@ receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$6'),'$2','$4','$5'}.
 
 
-fun_expr -> 'fun' dot_atom '/' integer :
+fun_expr -> 'fun' atom '/' integer :
         case '$2'of
             {atom,_,_} ->
                 {'fun',?anno('$1','$4'),{function,element(3, '$2'),element(3, '$4')}};
@@ -1107,7 +1109,8 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form([{'-', A1}, {atom, A2, TypeLike} = Atom | Tokens]) when
-    TypeLike =:= type; TypeLike =:= opaque; TypeLike =:= enum ->
+    TypeLike =:= type; TypeLike =:= opaque
+->
     NewTokens = [{'-', A1}, {type_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
@@ -1115,6 +1118,10 @@ parse_form([{'-', A1}, {atom, A2, StructLike} = Atom | Tokens]) when
     StructLike =:= struct; StructLike =:= message; StructLike =:= exception
 ->
     NewTokens = [{'-', A1}, {struct_like, A2}, Atom | Tokens],
+    ?ANNO_CHECK(NewTokens),
+    parse(NewTokens);
+parse_form([{'-', A1}, {atom, A2, EnumLike} = Atom | Tokens]) when EnumLike =:= enum ->
+    NewTokens = [{'-', A1}, {enum_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form(Tokens) ->
@@ -1162,6 +1169,11 @@ parse_term(Tokens) ->
 build_struct_def(Anno, {atom, _, Attr}, {struct_def, DefAnno, Name, Fields}) ->
     {call, _, {atom, _, TypeName} = Tag, Args} = Name,
     Type = {type, DefAnno, struct, Tag, Fields},
+    {attribute, Anno, Attr, {TypeName, Type, Args}}.
+
+build_enum_def(Anno, {atom, _, Attr}, {enum_def, DefAnno, Name, Constructors}) ->
+    {call, _, {atom, _, TypeName} = Tag, Args} = Name,
+    Type = {type, DefAnno, enum, Tag, Constructors},
     {attribute, Anno, Attr, {TypeName, Type, Args}}.
 
 build_type_def(Anno, {atom, _, Attr}, {type_def, _DefAnno, Name, Type}) ->
@@ -1273,18 +1285,6 @@ build_bin_type([], Int) ->
     Int;
 build_bin_type([{var, Aa, _} | _], _) ->
     ret_err(Aa, "Bad binary type").
-
-build_enum_type(Name, Types) ->
-    case erlt_parse:balance_dotted(Name) of
-        {op, A, '.', {op, A2, '.', M, E}, N} ->
-            {type, A, enum, {remote, A2, fold_dots(M), E}, N, Types};
-        {op, A, '.', E, N} ->
-            {type, A, enum, E, N, Types};
-        {atom, A, _} = N ->
-            {type, A, enum, N, Types};
-        Other ->
-            ret_err(?anno(Other), "bad enum type")
-    end.
 
 build_anon_struct_internals_type(This, {Fields, Ext}) ->
     {[This | Fields], Ext};
@@ -1461,20 +1461,6 @@ strip_map_tuple({map_tuple, _Anno, List}) ->
 
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
-
-build_enum(Name, Elements, Anno) ->
-    case erlt_parse:balance_dotted(Name) of
-        {op, _, '.', {op, ModAnno, '.', Mod, Enum}, Ctr} ->
-            %% remote enum reference Mod.Enum.Constructor{...}
-            {enum, Anno, {remote, ModAnno, Mod, Enum}, Ctr, Elements};
-        {op, _, '.', Enum, Ctr} ->
-            %% local qualified enum reference Enum.Constructor{...}
-            {enum, Anno, Enum, Ctr, Elements};
-        {atom, _, _} ->
-            ret_err(Anno, "constructor missing enum qualifier");
-        _Other ->
-            ret_err(Anno, "bad enum")
-    end.
 
 -spec ret_err(_, _) -> no_return().
 ret_err(Anno, S) ->
