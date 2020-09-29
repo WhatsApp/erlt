@@ -22,7 +22,7 @@
 %% N.B. if this module is to be used as a basis for transforms then
 %% all the error cases must be handled otherwise this module just crashes!
 
--export([module/2]).
+-export([module/2, local_rewriter/1]).
 
 -record(context, {
     module :: atom(),
@@ -34,6 +34,11 @@ module(Forms, DefDb) ->
     Context = init_context(Forms, DefDb),
     erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Context, Ctx) end).
 
+local_rewriter(Forms) ->
+    Context = init_context(Forms, erlt_defs:new()),
+    fun(Expr) ->
+        rewrite_local(Expr, Context)
+    end.
 
 init_context(Forms, DefsDb) ->
     [Module] = [M || {attribute, _, module, M} <- Forms],
@@ -74,6 +79,11 @@ rewrite({enum, Line, Name, Variant, Fields}, Context, _Ctx) ->
     {tuple, Line, [RuntimeTag | Constructor]};
 rewrite(Other, _Context, _Ctx) ->
     Other.
+
+rewrite_local({enum, Line, {atom, _, Name}, {atom, _, Variant}, Fields}, Context) ->
+    {RuntimeTag, Def} = map_get(Variant, map_get(Name, Context#context.enums)),
+    Constructor = variant_init(Fields, Def),
+    {tuple, Line, [RuntimeTag | Constructor]}.
 
 get_definition({atom, _, Name}, {atom, _, Variant}, Context) ->
     map_get(Variant, map_get(Name, Context#context.enums));
