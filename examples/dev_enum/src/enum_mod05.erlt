@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erlt]).
 -module(enum_mod05).
 
 -export([expr/0, pattern/3, guard/3]).
