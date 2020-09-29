@@ -6,43 +6,25 @@
 
 -type possibly(T) :: enum_mod01:possibly(T).
 
--type perhaps(T) :: {969696,
-                     enum_mod01,
-                     possibly,
-                     some,
-                     T} |
-                    {969696, enum_mod01, possibly, none}.
-
 -spec p() -> possibly(any()).
 
-p() -> {969696, enum_mod01, possibly, none}.
+p() -> {'$#enum_mod01:possibly.none'}.
 
--spec q(T) -> perhaps(T).
+q(X) -> {'$#enum_mod01:possibly.some', X}.
 
-q(X) -> {969696, enum_mod01, possibly, some, X}.
-
--spec r(perhaps(T)) -> [T].
-
-r({969696, enum_mod01, possibly, some, X = 41}) ->
-    X + 1;
+r({'$#enum_mod01:possibly.some', X = 41}) -> X + 1;
 r(E) ->
     case E of
-        {969696, enum_mod01, possibly, none} -> [];
-        {969696, enum_mod01, possibly, some, X} -> [X]
+        {'$#enum_mod01:possibly.none'} -> [];
+        {'$#enum_mod01:possibly.some', X} -> [X]
     end.
-
--spec s(perhaps(T)) -> [T].
 
 s(E) ->
     try E of
-        {969696, enum_mod01, possibly, none} -> [];
-        {969696, enum_mod01, possibly, some, X} -> [X]
+        {'$#enum_mod01:possibly.none'} -> [];
+        {'$#enum_mod01:possibly.some', X} -> [X]
     catch
-        throw:{969696,
-               enum_mod01,
-               possibly,
-               some,
-               thing}:Trace ->
+        throw:{'$#enum_mod01:possibly.some', thing}:Trace ->
             {caught, Trace}
     end.
 

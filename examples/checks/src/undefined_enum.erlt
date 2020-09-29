@@ -4,5 +4,5 @@
 -export([f/1]).
 
 %% Error: referring to an unknown enum type in the current module
-f(bar.baz{}) ->
+f(bar.baz) ->
     true.

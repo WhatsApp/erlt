@@ -1,8 +1,10 @@
 
--module(remote_constr_wrong_arity).
+-module(undefined_constr).
 
 -export([f/1]).
 
+-enum foo() :: (bar).
+
 %% Error: referring to an unknown constructor in an existing enum
-f(define_enum.foo.bar{A}) ->
-    A.
+f(foo.baz) ->
+    true.

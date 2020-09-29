@@ -1,0 +1,6 @@
+-lang([erlt]).
+-module(redefine_imported_enum).
+
+-import_type(no_need_to_exist1, [foo/2]).
+
+-enum foo :: (a).

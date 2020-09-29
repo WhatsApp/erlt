@@ -9,4 +9,16 @@ type_vars.erlt:13:12: _ is not a valid type
 type_vars.erlt:14:17: _ is not a valid type
 type_vars.erlt:16:13: type variable 'A' appears multiple times in type arguments
 type_vars.erlt:17:10: _ is not a valid type
-type_vars.erlt:18:17: _ is not a valid type
+type_vars.erlt:18:27: _ is not a valid type
+type_vars.erlt:4:1: type x1(_,_) is unused
+type_vars.erlt:5:1: type x2(_) is unused
+type_vars.erlt:6:1: type x3() is unused
+type_vars.erlt:8:1: type y1(_,_) is unused
+type_vars.erlt:9:1: type y2(_) is unused
+type_vars.erlt:10:1: type y3() is unused
+type_vars.erlt:12:1: type z1(_,_) is unused
+type_vars.erlt:13:1: type z2(_) is unused
+type_vars.erlt:14:1: type z3() is unused
+type_vars.erlt:16:1: type e1(_,_) is unused
+type_vars.erlt:17:1: type e2(_) is unused
+type_vars.erlt:18:1: type e3() is unused
