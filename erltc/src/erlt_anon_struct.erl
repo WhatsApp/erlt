@@ -50,4 +50,4 @@ to_typed_map_fields(Fields) ->
     ].
 
 to_map_fields(TypeOfMapField, Fields) ->
-    [{TypeOfMapField, Line, Key, Value} || {struct_field, Line, Key, Value} <- Fields].
+    [{TypeOfMapField, Line, Key, Value} || {field, Line, Key, Value} <- Fields].

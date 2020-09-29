@@ -99,7 +99,7 @@ get_remote_definition(Module, Name, Context) ->
 variant_init(Fields, Defs) ->
     Fun = fun({Name, Default}) ->
         case find_field(Name, Fields) of
-            {struct_field, _, _, Value} -> Value;
+            {field, _, _, Value} -> Value;
             error when Default =/= undefined -> Default
         end
     end,
@@ -108,7 +108,7 @@ variant_init(Fields, Defs) ->
 variant_pattern(Fields, Defs) ->
     Fun = fun({Name, _Default}) ->
         case find_field(Name, Fields) of
-            {struct_field, _, _, Value} ->
+            {field, _, _, Value} ->
                 Value;
             error ->
                 Anno = erl_anno:set_generated(true, erl_anno:new(1)),
@@ -117,7 +117,7 @@ variant_pattern(Fields, Defs) ->
     end,
     lists:map(Fun, Defs).
 
-find_field(Name, [{struct_field, _, {atom, _, Name}, _} = Field | _]) ->
+find_field(Name, [{field, _, {atom, _, Name}, _} = Field | _]) ->
     Field;
 find_field(Name, [_ | Rest]) ->
     find_field(Name, Rest);

@@ -499,13 +499,13 @@ ltypes(Ts, Opts, F, Prec) ->
 variant_fields([], _Opts) ->
     "";
 variant_fields(Fields, Opts) ->
-    struct_fields(Fields, Opts).
+    fields(Fields, Opts).
 
-struct_fields(FieldVals, Opts) ->
+fields(FieldVals, Opts) ->
     {L, _, R} = inop_prec('='),
     Fields = [
         [lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)]
-        || {struct_field, _, Name, Value} <- FieldVals
+        || {field, _, Name, Value} <- FieldVals
     ],
     {seq, ${, $}, [$,], Fields}.
 
@@ -619,7 +619,7 @@ lexpr({enum, _, Name, Variant, Elts}, Prec, Opts) ->
     [lexpr(Name, Prec, Opts), ".", lexpr(Variant, Prec, Opts), variant_fields(Elts, Opts)];
 lexpr({struct, _, Tag, Elts}, Prec, Opts) ->
     {P, R} = preop_prec('#'),
-    El = {first, "#", {first, lexpr(Tag, R, Opts), struct_fields(Elts, Opts)}},
+    El = {first, "#", {first, lexpr(Tag, R, Opts), fields(Elts, Opts)}},
     maybe_paren(P, Prec, El);
 lexpr({map, _, Fs}, Prec, Opts) ->
     {P, _R} = preop_prec('#'),
