@@ -23,17 +23,17 @@
 
 
 %% proper enum declarations
--enum possibly(T) :: some{T} | none{}.
+-enum possibly(T) :: (some{value :: T}, none).
 
 %% exporting an enum type
 -export_type([ possibly/1 ]).
 
 %% a non-exported enum type
--enum pair(T1, T2) :: p{T1, T2}.
+-enum pair(T1, T2) :: (p{fst :: T1, snd :: T2}).
 
 %% a plain type that refers to constructors from another enum type
--type t(T) :: possibly.some{T} | possibly.none{}.
--export_type([ t/1 ]).
+%% -type t(T) :: possibly.some{T} | possibly.none{}.
+%% -export_type([ t/1 ]).
 
 -spec f() -> maybe(any()).
 f() ->
@@ -46,24 +46,24 @@ g() ->
 
 -spec p() -> possibly(any()).
 p() ->
-    possibly.none{}.
+    possibly.none.
 
 -spec q(T) -> possibly(T).
 q(X) ->
-    possibly.some{X}.
+    possibly.some{value = X}.
 
 -spec r(possibly(T)) -> [T].
 r(E) ->
     case E of
-        possibly.none{} ->
+        possibly.none ->
             [];
-        possibly.some{X} when X =:= possibly.none{} ->
+        possibly.some{value = X} when X =:= possibly.none ->
             [];
-        possibly.some{X} ->
+        possibly.some{value = X} ->
             [X]
     end.
 
 
 -spec s(T1, T2) -> pair(T1, T2).
 s(H, T) ->
-    pair.p{H, T}.
+    pair.p{fst = H, snd = T}.

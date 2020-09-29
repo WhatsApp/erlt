@@ -10,11 +10,7 @@
 
 -type error2() :: {'$#exn:error2', string()}.
 
--type my_error() :: {969696,
-                     exn,
-                     my_error,
-                     my_error,
-                     any()}.
+-type my_error() :: {'$#exn:my_error.my_error', any()}.
 
 mk_error1() -> {'$#exn:error1'}.
 

@@ -10,31 +10,25 @@
 
 -import_type({mod03, [{pair, 2}]}).
 
--type maybe_pair() :: {969696,
-                       import_enum_in_enum,
-                       maybe_pair,
-                       really_pair,
-                       mod03:pair(integer(), integer())} |
-                      {969696, import_enum_in_enum, maybe_pair, empty}.
+-type
+     maybe_pair() :: {'$#import_enum_in_enum:maybe_pair.really_pair',
+                      mod03:pair(integer(), integer())} |
+                     {'$#import_enum_in_enum:maybe_pair.empty'}.
 
 -spec mk_pair(integer(),
               integer()) -> mod03:pair(integer(), integer()).
 
-mk_pair(A, B) -> {969696, mod03, pair, pair, A, B}.
+mk_pair(A, B) -> {'$#mod03:pair.pair', A, B}.
 
 -spec mk_ordered_pair(mod03:pair(integer(),
                                  integer())) -> maybe_pair().
 
-mk_ordered_pair({969696, mod03, pair, pair, A, B} = P)
+mk_ordered_pair({'$#mod03:pair.pair', A, B} = P)
     when A >= B ->
-    {969696,
-     import_enum_in_enum,
-     maybe_pair,
-     really_pair,
-     P};
-mk_ordered_pair({969696, mod03, pair, pair, A, B})
+    {'$#import_enum_in_enum:maybe_pair.really_pair', P};
+mk_ordered_pair({'$#mod03:pair.pair', A, B})
     when A < B ->
-    {969696, import_enum_in_enum, maybe_pair, empty}.
+    {'$#import_enum_in_enum:maybe_pair.empty'}.
 
 
 

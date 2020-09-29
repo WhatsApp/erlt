@@ -75,22 +75,16 @@
 -type date() :: #{year := integer(), month := string(),
                   day := integer()}.
 
--type either(A, B) :: {969696,
-                       st_mapping,
-                       either,
-                       left,
-                       A} |
-                      {969696, st_mapping, either, right, B}.
+-type either(A, B) :: {'$#st_mapping:either.left', A} |
+                      {'$#st_mapping:either.right', B}.
 
--type option(A) :: {969696, st_mapping, option, none} |
-                   {969696, st_mapping, option, some, A}.
+-type option(A) :: {'$#st_mapping:option.none'} |
+                   {'$#st_mapping:option.some', A}.
 
 -spec option_to_list(option(A)) -> [A].
 
-option_to_list({969696, st_mapping, option, none}) ->
-    [];
-option_to_list({969696, st_mapping, option, some, A}) ->
-    [A].
+option_to_list({'$#st_mapping:option.none'}) -> [];
+option_to_list({'$#st_mapping:option.some', A}) -> [A].
 
 rec1() -> #{}.
 
@@ -98,7 +92,7 @@ rec2() -> #{year => 2020, month => "April", day => 17}.
 
 rec3(Rec) -> erlang:map_get(id, Rec).
 
-rec4(Rec) -> Rec#{year := 2046}.
+rec4(Rec) -> Rec#{year => 2046}.
 
 -spec rec5(#{id := A}) -> A.
 
@@ -107,9 +101,9 @@ rec5(Rec) -> erlang:map_get(id, Rec).
 -spec rec6(#{year := integer()}) -> #{year :=
                                           integer()}.
 
-rec6(Rec) -> Rec#{year := 2046}.
+rec6(Rec) -> Rec#{year => 2046}.
 
--spec rec7(#{id := A, _ := _}) -> A.
+-spec rec7(#{id := A, atom() => any()}) -> A.
 
 rec7(Rec) -> erlang:map_get(id, Rec).
 

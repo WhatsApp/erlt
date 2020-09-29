@@ -10,8 +10,8 @@
 
 -spec swap(mod03:pair(A, B)) -> mod03:pair(A, B).
 
-swap({969696, mod03, pair, pair, A, B}) ->
-    {969696, mod03, pair, pair, B, A}.
+swap({'$#mod03:pair.pair', A, B}) ->
+    {'$#mod03:pair.pair', B, A}.
 
 
 

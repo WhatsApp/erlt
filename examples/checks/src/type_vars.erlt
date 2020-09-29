@@ -13,6 +13,6 @@
 -opaque z2(_) :: integer().
 -opaque z3() :: _.
 
--enum e1(A, A) :: e{A}.
--enum e2(_) :: e{integer()}.
--enum e3() :: e{_}.
+-enum e1(A, A) :: (e{value :: A}).
+-enum e2(_) :: (e{value :: integer()}).
+-enum e3() :: (e{value :: _}).

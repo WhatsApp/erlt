@@ -1,1 +1,2 @@
-illegal_enum.erlt:7:22: only unqualified enum constructors are allowed in an enum type definition
+illegal_enum.erlt:6:9: only fully qualified remote 'module:name' or local 'name' references are supported
+illegal_enum.erlt:7:9: only fully qualified remote 'module:name' or local 'name' references are supported

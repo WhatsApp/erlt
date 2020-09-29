@@ -4,5 +4,5 @@
 -export([f/1]).
 
 %% Error: referring to an unknown constructor in an existing enum
-f(define_enum.foo.baz{}) ->
+f(define_enum:foo.baz) ->
     true.

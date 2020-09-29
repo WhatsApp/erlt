@@ -1,0 +1,2 @@
+undefined_variant.erlt:9:3: enum foo has no variant baz
+undefined_variant.erlt:6:1: type foo() is unused
