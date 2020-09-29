@@ -127,7 +127,7 @@ get_remote_definition(Module, Name, Context) ->
 struct_init(Fields, Defs) ->
     Fun = fun({Name, Default}) ->
         case find_field(Name, Fields) of
-            {struct_field, _, _, Value} -> Value;
+            {field, _, _, Value} -> Value;
             error when Default =/= undefined -> Default
         end
     end,
@@ -136,7 +136,7 @@ struct_init(Fields, Defs) ->
 struct_pattern(Fields, Defs) ->
     Fun = fun({Name, _Default}) ->
         case find_field(Name, Fields) of
-            {struct_field, _, _, Value} ->
+            {field, _, _, Value} ->
                 Value;
             error ->
                 Anno = erl_anno:set_generated(true, erl_anno:new(1)),
@@ -148,17 +148,17 @@ struct_pattern(Fields, Defs) ->
 update_pattern(Line, Fields, Defs) ->
     Fun = fun({Name, _Default}) ->
         case find_field(Name, Fields) of
-            {struct_field, _, _, _} ->
+            {field, _, _, _} ->
                 {{var, Line, '_'}, []};
             error ->
                 Var = gen_var(Line, Name),
-                {Var, [{struct_field, Line, {atom, Line, Name}, Var}]}
+                {Var, [{field, Line, {atom, Line, Name}, Var}]}
         end
     end,
     {Pattern, ExtraFields} = lists:unzip(lists:map(Fun, Defs)),
     {Pattern, lists:flatten(ExtraFields)}.
 
-find_field(Name, [{struct_field, _, {atom, _, Name}, _} = Field | _]) ->
+find_field(Name, [{field, _, {atom, _, Name}, _} = Field | _]) ->
     Field;
 find_field(Name, [_ | Rest]) ->
     find_field(Name, Rest);
@@ -173,7 +173,7 @@ find_index(Name, [_ | Rest], Acc) ->
 struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
-    Pattern = struct_pattern([{struct_field, GenLine, Field, Var}], Def),
+    Pattern = struct_pattern([{field, GenLine, Field, Var}], Def),
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
         {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}

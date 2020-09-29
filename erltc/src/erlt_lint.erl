@@ -3048,7 +3048,7 @@ check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
     check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
 
 check_anon_struct_fields(
-    [{struct_field, Lf, {atom, _La, F}, Val} | Fields],
+    [{field, Lf, {atom, _La, F}, Val} | Fields],
     Vt,
     St,
     CheckFun,
@@ -3065,7 +3065,7 @@ check_anon_struct_fields([], Vt, St, _CheckFun, _) ->
     {Vt, St}.
 
 check_anon_struct_pattern_fields(
-    [{struct_field, Lf, {atom, _La, F}, Val} | Fields],
+    [{field, Lf, {atom, _La, F}, Val} | Fields],
     Vt,
     Old,
     Bvt,
@@ -3096,7 +3096,7 @@ check_fields(Fields, Name, Defs, Vt0, St0, CheckFun) ->
     end,
     foldl(Fun, {[], [], St0}, Fields).
 
-check_field({struct_field, Lf, {atom, La, F}, Val}, Name, Defs, Vt, St, Sfs, CheckFun) ->
+check_field({field, Lf, {atom, La, F}, Val}, Name, Defs, Vt, St, Sfs, CheckFun) ->
     case member(F, Sfs) of
         true ->
             {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};

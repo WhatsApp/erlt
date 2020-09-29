@@ -35,7 +35,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr anon_struct_expr
-struct_expr local_or_remote_name struct_tuple struct_fields struct_field
+struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses atom_or_var integer_or_var
@@ -317,7 +317,7 @@ pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
 anon_struct_pat_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_pat_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+anon_struct_pat_expr -> '#' '(' fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -333,7 +333,7 @@ struct_pat_expr -> '#' local_or_remote_name struct_tuple :
 
 enum_pat_expr -> local_or_remote_name '.' atom :
     {enum, ?anno('$1', '$3'), '$1', '$3', []}.
-enum_pat_expr -> local_or_remote_name '.' atom '{' struct_fields '}' :
+enum_pat_expr -> local_or_remote_name '.' atom '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
@@ -387,16 +387,16 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 %% function call syntax
 enum_expr -> expr_remote '.' atom :
     {enum, ?anno('$1', '$3'), '$1', '$3', []}.
-enum_expr -> expr_remote '.' atom '{' struct_fields '}' :
+enum_expr -> expr_remote '.' atom '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+anon_struct_expr -> '#' '(' fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
 anon_struct_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_expr -> expr_max '#' '(' struct_fields ')' :
+anon_struct_expr -> expr_max '#' '(' fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
 anon_struct_expr -> expr_max '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_expr -> anon_struct_expr '#' '(' struct_fields ')' :
+anon_struct_expr -> anon_struct_expr '#' '(' fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
 anon_struct_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
 anon_struct_expr -> anon_struct_expr '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
@@ -442,12 +442,12 @@ local_or_remote_name -> atom : '$1'.
 local_or_remote_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
 struct_tuple -> '{' '}' : [].
-struct_tuple -> '{' struct_fields '}' : '$2'.
+struct_tuple -> '{' fields '}' : '$2'.
 
-struct_fields -> struct_field : ['$1'].
-struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
+fields -> field : ['$1'].
+fields -> field ',' fields : ['$1' | '$3'].
 
-struct_field -> atom '=' expr : {struct_field, ?anno('$1','$3'), '$1', '$3'}.
+field -> atom '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 
