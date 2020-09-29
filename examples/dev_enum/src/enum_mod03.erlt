@@ -1,0 +1,44 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-lang([erlt]).
+-module(enum_mod03).
+
+-export_type([foo/0, bar/1, default_with_default/0]).
+
+-export([foo/0, bar/0, baz/0, pattern/3, guard/1]).
+
+-enum bar(A) :: (x{a :: A, b :: foo()}).
+
+-enum baz :: (x{bar = bar.x{a = trunc(1.5), b = foo.x} :: bar(integer())}).
+
+-enum in_pattern :: (x).
+
+-enum default_with_default :: (x{x = baz.x :: baz()}).
+
+-enum foo :: (x).
+
+foo() ->
+    foo.x.
+
+bar() ->
+    bar.x{a = 1, b = foo.x}.
+
+baz() ->
+    {baz.x, default_with_default.x}.
+
+pattern(foo.x, bar.x{b = B}, in_pattern.x) -> B.
+
+guard(Value) when Value =:= bar.x{a = 1, b = 2} ->
+    ok.

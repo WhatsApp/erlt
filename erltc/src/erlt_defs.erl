@@ -68,18 +68,26 @@ gather_exported_types(Module, Forms) ->
 -spec normalise_definitions([erlt_parse:abstract_form()]) -> [erlt_parse:abstract_form()].
 normalise_definitions(Forms) ->
     StructRewriter = erlt_struct:local_rewriter(Forms),
-    [normalise_definition(Form, StructRewriter) || {attribute, _, _, _} = Form <- Forms].
+    EnumRewriter = erlt_enum:local_rewriter(Forms),
+    [
+        normalise_definition(Form, StructRewriter, EnumRewriter)
+        || {attribute, _, _, _} = Form <- Forms
+    ].
 
-normalise_definition({attribute, Loc, struct, {Name, Type0, Vs}}, StructRewriter) ->
-    Fun = fun(Node, Ctx) -> normalise_locals(Node, StructRewriter, Ctx) end,
+normalise_definition({attribute, Loc, Attr, {Name, Type0, Vs}}, StructRewriter, EnumRewriter) when
+    Attr =:= struct; Attr =:= enum
+->
+    Fun = fun(Node, Ctx) -> normalise_locals(Node, StructRewriter, EnumRewriter, Ctx) end,
     Type = erlt_ast:prewalk(Type0, Fun),
-    {attribute, Loc, struct, {Name, Type, Vs}};
-normalise_definition(Other, _StructRewriter) ->
+    {attribute, Loc, Attr, {Name, Type, Vs}};
+normalise_definition(Other, _StructRewriter, _EnumRewriter) ->
     Other.
 
-%% Expand local structs, so that we don't encounter scoping issues
+%% Expand local structs & enums, so that we don't encounter scoping issues
 %% in the importing module
-normalise_locals({struct, _, {atom, _, _}, _} = Struct, StructRewriter, guard) ->
+normalise_locals({struct, _, {atom, _, _}, _} = Struct, StructRewriter, _EnumRewriter, guard) ->
     StructRewriter(Struct);
-normalise_locals(Other, _StructRewriter, _Ctx) ->
+normalise_locals({enum, _, {atom, _, _}, _, _} = Enum, _StructRewriter, EnumRewriter, guard) ->
+    EnumRewriter(Enum);
+normalise_locals(Other, _StructRewriter, _EnumRewriter, _Ctx) ->
     Other.
