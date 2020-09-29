@@ -265,15 +265,14 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post(Node, Acc0, Ctx);
         {type, _, tuple, any} ->
             Post(Node, Acc0, Ctx);
-        {type, Line, enum, Name0, Constr0, Args0} ->
+        {type, Line, enum, Name0, Variants0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
-            {Args1, Acc3} = do_traverse_list(Args0, Acc2, Pre, Post, Ctx),
-            Post({type, Line, enum, Name1, Constr1, Args1}, Acc3, Ctx);
-        {type, Line, enum, Constr0, Args0} ->
-            {Constr1, Acc1} = do_traverse(Constr0, Acc0, Pre, Post, Ctx),
-            {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
-            Post({type, Line, enum, Constr1, Args1}, Acc2, Ctx);
+            {Variants1, Acc2} = do_traverse_list(Variants0, Acc1, Pre, Post, Ctx),
+            Post({type, Line, enum, Name1, Variants1}, Acc2, Ctx);
+        {variant, Line, Name0, Fields0} ->
+            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
+            Post({variant, Line, Name1, Fields1}, Acc2, Ctx);
         {type, Line, struct, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),

@@ -334,8 +334,6 @@ lattribute(Name, Arg, Options) ->
 abstract(Arg, #options{encoding = Encoding}) ->
     erlt_parse:abstract(Arg, [{encoding, Encoding}]).
 
-typeattr(struct, {TypeName, Type, []}, Opts) ->
-    {first, leaf("-struct "), typed(atom_to_list(TypeName), Type, Opts)};
 typeattr(Tag, {TypeName, Type, Args}, Opts) ->
     {first, leaf("-" ++ atom_to_list(Tag) ++ " "),
         typed(call({atom, a0(), TypeName}, Args, 0, Opts), Type, Opts)}.
@@ -390,8 +388,8 @@ ltype({type, _, 'fun', [{type, _, any}, _]} = FunType, _, Opts) ->
     [fun_type(['fun', $(], FunType, Opts), $)];
 ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _, Opts) ->
     [fun_type(['fun', $(], FunType, Opts), $)];
-ltype({type, _Line, enum, Tag, Vars}, _, Opts) ->
-    {first, lexpr(Tag, Opts), tuple_type(Vars, Opts, fun ltype/3)};
+ltype({type, _Line, enum, _Tag, Vars}, _, Opts) ->
+    {seq, $(, $), [$,], lists:map(fun(Var) -> variant_def(Var, Opts) end, Vars)};
 ltype({type, _Line, struct, _Name, Fields}, _, Opts) ->
     {seq, $(, $), [$,], lists:map(fun(Field) -> field_def(Field, Opts) end, Fields)};
 ltype({type, Line, T, Ts}, _, Opts) ->
@@ -505,6 +503,12 @@ struct_fields(FieldVals, Opts) ->
         || {struct_field, _, Name, Value} <- FieldVals
     ],
     {seq, ${, $}, [$,], Fields}.
+
+variant_def({variant, _, Name, []}, Opts) ->
+    ltype(Name, Opts);
+variant_def({variant, _, Name, Fields}, Opts) ->
+    FieldsF = lists:map(fun(Field) -> field_def(Field, Opts) end, Fields),
+    {first, ltype(Name, Opts), {seq, ${, $}, [$,], FieldsF}}.
 
 field_def({field_definition, _, Name, undefined, Type}, Opts) ->
     [ltype(Name, Opts), " :: ", ltype(Type, Opts)];

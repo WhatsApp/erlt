@@ -7,4 +7,4 @@
 
 -spec swap(pair(A, B)) -> pair(A, B).
 
-swap(pair.pair{A, B}) -> pair.pair{B, A}.
+swap(pair.pair{fst = A, snd = B}) -> pair.pair{fst = B, snd = A}.

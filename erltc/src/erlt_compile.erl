@@ -1070,12 +1070,15 @@ do_invoke_sterlang(_CheckCmd, _BinDir) ->
 
 erlt_to_erl1(Code, St) ->
     case erlt_struct:module(Code, St#compile.global_defs) of
-        Forms when is_list(Forms) ->
-            do_erlt_to_erl1(Forms, St)
+        Code1 when is_list(Code1) ->
+            case erlt_enum:module(Code1, St#compile.global_defs) of
+                Code2 when is_list(Code2) ->
+                    do_erlt_to_erl1(Code2, St)
+            end
     end.
 
 do_erlt_to_erl1(Code, St0) ->
-    Transforms = [erlt_enum, erlt_anon_struct, erlt_modifiers, erlt_dots, erlt_pinning],
+    Transforms = [erlt_anon_struct, erlt_modifiers, erlt_dots, erlt_pinning],
     case foldl_transform(Transforms, Code, St0) of
         {ok, Erl1Forms, St0} ->
             write_erl1(Erl1Forms, St0),
