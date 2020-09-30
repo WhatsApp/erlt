@@ -233,7 +233,9 @@ class AstChecks(val context: Context) {
   // - Type vars of an opaque
   // - Type vars of an enum definitions (going down into constructors)
   // - Type vars of a struct
-  // It collects and at the same time performs corresponding checks
+  // It collects and at the same time performs corresponding checks:
+  // - There are no `_` (Wild type vars)
+  // - There are no open shapes (open shapes are supported in specs only for now)
   private def collectRHSTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
     t match {
       case t: TypeVar =>
@@ -256,9 +258,7 @@ class AstChecks(val context: Context) {
         Set.empty
       case ShapeType(fields) =>
         fields.map(f => collectRHSTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      // $COVERAGE-OFF$ TODO
-      case OpenShapeType(fields, _) =>
-        ???
-      // $COVERAGE-ON$
+      case OpenShapeType(_, extType) =>
+        throw new RHSOpenShape(extType.r)
     }
 }

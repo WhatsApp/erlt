@@ -72,6 +72,12 @@ class MessageType(range: Doc.Range, messageName: String)
 class DuplicateTypeVar(range: Doc.Range, v: String) extends RangedError(range, s"Duplicate type var: $v", None)
 class UnboundTypeVariable(range: Doc.Range, name: String)
     extends RangedError(range, s"Unbound type variable: $name", None)
+class RHSOpenShape(range: Doc.Range)
+    extends RangedError(
+      range,
+      s"Shape extension type in a type definition",
+      Some("Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only."),
+    )
 class IllegalWildTypeVariable(range: Doc.Range)
     extends RangedError(range, "Wild type variable is not allowed here", None)
 class UselessTypeVar(range: Doc.Range, name: String) extends RangedError(range, s"Useless type variable: $name", None)
