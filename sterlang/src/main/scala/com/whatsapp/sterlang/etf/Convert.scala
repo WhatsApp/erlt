@@ -348,8 +348,13 @@ object Convert {
       case Types.Shape(p, fieldTypes) =>
         Ast.ShapeType(fieldTypes.map(convertKeyValueType))(p)
       case Types.OpenShape(p, fieldType, extType) =>
-        // TODO
-        Ast.OpenShapeType(fieldType.map(convertKeyValueType), Ast.WildTypeVar()(extType.r))(p)
+        val eType = extType match {
+          case Types.TypeVariable(p, "_") =>
+            Left(Ast.WildTypeVar()(p))
+          case Types.TypeVariable(p, v) =>
+            Right(Ast.TypeVar(v)(p))
+        }
+        Ast.OpenShapeType(fieldType.map(convertKeyValueType), eType)(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>

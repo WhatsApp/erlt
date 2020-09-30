@@ -664,7 +664,7 @@ object AstUtil {
       case ShapeType(fields) =>
         fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case OpenShapeType(fields, extType) =>
-        fields.map(f => getDepType(f.value)).foldLeft(getDepType(extType))(_ ++ _)
+        fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case FunType(argTypes, resType) =>
         argTypes.map(getDepType).foldLeft(getDepType(resType))(_ ++ _)
       case ListType(elemType) =>
