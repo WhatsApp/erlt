@@ -144,12 +144,14 @@ object Ast {
     override val stringId: String = s"$module:$name/$arity"
   }
 
+  type ShapeExtType = Either[WildTypeVar, TypeVar]
+
   sealed trait Type { val r: Doc.Range }
   case class WildTypeVar()(val r: Doc.Range) extends Type
   case class TypeVar(name: String)(val r: Doc.Range) extends Type
   case class TupleType(params: List[Type])(val r: Doc.Range) extends Type
   case class ShapeType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
-  case class OpenShapeType(fields: List[Field[Type]], extType: WildTypeVar)(val r: Doc.Range) extends Type
+  case class OpenShapeType(fields: List[Field[Type]], extType: ShapeExtType)(val r: Doc.Range) extends Type
   case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
   case class ListType(elemType: Type)(val r: Doc.Range) extends Type
   case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type

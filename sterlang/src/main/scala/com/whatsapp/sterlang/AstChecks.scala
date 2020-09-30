@@ -194,19 +194,25 @@ class AstChecks(val context: Context) {
                 throw new UnknownType(tp.r, name.stringId, params.size)
             }
         }
+
       case _: TypeVar =>
       // OK
+
       case WildTypeVar() =>
       // OK
+
       case TupleType(params) =>
         params.foreach(expandType(program, visited))
       case ShapeType(fields) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
-      case OpenShapeType(fields, rt) =>
+
+      case OpenShapeType(fields, _) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
-        expandType(program, visited)(rt)
+      // It makes no sense to expand an extension here -
+      // Since it is always either a TypeVar or a WildTypeVar
+
       case FunType(argTypes, resType) =>
         argTypes.foreach(expandType(program, visited))
         expandType(program, visited)(resType)
@@ -258,7 +264,9 @@ class AstChecks(val context: Context) {
         Set.empty
       case ShapeType(fields) =>
         fields.map(f => collectRHSTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      case OpenShapeType(_, extType) =>
+      case OpenShapeType(_, Left(extType)) =>
+        throw new RHSOpenShape(extType.r)
+      case OpenShapeType(_, Right(extType)) =>
         throw new RHSOpenShape(extType.r)
     }
 }
