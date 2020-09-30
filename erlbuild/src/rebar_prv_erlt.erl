@@ -1,59 +1,28 @@
 % This code was adapted from earlier work by Anton Lavrik @alavrik
--module(rebar3_erlt_prv).
+-module(rebar_prv_erlt).
+
+-export([init/1, run/2, compile_app/1, clean_app/1]).
 
 -include("erlbuild_types.hrl").
 
-% rebar3 plugin docs: https://www.rebar3.org/docs/tutorials/building_plugins/
--behaviour(provider).
-
--export([init/1, do/1, format_error/1]).
-
--define(PROVIDER, erlt).
--define(DEPS, [compile, app_discovery]).
 -define(SRC_DIR, "src").
 
--define(EXAMPLE,
-    "build all apps in the project: `rebar3 erlt`~n\tbuild a single app rebar3 erlt <app-name>~n\tclean: `rebar3 erlt clean [<app name>]`"
-).
-
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
-init(State) ->
-    Provider =
-        providers:create([
-            {name, ?PROVIDER},
-            {module, ?MODULE},
-            {bare, true},
-            {deps, ?DEPS},
-            {example, ?EXAMPLE},
-            {opts, []},
-            {short_desc, "build tool for ErlT"},
-            {
-                desc,
-                "build tool for ErlT~n~n"
-                ?EXAMPLE
-            }
-        ]),
-    {ok, rebar_state:add_provider(State, Provider)}.
+init(State0) ->
+    {ok, State1} = rebar_prv_erlt_compile:init(State0),
+    rebar_prv_erlt_clean:init(State1).
 
--spec do(rebar_state:t()) -> {ok, rebar_state:t()}.
-do(State) ->
-    {Task, Args} = get_task_and_args(rebar_state:command_args(State)),
+run(F, State) ->
+    Args = rebar_state:command_args(State),
     AppInfos = get_app_infos(Args, rebar_state:project_apps(State)),
     [
         begin
             validate_app_info(AppInfo),
-            handle_app(Task, AppInfo)
+            F(AppInfo)
         end
         || AppInfo <- AppInfos
     ],
-    {ok, State}.
-
-get_task_and_args(AllArgs) ->
-    case AllArgs of
-        ["clean" | Args] -> {"clean", Args};
-        ["compile" | Args] -> {"compile", Args};
-        Args -> {"compile", Args}
-    end.
+    ok.
 
 get_app_infos([], ProjectApps) ->
     ProjectApps;
@@ -74,7 +43,7 @@ get_app_infos(Args, _ProjectApps) ->
         Args
     ]).
 
-handle_app(Task = "compile", AppInfo) ->
+compile_app(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
     ErlOpts = rebar_opts:erl_opts(RebarOpts),
     EbinDir = rebar_app_info:ebin_dir(AppInfo),
@@ -91,7 +60,7 @@ handle_app(Task = "compile", AppInfo) ->
         EbinDir
     ],
     handle_dir(
-        Task,
+        "compile",
         AppInfo,
         ErltCompileFlags,
         ?SRC_DIR,
@@ -99,8 +68,9 @@ handle_app(Task = "compile", AppInfo) ->
         CommonOptions,
         ErlOpts
     ),
-    ok;
-handle_app(_Task = "clean", AppInfo) ->
+    ok.
+
+clean_app(AppInfo) ->
     Options = make_erlt_dir_options(AppInfo, ?SRC_DIR),
     verbose_level() >= 1 andalso
         rebar_log:info("Cleaning ~s/~s", [rebar_app_info:name(AppInfo), ?SRC_DIR]),
@@ -221,9 +191,6 @@ verbose_level() ->
                     9
             end
     end.
-
-format_error(Reason) ->
-    io_lib:format("~p", [Reason]).
 
 to_string(X) when is_list(X) ->
     X;

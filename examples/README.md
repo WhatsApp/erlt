@@ -1,21 +1,22 @@
 # To build all examples
 
 ```sh
-rebar3 erlt
+rebar3 erlt compile
 ```
 
-# To build a single example
+# To build a single example (focused mode)
 
 ```sh
-rebar3 erlt <app-name>
+rebar3 erlt compile <app-name>
 ```
 
 For example:
 
 ```sh
-rebar3 erlt dev_enum
+rebar3 erlt compile dev_enum
 ```
 
+> NOTE: even in focused mode, all classic Erlang files are rebuilt. This is a limitation of rebar.
 > rebar commands can be run in any subdirectory of `examples`
 
 # To peep into erl2 internals
