@@ -57,6 +57,15 @@ do_file(
         end,
     mkdirp(BuildDir),
     mkdirp(OutputDir),
+    PhaseArgs =
+        case Phase of
+            "scan" ->
+                % The scan phase produces .D files (readable by Ninja, Make, and humans) representing the dependency graph.
+                % These files will be used in future for incremental builds.
+                ["-MF", filename:join(BuildDir, InputFile ++ ".D")];
+            _ ->
+                []
+        end,
     Args =
         [
             "--build-phase",
@@ -65,7 +74,7 @@ do_file(
             BuildDir,
             "-o",
             OutputDir
-        ] ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
+        ] ++ PhaseArgs ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
     case erltc:api(Args) of
         ok ->
             ok;

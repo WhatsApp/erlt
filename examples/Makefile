@@ -1,7 +1,7 @@
 DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core
 
 build:
-	rebar3 erlt
+	rebar3 erlt compile
 
 clean:
 	rm -rf _build
@@ -12,7 +12,7 @@ ir: $(DIRS:%=.ir/%)
 
 .ir/%:
 	rm -rf _build/ir/lib/$*
-	rebar3 as ir erlt $*
+	rebar3 as ir erlt compile $*
 
 test-ir/%: .ir/%
 	diff -x '*.beam' -x '*.app' -r _build/ir/lib/$*/ebin $*/ir-spec

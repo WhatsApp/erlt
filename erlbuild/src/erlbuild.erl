@@ -109,7 +109,7 @@ main(Argv) ->
 
 % rebar3 entry point
 init(RebarState) ->
-    rebar3_erlt_prv:init(RebarState).
+    rebar_prv_erlt:init(RebarState).
 
 run_command_as_api_function(Name, Fun, Argv) ->
     try
