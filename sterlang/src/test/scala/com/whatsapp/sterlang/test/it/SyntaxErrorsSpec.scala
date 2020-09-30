@@ -58,7 +58,7 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   def processIllSyntax(erltPath: String, etfPath: String): Unit = {
     try {
       Main.loadProgram(etfPath)
-      fail(s"$erltPath should generate an UnsupportedSyntaxError")
+      fail(s"$erltPath should generate an UnsupportedSyntaxError or a ParseError")
     } catch {
       case error: UnsupportedSyntaxError =>
         val errMsg = Main.errorString(erltPath, fileContent(erltPath), error)
