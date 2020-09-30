@@ -106,7 +106,7 @@ class AstChecks(val context: Context) {
   private def checkTypeAlias(program: Program, alias: TypeAlias): Unit = {
     val tp = UserType(LocalName(alias.name), alias.params)(Doc.ZRange)
     val bound = collectParams(alias.params)
-    val used = collectTypeVars(bound)(alias.body)
+    val used = collectRHSTypeVars(bound)(alias.body)
     checkUsage(alias.params, used)
     expandType(program, Set.empty)(tp)
   }
@@ -114,7 +114,7 @@ class AstChecks(val context: Context) {
   private def checkOpaque(program: Program, opaque: Opaque): Unit = {
     val tp = UserType(LocalName(opaque.name), opaque.params)(Doc.ZRange)
     val bound = collectParams(opaque.params)
-    val used = collectTypeVars(bound)(opaque.body)
+    val used = collectRHSTypeVars(bound)(opaque.body)
     checkUsage(opaque.params, used)
     expandType(program, Set.empty)(tp)
   }
@@ -124,7 +124,7 @@ class AstChecks(val context: Context) {
     val bound = collectParams(enumDef.params)
     val used = enumDef.ctrs
       .map { con =>
-        con.argTypes.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        con.argTypes.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       }
       .foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(enumDef.params, used)
@@ -151,7 +151,7 @@ class AstChecks(val context: Context) {
     }
     structDef.fields.foreach { f =>
       expandType(program, Set.empty)(f.value)
-      collectTypeVars(Set.empty)(f.value)
+      collectRHSTypeVars(Set.empty)(f.value)
     }
   }
 
@@ -228,7 +228,13 @@ class AstChecks(val context: Context) {
         }
     }
 
-  private def collectTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
+  // It collects the type vars of RHS of a definition:
+  // - Type vars of a type alias
+  // - Type vars of an opaque
+  // - Type vars of an enum definitions (going down into constructors)
+  // - Type vars of a struct
+  // It collects and at the same time performs corresponding checks
+  private def collectRHSTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
     t match {
       case t: TypeVar =>
         if (!bound(t)) {
@@ -236,19 +242,20 @@ class AstChecks(val context: Context) {
         }
         Set(t)
       case WildTypeVar() =>
+        // The wild type var is not allowed on the RHS
         throw new IllegalWildTypeVariable(t.r)
       case UserType(_, args) =>
-        args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        args.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>
-        args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        args.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case FunType(args, res) =>
-        (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        (res :: args).map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
-        collectTypeVars(bound)(elemType)
+        collectRHSTypeVars(bound)(elemType)
       case StructType(_) =>
         Set.empty
       case ShapeType(fields) =>
-        fields.map(f => collectTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        fields.map(f => collectRHSTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       // $COVERAGE-OFF$ TODO
       case OpenShapeType(fields, _) =>
         ???
