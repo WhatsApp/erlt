@@ -771,8 +771,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Some(ed) => ed
       case None     => throw new UnknownEnum(exp.r, nName.stringId)
     }
-    val sub: Map[String, T.Type] =
+    val sub =
       enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
 
     val typeConParams = enumDef.params.map(p => sub(p.name))
     val namedType = MT.NamedType(enumDef.name, typeConParams)
@@ -785,7 +787,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val args1 = for ((arg, argType) <- args.zip(enumCtr.argTypes)) yield {
-      val contentType = expander.mkType(argType, sub)
+      val contentType = expander.mkType(argType, eSub)
       val eContentType = expander.expandType(contentType)
       elab(arg, eContentType, d, env)
     }
@@ -802,12 +804,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def createTypeSchema(d: T.Depth)(fun: Function): ST.TypeSchema = {
     val expander = dExpander(d)
     def freshSType(): ST.Type = ST.PlainType(freshTypeVar(d))
+    def freshSRType(kind: Set[String]): ST.RowType = ST.RowVarType(freshRTypeVar(d)(kind))
     val sFunType = context.specs.find(_.name.stringId == fun.name) match {
       case Some(spec) =>
         val specFType = spec.funType
         val sVars = AstUtil.collectNamedTypeVars(specFType)
-        val sub = sVars.map { v => v -> freshSType() }.toMap
-        val sType = expander.mkSType(specFType, sub)
+        val rVars = AstUtil.collectNamedRowTypeVars(specFType)
+        val sSub: Expander.SSub =
+          sVars.map { v => v -> Left(freshSType()) }.toMap
+        val rSub: Expander.SSub =
+          rVars.map { case (rv, kind) => rv.name -> Right(freshSRType(kind)) }.toMap
+        val eSub: Expander.SSub =
+          sSub ++ rSub
+        val sType = expander.mkSType(specFType, eSub)
         expander.expandSType(sType)
       case None =>
         val arity = fun.clauses.head.pats.size
@@ -1120,6 +1129,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case None             => throw new UnknownEnum(p.r, nName.stringId)
     }
     val sub = enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
     val typeConParams = enumDef.params.map(p => sub(p.name))
     val namedType = MT.NamedType(enumDef.name, typeConParams)
     val eNamedType = expander.expandType(namedType)
@@ -1133,7 +1144,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     var envAcc = env
     var penvAcc = penv
     val argPats1 = for ((argType, pat) <- enumCtr.argTypes.zip(pats)) yield {
-      val contentType = expander.mkType(argType, sub)
+      val contentType = expander.mkType(argType, eSub)
       val eContentType = expander.expandType(contentType)
       val (pat1, env1, penv1) = elpat(pat, eContentType, d, envAcc, penvAcc, gen)
       envAcc = env1
@@ -1194,8 +1205,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     context.specs.find(_.name.stringId == fName).foreach { spec =>
       val specFType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(specFType)
-      val sub = sVars.map { v => v -> freshTypeVar(d) }.toMap
-      val specType = expander.mkType(specFType, sub)
+      val rVars = AstUtil.collectNamedRowTypeVars(specFType)
+
+      val sSub: Expander.Sub =
+        sVars.map { v => v -> Left(freshTypeVar(d)) }.toMap
+      val rSub: Expander.Sub =
+        rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(d, kind)) }.toMap
+      val eSub: Expander.Sub =
+        sSub ++ rSub
+      val specType = expander.mkType(specFType, eSub)
       val eSpecType = expander.expandType(specType)
       val specScheme = TU.generalize(d)(eSpecType)
 

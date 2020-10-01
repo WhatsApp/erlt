@@ -1,1 +1,2 @@
 -spec get_id(#( id :: A, 'A )) -> A.
+-spec test() -> list(integer()).

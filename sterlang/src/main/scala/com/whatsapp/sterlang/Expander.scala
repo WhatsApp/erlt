@@ -16,20 +16,31 @@
 
 package com.whatsapp.sterlang
 
+object Expander {
+  type SubVal = Either[Types.Type, Types.RowType]
+  type Sub = Map[String, SubVal]
+
+  type SSubVal = Either[STypes.Type, STypes.RowType]
+  type SSub = Map[String, SSubVal]
+}
+
 class Expander(
     val aliases: List[Ast.TypeAlias],
     val tGen: () => Types.Type,
     val rtGen: Set[String] => Types.RowTypeVar,
 ) {
+  import Expander._
+
   val T = Types
   val MT = METypes
   val ST = STypes
   val MST = MESTypes
 
-  def mkType(t: Ast.Type, sub: Map[String, T.Type]): T.Type =
+  def mkType(t: Ast.Type, sub: Sub): T.Type =
     t match {
       case Ast.TypeVar(n) =>
-        sub(n)
+        val Left(t) = sub(n)
+        t
       case Ast.WildTypeVar() =>
         tGen()
       case Ast.UserType(name, params) =>
@@ -41,10 +52,16 @@ class Expander(
         val zero: T.RowType = T.RowEmptyType
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
         MT.ShapeType(rowType)
-      case Ast.OpenShapeType(fields, _) =>
+      case Ast.OpenShapeType(fields, extType) =>
         val lbls = fields.map(_.label).toSet
         val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
-        val zero: T.RowType = T.RowVarType(rtGen(lbls))
+        val zero = extType match {
+          case Left(Ast.WildTypeVar()) =>
+            T.RowVarType(rtGen(lbls))
+          case Right(Ast.TypeVar(n)) =>
+            val Right(rt) = sub(n)
+            rt
+        }
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
         MT.ShapeType(rowType)
       case Ast.FunType(params, res) =>
@@ -55,10 +72,11 @@ class Expander(
         MT.StructType(name)
     }
 
-  def mkSType(t: Ast.Type, sub: Map[String, ST.Type]): ST.Type =
+  def mkSType(t: Ast.Type, sub: SSub): ST.Type =
     t match {
       case Ast.TypeVar(n) =>
-        sub(n)
+        val Left(t) = sub(n)
+        t
       case Ast.WildTypeVar() =>
         ST.PlainType(tGen())
       case Ast.UserType(name, params) =>
@@ -70,10 +88,16 @@ class Expander(
         val zero: ST.RowType = ST.RowEmptyType
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
-      case Ast.OpenShapeType(fields, _) =>
+      case Ast.OpenShapeType(fields, extType) =>
         val lbls = fields.map(_.label).toSet
         val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
-        val zero: ST.RowType = ST.RowVarType(rtGen(lbls))
+        val zero = extType match {
+          case Left(Ast.WildTypeVar()) =>
+            ST.RowVarType(rtGen(lbls))
+          case Right(Ast.TypeVar(n)) =>
+            val Right(rt) = sub(n)
+            rt
+        }
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
       case Ast.FunType(params, res) =>
@@ -90,7 +114,8 @@ class Expander(
         ST.PlainType(expandType(typ))
       case ST.ConType(TyCons.NamedTyCon(name), typs, List()) if aliases.exists(_.name == name) =>
         val alias = aliases.find(_.name == name).get
-        val expandedParams = typs.map(expandSType)
+        val expandedParams: List[SSubVal] =
+          typs.map(expandSType).map(Left(_))
         val t1 = mkSType(alias.body, alias.params.map(_.name).zip(expandedParams).toMap)
         expandSType(t1)
       case ST.ConType(tyCon, typs, rtys) =>
@@ -123,8 +148,9 @@ class Expander(
         T.VarType(tv)
       case Types.ConType(TyCons.NamedTyCon(name), ts, List()) if aliases.exists(_.name == name) =>
         val alias = aliases.find(_.name == name).get
-        val expandedParams = ts.map(expandType)
-        val t1 = mkType(alias.body, alias.params.map(_.name).zip(expandedParams).toMap)
+        val expandedParams: List[SubVal] =
+          ts.map(expandType).map(Left(_))
+        val t1 = mkType(alias.body, alias.params.map(_.name).zip(expandedParams).toMap[String, SubVal])
         expandType(t1)
       case Types.ConType(tyCon, ts, rts) =>
         Types.ConType(tyCon, ts.map(expandType), rts.map(expandRowType))

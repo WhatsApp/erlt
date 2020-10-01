@@ -1,2 +1,6 @@
 val get_id/1: fun((#( id :: A, A )) -> A)
 val Shape: #( id :: A, A )
+val test/0: fun(() -> list(integer()))
+val Shape1: #( id :: integer() )
+val Shape2: #( bar :: integer(), id :: integer() )
+val Shape3: #( foo :: integer(), id :: integer() )
