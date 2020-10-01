@@ -84,6 +84,15 @@ class TypeVarKindConflict(range: Doc.Range, varName: String)
       s"Plain type variable $varName is used as row type variable",
       Some("All occurrences of type variable should of the same kind (plain or row)"),
     )
+class InconsistentShapeExtension(range: Doc.Range, varName: String, prevKind: List[String], thisKind: List[String])
+    extends RangedError(
+      range,
+      s"Shape extension type variable $varName is used inconsistently",
+      Some(
+        s"""Expected constraint: ${prevKind.mkString("`", ", ", "`")}
+           |Found constraint:    ${thisKind.mkString("`", ", ", "`")}""".stripMargin
+      ),
+    )
 class IllegalWildTypeVariable(range: Doc.Range)
     extends RangedError(range, "Wild type variable is not allowed here", None)
 class UselessTypeVar(range: Doc.Range, name: String) extends RangedError(range, s"Useless type variable: $name", None)
