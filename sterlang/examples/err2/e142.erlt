@@ -13,14 +13,14 @@
 %% limitations under the License.
 
 -lang(st).
--module(shapes).
+-module(e142).
 
--spec get_id(#(id :: A, B)) -> A.
-get_id(Shape) -> Shape#(id).
-
--spec test() -> list(integer()).
-test() ->
+%% Compare with examples/dev/shapes.erlt!
+%% Monomorphism restriction in action.
+-spec test(fun((#(id :: integer(), B)) -> integer())) -> boolean().
+test(F) ->
     Shape1 = #(id = 1),
     Shape2 = #(id = 2, bar = 3),
-    Shape3 = #(id = 3, foo = 5),
-    [get_id(Shape1), get_id(Shape2), get_id(Shape3)].
+    T1 = F(Shape1),
+    T2 = F(Shape2),
+    false.

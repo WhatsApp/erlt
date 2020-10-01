@@ -12,15 +12,11 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e139).
 -lang(st).
--module(shapes).
 
--spec get_id(#(id :: A, B)) -> A.
-get_id(Shape) -> Shape#(id).
+-spec shape_with_foo(#(foo :: Foo, Other)) -> #(foo :: Foo, Other).
+shape_with_foo(Shape) -> shape_with_foo_bar(Shape).
 
--spec test() -> list(integer()).
-test() ->
-    Shape1 = #(id = 1),
-    Shape2 = #(id = 2, bar = 3),
-    Shape3 = #(id = 3, foo = 5),
-    [get_id(Shape1), get_id(Shape2), get_id(Shape3)].
+-spec shape_with_foo_bar(#(foo :: Foo, bar :: Bar, Other)) -> #(foo :: Foo, bar :: Bar, Other).
+shape_with_foo_bar(Shape) -> Shape.

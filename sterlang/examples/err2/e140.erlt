@@ -12,15 +12,8 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
+-module(e140).
 -lang(st).
--module(shapes).
 
--spec get_id(#(id :: A, B)) -> A.
-get_id(Shape) -> Shape#(id).
-
--spec test() -> list(integer()).
-test() ->
-    Shape1 = #(id = 1),
-    Shape2 = #(id = 2, bar = 3),
-    Shape3 = #(id = 3, foo = 5),
-    [get_id(Shape1), get_id(Shape2), get_id(Shape3)].
+-spec get_foo(#(foo :: Foo, Other)) -> Foo.
+get_foo(#(foo = Foo, bar = Bar)) -> Foo.

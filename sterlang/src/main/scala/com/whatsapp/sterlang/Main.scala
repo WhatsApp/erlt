@@ -131,7 +131,9 @@ object Main {
       val funType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(funType)
       val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
-      val specType = expander.mkType(funType, sub)
+      val eSub: Expander.Sub =
+        sub.view.mapValues(Left(_)).toMap
+      val specType = expander.mkType(funType, eSub)
       val schema = TU.generalize(0)(specType)
       name -> schema
     }.toMap
