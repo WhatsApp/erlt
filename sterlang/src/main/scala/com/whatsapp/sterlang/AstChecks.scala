@@ -49,6 +49,7 @@ class AstChecks(val context: Context) {
   private def checkSpecs(program: Program): Unit =
     program.specs.foreach { spec =>
       expandType(program, Set.empty)(spec.funType)
+      checkShapeExtensions(spec.funType)
     }
 
   def checkUniqueTypes(program: Program): Unit = {
@@ -269,4 +270,18 @@ class AstChecks(val context: Context) {
       case OpenShapeType(_, Right(extType)) =>
         throw new RHSOpenShape(extType.r)
     }
+
+  // checks that
+  // - Each type var is either a standard type var or a shape extension type var
+  private def checkShapeExtensions(funType: FunType): Unit = {
+    val types = funType.argTypes ++ List(funType.resType)
+    val vars = types.flatMap(AstUtil.collectNamedTypeVars).toSet
+    val rowVars = types.flatMap(AstUtil.collectNamedRowTypeVars)
+
+    for ((rv, _) <- rowVars) {
+      if (vars(rv.name)) {
+        throw new TypeVarKindConflict(rv.r, rv.name)
+      }
+    }
+  }
 }

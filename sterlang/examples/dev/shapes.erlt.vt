@@ -1,0 +1,2 @@
+val get_id/1: fun((#( id :: A, A )) -> A)
+val Shape: #( id :: A, A )
