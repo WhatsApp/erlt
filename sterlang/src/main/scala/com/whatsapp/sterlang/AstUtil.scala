@@ -286,30 +286,18 @@ object AstUtil {
     if (funs.isEmpty) {
       return List()
     }
-
     val names = funs.map(_.name.stringId)
-
     val nameToIndex = names.zipWithIndex.toMap
-
-    val vertices = names.map(SCC.Vertex)
     val nameToUsedVars: Map[String, Set[String]] =
-      funs.map { f => (f.name.stringId, funFreeVars(f, module).filter(names.contains)) }.toMap
-
+      funs.map { f =>
+        (f.name.stringId, funFreeVars(f, module).filter(names.contains))
+      }.toMap
     val edges = funs.flatMap { fun =>
-      val funVertex = SCC.Vertex(fun.name.stringId)
-      nameToUsedVars(fun.name.stringId).toList.map(SCC.Vertex).map(SCC.Edge(funVertex, _))
+      nameToUsedVars(fun.name.stringId).toList.map(SCC.Edge(fun.name.stringId, _))
     }
-
-    val g = SCC.G(vertices, edges)
-    val components = SCC.components(g)
-    val compNames = components.map { c => c.map(_.label) }
-
-    // each comp is sorted inside
-    val compNames1 = compNames.map { c => c.sortBy(nameToIndex) }
-    // comps are sorted
-    val compNames2 = compNames1.sortBy { c => nameToIndex(c.head) }
-    // proper topo order
-    properSort(compNames2, nameToUsedVars)
+    val g = SCC.G(names, edges)
+    val compNames = SCC.components(g).map(_.sortBy(nameToIndex)).sortBy(c => nameToIndex(c.head))
+    properSort(compNames, nameToUsedVars)
   }
 
   private def properSort(sccs: List[List[String]], usage: Map[String, Set[String]]): List[List[String]] =
