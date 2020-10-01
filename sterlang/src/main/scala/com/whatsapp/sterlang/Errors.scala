@@ -78,6 +78,12 @@ class RHSOpenShape(range: Doc.Range)
       s"Shape extension type in a type definition",
       Some("Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only."),
     )
+class TypeVarKindConflict(range: Doc.Range, varName: String)
+    extends RangedError(
+      range,
+      s"Plain type variable $varName is used as row type variable",
+      Some("All occurrences of type variable should of the same kind (plain or row)"),
+    )
 class IllegalWildTypeVariable(range: Doc.Range)
     extends RangedError(range, "Wild type variable is not allowed here", None)
 class UselessTypeVar(range: Doc.Range, name: String) extends RangedError(range, s"Useless type variable: $name", None)

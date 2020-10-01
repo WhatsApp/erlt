@@ -75,6 +75,28 @@ object AstUtil {
         List.empty
     }
 
+  def collectNamedRowTypeVars(t: Type): List[(TypeVar, Set[String])] =
+    t match {
+      case TypeVar(_) | WildTypeVar() | StructType(_) =>
+        List.empty
+      case UserType(_, params) =>
+        params.flatMap(collectNamedRowTypeVars)
+      case TupleType(params) =>
+        params.flatMap(collectNamedRowTypeVars)
+      case FunType(params, res) =>
+        (params ++ List(res)).flatMap(collectNamedRowTypeVars)
+      case ListType(elemType) =>
+        collectNamedRowTypeVars(elemType)
+      case ShapeType(fields) =>
+        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+      case OpenShapeType(fields, Left(WildTypeVar())) =>
+        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+      case OpenShapeType(fields, Right(tv)) =>
+        val item = tv -> fields.map(_.label).toSet
+        val other = fields.map(_.value).flatMap(collectNamedRowTypeVars)
+        other ++ List(item)
+    }
+
   @scala.annotation.tailrec
   private def freeVars(
       defs: List[ValDef],
