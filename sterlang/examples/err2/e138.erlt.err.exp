@@ -1,0 +1,6 @@
+-- ERROR ----------------------------------------- examples/err2/e138.erlt:18:49
+Shape extension type variable TVar is used inconsistently
+Expected constraint: ``
+Found constraint:    `id`
+ 18| -spec test(#(TVar), #(TVar), #(id :: integer(), TVar)) -> integer().
+...|                                                 ~~~~

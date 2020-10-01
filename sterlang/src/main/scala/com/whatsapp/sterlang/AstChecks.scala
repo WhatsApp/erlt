@@ -273,6 +273,7 @@ class AstChecks(val context: Context) {
 
   // checks that
   // - Each type var is either a standard type var or a shape extension type var
+  // - Shape extension type variables are used consistently
   private def checkShapeExtensions(funType: FunType): Unit = {
     val types = funType.argTypes ++ List(funType.resType)
     val vars = types.flatMap(AstUtil.collectNamedTypeVars).toSet
@@ -281,6 +282,18 @@ class AstChecks(val context: Context) {
     for ((rv, _) <- rowVars) {
       if (vars(rv.name)) {
         throw new TypeVarKindConflict(rv.r, rv.name)
+      }
+    }
+
+    var kinds = Map.empty[String, Set[String]]
+    for ((rv, thisKind) <- rowVars) {
+      kinds.get(rv.name) match {
+        case None =>
+          kinds = kinds + (rv.name -> thisKind)
+        case Some(prevKind) =>
+          if (prevKind != thisKind) {
+            throw new InconsistentShapeExtension(rv.r, rv.name, prevKind.toList.sorted, thisKind.toList.sorted)
+          }
       }
     }
   }
