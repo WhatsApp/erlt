@@ -19,11 +19,13 @@ package com.whatsapp.sterlang
 import scala.collection.immutable.{IntMap, TreeMap, TreeSet}
 
 class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
-  val T = Types
-  val ST = STypes
-  private val TC = TyCons
 
-  def type2typeSchema(t: T.Type): ST.Type =
+  private val tyVarSetEmpty: TreeSet[Types.TypeVar] =
+    TreeSet.empty(vars.TVarOrdering)
+  private val rtyVarSetEmpty: TreeSet[Types.RowTypeVar] =
+    TreeSet.empty(vars.RVarOrdering)
+
+  private def type2typeSchema(t: Types.Type): STypes.Type =
     tu.generalize(Int.MaxValue)(t).body
 
   // sTypeVars:
@@ -33,12 +35,12 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
   // freeRowTypeVars:
   //          all encountered free row type vars
   private case class Info(
-      sTypeVars: Set[ST.TypeVar] = Set.empty,
-      freeTypeVars: TreeSet[T.TypeVar] = tyVarSetEmpty,
-      freeRowTypeVars: TreeSet[T.RowTypeVar] = rtyVarSetEmpty,
+      sTypeVars: Set[STypes.TypeVar] = Set.empty,
+      freeTypeVars: TreeSet[Types.TypeVar] = tyVarSetEmpty,
+      freeRowTypeVars: TreeSet[Types.RowTypeVar] = rtyVarSetEmpty,
   )
 
-  private def collectInfo(body: ST.Type): (ST.Type, Info) = {
+  private def collectInfo(body: STypes.Type): (STypes.Type, Info) = {
 
     def join(m1: Info, m2: Info): Info = {
       val sVars = m1.sTypeVars ++ m2.sTypeVars
@@ -47,55 +49,58 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
       Info(sVars, tVars, tRowVars)
     }
 
-    def typ(ts: ST.Type): (ST.Type, Info) =
+    def typ(ts: STypes.Type): (STypes.Type, Info) =
       ts match {
-        case ST.PlainType(T.VarType(v)) =>
+        case STypes.PlainType(Types.VarType(v)) =>
           vars.tGet(v) match {
-            case T.Instance(t) =>
+            case Types.Instance(t) =>
               typ(type2typeSchema(t))
-            case T.Open(_) =>
+            case Types.Open(_) =>
               (ts, Info(freeTypeVars = tyVarSetEmpty + v))
           }
-        case ST.PlainType(t: T.ConType) =>
+        case STypes.PlainType(t: Types.ConType) =>
           typ(type2typeSchema(t))
-        case ST.ConType(tyc, sTypes, sRowTypes) =>
+        case STypes.ConType(tyc, sTypes, sRowTypes) =>
           val (sTypes1, infos1) = sTypes.map(typ).unzip
           val (sRowTypes1, infos2) = sRowTypes.map(rtyp).unzip
           val info = (infos1 ++ infos2).foldLeft(Info())(join)
-          (ST.ConType(tyc, sTypes1, sRowTypes1), info)
-        case ts @ ST.RefType(sTypeVar) =>
+          (STypes.ConType(tyc, sTypes1, sRowTypes1), info)
+        case ts @ STypes.RefType(sTypeVar) =>
           (ts, Info(sTypeVars = Set(sTypeVar)))
       }
 
-    def rtyp(rts: ST.RowType): (ST.RowType, Info) =
+    def rtyp(rts: STypes.RowType): (STypes.RowType, Info) =
       rts match {
-        case rts @ ST.RowVarType(rowTypeVar) =>
+        case rts @ STypes.RowVarType(rowTypeVar) =>
           (rts, Info(freeRowTypeVars = rtyVarSetEmpty + rowTypeVar))
-        case rts @ ST.RowEmptyType =>
+        case rts @ STypes.RowEmptyType =>
           (rts, Info())
-        case ST.RowFieldType(ST.Field(label, ts), rts) =>
+        case STypes.RowFieldType(STypes.Field(label, ts), rts) =>
           val (ts1, fm) = typ(ts)
           val (rts1, rm) = rtyp(rts)
-          (ST.RowFieldType(ST.Field(label, ts1), rts1), join(fm, rm))
-        case rts @ ST.RowRefType(v) =>
+          (STypes.RowFieldType(STypes.Field(label, ts1), rts1), join(fm, rm))
+        case rts @ STypes.RowRefType(v) =>
           (rts, Info())
       }
 
     typ(body)
   }
 
-  val globalNames = new TypePrinterUtil
+  private type TMap = TreeMap[Types.TypeVar, String]
+  private type RTMap = TreeMap[Types.RowTypeVar, String]
+
+  private val globalNames = new TypePrinterUtil
   private val tMapEmpty: TMap = TreeMap.empty(vars.TVarOrdering)
   private val rtMapEmpty: RTMap = TreeMap.empty(vars.RVarOrdering)
   private var freeTypeVarNames: TMap = tMapEmpty
   private var freeRowTypeVarNames: RTMap = rtMapEmpty
 
-  def typeSchema(schema: ST.TypeSchema, mode: TypePrinter2.Mode): String = {
+  def typeSchema(schema: STypes.TypeSchema, mode: TypePrinter2.Mode): String = {
 
     val localNames = new TypePrinterUtil
     val (body, info) = collectInfo(schema.body)
 
-    val sTypeVarNames: Map[ST.TypeVar, String] =
+    val sTypeVarNames: Map[STypes.TypeVar, String] =
       info.sTypeVars.toList.sortBy(_.id).map { (_, localNames.nextSchematicTypeName()) }.toMap
     val sRowTypeVarNames: IntMap[String] =
       schema.rargs.indices.foldLeft(IntMap.empty[String]) {
@@ -115,7 +120,7 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
     }
 
     mode match {
-      case TypePrinter2.TypeSchemes =>
+      case TypePrinter2.Specs =>
         assert(freeTypeVarNames.isEmpty)
         assert(freeRowTypeVarNames.isEmpty)
       case TypePrinter2.Types =>
@@ -125,59 +130,59 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
 
     /// ---------- printing ------------------
 
-    def typ(sType: ST.Type): String =
+    def typ(sType: STypes.Type): String =
       sType match {
-        case ST.PlainType(T.VarType(typeVar)) =>
+        case STypes.PlainType(Types.VarType(typeVar)) =>
           freeTypeVarNames(typeVar)
-        case ST.ConType(tyCon, types, rowTypes) =>
+        case STypes.ConType(tyCon, types, rowTypes) =>
           conType(tyCon, types, rowTypes)
-        case ST.RefType(sTypeVar) =>
+        case STypes.RefType(sTypeVar) =>
           sTypeVarNames(sTypeVar)
       }
 
-    def conType(tyCon: TC.TyCon, sTypes: List[ST.Type], sRowTypes: List[ST.RowType]): String =
+    def conType(tyCon: TyCons.TyCon, sTypes: List[STypes.Type], sRowTypes: List[STypes.RowType]): String =
       (tyCon, sTypes, sRowTypes) match {
-        case (TC.FunTyCon(_), ts, List()) =>
+        case (TyCons.FunTyCon(_), ts, List()) =>
           val args = ts.init
           val result = ts.last
           "fun(" + args.map(typ).mkString("(", ", ", ")") + " -> " + typ(result) + ")"
-        case (TC.ShapeTyCon, Nil, List(rts)) =>
+        case (TyCons.ShapeTyCon, Nil, List(rts)) =>
           shapeStr(rts)
-        case (TC.NamedTyCon(name), ts, Nil) =>
+        case (TyCons.NamedTyCon(name), ts, Nil) =>
           ts.map(typ).mkString(name + "(", ", ", ")")
-        case (TC.TupleCon(_), ts, Nil) =>
+        case (TyCons.TupleCon(_), ts, Nil) =>
           ts.map(typ).mkString("{", ", ", "}")
-        case (TC.StructTyCon(name), Nil, Nil) =>
+        case (TyCons.StructTyCon(name), Nil, Nil) =>
           s"#$name{}"
       }
 
-    def shapeStr(sRowType: ST.RowType): String =
+    def shapeStr(sRowType: STypes.RowType): String =
       sRowType match {
-        case ST.RowEmptyType => "#()"
-        case _               => rowtype(sRowType, lb = "#( ", rb = " )")
+        case STypes.RowEmptyType => "#()"
+        case _                   => rowtype(sRowType, lb = "#( ", rb = " )")
       }
 
-    def namedField(sField: ST.Field): String =
+    def namedField(sField: STypes.Field): String =
       sField.label + " :: " + typ(sField.value)
 
-    def rowtype(sRowType: ST.RowType, lb: String, rb: String): String = {
+    def rowtype(sRowType: STypes.RowType, lb: String, rb: String): String = {
 
-      def withBaseVar(baseVar: String, fields: List[ST.Field]): String = {
+      def withBaseVar(baseVar: String, fields: List[STypes.Field]): String = {
         val elems = fields.sortBy(_.label).map(namedField) ++ List(baseVar)
         elems.mkString(lb, ", ", rb)
       }
 
       @scala.annotation.tailrec
-      def unfold(sRowType: ST.RowType, fields: List[ST.Field]): String =
+      def unfold(sRowType: STypes.RowType, fields: List[STypes.Field]): String =
         sRowType match {
-          case ST.RowEmptyType =>
+          case STypes.RowEmptyType =>
             val sortedFields = fields.sortBy(_.label)
             sortedFields.map(namedField).mkString(lb, ", ", rb)
-          case ST.RowFieldType(sField, sRowType) =>
+          case STypes.RowFieldType(sField, sRowType) =>
             unfold(sRowType, sField :: fields)
-          case ST.RowVarType(rowTypeVar) =>
+          case STypes.RowVarType(rowTypeVar) =>
             withBaseVar(freeRowTypeVarNames(rowTypeVar), fields)
-          case ST.RowRefType(sRowTypeVar) =>
+          case STypes.RowRefType(sRowTypeVar) =>
             withBaseVar(sRowTypeVarNames(sRowTypeVar.id), fields)
         }
 
@@ -186,14 +191,5 @@ class TypePrinter(private val vars: Vars, private val tu: TypesUtil) {
 
     typ(body)
   }
-
-  // -- utilities ---
-  private type TMap = TreeMap[T.TypeVar, String]
-  private type RTMap = TreeMap[T.RowTypeVar, String]
-
-  private val tyVarSetEmpty: TreeSet[T.TypeVar] =
-    TreeSet.empty(vars.TVarOrdering)
-  private val rtyVarSetEmpty: TreeSet[T.RowTypeVar] =
-    TreeSet.empty(vars.RVarOrdering)
 
 }

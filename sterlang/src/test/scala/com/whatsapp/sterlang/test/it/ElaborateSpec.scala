@@ -71,7 +71,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFile(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, TypePrinter2.TypeSchemes, "_ty", "ty")
+    processFile(erltPath, etfPath, TypePrinter2.Specs, "_ty", "ty")
 
     val myOutput = fileContent(erltPath + "._ty")
     val expectedOut = fileContent(erltPath + ".ty")
@@ -105,24 +105,25 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
-    val sw = new StringWriter
-    val printer = TypePrinter2(vars, Some(sw))
-    mode match {
-      case TypePrinter2.TypeSchemes =>
-        printer.printFunsTypeSchemes(annDefs, env)
+    val printer = TypePrinter2(vars)
+    val lines = mode match {
+      case TypePrinter2.Specs =>
+        printer.showFunSpecs(annDefs, env)
       case TypePrinter2.Types =>
-        printer.printFuns(annDefs)
+        printer.showFunTypes(annDefs)
     }
+
+    val output = lines.mkString("", "\n", "\n")
 
     {
       val w2 = new BufferedWriter(new FileWriter(erltPath + "." + tmpExt))
-      w2.write(sw.toString)
+      w2.write(output)
       w2.close()
     }
 
     if (generateOut) {
       val w = new BufferedWriter(new FileWriter(erltPath + "." + outExt))
-      w.write(sw.toString)
+      w.write(output)
       w.close()
     }
 

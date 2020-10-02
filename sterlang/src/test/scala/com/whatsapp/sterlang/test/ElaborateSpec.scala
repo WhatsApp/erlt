@@ -18,20 +18,18 @@ package com.whatsapp.sterlang.test
 
 import java.io.StringWriter
 
-import com.whatsapp.sterlang.{Ast, _}
+import com.whatsapp.sterlang._
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
-  val S = Ast
 
   def testTyping(input: String, expOutput: String): Unit = {
     val prog = etf.programFromString(input)
-    val sw = new StringWriter()
     val vars = new Vars()
     val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
     val elaborate = new Elaborate(vars, context, prog)
     val (annDefs, env) = elaborate.elaborateFuns(prog.funs)
-    TypePrinter2(vars, Some(sw)).printFunsTypeSchemes(annDefs, env)
-    val actualOutput = sw.toString
+    val specStrings = TypePrinter2(vars).showFunSpecs(annDefs, env)
+    val actualOutput = specStrings.mkString("", "\n", "\n")
     assert(actualOutput == expOutput)
   }
 

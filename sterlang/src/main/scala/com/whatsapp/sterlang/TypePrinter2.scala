@@ -16,244 +16,241 @@
 
 package com.whatsapp.sterlang
 
-import java.io.StringWriter
+import scala.collection.mutable.ListBuffer
 
 object TypePrinter2 {
   sealed trait Mode
-  case object TypeSchemes extends Mode
   case object Types extends Mode
+  case object Specs extends Mode
 }
 
-case class TypePrinter2(vars: Vars, sw: Option[StringWriter]) {
-  val A = AnnAst
-  val ST = STypes
+case class TypePrinter2(vars: Vars) {
+
   val printer = new TypePrinter(vars, new TypesUtil(vars))
 
-  def printFunsTypeSchemes(funs: List[A.Fun], env: Env): Unit = {
-    funs.foreach { f => printTypeScheme(env, f.name) }
-  }
-
-  private def printTypeScheme(env: Env, v: String): Unit = {
-    val typeSchema = env(v)
-    val raw = printer.typeSchema(typeSchema, TypePrinter2.TypeSchemes)
-    val inner = raw.substring(4, raw.length - 1)
-    val slashIndex = v.lastIndexOf('/')
-    val normV = v.substring(0, slashIndex)
-    val pp = "-spec " + normV + inner + "."
-    output(pp)
-  }
-
-  def printValDefsTypes(defs: List[A.ValDef]): Unit = {
-    defs.foreach(printValDef)
-  }
-
-  def printFuns(funs: List[A.Fun]): Unit = {
-    funs.foreach {
-      case A.Fun(name, clauses, fType) =>
-        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(fType))
-        val typeSchemaString = printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
-        val pp = "val " + name + ": " + typeSchemaString
-        output(pp)
-
-        clauses.foreach { clause =>
-          clause.pats.foreach(printPat)
-          printBody(clause.body)
-        }
+  def showFunSpecs(funs: List[AnnAst.Fun], env: Env): List[String] = {
+    funs.map { f =>
+      val typeSchema = env(f.name)
+      // fun((ArgType1, ArgType2, ...) -> ResType)
+      val raw = printer.typeSchema(typeSchema, TypePrinter2.Specs)
+      val inner = raw.substring(4, raw.length - 1)
+      val slashIndex = f.name.lastIndexOf('/')
+      val normV = f.name.substring(0, slashIndex)
+      val pp = "-spec " + normV + inner + "."
+      pp
     }
   }
 
   def printType(tp: Types.Type): String = {
-    val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(tp))
+    val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(tp))
     printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
   }
 
-  def printScheme(s: ST.TypeSchema): String = {
-    printer.typeSchema(s, TypePrinter2.TypeSchemes)
+  def printScheme(s: STypes.TypeSchema): String = {
+    printer.typeSchema(s, TypePrinter2.Specs)
   }
 
-  private def printValDef(d: A.ValDef): Unit =
-    d match {
-      case A.ValDef(pat, exp, _, _, _) =>
-        printPat(pat)
-        printExp(exp)
+  def showFunTypes(funs: List[AnnAst.Fun]): List[String] = {
+    val buf = new ListBuffer[String]
+    funs.foreach {
+      case AnnAst.Fun(name, clauses, fType) =>
+        val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(fType))
+        val typeSchemaString = printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
+        val pp = "val " + name + ": " + typeSchemaString
+
+        buf.append(pp)
+
+        clauses.foreach { clause =>
+          clause.pats.foreach(printPat(buf))
+          printBody(buf)(clause.body)
+        }
     }
 
-  private def printPat(pat: A.Pat): Unit =
+    buf.toList
+
+  }
+
+  private def printPat(buf: ListBuffer[String])(pat: AnnAst.Pat): Unit =
     pat match {
-      case A.WildPat() =>
+      case AnnAst.WildPat() =>
       // nothing
-      case A.VarPat(v) =>
-        val fakeTypeScheme = ST.TypeSchema(0, List(), ST.PlainType(pat.typ))
+      case AnnAst.VarPat(v) =>
+        val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(pat.typ))
         val typeSchemaString = printer.typeSchema(fakeTypeScheme, TypePrinter2.Types)
         val pp = "val " + v + ": " + typeSchemaString
-        output(pp)
-      case A.AndPat(p1, p2) =>
-        printPat(p1)
-        printPat(p2)
+        buf.append(pp)
+      case AnnAst.AndPat(p1, p2) =>
+        printPat(buf)(p1)
+        printPat(buf)(p2)
 
-      case A.LiteralPat(_) =>
+      case AnnAst.LiteralPat(_) =>
       //
-      case A.TuplePat(pats) =>
-        pats.foreach(printPat)
-      case A.NilPat() =>
+      case AnnAst.TuplePat(pats) =>
+        pats.foreach(printPat(buf))
+      case AnnAst.NilPat() =>
       //
-      case A.ShapePat(fields) =>
-        fields.foreach { f => printPat(f.value) }
+      case AnnAst.ShapePat(fields) =>
+        fields.foreach { f => printPat(buf)(f.value) }
 
-      case A.ConsPat(hPat, tPat) =>
-        printPat(hPat)
-        printPat(tPat)
-      case A.EnumPat(_, _, pats) =>
-        pats.foreach(printPat)
+      case AnnAst.ConsPat(hPat, tPat) =>
+        printPat(buf)(hPat)
+        printPat(buf)(tPat)
+      case AnnAst.EnumPat(_, _, pats) =>
+        pats.foreach(printPat(buf))
 
-      case A.BinPat(elems) =>
+      case AnnAst.BinPat(elems) =>
         elems.foreach { elem =>
-          printPat(elem.pat)
-          elem.size.map(printExp)
+          printPat(buf)(elem.pat)
+          elem.size.map(printExp(buf))
         }
 
-      case A.StructPat(_, fields) =>
-        fields.foreach { f => printPat(f.value) }
+      case AnnAst.StructPat(_, fields) =>
+        fields.foreach { f => printPat(buf)(f.value) }
     }
 
-  private def printBody(body: A.Body): Unit = {
-    printValDefsTypes(body.prelude)
-    printValDef(body.main)
+  private def printBody(buf: ListBuffer[String])(body: AnnAst.Body): Unit = {
+    printValDefsTypes(buf)(body.prelude)
+    printValDef(buf)(body.main)
   }
 
-  private def printExp(exp: A.Exp): Unit =
+  private def printValDefsTypes(buf: ListBuffer[String])(defs: List[AnnAst.ValDef]): Unit = {
+    defs.foreach(printValDef(buf))
+  }
+
+  private def printValDef(buf: ListBuffer[String])(d: AnnAst.ValDef): Unit =
+    d match {
+      case AnnAst.ValDef(pat, exp, _, _, _) =>
+        printPat(buf)(pat)
+        printExp(buf)(exp)
+    }
+
+  private def printExp(buf: ListBuffer[String])(exp: AnnAst.Exp): Unit =
     exp match {
-      case A.VarExp(_) =>
+      case AnnAst.VarExp(_) =>
       // Nothing
 
-      case A.LiteralExp(_) =>
+      case AnnAst.LiteralExp(_) =>
       // Nothing
-      case A.TupleExp(elems) =>
-        elems.foreach(printExp)
-      case A.NilExp() =>
+      case AnnAst.TupleExp(elems) =>
+        elems.foreach(printExp(buf))
+      case AnnAst.NilExp() =>
       // Nothing
-      case A.BinExp(elems) =>
+      case AnnAst.BinExp(elems) =>
         elems.foreach { elem =>
-          printExp(elem.expr)
-          elem.size.foreach(printExp)
+          printExp(buf)(elem.expr)
+          elem.size.foreach(printExp(buf))
         }
 
-      case A.UOpExp(_, exp) =>
-        printExp(exp)
-      case A.BinOpExp(_, exp1, exp2) =>
-        printExp(exp1)
-        printExp(exp2)
+      case AnnAst.UOpExp(_, exp) =>
+        printExp(buf)(exp)
+      case AnnAst.BinOpExp(_, exp1, exp2) =>
+        printExp(buf)(exp1)
+        printExp(buf)(exp2)
 
-      case A.CaseExp(selector, branches) =>
-        printExp(selector)
+      case AnnAst.CaseExp(selector, branches) =>
+        printExp(buf)(selector)
         branches.foreach { branch =>
-          printPat(branch.pat)
-          printBody(branch.body)
+          printPat(buf)(branch.pat)
+          printBody(buf)(branch.body)
         }
 
-      case A.IfExp(bodies) =>
-        bodies.foreach(printBody)
+      case AnnAst.IfExp(bodies) =>
+        bodies.foreach(printBody(buf))
 
-      case A.Comprehension(template, qualifiers) =>
+      case AnnAst.Comprehension(template, qualifiers) =>
         qualifiers.foreach {
-          case A.Filter(exp) =>
-            printExp(exp)
-          case A.Generator(pat, exp) =>
-            printPat(pat)
-            printExp(exp)
-          case A.BGenerator(pat, exp) =>
-            printPat(pat)
-            printExp(exp)
+          case AnnAst.Filter(exp) =>
+            printExp(buf)(exp)
+          case AnnAst.Generator(pat, exp) =>
+            printPat(buf)(pat)
+            printExp(buf)(exp)
+          case AnnAst.BGenerator(pat, exp) =>
+            printPat(buf)(pat)
+            printExp(buf)(exp)
         }
-        printExp(template)
-      case A.BComprehension(template, qualifiers) =>
+        printExp(buf)(template)
+      case AnnAst.BComprehension(template, qualifiers) =>
         qualifiers.foreach {
-          case A.Filter(exp) =>
-            printExp(exp)
-          case A.Generator(pat, exp) =>
-            printPat(pat)
-            printExp(exp)
-          case A.BGenerator(pat, exp) =>
-            printPat(pat)
-            printExp(exp)
+          case AnnAst.Filter(exp) =>
+            printExp(buf)(exp)
+          case AnnAst.Generator(pat, exp) =>
+            printPat(buf)(pat)
+            printExp(buf)(exp)
+          case AnnAst.BGenerator(pat, exp) =>
+            printPat(buf)(pat)
+            printExp(buf)(exp)
         }
-        printExp(template)
+        printExp(buf)(template)
 
-      case A.BlockExp(body) =>
-        printBody(body)
+      case AnnAst.BlockExp(body) =>
+        printBody(buf)(body)
 
-      case A.ShapeCreateExp(fields) =>
-        fields.foreach(f => printExp(f.value))
-      case A.ShapeSelectExp(exp, _) =>
-        printExp(exp)
-      case A.ShapeUpdateExp(exp, fields) =>
-        printExp(exp)
-        fields.foreach(f => printExp(f.value))
+      case AnnAst.ShapeCreateExp(fields) =>
+        fields.foreach(f => printExp(buf)(f.value))
+      case AnnAst.ShapeSelectExp(exp, _) =>
+        printExp(buf)(exp)
+      case AnnAst.ShapeUpdateExp(exp, fields) =>
+        printExp(buf)(exp)
+        fields.foreach(f => printExp(buf)(f.value))
 
-      case A.StructCreate(_, fields) =>
-        fields.foreach(f => printExp(f.value))
-      case A.StructUpdate(struct, _, fields) =>
-        printExp(struct)
-        fields.foreach(f => printExp(f.value))
-      case A.StructSelect(struct, _, _) =>
-        printExp(struct)
+      case AnnAst.StructCreate(_, fields) =>
+        fields.foreach(f => printExp(buf)(f.value))
+      case AnnAst.StructUpdate(struct, _, fields) =>
+        printExp(buf)(struct)
+        fields.foreach(f => printExp(buf)(f.value))
+      case AnnAst.StructSelect(struct, _, _) =>
+        printExp(buf)(struct)
 
-      case A.FnExp(clauses) =>
+      case AnnAst.FnExp(clauses) =>
         clauses.foreach { clause =>
-          clause.pats.foreach(printPat)
-          printBody(clause.body)
+          clause.pats.foreach(printPat(buf))
+          printBody(buf)(clause.body)
         }
-      case A.NamedFnExp(name, clauses) =>
+      case AnnAst.NamedFnExp(name, clauses) =>
         // TODO: the source location is wrong, but I don't think it matters.
-        printPat(A.VarPat(name)(exp.r)(exp.typ))
+        printPat(buf)(AnnAst.VarPat(name)(exp.r)(exp.typ))
         clauses.foreach { clause =>
-          clause.pats.foreach(printPat)
-          printBody(clause.body)
+          clause.pats.foreach(printPat(buf))
+          printBody(buf)(clause.body)
         }
-      case A.AppExp(head, args) =>
-        printExp(head)
-        args.foreach(printExp)
+      case AnnAst.AppExp(head, args) =>
+        printExp(buf)(head)
+        args.foreach(printExp(buf))
 
-      case A.ConsExp(h, t) =>
-        printExp(h)
-        printExp(t)
-      case A.EnumExp(_, _, exprs) =>
-        exprs.foreach(printExp)
+      case AnnAst.ConsExp(h, t) =>
+        printExp(buf)(h)
+        printExp(buf)(t)
+      case AnnAst.EnumExp(_, _, exprs) =>
+        exprs.foreach(printExp(buf))
 
-      case A.TryCatchExp(tryBody, catchBranches, after) =>
-        printBody(tryBody)
+      case AnnAst.TryCatchExp(tryBody, catchBranches, after) =>
+        printBody(buf)(tryBody)
         catchBranches.foreach { branch =>
-          printPat(branch.pat)
-          printBody(branch.body)
+          printPat(buf)(branch.pat)
+          printBody(buf)(branch.body)
         }
-        after.foreach(printBody)
+        after.foreach(printBody(buf))
 
-      case A.TryOfCatchExp(tryBody, tryBranches, catchBranches, after) =>
-        printBody(tryBody)
+      case AnnAst.TryOfCatchExp(tryBody, tryBranches, catchBranches, after) =>
+        printBody(buf)(tryBody)
         tryBranches.foreach { branch =>
-          printPat(branch.pat)
-          printBody(branch.body)
+          printPat(buf)(branch.pat)
+          printBody(buf)(branch.body)
         }
         catchBranches.foreach { branch =>
-          printPat(branch.pat)
-          printBody(branch.body)
+          printPat(buf)(branch.pat)
+          printBody(buf)(branch.body)
         }
-        after.foreach(printBody)
+        after.foreach(printBody(buf))
 
-      case A.ReceiveExp(branches, after) =>
+      case AnnAst.ReceiveExp(branches, after) =>
         branches.foreach { branch =>
-          printPat(branch.pat)
-          printBody(branch.body)
+          printPat(buf)(branch.pat)
+          printBody(buf)(branch.body)
         }
         after.foreach { afterBody =>
-          printExp(afterBody.timeout)
-          printBody(afterBody.body)
+          printExp(buf)(afterBody.timeout)
+          printBody(buf)(afterBody.body)
         }
     }
-
-  private def output(pp: String): Unit = {
-    val Some(w) = sw
-    w.append(pp)
-    w.append("\n")
-  }
 }

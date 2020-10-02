@@ -41,8 +41,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     vars.rVar(T.RowOpen(d, kind))
 
   def unify(pos: Doc.Range, t1: T.Type, t2: T.Type): Unit = {
-    val required = TypePrinter2(vars, None).printType(t1)
-    val found = TypePrinter2(vars, None).printType(t2)
+    val required = TypePrinter2(vars).printType(t1)
+    val found = TypePrinter2(vars).printType(t2)
     try {
       U.unify(t1, t2)
     } catch {
@@ -1218,9 +1218,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       val specScheme = TU.generalize(d)(eSpecType)
 
       val elabNormString =
-        new TypePrinter2(vars, None).printScheme(elabSchemaType)
+        new TypePrinter2(vars).printScheme(elabSchemaType)
       val specNormString =
-        new TypePrinter2(vars, None).printScheme(specScheme)
+        new TypePrinter2(vars).printScheme(specScheme)
 
       if (specNormString != elabNormString) {
         throw new SpecError(spec.r, fName, specNormString, elabNormString)
