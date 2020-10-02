@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.test.it
 
-import java.io.{BufferedWriter, File, FileWriter, StringWriter}
+import java.io.{BufferedWriter, File, FileWriter}
 import java.nio.file.Files
 
 import com.whatsapp.sterlang._
@@ -71,7 +71,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFile(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, TypePrinter2.Specs, "_ty", "ty")
+    processFile(erltPath, etfPath, verbose = false, "_ty", "ty")
 
     val myOutput = fileContent(erltPath + "._ty")
     val expectedOut = fileContent(erltPath + ".ty")
@@ -81,7 +81,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFileVerbose(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, TypePrinter2.Types, "_vt", "vt")
+    processFile(erltPath, etfPath, verbose = true, "_vt", "vt")
 
     val myOutput = fileContent(erltPath + "._vt")
     val expectedOut = fileContent(erltPath + ".vt")
@@ -97,7 +97,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     content
   }
 
-  def processFile(erltPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
+  def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
     val rawProgram = Main.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -105,15 +105,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
 
-    val printer = TypePrinter2(vars)
-    val lines = mode match {
-      case TypePrinter2.Specs =>
-        printer.showFunSpecs(annDefs, env)
-      case TypePrinter2.Types =>
-        printer.showFunTypes(annDefs)
-    }
-
-    val output = lines.mkString("", "\n", "\n")
+    val lines =
+      if (verbose) Render(vars).varTypes(annDefs) else Render(vars).specs(annDefs, env)
+    val output =
+      lines.mkString("", "\n", "\n")
 
     {
       val w2 = new BufferedWriter(new FileWriter(erltPath + "." + tmpExt))

@@ -41,8 +41,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     vars.rVar(T.RowOpen(d, kind))
 
   def unify(pos: Doc.Range, t1: T.Type, t2: T.Type): Unit = {
-    val required = TypePrinter2(vars).printType(t1)
-    val found = TypePrinter2(vars).printType(t2)
+    val required = Render(vars).typ(t1)
+    val found = Render(vars).typ(t2)
     try {
       U.unify(t1, t2)
     } catch {
@@ -1200,7 +1200,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   // --- Some additional checks ---
 
-  private def checkSpec(fName: String, elabSchemaType: ST.TypeSchema, d: Int): Unit = {
+  private def checkSpec(fName: String, elabSchema: ST.TypeSchema, d: Int): Unit = {
     val expander = dExpander(d)
     context.specs.find(_.name.stringId == fName).foreach { spec =>
       val specFType = spec.funType
@@ -1215,12 +1215,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         sSub ++ rSub
       val specType = expander.mkType(specFType, eSub)
       val eSpecType = expander.expandType(specType)
-      val specScheme = TU.generalize(d)(eSpecType)
+      val specSchema = TU.generalize(d)(eSpecType)
 
-      val elabNormString =
-        new TypePrinter2(vars).printScheme(elabSchemaType)
-      val specNormString =
-        new TypePrinter2(vars).printScheme(specScheme)
+      // it's important to use Render#scheme,
+      // since type we get - it doesn't have proper ordering of vars
+      val elabNormString = Render(vars).scheme(elabSchema)
+      val specNormString = Render(vars).scheme(specSchema)
 
       if (specNormString != elabNormString) {
         throw new SpecError(spec.r, fName, specNormString, elabNormString)

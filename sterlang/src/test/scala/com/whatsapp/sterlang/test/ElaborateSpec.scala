@@ -28,7 +28,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
     val elaborate = new Elaborate(vars, context, prog)
     val (annDefs, env) = elaborate.elaborateFuns(prog.funs)
-    val specStrings = TypePrinter2(vars).showFunSpecs(annDefs, env)
+    val specStrings = Render(vars).specs(annDefs, env)
     val actualOutput = specStrings.mkString("", "\n", "\n")
     assert(actualOutput == expOutput)
   }

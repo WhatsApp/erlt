@@ -1,16 +1,16 @@
 val mk_unit_remote_dot/0: fun(() -> mod03:unit0())
 val mk_left_remote_dot/1: fun((A) -> mod03:either(A, B))
 val A: A
-val mk_right_remote_dot/1: fun((C) -> mod03:either(D, C))
-val B: C
-val zero_remote_dot/2: fun((mod03:unit0(), E) -> E)
+val mk_right_remote_dot/1: fun((A) -> mod03:either(B, A))
+val B: A
+val zero_remote_dot/2: fun((mod03:unit0(), A) -> A)
 val U: mod03:unit0()
-val Val: E
-val zero_remote1_dot/2: fun((mod03:unit0(), F) -> F)
-val Val: F
-val un_pair_remote_dot/1: fun((mod03:pair(G, H)) -> {G, H})
-val Pair: mod03:pair(G, H)
-val A: G
-val B: H
+val Val: A
+val zero_remote1_dot/2: fun((mod03:unit0(), A) -> A)
+val Val: A
+val un_pair_remote_dot/1: fun((mod03:pair(A, B)) -> {A, B})
+val Pair: mod03:pair(A, B)
+val A: A
+val B: B
 val funs/0: fun(() -> list(fun(() -> mod03:unit0())))
 val import1/0: fun(() -> mod03:unit0())

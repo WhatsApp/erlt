@@ -1,5 +1,5 @@
 val id/1: fun((A) -> A)
 val X: A
-val call_id/1: fun((B) -> B)
-val X: B
+val call_id/1: fun((A) -> A)
+val X: A
 val str/0: fun(() -> string())

@@ -6,33 +6,33 @@ val H: A
 val T: list(A)
 val Ht: A
 val Tt: list(A)
-val merge/3: fun((fun((B, B) -> boolean()), list(B), list(B)) -> list(B))
-val Lt: fun((B, B) -> boolean())
-val L1: list(B)
-val L2: list(B)
-val H1: B
-val T1: list(B)
-val H2: B
-val T2: list(B)
-val sort/2: fun((fun((C, C) -> boolean()), list(C)) -> list(C))
-val Lt: fun((C, C) -> boolean())
-val L: list(C)
-val H: C
-val T: list(C)
-val Ht: C
-val Tt: list(C)
-val P1: list(C)
-val P2: list(C)
-val mergesort/2: fun((fun((D, D) -> boolean()), list(D)) -> list(D))
-val Lt: fun((D, D) -> boolean())
-val L: list(D)
-val loop/2: fun((list(E), integer()) -> integer())
-val L: list(E)
+val merge/3: fun((fun((A, A) -> boolean()), list(A), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L1: list(A)
+val L2: list(A)
+val H1: A
+val T1: list(A)
+val H2: A
+val T2: list(A)
+val sort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L: list(A)
+val H: A
+val T: list(A)
+val Ht: A
+val Tt: list(A)
+val P1: list(A)
+val P2: list(A)
+val mergesort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L: list(A)
+val loop/2: fun((list(A), integer()) -> integer())
+val L: list(A)
 val N: integer()
-val T: list(E)
-val length/1: fun((list(F)) -> integer())
-val L: list(F)
-val lt/2: fun((G, G) -> boolean())
-val S1: G
-val S2: G
-val main/0: fun(() -> list(H))
+val T: list(A)
+val length/1: fun((list(A)) -> integer())
+val L: list(A)
+val lt/2: fun((A, A) -> boolean())
+val S1: A
+val S2: A
+val main/0: fun(() -> list(A))

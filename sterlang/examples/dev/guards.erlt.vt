@@ -7,16 +7,16 @@ val Pred: fun((A) -> boolean())
 val Hd: A
 val Tail: list(A)
 val Pred: fun((A) -> boolean())
-val client1/1: fun((B) -> fun((C) -> boolean()))
-val X: B
-val F: fun((D) -> boolean())
+val client1/1: fun((A) -> fun((B) -> boolean()))
+val X: A
+val F: fun((C) -> boolean())
+val Y: C
+val api1/1: fun((A) -> A)
+val X: A
+val client2/1: fun((A) -> fun((B) -> boolean()))
+val X: A
+val F: fun((C) -> boolean())
+val Fun: fun((D) -> boolean())
 val Y: D
-val api1/1: fun((E) -> E)
-val X: E
-val client2/1: fun((F) -> fun((G) -> boolean()))
-val X: F
-val F: fun((H) -> boolean())
-val Fun: fun((I) -> boolean())
-val Y: I
-val api3/1: fun((J) -> J)
-val X: J
+val api3/1: fun((A) -> A)
+val X: A

@@ -2,12 +2,12 @@ val odd/1: fun((integer()) -> boolean())
 val X: integer()
 val id/1: fun((A) -> A)
 val X: A
-val id_caller/1: fun((B) -> B)
-val X: B
-val id_rec/1: fun((C) -> C)
-val X: C
+val id_caller/1: fun((A) -> A)
+val X: A
+val id_rec/1: fun((A) -> A)
+val X: A
 val even/1: fun((integer()) -> boolean())
 val X: integer()
-val mod01call/1: fun((D) -> D)
-val X: D
+val mod01call/1: fun((A) -> A)
+val X: A
 val mk_unit/0: fun(() -> integer())

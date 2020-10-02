@@ -2,37 +2,37 @@ val map/2: fun((fun((A) -> B), list(A)) -> list(B))
 val F: fun((A) -> B)
 val L: list(A)
 val X: A
-val filter/2: fun((fun((C) -> boolean()), list(C)) -> list(C))
-val F: fun((C) -> boolean())
-val L: list(C)
-val X: C
-val strange_perm/3: fun((fun((D, E) -> boolean()), list(D), list(E)) -> list({D, E}))
-val F: fun((D, E) -> boolean())
-val L1: list(D)
-val L2: list(E)
-val X: D
-val Y: E
-val sort/1: fun((list(F)) -> list(F))
-val Pivot: F
-val T: list(F)
-val X: F
-val Y: F
-val sort/2: fun((list(G), fun((G, G) -> boolean())) -> list(G))
-val Pivot: G
-val T: list(G)
-val C: fun((G, G) -> boolean())
-val X: G
-val Y: G
-val _C: fun((G, G) -> boolean())
-val append/1: fun((list(list(H))) -> list(H))
-val L: list(list(H))
-val L1: list(H)
-val X: H
-val flat_map/2: fun((fun((I) -> list(J)), list(I)) -> list(J))
-val F: fun((I) -> list(J))
-val L: list(I)
-val X: I
-val Y: J
+val filter/2: fun((fun((A) -> boolean()), list(A)) -> list(A))
+val F: fun((A) -> boolean())
+val L: list(A)
+val X: A
+val strange_perm/3: fun((fun((A, B) -> boolean()), list(A), list(B)) -> list({A, B}))
+val F: fun((A, B) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val X: A
+val Y: B
+val sort/1: fun((list(A)) -> list(A))
+val Pivot: A
+val T: list(A)
+val X: A
+val Y: A
+val sort/2: fun((list(A), fun((A, A) -> boolean())) -> list(A))
+val Pivot: A
+val T: list(A)
+val C: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val _C: fun((A, A) -> boolean())
+val append/1: fun((list(list(A))) -> list(A))
+val L: list(list(A))
+val L1: list(A)
+val X: A
+val flat_map/2: fun((fun((A) -> list(B)), list(A)) -> list(B))
+val F: fun((A) -> list(B))
+val L: list(A)
+val X: A
+val Y: B
 val list_from_binary/1: fun((binary()) -> list(integer()))
 val Binary: binary()
 val X: integer()

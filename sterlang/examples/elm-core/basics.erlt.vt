@@ -25,57 +25,57 @@ val X2: integer()
 val eq/2: fun((A, A) -> boolean())
 val X1: A
 val X2: A
-val eq/1: fun((B) -> fun((B) -> boolean()))
-val X1: B
-val X2: B
-val neq/2: fun((C, C) -> boolean())
-val X1: C
-val X2: C
-val neq/1: fun((D) -> fun((D) -> boolean()))
-val X1: D
-val X2: D
-val lt/2: fun((E, E) -> boolean())
-val X1: E
-val X2: E
-val lt/1: fun((F) -> fun((F) -> boolean()))
-val X1: F
-val X2: F
-val gt/2: fun((G, G) -> boolean())
-val X1: G
-val X2: G
-val gt/1: fun((H) -> fun((H) -> boolean()))
-val X1: H
-val X2: H
-val le/2: fun((I, I) -> boolean())
-val X1: I
-val X2: I
-val le/1: fun((J) -> fun((J) -> boolean()))
-val X1: J
-val X2: J
-val ge/2: fun((K, K) -> boolean())
-val X1: K
-val X2: K
-val ge/1: fun((L) -> fun((L) -> boolean()))
-val X1: L
-val X2: L
-val min/2: fun((M, M) -> M)
-val X1: M
-val X2: M
-val min/1: fun((N) -> fun((N) -> N))
-val X1: N
-val X2: N
-val max/2: fun((O, O) -> O)
-val X1: O
-val X2: O
-val max/1: fun((P) -> fun((P) -> P))
-val X1: P
-val X2: P
-val compare/2: fun((Q, Q) -> order())
-val X1: Q
-val X2: Q
-val compare/1: fun((R) -> fun((R) -> order()))
-val X1: R
-val X2: R
+val eq/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val neq/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val neq/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val lt/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val lt/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val gt/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val gt/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val le/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val le/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val ge/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val ge/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val min/2: fun((A, A) -> A)
+val X1: A
+val X2: A
+val min/1: fun((A) -> fun((A) -> A))
+val X1: A
+val X2: A
+val max/2: fun((A, A) -> A)
+val X1: A
+val X2: A
+val max/1: fun((A) -> fun((A) -> A))
+val X1: A
+val X2: A
+val compare/2: fun((A, A) -> order())
+val X1: A
+val X2: A
+val compare/1: fun((A) -> fun((A) -> order()))
+val X1: A
+val X2: A
 val not/1: fun((boolean()) -> boolean())
 val B: boolean()
 val and/2: fun((boolean(), boolean()) -> boolean())
@@ -116,38 +116,38 @@ val clamp/3: fun((integer(), integer(), integer()) -> integer())
 val Low: integer()
 val High: integer()
 val Num: integer()
-val composeL/2: fun((fun((U) -> T), fun((S) -> U)) -> fun((S) -> T))
-val G: fun((U) -> T)
-val F: fun((S) -> U)
-val X: S
-val composeL/1: fun((fun((V) -> X)) -> fun((fun((W) -> V)) -> fun((W) -> X)))
-val G: fun((V) -> X)
-val F: fun((W) -> V)
-val composeR/2: fun((fun((Y) -> T_26), fun((T_26) -> Z)) -> fun((Y) -> Z))
-val F: fun((Y) -> T_26)
-val G: fun((T_26) -> Z)
-val X: Y
-val composeR/1: fun((fun((T_28) -> T_27)) -> fun((fun((T_27) -> T_29)) -> fun((T_28) -> T_29)))
-val F: fun((T_28) -> T_27)
-val G: fun((T_27) -> T_29)
-val apR/2: fun((T_30, fun((T_30) -> T_31)) -> T_31)
-val X: T_30
-val F: fun((T_30) -> T_31)
-val apR/1: fun((T_32) -> fun((fun((T_32) -> T_33)) -> T_33))
-val X: T_32
-val F: fun((T_32) -> T_33)
-val apL/2: fun((fun((T_34) -> T_35), T_34) -> T_35)
-val F: fun((T_34) -> T_35)
-val X: T_34
-val apL/1: fun((fun((T_37) -> T_36)) -> fun((T_37) -> T_36))
-val F: fun((T_37) -> T_36)
-val X: T_37
-val identity/1: fun((T_38) -> T_38)
-val X: T_38
-val always/2: fun((T_39, T_40) -> T_39)
-val A: T_39
-val always/1: fun((T_41) -> fun((T_42) -> T_41))
-val A: T_41
-val X: T_42
-val never/1: fun((never()) -> T_43)
+val composeL/2: fun((fun((C) -> B), fun((A) -> C)) -> fun((A) -> B))
+val G: fun((C) -> B)
+val F: fun((A) -> C)
+val X: A
+val composeL/1: fun((fun((A) -> C)) -> fun((fun((B) -> A)) -> fun((B) -> C)))
+val G: fun((A) -> C)
+val F: fun((B) -> A)
+val composeR/2: fun((fun((A) -> C), fun((C) -> B)) -> fun((A) -> B))
+val F: fun((A) -> C)
+val G: fun((C) -> B)
+val X: A
+val composeR/1: fun((fun((B) -> A)) -> fun((fun((A) -> C)) -> fun((B) -> C)))
+val F: fun((B) -> A)
+val G: fun((A) -> C)
+val apR/2: fun((A, fun((A) -> B)) -> B)
+val X: A
+val F: fun((A) -> B)
+val apR/1: fun((A) -> fun((fun((A) -> B)) -> B))
+val X: A
+val F: fun((A) -> B)
+val apL/2: fun((fun((A) -> B), A) -> B)
+val F: fun((A) -> B)
+val X: A
+val apL/1: fun((fun((B) -> A)) -> fun((B) -> A))
+val F: fun((B) -> A)
+val X: B
+val identity/1: fun((A) -> A)
+val X: A
+val always/2: fun((A, B) -> A)
+val A: A
+val always/1: fun((A) -> fun((B) -> A))
+val A: A
+val X: B
+val never/1: fun((never()) -> A)
 val Nvr: never()

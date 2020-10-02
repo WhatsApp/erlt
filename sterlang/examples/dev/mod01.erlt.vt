@@ -1,79 +1,79 @@
 val id/1: fun((A) -> A)
 val X: A
-val arg13/3: fun((B, C, D) -> B)
-val X: B
+val arg13/3: fun((A, B, C) -> A)
+val X: A
+val _Y: B
+val _Z: C
+val arg23/3: fun((B, A, C) -> A)
+val _X: B
+val Y: A
+val _Z: C
+val arg33/3: fun((B, C, A) -> A)
+val _X: B
 val _Y: C
-val _Z: D
-val arg23/3: fun((F, E, G) -> E)
-val _X: F
-val Y: E
-val _Z: G
-val arg33/3: fun((I, J, H) -> H)
-val _X: I
-val _Y: J
-val Z: H
+val Z: A
 val mk_int/0: fun(() -> integer())
 val mk_string/0: fun(() -> string())
-val mk_nil/0: fun(() -> list(K))
-val mk_cons/2: fun((L, list(L)) -> list(L))
-val H: L
-val T: list(L)
-val mk_tuple/3: fun((M, N, O) -> {M, N, O})
-val A: M
-val B: N
-val C: O
-val mk_tuple2/1: fun((P) -> {integer(), integer(), integer(), P})
-val A: P
-val mk_map/2: fun((Q, R) -> #( a :: Q, b :: R ))
-val A: Q
-val B: R
-val update_map1/2: fun((#( a :: S ), S) -> #( a :: S ))
-val M: #( a :: S )
-val A: S
-val update_map3/1: fun((#( a :: T, b :: T )) -> #( a :: T, b :: T ))
-val M: #( a :: T, b :: T )
-val A0: T
-val B0: T
-val access_map/1: fun((#( id :: U, location :: V, A )) -> {U, V})
-val M: #( id :: U, location :: V, A )
-val access_map2/1: fun((#( inner1 :: #( inner2 :: W ) )) -> W)
-val M: #( inner1 :: #( inner2 :: W ) )
+val mk_nil/0: fun(() -> list(A))
+val mk_cons/2: fun((A, list(A)) -> list(A))
+val H: A
+val T: list(A)
+val mk_tuple/3: fun((A, B, C) -> {A, B, C})
+val A: A
+val B: B
+val C: C
+val mk_tuple2/1: fun((A) -> {integer(), integer(), integer(), A})
+val A: A
+val mk_map/2: fun((A, B) -> #( a :: A, b :: B ))
+val A: A
+val B: B
+val update_map1/2: fun((#( a :: A ), A) -> #( a :: A ))
+val M: #( a :: A )
+val A: A
+val update_map3/1: fun((#( a :: A, b :: A )) -> #( a :: A, b :: A ))
+val M: #( a :: A, b :: A )
+val A0: A
+val B0: A
+val access_map/1: fun((#( id :: A, location :: B, A )) -> {A, B})
+val M: #( id :: A, location :: B, A )
+val access_map2/1: fun((#( inner1 :: #( inner2 :: A ) )) -> A)
+val M: #( inner1 :: #( inner2 :: A ) )
 val mk_seq/0: fun(() -> {integer(), integer()})
 val X: integer()
 val Y: integer()
-val is_empty/1: fun((list(X)) -> boolean())
-val _H: X
-val _T: list(X)
-val is_empty2/1: fun((list(Y)) -> boolean())
+val is_empty/1: fun((list(A)) -> boolean())
+val _H: A
+val _T: list(A)
+val is_empty2/1: fun((list(A)) -> boolean())
 val with_as/1: fun((integer()) -> integer())
 val X: integer()
 val Y: integer()
-val block/2: fun((Z, list(Z)) -> {list(Z), list(Z)})
-val X: Z
-val Y: list(Z)
-val Z: list(Z)
-val is_empty_case/1: fun((list(T_26)) -> boolean())
-val L: list(T_26)
-val both_empty/2: fun((list(T_27), list(T_28)) -> boolean())
-val L1: list(T_27)
-val L2: list(T_28)
-val call/2: fun((list(T_29), list(T_30)) -> boolean())
-val L1: list(T_29)
-val L2: list(T_30)
-val fun_to_var/0: fun(() -> fun((T_31, T_32) -> {T_31, T_32}))
-val F: fun((T_33, T_34) -> {T_33, T_34})
-val X: T_33
-val Y: T_34
-val local_fun_to_var/2: fun((T_35, T_36) -> fun((list(T_37), list(T_38)) -> boolean()))
-val _A: T_35
-val _B: T_36
-val F: fun((list(T_39), list(T_40)) -> boolean())
-val local_n_fun/0: fun(() -> fun((list(T_41)) -> list(T_42)))
-val F: fun((list(T_43)) -> list(T_44))
-val Local: fun((list(T_45)) -> list(T_46))
-val T: list(T_45)
-val mod01F/1: fun((T_47) -> T_47)
-val X: T_47
+val block/2: fun((A, list(A)) -> {list(A), list(A)})
+val X: A
+val Y: list(A)
+val Z: list(A)
+val is_empty_case/1: fun((list(A)) -> boolean())
+val L: list(A)
+val both_empty/2: fun((list(A), list(B)) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val call/2: fun((list(A), list(B)) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val fun_to_var/0: fun(() -> fun((A, B) -> {A, B}))
+val F: fun((C, D) -> {C, D})
+val X: C
+val Y: D
+val local_fun_to_var/2: fun((A, B) -> fun((list(C), list(D)) -> boolean()))
+val _A: A
+val _B: B
+val F: fun((list(E), list(F)) -> boolean())
+val local_n_fun/0: fun(() -> fun((list(A)) -> list(B)))
+val F: fun((list(C)) -> list(D))
+val Local: fun((list(E)) -> list(F))
+val T: list(E)
+val mod01F/1: fun((A) -> A)
+val X: A
 val unary_plus/1: fun((integer()) -> integer())
 val X: integer()
 val unary_minus/1: fun((integer()) -> integer())
@@ -127,36 +127,36 @@ val Y: boolean()
 val binary_andalso/2: fun((boolean(), boolean()) -> boolean())
 val X: boolean()
 val Y: boolean()
-val list_plus/2: fun((list(T_48), list(T_48)) -> list(T_48))
-val X: list(T_48)
-val Y: list(T_48)
-val list_minus/2: fun((list(T_49), list(T_49)) -> list(T_49))
-val X: list(T_49)
-val Y: list(T_49)
-val comp1/2: fun((T_50, T_50) -> boolean())
-val X: T_50
-val Y: T_50
-val comp2/2: fun((T_51, T_51) -> boolean())
-val X: T_51
-val Y: T_51
-val comp3/2: fun((T_52, T_52) -> boolean())
-val X: T_52
-val Y: T_52
-val comp4/2: fun((T_53, T_53) -> boolean())
-val X: T_53
-val Y: T_53
-val comp5/2: fun((T_54, T_54) -> boolean())
-val X: T_54
-val Y: T_54
-val comp6/2: fun((T_55, T_55) -> boolean())
-val X: T_55
-val Y: T_55
-val comp7/2: fun((T_56, T_56) -> boolean())
-val X: T_56
-val Y: T_56
-val comp8/2: fun((T_57, T_57) -> boolean())
-val X: T_57
-val Y: T_57
+val list_plus/2: fun((list(A), list(A)) -> list(A))
+val X: list(A)
+val Y: list(A)
+val list_minus/2: fun((list(A), list(A)) -> list(A))
+val X: list(A)
+val Y: list(A)
+val comp1/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp2/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp3/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp4/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp5/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp6/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp7/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp8/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
 val guard1/2: fun((integer(), integer()) -> boolean())
 val X: integer()
 val Y: integer()
@@ -164,18 +164,18 @@ val X: integer()
 val Y: integer()
 val _X: integer()
 val _Y: integer()
-val guard2/3: fun((list(T_58), T_58, list(T_58)) -> list(T_58))
-val X: list(T_58)
-val Y: T_58
-val X1: T_58
-val Xs: list(T_58)
-val Xs: list(T_58)
-val X: list(T_58)
-val Z: list(T_58)
-val Z: list(T_58)
+val guard2/3: fun((list(A), A, list(A)) -> list(A))
+val X: list(A)
+val Y: A
+val X1: A
+val Xs: list(A)
+val Xs: list(A)
+val X: list(A)
+val Z: list(A)
+val Z: list(A)
 val p_match_tuple0/1: fun(({}) -> {{}})
-val p_match_tuple1/1: fun(({T_59}) -> {})
-val _X: T_59
+val p_match_tuple1/1: fun(({A}) -> {})
+val _X: A
 val p_match_invoke/0: fun(() -> {})
 val any_id/1: fun((any()) -> any())
 val A: any()
@@ -195,8 +195,8 @@ val iodata_id/1: fun((iodata()) -> iodata())
 val A: iodata()
 val iolist_id/1: fun((iolist()) -> iolist())
 val A: iolist()
-val map_id/1: fun((map(T_60, T_61)) -> map(T_60, T_61))
-val M: map(T_60, T_61)
+val map_id/1: fun((map(A, B)) -> map(A, B))
+val M: map(A, B)
 val none_id/1: fun((none()) -> none())
 val A: none()
 val noreturn_id/1: fun((none()) -> none())
@@ -215,9 +215,9 @@ val timeout_id/1: fun((timeout()) -> timeout())
 val A: timeout()
 val ints_id/1: fun(({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()})
 val X: {neg_integer(), non_neg_integer(), pos_integer()}
-val mk_my_pair/2: fun((T_62, T_62) -> {T_62, T_62})
-val A: T_62
-val B: T_62
+val mk_my_pair/2: fun((A, A) -> {A, A})
+val A: A
+val B: A
 val float_as_int/0: fun(() -> integer())
 val float_pat/1: fun((integer()) -> string())
 val char_pat/1: fun((char()) -> char())

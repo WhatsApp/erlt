@@ -3,52 +3,52 @@ val _Def: B
 val A: B
 val Def: B
 val _E: A
-val with_default/1: fun((C) -> fun((result(D, C)) -> C))
-val Def: C
-val Res: result(D, C)
-val map/2: fun((fun((F) -> G), result(E, F)) -> result(E, G))
-val Func: fun((F) -> G)
-val A: F
-val _Func: fun((F) -> G)
-val E: E
-val map/1: fun((fun((H) -> J)) -> fun((result(I, H)) -> result(I, J)))
-val Func: fun((H) -> J)
-val Res: result(I, H)
-val map2/3: fun((fun((L, M) -> N), result(K, L), result(K, M)) -> result(K, N))
-val _Func: fun((L, M) -> N)
-val X: K
-val _Func: fun((L, M) -> N)
-val X: K
-val Func: fun((L, M) -> N)
-val A: L
-val B: M
-val map2/1: fun((fun((O, P) -> R)) -> fun((result(Q, O), result(Q, P)) -> result(Q, R)))
-val Func: fun((O, P) -> R)
-val ResA: result(Q, O)
-val ResB: result(Q, P)
-val and_then/2: fun((fun((T) -> result(S, U)), result(S, T)) -> result(S, U))
-val Callback: fun((T) -> result(S, U))
-val Value: T
-val _Callback: fun((T) -> result(S, U))
-val Msg: S
-val and_then/1: fun((fun((V) -> result(W, X))) -> fun((result(W, V)) -> result(W, X)))
-val Callback: fun((V) -> result(W, X))
-val Res: result(W, V)
-val map_error/2: fun((fun((Z) -> T_26), result(Z, Y)) -> result(T_26, Y))
-val _F: fun((Z) -> T_26)
-val V: Y
-val F: fun((Z) -> T_26)
-val E: Z
-val map_error/1: fun((fun((T_27) -> T_28)) -> fun((result(T_27, T_29)) -> result(T_28, T_29)))
-val F: fun((T_27) -> T_28)
-val Res: result(T_27, T_29)
-val to_maybe/1: fun((result(T_30, T_31)) -> maybe:maybe(T_31))
-val V: T_31
-val from_maybe/2: fun((T_32, maybe:maybe(T_33)) -> result(T_32, T_33))
-val _Err: T_32
-val V: T_33
-val Err: T_32
-val from_maybe/1: fun((T_34) -> fun((maybe:maybe(T_35)) -> result(T_34, T_35)))
-val Err: T_34
-val Maybe: maybe:maybe(T_35)
-val is_ok/1: fun((result(T_36, T_37)) -> boolean())
+val with_default/1: fun((A) -> fun((result(B, A)) -> A))
+val Def: A
+val Res: result(B, A)
+val map/2: fun((fun((B) -> C), result(A, B)) -> result(A, C))
+val Func: fun((B) -> C)
+val A: B
+val _Func: fun((B) -> C)
+val E: A
+val map/1: fun((fun((A) -> C)) -> fun((result(B, A)) -> result(B, C)))
+val Func: fun((A) -> C)
+val Res: result(B, A)
+val map2/3: fun((fun((B, C) -> D), result(A, B), result(A, C)) -> result(A, D))
+val _Func: fun((B, C) -> D)
+val X: A
+val _Func: fun((B, C) -> D)
+val X: A
+val Func: fun((B, C) -> D)
+val A: B
+val B: C
+val map2/1: fun((fun((A, B) -> D)) -> fun((result(C, A), result(C, B)) -> result(C, D)))
+val Func: fun((A, B) -> D)
+val ResA: result(C, A)
+val ResB: result(C, B)
+val and_then/2: fun((fun((B) -> result(A, C)), result(A, B)) -> result(A, C))
+val Callback: fun((B) -> result(A, C))
+val Value: B
+val _Callback: fun((B) -> result(A, C))
+val Msg: A
+val and_then/1: fun((fun((A) -> result(B, C))) -> fun((result(B, A)) -> result(B, C)))
+val Callback: fun((A) -> result(B, C))
+val Res: result(B, A)
+val map_error/2: fun((fun((B) -> C), result(B, A)) -> result(C, A))
+val _F: fun((B) -> C)
+val V: A
+val F: fun((B) -> C)
+val E: B
+val map_error/1: fun((fun((A) -> B)) -> fun((result(A, C)) -> result(B, C)))
+val F: fun((A) -> B)
+val Res: result(A, C)
+val to_maybe/1: fun((result(A, B)) -> maybe:maybe(B))
+val V: B
+val from_maybe/2: fun((A, maybe:maybe(B)) -> result(A, B))
+val _Err: A
+val V: B
+val Err: A
+val from_maybe/1: fun((A) -> fun((maybe:maybe(B)) -> result(A, B)))
+val Err: A
+val Maybe: maybe:maybe(B)
+val is_ok/1: fun((result(A, B)) -> boolean())
