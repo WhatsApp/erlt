@@ -1,6 +1,8 @@
 **/*.swp
 *.beam
-**/build/
-/_build/
-**/.deps.mk
+**build/
+**_build/
+.idea
+rebar3.crashdump
+.metals
 erltc/src/erlt_parse.erl
