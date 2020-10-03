@@ -161,7 +161,9 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
-  case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val r: Doc.Range)
+  case class StructDef(name: String, params: List[TypeVar], fields: List[Field[Type]], kind: StructKind)(
+      val r: Doc.Range
+  )
   case class EnumCtr(name: String, argTypes: List[Type])(val r: Doc.Range)
 
   sealed trait Exp { val r: Doc.Range }

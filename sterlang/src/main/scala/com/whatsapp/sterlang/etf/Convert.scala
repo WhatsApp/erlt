@@ -77,11 +77,10 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.StructDecl(p, name, params, eFields, kind) =>
-        // TODO - add support for struct params
-        assert(params.isEmpty)
+      case Forms.StructDecl(p, name, eParams, eFields, kind) =>
+        val params = eParams.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         val fields = eFields.map(convertStructFieldDecl)
-        val eStructType = Ast.StructDef(name, fields, convertStructKind(kind))(p)
+        val eStructType = Ast.StructDef(name, params, fields, convertStructKind(kind))(p)
         Some(Ast.StructElem(eStructType))
       case Forms.EOF =>
         None
@@ -113,7 +112,7 @@ object Convert {
   private def convertCatchClause(catchClause: Exprs.Clause): Ast.Rule = {
     val List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) = catchClause.pats
     val Ast.WildPat() = convertPattern(stackTrace)
-    val Patterns.LiteralPattern(literal) = exnClass;
+    val Patterns.LiteralPattern(literal) = exnClass
     val Exprs.AtomLiteral(_, "throw") = literal
     val exnPat = convertPattern(exn)
     Ast.Rule(exnPat, catchClause.guards.map(convertGuard), convertBody(catchClause.body))
