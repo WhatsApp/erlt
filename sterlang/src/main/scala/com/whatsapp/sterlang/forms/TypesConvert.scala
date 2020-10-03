@@ -58,8 +58,6 @@ object TypesConvert {
         Shape(r(anno), assocTypes.map(convertShapeField))
       case ETuple(List(EAtom("type"), anno, EAtom("open_shape"), EList(assocTypes), restType)) =>
         OpenShape(r(anno), assocTypes.map(convertShapeField), convertType(restType))
-      case ETuple(List(EAtom("type"), anno, EAtom("struct"), EList(List(structName)))) =>
-        StructType(r(anno), FormsConvert.convertAtomLit(structName))
       // af_remote_type
       case ETuple(List(EAtom("remote_type"), anno, EList(List(moduleLit, typeNameLit, EList(args))))) =>
         RemoteType(

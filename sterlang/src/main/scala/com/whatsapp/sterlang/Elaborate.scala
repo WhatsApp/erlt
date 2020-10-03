@@ -488,7 +488,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val expType = structDef.kind match {
-      case Ast.StrStruct => MT.StructType(name)
+      case Ast.StrStruct => MT.NamedType(name, List.empty)
       case Ast.ExnStruct => MT.ExceptionType
       case Ast.MsgStruct => MT.MessageType
     }
@@ -523,7 +523,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val structType = MT.StructType(name)
+    val structType = MT.NamedType(name, List.empty)
     val struct1 = elab(struct, structType, d, env)
     unify(exp.r, ty, structType)
 
@@ -550,7 +550,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case None    => throw new UnknownStructField(exp.r, name, fieldName)
       }
 
-    val structType = MT.StructType(name)
+    val structType = MT.NamedType(name, List.empty)
     val struct1 = elab(struct, structType, d, env)
 
     val fieldType = expander.mkType(fieldDef.value, Map.empty)
@@ -1174,7 +1174,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val expType = structDef.kind match {
       case Ast.StrStruct =>
-        MT.StructType(name)
+        MT.NamedType(name, List.empty)
       case Ast.ExnStruct =>
         MT.ExceptionType
       case Ast.MsgStruct =>

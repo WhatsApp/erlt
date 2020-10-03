@@ -18,7 +18,7 @@
 
 -struct r :: {a :: boolean(), b :: boolean()}.
 
--spec test1(#r{}) -> {}.
+-spec test1(r()) -> {}.
 test1(#r{a = true}) -> {};
 test1(#r{a = _, b = _}) -> {};
 test1(#r{}) -> {}.

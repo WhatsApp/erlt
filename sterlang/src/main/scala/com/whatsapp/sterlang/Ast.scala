@@ -155,7 +155,6 @@ object Ast {
   case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
   case class ListType(elemType: Type)(val r: Doc.Range) extends Type
   case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type
-  case class StructType(name: String)(val r: Doc.Range) extends Type
 
   case class Spec(name: VarName, funType: FunType)(val r: Doc.Range)
 

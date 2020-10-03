@@ -34,7 +34,6 @@ object Types {
   case class ShapeField(r: Doc.Range, keyType: Type, valueType: Type)
 
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
-  case class StructType(r: Doc.Range, name: String) extends Type
   case class RemoteType(r: Doc.Range, module: String, name: String, params: List[Type]) extends Type
 
   sealed trait TupleType extends Type

@@ -71,13 +71,11 @@ object AstUtil {
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
       case ListType(elemType) =>
         collectNamedTypeVars(elemType)
-      case StructType(_) =>
-        List.empty
     }
 
   def collectNamedRowTypeVars(t: Type): List[(TypeVar, Set[String])] =
     t match {
-      case TypeVar(_) | WildTypeVar() | StructType(_) =>
+      case TypeVar(_) | WildTypeVar() =>
         List.empty
       case UserType(_, params) =>
         params.flatMap(collectNamedRowTypeVars)
@@ -376,8 +374,6 @@ object AstUtil {
           case _ => name
         }
         UserType(name1, params.map(globalizeType(module, names)))(tp.r)
-      case StructType(_) =>
-        tp
     }
 
   def normalizeTypes(program: Program): Program = {
@@ -407,7 +403,7 @@ object AstUtil {
 
   private def normalizeType(program: Program)(tp: Type): Type =
     tp match {
-      case WildTypeVar() | TypeVar(_) | StructType(_) => tp
+      case WildTypeVar() | TypeVar(_) => tp
       case TupleType(ts) =>
         TupleType(ts.map(normalizeType(program)))(tp.r)
       case ShapeType(fields) =>
@@ -667,7 +663,7 @@ object AstUtil {
 
   private def getDepType(tp: Type): Set[String] =
     tp match {
-      case WildTypeVar() | TypeVar(_) | StructType(_) =>
+      case WildTypeVar() | TypeVar(_) =>
         Set.empty[String]
       case TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)

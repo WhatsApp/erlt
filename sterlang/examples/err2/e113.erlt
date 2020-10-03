@@ -17,6 +17,6 @@
 
 -message foo :: {id :: integer()}.
 
--spec test() -> #foo{}.
+-spec test() -> foo().
 test() ->
     #foo{id = 1}.

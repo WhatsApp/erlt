@@ -436,8 +436,6 @@ case class Render(vars: Vars) {
           ts.map(typ).mkString(name + "(", ", ", ")")
         case (TyCons.TupleCon(_), ts, Nil) =>
           ts.map(typ).mkString("{", ", ", "}")
-        case (TyCons.StructTyCon(name), Nil, Nil) =>
-          s"#$name{}"
       }
 
     def shapeStr(sRowType: STypes.RowType): String =

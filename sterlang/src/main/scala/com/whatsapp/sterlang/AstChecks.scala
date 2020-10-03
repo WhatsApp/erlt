@@ -178,7 +178,21 @@ class AstChecks(val context: Context) {
                     expandType(program, visited + name)(opaque.body)
                     params.foreach(expandType(program, visited))
                   case None =>
-                    throw new UnknownType(tp.r, name.stringId, params.size)
+                    val strName = name.stringId
+                    // TODO - params
+                    program.structDefs.find(_.name == strName) match {
+                      case Some(eRec) =>
+                        eRec.kind match {
+                          case ExnStruct =>
+                            throw new ExceptionType(tp.r, strName)
+                          case MsgStruct =>
+                            throw new MessageType(tp.r, strName)
+                          case StrStruct =>
+                          // OK
+                        }
+                      case None =>
+                        throw new UnknownType(tp.r, name.stringId, params.size)
+                    }
                 }
             }
         }
@@ -219,20 +233,6 @@ class AstChecks(val context: Context) {
         expandType(program, visited)(resType)
       case ListType(elemType) =>
         expandType(program, visited)(elemType)
-      case StructType(name) =>
-        program.structDefs.find(_.name == name) match {
-          case Some(eRec) =>
-            eRec.kind match {
-              case ExnStruct =>
-                throw new ExceptionType(tp.r, name)
-              case MsgStruct =>
-                throw new MessageType(tp.r, name)
-              case StrStruct =>
-              // OK
-            }
-          case None =>
-            throw new UnknownStruct(tp.r, name)
-        }
     }
 
   // It collects the type vars of RHS of a definition:
@@ -261,8 +261,6 @@ class AstChecks(val context: Context) {
         (res :: args).map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
         collectRHSTypeVars(bound)(elemType)
-      case StructType(_) =>
-        Set.empty
       case ShapeType(fields) =>
         fields.map(f => collectRHSTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case OpenShapeType(_, Left(extType)) =>

@@ -17,6 +17,6 @@
 
 -struct foo :: {id :: integer()}.
 
--spec test(#foo{}) -> string().
+-spec test(foo()) -> string().
 test(Foo) when Foo == #foo{name = "anonymous"} ->
     Foo#foo.id.

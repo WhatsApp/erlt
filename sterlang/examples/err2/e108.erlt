@@ -17,6 +17,6 @@
 
 -struct foo :: {id :: integer()}.
 
--spec test(#foo{}) -> string().
+-spec test(foo()) -> string().
 test(#foo{name = Name}) ->
     Name.

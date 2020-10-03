@@ -68,8 +68,6 @@ class Expander(
         MT.FunType(params.map(mkType(_, sub)), mkType(res, sub))
       case Ast.ListType(elemType) =>
         MT.ListType(mkType(elemType, sub))
-      case Ast.StructType(name) =>
-        MT.StructType(name)
     }
 
   def mkSType(t: Ast.Type, sub: SSub): ST.Type =
@@ -104,8 +102,6 @@ class Expander(
         MST.FunType(params.map(mkSType(_, sub)), mkSType(res, sub))
       case Ast.ListType(elemType) =>
         MST.ListType(mkSType(elemType, sub))
-      case Ast.StructType(name) =>
-        MST.StructType(name)
     }
 
   def expandSType(ts: ST.Type): ST.Type =

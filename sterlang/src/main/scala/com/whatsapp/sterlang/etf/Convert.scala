@@ -369,8 +369,6 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.StructType(p, name) =>
-        Ast.StructType(name)(p)
       case Types.AtomType(p, _) =>
         // banned
         throw new UnsupportedSyntaxError(p, "Atom literal")
