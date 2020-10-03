@@ -43,7 +43,13 @@ object Forms {
   case class Import(module: String, ids: List[IdWithArity]) extends Form
   case class ExportType(ids: List[IdWithArity]) extends Form
   case class ImportType(module: String, ids: List[IdWithArity]) extends Form
-  case class StructDecl(r: Doc.Range, name: String, fields: List[StructFieldDecl], kind: StructKind) extends Form
+  case class StructDecl(
+      r: Doc.Range,
+      name: String,
+      params: List[TypeVariable],
+      fields: List[StructFieldDecl],
+      kind: StructKind,
+  ) extends Form
   case class TypeDecl(
       r: Doc.Range,
       typeAttr: TypeAttr,

@@ -77,7 +77,9 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
-      case Forms.StructDecl(p, name, eFields, kind) =>
+      case Forms.StructDecl(p, name, params, eFields, kind) =>
+        // TODO - add support for struct params
+        assert(params.isEmpty)
         val fields = eFields.map(convertStructFieldDecl)
         val eStructType = Ast.StructDef(name, fields, convertStructKind(kind))(p)
         Some(Ast.StructElem(eStructType))

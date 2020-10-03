@@ -16,8 +16,8 @@
 -module(exceptions).
 -export([test1/0, test2/1, test3/0, test4/0, test5/0, test6/0, test7/0, test8/1]).
 
--exception e0 :: {}.
--exception e1 :: {a :: boolean()}.
+-exception e0() :: {}.
+-exception e1() :: {a :: boolean()}.
 
 % We don't check for exhaustiveness in catch clauses.
 -spec test1() -> {}.

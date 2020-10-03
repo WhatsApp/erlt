@@ -15,7 +15,7 @@
 -lang(st).
 -module(e118).
 
--message my_msg :: {message :: string()}.
+-message my_msg() :: {message :: string()}.
 
 msg_update(M) ->
     M#my_msg{message = "new message"}.

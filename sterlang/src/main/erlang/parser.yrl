@@ -103,8 +103,8 @@ attribute -> '-' atom '(' attr_val ')' :
     build_attribute('$2', '$4', anno('$1','$5')).
 attribute -> '-' type_kind atom var_list '::' top_type :
     type_def('$2', '$3', '$4', '$6', anno('$1','$6')).
-attribute -> '-' struct_kind atom '::' '{' field_defs '}' :
-    struct_def('$2', '$3', '$6', anno('$1','$7')).
+attribute -> '-' struct_kind atom var_list '::' '{' field_defs '}' :
+    struct_def('$2', '$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' 'spec' type_spec :
     type_spec('$3', anno('$1','$3')).
 
@@ -487,8 +487,8 @@ parse_form(Tokens) ->
 type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
     {attribute, Aa, Kind, {Name, Type, Args}}.
 
-struct_def({StructKind, _}, {atom, _An, StructName}, Fields, Aa) ->
-    {attribute, Aa, StructKind, {StructName, Fields}}.
+struct_def({StructKind, _}, {atom, _An, StructName}, Args, Fields, Aa) ->
+    {attribute, Aa, StructKind, {StructName, Args, Fields}}.
 
 type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
     {attribute, Aa, spec, {{Fun, find_arity_from_specs(TypeSpecs)}, TypeSpecs}}.

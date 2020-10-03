@@ -62,17 +62,17 @@ object FormsConvert {
         val params = vars.map(TypesConvert.convertVar)
         TypeDecl(r(anno), typeAttr, typeName, params, abstractType)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(fields))))
+            List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, fields.map(structFieldDecl), StrStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), StrStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(fields))))
+            List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, fields.map(structFieldDecl), ExnStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), ExnStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(fields))))
+            List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, fields.map(structFieldDecl), MsgStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), MsgStruct)
       // af_function_spec
       case ETuple(
             List(

@@ -15,7 +15,7 @@
 -lang(st).
 -module(e105).
 
--struct foo :: {id :: integer()}.
+-struct foo() :: {id :: integer()}.
 
 test(Foo) ->
     Foo#foo.unknown_field.

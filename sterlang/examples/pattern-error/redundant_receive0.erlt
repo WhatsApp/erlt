@@ -16,7 +16,7 @@
 -module(redundant_receive0).
 -export([test/0]).
 
--message m0 :: {}.
+-message m0() :: {}.
 
 -spec test() -> {}.
 test() ->

@@ -15,7 +15,7 @@
 -lang(st).
 -module(e109).
 
--struct foo :: {id :: integer()}.
+-struct foo() :: {id :: integer()}.
 
 test(#foo{id = Id, id = Id}) ->
     Id.
