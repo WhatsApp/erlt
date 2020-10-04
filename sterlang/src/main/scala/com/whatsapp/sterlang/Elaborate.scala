@@ -165,7 +165,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         TU.generalize(d)(t)
       else
         // dummy type scheme
-        ST.TypeSchema(0, List(), ST.PlainType(t))
+        ST.TypeSchema(List.empty, List.empty, ST.PlainType(t))
     val (prePat, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
     (prePat(t), env1, penv1)
   }
@@ -837,7 +837,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         val arity = fun.clauses.head.pats.size
         ST.SFunType((1 to arity).map(_ => freshSType()).toList, freshSType())
     }
-    ST.TypeSchema(0, Nil, sFunType)
+    ST.TypeSchema(List.empty, List.empty, sFunType)
   }
 
   private def elabFuns(funs: List[Function], d: T.Depth, env: Env): (List[AnnAst.Fun], Env) = {

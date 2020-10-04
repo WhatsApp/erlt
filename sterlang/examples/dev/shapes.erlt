@@ -24,3 +24,6 @@ test() ->
     Shape2 = #(id = 2, bar = 3),
     Shape3 = #(id = 3, foo = 5),
     [get_id(Shape1), get_id(Shape2), get_id(Shape3)].
+
+test2(S1, S2) ->
+    {S1#(id), S2#(id)}.

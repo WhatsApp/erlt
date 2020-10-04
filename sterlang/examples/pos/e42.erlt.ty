@@ -1,1 +1,1 @@
--spec foo(#( x :: boolean(), y :: boolean(), 'A )) -> integer().
+-spec foo(#( x :: boolean(), y :: boolean(), A )) -> integer().

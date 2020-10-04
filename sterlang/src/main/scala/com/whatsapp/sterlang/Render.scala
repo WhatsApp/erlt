@@ -29,39 +29,16 @@ object Render {
 
   private class RenderUtil {
 
-    private var ftcounter = 0
-    private var frcounter = 0
-    private var btCounter = 0
-    private var brCounter = 0
+    private var counter = 0
 
-    def nextSchematicTypeName(): String = {
-      val n = btCounter
-      btCounter = btCounter + 1
-      str("", n)
+    def genTypeName(): String = {
+      val n = counter
+      counter = counter + 1
+      str(n)
     }
 
-    def nextSchematicRowTypeName(): String = {
-      val n = brCounter
-      brCounter = brCounter + 1
-      str("'", n)
-    }
-
-    // free type
-    def nextftname(): String = {
-      val n = ftcounter
-      ftcounter = ftcounter + 1
-      str("", n)
-    }
-
-    // row type
-    def nextfrname(): String = {
-      val n = frcounter
-      frcounter = frcounter + 1
-      str("", n)
-    }
-
-    private def str(prefix: String, n: Int): String =
-      prefix + (if (n < 26) ('A' + n).toChar.toString else "T_" + n)
+    private def str(n: Int): String =
+      if (n < 26) ('A' + n).toChar.toString else "T_" + n
   }
 }
 
@@ -85,7 +62,7 @@ case class Render(vars: Vars) {
 
   def typ(tp: Types.Type): String = {
     resetContext()
-    val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(tp))
+    val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(tp))
     typeSchema(fakeTypeScheme, TypesMode)
   }
 
@@ -100,7 +77,7 @@ case class Render(vars: Vars) {
     funs.foreach { fun =>
       resetContext()
       val AnnAst.Fun(name, clauses, fType) = fun
-      val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(fType))
+      val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(fType))
       val typeSchemaString = typeSchema(fakeTypeScheme, TypesMode)
       val pp = "val " + name + ": " + typeSchemaString
 
@@ -121,7 +98,7 @@ case class Render(vars: Vars) {
       case AnnAst.WildPat() =>
       // nothing
       case AnnAst.VarPat(v) =>
-        val fakeTypeScheme = STypes.TypeSchema(0, List(), STypes.PlainType(pat.typ))
+        val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(pat.typ))
         val typeSchemaString = typeSchema(fakeTypeScheme, TypesMode)
         val pp = "val " + v + ": " + typeSchemaString
         buf.append(pp)
@@ -312,13 +289,16 @@ case class Render(vars: Vars) {
     tu.generalize(Int.MaxValue)(t).body
 
   // sTypeVars:
-  //          the set of all encountered sTypeVars
+  //          the set of all encountered schematic type vars
+  // sRowTypeVars:
+  //          the set of all encountered schematic row type vars
   // freeTypeVars:
   //          all encountered free type vars
   // freeRowTypeVars:
   //          all encountered free row type vars
   private case class Info(
       sTypeVars: Set[STypes.TypeVar] = Set.empty,
+      sRowTypeVars: Set[STypes.RowTypeVar] = Set.empty,
       freeTypeVars: TreeSet[Types.TypeVar] = tyVarSetEmpty,
       freeRowTypeVars: TreeSet[Types.RowTypeVar] = rtyVarSetEmpty,
   )
@@ -327,9 +307,10 @@ case class Render(vars: Vars) {
 
     def join(m1: Info, m2: Info): Info = {
       val sVars = m1.sTypeVars ++ m2.sTypeVars
+      val sRowVars = m1.sRowTypeVars ++ m2.sRowTypeVars
       val tVars = m1.freeTypeVars union m2.freeTypeVars
       val tRowVars = m1.freeRowTypeVars union m2.freeRowTypeVars
-      Info(sVars, tVars, tRowVars)
+      Info(sVars, sRowVars, tVars, tRowVars)
     }
 
     def typ(ts: STypes.Type): (STypes.Type, Info) =
@@ -362,8 +343,8 @@ case class Render(vars: Vars) {
           val (ts1, fm) = typ(ts)
           val (rts1, rm) = rtyp(rts)
           (STypes.RowFieldType(STypes.Field(label, ts1), rts1), join(fm, rm))
-        case rts @ STypes.RowRefType(v) =>
-          (rts, Info())
+        case rts @ STypes.RowRefType(sRowTypeVar) =>
+          (rts, Info(sRowTypeVars = Set(sRowTypeVar)))
       }
 
     typ(body)
@@ -385,23 +366,19 @@ case class Render(vars: Vars) {
     val (body, info) = collectInfo(schema.body)
 
     // schematic type vars: specs mode!
-    val sTypeVarNames: Map[STypes.TypeVar, String] =
-      info.sTypeVars.toList.sortBy(_.id).map { (_, localNames.nextSchematicTypeName()) }.toMap
-    val sRowTypeVarNames: IntMap[String] =
-      schema.rargs.indices.foldLeft(IntMap.empty[String]) {
-        case (m, i) => m + (i -> localNames.nextSchematicRowTypeName())
-      }
+    val sVarNames: Map[Int, String] =
+      (info.sTypeVars.map(_.id) ++ info.sRowTypeVars.map(_.id)).toList.sorted.map(_ -> localNames.genTypeName()).toMap
 
     // free type vars - type mode
     for (ftv <- info.freeTypeVars) {
       if (!freeTypeVarNames.contains(ftv)) {
-        freeTypeVarNames = freeTypeVarNames + (ftv -> globalNames.nextftname())
+        freeTypeVarNames = freeTypeVarNames + (ftv -> globalNames.genTypeName())
       }
     }
 
     for (frtv <- info.freeRowTypeVars) {
       if (!freeRowTypeVarNames.contains(frtv)) {
-        freeRowTypeVarNames = freeRowTypeVarNames + (frtv -> globalNames.nextfrname())
+        freeRowTypeVarNames = freeRowTypeVarNames + (frtv -> globalNames.genTypeName())
       }
     }
 
@@ -410,8 +387,7 @@ case class Render(vars: Vars) {
         assert(freeTypeVarNames.isEmpty)
         assert(freeRowTypeVarNames.isEmpty)
       case TypesMode =>
-        assert(sTypeVarNames.isEmpty)
-        assert(sRowTypeVarNames.isEmpty)
+        assert(sVarNames.isEmpty)
     }
 
     def typ(sType: STypes.Type): String =
@@ -421,7 +397,7 @@ case class Render(vars: Vars) {
         case STypes.ConType(tyCon, types, rowTypes) =>
           conType(tyCon, types, rowTypes)
         case STypes.RefType(sTypeVar) =>
-          sTypeVarNames(sTypeVar)
+          sVarNames(sTypeVar.id)
       }
 
     def conType(tyCon: TyCons.TyCon, sTypes: List[STypes.Type], sRowTypes: List[STypes.RowType]): String =
@@ -465,7 +441,7 @@ case class Render(vars: Vars) {
           case STypes.RowVarType(rowTypeVar) =>
             withBaseVar(freeRowTypeVarNames(rowTypeVar), fields)
           case STypes.RowRefType(sRowTypeVar) =>
-            withBaseVar(sRowTypeVarNames(sRowTypeVar.id), fields)
+            withBaseVar(sVarNames(sRowTypeVar.id), fields)
         }
 
       unfold(sRowType, Nil)

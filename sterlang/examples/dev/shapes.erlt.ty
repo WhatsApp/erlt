@@ -1,2 +1,3 @@
--spec get_id(#( id :: A, 'A )) -> A.
+-spec get_id(#( id :: A, B )) -> A.
 -spec test() -> list(integer()).
+-spec test2(#( id :: A, B ), #( id :: C, D )) -> {A, C}.

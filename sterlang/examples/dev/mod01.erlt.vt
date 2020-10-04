@@ -34,8 +34,8 @@ val update_map3/1: fun((#( a :: A, b :: A )) -> #( a :: A, b :: A ))
 val M: #( a :: A, b :: A )
 val A0: A
 val B0: A
-val access_map/1: fun((#( id :: A, location :: B, A )) -> {A, B})
-val M: #( id :: A, location :: B, A )
+val access_map/1: fun((#( id :: A, location :: B, C )) -> {A, B})
+val M: #( id :: A, location :: B, C )
 val access_map2/1: fun((#( inner1 :: #( inner2 :: A ) )) -> A)
 val M: #( inner1 :: #( inner2 :: A ) )
 val mk_seq/0: fun(() -> {integer(), integer()})

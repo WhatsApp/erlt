@@ -34,27 +34,28 @@ class TypesUtil(val vars: Vars) {
   private def generalizeImpl(gen: T.Depth => Boolean)(types: List[T.Type]): List[ST.TypeSchema] = {
 
     var nextVarId = 0
-    var nextRowVarId = 0
 
     var tMap: TreeMap[T.TypeVar, ST.TypeVar] =
       TreeMap.empty(vars.TVarOrdering)
     var rMap: TreeMap[T.RowTypeVar, ST.RowTypeVar] =
       TreeMap.empty(vars.RVarOrdering)
-    val rargsBuffer: ListBuffer[T.RtVarKind] =
+    val targsBuffer: ListBuffer[ST.TypeVar] =
+      ListBuffer()
+    val rargsBuffer: ListBuffer[ST.RowTypeVar] =
       ListBuffer()
 
     def mkSTypeVar(v: T.TypeVar): ST.TypeVar = {
       val sTypeVar = ST.TypeVar(nextVarId)
       nextVarId = nextVarId + 1
       tMap = tMap + (v -> sTypeVar)
+      targsBuffer.append(sTypeVar)
       sTypeVar
     }
 
-    //  TODO - should not we make kind a part of SRowTypeVar?
     def mkSRowTypeVar(rv: T.RowTypeVar, k: T.RtVarKind): ST.RowTypeVar = {
-      val sRowTypeVar = ST.RowTypeVar(nextRowVarId)
-      nextRowVarId = nextRowVarId + 1
-      rargsBuffer.append(k)
+      val sRowTypeVar = ST.RowTypeVar(nextVarId, k)
+      nextVarId = nextVarId + 1
+      rargsBuffer.append(sRowTypeVar)
       rMap = rMap + (rv -> sRowTypeVar)
       sRowTypeVar
     }
@@ -112,7 +113,7 @@ class TypesUtil(val vars: Vars) {
     val bodies: List[ST.Type] =
       types.map(typ)
 
-    val targs = nextVarId
+    val targs = targsBuffer.toList
     val rargs = rargsBuffer.toList
 
     // TODO: will it be a difference if we generalize them one-by-one?
@@ -123,13 +124,9 @@ class TypesUtil(val vars: Vars) {
   def instantiate(d: T.Depth, typSchema: ST.TypeSchema): T.Type = {
 
     val tMap: Map[ST.TypeVar, T.TypeVar] =
-      (0 until typSchema.targs).map { i =>
-        ST.TypeVar(i) -> vars.tVar(T.Open(d))
-      }.toMap
+      typSchema.targs.map(tv => tv -> vars.tVar(T.Open(d))).toMap
     val rMap: Map[ST.RowTypeVar, T.RowTypeVar] =
-      typSchema.rargs.zipWithIndex.map {
-        case (k, i) => ST.RowTypeVar(i) -> vars.rVar(T.RowOpen(d, k))
-      }.toMap
+      typSchema.rargs.map(rtv => rtv -> vars.rVar(T.RowOpen(d, rtv.kind))).toMap
 
     def tSub(tMap: Map[ST.TypeVar, T.TypeVar])(sType: ST.Type): T.Type =
       sType match {

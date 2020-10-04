@@ -1,6 +1,6 @@
 -- ERROR -------------------------------------------- examples/err/e81.erlt:18:1
 Spec mismatch for access_map/1
-Specified:  `fun((#( id :: A, location :: B, 'A )) -> #( id :: A, location :: B ))`
+Specified:  `fun((#( id :: A, location :: B, C )) -> #( id :: A, location :: B ))`
 Elaborated: `fun((#( id :: A, location :: B )) -> #( id :: A, location :: B ))`
  18| -spec access_map(#(id :: Id, location :: Location, _)) -> #(id :: Id, location :: Location).
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

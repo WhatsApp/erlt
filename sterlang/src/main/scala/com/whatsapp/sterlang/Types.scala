@@ -103,7 +103,7 @@ object STypes {
   // bound type in type schemas
   case class TypeVar(id: Int)
   // bound row type variable in type schema
-  case class RowTypeVar(id: Int)
+  case class RowTypeVar(id: Int, kind: Set[String])
 
   // Types used in type schemes
   sealed trait Type
@@ -121,9 +121,7 @@ object STypes {
 
   case class Field(label: String, value: Type)
 
-  // targs = number/size of type arguments, in this type scheme
-  //         Basically for i < targs, - all Open(i) are generalizable
-  case class TypeSchema(targs: Int, rargs: List[Types.RtVarKind], body: Type)
+  case class TypeSchema(targs: List[TypeVar], rargs: List[RowTypeVar], body: Type)
 
   def SFunType(argTypes: List[Type], resultType: Type): Type =
     ConType(TyCons.FunTyCon(argTypes.length), argTypes ++ List(resultType), List())
