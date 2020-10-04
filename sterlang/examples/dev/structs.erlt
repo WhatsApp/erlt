@@ -20,6 +20,9 @@
 -struct ok() :: {}.
 -struct boxed_int() :: {int :: integer()}.
 
+-struct box(A) :: {value :: A}.
+-struct box2(A, B) :: {value1 :: A, value2 :: B}.
+
 -spec test(user()) -> user().
 test(X) -> X.
 
@@ -52,3 +55,12 @@ foo(#manager{user = User}) ->
 
 %% For the record): This is an illegal guard expression! - updating a record is forbidden!
 %% guard1(BoxedInt) when BoxedInt == BoxedInt#boxed_int{int = 3} -> true.
+
+mk_box_int() ->
+    #box{value = 1}.
+
+mk_box(X) ->
+    #box{value = X}.
+
+mk_box2(X) ->
+    #box2{value1 = X, value2 = X}.

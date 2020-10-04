@@ -24,3 +24,8 @@ val Id: integer()
 val Id: integer()
 val foo/1: fun((manager()) -> user())
 val User: user()
+val mk_box_int/0: fun(() -> box(integer()))
+val mk_box/1: fun((A) -> box(A))
+val X: A
+val mk_box2/1: fun((A) -> box2(A, A))
+val X: A
