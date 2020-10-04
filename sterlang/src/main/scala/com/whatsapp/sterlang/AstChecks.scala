@@ -143,6 +143,14 @@ class AstChecks(val context: Context) {
   }
 
   private def checkStructDef(program: Program, structDef: StructDef): Unit = {
+    if (structDef.params.nonEmpty) {
+      if (structDef.kind == ExnStruct) {
+        throw new PolymorphicException(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+      if (structDef.kind == MsgStruct) {
+        throw new PolymorphicMessage(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+    }
     var fieldNames = Set.empty[String]
     for (f <- structDef.fields) {
       if (fieldNames(f.label)) {

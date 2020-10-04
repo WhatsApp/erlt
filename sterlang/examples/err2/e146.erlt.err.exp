@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------------- examples/err2/e146.erlt:18:26
+Message structs do not allow type parameters
+ 18| -message polymorphic_msg(A, B) :: {value_a :: A, value_b :: B}.
+...|                          ~~~~

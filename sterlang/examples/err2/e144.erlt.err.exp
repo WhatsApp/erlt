@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------------- examples/err2/e144.erlt:18:28
+Exception structs do not allow type parameters
+ 18| -exception polymorphic_exn(A, B) :: {value_a :: A, value_b :: B}.
+...|                            ~~~~
