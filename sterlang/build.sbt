@@ -36,6 +36,9 @@ lazy val sterlang = (project in file("."))
 val parser = taskKey[Seq[File]]("Generate parser command line utility")
 parser / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
 
+coverageMinimum := 100
+coverageFailOnMinimum := true
+
 parser := {
   val log = streams.value.log
   val erlangSrcDir = (Compile / sourceDirectory).value / "erlang"
