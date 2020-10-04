@@ -15,7 +15,7 @@
 -lang(st).
 -module(e96).
 
--struct my_record :: {id :: integer(), hash :: integer()}.
+-struct my_record() :: {id :: integer(), hash :: integer()}.
 
 uninitialized2() ->
     #my_record{hash = 1}.

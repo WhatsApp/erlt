@@ -15,7 +15,7 @@
 -lang(st).
 -module(e93).
 
--struct my_struct :: {}.
+-struct my_struct() :: {}.
 
 foo() ->
     #my_struct{unknown_field = 1}.

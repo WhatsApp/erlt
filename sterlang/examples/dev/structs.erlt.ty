@@ -8,3 +8,12 @@
 -spec is_user(user()) -> boolean().
 -spec match_users(user(), user()) -> boolean().
 -spec foo(manager()) -> user().
+-spec mk_box_int() -> box(integer()).
+-spec mk_box(A) -> box(A).
+-spec mk_box2(A) -> box2(A, A).
+-spec update_box(box(A), A) -> box(A).
+-spec update_box2(box2(A, A), A) -> box2(A, A).
+-spec update_box2(box2(A, B), B, A) -> box2(A, B).
+-spec select_box2(box2(integer(), integer())) -> integer().
+-spec test_box2(box2(A, A)) -> boolean().
+-spec pat_box2(box2(A, A)) -> A.

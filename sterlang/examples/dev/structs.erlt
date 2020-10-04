@@ -15,10 +15,13 @@
 -lang(st).
 -module(structs).
 
--struct user :: {name :: string(), id :: integer()}.
--struct manager :: {user :: user()}.
--struct ok :: {}.
--struct boxed_int :: {int :: integer()}.
+-struct user() :: {name :: string(), id :: integer()}.
+-struct manager() :: {user :: user()}.
+-struct ok() :: {}.
+-struct boxed_int() :: {int :: integer()}.
+
+-struct box(A) :: {value :: A}.
+-struct box2(A, B) :: {value1 :: A, value2 :: B}.
 
 -spec test(user()) -> user().
 test(X) -> X.
@@ -53,3 +56,29 @@ foo(#manager{user = User}) ->
 %% For the record): This is an illegal guard expression! - updating a record is forbidden!
 %% guard1(BoxedInt) when BoxedInt == BoxedInt#boxed_int{int = 3} -> true.
 
+mk_box_int() ->
+    #box{value = 1}.
+
+mk_box(X) ->
+    #box{value = X}.
+
+mk_box2(X) ->
+    #box2{value1 = X, value2 = X}.
+
+update_box(B, X) ->
+    B#box{value = X}.
+
+update_box2(B, X) ->
+    B#box2{value1 = X, value2 = X}.
+
+update_box2(B, Y, X) ->
+    B#box2{value1 = X, value2 = Y}.
+
+select_box2(B) ->
+    B#box2.value1 + B#box2.value2.
+
+test_box2(B) ->
+    B#box2.value1 == B#box2.value2.
+
+pat_box2(#box2{value1 = X, value2 = X}) -> X;
+pat_box2(#box2{value1 = X, value2 = Y}) -> Y.

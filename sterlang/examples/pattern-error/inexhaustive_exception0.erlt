@@ -16,8 +16,8 @@
 -module(inexhaustive_exception0).
 -export([test/1]).
 
--exception e0 :: {}.
--exception e1 :: {a :: boolean()}.
+-exception e0() :: {}.
+-exception e1() :: {a :: boolean()}.
 
 %% We require a catch all case when matching on exceptions as data
 -spec test(exception()) -> {}.

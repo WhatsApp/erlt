@@ -15,7 +15,7 @@
 -lang(st).
 -module(e111).
 
--exception foo :: {id :: integer()}.
+-exception foo() :: {id :: integer()}.
 
 -spec test() -> foo().
 test() ->

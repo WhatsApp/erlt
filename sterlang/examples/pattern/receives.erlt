@@ -16,8 +16,8 @@
 -module(receives).
 -export([test1/0, test2/0, test3/0, test4/0, test5/0, test6/0, test7/1]).
 
--message m0 :: {}.
--message m1 :: {a :: boolean()}.
+-message m0() :: {}.
+-message m1() :: {a :: boolean()}.
 
 % We don't check for exhaustiveness in receive clauses.
 -spec test1() -> {}.

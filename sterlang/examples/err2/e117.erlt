@@ -15,7 +15,7 @@
 -lang(st).
 -module(e117).
 
--exception my_exn :: {message :: string()}.
+-exception my_exn() :: {message :: string()}.
 
 exn_update(E) ->
     E#my_exn{message = "new message"}.

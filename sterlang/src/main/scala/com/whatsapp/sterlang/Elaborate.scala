@@ -480,15 +480,20 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     checkStructFields(fields, structDef)
     checkStructInit(exp.r, fields, structDef)
 
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
-      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
       AnnAst.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
     val expType = structDef.kind match {
-      case Ast.StrStruct => MT.NamedType(name, List.empty)
+      case Ast.StrStruct => MT.NamedType(name, typeConParams)
       case Ast.ExnStruct => MT.ExceptionType
       case Ast.MsgStruct => MT.MessageType
     }
@@ -516,14 +521,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
 
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
-      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
       AnnAst.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val structType = MT.NamedType(name, List.empty)
+    val structType = MT.NamedType(name, typeConParams)
     val struct1 = elab(struct, structType, d, env)
     unify(exp.r, ty, structType)
 
@@ -544,16 +554,21 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val expander = dExpander(d)
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val fieldDef =
       structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
         case None    => throw new UnknownStructField(exp.r, name, fieldName)
       }
 
-    val structType = MT.NamedType(name, List.empty)
+    val structType = MT.NamedType(name, typeConParams)
     val struct1 = elab(struct, structType, d, env)
 
-    val fieldType = expander.mkType(fieldDef.value, Map.empty)
+    val fieldType = expander.mkType(fieldDef.value, eSub)
     val eFieldType = expander.expandType(fieldType)
 
     unify(exp.r, ty, eFieldType)
@@ -1172,9 +1187,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val t = TU.instantiate(d, ts)
 
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val expType = structDef.kind match {
       case Ast.StrStruct =>
-        MT.NamedType(name, List.empty)
+        MT.NamedType(name, typeConParams)
       case Ast.ExnStruct =>
         MT.ExceptionType
       case Ast.MsgStruct =>
@@ -1187,7 +1207,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     var envAcc = env
     var penvAcc = penv
     val fields1 = for (field <- fields) yield {
-      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
       val (pat1, env1, penv1) = elpat(field.value, eFieldType, d, envAcc, penvAcc, gen)
       envAcc = env1

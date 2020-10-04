@@ -15,8 +15,8 @@
 -lang(st).
 -module(e102).
 
--struct foo :: {id :: integer()}.
--struct bar :: {id :: integer()}.
+-struct foo() :: {id :: integer()}.
+-struct bar() :: {id :: integer()}.
 
 test(Foo, Bar) ->
     Foo#foo{id = 1} == Bar#bar{id = 2}.

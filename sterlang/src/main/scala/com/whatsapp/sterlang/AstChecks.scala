@@ -143,6 +143,14 @@ class AstChecks(val context: Context) {
   }
 
   private def checkStructDef(program: Program, structDef: StructDef): Unit = {
+    if (structDef.params.nonEmpty) {
+      if (structDef.kind == ExnStruct) {
+        throw new PolymorphicException(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+      if (structDef.kind == MsgStruct) {
+        throw new PolymorphicMessage(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+    }
     var fieldNames = Set.empty[String]
     for (f <- structDef.fields) {
       if (fieldNames(f.label)) {
@@ -150,10 +158,12 @@ class AstChecks(val context: Context) {
       }
       fieldNames = fieldNames + f.label
     }
+    val bound = collectParams(structDef.params)
     structDef.fields.foreach { f =>
       expandType(program, Set.empty)(f.value)
-      collectRHSTypeVars(Set.empty)(f.value)
     }
+    val used = structDef.fields.map { f => collectRHSTypeVars(bound)(f.value) }.foldLeft(Set.empty[TypeVar])(_ ++ _)
+    checkUsage(structDef.params, used)
   }
 
   private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
@@ -179,9 +189,9 @@ class AstChecks(val context: Context) {
                     params.foreach(expandType(program, visited))
                   case None =>
                     val strName = name.stringId
-                    // TODO - params
-                    program.structDefs.find(_.name == strName) match {
+                    program.structDefs.find(s => s.name == strName && s.params.size == params.size) match {
                       case Some(eRec) =>
+                        params.foreach(expandType(program, visited))
                         eRec.kind match {
                           case ExnStruct =>
                             throw new ExceptionType(tp.r, strName)
