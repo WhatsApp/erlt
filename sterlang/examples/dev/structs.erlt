@@ -73,3 +73,9 @@ update_box2(B, X) ->
 
 update_box2(B, Y, X) ->
     B#box2{value1 = X, value2 = Y}.
+
+select_box2(B) ->
+    B#box2.value1 + B#box2.value2.
+
+test_box2(B) ->
+    B#box2.value1 == B#box2.value2.

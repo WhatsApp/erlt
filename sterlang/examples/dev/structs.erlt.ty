@@ -14,3 +14,5 @@
 -spec update_box(box(A), A) -> box(A).
 -spec update_box2(box2(A, A), A) -> box2(A, A).
 -spec update_box2(box2(A, B), B, A) -> box2(A, B).
+-spec select_box2(box2(integer(), integer())) -> integer().
+-spec test_box2(box2(A, A)) -> boolean().

@@ -554,16 +554,21 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val expander = dExpander(d)
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val fieldDef =
       structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
         case None    => throw new UnknownStructField(exp.r, name, fieldName)
       }
 
-    val structType = MT.NamedType(name, List.empty)
+    val structType = MT.NamedType(name, typeConParams)
     val struct1 = elab(struct, structType, d, env)
 
-    val fieldType = expander.mkType(fieldDef.value, Map.empty)
+    val fieldType = expander.mkType(fieldDef.value, eSub)
     val eFieldType = expander.expandType(fieldType)
 
     unify(exp.r, ty, eFieldType)

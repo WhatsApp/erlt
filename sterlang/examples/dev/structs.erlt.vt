@@ -39,3 +39,7 @@ val update_box2/3: fun((box2(B, A), A, B) -> box2(B, A))
 val B: box2(B, A)
 val Y: A
 val X: B
+val select_box2/1: fun((box2(integer(), integer())) -> integer())
+val B: box2(integer(), integer())
+val test_box2/1: fun((box2(A, A)) -> boolean())
+val B: box2(A, A)
