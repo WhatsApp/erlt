@@ -11,3 +11,6 @@
 -spec mk_box_int() -> box(integer()).
 -spec mk_box(A) -> box(A).
 -spec mk_box2(A) -> box2(A, A).
+-spec update_box(box(A), A) -> box(A).
+-spec update_box2(box2(A, A), A) -> box2(A, A).
+-spec update_box2(box2(A, B), B, A) -> box2(A, B).

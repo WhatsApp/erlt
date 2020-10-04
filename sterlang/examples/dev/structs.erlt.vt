@@ -29,3 +29,13 @@ val mk_box/1: fun((A) -> box(A))
 val X: A
 val mk_box2/1: fun((A) -> box2(A, A))
 val X: A
+val update_box/2: fun((box(A), A) -> box(A))
+val B: box(A)
+val X: A
+val update_box2/2: fun((box2(A, A), A) -> box2(A, A))
+val B: box2(A, A)
+val X: A
+val update_box2/3: fun((box2(B, A), A, B) -> box2(B, A))
+val B: box2(B, A)
+val Y: A
+val X: B

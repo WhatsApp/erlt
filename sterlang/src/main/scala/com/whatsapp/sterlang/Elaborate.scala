@@ -521,14 +521,19 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
 
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
     val fields1 = for (field <- fields) yield {
-      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
       AnnAst.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val structType = MT.NamedType(name, List.empty)
+    val structType = MT.NamedType(name, typeConParams)
     val struct1 = elab(struct, structType, d, env)
     unify(exp.r, ty, structType)
 

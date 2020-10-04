@@ -64,3 +64,12 @@ mk_box(X) ->
 
 mk_box2(X) ->
     #box2{value1 = X, value2 = X}.
+
+update_box(B, X) ->
+    B#box{value = X}.
+
+update_box2(B, X) ->
+    B#box2{value1 = X, value2 = X}.
+
+update_box2(B, Y, X) ->
+    B#box2{value1 = X, value2 = Y}.
