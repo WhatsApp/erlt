@@ -16,3 +16,4 @@
 -spec update_box2(box2(A, B), B, A) -> box2(A, B).
 -spec select_box2(box2(integer(), integer())) -> integer().
 -spec test_box2(box2(A, A)) -> boolean().
+-spec pat_box2(box2(A, A)) -> A.

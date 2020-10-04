@@ -79,3 +79,6 @@ select_box2(B) ->
 
 test_box2(B) ->
     B#box2.value1 == B#box2.value2.
+
+pat_box2(#box2{value1 = X, value2 = X}) -> X;
+pat_box2(#box2{value1 = X, value2 = Y}) -> Y.

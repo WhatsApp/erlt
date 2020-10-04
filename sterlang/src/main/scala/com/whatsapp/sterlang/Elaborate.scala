@@ -1187,9 +1187,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val t = TU.instantiate(d, ts)
 
+    val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val eSub: Expander.Sub =
+      sub.view.mapValues(Left(_)).toMap
+    val typeConParams = structDef.params.map(p => sub(p.name))
+
     val expType = structDef.kind match {
       case Ast.StrStruct =>
-        MT.NamedType(name, List.empty)
+        MT.NamedType(name, typeConParams)
       case Ast.ExnStruct =>
         MT.ExceptionType
       case Ast.MsgStruct =>
@@ -1202,7 +1207,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     var envAcc = env
     var penvAcc = penv
     val fields1 = for (field <- fields) yield {
-      val fieldType = expander.mkType(fieldTypes(field.label), Map.empty)
+      val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
       val (pat1, env1, penv1) = elpat(field.value, eFieldType, d, envAcc, penvAcc, gen)
       envAcc = env1
