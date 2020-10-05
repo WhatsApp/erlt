@@ -1,4 +1,4 @@
-DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core
+DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core erltodo
 
 build:
 	rebar3 erlt compile
