@@ -1,0 +1,23 @@
+val test_vars/0: fun(() -> {fun(({A, B, C, D, E, F, G, H, I, J}) -> {J, I, H, G, F, E, D, C, B, A}), fun((#( x0 :: K, x1 :: L, x2 :: M, x3 :: N, x4 :: O, x5 :: P, x6 :: Q, x7 :: R, x8 :: S, x9 :: T, T_28 )) -> {K, L, M, N, O, P, Q, R, S, T}), fun(({U, V, W, X, Y, Z, T_26, T_27}) -> #( x0 :: U, x1 :: V, x2 :: W, x3 :: X, x4 :: Y, x5 :: Z, x6 :: T_26, x7 :: T_27 ))})
+val ReverseTuple: fun(({T_29, T_30, T_31, T_32, T_33, T_34, T_35, T_36, T_37, T_38}) -> {T_38, T_37, T_36, T_35, T_34, T_33, T_32, T_31, T_30, T_29})
+val X0: T_29
+val X1: T_30
+val X2: T_31
+val X3: T_32
+val X4: T_33
+val X5: T_34
+val X6: T_35
+val X7: T_36
+val X8: T_37
+val X9: T_38
+val ShapeToTuple: fun((#( x0 :: T_39, x1 :: T_40, x2 :: T_41, x3 :: T_42, x4 :: T_43, x5 :: T_44, x6 :: T_45, x7 :: T_46, x8 :: T_47, x9 :: T_48, T_49 )) -> {T_39, T_40, T_41, T_42, T_43, T_44, T_45, T_46, T_47, T_48})
+val Shape: #( x0 :: T_39, x1 :: T_40, x2 :: T_41, x3 :: T_42, x4 :: T_43, x5 :: T_44, x6 :: T_45, x7 :: T_46, x8 :: T_47, x9 :: T_48, T_49 )
+val TupleToShape: fun(({T_50, T_51, T_52, T_53, T_54, T_55, T_56, T_57}) -> #( x0 :: T_50, x1 :: T_51, x2 :: T_52, x3 :: T_53, x4 :: T_54, x5 :: T_55, x6 :: T_56, x7 :: T_57 ))
+val X0: T_50
+val X1: T_51
+val X2: T_52
+val X3: T_53
+val X4: T_54
+val X5: T_55
+val X6: T_56
+val X7: T_57

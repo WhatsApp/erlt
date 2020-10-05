@@ -1,0 +1,50 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-lang(st).
+-module(vars).
+
+% very artificial test - to check printing of type vars after Z
+test_vars() ->
+    ReverseTuple = fun ({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9}) -> {
+        X9, X8, X7, X6, X5, X4, X3, X2, X1, X0
+    } end,
+
+    ShapeToTuple = fun (Shape) -> {
+        Shape#(x0),
+        Shape#(x1),
+        Shape#(x2),
+        Shape#(x3),
+        Shape#(x4),
+        Shape#(x5),
+        Shape#(x6),
+        Shape#(x7),
+        Shape#(x8),
+        Shape#(x9)
+    } end,
+
+    TupleToShape = fun ({X0, X1, X2, X3, X4, X5, X6, X7}) -> #(
+        x0 = X0,
+        x1 = X1,
+        x2 = X2,
+        x3 = X3,
+        x4 = X4,
+        x5 = X5,
+        x6 = X6,
+        x7 = X7
+    ) end,
+
+    {ReverseTuple, ShapeToTuple, TupleToShape}.
+
+

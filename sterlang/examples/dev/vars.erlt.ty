@@ -1,0 +1,1 @@
+-spec test_vars() -> {fun(({A, B, C, D, E, F, G, H, I, J}) -> {J, I, H, G, F, E, D, C, B, A}), fun((#( x0 :: K, x1 :: L, x2 :: M, x3 :: N, x4 :: O, x5 :: P, x6 :: Q, x7 :: R, x8 :: S, x9 :: T, U )) -> {K, L, M, N, O, P, Q, R, S, T}), fun(({V, W, X, Y, Z, T_26, T_27, T_28}) -> #( x0 :: V, x1 :: W, x2 :: X, x3 :: Y, x4 :: Z, x5 :: T_26, x6 :: T_27, x7 :: T_28 ))}.
