@@ -23,17 +23,12 @@
 
 -export([main/1]).
 
-% These were used when we had a programmatic public API
-% specific to builds.
--compile([{nowarn_unused_function, [
-    compile/1,
-    clean/1,
-    run_command_as_api_function/3,
-    get_letter_option/1,
-    read_file/1,
-    print_warning/1,
-    print_warning/2
-]}]).
+-compile([
+    {nowarn_unused_function, [
+        print_warning/1,
+        print_warning/2
+    ]}
+]).
 
 -include("erlt_build_types.hrl").
 
@@ -90,18 +85,6 @@ print_usage() ->
         ]
     ]).
 
-% API entry point
-%
-% returns ok | {error, string()}
-compile(Argv) ->
-    run_command_as_api_function(compile, fun run_compile_command/1, Argv).
-
-% API entry point
-%
-% returns ok | {error, string()}
-clean(Argv) ->
-    run_command_as_api_function(clean, fun run_clean_command/1, Argv).
-
 % entry point when called from erlt
 main(Argv) ->
     case run_command(Argv) of
@@ -110,26 +93,6 @@ main(Argv) ->
         {error, ErrorStr} ->
             print_error(ErrorStr),
             erlang:halt(1)
-    end.
-
-run_command_as_api_function(Name, Fun, Argv) ->
-    try
-        Fun(Argv)
-    catch
-        {error, Reason} when is_list(Reason) ->
-            {error, Reason};
-        Class:Error:Stacktrace ->
-            ErrorStr =
-                erlt_build_util:format(
-                    "internal error while running erlt_build:~s(~p):~n~p~nStacktrace:~n~p~n",
-                    [
-                        Name,
-                        Argv,
-                        {Class, Error},
-                        Stacktrace
-                    ]
-                ),
-            {error, ErrorStr}
     end.
 
 run_command(Argv) ->
@@ -141,11 +104,14 @@ run_command(Argv) ->
             {error, Reason};
         Class:Error:Stacktrace ->
             ErrorStr =
-                erlt_build_util:format("internal error while running ~s:~n\t~p~nStacktrace:~n~p~n", [
-                    command_name(),
-                    {Class, Error},
-                    Stacktrace
-                ]),
+                erlt_build_util:format(
+                    "internal error while running ~s:~n\t~p~nStacktrace:~n~p~n",
+                    [
+                        command_name(),
+                        {Class, Error},
+                        Stacktrace
+                    ]
+                ),
             {error, ErrorStr}
     end.
 
@@ -417,9 +383,12 @@ check_file_arg(Filename) ->
     end,
     case Filename of
         "-" ++ _ ->
-            erlt_build_util:throw_error("invalid input file name '~s'. Name can't start with '-'", [
-                Filename
-            ]);
+            erlt_build_util:throw_error(
+                "invalid input file name '~s'. Name can't start with '-'",
+                [
+                    Filename
+                ]
+            );
         _ ->
             ok
     end,
@@ -432,10 +401,6 @@ check_file_arg(Filename) ->
                 [Filename]
             )
     end.
-
-get_letter_option(Argv) ->
-    {Value, _Copy, T} = get_letter_option_value(Argv),
-    {Value, T}.
 
 get_letter_option_and_copy(Argv, OutputArgv) ->
     {Value, Copy, T} = get_letter_option_value(Argv),
@@ -688,11 +653,6 @@ write_file(File, Body) when File =:= standard_io; File =:= standard_error ->
 write_file(Filename, Body) ->
     % TODO: error message
     ok = file:write_file(Filename, iolist_to_binary(Body)).
-
-read_file(Filename) ->
-    % TODO: error message
-    {ok, FileContents} = file:read_file(Filename),
-    FileContents.
 
 check_and_unset_environment_variable(Name) ->
     case os:getenv(Name) of
