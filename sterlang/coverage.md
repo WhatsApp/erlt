@@ -15,20 +15,6 @@ are also excluded from code coverage reports.
 The mechanism for excluding code from coverage is 
 `$COVERAGE-OFF$`/`$COVERAGE-ON$` comments.
 
-## Extensible shapes
-
-[comment]: <> (extensible-shapes)
-
-There are 2 places which can be covered only with extensible shapes
-(supporting adding and deleting fields) in the first place with integration 
-tests. Those places are commented with `$COVERAGE-OFF$ extensible-shapes`.
-
-Options to fill the gap:
-
-- We may consider to actually support adding and deleting fields in stErlang
-internal language in the future (but not in the erlT surface language).
-- Just to write simpler unit tests checking `Unify` directly.
-
 ## Interactive IO
 
 [comment]: <> (interactivity)
