@@ -188,7 +188,7 @@ compiler_runner(List) ->
 
 compile1(Args0) ->
     {ok, Cwd} = file:get_cwd(),
-    {BuildArgs, Args} = lists:partition(fun (Arg) -> Arg =:= "--build" end, Args0),
+    {BuildArgs, Args} = lists:partition(fun(Arg) -> Arg =:= "--build" end, Args0),
     ShouldBuildMultipleFiles = BuildArgs =/= [],
     case ShouldBuildMultipleFiles of
         true -> erlt_build:main(Args);
