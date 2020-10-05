@@ -45,14 +45,10 @@ get_app_infos(Args, _ProjectApps) ->
 
 compile_app(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
-    ErlOpts = rebar_opts:erl_opts(RebarOpts),
     EbinDir = rebar_app_info:ebin_dir(AppInfo),
     OutDir = rebar_app_info:out_dir(AppInfo),
 
-    ErltCompileFlags = [],
-    % TODO: read erlt_opts from config. Use these instead of erl_opts.
-    % See how erl_opts is implemented and mirror it.
-    % ErlbuildCompileFlags = rebar_opts:get(RebarOpts, erlt_opts, ""),
+    ErltOpts = get_erlt_opts(RebarOpts),
     CommonOptions = [
         "-I",
         filename:join(OutDir, "include"),
@@ -62,11 +58,10 @@ compile_app(AppInfo) ->
     handle_dir(
         "compile",
         AppInfo,
-        ErltCompileFlags,
         ?SRC_DIR,
         EbinDir,
         CommonOptions,
-        ErlOpts
+        ErltOpts
     ),
     ok.
 
@@ -77,7 +72,7 @@ clean_app(AppInfo) ->
     Argv = ["clean" | Options],
     call_erlt_build(Argv).
 
-handle_dir(Task, AppInfo, ErltCompileFlags, SrcDir, OutputDir, CommonOptions, ErlOpts) ->
+handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
     BaseDir = rebar_app_info:dir(AppInfo),
     FullSrcDir = filename:join(BaseDir, SrcDir),
 
@@ -101,15 +96,13 @@ handle_dir(Task, AppInfo, ErltCompileFlags, SrcDir, OutputDir, CommonOptions, Er
                 make_erlt_dir_options(AppInfo, SrcDir) ++
                     CommonOptions ++
                     % options defined in rebar.config, or injected by rebar -- keeping them as-is, i.e. represented as Erlang terms
-                    ["+" ++ to_string(Term) || Term <- ErlOpts],
+                    ["+" ++ to_string(Term) || Term <- ErltOpts],
 
             Argv = lists:append([
                 [Task],
-                [ErltCompileFlags || ErltCompileFlags =/= ""],
                 Options,
                 Sources
             ]),
-
             call_erlt_build(Argv),
 
             % We run this *after* call_erlt_build(), because
@@ -171,6 +164,12 @@ validate_app_info(AppInfo) ->
         SrcDirs ->
             rebar_utils:abort("erlt: invalid src_dirs (only [\"src\"] is supported): ~p", [SrcDirs])
     end.
+
+get_erlt_opts(RebarOpts) ->
+    % we can copy the following features from rebar_opts:erl_opts if we want them:
+    % - platform defines
+    % - forcing debug_info to always be on
+    rebar_opts:get(RebarOpts, erlt_opts, []).
 
 verbose_level() ->
     case os:getenv("VERBOSE") of
