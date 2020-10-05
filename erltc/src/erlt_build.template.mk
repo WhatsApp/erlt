@@ -13,11 +13,11 @@
 ## limitations under the License.
 
 
-# erlbuild.template.mk -- template for 'erlbuild', a correct and simple
+# erlbuild.template.mk -- template for incremental builds of ErlT
 # low-level build system for Erlang
 #
-# It is meant to be called only by 'erlbuild' command. See erlbuild.erl for
-# details.
+# This file should not be used directly, but instead
+# is an implementation detail of erltc. See ./erlt_build.erl for details.
 #
 # Input parameters. MUST be defined above upon applyng this template.
 #

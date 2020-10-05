@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 % some useful utility functions
--module(erlbuild_util).
+-module(erlt_build_util).
 
 -compile(export_all).
 -compile(nowarn_export_all).

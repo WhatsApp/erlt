@@ -1,6 +1,6 @@
--module(erlbuild_basic_mode).
+-module(erlt_build_basic_mode).
 
--include("erlbuild_types.hrl").
+-include("erlt_build_types.hrl").
 
 % timeout for scanning or building a file
 -define(TIMEOUT_FOR_FILE, 3000).
@@ -19,9 +19,9 @@ invoke(#args{command = compile} = Args) ->
     end,
     ok;
 invoke(#args{command = clean, build_dir = undefined}) ->
-    erlbuild_util:throw_error("internal error: I don't know which build directory to clean");
+    erlt_build_util:throw_error("internal error: I don't know which build directory to clean");
 invoke(#args{command = clean, output_dir = undefined}) ->
-    erlbuild_util:throw_error("internal error: I don't know which output directory to clean");
+    erlt_build_util:throw_error("internal error: I don't know which output directory to clean");
 invoke(#args{command = clean} = Args) ->
     clean(Args).
 

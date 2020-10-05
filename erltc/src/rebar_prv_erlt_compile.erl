@@ -2,7 +2,7 @@
 
 -export([init/1, do/1, format_error/1]).
 
--include("erlbuild_types.hrl").
+-include("erlt_build_types.hrl").
 
 % rebar3 plugin docs: https://www.rebar3.org/docs/tutorials/building_plugins/
 -behaviour(provider).
