@@ -1,4 +1,4 @@
--- ERROR ------------------------------------------- examples/err/e79.erlt:18:21
+-- ERROR ------------------------------------------- examples/err/e79.erlt:17:21
 Unknown type: test/1
- 18| -opaque elem(A) :: {test(A)}.
+ 17| -opaque elem(A) :: {test(A)}.
 ...|                     ~~~~~~~

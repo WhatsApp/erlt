@@ -1,4 +1,4 @@
--- ERROR -------------------------------------------- examples/err/e91.erlt:19:1
+-- ERROR -------------------------------------------- examples/err/e91.erlt:18:1
 Duplicate struct: #duplicate_struct{}
- 19| -struct duplicate_struct() :: {id :: integer()}.
+ 18| -struct duplicate_struct() :: {id :: integer()}.
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

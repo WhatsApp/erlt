@@ -55,7 +55,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("box()") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-enum box() :: box{}.
           |b() -> box.box{}.
@@ -69,7 +68,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("box(A)") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-enum box(A) :: box{A}.
           |box1(X) -> box.box{X}.
@@ -85,7 +83,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Option(A)") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-enum option(A) :: none{} | some{A}.
           |mkNone(A) -> option.none{}.
@@ -111,7 +108,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Catching error") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-enum option(A) :: none{} | some{A}.
           |mkSome(A) -> option.some{A}.
@@ -127,7 +123,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("some case expressions") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-enum option(A) :: none{} | some{A}.
           |-enum num() :: z{} | s{num()}.

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e03).
--lang(st).
 
 -spec test(map()) -> integer().
 test(X) ->

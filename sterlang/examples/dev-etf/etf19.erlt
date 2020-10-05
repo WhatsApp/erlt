@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf19).
 
 open_rec(##{}) -> 1.

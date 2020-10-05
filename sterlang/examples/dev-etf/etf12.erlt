@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf12).
 
 -export([loop1/1, loop2/1, apply_f/2]).

@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e17.erlt:20:18
+-- ERROR ------------------------------------ examples/err-syntax/e17.erlt:19:18
 Parse Error
- 20| -spec range() -> 1..2.
+ 19| -spec range() -> 1..2.
 ...|                  ^

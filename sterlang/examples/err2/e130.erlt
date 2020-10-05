@@ -13,6 +13,5 @@
 %% limitations under the License.
 
 -module(e130).
--lang(st).
 
 -enum my_enum(Ext) :: ctr{#(id :: integer(), Ext)}.

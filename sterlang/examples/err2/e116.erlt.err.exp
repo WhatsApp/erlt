@@ -1,4 +1,4 @@
--- ERROR ------------------------------------------ examples/err2/e116.erlt:21:9
+-- ERROR ------------------------------------------ examples/err2/e116.erlt:20:9
 Illegal receive pattern
- 21|         {IllegalPattern} -> IllegalPattern
+ 20|         {IllegalPattern} -> IllegalPattern
 ...|         ~~~~~~~~~~~~~~~~

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(literals).
--lang(st).
 
 -export([
     my_binary/1,

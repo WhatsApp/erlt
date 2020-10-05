@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e11).
--lang(st).
 
 %% constrained function type aka bounded_fun
 -spec foo({X}) -> X when X :: integer().

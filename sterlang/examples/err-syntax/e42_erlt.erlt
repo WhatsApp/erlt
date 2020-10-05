@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e42_erlt).
--lang(st).
 
 %% the shape extension should be a type variable, not a concrete type
 -spec id_shape1(#(id :: integer(), integer())) -> #(id :: integer(), integer()).

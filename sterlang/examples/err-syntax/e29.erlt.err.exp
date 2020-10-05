@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e29.erlt:20:38
+-- ERROR ------------------------------------ examples/err-syntax/e29.erlt:19:38
 Parse Error
- 20| remote_dynamic_call2(Mod, Fun) -> Mod:Fun().
+ 19| remote_dynamic_call2(Mod, Fun) -> Mod:Fun().
 ...|                                      ^

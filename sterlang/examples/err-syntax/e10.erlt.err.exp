@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e10.erlt:22:14
+-- ERROR ------------------------------------ examples/err-syntax/e10.erlt:21:14
 Parse Error
- 22|         Class:Err:Trace ->
+ 21|         Class:Err:Trace ->
 ...|              ^

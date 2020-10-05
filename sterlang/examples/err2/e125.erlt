@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e125).
--lang(st).
 
 %% API
 test(X, Y) -> X == Y.

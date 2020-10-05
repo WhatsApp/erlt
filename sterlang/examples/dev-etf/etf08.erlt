@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf08).
 
 -export([get_id/1, get_id_id/1]).

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e07).
--lang(st).
 
 test(40 / 2) ->
     1.

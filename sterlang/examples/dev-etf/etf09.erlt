@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf09).
 
 -export([mk_record/2, update_record/2, update_record/3]).

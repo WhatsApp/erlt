@@ -1,11 +1,11 @@
--- WARNING --------------------------- examples/pattern-error/abstract.erlt:24:1
+-- WARNING --------------------------- examples/pattern-error/abstract.erlt:23:1
 Missing Patterns
 missing: _, false
- 24| test1(<<>>, true) -> {}.
+ 23| test1(<<>>, true) -> {}.
 ...| ~~~~~~~~~~~~~~~~~~~~~~~
 
--- WARNING --------------------------- examples/pattern-error/abstract.erlt:27:1
+-- WARNING --------------------------- examples/pattern-error/abstract.erlt:26:1
 Missing Patterns
 missing: false, _
- 27| test2(true, <<>>) -> {}.
+ 26| test2(true, <<>>) -> {}.
 ...| ~~~~~~~~~~~~~~~~~~~~~~~

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e36_erlt).
--lang(st).
 
 -export([mk_map1/1, mk_map1/2]).
 

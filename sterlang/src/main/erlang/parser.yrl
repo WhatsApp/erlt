@@ -539,8 +539,8 @@ build_attribute({atom, _, import}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import, {Mod, farity_list(ImpList)}};
 build_attribute({atom, _, import_type}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
-build_attribute({atom, _, lang}, {atom, _, Lang}, Aa) when Lang == ffi; Lang == st ->
-    {attribute, Aa, lang, Lang};
+build_attribute({atom, _, lang}, {atom, _, ffi}, Aa) ->
+    {attribute, Aa, ffi};
 build_attribute(_, _, Aa) ->
     ret_err(Aa, "bad attribute").
 
@@ -650,7 +650,8 @@ main(["-idir", IDir, "-odir", ODir]) ->
     ok.
 
 parse_lang(Forms) ->
-    lists:nth(1, [Lang || {attribute, _, lang, Lang} <- Forms]).
+    Langs = [ffi || {attribute, _, ffi} <- Forms],
+    case Langs of [] -> st; _ -> ffi end.
 
 normalize_for_typecheck(Forms, Lang) ->
     Forms1 =

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e13).
--lang(st).
 
 catch_me_if_you_can() -> error("ha").
 

@@ -1,5 +1,5 @@
--- ERROR ----------------------------------------- examples/err2/e132.erlt:18:37
+-- ERROR ----------------------------------------- examples/err2/e132.erlt:17:37
 Plain type variable TVar is used as row type variable
 All occurrences of type variable should of the same kind (plain or row)
- 18| -spec test(TVar, #(id :: integer(), TVar)) -> integer().
+ 17| -spec test(TVar, #(id :: integer(), TVar)) -> integer().
 ...|                                     ~~~~

@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf15).
 
 -export([empty_rec/1]).

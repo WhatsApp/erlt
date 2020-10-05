@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf05).
 
 -export([tuple0/1, tuple1/1, tuple2/1, tuple3/1]).

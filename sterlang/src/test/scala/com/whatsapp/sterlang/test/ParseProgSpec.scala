@@ -30,7 +30,6 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Should be parsed correctly") {
       testProg(
         """
-          |-lang(st).
           |-module(test).
           |-enum box(A) :: box{A}.
           |-type boxAlias(A) :: box(A).

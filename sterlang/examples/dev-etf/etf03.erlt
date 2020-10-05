@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf03).
 
 -export([

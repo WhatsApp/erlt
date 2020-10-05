@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf11).
 
 -export([case1/1, case2/2]).

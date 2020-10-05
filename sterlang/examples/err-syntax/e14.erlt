@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e14).
--lang(st).
 
 -export([make_nil/0]).
 

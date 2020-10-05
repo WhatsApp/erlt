@@ -13,6 +13,5 @@
 %% limitations under the License.
 
 -module(e12).
--lang(st).
 
 foo() -> "multi" "segment" "string".

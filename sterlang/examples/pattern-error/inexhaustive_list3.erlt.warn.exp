@@ -1,7 +1,7 @@
--- WARNING ----------------- examples/pattern-error/inexhaustive_list3.erlt:20:1
+-- WARNING ----------------- examples/pattern-error/inexhaustive_list3.erlt:19:1
 Missing Patterns
 missing: [_]
- 20| test1([]) -> {};
+ 19| test1([]) -> {};
 ...| ~~~~~~~~~~~~~~~~
- 21| test1([_E1 | [_E2 | _T]]) -> {}.
+ 20| test1([_E1 | [_E2 | _T]]) -> {}.
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

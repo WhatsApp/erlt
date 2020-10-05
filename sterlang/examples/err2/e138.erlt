@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e138).
--lang(st).
 
 -spec test(#(TVar), #(TVar), #(id :: integer(), TVar)) -> integer().
 test(X, Y, Z) -> 1.

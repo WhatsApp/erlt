@@ -13,6 +13,5 @@
 %% limitations under the License.
 
 -module(e128).
--lang(st).
 
 -opaque open_shape(Ext) :: #(id :: integer(), Ext).

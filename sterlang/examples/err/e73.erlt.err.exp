@@ -1,4 +1,4 @@
--- ERROR -------------------------------------------- examples/err/e73.erlt:19:1
+-- ERROR -------------------------------------------- examples/err/e73.erlt:18:1
 Duplicate type: unit1
- 19| -type unit1(A) :: {A}.
+ 18| -type unit1(A) :: {A}.
 ...| ~~~~~~~~~~~~~~~~~~~~~

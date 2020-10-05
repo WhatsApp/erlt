@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e05).
--lang(st).
 
 -spec test(integer() | boolean()) -> integer().
 test(X) ->

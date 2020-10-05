@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e33).
--lang(st).
 
 -export([remote_fun3/2]).
 

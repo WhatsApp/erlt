@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf17).
 
 -export([

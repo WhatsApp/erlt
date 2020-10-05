@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf14).
 
 -export([id/1, local/0, remote/0]).

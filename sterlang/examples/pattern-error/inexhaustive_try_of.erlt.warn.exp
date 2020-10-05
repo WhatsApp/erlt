@@ -1,7 +1,7 @@
--- WARNING ---------------- examples/pattern-error/inexhaustive_try_of.erlt:22:3
+-- WARNING ---------------- examples/pattern-error/inexhaustive_try_of.erlt:21:3
 Missing Patterns
 missing: true
- 22|   try X of
+ 21|   try X of
 ...|   ~~~~~~~~
 ...|     false -> {}
 ...| ~~~~~~~~~~~~~~~
@@ -9,5 +9,5 @@ missing: true
 ...| ~~~~~~~
 ...|     _ -> {}
 ...| ~~~~~~~~~~~
- 26|   end.
+ 25|   end.
 ...| ~~~~~

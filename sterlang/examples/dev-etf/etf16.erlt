@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf16).
 
 -export([unary_plus/1, unary_minus/1, unary_not/1, unary_bnot/1]).

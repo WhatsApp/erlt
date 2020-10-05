@@ -1,5 +1,5 @@
--- ERROR -------------------------------------------- examples/neg/n02.erlt:4:11
+-- ERROR -------------------------------------------- examples/neg/n02.erlt:3:11
 Infinite type
 A <> fun((A) -> B)
-  4| f(T) -> f(fun f/1).
+  3| f(T) -> f(fun f/1).
 ...|           ~~~~~~~

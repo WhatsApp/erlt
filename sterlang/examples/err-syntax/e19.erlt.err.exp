@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e19.erlt:20:24
+-- ERROR ------------------------------------ examples/err-syntax/e19.erlt:19:24
 Parse Error
- 20| -spec single_char() -> $x.
+ 19| -spec single_char() -> $x.
 ...|                        ^

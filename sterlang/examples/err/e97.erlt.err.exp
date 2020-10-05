@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e97.erlt:21:31
+-- ERROR ------------------------------------------- examples/err/e97.erlt:20:31
 Type Mismatch
 Found:    string()
 Required: integer()
- 21|     #my_record{hash = 1, id = "test"}.
+ 20|     #my_record{hash = 1, id = "test"}.
 ...|                               ~~~~~~

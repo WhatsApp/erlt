@@ -1,5 +1,5 @@
--- ERROR ------------------------------------ examples/err-syntax/e27.erlt:18:14
+-- ERROR ------------------------------------ examples/err-syntax/e27.erlt:17:14
 Unsupported Syntax
 Atom literal
- 18| mk_atom() -> atom.
+ 17| mk_atom() -> atom.
 ...|              ~~~~

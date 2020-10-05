@@ -13,6 +13,5 @@
 %% limitations under the License.
 
 -module(e129).
--lang(st).
 
 -type open_shape() :: #(id :: integer(), _).

@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e24.erlt:17:17
+-- ERROR ------------------------------------------- examples/err/e24.erlt:16:17
 Type Mismatch
 Found:    list({A, A})
 Required: list({A})
- 17| foo(X) -> [{X}, {X, X}].
+ 16| foo(X) -> [{X}, {X, X}].
 ...|                 ~~~~~~~

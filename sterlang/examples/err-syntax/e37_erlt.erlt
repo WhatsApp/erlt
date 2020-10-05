@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e37_erlt).
--lang(st).
 
 -export([update_map/2, update_map/3]).
 

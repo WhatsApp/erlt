@@ -1,29 +1,29 @@
--- WARNING --------------------------- examples/pattern-error/literals.erlt:31:1
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:30:1
 Missing Patterns
 missing: false
- 31| my_boolean(true) -> true.
+ 30| my_boolean(true) -> true.
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~
 
--- WARNING --------------------------- examples/pattern-error/literals.erlt:34:1
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:33:1
 Missing Patterns
 missing: _
- 34| my_char($a) -> true.
+ 33| my_char($a) -> true.
 ...| ~~~~~~~~~~~~~~~~~~~
 
--- WARNING --------------------------- examples/pattern-error/literals.erlt:37:1
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:36:1
 Missing Patterns
 missing: _
- 37| my_integer(0) -> true.
+ 36| my_integer(0) -> true.
 ...| ~~~~~~~~~~~~~~~~~~~~~
 
--- WARNING --------------------------- examples/pattern-error/literals.erlt:40:1
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:39:1
 Missing Patterns
 missing: [_ | _]
- 40| my_list([]) -> true.
+ 39| my_list([]) -> true.
 ...| ~~~~~~~~~~~~~~~~~~~
 
--- WARNING --------------------------- examples/pattern-error/literals.erlt:43:1
+-- WARNING --------------------------- examples/pattern-error/literals.erlt:42:1
 Missing Patterns
 missing: _
- 43| my_string("") -> true.
+ 42| my_string("") -> true.
 ...| ~~~~~~~~~~~~~~~~~~~~~

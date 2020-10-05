@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf13).
 
 -spec local_fun() -> fun((A, B) -> {A, B}).

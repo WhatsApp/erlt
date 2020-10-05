@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf10).
 
 -export([block/2]).

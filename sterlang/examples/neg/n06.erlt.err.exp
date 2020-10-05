@@ -1,5 +1,5 @@
--- ERROR -------------------------------------------- examples/neg/n06.erlt:5:28
+-- ERROR -------------------------------------------- examples/neg/n06.erlt:4:28
 Infinite type
 A <> #( x :: A, B )
-  5|     if B -> R#(x); true -> R end.
+  4|     if B -> R#(x); true -> R end.
 ...|                            ^

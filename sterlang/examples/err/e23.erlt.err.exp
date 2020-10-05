@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e23.erlt:17:14
+-- ERROR ------------------------------------------- examples/err/e23.erlt:16:14
 Type Mismatch
 Found:    {integer()}
 Required: integer()
- 17| foo() -> 1 + {1}.
+ 16| foo() -> 1 + {1}.
 ...|              ~~~

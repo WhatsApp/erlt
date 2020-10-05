@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e06).
--lang(st).
 
 test(-(-4)) ->
     1.

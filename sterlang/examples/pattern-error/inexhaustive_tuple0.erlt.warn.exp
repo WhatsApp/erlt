@@ -1,5 +1,5 @@
--- WARNING ---------------- examples/pattern-error/inexhaustive_tuple0.erlt:22:1
+-- WARNING ---------------- examples/pattern-error/inexhaustive_tuple0.erlt:21:1
 Missing Patterns
 missing: {ab.b{}}
- 22| test1({ab.a{}}) -> {}.
+ 21| test1({ab.a{}}) -> {}.
 ...| ~~~~~~~~~~~~~~~~~~~~~

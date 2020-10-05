@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e23).
--lang(st).
 
 -export([bitstring3/0]).
 

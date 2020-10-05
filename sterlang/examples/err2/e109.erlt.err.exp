@@ -1,4 +1,4 @@
--- ERROR ------------------------------------------ examples/err2/e109.erlt:20:6
+-- ERROR ------------------------------------------ examples/err2/e109.erlt:19:6
 Duplicate fields: id
- 20| test(#foo{id = Id, id = Id}) ->
+ 19| test(#foo{id = Id, id = Id}) ->
 ...|      ~~~~~~~~~~~~~~~~~~~~~~

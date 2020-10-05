@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e34.erlt:20:40
+-- ERROR ------------------------------------ examples/err-syntax/e34.erlt:19:40
 Parse Error
- 20| remote_fun5(Mod, Fun, Arity) -> fun Mod:Fun/Arity.
+ 19| remote_fun5(Mod, Fun, Arity) -> fun Mod:Fun/Arity.
 ...|                                        ^

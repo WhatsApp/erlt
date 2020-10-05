@@ -1,5 +1,5 @@
--- ERROR ----------------------------------------- examples/err2/e130.erlt:18:46
+-- ERROR ----------------------------------------- examples/err2/e130.erlt:17:46
 Shape extension type in a type definition
 Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only.
- 18| -enum my_enum(Ext) :: ctr{#(id :: integer(), Ext)}.
+ 17| -enum my_enum(Ext) :: ctr{#(id :: integer(), Ext)}.
 ...|                                              ~~~

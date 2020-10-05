@@ -1,4 +1,4 @@
--- ERROR ------------------------------------------ examples/err2/e104.erlt:19:1
+-- ERROR ------------------------------------------ examples/err2/e104.erlt:18:1
 Cyclic type alias: box2
- 19| -type box2(A) :: box(box2(A)).
+ 18| -type box2(A) :: box(box2(A)).
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

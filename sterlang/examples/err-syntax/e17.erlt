@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e17).
--lang(st).
 
 -export([range/0]).
 

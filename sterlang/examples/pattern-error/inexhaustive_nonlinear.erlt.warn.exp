@@ -1,5 +1,5 @@
--- WARNING ------------- examples/pattern-error/inexhaustive_nonlinear.erlt:20:1
+-- WARNING ------------- examples/pattern-error/inexhaustive_nonlinear.erlt:19:1
 Possibly Missing Patterns
 missing: _, _
- 20| test1(X, X) -> {}.
+ 19| test1(X, X) -> {}.
 ...| ~~~~~~~~~~~~~~~~~

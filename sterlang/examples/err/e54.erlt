@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang(st).
 -module(e54).
 -enum my_enum() :: ctr{}.
 %% %% enum constructor with a wrong arity

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e139).
--lang(st).
 
 -spec shape_with_foo(#(foo :: Foo, Other)) -> #(foo :: Foo, Other).
 shape_with_foo(Shape) -> shape_with_foo_bar(Shape).

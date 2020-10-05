@@ -1,6 +1,6 @@
--- ERROR -------------------------------------------- examples/err/e83.erlt:20:7
+-- ERROR -------------------------------------------- examples/err/e83.erlt:19:7
 Type Mismatch
 Found:    boolean()
 Required: binary()
- 20|     <<X/binary>>.
+ 19|     <<X/binary>>.
 ...|       ^

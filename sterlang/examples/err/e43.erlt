@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang(st).
 -module(e43).
 -enum e1() :: e1{}. -enum e2() :: e2{}.
 foo(E) -> case E of e1.e1{} -> 1; e2.e2{} -> 2 end.

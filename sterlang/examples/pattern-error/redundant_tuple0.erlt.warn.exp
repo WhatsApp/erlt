@@ -1,4 +1,4 @@
--- WARNING ------------------- examples/pattern-error/redundant_tuple0.erlt:21:7
+-- WARNING ------------------- examples/pattern-error/redundant_tuple0.erlt:20:7
 Useless Pattern
- 21| test1(_) -> {}.
+ 20| test1(_) -> {}.
 ...|       ^

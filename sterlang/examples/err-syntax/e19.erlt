@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e19).
--lang(st).
 
 -export([single_char/0]).
 

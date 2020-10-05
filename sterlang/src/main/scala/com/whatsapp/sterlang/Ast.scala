@@ -271,7 +271,7 @@ object Ast {
   sealed trait ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
-  case class LangElem(lang: String) extends ProgramElem
+  case object FfiElem extends ProgramElem
   case class ModuleElem(module: String) extends ProgramElem
   case class ExportElem(ids: List[(String, Int)]) extends ProgramElem
   case class ImportElem(module: String, ids: List[LocalFunName]) extends ProgramElem
@@ -285,11 +285,7 @@ object Ast {
 
   case class RawProgram(elems: List[ProgramElem]) {
     def program: Program = {
-      val langString = elems.find { _.isInstanceOf[LangElem] }.get.asInstanceOf[LangElem].lang
-      val lang: Lang = langString match {
-        case "st"  => ST
-        case "ffi" => FFI
-      }
+      val lang: Lang = if (elems.contains(FfiElem)) FFI else ST
       Program(
         lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,

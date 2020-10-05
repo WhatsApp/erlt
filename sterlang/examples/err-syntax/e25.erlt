@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e25).
--lang(st).
 
 -export([single_int/0]).
 

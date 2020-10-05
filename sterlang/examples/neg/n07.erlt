@@ -1,4 +1,3 @@
--lang(st).
 -module(n07).
 -enum option(A) :: none{} | some{A}.
 

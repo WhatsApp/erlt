@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e141).
--lang(st).
 
 -spec get_foo(#(foo :: Foo, _)) -> Foo.
 get_foo(#(foo = Foo, bar = Bar)) -> Foo.

@@ -1,4 +1,4 @@
--- WARNING ------------------ examples/pattern-error/redundant_struct2.erlt:24:7
+-- WARNING ------------------ examples/pattern-error/redundant_struct2.erlt:23:7
 Useless Pattern
- 24| test1(#r{}) -> {}.
+ 23| test1(#r{}) -> {}.
 ...|       ~~~~

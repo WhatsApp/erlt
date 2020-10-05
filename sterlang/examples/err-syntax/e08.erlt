@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e08).
--lang(st).
 
 % Spec overloading
 -spec test (integer()) -> integer(); (boolean()) -> boolean().

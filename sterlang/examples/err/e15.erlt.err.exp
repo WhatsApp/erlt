@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e15.erlt:18:10
+-- ERROR ------------------------------------------- examples/err/e15.erlt:17:10
 Type Mismatch
 Found:    boolean()
 Required: integer()
- 18|     1 + (X < Y).
+ 17|     1 + (X < Y).
 ...|          ~~~~~

@@ -1,4 +1,4 @@
--- ERROR ------------------------------------------- examples/err/e88.erlt:18:16
+-- ERROR ------------------------------------------- examples/err/e88.erlt:17:16
 Duplicate type var: A
- 18| -struct box(A, A) :: {value :: A}.
+ 17| -struct box(A, A) :: {value :: A}.
 ...|                ^

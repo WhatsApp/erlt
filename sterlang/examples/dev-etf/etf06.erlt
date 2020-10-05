@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf06).
 
 -export([same/2, same/3, same1/3, foo/1, same2/1]).

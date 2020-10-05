@@ -1,4 +1,4 @@
--- ERROR ------------------------------------ examples/err-syntax/e16.erlt:21:35
+-- ERROR ------------------------------------ examples/err-syntax/e16.erlt:20:35
 Parse Error
- 21| -spec int_fun_is_no_fun() -> fun((...) -> integer()).
+ 20| -spec int_fun_is_no_fun() -> fun((...) -> integer()).
 ...|                                   ^

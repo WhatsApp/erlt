@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e04).
--lang(st).
 
 test(atom) ->
     1.

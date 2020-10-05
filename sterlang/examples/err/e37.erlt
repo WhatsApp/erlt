@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang(st).
 -module(e37).
 foo(X) ->
     case X of [true] -> 2; false -> 1 end.

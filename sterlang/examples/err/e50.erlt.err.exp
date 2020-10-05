@@ -1,4 +1,4 @@
--- ERROR -------------------------------------------- examples/err/e50.erlt:19:6
+-- ERROR -------------------------------------------- examples/err/e50.erlt:18:6
 Unknown enum: unknown_enum
- 19|     [unknown_enum.ctr{}].
+ 18|     [unknown_enum.ctr{}].
 ...|      ~~~~~~~~~~~~~~~~~~

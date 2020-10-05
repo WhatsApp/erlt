@@ -1,4 +1,4 @@
--- ERROR -------------------------------------------- examples/err/e70.erlt:18:9
+-- ERROR -------------------------------------------- examples/err/e70.erlt:17:9
 Useless type variable: A
- 18| -enum e(A) :: e1{}.
+ 17| -enum e(A) :: e1{}.
 ...|         ^

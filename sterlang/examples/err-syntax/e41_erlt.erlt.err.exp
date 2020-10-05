@@ -1,4 +1,4 @@
--- ERROR ------------------------------- examples/err-syntax/e41_erlt.erlt:23:26
+-- ERROR ------------------------------- examples/err-syntax/e41_erlt.erlt:22:26
 Parse Error
- 23| -spec id_shape2(#(integer() :: boolean())) -> #(integer() :: boolean()).
+ 22| -spec id_shape2(#(integer() :: boolean())) -> #(integer() :: boolean()).
 ...|                          ^

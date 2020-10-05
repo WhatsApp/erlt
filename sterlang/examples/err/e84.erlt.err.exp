@@ -1,6 +1,6 @@
--- ERROR -------------------------------------------- examples/err/e84.erlt:19:7
+-- ERROR -------------------------------------------- examples/err/e84.erlt:18:7
 Type Mismatch
 Found:    integer()
 Required: binary()
- 19|     <<Y:(Y + Z)/binary>>.
+ 18|     <<Y:(Y + Z)/binary>>.
 ...|       ^

@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e41_erlt).
--lang(st).
 
 
 -spec id_shape1(#(key :: boolean())) -> #(key :: boolean()).

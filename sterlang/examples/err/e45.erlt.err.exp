@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e45.erlt:17:21
+-- ERROR ------------------------------------------- examples/err/e45.erlt:16:21
 Type Mismatch
 Found:    list(A)
 Required: integer()
- 17| foo(E) -> case 1 of [true,false] -> 1 end.
+ 16| foo(E) -> case 1 of [true,false] -> 1 end.
 ...|                     ~~~~~~~~~~~~

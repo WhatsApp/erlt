@@ -13,7 +13,6 @@
 %% limitations under the License.
 
 -module(e30).
--lang(st).
 
 -export([remote_dynamic_call3/1]).
 

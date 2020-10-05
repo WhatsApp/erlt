@@ -1,5 +1,5 @@
--- ERROR ----------------------------------------- examples/err2/e129.erlt:18:42
+-- ERROR ----------------------------------------- examples/err2/e129.erlt:17:42
 Shape extension type in a type definition
 Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only.
- 18| -type open_shape() :: #(id :: integer(), _).
+ 17| -type open_shape() :: #(id :: integer(), _).
 ...|                                          ^

@@ -13,6 +13,5 @@
 %% limitations under the License.
 
 -module(e39_erlt).
--lang(st).
 
 -enum box() :: box{} | boolean().

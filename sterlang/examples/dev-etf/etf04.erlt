@@ -1,5 +1,3 @@
--lang(st).
-
 -module(etf04).
 
 -export([empty_list/1, id_list/1]).

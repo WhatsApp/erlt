@@ -1,4 +1,3 @@
--lang(st).
 -module(erl2).
 
 %% testing that different constructs are mappable

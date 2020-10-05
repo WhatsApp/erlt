@@ -1,6 +1,6 @@
--- ERROR ------------------------------------------- examples/err/e04.erlt:17:23
+-- ERROR ------------------------------------------- examples/err/e04.erlt:16:23
 Type Mismatch
 Found:    integer()
 Required: boolean()
- 17| foo() -> true andalso 1.
+ 16| foo() -> true andalso 1.
 ...|                       ^

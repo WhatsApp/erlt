@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang(st).
 -module(e62).
 % Unknown type some_type
 -type my_type() :: some_type().

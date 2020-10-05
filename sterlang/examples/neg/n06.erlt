@@ -1,4 +1,3 @@
--lang(st).
 -module(n06).
 foo(B, R) ->
     % circularity

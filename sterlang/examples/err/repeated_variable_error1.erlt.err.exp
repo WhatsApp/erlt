@@ -1,6 +1,6 @@
--- ERROR ---------------------- examples/err/repeated_variable_error1.erlt:20:11
+-- ERROR ---------------------- examples/err/repeated_variable_error1.erlt:19:11
 Type Mismatch
 Found:    boolean()
 Required: integer()
- 20| equals(X, X) -> true;
+ 19| equals(X, X) -> true;
 ...|           ^

@@ -1,4 +1,3 @@
--lang(st).
 -module(etf01).
 
 -export([id/1]).
