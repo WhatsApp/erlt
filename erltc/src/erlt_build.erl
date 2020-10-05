@@ -12,28 +12,33 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
-% 'erlbuild' is a low-level build system for Erlang.
+% This is our support for multi-file builds.
+% Currently our only public API for multi-file builds is the rebar3 plugin
+% in ./rebar_prv_erlt.erl
 %
-% 'erlbuild' can be called as a command-line tool, or using Erlang API.
-%
-% - it builds several .erlt files in one Erlang src directory
-% - it does this correctly, incrementally, and in parallel (if requested)
-% - it supports the same command-line options as 'erlc'
-% - the logic and the implementation are very simple and robust
-% - all build phases and individual compilation steps are explicit,
-%   observable, and can be reproduced manually from the commmand-line
-%
-% See complete description in ../README.md
+% erlt_build is based on earlier work on erlbuild, a low-level build tool for Erlang
+% See https://github.com/WhatsApp/erlt/blob/80877ae15b4a9300c69ce34ffb2e844bc9acc74b/erlbuild/README.md
 
--module(erlbuild).
+-module(erlt_build).
 
--compile(export_all).
--compile(nowarn_export_all).
+-export([main/1]).
 
--include("erlbuild_types.hrl").
+% These were used when we had a programmatic public API
+% specific to builds.
+-compile([{nowarn_unused_function, [
+    compile/1,
+    clean/1,
+    run_command_as_api_function/3,
+    get_letter_option/1,
+    read_file/1,
+    print_warning/1,
+    print_warning/2
+]}]).
+
+-include("erlt_build_types.hrl").
 
 command_name() ->
-    "erlbuild".
+    "erlt_build".
 
 print_usage() ->
     io:format("~s", [
@@ -43,18 +48,18 @@ print_usage() ->
             " [command] ...\n"
             "\n",
             command_name(),
-            " is a low-level build system for Erlang. See erlbuild.md for details\n"
+            " is a build system for Erlang.\n"
             "\n"
             "commands (Defaults to 'compile'):\n"
             "\n"
-            "  compile [erlbuild options] [erlc options] [--] <.erl files>\n"
+            "  compile [options] [erlc options] [--] <.erl files>\n"
             "      -- compile .erl, .yrl, and .xrl files in one src directory\n"
             "\n"
-            "  clean [erlbuild options]\n"
+            "  clean [options]\n"
             "      -- clean compile results and incremental compilation state stored in <build_dir>\n"
             "\n"
             "\n"
-            "erlbuild options:\n"
+            "options:\n"
             "  --incremental            do an incremental build. Defaults to false\n"
             "  -o <output_dir>          directory where the compiler is to place the output files. Defaults to ../ebin\n"
             "  --build-dir <build_dir>  directory for storing intermediate compilation state. Defaults to <output_dir>/../build\n"
@@ -97,7 +102,7 @@ compile(Argv) ->
 clean(Argv) ->
     run_command_as_api_function(clean, fun run_clean_command/1, Argv).
 
-% Escript entry point
+% entry point when called from erlt
 main(Argv) ->
     case run_command(Argv) of
         ok ->
@@ -107,10 +112,6 @@ main(Argv) ->
             erlang:halt(1)
     end.
 
-% rebar3 entry point
-init(RebarState) ->
-    rebar_prv_erlt:init(RebarState).
-
 run_command_as_api_function(Name, Fun, Argv) ->
     try
         Fun(Argv)
@@ -119,8 +120,8 @@ run_command_as_api_function(Name, Fun, Argv) ->
             {error, Reason};
         Class:Error:Stacktrace ->
             ErrorStr =
-                erlbuild_util:format(
-                    "internal error while running erlbuild:~s(~p):~n~p~nStacktrace:~n~p~n",
+                erlt_build_util:format(
+                    "internal error while running erlt_build:~s(~p):~n~p~nStacktrace:~n~p~n",
                     [
                         Name,
                         Argv,
@@ -140,7 +141,7 @@ run_command(Argv) ->
             {error, Reason};
         Class:Error:Stacktrace ->
             ErrorStr =
-                erlbuild_util:format("internal error while running ~s:~n\t~p~nStacktrace:~n~p~n", [
+                erlt_build_util:format("internal error while running ~s:~n\t~p~nStacktrace:~n~p~n", [
                     command_name(),
                     {Class, Error},
                     Stacktrace
@@ -159,7 +160,7 @@ do_run_command(Argv0) ->
         "clean" ->
             run_clean_command(Argv);
         _ ->
-            erlbuild_util:throw_error("unknown command '~s'; see '~s -h' for list of commands", [
+            erlt_build_util:throw_error("unknown command '~s'; see '~s -h' for list of commands", [
                 Command,
                 command_name()
             ])
@@ -233,7 +234,7 @@ update_args_makefile(Args) ->
     case Args#args.makefile of
         undefined ->
             Args#args{
-                makefile = filename:join(Args#args.build_dir, "erlbuild.mk")
+                makefile = filename:join(Args#args.build_dir, "erlt_build.mk")
             };
         _ ->
             Args
@@ -334,11 +335,11 @@ parse_args(["-o" ++ _ | _] = Argv, Args) ->
     },
     parse_args(T, NewArgs);
 parse_args(Argv, Args) when Args#args.command =:= clean ->
-    % at this point all valid 'erlbuild clean' options should be parsed
+    % at this point all valid 'clean' options should be parsed
     case Argv of
         [] -> Args;
-        ["-" ++ _ = Option | _] -> erlbuild_util:throw_error("unknown option: '~s'", [Option]);
-        [Arg | _] -> erlbuild_util:throw_error("unexpected positional argument: '~s'", [Arg])
+        ["-" ++ _ = Option | _] -> erlt_build_util:throw_error("unknown option: '~s'", [Option]);
+        [Arg | _] -> erlt_build_util:throw_error("unexpected positional argument: '~s'", [Arg])
     end;
 % all options below are erlc options
 parse_args(["-I" ++ _ | _] = Argv, Args) ->
@@ -384,7 +385,7 @@ parse_args(["--" = Arg | T], Args) ->
     },
     parse_file_args(T, NewArgs);
 parse_args(["-" ++ _ = Option | _], _Args) ->
-    erlbuild_util:throw_error("unknown option: '~s'", [Option]);
+    erlt_build_util:throw_error("unknown option: '~s'", [Option]);
 parse_args(Argv, Args) ->
     % following erlc behavior here
     parse_file_args(Argv, Args).
@@ -395,7 +396,7 @@ parse_file_args(_Argv = InputFiles, Args) ->
 
     case InputFiles =:= [] of
         false -> ok;
-        true -> erlbuild_util:throw_error("no input files were given")
+        true -> erlt_build_util:throw_error("no input files were given")
     end,
 
     Args#args{
@@ -410,13 +411,13 @@ check_file_arg(Filename) ->
         false ->
             ok;
         true ->
-            erlbuild_util:throw_error("invalid input file name '~s'. Name can't contain '/'", [
+            erlt_build_util:throw_error("invalid input file name '~s'. Name can't contain '/'", [
                 Filename
             ])
     end,
     case Filename of
         "-" ++ _ ->
-            erlbuild_util:throw_error("invalid input file name '~s'. Name can't start with '-'", [
+            erlt_build_util:throw_error("invalid input file name '~s'. Name can't start with '-'", [
                 Filename
             ]);
         _ ->
@@ -426,7 +427,7 @@ check_file_arg(Filename) ->
         ?SOURCE_FILE_EXTENSION ->
             ok;
         _ ->
-            erlbuild_util:throw_error(
+            erlt_build_util:throw_error(
                 "invalid input file name '~s'. Extension must be " ++ ?SOURCE_FILE_EXTENSION,
                 [Filename]
             )
@@ -450,7 +451,7 @@ get_letter_option_value([[$-, Letter | Value] = Arg | T]) ->
     {Value, _Copy = [Arg], T}.
 
 get_option_value(Name, []) ->
-    erlbuild_util:throw_error("no value given for option ~s", [Name]);
+    erlt_build_util:throw_error("no value given for option ~s", [Name]);
 get_option_value(Name, [Value | T]) ->
     check_option_value(Name, Value),
     {Value, _Copy = [Value, Name], T}.
@@ -497,7 +498,7 @@ ensure_input_filenames_valid(#args{incremental = false, input_files = InputFiles
         0 ->
             ok;
         _ ->
-            erlbuild_util:throw_error(
+            erlt_build_util:throw_error(
                 "All input files must have extension ~p. Please try again without: ~p",
                 [?SOURCE_FILE_EXTENSION, BadFilenames]
             )
@@ -506,13 +507,13 @@ ensure_input_filenames_valid(_) ->
     ok.
 
 throw_needs_incremental(Opt) ->
-    erlbuild_util:throw_error("to use option '~s', you must also use option --incremental", [Opt]).
+    erlt_build_util:throw_error("to use option '~s', you must also use option --incremental", [Opt]).
 
 args_value_error(Name, Value, ErrorStr) ->
-    erlbuild_util:throw_error("invalid value for option ~s: '~s'. ~s", [Name, Value, ErrorStr]).
+    erlt_build_util:throw_error("invalid value for option ~s: '~s'. ~s", [Name, Value, ErrorStr]).
 
 do_compile(#args{incremental = false} = Args) ->
-    erlbuild_basic_mode:invoke(Args);
+    erlt_build_basic_mode:invoke(Args);
 do_compile(#args{incremental = true, makefile = Makefile, gen_only = GenOnly} = Args) ->
     Makefile = generate_makefile(Args),
     case GenOnly orelse Makefile =:= "-" of
@@ -529,7 +530,7 @@ do_compile(#args{incremental = true, makefile = Makefile, gen_only = GenOnly} = 
     end.
 
 do_clean(#args{incremental = false} = Args) ->
-    erlbuild_basic_mode:invoke(Args);
+    erlt_build_basic_mode:invoke(Args);
 do_clean(Args) ->
     Makefile = Args#args.makefile,
     case filelib:is_regular(Makefile) of
@@ -589,7 +590,7 @@ generate_makefile(Args) ->
         "\n"
     ],
 
-    write_file(Makefile, [InputParameters, erlbuild_template_mk:get_template()]),
+    write_file(Makefile, [InputParameters, erlt_build_template_mk:get_template()]),
     Makefile.
 
 quote_shell_arg(("+" ++ _) = Arg) ->
@@ -624,7 +625,7 @@ run_make(Makefile, Args, Goal) ->
             {unix, _} ->
                 "make";
             OsType ->
-                erlbuild_util:throw_error("unsupported os type for running GNU make: ~w", [OsType])
+                erlt_build_util:throw_error("unsupported os type for running GNU make: ~w", [OsType])
         end,
 
     VerboseOption =
@@ -667,14 +668,14 @@ run_make(Makefile, Args, Goal) ->
 
     % NOTE: mirroring output to stdout line by line, not capturing any
     {ReturnCode, _Output = undefined} =
-        erlbuild_util:shell_command(Command, [mirror_line_output]),
+        erlt_build_util:shell_command(Command, [mirror_line_output]),
 
     case ReturnCode of
         0 ->
             ok;
         _ ->
             % TODO, XXX: print Command that failed when running in non-verbose mode
-            erlbuild_util:throw_error("make failed with code ~w", [ReturnCode])
+            erlt_build_util:throw_error("make failed with code ~w", [ReturnCode])
     end.
 
 % produce a ' '-separated string from Argv

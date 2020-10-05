@@ -4,7 +4,6 @@
 
 % command-line args
 -record(args, {
-    % erlbuild <command>
     command :: compile | clean,
     % -j
     jobs :: undefined | string(),

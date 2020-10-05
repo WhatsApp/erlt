@@ -3,7 +3,7 @@
 
 -export([init/1, run/2, compile_app/1, clean_app/1]).
 
--include("erlbuild_types.hrl").
+-include("erlt_build_types.hrl").
 
 -define(SRC_DIR, "src").
 
@@ -75,7 +75,7 @@ clean_app(AppInfo) ->
     verbose_level() >= 1 andalso
         rebar_log:info("Cleaning ~s/~s", [rebar_app_info:name(AppInfo), ?SRC_DIR]),
     Argv = ["clean" | Options],
-    call_erlbuild(Argv).
+    call_erlt_build(Argv).
 
 handle_dir(Task, AppInfo, ErltCompileFlags, SrcDir, OutputDir, CommonOptions, ErlOpts) ->
     BaseDir = rebar_app_info:dir(AppInfo),
@@ -110,10 +110,10 @@ handle_dir(Task, AppInfo, ErltCompileFlags, SrcDir, OutputDir, CommonOptions, Er
                 Sources
             ]),
 
-            call_erlbuild(Argv),
+            call_erlt_build(Argv),
 
-            % We run this *after* call_erlbuild(), because
-            % erlbuild will create "ebin" directory, without which
+            % We run this *after* call_erlt_build(), because
+            % erlt_build will create "ebin" directory, without which
             % code:add_patha() would return {error,bad_directory}
             AbsOutputDir = filename:absname(OutputDir),
             case code:add_patha(AbsOutputDir) of
@@ -152,10 +152,10 @@ make_erlt_dir_options(AppInfo, SrcDir) ->
             EbinDir
         ].
 
-call_erlbuild(Argv) ->
-    rebar_log:log(debug, "calling erlbuild with args: ~p", [Argv]),
-    % erlbuild expected to either return OK or halt(nonzero)
-    ok = erlbuild:main(Argv).
+call_erlt_build(Argv) ->
+    rebar_log:log(debug, "calling erlt_build with args: ~p", [Argv]),
+    % erlt_build expected to either return OK or halt(nonzero)
+    ok = erlt_build:main(Argv).
 
 validate_app_info(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
