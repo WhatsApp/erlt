@@ -93,6 +93,8 @@ object FormsConvert {
         EOF
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
         Error(Doc.Pos(line.toInt, column.toInt))
+      case ETuple(List(EAtom("error"), ETuple(List(ETuple(List(ELong(line), ELong(column))), _, _)))) =>
+        Error(Doc.Pos(line.toInt, column.toInt))
     }
 
   def convertIdWithArity(term: ETerm): IdWithArity =
