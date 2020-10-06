@@ -45,6 +45,7 @@ See the [examples](examples/) folder.
 ## Requirements
 
 - [erlang](https://www.erlang.org/) with OTP 23 or higher
+- [rebar3](https://www.rebar3.org/) version 3.14.1 or higher
 - [sbt](https://www.scala-sbt.org/)
 
 ## Building
