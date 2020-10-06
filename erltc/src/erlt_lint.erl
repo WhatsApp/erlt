@@ -1854,9 +1854,9 @@ pattern({op, _Line, '++', {cons, Li, {integer, _L2, _I}, T}, R}, Vt, Old, Bvt, S
 pattern({op, _Line, '++', {string, _Li, _S}, R}, Vt, Old, Bvt, St) ->
     %String unimportant here
     pattern(R, Vt, Old, Bvt, St);
-pattern({op, _Line, '.', E, {atom, _, _}}, Vt, _Old, _Bvt, St) ->
+pattern({op, _Line, '.', E, {atom, _, _}}, Vt, Old, Bvt, St) ->
     %% we only allow the right hand side to be an atom: X.a, but not X.Y
-    pattern(E, Vt, _Old, _Bvt, St);
+    pattern(E, Vt, Old, Bvt, St);
 pattern({op, Line, '.', _, _}, _Vt, _Old, _Bvt, St) ->
     {[], [], add_error(Line, illegal_dot, St)};
 pattern({match, _Line, Pat1, Pat2}, Vt, Old, Bvt, St0) ->
@@ -4399,6 +4399,8 @@ vtmerge(Vt1, Vt2) ->
 
 vtmerge(Vts) -> foldl(fun(Vt, Mvts) -> vtmerge(Vt, Mvts) end, [], Vts).
 
+%% this version marks variables that exist in both tables as used
+%% (since that implies the compiler will add an equality check)
 vtmerge_pat(Vt1, Vt2) ->
     orddict:merge(
         fun(_V, {S1, _Usage1, L1}, {S2, _Usage2, L2}) ->
