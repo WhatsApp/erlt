@@ -4,3 +4,13 @@ rebar3.crashdump
 .idea
 .metals
 erltc/src/erlt_parse.erl
+
+# we have reason to believe that
+# old (unsupported) versions of rebar generate this
+# and I want to minimize dealing with it it
+.rebar3/
+
+# this file may exist for some team members sometimes
+# in a way I can't reproduce but it doesn't seem to matter
+examples/rebar.lock
+
