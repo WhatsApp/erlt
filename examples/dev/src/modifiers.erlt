@@ -1,0 +1,29 @@
+-lang([erl2]).
+-module(modifiers).
+
+-export([ffi/1, dt/1, empty/0, get/2, put/3]).
+
+[opaque, unchecked]
+-type map(Key, Value) :: term().
+
+-spec ffi(integer()) -> binary().
+[unchecked]
+ffi(X) ->
+    term_to_binary(X).
+
+-spec empty() -> map(_Key, _Value).
+empty() ->
+    maps:empty().
+
+-spec get(Key, map(Key, Value)) -> Value. 
+get(Key, Map) ->
+    maps:get(Key, Map).
+
+-spec put(Key, Value, map(Key, Value)) -> map(Key, Value). 
+put(Key, Value, Map) ->
+    maps:put(Key, Value, Map).
+
+[unchecked]
+dt(X) ->
+    [X, {X}, [X], term_to_binary(X)].
+

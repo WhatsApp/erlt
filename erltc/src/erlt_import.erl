@@ -29,6 +29,8 @@ init(Forms) -> init(Forms, [], []).
 
 init([{function, _, Name, Arity, _} | Rest], Functions, Types) ->
     init(Rest, [{{Name, Arity}, local} | Functions], Types);
+init([{unchecked_function, _, Name, Arity, _} | Rest], Functions, Types) ->
+    init(Rest, [{{Name, Arity}, local} | Functions], Types);
 init([{attribute, _, import, {Mod, Imports}} | Rest], Functions0, Types) ->
     Functions = [{NA, {imported, Mod}} || NA <- Imports] ++ Functions0,
     init(Rest, Functions, Types);
@@ -38,6 +40,8 @@ init([{attribute, _, import_type, {Mod, Imports}} | Rest], Functions, Types0) ->
 init([{attribute, _, type, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, opaque, {Name, _, _}} | Rest], Functions, Types) ->
+    init(Rest, Functions, [{Name, local} | Types]);
+init([{attribute, _, unchecked_opaque, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, struct, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);

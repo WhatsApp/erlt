@@ -267,6 +267,8 @@ encoding(Options) ->
 
 lform({attribute, Line, Name, Arg}, Opts) ->
     lattribute({attribute, Line, Name, Arg}, Opts);
+lform({unchecked_function, Line, Name, Arity, Clauses}, Opts) ->
+    [leaf("[unchecked]\n"), lfunction({function, Line, Name, Arity, Clauses}, Opts)];
 lform({function, Line, Name, Arity, Clauses}, Opts) ->
     lfunction({function, Line, Name, Arity, Clauses}, Opts);
 %% These are specials to make it easier for the compiler.
@@ -289,6 +291,8 @@ lattribute({attribute, _Line, type, Type}, Opts) ->
     [typeattr(type, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, opaque, Type}, Opts) ->
     [typeattr(opaque, Type, Opts), leaf(".\n")];
+lattribute({attribute, _Line, unchecked_opaque, Type}, Opts) ->
+    [leaf("[unchecked, opaque]\n"), typeattr(type, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, enum, Type}, Opts) ->
     [typeattr(enum, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, struct, Type}, Opts) ->

@@ -53,12 +53,18 @@ postwalk(Ast, Acc0, Fun) ->
     Kind =:= type orelse
         Kind =:= opaque orelse
         Kind =:= enum orelse
-        Kind =:= struct
+        Kind =:= struct orelse
+        Kind =:= unchecked_opaque
 ).
 
 -define(IS_SPEC(Kind),
     Kind =:= spec orelse
         Kind =:= callback
+).
+
+-define(IS_FUNCTION(Kind),
+    Kind =:= function orelse
+        Kind =:= unchecked_function
 ).
 
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
@@ -98,9 +104,9 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         %% TODO: traverse other attributes that can have type defintions
         {attribute, _, _, _} ->
             Post(Node, Acc0, Ctx);
-        {function, Line, Name, Arity, Clauses} ->
+        {F, Line, Name, Arity, Clauses} when ?IS_FUNCTION(F) ->
             {Clauses1, Acc1} = do_traverse_list(Clauses, Acc0, Pre, Post, Ctx),
-            Post({function, Line, Name, Arity, Clauses1}, Acc1, Ctx);
+            Post({F, Line, Name, Arity, Clauses1}, Acc1, Ctx);
         {clause, Line, Head0, Guard0, Body0} ->
             {Head1, Acc1} = do_traverse_list(Head0, Acc0, Pre, Post, pattern),
             {Guard1, Acc2} = do_traverse_guards(Guard0, Acc1, Pre, Post),
