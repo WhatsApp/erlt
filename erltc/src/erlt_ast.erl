@@ -140,7 +140,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Values1, Acc2} = do_traverse_list(Values0, Acc1, Pre, Post, Ctx),
             Post({map, Line, Expr1, Values1}, Acc2, Ctx);
         {map_field_exact, Line, Key0, Value0} ->
-            %% erl_id_trans in patterns traverses key as expr
+            %% map keys are never pattern, but (limited) expressions
             {Key1, Acc1} = do_traverse(Key0, Acc0, Pre, Post, pattern_to_expr(Ctx)),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
             Post({map_field_exact, Line, Key1, Value1}, Acc2, Ctx);
@@ -194,7 +194,8 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {bin_element, Line, Expr0, Size0, Type} when Size0 =/= default ->
             %% don't recurse into Type, it's not AST, but special syntax
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            {Size1, Acc2} = do_traverse(Size0, Acc1, Pre, Post, Ctx),
+            %% bin field size are never patterns, but (limited) expressions
+            {Size1, Acc2} = do_traverse(Size0, Acc1, Pre, Post, pattern_to_expr(Ctx)),
             Post({bin_element, Line, Expr1, Size1, Type}, Acc2, Ctx);
         {bin_element, Line, Expr0, default, Type} ->
             %% don't recurse into Type, it's not AST, but special syntax
