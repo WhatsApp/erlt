@@ -55,8 +55,8 @@
 -define(MAXLINE, 72).
 
 -type hook_function() ::
-    none |
-    fun(
+    none
+    | fun(
         (
             Expr :: erlt_parse:abstract_expr(),
             CurrentIndentation :: integer(),
@@ -66,9 +66,9 @@
     ).
 
 -type option() ::
-    {hook, hook_function()} |
-    {encoding, latin1 | unicode | utf8} |
-    {quote_singleton_atom_types, boolean()}.
+    {hook, hook_function()}
+    | {encoding, latin1 | unicode | utf8}
+    | {quote_singleton_atom_types, boolean()}.
 
 -type options() :: hook_function() | [option()].
 
