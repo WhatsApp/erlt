@@ -72,17 +72,17 @@
 -type category() :: atom().
 -type resword_fun() :: fun((atom()) -> boolean()).
 -type option() ::
-    'return' |
-    'return_white_spaces' |
-    'return_comments' |
-    'text' |
-    {'reserved_word_fun', resword_fun()}.
+    'return'
+    | 'return_white_spaces'
+    | 'return_comments'
+    | 'text'
+    | {'reserved_word_fun', resword_fun()}.
 
 -type options() :: option() | [option()].
 -type symbol() :: atom() | float() | integer() | string().
 -type token() ::
-    {category(), Anno :: erl_anno:anno(), symbol()} |
-    {category(), Anno :: erl_anno:anno()}.
+    {category(), Anno :: erl_anno:anno(), symbol()}
+    | {category(), Anno :: erl_anno:anno()}.
 
 -type tokens() :: [token()].
 -type error_description() :: term().
@@ -118,8 +118,8 @@ format_error(Other) ->
 -spec string(String) -> Return when
     String :: string(),
     Return ::
-        {'ok', Tokens :: tokens(), EndLocation} |
-        {'error', ErrorInfo :: error_info(), ErrorLocation},
+        {'ok', Tokens :: tokens(), EndLocation}
+        | {'error', ErrorInfo :: error_info(), ErrorLocation},
     EndLocation :: erl_anno:location(),
     ErrorLocation :: erl_anno:location().
 string(String) ->
@@ -128,8 +128,8 @@ string(String) ->
 -spec string(String, StartLocation) -> Return when
     String :: string(),
     Return ::
-        {'ok', Tokens :: tokens(), EndLocation} |
-        {'error', ErrorInfo :: error_info(), ErrorLocation},
+        {'ok', Tokens :: tokens(), EndLocation}
+        | {'error', ErrorInfo :: error_info(), ErrorLocation},
     StartLocation :: erl_anno:location(),
     EndLocation :: erl_anno:location(),
     ErrorLocation :: erl_anno:location().
@@ -140,8 +140,8 @@ string(String, StartLocation) ->
     String :: string(),
     Options :: options(),
     Return ::
-        {'ok', Tokens :: tokens(), EndLocation} |
-        {'error', ErrorInfo :: error_info(), ErrorLocation},
+        {'ok', Tokens :: tokens(), EndLocation}
+        | {'error', ErrorInfo :: error_info(), ErrorLocation},
     StartLocation :: erl_anno:location(),
     EndLocation :: erl_anno:location(),
     ErrorLocation :: erl_anno:location().
@@ -167,17 +167,17 @@ string(String, {Line, Column}, Options) when ?STRING(String), ?ALINE(Line), ?COL
         any(), cont_fun()}.
 
 -type tokens_result() ::
-    {'ok', Tokens :: tokens(), EndLocation :: erl_anno:location()} |
-    {'eof', EndLocation :: erl_anno:location()} |
-    {'error', ErrorInfo :: error_info(), EndLocation :: erl_anno:location()}.
+    {'ok', Tokens :: tokens(), EndLocation :: erl_anno:location()}
+    | {'eof', EndLocation :: erl_anno:location()}
+    | {'error', ErrorInfo :: error_info(), EndLocation :: erl_anno:location()}.
 
 -spec tokens(Continuation, CharSpec, StartLocation) -> Return when
     Continuation :: return_cont() | [],
     CharSpec :: char_spec(),
     StartLocation :: erl_anno:location(),
     Return ::
-        {'done', Result :: tokens_result(), LeftOverChars :: char_spec()} |
-        {'more', Continuation1 :: return_cont()}.
+        {'done', Result :: tokens_result(), LeftOverChars :: char_spec()}
+        | {'more', Continuation1 :: return_cont()}.
 tokens(Cont, CharSpec, StartLocation) ->
     tokens(Cont, CharSpec, StartLocation, []).
 
@@ -187,8 +187,8 @@ tokens(Cont, CharSpec, StartLocation) ->
     StartLocation :: erl_anno:location(),
     Options :: options(),
     Return ::
-        {'done', Result :: tokens_result(), LeftOverChars :: char_spec()} |
-        {'more', Continuation1 :: return_cont()}.
+        {'done', Result :: tokens_result(), LeftOverChars :: char_spec()}
+        | {'more', Continuation1 :: return_cont()}.
 tokens([], CharSpec, Line, Options) when ?ALINE(Line) ->
     tokens1(CharSpec, options(Options), Line, no_col, [], fun scan/6, []);
 tokens([], CharSpec, {Line, Column}, Options) when ?ALINE(Line), ?COLUMN(Column) ->
