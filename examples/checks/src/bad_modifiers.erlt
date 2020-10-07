@@ -1,0 +1,36 @@
+-lang([erl2]).
+-module(bad_modifiers).
+
+[unchecked]
+[opaque]
+
+-export([test/0]).
+
+[opaque, opaque]
+-type x() :: integer().
+
+[opaque, unchecked, special]
+-type y() :: integer().
+
+[unchecked]
+-type z() :: integer().
+
+[unchecked,]
+-type z1() :: integer().
+
+[]
+-type z2() :: integer().
+
+[fantastic]
+test() ->
+    test1().
+
+-spec test1() -> x().
+[unchecked, unchecked]
+test1() ->
+    1.
+
+-spec test2() -> {y(), z()}.
+[opaque]
+test2() ->
+    {1,2}.

@@ -33,6 +33,8 @@
 
 -import(lists, [member/2, map/2, foldl/3, foldr/3, mapfoldl/3, all/2, reverse/1]).
 
+-define(IS_FUNCTION(F), (F =:= function orelse F =:= unchecked_function)).
+
 %% keeping only our added errors and warnings; the real linter will run later
 
 %% our added checks
@@ -874,8 +876,8 @@ eval_file_attr([], _File) ->
 
 set_form_file({attribute, L, K, V}, File) ->
     {attribute, erl_anno:set_file(File, L), K, V};
-set_form_file({function, L, N, A, C}, File) ->
-    {function, erl_anno:set_file(File, L), N, A, C};
+set_form_file({F, L, N, A, C}, File) when ?IS_FUNCTION(F) ->
+    {F, erl_anno:set_file(File, L), N, A, C};
 set_form_file(Form, _File) ->
     Form.
 
@@ -941,6 +943,8 @@ attribute_state({attribute, L, type, {TypeName, TypeDef, Args}}, St) ->
     type_def(type, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, opaque, {TypeName, TypeDef, Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
+attribute_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St) ->
+    type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
@@ -983,7 +987,7 @@ function_state({attribute, _L, dialyzer, _Val}, St) ->
     St;
 function_state({attribute, La, Attr, _Val}, St) ->
     add_error(La, {attribute, Attr}, St);
-function_state({function, L, N, A, Cs}, St) ->
+function_state({F, L, N, A, Cs}, St) when ?IS_FUNCTION(F) ->
     function(L, N, A, Cs, St);
 function_state({eof, L}, St) ->
     eof(L, St).
@@ -999,7 +1003,7 @@ eof(_Line, St0) ->
 bif_clashes(Forms, #lint{nowarn_bif_clash = Nowarn} = St) ->
     Clashes0 = [
         {Name, Arity}
-        || {function, _L, Name, Arity, _Cs} <- Forms, erl_internal:bif(Name, Arity)
+        || {F, _L, Name, Arity, _Cs} <- Forms, ?IS_FUNCTION(F), erl_internal:bif(Name, Arity)
     ],
     Clashes = ordsets:subtract(ordsets:from_list(Clashes0), Nowarn),
     St#lint{clashes = Clashes}.
@@ -1321,7 +1325,7 @@ check_unused_functions(Forms, St0) ->
             Used = reached_functions(initially_reached(St1), Usage#usage.calls),
             UsedOrNowarn = ordsets:union(Used, Nowarn),
             Unused = ordsets:subtract(gb_sets:to_list(St1#lint.defined), UsedOrNowarn),
-            Functions = [{{N, A}, L} || {function, L, N, A, _} <- Forms],
+            Functions = [{{N, A}, L} || {F, L, N, A, _} <- Forms, ?IS_FUNCTION(F)],
             Bad = [{FA, L} || FA <- Unused, {FA2, L} <- Functions, FA =:= FA2],
             func_line_warning(unused_function, Bad, St1)
     end.
@@ -3226,6 +3230,27 @@ enum_def_1(TypeName, [], _Ns, NAs, #lint{enums = Map} = St) ->
 
 -dialyzer({no_match, type_def/6}).
 
+type_def(unchecked_opaque, Line, TypeName, ProtoType, Args, St0) ->
+    TypeDefs = St0#lint.types,
+    Arity = length(Args),
+    TypePair = {TypeName, Arity},
+    Info = #typeinfo{attr = unchecked_opaque, line = Line},
+    NewDefs = dict:store(TypePair, Info, TypeDefs),
+    St1 = verify_typevars(Args, St0),
+    case is_default_type(TypePair) of
+        true ->
+            add_error(Line, {builtin_type, TypePair}, St1);
+        false ->
+            St2 = check_redefined_type(Line, TypeName, Arity, St1),
+            St3 =
+                case is_underspecified(ProtoType, 0) of
+                    false ->
+                        add_error(Line, "opaque unchecked type must be term()", St2);
+                    true ->
+                        St2
+                end,
+            St3#lint{types = NewDefs}
+    end;
 type_def(Attr, Line, TypeName, ProtoType, Args, St0) ->
     TypeDefs = St0#lint.types,
     Arity = length(Args),
@@ -3701,11 +3726,16 @@ add_missing_spec_warnings(Forms, St0, Type) ->
     Warns =
         case Type of
             all ->
-                [{FA, L} || {function, L, F, A, _} <- Forms, not lists:member(FA = {F, A}, Specs)];
+                [
+                    {FA, L}
+                    || {FN, L, F, A, _} <- Forms,
+                       ?IS_FUNCTION(FN),
+                       not lists:member(FA = {F, A}, Specs)
+                ];
             exported ->
                 Exps0 = gb_sets:to_list(St0#lint.exports) -- pseudolocals(),
                 Exps = Exps0 -- Specs,
-                [{FA, L} || {function, L, F, A, _} <- Forms, member(FA = {F, A}, Exps)]
+                [{FA, L} || {FN, L, F, A, _} <- Forms, ?IS_FUNCTION(FN), member(FA = {F, A}, Exps)]
         end,
     foldl(
         fun({FA, L}, St) ->
@@ -3759,6 +3789,8 @@ check_local_opaque_types(St) ->
         (_Type, #typeinfo{attr = enum}, AccSt) ->
             AccSt;
         (_Type, #typeinfo{attr = struct}, AccSt) ->
+            AccSt;
+        (_Type, #typeinfo{attr = unchecked_opaque}, AccSt) ->
             AccSt;
         (Type, #typeinfo{attr = opaque, line = FileLine}, AccSt) ->
             case gb_sets:is_element(Type, ExpTs) of
@@ -4741,7 +4773,7 @@ control_type(_C, _Need) ->
 
 %% Prebuild set of local functions (to override auto-import)
 local_functions(Forms) ->
-    gb_sets:from_list([{Func, Arity} || {function, _, Func, Arity, _} <- Forms]).
+    gb_sets:from_list([{Func, Arity} || {F, _, Func, Arity, _} <- Forms, ?IS_FUNCTION(F)]).
 
 %% Predicate to find out if the function is locally defined
 is_local_function(LocalSet, {Func, Arity}) ->

@@ -24,6 +24,7 @@
 
 Nonterminals
 form
+modifier_list
 attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
@@ -93,8 +94,15 @@ Left 170 '|'.
 Nonassoc 200 '..'.
 Nonassoc 500 '*'. % for binary expressions
 
+
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
+form -> '[' modifier_list ']' function dot : ?set_anno(modified_function('$2', '$4'), ?anno('$1', '$4')).
+form -> '[' modifier_list ']' '-' atom type_def dot : 
+    ?set_anno(modified_type_def('$2', build_type_def(?anno('$4', '$6'), '$5', '$6')), ?anno('$1', '$6')).
+
+modifier_list -> atom : ['$1'].
+modifier_list -> atom ',' modifier_list : ['$1' | '$3'].
 
 attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
@@ -1103,8 +1111,7 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form([{'-', A1}, {atom, A2, TypeLike} = Atom | Tokens]) when
-    TypeLike =:= type; TypeLike =:= opaque; TypeLike =:= enum
-->
+    TypeLike =:= type; TypeLike =:= opaque; TypeLike =:= enum ->
     NewTokens = [{'-', A1}, {type_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
@@ -1164,6 +1171,53 @@ build_struct_def(Anno, {atom, _, Attr}, {struct_def, DefAnno, Name, Fields}) ->
 build_type_def(Anno, {atom, _, Attr}, {type_def, _DefAnno, Name, Type}) ->
     {call, _, {atom, _, TypeName}, Args} = Name,
     {attribute, Anno, Attr, {TypeName, Type, Args}}.
+
+modified_type_def(ModifierList, {attribute, Anno, Attr, TypeDef}) ->
+    case check_modifier_list(ModifierList) of
+        {{opaque, _A1}, {unchecked, _A2}} ->
+            {attribute, Anno, unchecked_opaque, TypeDef};
+        {opaque, _A1} ->
+            {attribute, Anno, opaque, TypeDef};
+        {unchecked, _A1} ->
+            case Attr of
+                opaque -> 
+                    {attribute, Anno, unchecked_opaque, TypeDef};
+                _ ->
+                    ret_err(Anno, "Only opaque types can be unchecked")
+            end
+    end.
+
+modified_function(ModifierList, {function, Anno, Name, Arity, Clauses}) ->
+    case check_modifier_list(ModifierList) of
+        {unchecked, _A1} ->
+            {unchecked_function, Anno, Name, Arity, Clauses};
+        {opaque, A1} ->
+            ret_err(A1, "opaque is not a legal modifier for a function.");
+        {{opaque, A1}, {unchecked, _A2}} ->
+            ret_err(A1, "opaque is not a legal modifier for a function.")
+    end.
+
+check_modifier_list([{atom, A1, opaque}, {atom, A2, unchecked}]) ->
+    {{opaque, A1}, {unchecked, A2}};
+check_modifier_list([{atom, A1, unchecked}, {atom, A2, opaque}]) ->
+    {{opaque, A2}, {unchecked, A1}};
+check_modifier_list([{atom, A1, opaque}]) ->
+    {opaque, A1};
+check_modifier_list([{atom, A1, unchecked}]) ->
+    {unchecked, A1};
+check_modifier_list(ModifierList) ->
+    check_bad_modifier_list(ModifierList, false, false).
+
+check_bad_modifier_list([{atom, A, opaque} | _Rest], true, _UsedUnchecked) ->
+    ret_err(A, "opaque used twice in a modifier list");
+check_bad_modifier_list([{atom, _A, opaque} | Rest], false, UsedUnchecked) ->
+    check_bad_modifier_list(Rest, true, UsedUnchecked);
+check_bad_modifier_list([{atom, A, unchecked} | _Rest], _UsedOpaque, true) ->
+    ret_err(A, "unchecked used twice in a modifier list");
+check_bad_modifier_list([{atom, _A, unchecked} | Rest], UsedOpaque, false) ->
+    check_bad_modifier_list(Rest, UsedOpaque, true);
+check_bad_modifier_list([{atom, A, IllegalValue} | _Rest], _UsedOpaque, _UsedUnchecked) ->
+    ret_err(A, io_lib:format("~tw is an illegal modifier", [IllegalValue])).
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
@@ -1902,11 +1956,11 @@ modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
     {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
     {{attribute, A1, type, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
+modify_anno1({attribute, A, unchecked_opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
     {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, opaque, {TypeName, TypeDef1, Args1}}, Ac3};
+    {{attribute, A1, unchecked_opaque, {TypeName, TypeDef1, Args1}}, Ac3};
 modify_anno1({attribute, A, enum, {TypeName, TypeDef, Args}}, Ac, Mf) ->
     {A1, Ac1} = Mf(A, Ac),
     {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
