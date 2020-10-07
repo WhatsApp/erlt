@@ -231,10 +231,7 @@ object Convert {
         Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
       case Exprs.ShapeUpdate(p, exp, entries) =>
         val shapeExp = convertExpr(exp)
-        // this is not present in Erlang. Approximating
-        // TODO - it should be just fields in AST!
-        val updateRange = Doc.Range(shapeExp.r.end, p.end)
-        Ast.ShapeUpdateExp(shapeExp, Ast.ShapeCreateExp(entries.map(convertShapeField))(updateRange))(p)
+        Ast.ShapeUpdateExp(shapeExp, entries.map(convertShapeField))(p)
       case Exprs.Block(p, exprs) =>
         Ast.BlockExpr(convertBody(exprs))(p)
       case Exprs.Case(p, expr, clauses) =>

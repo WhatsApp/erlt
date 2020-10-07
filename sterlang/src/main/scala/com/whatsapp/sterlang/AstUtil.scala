@@ -121,8 +121,8 @@ object AstUtil {
 
   private def freeVars(expr: Exp, m: String): Set[String] =
     expr match {
-      case ShapeUpdateExp(exp, delta) =>
-        freeVars(exp, m) ++ freeVars(delta, m)
+      case ShapeUpdateExp(exp, fields) =>
+        freeVars(exp, m) ++ fields.flatMap(f => freeVars(f.value, m))
       case BinOpExp(binOp, exp1, exp2) =>
         freeVars(exp1, m) ++ freeVars(exp2, m)
       case UOpExp(uOp, exp) =>
@@ -530,8 +530,8 @@ object AstUtil {
 
   private def getDepExp(expr: Exp): Set[String] =
     expr match {
-      case ShapeUpdateExp(exp, delta) =>
-        getDepExp(exp) ++ getDepExp(delta)
+      case ShapeUpdateExp(exp, fields) =>
+        getDepExp(exp) ++ fields.flatMap(f => getDepExp(f.value))
       case BinOpExp(binOp, exp1, exp2) =>
         getDepExp(exp1) ++ getDepExp(exp2)
       case UOpExp(uOp, exp) =>

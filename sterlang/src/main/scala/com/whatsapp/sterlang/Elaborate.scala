@@ -447,10 +447,9 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabShapeUpdateExp(exp: Ast.ShapeUpdateExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.ShapeUpdateExp(shape, delta) = exp
-    checkUniqueFields(delta.r, delta.fields.map(_.label))
+    val Ast.ShapeUpdateExp(shape, fields) = exp
+    checkUniqueFields(exp.r, fields.map(_.label))
 
-    val fields = delta.fields
     val (fieldTypes, fields1) = fields
       .map({ field =>
         val Ast.Field(label, value) = field

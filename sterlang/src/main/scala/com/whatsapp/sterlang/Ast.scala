@@ -179,8 +179,7 @@ object Ast {
 
   case class ShapeCreateExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
-  // TODO delta should be fields
-  case class ShapeUpdateExp(exp: Exp, delta: ShapeCreateExp)(val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
 
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
   case class EnumExp(enumName: Name, ctr: String, args: List[Exp])(val r: Doc.Range) extends Exp
