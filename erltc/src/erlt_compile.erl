@@ -524,11 +524,14 @@ compile_erl1_forms(Forms, St0) ->
     % Make the compiler return errors and warnings instead of printing them
     %% suppress some warnings in standard compiler because we have already
     %% warned about them in our custom lint pass.
-    Opts0 = St0#compile.options -- [nowarn_unused_type, report_warnings, report_errors],
+    Opts0 =
+        St0#compile.options --
+            [nowarn_unused_vars, nowarn_unused_type, report_warnings, report_errors],
     Ret = compile:noenv_forms(Forms, [
         return_errors,
         return_warnings,
         nowarn_unused_type,
+        nowarn_unused_vars,
         {source, St0#compile.filename}
         | Opts0
     ]),
