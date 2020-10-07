@@ -14,7 +14,7 @@
 
 -module(caret_mod01).
 
--export([f/1, g/1, h/1, i/2]).
+-export([f/1, g/1, h/1, i/3, j/2, k/2, m/2]).
 
 f(X) ->
     Y = 42,
@@ -36,8 +36,38 @@ h(X) ->
     {ok, ^Y} = X,  % assert
     true.
 
-i(Elem, List) ->
-    [found || ^Elem <- List].
+i(Elem, List1, List2) ->
+    Foo = 42,
+    [found || ^Elem <- List1, {foo, ^Foo}<-List2].
 
 j(Elem, List) ->
-    lists:filter(fun(^Elem) -> true; (_) -> false end, List).
+    Foo = 42,
+    lists:filter(fun(^Elem) -> true;
+                    ({foo, ^Foo}) -> true;
+                    (_) -> false
+                 end,
+                 List).
+
+k(X, Y) ->
+    case X of
+        {a, ^X} -> {b, X};
+        {a, ^Y} when X < Y; Y > X -> {b, Y};
+        {b, ^Y} ->
+            Z = {X, Y},
+            case Y of
+                {c, ^X} -> {d, X};
+                {c, ^Y} when X < Y; Y > X -> {d, Y};
+                {d, ^X} -> {d, Y};
+                {d, ^Z} -> {z, Z}
+            end
+    end.
+
+m(X, Y) ->
+    fun ({foo, ^X, Z}) -> Z;
+        ({bar, ^X, Z}) ->
+            case X of
+                {ok, ^X} -> {ok, Z};
+                error -> error
+            end;
+        ({baz, ^Y, Z}) -> Z
+    end.
