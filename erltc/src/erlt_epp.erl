@@ -49,9 +49,9 @@
 -type name() :: atom().
 %No arguments
 -type argspec() ::
-    'none' |
+    'none'
     %Number of arguments
-    non_neg_integer().
+    | non_neg_integer().
 
 -type argnames() :: [atom()].
 -type tokens() :: [erlt_scan:token()].
@@ -59,9 +59,9 @@
 -type userdef() :: {argspec(), {argnames(), tokens()}}.
 -type used() :: {name(), argspec()}.
 -type function_name_type() ::
-    'undefined' |
-    {atom(), non_neg_integer()} |
-    tokens().
+    'undefined'
+    | {atom(), non_neg_integer()}
+    | tokens().
 
 -type warning_info() :: {erl_anno:location(), module(), term()}.
 
@@ -70,9 +70,9 @@
 %% Epp state record.
 -record(epp, {
     file ::
-        file:io_device() |
+        file:io_device()
         %Current file
-        'undefined',
+        | 'undefined',
     %Current location
     location = 1,
     %Offset from Location (-file)
@@ -136,12 +136,12 @@ open(Name, File, StartLocation, Path, Pdm) ->
 
 -spec open(Options) -> {'ok', Epp} | {'ok', Epp, Extra} | {'error', ErrorDescriptor} when
     Options :: [
-        {'default_encoding', DefEncoding :: source_encoding()} |
-        {'includes', IncludePath :: [DirectoryName :: file:name()]} |
-        {'source_name', SourceName :: file:name()} |
-        {'macros', PredefMacros :: macros()} |
-        {'name', FileName :: file:name()} |
-        'extra'
+        {'default_encoding', DefEncoding :: source_encoding()}
+        | {'includes', IncludePath :: [DirectoryName :: file:name()]}
+        | {'source_name', SourceName :: file:name()}
+        | {'macros', PredefMacros :: macros()}
+        | {'name', FileName :: file:name()}
+        | 'extra'
     ],
     Epp :: epp_handle(),
     Extra :: [{'encoding', source_encoding() | 'none'}],
@@ -182,10 +182,10 @@ scan_erl_form(Epp) ->
     epp_request(Epp, scan_erl_form).
 
 -spec parse_erl_form(Epp) ->
-    {'ok', AbsForm} |
-    {error, ErrorInfo} |
-    {'warning', WarningInfo} |
-    {'eof', Line}
+    {'ok', AbsForm}
+    | {error, ErrorInfo}
+    | {'warning', WarningInfo}
+    | {'eof', Line}
 when
     Epp :: epp_handle(),
     AbsForm :: erlt_parse:abstract_form(),
@@ -270,11 +270,11 @@ parse_file(Ifile, Path, Predefs) ->
 when
     FileName :: file:name(),
     Options :: [
-        {'includes', IncludePath :: [DirectoryName :: file:name()]} |
-        {'source_name', SourceName :: file:name()} |
-        {'macros', PredefMacros :: macros()} |
-        {'default_encoding', DefEncoding :: source_encoding()} |
-        'extra'
+        {'includes', IncludePath :: [DirectoryName :: file:name()]}
+        | {'source_name', SourceName :: file:name()}
+        | {'macros', PredefMacros :: macros()}
+        | {'default_encoding', DefEncoding :: source_encoding()}
+        | 'extra'
     ],
     Form :: erlt_parse:abstract_form() | {'error', ErrorInfo} | {'eof', Line},
     Line :: erl_anno:line(),
@@ -298,10 +298,10 @@ parse_file(Ifile, Options) ->
 -spec parse_file(Epp) -> [Form] when
     Epp :: epp_handle(),
     Form ::
-        erlt_parse:abstract_form() |
-        {'error', ErrorInfo} |
-        {'warning', WarningInfo} |
-        {'eof', Line},
+        erlt_parse:abstract_form()
+        | {'error', ErrorInfo}
+        | {'warning', WarningInfo}
+        | {'eof', Line},
     Line :: erl_anno:line(),
     ErrorInfo :: erlt_scan:error_info() | erlt_parse:error_info(),
     WarningInfo :: warning_info().
