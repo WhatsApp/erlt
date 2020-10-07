@@ -77,6 +77,8 @@ keep_error({exported_var, _V, {_What, _Where}}, _Def) ->
 %% warnings that we disable in the standard erl compiler because we do them here
 keep_error({unused_type, {_T, _A}}, _Def) ->
     true;
+keep_error({unused_var, _V}, _Def) ->
+    true;
 %% if you want to always suppress a check, you can force it to false
 %keep_error({unbound_var,_V}, _Def) -> false;
 keep_error(_X, Def) ->
