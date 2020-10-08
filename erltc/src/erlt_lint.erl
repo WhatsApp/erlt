@@ -3322,7 +3322,7 @@ verify_no_underscore([{var, Anno, '_'} | _Rest], St) ->
 verify_no_underscore([_Var | Rest], St) ->
     verify_no_underscore(Rest, St);
 verify_no_underscore([], St) ->
-    St. 
+    St.
 
 is_underspecified({type, _, term, []}, 0) -> true;
 is_underspecified({type, _, any, []}, 0) -> true;
