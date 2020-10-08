@@ -977,6 +977,8 @@ function_state({attribute, L, type, {TypeName, TypeDef, Args}}, St) ->
     type_def(type, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, opaque, {TypeName, TypeDef, Args}}, St) ->
     type_def(opaque, L, TypeName, TypeDef, Args, St);
+function_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St) ->
+    type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     St1 = enum_def(TypeName, TypeDef, St),
     St2 = type_def(enum, L, TypeName, TypeDef, Args, St1#lint{enum = TypeName}),
@@ -3238,7 +3240,7 @@ type_def(unchecked_opaque, Line, TypeName, ProtoType, Args, St0) ->
     TypePair = {TypeName, Arity},
     Info = #typeinfo{attr = unchecked_opaque, line = Line},
     NewDefs = dict:store(TypePair, Info, TypeDefs),
-    St1 = verify_typevars(Args, St0),
+    St1 = verify_no_underscore(Args, verify_typevars(Args, St0)),
     case is_default_type(TypePair) of
         true ->
             add_error(Line, {builtin_type, TypePair}, St1);
@@ -3314,6 +3316,13 @@ verify_typevars(Vars, St0) ->
         end
     end,
     element(1, lists:foldl(Fun, {St0, cerl_sets:new()}, Vars)).
+
+verify_no_underscore([{var, Anno, '_'} | _Rest], St) ->
+    add_error(Anno, underscore_type, St);
+verify_no_underscore([_Var | Rest], St) ->
+    verify_no_underscore(Rest, St);
+verify_no_underscore([], St) ->
+    St. 
 
 is_underspecified({type, _, term, []}, 0) -> true;
 is_underspecified({type, _, any, []}, 0) -> true;
