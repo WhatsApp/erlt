@@ -1,23 +1,21 @@
 DIRS := calc dev dev_dots dev_enum dev_struct doc elm_core erltodo
 
 build:
-	rebar3 erlt compile
+	rebar3 compile
 
 clean:
 	rm -rf _build
 
 test-ir: $(DIRS:%=test-ir/%)
 
-ir: $(DIRS:%=.ir/%)
+ir:
+	rm -rf _buid
+	rebar3 as ir compile
 
-.ir/%:
-	rm -rf _build/ir/lib/$*
-	rebar3 as ir erlt compile $*
-
-test-ir/%: .ir/%
+test-ir/%: ir
 	diff -x '*.beam' -x '*.app' -r _build/ir/lib/$*/ebin $*/ir-spec
 
-update-ir-spec/%: .ir/%
+update-ir-spec/%: ir
 	rm -rf $*/ir-spec
 	mkdir -p $*/ir-spec
 	cp -r _build/ir/lib/$*/ebin/*.P $*/ir-spec
