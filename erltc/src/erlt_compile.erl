@@ -200,6 +200,7 @@ do_file(File, Options0) ->
                         {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
+                        {iff, 'A', {src_listing, "A"}},
                         ?pass(transform_module),
                         ?pass(compile_erl1_forms),
                         ?pass(maybe_save_binary)

@@ -273,6 +273,8 @@ parse_generic_option("W" ++ Warn, T, #options{specific = Spec} = Opts) ->
     end;
 parse_generic_option("B", T, #options{specific = Spec} = Opts) ->
     compile1(T, Opts#options{specific = ['B' | Spec]});
+parse_generic_option("A", T, #options{specific = Spec} = Opts) ->
+    compile1(T, Opts#options{specific = ['A' | Spec]});
 parse_generic_option("E", T, #options{specific = Spec} = Opts) ->
     compile1(T, Opts#options{specific = ['E' | Spec]});
 parse_generic_option("P", T, #options{specific = Spec} = Opts) ->
