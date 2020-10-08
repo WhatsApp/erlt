@@ -1,31 +1,49 @@
 # To build all examples
 
 ```sh
-rebar3 erlt compile
+rebar3 compile
 ```
-
-# To build a single example (focused mode)
-
-```sh
-rebar3 erlt compile <app-name>
-```
-
-For example:
-
-```sh
-rebar3 erlt compile dev_enum
-```
-
-> NOTE: even in focused mode, all classic Erlang files are rebuilt. This is a limitation of rebar.
-> rebar commands can be run in any subdirectory of `examples`
 
 # To peep into erl2 internals
 
-    make ir
+```sh
+rebar3 as ir compile
+```
 
-`make ir` puts intermediate representation (IR) of the build into `_build/ir/lib/<app-name>/ebin/*.P`
+This puts intermediate representation (IR) of the build into `_build/ir/lib/<app-name>/ebin/*.P`
 
 These `.P` files are a classic Erlang representation of ErlT files.
+
+# To Focus on a Specific Example
+
+> Make sure erltc is on your PATH and points to `<repo-root>../_build/default/bin/`
+
+Run
+
+```sh
+DEBUG=1 rebar3 compile | grep 'erltc --build' | sed G
+```
+
+The output will look something like this:
+
+```
+erltc --build compile --src-dir examples/dev_dots/src --build-dir examples/_build/default/lib/dev_dots/build -o examples/_build/default/lib/dev_dots/ebin -I examples/_build/default/lib/dev_dots/include -pa examples/_build/default/lib/dev_dots/ebin +debug_info +report_warnings dots_mod01.erlt
+
+erltc --build compile --src-dir examples/calc/src --build-dir examples/_build/default/lib/calc/build -o examples/_build/default/lib/calc/ebin -I examples/_build/default/lib/calc/include -pa examples/_build/default/lib/calc/ebin +debug_info +report_warnings calc.erlt calc_core.erlt calc_parser_ffi.erlt
+
+...
+
+```
+
+Copy the command for the example you want to focus on.
+
+You can do the same for IR with:
+
+```sh
+DEBUG=1 rebar3 as ir compile | grep 'erltc --build' | sed G
+```
+
+> Note: the rebar plugin does not shell out to erltc: it passes a list of strings in memory.
 
 # To run tests
 
@@ -38,14 +56,6 @@ make test
 You can run only the IR tests with `make test-ir`
 
 You can update these tests with `make update-ir-spec`
-
-# To run a specific ir test
-
-    make test-ir/<app-name>
-
-for example:
-
-    make test-ir/example
 
 # Checks Test
 

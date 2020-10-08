@@ -13,35 +13,21 @@ init(State0) ->
     rebar_prv_erlt_clean:init(State1).
 
 run(F, State) ->
-    Args = rebar_state:command_args(State),
-    AppInfos = get_app_infos(Args, rebar_state:project_apps(State)),
+    Apps =
+        case rebar_state:current_app(State) of
+            undefined ->
+                rebar_state:project_apps(State);
+            CurrentApp ->
+                [CurrentApp]
+        end,
     [
         begin
-            validate_app_info(AppInfo),
-            F(AppInfo)
+            validate_app_info(App),
+            F(App)
         end
-        || AppInfo <- AppInfos
+        || App <- Apps
     ],
     ok.
-
-get_app_infos([], ProjectApps) ->
-    ProjectApps;
-get_app_infos([Arg], ProjectApps) ->
-    case
-        lists:search(fun(App) -> binary_to_list(rebar_app_info:name(App)) =:= Arg end, ProjectApps)
-    of
-        {value, App} ->
-            [App];
-        false ->
-            rebar_utils:abort(
-                "expected the optional positional argument to be an app name, instead got: ~p. Project apps are: ~p",
-                [Arg, [binary_to_list(rebar_app_info:name(App)) || App <- ProjectApps]]
-            )
-    end;
-get_app_infos(Args, _ProjectApps) ->
-    rebar_utils:abort("expected either no ppositional arguments or an app name, instead got: ~p", [
-        Args
-    ]).
 
 compile_app(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
@@ -69,8 +55,8 @@ clean_app(AppInfo) ->
     Options = make_erlt_dir_options(AppInfo, ?SRC_DIR),
     verbose_level() >= 1 andalso
         rebar_log:info("Cleaning ~s/~s", [rebar_app_info:name(AppInfo), ?SRC_DIR]),
-    Argv = ["clean" | Options],
-    call_erlt_build(Argv).
+    Argv = ["--build" | ["clean" | Options]],
+    call_erltc(Argv).
 
 handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
     BaseDir = rebar_app_info:dir(AppInfo),
@@ -99,11 +85,11 @@ handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
                     ["+" ++ to_string(Term) || Term <- ErltOpts],
 
             Argv = lists:append([
-                [Task],
+                ["--build", Task],
                 Options,
                 Sources
             ]),
-            call_erlt_build(Argv),
+            call_erltc(Argv),
 
             % We run this *after* call_erlt_build(), because
             % erlt_build will create "ebin" directory, without which
@@ -145,10 +131,11 @@ make_erlt_dir_options(AppInfo, SrcDir) ->
             EbinDir
         ].
 
-call_erlt_build(Argv) ->
-    rebar_log:log(debug, "calling erlt_build with args: ~p", [Argv]),
-    % erlt_build expected to either return OK or halt(nonzero)
-    ok = erlt_build:main(Argv).
+call_erltc(Argv) ->
+    Repro = string:join(Argv, " "),
+    rebar_log:log(debug, "calling erlt_build. You can reproduce with:~n erltc ~s", [Repro]),
+    % erltc expected to either return OK or halt(nonzero)
+    ok = erltc:api(Argv).
 
 validate_app_info(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
