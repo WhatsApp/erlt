@@ -606,6 +606,8 @@ format_error({deprecated_builtin_type, {Name, Arity}, Replacement, Rel}) ->
         "removed in ~s; use ~s",
         [Name, Arity, Rel, UseS]
     );
+format_error(opaque_unchecked_type_error) ->
+    "opaque unchecked type must be term()";
 format_error({not_exported_opaque, {TypeName, Arity}}) ->
     io_lib:format("opaque type ~tw~s is not exported", [TypeName, gen_type_paren(Arity)]);
 format_error({underspecified_opaque, {TypeName, Arity}}) ->
@@ -3245,7 +3247,7 @@ type_def(unchecked_opaque, Line, TypeName, ProtoType, Args, St0) ->
             St3 =
                 case is_underspecified(ProtoType, 0) of
                     false ->
-                        add_error(Line, "opaque unchecked type must be term()", St2);
+                        add_error(Line, opaque_unchecked_type_error, St2);
                     true ->
                         St2
                 end,
