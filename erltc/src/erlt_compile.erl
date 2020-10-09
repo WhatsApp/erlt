@@ -1383,19 +1383,19 @@ fmt_line(L, Text) ->
 line_to_txt(0) -> "";
 line_to_txt(L) -> integer_to_list(L).
 
-decorate([{Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when
+decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when
     Line =:= StartLine, EndLine =:= StartLine
 ->
     %% start and end on same line
-    S = underline(StartCol, EndCol),
+    S = underline(Text, StartCol, EndCol),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
 decorate([{Line, Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) when Line =:= StartLine ->
     %% start with end on separate line
-    S = underline(StartCol, string:length(Text) + 1),
+    S = underline(Text, StartCol, string:length(Text) + 1),
     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
-%% decorate([{Line, _Text}=L|Ls], StartLine, StartCol, EndLine, EndCol)
+%% decorate([{Line, Text}=L|Ls], StartLine, StartCol, EndLine, EndCol)
 %%   when Line =:= EndLine ->
-%%     S = underline(EndCol,EndCol),  % just mark end
+%%     S = underline(Text, EndCol,EndCol),  % just mark end
 %%     decorate(S, L, Ls, StartLine, StartCol, EndLine, EndCol);
 decorate([{_Line, _Text} = L | Ls], StartLine, StartCol, EndLine, EndCol) ->
     [L | decorate(Ls, StartLine, StartCol, EndLine, EndCol)];
@@ -1411,17 +1411,19 @@ decorate(Text, L, Ls, StartLine, StartCol, EndLine, EndCol) ->
 %% End typically points to the first position after the actual region.
 %% If End = Start, we adjust it to Start+1 to mark at least one character
 %% TODO: colorization option
-underline(Start, End) when End < Start ->
+underline(_Text, Start, End) when End < Start ->
     % no underlining at all if end column is unknown
     "";
-underline(Start, Start) ->
-    underline(Start, Start + 1);
-underline(Start, End) ->
-    underline(1, Start, End).
+underline(Text, Start, Start) ->
+    underline(Text, Start, Start + 1);
+underline(Text, Start, End) ->
+    underline(Text, Start, End, 1).
 
-underline(N, Start, End) when N < Start ->
-    [$\s | underline(N + 1, Start, End)];
-underline(N, _Start, End) ->
+underline(<<$\t, Text/binary>>, Start, End, N) when N < Start ->
+    [$\t | underline(Text, Start, End, N + 1)];
+underline(<<_, Text/binary>>, Start, End, N) when N < Start ->
+    [$\s | underline(Text, Start, End, N + 1)];
+underline(_Text, _Start, End, N) ->
     underline_1(N, End).
 
 underline_1(N, End) when N < End ->
