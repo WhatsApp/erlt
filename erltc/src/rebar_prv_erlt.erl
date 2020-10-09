@@ -55,7 +55,7 @@ clean_app(AppInfo) ->
     Options = make_erlt_dir_options(AppInfo, ?SRC_DIR),
     verbose_level() >= 1 andalso
         rebar_log:info("Cleaning ~s/~s", [rebar_app_info:name(AppInfo), ?SRC_DIR]),
-    Argv = ["--build" | ["clean" | Options]],
+    Argv = ["--build", "clean" | Options],
     call_erltc(Argv).
 
 handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
