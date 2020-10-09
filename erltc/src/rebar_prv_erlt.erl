@@ -29,7 +29,7 @@ run(F, Description, State) ->
             ok ->
                 ok;
             error ->
-                rebar_utils:abort("error ~s", [Description])
+                rebar_utils:abort("~s failed", [Description])
         end
         || App <- Apps
     ],
