@@ -38,8 +38,7 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok, rebar_state:t()}.
 do(State) ->
-    ok = rebar_prv_erlt:run(fun rebar_prv_erlt:compile_app/1, State),
-    {ok, State}.
+    rebar_prv_erlt:run(fun rebar_prv_erlt:compile_app/1, "compiling ErlT code", State).
 
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).

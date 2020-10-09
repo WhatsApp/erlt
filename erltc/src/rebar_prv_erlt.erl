@@ -1,7 +1,7 @@
 % This code was adapted from earlier work by Anton Lavrik @alavrik
 -module(rebar_prv_erlt).
 
--export([init/1, run/2, compile_app/1, clean_app/1]).
+-export([init/1, run/3, compile_app/1, clean_app/1]).
 
 -include("erlt_build_types.hrl").
 
@@ -12,7 +12,10 @@ init(State0) ->
     {ok, State1} = rebar_prv_erlt_compile:init(State0),
     rebar_prv_erlt_clean:init(State1).
 
-run(F, State) ->
+% halts when there is an error
+-spec run(F, string(), rebar_state:t()) -> {ok, rebar_state:t()} when
+    F :: fun((rebar_app_info:t()) -> ok | error).
+run(F, Description, State) ->
     Apps =
         case rebar_state:current_app(State) of
             undefined ->
@@ -20,14 +23,17 @@ run(F, State) ->
             CurrentApp ->
                 [CurrentApp]
         end,
+    lists:foreach(fun validate_app_info/1, Apps),
     [
-        begin
-            validate_app_info(App),
-            F(App)
+        case F(App) of
+            ok ->
+                ok;
+            error ->
+                rebar_utils:abort("error ~s", [Description])
         end
         || App <- Apps
     ],
-    ok.
+    {ok, State}.
 
 compile_app(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),
@@ -48,8 +54,7 @@ compile_app(AppInfo) ->
         EbinDir,
         CommonOptions,
         ErltOpts
-    ),
-    ok.
+    ).
 
 clean_app(AppInfo) ->
     Options = make_erlt_dir_options(AppInfo, ?SRC_DIR),
@@ -89,23 +94,24 @@ handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
                 Options,
                 Sources
             ]),
-            call_erltc(Argv),
-
-            % We run this *after* call_erlt_build(), because
-            % erlt_build will create "ebin" directory, without which
-            % code:add_patha() would return {error,bad_directory}
-            AbsOutputDir = filename:absname(OutputDir),
-            case code:add_patha(AbsOutputDir) of
-                true ->
-                    ok;
-                AddPathError ->
-                    rebar_utils:error("erlt: code:add_patha(~s) returned error: ~p", [
-                        AbsOutputDir,
-                        AddPathError
-                    ])
-            end,
-
-            ok
+            case call_erltc(Argv) of
+                ok ->
+                    % We run this *after* call_erlt_build(), because
+                    % erlt_build will create "ebin" directory, without which
+                    % code:add_patha() would return {error,bad_directory}
+                    AbsOutputDir = filename:absname(OutputDir),
+                    case code:add_patha(AbsOutputDir) of
+                        true ->
+                            ok;
+                        AddPathError ->
+                            rebar_utils:error("erlt: code:add_patha(~s) returned error: ~p", [
+                                AbsOutputDir,
+                                AddPathError
+                            ])
+                    end;
+                error ->
+                    error
+            end
     end.
 
 make_erlt_dir_options(AppInfo, SrcDir) ->
@@ -131,11 +137,12 @@ make_erlt_dir_options(AppInfo, SrcDir) ->
             EbinDir
         ].
 
+% can halt if incremental mode
+-spec call_erltc([string]) -> ok | error.
 call_erltc(Argv) ->
     Repro = string:join(Argv, " "),
     rebar_log:log(debug, "calling erlt_build. You can reproduce with:~n erltc ~s", [Repro]),
-    % erltc expected to either return OK or halt(nonzero)
-    ok = erltc:api(Argv).
+    erltc:api(Argv).
 
 validate_app_info(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),

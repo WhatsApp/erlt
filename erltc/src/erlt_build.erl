@@ -26,7 +26,9 @@
 -compile([
     {nowarn_unused_function, [
         print_warning/1,
-        print_warning/2
+        print_warning/2,
+        print_error/1,
+        print_error/2
     ]}
 ]).
 
@@ -85,17 +87,10 @@ print_usage() ->
         ]
     ]).
 
-% entry point when called from erlt
-main(Argv) ->
-    case run_command(Argv) of
-        ok ->
-            ok;
-        {error, ErrorStr} ->
-            print_error(ErrorStr),
-            erlang:halt(1)
-    end.
+% entry point when called from erltc.erl
 
-run_command(Argv) ->
+-spec main([string]) -> ok | error.
+main(Argv) ->
     try
         do_run_command(Argv)
     catch
@@ -477,6 +472,7 @@ throw_needs_incremental(Opt) ->
 args_value_error(Name, Value, ErrorStr) ->
     erlt_build_util:throw_error("invalid value for option ~s: '~s'. ~s", [Name, Value, ErrorStr]).
 
+-spec do_compile(#args{}) -> ok | error.
 do_compile(#args{incremental = false} = Args) ->
     erlt_build_basic_mode:invoke(Args);
 do_compile(#args{incremental = true, makefile = Makefile, gen_only = GenOnly} = Args) ->
