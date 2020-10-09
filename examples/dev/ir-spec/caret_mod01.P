@@ -6,69 +6,51 @@
 
 f(X) ->
     Y = 42,
-    begin
-        pin_o0 = Y,
-        case X of
-            pin_i0 when pin_i0 =:= pin_o0 ->
-                {that, Y};
-            Z ->
-                {this, Z}
-        end
+    case X of
+        Y ->
+            {that, Y};
+        Z ->
+            {this, Z}
     end.
 
 g(X) ->
     Y = 42,
-    begin
-        pin_o1 = Y,
-        case X of
-            {foo, [pin_i1 | Zs]} when pin_i1 =:= pin_o1 ->
-                {that, Y, Zs};
-            {foo, [Z | Zs]} ->
-                {this, Z, Zs};
-            Z ->
-                {other, Z}
-        end
+    case X of
+        {foo, [Y | Zs]} ->
+            {that, Y, Zs};
+        {foo, [Z | Zs]} ->
+            {this, Z, Zs};
+        Z ->
+            {other, Z}
     end.
 
 h(X) ->
     Y = 42,
-    begin
-        pin_o2 = Y,
-        begin
-            pin_m3 = X,
-            {ok, pin_i2} = pin_m3,
-            if
-                pin_i2 =:= pin_o2 ->
-                    pin_m3;
-                true ->
-                    error({badmatch, pin_m3})
-            end
-        end
-    end,
+    {ok, Y} = X,
     true.
 
 i(Elem, List1, List2) ->
     Foo = 42,
     begin
-        pin_o4 = Elem,
-        pin_o5 = Foo,
+        pin_o0 = Elem,
+        pin_o1 = Foo,
         [ 
          found ||
-             pin_i4 <- List1,
-             pin_i4 =:= pin_o4,
-             {foo, pin_i5} <- List2,
-             pin_i5 =:= pin_o5
+             pin_i0 <- List1,
+             pin_i0 =:= pin_o0,
+             {foo, pin_i1} <- List2,
+             pin_i1 =:= pin_o1
         ]
     end.
 
 j(Elem, List) ->
     Foo = 42,
     lists:filter(begin
-                     pin_o6 = Elem,
-                     pin_o7 = Foo,
-                     fun(pin_i6) when pin_i6 =:= pin_o6 ->
+                     pin_o2 = Elem,
+                     pin_o3 = Foo,
+                     fun(pin_i2) when pin_i2 =:= pin_o2 ->
                             true;
-                        ({foo, pin_i7}) when pin_i7 =:= pin_o7 ->
+                        ({foo, pin_i3}) when pin_i3 =:= pin_o3 ->
                             true;
                         (_) ->
                             false
@@ -77,55 +59,39 @@ j(Elem, List) ->
                  List).
 
 k(X, Y) ->
-    begin
-        pin_o8 = X,
-        pin_o9 = Y,
-        case X of
-            {a, pin_i8} when pin_i8 =:= pin_o8 ->
-                {b, X};
-            {a, pin_i9}
-                when pin_i9 =:= pin_o9, X < Y; pin_i9 =:= pin_o9, Y > X ->
-                {b, Y};
-            {b, pin_i9} when pin_i9 =:= pin_o9 ->
-                Z = {X, Y},
-                begin
-                    pin_o10 = X,
-                    pin_o11 = Y,
-                    pin_o12 = Z,
-                    case Y of
-                        {c, pin_i10} when pin_i10 =:= pin_o10 ->
-                            {d, X};
-                        {c, pin_i11}
-                            when
-                                pin_i11 =:= pin_o11, X < Y;
-                                pin_i11 =:= pin_o11, Y > X ->
-                            {d, Y};
-                        {d, pin_i10} when pin_i10 =:= pin_o10 ->
-                            {d, Y};
-                        {d, pin_i12} when pin_i12 =:= pin_o12 ->
-                            {z, Z}
-                    end
-                end
-        end
+    case X of
+        {a, X} ->
+            {b, X};
+        {a, Y} when X < Y; Y > X ->
+            {b, Y};
+        {b, Y} ->
+            Z = {X, Y},
+            case Y of
+                {c, X} ->
+                    {d, X};
+                {c, Y} when X < Y; Y > X ->
+                    {d, Y};
+                {d, X} ->
+                    {d, Y};
+                {d, Z} ->
+                    {z, Z}
+            end
     end.
 
 m(X, Y) ->
     begin
-        pin_o13 = X,
-        pin_o15 = Y,
-        fun({foo, pin_i13, Z}) when pin_i13 =:= pin_o13 ->
+        pin_o4 = X,
+        pin_o5 = Y,
+        fun({foo, pin_i4, Z}) when pin_i4 =:= pin_o4 ->
                Z;
-           ({bar, pin_i13, Z}) when pin_i13 =:= pin_o13 ->
-               begin
-                   pin_o14 = X,
-                   case X of
-                       {ok, pin_i14} when pin_i14 =:= pin_o14 ->
-                           {ok, Z};
-                       error ->
-                           error
-                   end
+           ({bar, pin_i4, Z}) when pin_i4 =:= pin_o4 ->
+               case X of
+                   {ok, X} ->
+                       {ok, Z};
+                   error ->
+                       error
                end;
-           ({baz, pin_i15, Z}) when pin_i15 =:= pin_o15 ->
+           ({baz, pin_i5, Z}) when pin_i5 =:= pin_o5 ->
                Z
         end
     end.

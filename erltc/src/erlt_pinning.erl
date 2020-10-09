@@ -21,11 +21,9 @@ parse_transform(Forms, _Options) ->
     {Forms1, _St1} = erlt_ast:traverse(Forms, St, fun pre/3, fun post/3),
     Forms1.
 
--define(VAR_PREFIX, "pin").
-
 -record(state, {
     % lift pinnings only for shadowing
-    keep_nonshadowing = false,
+    keep_nonshadowing = true,
     % stack of flags, whether pinned vars should be kept or lifted
     keep = [],
     pinned = [],
