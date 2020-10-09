@@ -7,17 +7,21 @@
 
 -export([invoke/1]).
 
+-spec invoke(#args{}) -> ok | error.
 invoke(#args{command = compile} = Args) ->
     clean(Args),
     try
-        do_phase("scan", Args),
-        do_phase("compile", Args)
+        case do_phase("scan", Args) of
+            ok ->
+                do_phase("compile", Args);
+            error ->
+                error
+        end
     catch
         Class:Reason:Stacktrace ->
             clean(Args),
             erlang:raise(Class, Reason, Stacktrace)
-    end,
-    ok;
+    end;
 invoke(#args{command = clean, build_dir = undefined}) ->
     erlt_build_util:throw_error("internal error: I don't know which build directory to clean");
 invoke(#args{command = clean, output_dir = undefined}) ->
@@ -32,9 +36,14 @@ clean(#args{build_dir = BuildDir, output_dir = OutputDir}) ->
 % calls erltc Phase on InputFiles in parallel
 do_phase(Phase, #args{input_files = InputFiles} = Args) ->
     F = fun(InputFile) -> do_file(Phase, Args, InputFile) end,
-    case p_each(F, InputFiles) of
-        ok ->
-            ok;
+    case p_map(F, InputFiles) of
+        {results, Results} ->
+            case lists:member(error, maps:values(Results)) of
+                true ->
+                    error;
+                false ->
+                    ok
+            end;
         {timeout, TimedOutFiles} ->
             clean(Args),
             io:format(
@@ -42,7 +51,7 @@ do_phase(Phase, #args{input_files = InputFiles} = Args) ->
                 "Internal error: following files timed out during the ~s phase: ~p~n",
                 [Phase, TimedOutFiles]
             ),
-            erlang:halt(3)
+            error
     end.
 
 do_file(
@@ -75,37 +84,32 @@ do_file(
             "-o",
             OutputDir
         ] ++ PhaseArgs ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
-    case erltc:api(Args) of
-        ok ->
-            ok;
-        error ->
-            % the actual error message is logged to stdio by erltc
-            % so we simply halt
-            erlang:halt(3)
-    end,
-    ok.
+    erltc:api(Args).
 
 %% UTILITIES
 
 % Errors are not handled (nocatch)
-% and we ignore return values
--spec p_each(Cb, list(Key)) -> ok | {timeout, list(Key)} when
+-spec p_map(Cb, list(Key)) -> {results, #{Key => Ret}} | {timeout, list(Key)} when
     Cb :: fun((Key) -> Ret), Ret :: term().
-p_each(_, []) ->
-    ok;
-p_each(F, List) ->
+p_map(F, List) ->
+    p_map(F, List, #{}).
+
+p_map(_, [], Results) ->
+    {results, Results};
+p_map(F, List, Results0) ->
     {L1, L2} = safe_split(concurrency(), List),
     [work(F, Key) || Key <- L1],
-    Results = [
+    ResList = [
         receive
             {Key, Res} -> {Key, Res}
         end
         || Key <- L1
     ],
-    TimedOutKeys = [Key || {Key, timeout} <- Results],
-    case length(TimedOutKeys) of
-        0 ->
-            p_each(F, L2);
+    TimedOutKeys = [Key || {Key, timeout} <- ResList],
+    case TimedOutKeys of
+        [] ->
+            Results1 = maps:merge(Results0, maps:from_list(ResList)),
+            p_map(F, L2, Results1);
         _ ->
             {timeout, TimedOutKeys}
     end.
@@ -114,10 +118,10 @@ work(F, Key) ->
     Self = self(),
     spawn_link(fun() ->
         TimeoutHandler = self(),
-        Child = spawn_link(fun() -> TimeoutHandler ! {Key, {ok, F(Key)}} end),
+        Child = spawn_link(fun() -> TimeoutHandler ! {Key, F(Key)} end),
         receive
-            {Key, {ok, Val}} ->
-                Self ! {Key, {ok, Val}}
+            {Key, Val} ->
+                Self ! {Key, Val}
         after ?TIMEOUT_FOR_FILE ->
             exit(Child, kill),
             Self ! {Key, timeout}
@@ -144,7 +148,7 @@ rmrf(Dir) ->
             ok;
         {error, Reason} ->
             io:format(standard_error, "could not remove directory ~p: ~p~n", [Dir, Reason]),
-            erlang:halt(1)
+            error
     end.
 
 safe_split(N, List) when length(List) < N ->
