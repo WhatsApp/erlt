@@ -36,7 +36,7 @@ init(State) ->
 
 -spec do(rebar_state:t()) -> {ok | error, rebar_state:t()}.
 do(State) ->
-    rebar_prv_erlt:run(fun rebar_prv_erlt:clean_app/1, "cleaning ErlT build artifacts", State).
+    rebar_prv_erlt:run(fun rebar_prv_erlt:clean_app/1, "Cleaning ErlT build artifacts", State).
 
 format_error(Reason) ->
     io_lib:format("~p", [Reason]).
