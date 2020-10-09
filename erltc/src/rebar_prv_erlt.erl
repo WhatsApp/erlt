@@ -137,7 +137,6 @@ make_erlt_dir_options(AppInfo, SrcDir) ->
             EbinDir
         ].
 
-% can halt if incremental mode
 -spec call_erltc([string]) -> ok | error.
 call_erltc(Argv) ->
     Repro = string:join(Argv, " "),
