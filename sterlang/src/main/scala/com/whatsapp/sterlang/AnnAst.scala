@@ -52,12 +52,12 @@ object AnnAst {
   case class IfExp(bodies: List[Body])(val typ: Type, val r: Doc.Range) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
-  case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class StructUpdate(exp: Exp, structName: String, fields: List[Field[Exp]])(
+  case class StructCreate(struct: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructUpdate(exp: Exp, struct: String, fields: List[Field[Exp]])(
       val typ: Type,
       val r: Doc.Range,
   ) extends Exp
-  case class StructSelect(exp: Exp, structName: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructSelect(exp: Exp, struct: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
       val r: Doc.Range,

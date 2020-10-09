@@ -472,8 +472,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructCreate(name, fields) = exp
-    val structDef = getStructDef(exp.r, name)
+    val nName = normalizeTypeName(name)
     val expander = dExpander(d)
+
+    val structDef = getStructDef(exp.r, nName)
 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -492,30 +494,31 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val expType = structDef.kind match {
-      case Ast.StrStruct => MT.NamedType(name, typeConParams)
+      case Ast.StrStruct => MT.NamedType(nName.stringId, typeConParams)
       case Ast.ExnStruct => MT.ExceptionType
       case Ast.MsgStruct => MT.MessageType
     }
 
     unify(exp.r, ty, expType)
 
-    AnnAst.StructCreate(name, fields1)(typ = ty, r = exp.r)
+    AnnAst.StructCreate(nName.stringId, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructUpdate(exp: Ast.StructUpdate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructUpdate(struct, name, fields) = exp
-    val structDef = getStructDef(exp.r, name)
+    val nName = normalizeTypeName(name)
+    val expander = dExpander(d)
+
+    val structDef = getStructDef(exp.r, nName)
 
     structDef.kind match {
       case Ast.StrStruct =>
       // OK
       case Ast.ExnStruct =>
-        throw new UnconditionalExceptionUpdate(exp.r, name)
+        throw new UnconditionalExceptionUpdate(exp.r, nName.stringId)
       case Ast.MsgStruct =>
-        throw new UnconditionalMessageUpdate(exp.r, name)
+        throw new UnconditionalMessageUpdate(exp.r, nName.stringId)
     }
-
-    val expander = dExpander(d)
 
     checkUniqueFields(exp.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -532,27 +535,29 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(field.label, elab(field.value, eFieldType, d, env))
     }
 
-    val structType = MT.NamedType(name, typeConParams)
+    val structType = MT.NamedType(nName.stringId, typeConParams)
     val struct1 = elab(struct, structType, d, env)
     unify(exp.r, ty, structType)
 
-    AnnAst.StructUpdate(struct1, name, fields1)(typ = ty, r = exp.r)
+    AnnAst.StructUpdate(struct1, nName.stringId, fields1)(typ = ty, r = exp.r)
   }
 
   private def elabStructSelect(exp: Ast.StructSelect, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructSelect(struct, name, fieldName) = exp
-    val structDef = getStructDef(exp.r, name)
+    val nName = normalizeTypeName(name)
+    val expander = dExpander(d)
+
+    val structDef = getStructDef(exp.r, nName)
 
     structDef.kind match {
       case Ast.StrStruct =>
       // OK
       case Ast.ExnStruct =>
-        throw new UnconditionalExceptionSelect(exp.r, name)
+        throw new UnconditionalExceptionSelect(exp.r, nName.stringId)
       case Ast.MsgStruct =>
-        throw new UnconditionalMessageSelect(exp.r, name)
+        throw new UnconditionalMessageSelect(exp.r, nName.stringId)
     }
 
-    val expander = dExpander(d)
     val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val eSub: Expander.Sub =
       sub.view.mapValues(Left(_)).toMap
@@ -561,10 +566,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val fieldDef =
       structDef.fields.find(_.label == fieldName) match {
         case Some(f) => f
-        case None    => throw new UnknownStructField(exp.r, name, fieldName)
+        case None    => throw new UnknownStructField(exp.r, nName.stringId, fieldName)
       }
 
-    val structType = MT.NamedType(name, typeConParams)
+    val structType = MT.NamedType(nName.stringId, typeConParams)
     val struct1 = elab(struct, structType, d, env)
 
     val fieldType = expander.mkType(fieldDef.value, eSub)
@@ -572,7 +577,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.r, ty, eFieldType)
 
-    AnnAst.StructSelect(struct1, name, fieldName)(typ = ty, r = exp.r)
+    AnnAst.StructSelect(struct1, nName.stringId, fieldName)(typ = ty, r = exp.r)
   }
 
   private def elabAppExp(exp: Ast.AppExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -778,7 +783,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabEnumExp(exp: Ast.EnumExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.EnumExp(eName, cName, args) = exp
-    val nName = normalizeEnumName(eName)
+    val nName = normalizeTypeName(eName)
     val expander = dExpander(d)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
@@ -1135,7 +1140,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (PreAnnPat, Env, PEnv) = {
     val expander = dExpander(d)
     val Ast.EnumPat(eName, cName, pats) = p
-    val nName = normalizeEnumName(eName)
+    val nName = normalizeTypeName(eName)
     val t = TU.instantiate(d, ts)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
@@ -1178,8 +1183,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (PreAnnPat, Env, PEnv) = {
     val Ast.StructPat(name, fields) = p
-    val structDef = getStructDef(p.r, name)
+    val nName = normalizeTypeName(name)
     val expander = dExpander(d)
+
+    val structDef = getStructDef(p.r, nName)
 
     checkUniqueFields(p.r, fields.map(_.label))
     checkStructFields(fields, structDef)
@@ -1193,7 +1200,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     val expType = structDef.kind match {
       case Ast.StrStruct =>
-        MT.NamedType(name, typeConParams)
+        MT.NamedType(nName.stringId, typeConParams)
       case Ast.ExnStruct =>
         MT.ExceptionType
       case Ast.MsgStruct =>
@@ -1214,7 +1221,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       AnnAst.Field(field.label, pat1)
     }
 
-    (AnnAst.StructPat(name, fields1)(p.r), envAcc, penvAcc)
+    (AnnAst.StructPat(nName.stringId, fields1)(p.r), envAcc, penvAcc)
   }
 
   // --- Some additional checks ---
@@ -1281,7 +1288,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         else rem
     }
 
-  private def normalizeEnumName(eName: Ast.Name): Ast.Name =
+  private def normalizeTypeName(eName: Ast.Name): Ast.Name =
     eName match {
       case local: Ast.LocalName =>
         program.typeMap.getOrElse(local, local)
@@ -1290,9 +1297,10 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         else eName
     }
 
-  private def getStructDef(pos: Doc.Range, name: String): Ast.StructDef =
-    program.structDefs.find(_.name == name) match {
-      case Some(structDef) => structDef
-      case None            => throw new UnknownStruct(pos, name)
+  private def getStructDef(pos: Doc.Range, name: Ast.Name): Ast.StructDef =
+    context.structDefs.find(_.name == name.stringId) match {
+      case Some(sd) => sd
+      case None     => throw new UnknownStruct(pos, name.stringId)
     }
+
 }

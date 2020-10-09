@@ -22,6 +22,10 @@
 
 -import(mod03, [mk_unit/0]).
 
+-import_type(mod03, [box2/1]).
+
+-struct box3(A) :: {value :: A}.
+
 -spec mk_unit_remote_dot() -> mod03:unit0().
 mk_unit_remote_dot() -> mod03:unit0.unit0{}.
 
@@ -58,12 +62,32 @@ funs() -> [
   fun () -> mod03:unit0.unit0{} end
 ].
 
-%%-spec remote_dot2() -> mod03.unit0().
-%%remote_dot2() -> mod03.mk_unit().
-%%
 -spec import1() -> mod03:unit0().
 import1() -> mk_unit().
 
-%% Should work some day - see https://github.com/erlang/otp/blob/9a6e292336cb36561f9a993f86ddee363f1d0850/lib/stdlib/src/erl_lint.erl#L2427-L2435
-%%-spec import2() -> fun(() -> mod03.unit0()).
-%%import2() -> fun mk_unit/0.
+mk_box1(X) ->
+    #mod03:box1{value = X}.
+match_box1(#mod03:box1{value = X}) ->
+    X.
+select_from_box1(Box1) ->
+    Box1#mod03:box1.value.
+update_box1(Box1, Value) ->
+    Box1#mod03:box1{value = Value}.
+
+mk_box2(X) ->
+    #box2{value = X}.
+match_box2(#box2{value = X}) ->
+    X.
+select_from_box2(Box2) ->
+    Box2#box2.value.
+update_box2(Box2, Value) ->
+    Box2#box2{value = Value}.
+
+mk_box3(X) ->
+    #box3{value = X}.
+match_box3(#box3{value = X}) ->
+    X.
+select_from_box3(Box3) ->
+    Box3#box3.value.
+update_box3(Box3, Value) ->
+    Box3#box3{value = Value}.

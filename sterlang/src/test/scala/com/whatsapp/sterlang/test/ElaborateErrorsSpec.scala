@@ -28,7 +28,7 @@ class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     val sw = new StringWriter()
     try {
       val vars = new Vars()
-      val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+      val context = Context(prog.enumDefs, prog.structDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
       val elaborate = new Elaborate(vars, context, prog)
       elaborate.elaborateFuns(prog.funs)
       val actualOutput = sw.toString

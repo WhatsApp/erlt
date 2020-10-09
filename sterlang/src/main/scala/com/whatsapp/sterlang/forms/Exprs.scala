@@ -41,9 +41,15 @@ object Exprs {
   case class Bin(r: Doc.Range, elems: List[BinElement]) extends Expr
   case class BinaryOp(r: Doc.Range, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(r: Doc.Range, op: String, exp1: Expr) extends Expr
-  case class StructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
-  case class StructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[StructField]) extends Expr
-  case class StructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class LocalStructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
+  case class RemoteStructCreate(r: Doc.Range, module: String, structName: String, fields: List[StructField])
+      extends Expr
+  case class LocalStructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[StructField]) extends Expr
+  case class RemoteStructUpdate(r: Doc.Range, exp: Expr, module: String, structName: String, fields: List[StructField])
+      extends Expr
+  case class LocalStructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class RemoteStructSelect(r: Doc.Range, struct: Expr, module: String, structName: String, fieldName: String)
+      extends Expr
   case class ShapeSelect(r: Doc.Range, exp: Expr, fieldName: String) extends Expr
   case class ShapeCreate(r: Doc.Range, entries: List[ShapeField]) extends Expr
   case class ShapeUpdate(r: Doc.Range, exp: Expr, entries: List[ShapeField]) extends Expr

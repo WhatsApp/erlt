@@ -59,12 +59,63 @@ object ExprsConvert {
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
         UnaryOp(r(anno), op, convertExp(eExp1))
       case ETuple(List(EAtom("struct"), anno, EAtom(name), EList(fields))) =>
-        StructCreate(r(anno), name, fields.map(structField))
+        LocalStructCreate(r(anno), name, fields.map(structField))
+      case ETuple(
+            List(
+              EAtom("struct"),
+              anno,
+              ETuple(
+                List(
+                  EAtom("remote"),
+                  _,
+                  ETuple(List(EAtom("atom"), _anno1, EAtom(module))),
+                  ETuple(List(EAtom("atom"), _anno2, EAtom(structName))),
+                )
+              ),
+              EList(fields),
+            )
+          ) =>
+        RemoteStructCreate(r(anno), module, structName, fields.map(structField))
       case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
-        StructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
+        LocalStructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
+      case ETuple(
+            List(
+              EAtom("struct"),
+              anno,
+              eExp,
+              ETuple(
+                List(
+                  EAtom("remote"),
+                  _,
+                  ETuple(List(EAtom("atom"), _anno1, EAtom(module))),
+                  ETuple(List(EAtom("atom"), _anno2, EAtom(structName))),
+                )
+              ),
+              EList(fields),
+            )
+          ) =>
+        RemoteStructUpdate(r(anno), convertExp(eExp), module, structName, fields.map(structField))
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(structName), eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
-        StructSelect(r(anno), convertExp(eExp), structName, fieldName)
+        LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
+      case ETuple(
+            List(
+              EAtom("struct_field"),
+              anno,
+              eExp,
+              ETuple(
+                List(
+                  EAtom("remote"),
+                  _,
+                  ETuple(List(EAtom("atom"), _anno1, EAtom(module))),
+                  ETuple(List(EAtom("atom"), _anno2, EAtom(structName))),
+                )
+              ),
+              eFieldName,
+            )
+          ) =>
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
+        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertAssoc))
       case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>

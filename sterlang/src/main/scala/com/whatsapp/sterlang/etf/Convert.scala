@@ -189,8 +189,10 @@ object Convert {
         // - This should be fixed in parser in the first place.
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p, "Calculation in patterns")
-      case Patterns.StructPattern(p, structName, fields) =>
-        Ast.StructPat(structName, fields.map(convertStructFieldPattern))(p)
+      case Patterns.LocalStructPattern(p, structName, fields) =>
+        Ast.StructPat(Ast.LocalName(structName), fields.map(convertStructFieldPattern))(p)
+      case Patterns.RemoteStructPattern(p, module, structName, fields) =>
+        Ast.StructPat(Ast.RemoteName(module, structName), fields.map(convertStructFieldPattern))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -278,12 +280,18 @@ object Convert {
         )(p)
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
-      case Exprs.StructCreate(p, structName, fields) =>
-        Ast.StructCreate(structName, fields.map(convertStructField))(p)
-      case Exprs.StructUpdate(p, struct, structName, fields) =>
-        Ast.StructUpdate(convertExpr(struct), structName, fields.map(convertStructField))(p)
-      case Exprs.StructSelect(p, struct, structName, fieldName) =>
-        Ast.StructSelect(convertExpr(struct), structName, fieldName)(p)
+      case Exprs.LocalStructCreate(p, structName, fields) =>
+        Ast.StructCreate(Ast.LocalName(structName), fields.map(convertStructField))(p)
+      case Exprs.RemoteStructCreate(p, module, structName, fields) =>
+        Ast.StructCreate(Ast.RemoteName(module, structName), fields.map(convertStructField))(p)
+      case Exprs.LocalStructUpdate(p, struct, structName, fields) =>
+        Ast.StructUpdate(convertExpr(struct), Ast.LocalName(structName), fields.map(convertStructField))(p)
+      case Exprs.RemoteStructUpdate(p, struct, module, structName, fields) =>
+        Ast.StructUpdate(convertExpr(struct), Ast.RemoteName(module, structName), fields.map(convertStructField))(p)
+      case Exprs.LocalStructSelect(p, struct, structName, fieldName) =>
+        Ast.StructSelect(convertExpr(struct), Ast.LocalName(structName), fieldName)(p)
+      case Exprs.RemoteStructSelect(p, struct, module, structName, fieldName) =>
+        Ast.StructSelect(convertExpr(struct), Ast.RemoteName(module, structName), fieldName)(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)

@@ -21,6 +21,7 @@ package object sterlang {
 
   case class Context(
       enumDefs: List[Ast.EnumDef],
+      structDefs: List[Ast.StructDef],
       specs: List[Ast.Spec],
       aliases: List[Ast.TypeAlias],
       opaques: Set[Ast.TypeId],
@@ -32,6 +33,7 @@ package object sterlang {
       }
       Context(
         enumDefs ++ program.enumDefs,
+        structDefs ++ program.structDefs,
         specs ++ program.specs,
         aliases ++ program.typeAliases ++ opaqueAliases,
         opaques,
@@ -42,6 +44,7 @@ package object sterlang {
 
   case class ModuleApi(
       enumDefs: List[Ast.EnumDef],
+      structDefs: List[Ast.StructDef],
       aliases: List[Ast.TypeAlias],
       specs: List[Ast.Spec],
       opaques: List[Ast.TypeId],

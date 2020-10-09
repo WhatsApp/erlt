@@ -122,6 +122,7 @@ object Main {
     }
 
     val enumDefs = api.flatMap(_.enumDefs)
+    val structDefs = api.flatMap(_.structDefs)
     val specs = api.flatMap(_.specs)
     val aliases = nativeAliases ++ api.flatMap(_.aliases)
     val expander = new Expander(aliases, () => freshTypeVar(vars), freshRTypeVar(vars))
@@ -137,7 +138,7 @@ object Main {
       val schema = TU.generalize(0)(specType)
       name -> schema
     }.toMap
-    Context(enumDefs, List.empty, aliases, opaques, env)
+    Context(enumDefs, structDefs, List.empty, aliases, opaques, env)
   }
 
   def loadProgram(file: String): Ast.Program = {

@@ -34,7 +34,7 @@ list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
-struct_expr struct_tuple struct_field struct_fields
+struct_expr struct_tuple struct_field struct_fields struct_name
 shape_expr shape_tuple shape_field shape_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
@@ -233,8 +233,8 @@ shape_pat_expr -> '#' shape_tuple :
 shape_pat_expr -> pat_expr_max '#' shape_tuple :
 	{shape, anno('$1','$3'),'$1',strip_shape_tuple('$3')}.
 
-struct_pat_expr -> '#' atom struct_tuple :
-	{struct, anno('$1', '$3'), element(3, '$2'), element(1, '$3')}.
+struct_pat_expr -> '#' struct_name struct_tuple :
+	{struct, anno('$1', '$3'), '$2', element(1, '$3')}.
 
 list -> '[' ']'       : {nil,  anno('$1','$2')}.
 list -> '[' expr tail : {cons, anno('$1','$3'),'$2','$3'}.
@@ -309,16 +309,19 @@ shape_fields -> shape_field ',' shape_fields : ['$1' | '$3'].
 
 shape_field -> atom '=' expr : {shape_field, anno('$1','$3'), '$1', '$3'}.
 
-struct_expr -> '#' atom struct_tuple :
-	{struct, anno('$1','$3'), element(3, '$2'), element(1, '$3')}.
-struct_expr -> expr_max '#' atom '.' atom :
-	{struct_field, anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
-struct_expr -> struct_expr '#' atom '.' atom :
-	{struct_field, anno('$2', '$5'), '$1', element(3, '$3'),'$5'}.
-struct_expr -> expr_max '#' atom struct_tuple :
-	{struct, anno('$2','$4'), '$1', element(3, '$3'), element(1, '$4')}.
-struct_expr -> struct_expr '#' atom struct_tuple :
-	{struct, anno('$2','$4'), '$1', element(3, hd('$3')), element(1, '$4')}.
+struct_expr -> '#' struct_name struct_tuple :
+	{struct, anno('$1','$3'), '$2', element(1, '$3')}.
+struct_expr -> expr_max '#' struct_name '.' atom :
+	{struct_field, anno('$2', '$5'), '$1', '$3', '$5'}.
+struct_expr -> struct_expr '#' struct_name '.' atom :
+	{struct_field, anno('$2', '$5'), '$1', '$3','$5'}.
+struct_expr -> expr_max '#' struct_name struct_tuple :
+	{struct, anno('$2','$4'), '$1', '$3', element(1, '$4')}.
+struct_expr -> struct_expr '#' struct_name struct_tuple :
+	{struct, anno('$2','$4'), '$1', '$3', element(1, '$4')}.
+
+struct_name -> atom : element(3, '$1').
+struct_name -> atom ':' atom : {remote, anno('$1', '$3'), '$1', '$3'}.
 
 struct_tuple -> '{' '}'               : {[],   anno('$1', '$2')}.
 struct_tuple -> '{' struct_fields '}' : {'$2', anno('$1', '$3')}.

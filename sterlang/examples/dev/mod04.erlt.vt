@@ -14,3 +14,30 @@ val A: A
 val B: B
 val funs/0: fun(() -> list(fun(() -> mod03:unit0())))
 val import1/0: fun(() -> mod03:unit0())
+val mk_box1/1: fun((A) -> mod03:box1(A))
+val X: A
+val match_box1/1: fun((mod03:box1(A)) -> A)
+val X: A
+val select_from_box1/1: fun((mod03:box1(A)) -> A)
+val Box1: mod03:box1(A)
+val update_box1/2: fun((mod03:box1(A), A) -> mod03:box1(A))
+val Box1: mod03:box1(A)
+val Value: A
+val mk_box2/1: fun((A) -> mod03:box2(A))
+val X: A
+val match_box2/1: fun((mod03:box2(A)) -> A)
+val X: A
+val select_from_box2/1: fun((mod03:box2(A)) -> A)
+val Box2: mod03:box2(A)
+val update_box2/2: fun((mod03:box2(A), A) -> mod03:box2(A))
+val Box2: mod03:box2(A)
+val Value: A
+val mk_box3/1: fun((A) -> box3(A))
+val X: A
+val match_box3/1: fun((box3(A)) -> A)
+val X: A
+val select_from_box3/1: fun((box3(A)) -> A)
+val Box3: box3(A)
+val update_box3/2: fun((box3(A), A) -> box3(A))
+val Box3: box3(A)
+val Value: A

@@ -192,9 +192,9 @@ object Ast {
   case class FnExp(clauses: List[Clause])(val r: Doc.Range) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
-  case class StructCreate(name: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
-  case class StructUpdate(struct: Exp, structName: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
-  case class StructSelect(struct: Exp, structName: String, fieldName: String)(val r: Doc.Range) extends Exp
+  case class StructCreate(name: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructUpdate(struct: Exp, structName: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructSelect(struct: Exp, structName: Name, fieldName: String)(val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val r: Doc.Range) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
       val r: Doc.Range
@@ -244,7 +244,7 @@ object Ast {
   case class CharPat(char: Char)(val r: Doc.Range) extends Pat
   case class NumberPat(n: Int)(val r: Doc.Range) extends Pat
   case class StringPat(s: String)(val r: Doc.Range) extends Pat
-  case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class StructPat(structName: Name, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

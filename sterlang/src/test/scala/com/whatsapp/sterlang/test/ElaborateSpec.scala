@@ -25,7 +25,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   def testTyping(input: String, expOutput: String): Unit = {
     val prog = etf.programFromString(input)
     val vars = new Vars()
-    val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+    val context = Context(prog.enumDefs, prog.structDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
     val elaborate = new Elaborate(vars, context, prog)
     val (annDefs, env) = elaborate.elaborateFuns(prog.funs)
     val specStrings = Render(vars).specs(annDefs, env)
@@ -38,7 +38,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     val sw = new StringWriter()
     try {
       val vars = new Vars()
-      val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+      val context = Context(prog.enumDefs, prog.structDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
       val elaborate = new Elaborate(vars, context, prog)
       elaborate.elaborateFuns(prog.funs)
       val actualOutput = sw.toString

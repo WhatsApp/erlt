@@ -42,7 +42,23 @@ object PatternsConvert {
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
         UnOpPattern(r(anno), op, convertPat(ePat1))
       case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
-        StructPattern(r(anno), structName, eStructFieldPatterns.map(structFieldPattern))
+        LocalStructPattern(r(anno), structName, eStructFieldPatterns.map(structFieldPattern))
+      case ETuple(
+            List(
+              EAtom("struct"),
+              anno,
+              ETuple(
+                List(
+                  EAtom("remote"),
+                  _,
+                  ETuple(List(EAtom("atom"), _anno1, EAtom(module))),
+                  ETuple(List(EAtom("atom"), _anno2, EAtom(structName))),
+                )
+              ),
+              EList(eStructFieldPatterns),
+            )
+          ) =>
+        RemoteStructPattern(r(anno), module, structName, eStructFieldPatterns.map(structFieldPattern))
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapePattern(r(anno), eAssocs.map(convertShapeFieldPattern))
       case ETuple(

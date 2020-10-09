@@ -316,7 +316,12 @@ object AstUtil {
 
   def moduleApi(module: String, program: Program): ModuleApi = {
     val names =
-      (program.enumDefs.map(_.name) ++ program.typeAliases.map(_.name) ++ program.opaques.map(_.name)).toSet
+      List(
+        program.enumDefs.map(_.name),
+        program.structDefs.map(_.name),
+        program.typeAliases.map(_.name),
+        program.opaques.map(_.name),
+      ).flatten.toSet
     val enumDefs1 = program.enumDefs.collect {
       case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
@@ -325,6 +330,15 @@ object AstUtil {
             EnumCtr(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
         }
         EnumDef(name1, params, cons1)(Doc.ZRange)
+    }
+    val structDefs1 = program.structDefs.collect {
+      case StructDef(name, params, fields, kind) if program.exportTypes((name, params.size)) =>
+        val name1 = module + ":" + name
+        val fields1 = fields.map {
+          case Field(key, value) =>
+            Field(key, globalizeType(module, names)(value))(Doc.ZRange)
+        }
+        StructDef(name1, params, fields1, kind)(Doc.ZRange)
     }
     val aliases1 = program.typeAliases.collect {
       case TypeAlias(name, params, tp) if program.exportTypes((name, params.size)) =>
@@ -343,7 +357,7 @@ object AstUtil {
       case Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
         TypeId(RemoteName(module, name), params.size)
     }
-    ModuleApi(enumDefs1, aliases1, specs1, opaques)
+    ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques)
   }
 
   private def globalizeType(module: String, names: Set[String])(tp: Type): Type =
