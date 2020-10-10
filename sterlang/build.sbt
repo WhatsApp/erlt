@@ -23,6 +23,7 @@ lazy val projectSetting = Seq(
   libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
+  test in assembly := {},
 )
 
 lazy val sterlang = (project in file("."))
