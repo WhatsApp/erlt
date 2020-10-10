@@ -98,7 +98,7 @@ object Main {
     vars.rVar(Types.RowOpen(0, kind))
 
   def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context = {
-    val ext = mainFile.takeRight(4)
+    val ext = mainFile.takeRight(mainFile.reverse.indexOf('.') + 1)
     val dir = Paths.get(mainFile).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
