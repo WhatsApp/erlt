@@ -1,0 +1,4 @@
+-- ERROR -------------------------------- examples/err-syntax/e43_erlt.erlt:18:1
+Parse Error
+ 18| asd
+...| ^
