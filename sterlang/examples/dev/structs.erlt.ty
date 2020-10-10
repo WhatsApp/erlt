@@ -17,3 +17,4 @@
 -spec select_box2(box2(integer(), integer())) -> integer().
 -spec test_box2(box2(A, A)) -> boolean().
 -spec pat_box2(box2(A, A)) -> A.
+-spec mk_wrapped_int() -> wrapped_int().

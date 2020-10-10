@@ -48,3 +48,4 @@ val X: A
 val X: A
 val X: A
 val Y: A
+val mk_wrapped_int/0: fun(() -> wrapped_int())

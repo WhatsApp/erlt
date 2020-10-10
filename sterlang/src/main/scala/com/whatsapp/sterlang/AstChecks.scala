@@ -160,9 +160,9 @@ class AstChecks(val context: Context) {
     }
     val bound = collectParams(structDef.params)
     structDef.fields.foreach { f =>
-      expandType(program, Set.empty)(f.value)
+      expandType(program, Set.empty)(f.tp)
     }
-    val used = structDef.fields.map { f => collectRHSTypeVars(bound)(f.value) }.foldLeft(Set.empty[TypeVar])(_ ++ _)
+    val used = structDef.fields.map { f => collectRHSTypeVars(bound)(f.tp) }.foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(structDef.params, used)
   }
 

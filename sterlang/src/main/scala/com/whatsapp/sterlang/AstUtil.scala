@@ -335,8 +335,8 @@ object AstUtil {
       case StructDef(name, params, fields, kind) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val fields1 = fields.map {
-          case Field(key, value) =>
-            Field(key, globalizeType(module, names)(value))(Doc.ZRange)
+          case StructField(label, tp, default) =>
+            StructField(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
         }
         StructDef(name1, params, fields1, kind)(Doc.ZRange)
     }
@@ -401,8 +401,8 @@ object AstUtil {
       program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.r) }
     val structDefs1 =
       program.structDefs.map { structDef =>
-        structDef
-          .copy(fields = structDef.fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(structDef.r)
+        val nFields = structDef.fields.map(f => StructField(f.label, normalizeType(program)(f.tp), f.default)(f.r))
+        structDef.copy(fields = nFields)(structDef.r)
       }
     val specs1 =
       program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.r))

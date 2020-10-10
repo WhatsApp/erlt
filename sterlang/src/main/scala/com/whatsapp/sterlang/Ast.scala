@@ -161,7 +161,7 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
-  case class StructDef(name: String, params: List[TypeVar], fields: List[Field[Type]], kind: StructKind)(
+  case class StructDef(name: String, params: List[TypeVar], fields: List[StructField], kind: StructKind)(
       val r: Doc.Range
   )
   case class EnumCtr(name: String, argTypes: List[Type])(val r: Doc.Range)
@@ -207,6 +207,7 @@ object Ast {
   case class Fun(name: LocalFunName, clauses: List[Clause])(val r: Doc.Range)
 
   case class Field[A](label: String, value: A)(val r: Doc.Range)
+  case class StructField(label: String, tp: Type, default: Option[Exp])(val r: Doc.Range)
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)

@@ -486,7 +486,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       sub.view.mapValues(Left(_)).toMap
     val typeConParams = structDef.params.map(p => sub(p.name))
 
-    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.tp).toMap
     val fields1 = for (field <- fields) yield {
       val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
@@ -528,7 +528,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       sub.view.mapValues(Left(_)).toMap
     val typeConParams = structDef.params.map(p => sub(p.name))
 
-    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.tp).toMap
     val fields1 = for (field <- fields) yield {
       val fieldType = expander.mkType(fieldTypes(field.label), eSub)
       val eFieldType = expander.expandType(fieldType)
@@ -572,7 +572,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val structType = MT.NamedType(nName.stringId, typeConParams)
     val struct1 = elab(struct, structType, d, env)
 
-    val fieldType = expander.mkType(fieldDef.value, eSub)
+    val fieldType = expander.mkType(fieldDef.tp, eSub)
     val eFieldType = expander.expandType(fieldType)
 
     unify(exp.r, ty, eFieldType)
@@ -1209,7 +1209,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(p.r, t, expType)
 
-    val fieldTypes = structDef.fields.map(f => f.label -> f.value).toMap
+    val fieldTypes = structDef.fields.map(f => f.label -> f.tp).toMap
     var envAcc = env
     var penvAcc = penv
     val fields1 = for (field <- fields) yield {
@@ -1273,7 +1273,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def checkStructInit(pos: Doc.Range, fields: List[Ast.Field[_]], structDef: Ast.StructDef): Unit = {
     val initialized = fields.map(_.label).toSet
     for (f <- structDef.fields) {
-      if (!initialized(f.label))
+      if (f.default.isEmpty && !initialized(f.label))
         throw new UnInitializedStructField(pos, structDef.name, f.label)
     }
   }
