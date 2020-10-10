@@ -105,8 +105,14 @@ object FormsConvert {
 
   def structFieldDecl(term: ETerm): StructFieldDecl =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, eType)) =>
-        StructFieldDecl(r(anno), convertAtomLit(fieldNameLit), None, TypesConvert.convertType(eType))
+      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, dValue, eType)) =>
+        val defaultValue = dValue match {
+          case EAtom("undefined") =>
+            None
+          case expr =>
+            Some(ExprsConvert.convertExp(expr))
+        }
+        StructFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
     }
 
   def convertAtomLit(term: ETerm): String =

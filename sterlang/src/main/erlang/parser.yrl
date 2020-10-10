@@ -114,7 +114,8 @@ field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
 field_defs -> field_def ',' field_defs    : ['$1'|'$3'].
 
-field_def -> atom '::' top_type           : {struct_field, anno('$1', '$3'), '$1', '$3'}.
+field_def -> atom '::' top_type           : {struct_field, anno('$1', '$3'), '$1', 'undefined', '$3'}.
+field_def -> atom '=' expr '::' type      : {struct_field, anno('$1', '$5'), '$1', '$3', '$5'}.
 
 top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
