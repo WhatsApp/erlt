@@ -1,0 +1,6 @@
+-- ERROR ----------------------------------------- examples/err2/e148.erlt:19:44
+Type Mismatch
+Found:    box(integer())
+Required: integer()
+ 19| -struct struct_with_bad_default() :: {id = #box{value = 1} :: integer()}.
+...|                                            ~~~~~~~~~~~~~~~

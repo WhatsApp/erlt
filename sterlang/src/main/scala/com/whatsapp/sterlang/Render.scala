@@ -66,6 +66,15 @@ case class Render(vars: Vars) {
     typeSchema(fakeTypeScheme, TypesMode)
   }
 
+  def typs(types: List[Types.Type]): String = {
+    resetContext()
+    val typeStrings = types.map { tp =>
+      val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(tp))
+      typeSchema(fakeTypeScheme, TypesMode)
+    }
+    typeStrings.mkString(", ")
+  }
+
   def scheme(s: STypes.TypeSchema): String = {
     resetContext()
     typeSchema(s, SpecsMode)

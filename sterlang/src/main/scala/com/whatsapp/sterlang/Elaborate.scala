@@ -54,7 +54,37 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   def elaborate(): (List[AnnAst.Fun], Env) = {
+    checkStructDefs()
     elaborateFuns(program.funs)
+  }
+
+  private def checkStructDefs(): Unit = {
+    val d = 0
+    val expander = dExpander(d)
+
+    for (Ast.StructDef(_, params, fields, structKind) <- program.structDefs) {
+      val sub = params.map(tv => tv.name -> freshTypeVar(d)).toMap
+      val eSub: Expander.Sub = sub.view.mapValues(Left(_)).toMap
+      val tParams = params.map(p => sub(p.name))
+
+      val declParams = Render(vars).typs(tParams)
+
+      val fieldTypes = fields.map(f => f.label -> f.tp).toMap
+      for (field <- fields; defaultVal <- field.default) {
+        val fieldType = expander.mkType(fieldTypes(field.label), eSub)
+        val eFieldType = expander.expandType(fieldType)
+        elab(defaultVal, eFieldType, d, context.env)
+      }
+
+      structKind match {
+        case Ast.StrStruct =>
+          val elabParams = Render(vars).typs(tParams)
+          if (declParams != elabParams)
+            throw new InconsistentStructTypeParamsError(params.head.r ! params.last.r, declParams, elabParams)
+        case Ast.ExnStruct | Ast.MsgStruct =>
+        // OK - no type parameters, no mismatch
+      }
+    }
   }
 
   private def elaborateFuns(funs: List[Ast.Fun]): (List[AnnAst.Fun], Env) = {
