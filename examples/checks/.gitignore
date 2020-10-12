@@ -1,1 +1,2 @@
 src/*.beam
+deps/*.erl

@@ -8,17 +8,20 @@ clean:
 
 test-ir: $(DIRS:%=test-ir/%)
 
-ir:
-	rm -rf _buid
-	rebar3 as ir compile
+# The generated .erl files are not actually used in compilation
+# but are there for humans to read. Not actually "ir"
+ir: $(DIRS:%=ir/%)
 
-test-ir/%: ir
-	diff -x '*.beam' -x '*.app' -r _build/ir/lib/$*/ebin $*/ir-spec
+ir/%: clean build
+	@mkdir -p _build/default/lib/$*/test_output 
+	../test_util/beam_to_erl.escript _build/default/lib/$*/ebin _build/default/lib/$*/test_output/
+
+test-ir/%: ir/%
+	diff -r _build/default/lib/$*/test_output $*/ir-spec
 
 update-ir-spec/%: ir
-	rm -rf $*/ir-spec
-	mkdir -p $*/ir-spec
-	cp -r _build/ir/lib/$*/ebin/*.P $*/ir-spec
+	@rm -rf $*/ir-spec
+	cp -r _build/default/lib/$*/test_output $*/ir-spec
 
 update-ir-spec: $(DIRS:%=update-ir-spec/%)
 
