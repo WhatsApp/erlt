@@ -53,7 +53,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
-  def elaborateFuns(funs: List[Ast.Fun]): (List[AnnAst.Fun], Env) = {
+  def elaborate(): (List[AnnAst.Fun], Env) = {
+    elaborateFuns(program.funs)
+  }
+
+  private def elaborateFuns(funs: List[Ast.Fun]): (List[AnnAst.Fun], Env) = {
     val names = funs.map(_.name.stringId)
     val fMap = funs.map { f => f.name.stringId -> f }.toMap
     val sccNames = AstUtil.buildSCC(funs, program.module)

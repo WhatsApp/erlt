@@ -62,7 +62,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val context = Main.loadContext(etfPath, program, vars).extend(program)
       val astChecks = new AstChecks(context)
       astChecks.check(program)
-      new Elaborate(vars, context, program).elaborateFuns(program.funs)
+      new Elaborate(vars, context, program).elaborate()
       if (erltPath.contains("_unspeced")) {
         astChecks.checkPublicSpecs(program)
       }

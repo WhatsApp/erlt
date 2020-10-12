@@ -71,7 +71,7 @@ object Main {
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       val elaborate = new Elaborate(vars, context, program)
-      val (annFuns, env) = elaborate.elaborateFuns(program.funs)
+      val (annFuns, env) = elaborate.elaborate()
 
       // Check patterns and print warnings, if any.
       if (options.contains("--check-patterns")) {
