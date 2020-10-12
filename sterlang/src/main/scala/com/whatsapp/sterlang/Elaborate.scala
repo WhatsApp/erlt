@@ -263,8 +263,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
           unify(exp.r, ty, listType)
           (res1, res2)
         case Ast.Arith(_) =>
-          unify(exp.r, ty, MT.IntType)
-          (elab(e1, MT.IntType, d, env), elab(e2, MT.IntType, d, env))
+          unify(exp.r, ty, MT.NumberType)
+          (elab(e1, MT.NumberType, d, env), elab(e2, MT.NumberType, d, env))
       }
 
     AnnAst.BinOpExp(op, e1Elaborated, e2Elaborated)(typ = ty, r = exp.r)
@@ -274,8 +274,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val Ast.UOpExp(op: Ast.UOp, e1: Ast.Exp) = exp
     val e1Elaborated = op match {
       case Ast.UMinus | Ast.UPlus | Ast.BNot =>
-        unify(exp.r, ty, MT.IntType)
-        elab(e1, MT.IntType, d, env)
+        unify(exp.r, ty, MT.NumberType)
+        elab(e1, MT.NumberType, d, env)
       case Ast.UNot =>
         unify(exp.r, ty, MT.BoolType)
         elab(e1, MT.BoolType, d, env)
@@ -391,7 +391,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val receiveBranches = elabReceiveRules(rules)
     val after1 = after.map {
       case Ast.AfterBody(timeout, body) =>
-        val timeout1 = elab(timeout, MT.IntType, d, env)
+        val timeout1 = elab(timeout, MT.NumberType, d, env)
         val body1 = elabBody(body, resType, d, env)
         AnnAst.AfterBody(timeout1, body1)
     }
@@ -648,8 +648,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def elabNumberExp(exp: Ast.NumberExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.NumberExp(n) = exp
 
-    unify(exp.r, ty, MT.IntType)
-    AnnAst.LiteralExp(Ast.IntVal(n))(typ = ty, r = exp.r)
+    unify(exp.r, ty, MT.NumberType)
+    AnnAst.LiteralExp(Ast.NumberVal(n))(typ = ty, r = exp.r)
   }
 
   private def elabCharExp(exp: Ast.CharExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -779,7 +779,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabBinElement(elem: Ast.BinElement, d: T.Depth, env: Env): AnnAst.BinElement = {
-    val size1 = elem.size.map(elab(_, MT.IntType, d, env))
+    val size1 = elem.size.map(elab(_, MT.NumberType, d, env))
     val isStringLiteral = elem.expr match {
       case Ast.StringExp(_) => true
       case _                => false
@@ -788,16 +788,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Some(value) =>
         value match {
           case Ast.IntegerBinElemType | Ast.Utf8BinElemType | Ast.Utf16BinElemType | Ast.Utf32BinElemType =>
-            if (isStringLiteral) MT.StringType else MT.IntType
+            if (isStringLiteral) MT.StringType else MT.NumberType
           case Ast.FloatBinElemType =>
-            MT.FloatType
+            MT.NumberType
           case Ast.BinaryBinElemType | Ast.BytesBinElemType =>
             MT.BinaryType
           case Ast.BitstringBinElemType | Ast.BitsBinElemType =>
             MT.BitstringType
         }
       case None =>
-        if (isStringLiteral) MT.StringType else MT.IntType
+        if (isStringLiteral) MT.StringType else MT.NumberType
     }
     val exp1 = elab(elem.expr, expType, d, env)
     AnnAst.BinElement(exp1, size1, elem.binElemType)
@@ -1020,8 +1020,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (PreAnnPat, Env, PEnv) = {
     val Ast.NumberPat(b) = p
     val t = TU.instantiate(d, ts)
-    unify(p.r, t, MT.IntType)
-    (AnnAst.LiteralPat(Ast.IntVal(b))(p.r), env, penv)
+    unify(p.r, t, MT.NumberType)
+    (AnnAst.LiteralPat(Ast.NumberVal(b))(p.r), env, penv)
   }
 
   private def elabStringPat(
@@ -1086,7 +1086,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       penv: PEnv,
       gen: Boolean,
   ): (AnnAst.BinElementPat, Env, PEnv) = {
-    val size1 = elem.size.map(elab(_, MT.IntType, d, env))
+    val size1 = elem.size.map(elab(_, MT.NumberType, d, env))
     val isStringLiteral = elem.pat match {
       case Ast.StringPat(_) => true
       case _                => false
@@ -1095,16 +1095,16 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Some(value) =>
         value match {
           case Ast.IntegerBinElemType | Ast.Utf8BinElemType | Ast.Utf16BinElemType | Ast.Utf32BinElemType =>
-            if (isStringLiteral) MT.StringType else MT.IntType
+            if (isStringLiteral) MT.StringType else MT.NumberType
           case Ast.FloatBinElemType =>
-            MT.FloatType
+            MT.NumberType
           case Ast.BinaryBinElemType | Ast.BytesBinElemType =>
             MT.BinaryType
           case Ast.BitstringBinElemType | Ast.BitsBinElemType =>
             MT.BitstringType
         }
       case None =>
-        if (isStringLiteral) MT.StringType else MT.IntType
+        if (isStringLiteral) MT.StringType else MT.NumberType
     }
 
     val (pat1, env1, penv1) = elpat(elem.pat, expType, d, env, penv, gen)

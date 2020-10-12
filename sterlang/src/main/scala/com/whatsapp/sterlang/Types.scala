@@ -67,10 +67,8 @@ object METypes {
   import TyCons._
 
   // Type construction
-  val IntType: ConType =
-    ConType(NamedTyCon("integer"), List(), List())
-  val FloatType: ConType =
-    ConType(NamedTyCon("float"), List(), List())
+  val NumberType: ConType =
+    ConType(NamedTyCon("number"), List(), List())
   val CharType: ConType =
     ConType(NamedTyCon("char"), List(), List())
   val BoolType: ConType =
@@ -132,8 +130,8 @@ object MESTypes {
   import TyCons._
 
   // Type construction
-  val IntType: ConType =
-    ConType(NamedTyCon("integer"), List(), List())
+  val NumberType: ConType =
+    ConType(NamedTyCon("number"), List(), List())
   val BoolType: ConType =
     ConType(NamedTyCon("boolean"), List(), List())
   val StringType: ConType =

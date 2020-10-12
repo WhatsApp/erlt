@@ -11,15 +11,15 @@ class UnifySpec extends org.scalatest.flatspec.AnyFlatSpec {
     Types.RowVarType(vars.rVar(Types.RowOpen(d, kind)))
 
   "Unify" should "unify a type with itself" in {
-    val intType = METypes.IntType
-    unify.unify(intType, intType)
+    val numberType = METypes.NumberType
+    unify.unify(numberType, numberType)
   }
 
   "it" should "throw TyConMismatch when matching different constructors" in {
-    val intType = METypes.IntType
+    val numberType = METypes.NumberType
     val stringType = METypes.StringType
     assertThrows[TyConMismatch] {
-      unify.unify(intType, stringType)
+      unify.unify(numberType, stringType)
     }
   }
 
@@ -28,7 +28,7 @@ class UnifySpec extends org.scalatest.flatspec.AnyFlatSpec {
       Types.RowEmptyType
 
     val shapeWithIdInt =
-      METypes.ShapeType(Types.RowFieldType(Types.Field("id", METypes.IntType), emptyShape))
+      METypes.ShapeType(Types.RowFieldType(Types.Field("id", METypes.NumberType), emptyShape))
     val shapeWithNameString =
       METypes.ShapeType(Types.RowFieldType(Types.Field("name", METypes.StringType), emptyShape))
 
