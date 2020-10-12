@@ -34,7 +34,7 @@ init(State) ->
         ]),
     {ok, rebar_state:add_provider(State, Provider)}.
 
--spec do(rebar_state:t()) -> {ok | error, rebar_state:t()}.
+-spec do(rebar_state:t()) -> {ok, rebar_state:t()}.
 do(State) ->
     rebar_prv_erlt:run(fun rebar_prv_erlt:clean_app/1, "Cleaning ErlT build artifacts", State).
 
