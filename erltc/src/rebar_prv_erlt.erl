@@ -12,7 +12,7 @@ init(State0) ->
     {ok, State1} = rebar_prv_erlt_compile:init(State0),
     rebar_prv_erlt_clean:init(State1).
 
-% halts when there is an error
+% aborts when there is an error
 -spec run(F, string(), rebar_state:t()) -> {ok, rebar_state:t()} when
     F :: fun((rebar_app_info:t()) -> ok | error).
 run(F, Description, State) ->
