@@ -238,8 +238,6 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     enums = #{},
     %Current enum
     enum = [] :: atom() | [],
-    %In a try head.
-    in_try_head = false :: boolean(),
     % Global definition database
     defs_db :: erlt_defs:defs(),
     % Used to track recursive struct defaults
@@ -468,6 +466,10 @@ format_error({stacktrace_guard, V}) ->
     io_lib:format("stacktrace variable ~w must not be used in a guard", [V]);
 format_error({stacktrace_bound, V}) ->
     io_lib:format("stacktrace variable ~w must not be previously bound", [V]);
+format_error(illegal_catch_kind) ->
+    "only atoms, variables, and pinned variables are allowed in kind position of catch clauses";
+format_error(illegal_catch_stack) ->
+    "only unbound variables are allowed in stacktrace position of catch clauses";
 %% --- binaries ---
 format_error({undefined_bittype, Type}) ->
     io_lib:format("bit type ~tw undefined", [Type]);
@@ -3896,11 +3898,10 @@ is_module_dialyzer_option(Option) ->
 
 try_clauses(Scs, Ccs, In, Vt, St0) ->
     {Csvt0, St1} = icrt_clauses(Scs, Vt, St0),
-    St2 = St1#lint{in_try_head = true},
-    {Csvt1, St3} = icrt_clauses(Ccs, Vt, St2),
+    {Csvt1, St2} = catch_clauses(Ccs, Vt, St1),
     Csvt = Csvt0 ++ Csvt1,
-    UpdVt = icrt_export(Csvt, Vt, In, St3),
-    {UpdVt, St3#lint{in_try_head = false}}.
+    UpdVt = icrt_export(Csvt, Vt, In, St2),
+    {UpdVt, St2}.
 
 %% icrt_clauses(Clauses, In, ImportVarTable, State) ->
 %%      {UpdVt,State}.
@@ -3916,35 +3917,43 @@ icrt_clauses(Cs, In, Vt, St0) ->
 icrt_clauses(Cs, Vt, St) ->
     mapfoldl(fun(C, St0) -> icrt_clause(C, Vt, St0) end, St, Cs).
 
-icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
-    Vt1 = taint_stack_var(Vt0, H, St0),
-    {Hvt, Binvt, St1} = head(H, Vt1, St0),
-    Vt2 = vtupdate(Hvt, Binvt),
-    St1_1 = unpinned_vars(Binvt, Vt0, St1),
-    Vt3 = taint_stack_var(Vt2, H, St1_1),
-    {Gvt, St2} = guard(G, vtupdate(Vt3, Vt0), St1_1#lint{in_try_head = false}),
-    Vt4 = vtupdate(Gvt, Vt2),
-    {Bvt, St3} = exprs(B, vtupdate(Vt4, Vt0), St2),
-    {vtupdate(Bvt, Vt4), St3}.
+catch_clauses(Cs, Vt, St) ->
+    mapfoldl(fun(C, St0) -> catch_clause(C, Vt, St0) end, St, Cs).
 
-taint_stack_var(Vt, Pat, #lint{in_try_head = true}) ->
-    [{tuple, _, [_, _, {var, _, Stk}]}] = Pat,
-    case Stk of
-        '_' ->
-            Vt;
-        _ ->
-            lists:map(
-                fun
-                    ({V, {bound, Used, Lines}}) when V =:= Stk ->
-                        {V, {stacktrace, Used, Lines}};
-                    (B) ->
-                        B
-                end,
-                Vt
-            )
-    end;
-taint_stack_var(Vt, _Pat, #lint{in_try_head = false}) ->
-    Vt.
+catch_clause({clause, _Line, H, G, B}, Vt0, St0) ->
+    {TaintVt, St1} = catch_head(H, St0),
+    icrt_clause(H, G, B, Vt0, TaintVt, St1).
+
+icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
+    icrt_clause(H, G, B, Vt0, [], St0).
+
+icrt_clause(H, G, B, Vt0, TaintVt, St0) ->
+    {Hvt, Binvt, St1} = head(H, Vt0, TaintVt, St0),
+    Vt1 = vtupdate(Hvt, Binvt),
+    St2 = unpinned_vars(Binvt, Vt0, St1),
+    Vt2 = vtupdate(TaintVt, Vt1),
+    {Gvt, St3} = guard(G, vtupdate(Vt2, Vt0), St2),
+    Vt3 = vtupdate(Gvt, Vt1),
+    {Bvt, St4} = exprs(B, vtupdate(Vt3, Vt0), St3),
+    {vtupdate(Bvt, Vt3), St4}.
+
+catch_head([{tuple, _, [Kind, _Reason, Stack]}], St0) ->
+    St1 = validate_catch_kind(Kind, St0),
+    taint_stack_var(Stack, St1).
+
+validate_catch_kind({var, _, _}, St) -> St;
+validate_catch_kind({atom, _, exit}, St) -> St;
+validate_catch_kind({atom, _, error}, St) -> St;
+validate_catch_kind({atom, _, throw}, St) -> St;
+validate_catch_kind({op, _, '^', {var, _, _}}, St) -> St;
+validate_catch_kind(Other, St) -> add_error(element(2, Other), illegal_catch_kind, St).
+
+taint_stack_var({var, _, '_'}, St) ->
+    {[], St};
+taint_stack_var({var, Loc, Name}, St) ->
+    {[{Name, {stacktrace, unused, [Loc]}}], St};
+taint_stack_var(Other, St) ->
+    {[], add_error(element(2, Other), illegal_catch_stack, St)}.
 
 icrt_export(Vts, Vt, {Tag, Attrs}, St) ->
     {_File, Loc} = loc(Attrs, St),
@@ -4192,6 +4201,9 @@ pat_var(V, Line, Vt, Bvt, St) ->
                     {[{V, {bound, used, Ls}}], [],
                         %% As this is matching, exported vars are risky.
                         add_warning(Line, {exported_var, V, From}, St)};
+                {ok, {stacktrace, _Usage, [Line]}} ->
+                    %% this is the definitoon & use, all is fine
+                    {[], [{V, {bound, unused, [Line]}}], St};
                 {ok, {stacktrace, _Usage, Ls}} ->
                     {[{V, {bound, used, Ls}}], [], add_error(Line, {stacktrace_bound, V}, St)};
                 error ->

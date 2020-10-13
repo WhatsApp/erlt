@@ -98,7 +98,7 @@ Nonassoc 500 '*'. % for binary expressions
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 form -> '[' modifier_list ']' function dot : ?set_anno(modified_function('$2', '$4'), ?anno('$1', '$4')).
-form -> '[' modifier_list ']' '-' atom type_def dot : 
+form -> '[' modifier_list ']' '-' atom type_def dot :
     ?set_anno(modified_type_def('$2', build_type_def(?anno('$4', '$6'), '$5', '$6')), ?anno('$1', '$6')).
 
 modifier_list -> atom : ['$1'].
@@ -539,15 +539,12 @@ try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
 try_clause -> pat_expr clause_guard clause_body :
 	A = ?anno('$1','$3'),
 	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
-try_clause -> atom ',' pat_expr try_opt_stacktrace clause_guard clause_body :
+try_clause -> pat_expr ',' pat_expr try_opt_stacktrace clause_guard clause_body :
 	A = ?anno('$1','$6'),
-	{clause,A,[{tuple,A,['$1','$3',{var,A,'$4'}]}],'$5','$6'}.
-try_clause -> var ',' pat_expr try_opt_stacktrace clause_guard clause_body :
-	A = ?anno('$1','$6'),
-	{clause,A,[{tuple,A,['$1','$3',{var,A,'$4'}]}],'$5','$6'}.
+	{clause,A,[{tuple,A,['$1','$3','$4']}],'$5','$6'}.
 
-try_opt_stacktrace -> ',' var : element(3, '$2').
-try_opt_stacktrace -> '$empty' : '_'.
+try_opt_stacktrace -> ',' pat_expr : '$2'.
+try_opt_stacktrace -> '$empty' : {var,0,'_'}.
 
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
@@ -1180,7 +1177,7 @@ modified_type_def(ModifierList, {attribute, Anno, Attr, TypeDef}) ->
             {attribute, Anno, opaque, TypeDef};
         {unchecked, _A1} ->
             case Attr of
-                opaque -> 
+                opaque ->
                     {attribute, Anno, unchecked_opaque, TypeDef};
                 _ ->
                     ret_err(Anno, "Only opaque types can be unchecked")
