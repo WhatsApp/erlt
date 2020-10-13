@@ -5,7 +5,7 @@ val Map: map_ffi:map(A, B)
 val member/2: fun((A, map_ffi:map(A, B)) -> boolean())
 val Key: A
 val Map: map_ffi:map(A, B)
-val size/1: fun((map_ffi:map(A, B)) -> integer())
+val size/1: fun((map_ffi:map(A, B)) -> number())
 val Map: map_ffi:map(A, B)
 val is_empty/1: fun((map_ffi:map(A, B)) -> boolean())
 val Map: map_ffi:map(A, B)

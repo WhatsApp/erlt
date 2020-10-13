@@ -1,7 +1,7 @@
 -spec empty() -> map_ffi:map(A, B).
 -spec get(A, map_ffi:map(A, B)) -> maybe:maybe(B).
 -spec member(A, map_ffi:map(A, B)) -> boolean().
--spec size(map_ffi:map(A, B)) -> integer().
+-spec size(map_ffi:map(A, B)) -> number().
 -spec is_empty(map_ffi:map(A, B)) -> boolean().
 -spec insert(A, B, map_ffi:map(A, B)) -> map_ffi:map(A, B).
 -spec remove(A, map_ffi:map(A, B)) -> map_ffi:map(A, B).

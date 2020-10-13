@@ -21,7 +21,7 @@
 -spec records_example() -> {}.
 -spec id_rec(#( A )) -> #( A ).
 -spec get_id1(#( id :: A, B )) -> A.
--spec update_a_b(#( a :: integer(), b :: integer(), A )) -> #( a :: integer(), b :: integer(), A ).
+-spec update_a_b(#( a :: number(), b :: number(), A )) -> #( a :: number(), b :: number(), A ).
 -spec swap_a_b(#( a :: A, b :: A, B )) -> #( a :: A, b :: A, B ).
 -spec id01(A) -> A.
 -spec id02(A) -> A.
@@ -30,7 +30,7 @@
 -spec map1(fun((A) -> B), my_list(A)) -> my_list(B).
 -spec to_bools(my_list(my_option(A))) -> my_list(boolean()).
 -spec onlySome(my_list(my_option(A))) -> my_list(my_option(A)).
--spec dec_opt(my_option(A)) -> integer().
+-spec dec_opt(my_option(A)) -> number().
 -spec dec_opt2(my_option(A)) -> list(A).
 -spec dec_opt3(my_option(fun((A) -> B)), A, A) -> list(B).
 -spec dec_opt4(A, B, C) -> {A, B, C}.

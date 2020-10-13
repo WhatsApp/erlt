@@ -1,5 +1,5 @@
--spec test1(#( y :: boolean(), A )) -> integer().
--spec test2(#( id :: integer(), name :: #( first :: string(), A ), B )) -> integer().
--spec test3(#( x :: integer() )) -> boolean().
--spec test4(#( x :: integer(), A )) -> boolean().
--spec test5(#( x :: integer(), y :: integer(), A )) -> boolean().
+-spec test1(#( y :: boolean(), A )) -> number().
+-spec test2(#( id :: number(), name :: #( first :: string(), A ), B )) -> number().
+-spec test3(#( x :: number() )) -> boolean().
+-spec test4(#( x :: number(), A )) -> boolean().
+-spec test5(#( x :: number(), y :: number(), A )) -> boolean().

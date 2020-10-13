@@ -1,6 +1,6 @@
 -- ERROR ------------------------------------------- examples/err/e09.erlt:19:10
 Type Mismatch
-Found:    #( y :: integer() )
+Found:    #( y :: number() )
 Required: #( x :: string() )
  19|     X == Y.
 ...|          ^

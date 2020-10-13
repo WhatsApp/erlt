@@ -2,21 +2,21 @@
 -spec arg13(A, B, C) -> A.
 -spec arg23(A, B, C) -> B.
 -spec arg33(A, B, C) -> C.
--spec mk_int() -> integer().
+-spec mk_int() -> number().
 -spec mk_string() -> string().
 -spec mk_nil() -> list(A).
 -spec mk_cons(A, list(A)) -> list(A).
 -spec mk_tuple(A, B, C) -> {A, B, C}.
--spec mk_tuple2(A) -> {integer(), integer(), integer(), A}.
+-spec mk_tuple2(A) -> {number(), number(), number(), A}.
 -spec mk_map(A, B) -> #( a :: A, b :: B ).
 -spec update_map1(#( a :: A ), A) -> #( a :: A ).
 -spec update_map3(#( a :: A, b :: A )) -> #( a :: A, b :: A ).
 -spec access_map(#( id :: A, location :: B, C )) -> {A, B}.
 -spec access_map2(#( inner1 :: #( inner2 :: A ) )) -> A.
--spec mk_seq() -> {integer(), integer()}.
+-spec mk_seq() -> {number(), number()}.
 -spec is_empty(list(A)) -> boolean().
 -spec is_empty2(list(A)) -> boolean().
--spec with_as(integer()) -> integer().
+-spec with_as(number()) -> number().
 -spec block(A, list(A)) -> {list(A), list(A)}.
 -spec is_empty_case(list(A)) -> boolean().
 -spec both_empty(list(A), list(B)) -> boolean().
@@ -25,21 +25,21 @@
 -spec local_fun_to_var(A, B) -> fun((list(C), list(D)) -> boolean()).
 -spec local_n_fun() -> fun((list(A)) -> list(B)).
 -spec mod01F(A) -> A.
--spec unary_plus(integer()) -> integer().
--spec unary_minus(integer()) -> integer().
+-spec unary_plus(number()) -> number().
+-spec unary_minus(number()) -> number().
 -spec unary_not(boolean()) -> boolean().
--spec unary_bnot(integer()) -> integer().
--spec binary_star(integer(), integer()) -> integer().
--spec binary_div(integer(), integer()) -> integer().
--spec binary_rem(integer(), integer()) -> integer().
--spec binary_band(integer(), integer()) -> integer().
+-spec unary_bnot(number()) -> number().
+-spec binary_star(number(), number()) -> number().
+-spec binary_div(number(), number()) -> number().
+-spec binary_rem(number(), number()) -> number().
+-spec binary_band(number(), number()) -> number().
 -spec binary_and(boolean(), boolean()) -> boolean().
--spec binary_plus(integer(), integer()) -> integer().
--spec binary_minus(integer(), integer()) -> integer().
--spec binary_bor(integer(), integer()) -> integer().
--spec binary_bxor(integer(), integer()) -> integer().
--spec binary_bsl(integer(), integer()) -> integer().
--spec binary_bsr(integer(), integer()) -> integer().
+-spec binary_plus(number(), number()) -> number().
+-spec binary_minus(number(), number()) -> number().
+-spec binary_bor(number(), number()) -> number().
+-spec binary_bxor(number(), number()) -> number().
+-spec binary_bsl(number(), number()) -> number().
+-spec binary_bsr(number(), number()) -> number().
 -spec binary_or(boolean(), boolean()) -> boolean().
 -spec binary_xor(boolean(), boolean()) -> boolean().
 -spec binary_orelse(boolean(), boolean()) -> boolean().
@@ -54,7 +54,7 @@
 -spec comp6(A, A) -> boolean().
 -spec comp7(A, A) -> boolean().
 -spec comp8(A, A) -> boolean().
--spec guard1(integer(), integer()) -> boolean().
+-spec guard1(number(), number()) -> boolean().
 -spec guard2(list(A), A, list(A)) -> list(A).
 -spec p_match_tuple0({}) -> {{}}.
 -spec p_match_tuple1({A}) -> {}.
@@ -64,7 +64,7 @@
 -spec binary_id(binary()) -> binary().
 -spec bitstring_id(bitstring()) -> bitstring().
 -spec byte_id(byte()) -> byte().
--spec float_id(float()) -> float().
+-spec float_id(number()) -> number().
 -spec identifier_id(identifier()) -> identifier().
 -spec iodata_id(iodata()) -> iodata().
 -spec iolist_id(iolist()) -> iolist().
@@ -77,8 +77,8 @@
 -spec reference_id(reference()) -> reference().
 -spec term_id(term()) -> term().
 -spec timeout_id(timeout()) -> timeout().
--spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
+-spec ints_id({number(), number(), number()}) -> {number(), number(), number()}.
 -spec mk_my_pair(A, A) -> {A, A}.
--spec float_as_int() -> integer().
--spec float_pat(integer()) -> string().
+-spec float_as_int() -> number().
+-spec float_pat(number()) -> string().
 -spec char_pat(char()) -> char().

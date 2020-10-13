@@ -1,9 +1,9 @@
 -spec two_selectors(#( person :: #( name :: A, B ), C )) -> A.
 -spec seq_call(fun((A) -> B), fun((C) -> D), A, C) -> D.
--spec sum_fr(fun((A) -> integer()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, B )) -> integer().
--spec sum_fr_proxy(fun((A) -> integer()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, B )) -> integer().
--spec add_f(integer()) -> integer().
--spec rich_record_example() -> integer().
+-spec sum_fr(fun((A) -> number()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, B )) -> number().
+-spec sum_fr_proxy(fun((A) -> number()), #( l01 :: A, l02 :: A, l03 :: A, l04 :: A, l05 :: A, l06 :: A, l07 :: A, l08 :: A, l09 :: A, l10 :: A, l11 :: A, l12 :: A, l13 :: A, l14 :: A, l15 :: A, l16 :: A, l17 :: A, l18 :: A, l19 :: A, B )) -> number().
+-spec add_f(number()) -> number().
+-spec rich_record_example() -> number().
 -spec name(rec_rec2(A)) -> A.
 -spec next(rec_rec2(A)) -> core:option(rec_rec2(A)).
 -spec unBox(rec_rec2(A)) -> rec_rec2(A).
@@ -13,10 +13,10 @@
 -spec add_id_empty_rec(#( A )) -> #( id :: string() ).
 -spec add_id_rec_f(#( f :: A, B )) -> #( f :: A, id :: string() ).
 -spec rec_tricky() -> {}.
--spec even(integer()) -> boolean().
--spec odd(integer()) -> boolean().
+-spec even(number()) -> boolean().
+-spec odd(number()) -> boolean().
 -spec loop({}) -> fun((#( a :: A, B )) -> A).
 -spec dummy() -> fun((#( a :: A, B )) -> A).
 -spec id(A) -> A.
--spec x_fun() -> integer().
+-spec x_fun() -> number().
 -spec y_fun() -> {}.

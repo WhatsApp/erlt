@@ -1,6 +1,6 @@
 -- ERROR ------------------------------------------- examples/err/e26.erlt:18:48
 Type Mismatch
 Found:    e2(string())
-Required: e1(integer())
+Required: e1(number())
  18| foo(C) -> case C of true -> e1.e1{1}; false -> e2.e2{""} end.
 ...|                                                ~~~~~~~~~
