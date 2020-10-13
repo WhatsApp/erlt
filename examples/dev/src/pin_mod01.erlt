@@ -12,9 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(caret_mod01).
+-module(pin_mod01).
 
--export([f/1, g/1, h/1, i/3, j/2, k/2, m/2]).
+-export([f/1, g/1, h/1, i/3, i2/4, j/2, k/2, m/2]).
 
 f(X) ->
     Y = 42,
@@ -39,6 +39,9 @@ h(X) ->
 i(Elem, List1, List2) ->
     Foo = 42,
     [found || ^Elem <- List1, {foo, ^Foo}<-List2].
+
+i2(Elem, List1, List2, List3) ->
+    [Elem || ^Elem <- List1, {foo, ^Elem}<-List2, {bar, ^Elem}<-List3].
 
 j(Elem, List) ->
     Foo = 42,
