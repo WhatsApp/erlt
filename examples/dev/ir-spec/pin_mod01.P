@@ -1,8 +1,8 @@
--file("caret_mod01.erlt", 1).
+-file("pin_mod01.erlt", 1).
 
--module(caret_mod01).
+-module(pin_mod01).
 
--export([f/1,g/1,h/1,i/3,j/2,k/2,m/2]).
+-export([f/1,g/1,h/1,i/3,i2/4,j/2,k/2,m/2]).
 
 f(X) ->
     Y = 42,
@@ -32,25 +32,39 @@ h(X) ->
 i(Elem, List1, List2) ->
     Foo = 42,
     begin
-        pin_o0 = Elem,
-        pin_o1 = Foo,
+        __pin_o0 = Elem,
+        __pin_o1 = Foo,
         [ 
          found ||
-             pin_i0 <- List1,
-             pin_i0 =:= pin_o0,
-             {foo, pin_i1} <- List2,
-             pin_i1 =:= pin_o1
+             __pin_i0 <- List1,
+             __pin_i0 =:= __pin_o0,
+             {foo, __pin_i1} <- List2,
+             __pin_i1 =:= __pin_o1
+        ]
+    end.
+
+i2(Elem, List1, List2, List3) ->
+    begin
+        __pin_o2 = Elem,
+        [ 
+         Elem ||
+             __pin_i2 <- List1,
+             __pin_i2 =:= __pin_o2,
+             {foo, __pin_i3} <- List2,
+             __pin_i3 =:= __pin_o2,
+             {bar, __pin_i4} <- List3,
+             __pin_i4 =:= __pin_o2
         ]
     end.
 
 j(Elem, List) ->
     Foo = 42,
     lists:filter(begin
-                     pin_o2 = Elem,
-                     pin_o3 = Foo,
-                     fun(pin_i2) when pin_i2 =:= pin_o2 ->
+                     __pin_o5 = Elem,
+                     __pin_o6 = Foo,
+                     fun(__pin_i5) when __pin_i5 =:= __pin_o5 ->
                             true;
-                        ({foo, pin_i3}) when pin_i3 =:= pin_o3 ->
+                        ({foo, __pin_i6}) when __pin_i6 =:= __pin_o6 ->
                             true;
                         (_) ->
                             false
@@ -80,18 +94,18 @@ k(X, Y) ->
 
 m(X, Y) ->
     begin
-        pin_o4 = X,
-        pin_o5 = Y,
-        fun({foo, pin_i4, Z}) when pin_i4 =:= pin_o4 ->
+        __pin_o7 = X,
+        __pin_o8 = Y,
+        fun({foo, __pin_i7, Z}) when __pin_i7 =:= __pin_o7 ->
                Z;
-           ({bar, pin_i4, Z}) when pin_i4 =:= pin_o4 ->
+           ({bar, __pin_i7, Z}) when __pin_i7 =:= __pin_o7 ->
                case X of
                    {ok, X} ->
                        {ok, Z};
                    error ->
                        error
                end;
-           ({baz, pin_i5, Z}) when pin_i5 =:= pin_o5 ->
+           ({baz, __pin_i8, Z}) when __pin_i8 =:= __pin_o8 ->
                Z
         end
     end.

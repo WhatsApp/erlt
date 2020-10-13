@@ -21,18 +21,10 @@ parse_transform(Forms, _Options) ->
     {Forms1, _St1} = erlt_ast:traverse(Forms, St, fun pre/3, fun post/3),
     Forms1.
 
--record(state, {
-    % lift pinnings only for shadowing
-    keep_nonshadowing = true,
-    % stack of flags, whether pinned vars should be kept or lifted
-    keep = [],
-    pinned = [],
-    var_count = 0
-}).
-
-init_state() ->
-    #state{}.
-
+%% This pass eliminates the ^ notation from pattern variables, either
+%% leaving the already-bound variable as it is, or replacing it with a
+%% fresh variable in those contexts where shadowing is in effect.
+%%
 %% To ensure that pinned variables can be accessed whether or not they
 %% happen to get shadowed in the same pattern, we always introduce fresh
 %% names for them, guaranteed not to become shadowed. We also need a fresh
@@ -54,19 +46,48 @@ init_state() ->
 %%
 %% which ultimately is what the compiler will do anyway with already-bound
 %% variables in patterns - the renamings do not cause any runtime overhead.
+%%
+%% To avoid generating many redundant variables in case the same variable
+%% is pinned in many parts of the same construct, we try to reuse the
+%% generated outer and inner names where this is possible (inner names
+%% cannot be reused in comprehensions, since generators shadow each other).
 
-pre({op, _, '^', {var, Line, V}}, #state{keep = [true | _]} = St, pattern) ->
+-record(ctx, {
+    keep = true,
+    reuse_inner = true
+}).
+
+-record(state, {
+    %% lift pinnings only for shadowing
+    keep_nonshadowing = true,
+    %% stack of contexts
+    ctx = [] :: #ctx{},
+    %% stack of variable sets
+    pinned = [],
+    var_count = 0
+}).
+
+init_state() ->
+    #state{}.
+
+pre({op, _, '^', {var, Line, V}}, #state{ctx = [#ctx{keep = true} | _]} = St, pattern) ->
     %% in constructs where we allow use of already bound variables
     %% we just drop the ^ and keep the variable as it is
     {{var, Line, V}, St};
-pre({op, _, '^', {var, Line, V}}, #state{keep = [false | _]} = St, pattern) ->
-    %% look up already existing pinning or generate fresh inner & outer
-    %% names, and replace ^V with inner name; in both cases we ensure that
-    %% the mapping is stored in the current clause pinnings so that guard
-    %% tests are generated in all clauses where this variable occurs pinned
+pre({op, _, '^', {var, Line, V}}, #state{ctx = [#ctx{keep = false} | _]} = St, pattern) ->
+    %% generate inner & outer names, reusing the outer if already existing,
+    %% and replace ^V with inner name; in both cases we ensure that the
+    %% mapping is stored in the current clause pinnings so that guard tests
+    %% are generated in all clauses where this variable occurs pinned
     case find_pin(V, St) of
         {ok, {Vo, Vi}} ->
-            {{var, Line, Vi}, add_pin(V, Vo, Vi, St)};
+            case St#state.ctx of
+                [#ctx{reuse_inner = false} | _] ->
+                    {Vi1, St1} = mk_var("__pin_i", St),
+                    {{var, Line, Vi1}, add_pin(V, Vo, Vi1, St1)};
+                _ ->
+                    {{var, Line, Vi}, add_pin(V, Vo, Vi, St)}
+            end;
         error ->
             {Vo, Vi, St1} = mk_var_pair(St),
             {{var, Line, Vi}, add_pin(V, Vo, Vi, St1)}
@@ -92,20 +113,24 @@ pre({lc, _L, _E, _C} = Expr, St, expr) ->
     {Expr, begin_construct(false, St)};
 pre({bc, _L, _E, _C} = Expr, St, expr) ->
     {Expr, begin_construct(false, St)};
-pre({clause, _L, _Head, _Guard, _Body} = Clause, #state{keep = [false | _]} = St, _Ctx) ->
+pre({clause, _L, _Head, _Guard, _Body} = Clause, #state{ctx = [#ctx{keep = false} | _]} = St, _) ->
     %% push an empty set of pinnings for the clause
     {Clause, push_empty_pinned(St)};
 pre({Generate, _L, _Pattern, _Expr} = Generator, St, expr) when
     Generate =:= generate; Generate =:= b_generate
 ->
-    %% push an empty set of pinnings for the generator
-    {Generator, push_empty_pinned(St)};
-pre(Other, St, _Ctx) ->
+    %% push an empty set of pinnings for the generator and ensure we do not
+    %% reuse inner variable names because of shadowing between generators
+    {Generator, push_empty_pinned(disable_reuse(St))};
+pre(Other, St, _) ->
     {Other, St}.
 
+disable_reuse(#state{ctx = [Ctx | Cs]} = St) ->
+    St#state{ctx = [Ctx#ctx{reuse_inner = false} | Cs]}.
+
 begin_construct(Keep, St) ->
-    %% pushes a new pinning set and 'keep' flag
-    push_empty_pinned(St#state{keep = [Keep | St#state.keep]}).
+    %% pushes a new pinning set and context
+    push_empty_pinned(St#state{ctx = [#ctx{keep = Keep} | St#state.ctx]}).
 
 %% Since we need to collect all pinned vars for a whole expression (like a
 %% case), but generate guard tests per clause, and we also need to handle
@@ -124,8 +149,9 @@ begin_construct(Keep, St) ->
 %% pinned variable.
 
 %% look up existing pinning for a variable, either in the current clause
-%% set or the current expression set (if in both, should have the same data)
-find_pin(V, #state{pinned = [Ps0, Ps1 | _Pss]}) ->
+%% set or the current expression set (if in both, should have the same
+%% outer variable)
+find_pin(V, #state{pinned = [Ps0, Ps1 | _]}) ->
     case orddict:find(V, Ps0) of
         {ok, Info} ->
             {ok, Info};
@@ -149,11 +175,17 @@ push_empty_pinned(#state{pinned = Pss} = St) ->
 pop_pinned(#state{pinned = [Ps | Pss]} = St) ->
     {Ps, St#state{pinned = Pss}}.
 
-%% merges the two top pinned sets, returning the previously topmost (if the
-%% same key exists in both, we just assert that they have the same data)
+%% merges the two top pinned sets, returning the previously topmost; if the
+%% same key exists in both, we assert that they have the same outer name
+%% and make a list of corresponding inner variables (mainly for debugging)
 merge_pinned(#state{pinned = [Ps0, Ps1 | Pss]} = St) ->
-    % assert same V
-    MergeFun = fun(_K, V, V) -> V end,
+    % assert same Vo and merge Vi to a list
+    MergeFun = fun(_K, {Vo, Vi0}, {Vo, Vi1}) ->
+        if
+            is_list(Vi0) -> {Vo, [Vi1 | Vi0]};
+            true -> {Vo, [Vi1, Vi0]}
+        end
+    end,
     Merged = orddict:merge(MergeFun, Ps0, Ps1),
     {Ps0, St#state{pinned = [Merged | Pss]}}.
 
@@ -165,12 +197,10 @@ clear_pinned(St) ->
 %% and tests for equality to clause guards for all inner variables.
 %% Note: forgetting to pop the pinning stack will have strange effects.
 
-%% TODO: only generate variables for shadowing patterns
-
 post(Form, St, form) ->
     %% ensure pinning info doesn't propagate between forms
     {Form, clear_pinned(St)};
-post({match, L, Pat, Expr} = Match, #state{keep = [false | _]} = St, expr) ->
+post({match, L, Pat, Expr} = Match, #state{ctx = [#ctx{keep = false} | _]} = St, expr) ->
     %% pop the set of pinnings for this match and add them to the total set
     %% for the enclosing expression
     {Pins, St1} = merge_pinned(St),
@@ -185,7 +215,7 @@ post({match, L, Pat, Expr} = Match, #state{keep = [false | _]} = St, expr) ->
             end_construct(Match, St1);
         _ ->
             Tests = mk_tests(Pins),
-            {V, St2} = mk_var("pin_m", St1),
+            {V, St2} = mk_var("__pin_m", St1),
             %% note that we want to always allow begin...end blocks to
             %% export bindings, otherwise it gets much more complicated to
             %% replace a single expression with a code sequence like this
@@ -207,7 +237,7 @@ post({match, L, Pat, Expr} = Match, #state{keep = [false | _]} = St, expr) ->
                 ]},
             end_construct(Expr1, St2)
     end;
-post({match, _L, _P, _E} = Expr, #state{keep = [true | _]} = St, expr) ->
+post({match, _L, _P, _E} = Expr, #state{ctx = [#ctx{keep = true} | _]} = St, expr) ->
     end_construct(Expr, St);
 post({'case', _L, _E, _Cs} = Expr, St, expr) ->
     end_construct(Expr, St);
@@ -229,7 +259,7 @@ post({bc, L, E, C}, St, expr) ->
     %% flatten the list of generators-and-tests, see the generator case below
     Expr = {bc, L, E, lists:flatten(C)},
     end_construct(Expr, St);
-post({clause, L, Head, Guard, Body}, #state{keep = [false | _]} = St, _Ctx) ->
+post({clause, L, Head, Guard, Body}, #state{ctx = [#ctx{keep = false} | _]} = St, _) ->
     %% pop the set of pinnings for this clause and add them to the total
     %% set for the enclosing expression
     {Pins, St1} = merge_pinned(St),
@@ -254,14 +284,14 @@ post({Generate, _L, _Pattern, _Expr}, St, expr) when
     %% in the post-handling for the comprehension as a whole
     Tests = mk_tests(Pins),
     {[{generate, _L, _Pattern, _Expr} | Tests], St1};
-post(Other, St, _Ctx) ->
+post(Other, St, _) ->
     {Other, St}.
 
 %% pops the total set of pinnings for an expression and adds corresponding
-%% outer bindings to the expression; also pops the keep state
-end_construct(Expr, #state{keep = [_ | Keep]} = St) ->
+%% outer bindings to the expression; also pops the context
+end_construct(Expr, #state{ctx = [_ | Ctx]} = St) ->
     {Pins, St1} = pop_pinned(St),
-    {mk_bind(Pins, Expr), St1#state{keep = Keep}}.
+    {mk_bind(Pins, Expr), St1#state{ctx = Ctx}}.
 
 mk_bind([], Expr) ->
     Expr;
@@ -283,6 +313,6 @@ mk_var(Prefix, #state{var_count = N} = St) ->
     {V, St#state{var_count = N + 1}}.
 
 mk_var_pair(#state{var_count = N} = St) ->
-    Vo = list_to_atom("pin_o" ++ integer_to_list(N)),
-    Vi = list_to_atom("pin_i" ++ integer_to_list(N)),
+    Vo = list_to_atom("__pin_o" ++ integer_to_list(N)),
+    Vi = list_to_atom("__pin_i" ++ integer_to_list(N)),
     {Vo, Vi, St#state{var_count = N + 1}}.
