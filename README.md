@@ -77,7 +77,7 @@ The tests for erltc come in these two flavors:
 - the tests under `./examples/check` verify compiler errors against .exp files. Run these with `make -C examples/check/src`
 - the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST.
     - See [./examples/README.md]( ./examples/README.md )for more information about running and updating these tests
-    - See also [erltc_architecutre](./doc/08_compiler_architecture.md).
+    - See also [erltc_architecture](./doc/08_compiler_architecture.md).
 
 
 ### stErlang tests
