@@ -3921,7 +3921,7 @@ catch_clauses(Cs, Vt, St) ->
     mapfoldl(fun(C, St0) -> catch_clause(C, Vt, St0) end, St, Cs).
 
 catch_clause({clause, _Line, H, G, B}, Vt0, St0) ->
-    {TaintVt, St1} = catch_head(H, St0),
+    {TaintVt, St1} = catch_head(H, Vt0, St0),
     icrt_clause(H, G, B, Vt0, TaintVt, St1).
 
 icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
@@ -3930,16 +3930,16 @@ icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
 icrt_clause(H, G, B, Vt0, TaintVt, St0) ->
     {Hvt, Binvt, St1} = head(H, Vt0, TaintVt, St0),
     Vt1 = vtupdate(Hvt, Binvt),
-    St2 = unpinned_vars(Binvt, Vt0, St1),
+    St2 = unpinned_vars(Binvt, vtmerge(TaintVt, Vt0), St1),
     Vt2 = vtupdate(TaintVt, Vt1),
     {Gvt, St3} = guard(G, vtupdate(Vt2, Vt0), St2),
     Vt3 = vtupdate(Gvt, Vt1),
     {Bvt, St4} = exprs(B, vtupdate(Vt3, Vt0), St3),
     {vtupdate(Bvt, Vt3), St4}.
 
-catch_head([{tuple, _, [Kind, _Reason, Stack]}], St0) ->
+catch_head([{tuple, _, [Kind, _Reason, Stack]}], Vt0, St0) ->
     St1 = validate_catch_kind(Kind, St0),
-    taint_stack_var(Stack, St1).
+    taint_stack_var(Stack, Vt0, St1).
 
 validate_catch_kind({var, _, _}, St) -> St;
 validate_catch_kind({atom, _, exit}, St) -> St;
@@ -3948,11 +3948,17 @@ validate_catch_kind({atom, _, throw}, St) -> St;
 validate_catch_kind({op, _, '^', {var, _, _}}, St) -> St;
 validate_catch_kind(Other, St) -> add_error(element(2, Other), illegal_catch_kind, St).
 
-taint_stack_var({var, _, '_'}, St) ->
+taint_stack_var({var, _, '_'}, _Vt, St) ->
     {[], St};
-taint_stack_var({var, Loc, Name}, St) ->
-    {[{Name, {stacktrace, unused, [Loc]}}], St};
-taint_stack_var(Other, St) ->
+taint_stack_var({var, Loc, Name}, Vt, St) ->
+    TaintVt = [{Name, {stacktrace, unused, [Loc]}}],
+    case orddict:is_key(Name, Vt) of
+        true ->
+            {TaintVt, add_error(Loc, {stacktrace_bound, Name}, St)};
+        false ->
+            {TaintVt, St}
+    end;
+taint_stack_var(Other, _Vt, St) ->
     {[], add_error(element(2, Other), illegal_catch_stack, St)}.
 
 icrt_export(Vts, Vt, {Tag, Attrs}, St) ->
@@ -4270,16 +4276,19 @@ exported_var(Line, V, From, St) ->
     end.
 
 unpinned_vars(Vt, Vt0, St0) ->
-    foldl(
-        fun
-            ({V, {_, _, [L | _]}}, St) ->
+    OldVt = vt_no_unsafe(Vt0),
+    Check = fun({V, {_, _, [L | _]}}, St) ->
+        case orddict:find(V, OldVt) of
+            {ok, {stacktrace, _, _}} ->
+                %% error already reported
+                St;
+            {ok, _} ->
                 add_error(L, {unpinned_var, V}, St);
-            (_, St) ->
+            error ->
                 St
-        end,
-        St0,
-        vtold(Vt, vt_no_unsafe(Vt0))
-    ).
+        end
+    end,
+    foldl(Check, St0, Vt).
 
 shadow_vars(Vt, Vt0, In, St0) ->
     case is_warn_enabled(shadow_vars, St0) of
