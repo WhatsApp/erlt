@@ -467,7 +467,7 @@ format_error({stacktrace_guard, V}) ->
 format_error({stacktrace_bound, V}) ->
     io_lib:format("stacktrace variable ~w must not be previously bound", [V]);
 format_error(illegal_catch_kind) ->
-    "only atoms, variables, and pinned variables are allowed in kind position of catch clauses";
+    "only variables and atoms throw, exit, and error are allowed in kind position of catch clauses";
 format_error(illegal_catch_stack) ->
     "only unbound variables are allowed in stacktrace position of catch clauses";
 %% --- binaries ---
