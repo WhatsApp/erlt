@@ -1,0 +1,8 @@
+try_catch.erlt:11:15: only unbound variables are allowed in stacktrace position of catch clauses
+try_catch.erlt:12:15: stacktrace variable 'Bound' must not be previously bound
+try_catch.erlt:13:15: only unbound variables are allowed in stacktrace position of catch clauses
+try_catch.erlt:14:36: stacktrace variable 'Unbound' must not be used in a guard
+try_catch.erlt:15:12: stacktrace variable 'Repeat' must not be previously bound
+try_catch.erlt:19:9: variable 'Bound' is already bound - must write '^Bound' to use value in pattern
+try_catch.erlt:20:9: only variables and atoms throw, exit, and error are allowed in kind position of catch clauses
+try_catch.erlt:21:9: only variables and atoms throw, exit, and error are allowed in kind position of catch clauses
