@@ -95,10 +95,10 @@ object Convert {
       case Forms.MsgStruct => Ast.MsgStruct
     }
 
-  private def convertStructFieldDecl(structFieldDecl: Forms.StructFieldDecl): Ast.Field[Ast.Type] =
+  private def convertStructFieldDecl(structFieldDecl: Forms.StructFieldDecl): Ast.StructField =
     structFieldDecl match {
-      case Forms.StructFieldDecl(p, name, None, tp) =>
-        Ast.Field(name, convertType(tp))(p)
+      case Forms.StructFieldDecl(p, name, default, tp) =>
+        Ast.StructField(name, convertType(tp), default.map(convertExpr))(p)
     }
 
   private def convertFunClause(funClause: Exprs.Clause): Ast.Clause =

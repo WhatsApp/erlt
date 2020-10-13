@@ -25,6 +25,8 @@
 -spec test(user()) -> user().
 test(X) -> X.
 
+-struct wrapped_int() :: {int_value = 0 :: integer()}.
+
 mk_user(Name, Id) ->
     #user{name = Name, id = Id}.
 
@@ -81,3 +83,6 @@ test_box2(B) ->
 
 pat_box2(#box2{value1 = X, value2 = X}) -> X;
 pat_box2(#box2{value1 = X, value2 = Y}) -> Y.
+
+mk_wrapped_int() ->
+    #wrapped_int{}.

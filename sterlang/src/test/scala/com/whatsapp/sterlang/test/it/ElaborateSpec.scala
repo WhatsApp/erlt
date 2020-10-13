@@ -103,7 +103,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     val vars = new Vars()
     val context = Main.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
-    val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+    val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 
     val lines =
       if (verbose) Render(vars).varTypes(annDefs) else Render(vars).specs(annDefs, env)
