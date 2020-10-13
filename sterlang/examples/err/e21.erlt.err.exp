@@ -1,6 +1,6 @@
 -- ERROR ------------------------------------------- examples/err/e21.erlt:19:12
 Type Mismatch
 Found:    boolean()
-Required: integer()
+Required: number()
  19|     double(R#(x)).
 ...|            ~~~~~

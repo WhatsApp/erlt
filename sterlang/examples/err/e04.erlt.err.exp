@@ -1,6 +1,6 @@
 -- ERROR ------------------------------------------- examples/err/e04.erlt:16:23
 Type Mismatch
-Found:    integer()
+Found:    number()
 Required: boolean()
  16| foo() -> true andalso 1.
 ...|                       ^

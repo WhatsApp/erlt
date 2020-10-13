@@ -1,20 +1,20 @@
 -spec test(user()) -> user().
--spec mk_user(string(), integer()) -> user().
--spec update_user(user(), string(), integer()) -> user().
--spec get_id(user()) -> integer().
--spec get_man_id(manager()) -> integer().
+-spec mk_user(string(), number()) -> user().
+-spec update_user(user(), string(), number()) -> user().
+-spec get_id(user()) -> number().
+-spec get_man_id(manager()) -> number().
 -spec check_user(user()) -> ok().
 -spec check_users(user(), user()) -> ok().
 -spec is_user(user()) -> boolean().
 -spec match_users(user(), user()) -> boolean().
 -spec foo(manager()) -> user().
--spec mk_box_int() -> box(integer()).
+-spec mk_box_int() -> box(number()).
 -spec mk_box(A) -> box(A).
 -spec mk_box2(A) -> box2(A, A).
 -spec update_box(box(A), A) -> box(A).
 -spec update_box2(box2(A, A), A) -> box2(A, A).
 -spec update_box2(box2(A, B), B, A) -> box2(A, B).
--spec select_box2(box2(integer(), integer())) -> integer().
+-spec select_box2(box2(number(), number())) -> number().
 -spec test_box2(box2(A, A)) -> boolean().
 -spec pat_box2(box2(A, A)) -> A.
 -spec mk_wrapped_int() -> wrapped_int().

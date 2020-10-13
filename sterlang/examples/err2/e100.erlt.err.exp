@@ -1,6 +1,6 @@
 -- ERROR ----------------------------------------- examples/err2/e100.erlt:20:24
 Type Mismatch
 Found:    list(A)
-Required: integer()
+Required: number()
  20|     Rec#my_record{id = []}.
 ...|                        ^^

@@ -1,5 +1,5 @@
 -spec test1(boolean()) -> {}.
--spec test2(integer()) -> {}.
+-spec test2(number()) -> {}.
 -spec test3(string()) -> {}.
 -spec test4({}) -> {}.
 -spec test5({}) -> {}.

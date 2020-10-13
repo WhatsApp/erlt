@@ -1,6 +1,6 @@
 -- ERROR -------------------------------------------- examples/neg/n09.erlt:4:12
 Type Mismatch
-Found:    #( n :: integer() )
+Found:    #( n :: number() )
 Required: #( n :: string(), A )
   4|     Rec2 = Rec1 #(n = "String"),
 ...|            ~~~~

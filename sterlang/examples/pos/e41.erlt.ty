@@ -1,1 +1,1 @@
--spec foo() -> integer().
+-spec foo() -> number().

@@ -1,6 +1,6 @@
 -- ERROR ----------------------------------------- examples/err2/e150.erlt:19:20
 Inconsistent struct type params
 Specified:  `A, B`
-Elaborated: `box(integer()), box(boolean())`
+Elaborated: `box(number()), box(boolean())`
  19| -struct bad_struct(A, B) :: {box1 = #box{value = 1} :: A, box2 = #box{value = true} :: B}.
 ...|                    ~~~~

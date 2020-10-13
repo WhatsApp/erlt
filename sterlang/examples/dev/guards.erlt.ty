@@ -1,5 +1,5 @@
--spec is_even(integer()) -> boolean().
--spec any_even_or_empty(list(integer())) -> boolean().
+-spec is_even(number()) -> boolean().
+-spec any_even_or_empty(list(number())) -> boolean().
 -spec any(fun((A) -> boolean()), list(A)) -> boolean().
 -spec client1(A) -> fun((B) -> boolean()).
 -spec api1(A) -> A.

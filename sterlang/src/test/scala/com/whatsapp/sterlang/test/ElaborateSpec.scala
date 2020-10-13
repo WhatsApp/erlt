@@ -97,9 +97,9 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
         """-spec mkNone(A) -> option(B).
           |-spec mkSome(A) -> option(A).
           |-spec none() -> option(A).
-          |-spec someInt() -> option(integer()).
+          |-spec someInt() -> option(number()).
           |-spec someStr() -> option(string()).
-          |-spec optInts() -> list(option(integer())).
+          |-spec optInts() -> list(option(number())).
           |-spec optStrs() -> list(option(string())).
           |""".stripMargin
       testTyping(input, output)

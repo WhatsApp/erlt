@@ -168,6 +168,8 @@ class AstChecks(val context: Context) {
 
   private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
     tp match {
+      case UserType(name: LocalName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
+      // OK - fast check for global aliases like integer() -> number
       case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
         params.foreach(expandType(program, visited))
       case UserType(name: LocalName, params) =>

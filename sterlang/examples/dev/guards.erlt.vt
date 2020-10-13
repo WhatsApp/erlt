@@ -1,7 +1,7 @@
-val is_even/1: fun((integer()) -> boolean())
-val N: integer()
-val any_even_or_empty/1: fun((list(integer())) -> boolean())
-val L: list(integer())
+val is_even/1: fun((number()) -> boolean())
+val N: number()
+val any_even_or_empty/1: fun((list(number())) -> boolean())
+val L: list(number())
 val any/2: fun((fun((A) -> boolean()), list(A)) -> boolean())
 val Pred: fun((A) -> boolean())
 val Hd: A

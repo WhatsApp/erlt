@@ -380,11 +380,17 @@ object AstUtil {
         ListType(globalizeType(module, names)(elemType))(tp.r)
       case UserType(name, params) =>
         val name1 = name match {
-          case LocalName(name) =>
-            if (names(name))
-              RemoteName(module, name)
-            else
-              LocalName(name)
+          case LocalName(lName) =>
+            nativeAliases.find(ta => ta.name == lName && ta.params.size == params.size) match {
+              case Some(ta) =>
+                val UserType(canonicalName, _) = ta.body
+                canonicalName
+              case None =>
+                if (names(lName))
+                  RemoteName(module, lName)
+                else
+                  LocalName(lName)
+            }
           case _ => name
         }
         UserType(name1, params.map(globalizeType(module, names)))(tp.r)

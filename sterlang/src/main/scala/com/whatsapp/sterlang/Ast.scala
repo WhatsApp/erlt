@@ -66,7 +66,7 @@ object Ast {
 
   sealed trait Val
   case class BooleanVal(value: Boolean) extends Val
-  case class IntVal(value: Int) extends Val
+  case class NumberVal(value: Int) extends Val
   case class CharVal(value: Char) extends Val
   case class StringVal(value: String) extends Val
 

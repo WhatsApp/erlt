@@ -1,4 +1,4 @@
 -spec get_from(message()) -> pid().
 -spec mk_pong(message()) -> message().
--spec loop_step(integer(), string()) -> string().
+-spec loop_step(number(), string()) -> string().
 -spec receive_guard(pid()) -> string().

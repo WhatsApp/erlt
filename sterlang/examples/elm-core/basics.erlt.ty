@@ -1,11 +1,11 @@
--spec add(integer(), integer()) -> integer().
--spec add(integer()) -> fun((integer()) -> integer()).
--spec sub(integer(), integer()) -> integer().
--spec sub(integer()) -> fun((integer()) -> integer()).
--spec mul(integer(), integer()) -> integer().
--spec mul(integer()) -> fun((integer()) -> integer()).
--spec idiv(integer(), integer()) -> integer().
--spec idiv(integer()) -> fun((integer()) -> integer()).
+-spec add(number(), number()) -> number().
+-spec add(number()) -> fun((number()) -> number()).
+-spec sub(number(), number()) -> number().
+-spec sub(number()) -> fun((number()) -> number()).
+-spec mul(number(), number()) -> number().
+-spec mul(number()) -> fun((number()) -> number()).
+-spec idiv(number(), number()) -> number().
+-spec idiv(number()) -> fun((number()) -> number()).
 -spec eq(A, A) -> boolean().
 -spec eq(A) -> fun((A) -> boolean()).
 -spec neq(A, A) -> boolean().
@@ -31,13 +31,13 @@
 -spec or(boolean()) -> fun((boolean()) -> boolean()).
 -spec xor(boolean(), boolean()) -> boolean().
 -spec xor(boolean()) -> fun((boolean()) -> boolean()).
--spec mod_by(integer(), integer()) -> integer().
--spec mod_by(integer()) -> fun((integer()) -> integer()).
--spec remainder_by(integer(), integer()) -> integer().
--spec remainder_by(integer()) -> fun((integer()) -> integer()).
--spec negate(integer()) -> integer().
--spec abs(integer()) -> integer().
--spec clamp(integer(), integer(), integer()) -> integer().
+-spec mod_by(number(), number()) -> number().
+-spec mod_by(number()) -> fun((number()) -> number()).
+-spec remainder_by(number(), number()) -> number().
+-spec remainder_by(number()) -> fun((number()) -> number()).
+-spec negate(number()) -> number().
+-spec abs(number()) -> number().
+-spec clamp(number(), number(), number()) -> number().
 -spec composeL(fun((A) -> B), fun((C) -> A)) -> fun((C) -> B).
 -spec composeL(fun((A) -> B)) -> fun((fun((C) -> A)) -> fun((C) -> B)).
 -spec composeR(fun((A) -> B), fun((B) -> C)) -> fun((A) -> C).
