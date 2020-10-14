@@ -33,3 +33,6 @@ jobs:
         run: "cd ./examples && make test-ir/elm_core"
       - name: "test-ir for examples/erltodo/"
         run: "cd ./examples && make test-ir/erltodo"
+      - name: "run checks for examples/checks/"
+        run: "cd ./examples && make -C checks/src test"
+      
