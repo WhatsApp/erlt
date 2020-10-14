@@ -71,3 +71,9 @@ run this test with `make -C checks/src`
 or
 
     make --debug
+
+# To see beam disassembly
+
+We disassemble BEAMS in our tests for the accuracy of our generated .erl files.
+For more information on how and why, see [the PR](https://github.com/WhatsApp/erlt/pull/236).
+
