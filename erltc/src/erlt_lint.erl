@@ -2037,7 +2037,7 @@ pattern_element(Be, Vt, Old, Acc) ->
     pattern_element_1(Be, Vt, Old, Acc).
 
 pattern_element_1({bin_element, Line, E, Sz0, Ts}, Vt, Old, {Size0, Esvt, Bvt, St0}) ->
-    {Pevt, Bvt1, St1} = pat_bit_expr(E, Old, Bvt, St0),
+    {Pevt, Bvt1, St1} = pat_bit_expr(E, Vt, Old, Bvt, St0),
     %% vtmerge or vtmerge_pat doesn't matter here
     {Sz1, Szvt, Bvt2, St2} = pat_bit_size(Sz0, vtmerge(Vt, Esvt), Bvt, St1),
     {Sz2, Bt, St3} = bit_type(Line, Sz1, Ts, St2),
@@ -2065,19 +2065,24 @@ good_string_size_type(default, Ts) ->
 good_string_size_type(_, _) ->
     false.
 
-%% pat_bit_expr(Pattern, OldVarTable, BinVarTable,State) ->
+%% pat_bit_expr(Pattern, VarTable, OldVarTable, BinVarTable,State) ->
 %%              {UpdVarTable,UpdBinVarTable,State}.
 %%  Check pattern bit expression, only allow really valid patterns!
 
-pat_bit_expr({var, _, '_'}, _Old, _Bvt, St) ->
+pat_bit_expr({op, _, '^', {var, Ln, V}}, Vt, _Old, _Bvt, St) when V =/= '_' ->
+    %% this is checked like a normal expression variable,
+    %% since it will actually become a guard test
+    {Vt1, St1} = expr_var(V, Ln, Vt, St),
+    {Vt1, [], St1};
+pat_bit_expr({var, _, '_'}, _Vt, _Old, _Bvt, St) ->
     {[], [], St};
-pat_bit_expr({var, Ln, V}, Old, Bvt, St) ->
+pat_bit_expr({var, Ln, V}, _Vt, Old, Bvt, St) ->
     pat_var(V, Ln, Old, Bvt, St);
-pat_bit_expr({string, _, _}, _Old, _Bvt, St) ->
+pat_bit_expr({string, _, _}, _Vt, _Old, _Bvt, St) ->
     {[], [], St};
-pat_bit_expr({bin, L, _}, _Old, _Bvt, St) ->
+pat_bit_expr({bin, L, _}, _Vt, _Old, _Bvt, St) ->
     {[], [], add_error(L, illegal_pattern, St)};
-pat_bit_expr(P, _Old, _Bvt, St) ->
+pat_bit_expr(P, _Vt, _Old, _Bvt, St) ->
     case is_pattern_expr(P) of
         true -> {[], [], St};
         false -> {[], [], add_error(element(2, P), illegal_pattern, St)}
