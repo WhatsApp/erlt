@@ -1076,14 +1076,14 @@ erlt_to_erl1(Code, St) ->
 
 % We write classic erlang files for humans to read.
 % These aren't used later in the compiler.
-do_erlt_to_erl1(Code, St) ->
+do_erlt_to_erl1(Code, St0) ->
     Transforms = [erlt_enum, erlt_anon_struct, erlt_modifiers, erlt_dots, erlt_pinning],
-    case foldl_transform(Transforms, Code, St) of
-        {ok, Erl1Forms, St} ->
-            write_erl1(Erl1Forms, St),
-            {ok, Erl1Forms, St};
-        Other ->
-            Other
+    case foldl_transform(Transforms, Code, St0) of
+        {ok, Erl1Forms, St0} ->
+            write_erl1(Erl1Forms, St0),
+            {ok, Erl1Forms, St0};
+        {error, St1} ->
+            {error, St1}
     end.
 
 foldl_transform([T | Ts], Code0, St) ->
