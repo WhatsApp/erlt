@@ -1,4 +1,4 @@
--lang([erl2]).
+
 -module(undefined_struct).
 
 -export([local/0, remote/0]).

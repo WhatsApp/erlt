@@ -1,4 +1,4 @@
--lang([erl2, st]).
+
 -module(export_var).
 
 -export([f/1]).

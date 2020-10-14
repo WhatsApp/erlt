@@ -1,4 +1,4 @@
--lang([erlt]).
+
 -module(try_catch).
 
 -export([t1/2]).

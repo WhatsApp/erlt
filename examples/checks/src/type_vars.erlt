@@ -1,4 +1,4 @@
--lang([erlt]).
+
 -module(type_vars).
 
 -type x1(A, A) :: A.
