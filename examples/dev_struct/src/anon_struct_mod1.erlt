@@ -19,7 +19,7 @@ test() ->
     {x, {25,36}} = access_map(#(id=x, location={25,36})),
     ok = access_map2(#(inner1=#(inner2=ok))).
 
--spec test(#(a::1, b::#(c::2 | _) | _)) -> really_ok;
+-spec test(#(a::1, b::#(c::2, _), _)) -> really_ok;
           (#(_)) -> ok;
           (any()) -> not_ok.
 
@@ -60,7 +60,7 @@ update_map3(M) ->
 %%    B0 = M#(b),
 %%    M#(a = B0, b = A0).
 
--spec access_map(#(id :: Id, location :: Location | _)) -> {Id, Location}.
+-spec access_map(#(id :: Id, location :: Location, _)) -> {Id, Location}.
 access_map(M) ->
     {M#(id), M#(location)}.
 

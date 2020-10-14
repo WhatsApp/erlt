@@ -127,8 +127,9 @@ vars -> var : ['$1'].
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
 
-anon_field_defs -> non_default_field_def ',' anon_field_defs : ['$1' | '$3'].
-anon_field_defs -> non_default_field_def : ['$1'].
+anon_field_defs -> var                                       : {[], '$1'}.
+anon_field_defs -> non_default_field_def                     : ['$1'].
+anon_field_defs -> non_default_field_def ',' anon_field_defs : build_anon_struct_internals_type('$1', '$3').
 
 field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
 field_def -> non_default_field_def : '$1'.
@@ -185,9 +186,7 @@ type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1','$5'),
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
 type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_anon_struct, []}.
-type -> '#' '(' var ')'                       : {type, ?anno('$1','$4'), open_anon_struct, [], '$3'}.
-type -> '#' '(' anon_field_defs ')'       : {type, ?anno('$1','$4'), closed_anon_struct, '$3'}.
-type -> '#' '(' anon_field_defs '|' var ')' : {type, ?anno('$1','$6'), open_anon_struct, '$3', '$5'}.
+type -> '#' '(' anon_field_defs ')'       : build_anon_struct_type(?anno('$1', '$4'), '$3').
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
@@ -1286,6 +1285,16 @@ build_enum_type(Name, Types) ->
         Other ->
             ret_err(?anno(Other), "bad enum type")
     end.
+
+build_anon_struct_internals_type(This, {Fields, Ext}) ->
+    {[This | Fields], Ext};
+build_anon_struct_internals_type(This, Rest) when is_list(Rest) ->
+    [This | Rest].
+
+build_anon_struct_type(Anno, {Fields, Extension}) ->
+    {type, Anno, open_anon_struct, Fields, Extension};
+build_anon_struct_type(Anno, Fields) ->
+    {type, Anno, closed_anon_struct, Fields}.
 
 build_type({op, A, '.', M, N}, Types) ->
     {remote_type, A, [fold_dots(M), N, Types]};
