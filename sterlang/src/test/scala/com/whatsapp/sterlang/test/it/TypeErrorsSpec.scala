@@ -25,9 +25,9 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/neg")
-  testDir("examples/err")
-  testDir("examples/err2")
+  testDir("examples/neg/src")
+  testDir("examples/err/src")
+  testDir("examples/err2/src")
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._

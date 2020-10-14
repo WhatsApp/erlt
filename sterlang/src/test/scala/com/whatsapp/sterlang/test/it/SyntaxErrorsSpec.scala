@@ -24,7 +24,7 @@ import com.whatsapp.sterlang._
 class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
-  testDir("examples/err-syntax")
+  testDir("examples/err_syntax/src")
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._

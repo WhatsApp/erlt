@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e09.erlt:21:15
-Parse Error
- 21|         error:Err ->
-...|               ^

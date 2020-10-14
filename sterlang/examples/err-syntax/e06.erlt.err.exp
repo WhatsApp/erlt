@@ -1,5 +1,0 @@
--- ERROR ------------------------------------- examples/err-syntax/e06.erlt:17:6
-Unsupported Syntax
-Calculation in patterns
- 17| test(-(-4)) ->
-...|      ~~~~

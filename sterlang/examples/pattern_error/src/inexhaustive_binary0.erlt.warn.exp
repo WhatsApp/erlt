@@ -1,0 +1,7 @@
+-- WARNING ----------- examples/pattern_error/src/inexhaustive_binary0.erlt:20:1
+Missing Patterns
+missing: false, _
+ 20| test(true, <<0, _/binary>>) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 21| test(true, <<1, _/binary>>) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

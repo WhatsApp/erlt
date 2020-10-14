@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e10.erlt:21:14
-Parse Error
- 21|         Class:Err:Trace ->
-...|              ^

@@ -1,9 +1,0 @@
--- WARNING ---------------------- examples/pattern-error/nested_match1.erlt:20:7
-Missing Patterns
-missing: {true, _}
- 20|   1 + case {true, false} of
-...|       ~~~~~~~~~~~~~~~~~~~~~
-...|         {false, _} -> 2
-...| ~~~~~~~~~~~~~~~~~~~~~~~
- 22|       end,
-...| ~~~~~~~~~

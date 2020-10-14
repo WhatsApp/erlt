@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/neg/src/n08.erlt:25:24
+Infinite type
+A <> recRec1(A)
+ 25|   getOrElse(next(Rec), Rec).
+...|                        ~~~

@@ -1,5 +1,0 @@
--- WARNING --------------- examples/pattern-error/inexhaustive_record2.erlt:19:1
-Missing Patterns
-missing: #{a := true}
- 19| test1(#(a = false)) -> {}.
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~

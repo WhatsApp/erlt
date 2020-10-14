@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------------- examples/err/src/e92.erlt:18:5
+Unknown struct: #unknown_struct{}
+ 18|     #unknown_struct{}.
+...|     ~~~~~~~~~~~~~~~~~

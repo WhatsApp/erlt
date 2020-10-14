@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------------- examples/err/src/e75.erlt:18:1
+Duplicate fun: foo/0
+ 18| foo() -> 2.
+...| ~~~~~~~~~~

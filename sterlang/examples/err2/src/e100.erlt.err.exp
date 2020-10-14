@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------- examples/err2/src/e100.erlt:20:24
+Type Mismatch
+Found:    list(A)
+Required: number()
+ 20|     Rec#my_record{id = []}.
+...|                        ^^

@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e02.erlt:16:10
+Type Mismatch
+Found:    boolean()
+Required: list(A)
+ 16| foo() -> true ++ [].
+...|          ~~~~

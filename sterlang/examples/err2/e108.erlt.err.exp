@@ -1,4 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e108.erlt:20:11
-Unknown field #foo.name
- 20| test(#foo{name = Name}) ->
-...|           ~~~~~~~~~~~

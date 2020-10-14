@@ -1,5 +1,0 @@
--- ERROR ------------------------------------- examples/err-syntax/e04.erlt:17:6
-Unsupported Syntax
-Atom literals
- 17| test(atom) ->
-...|      ~~~~

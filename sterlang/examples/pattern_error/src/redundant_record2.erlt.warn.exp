@@ -1,0 +1,4 @@
+-- WARNING -------------- examples/pattern_error/src/redundant_record2.erlt:21:7
+Useless Pattern
+ 21| test1(#()) -> {}.
+...|       ~~~

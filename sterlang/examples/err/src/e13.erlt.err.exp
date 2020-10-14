@@ -1,0 +1,6 @@
+-- ERROR ---------------------------------------- examples/err/src/e13.erlt:18:5
+Type Mismatch
+Found:    #( id1 :: number() )
+Required: #( id2 :: number(), A )
+ 18|     Y #(id2 = 2).
+...|     ^

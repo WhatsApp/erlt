@@ -1,4 +1,0 @@
--- WARNING ----------------- examples/pattern-error/redundant_receive1.erlt:24:5
-Useless Pattern
- 24|     #m0{} -> {}
-...|     ~~~~~

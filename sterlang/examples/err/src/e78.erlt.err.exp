@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------------- examples/err/src/e78.erlt:18:1
+Duplicate type: elem
+ 18| -opaque elem(A) :: {A}.
+...| ~~~~~~~~~~~~~~~~~~~~~~

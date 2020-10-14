@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------------- examples/err/src/e71.erlt:17:9
+Useless type variable: A
+ 17| -type e(A) :: {}.
+...|         ^

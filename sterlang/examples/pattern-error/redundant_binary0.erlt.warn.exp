@@ -1,4 +1,0 @@
--- WARNING ------------------ examples/pattern-error/redundant_binary0.erlt:22:6
-Useless Pattern
- 22| test(<<1, _/binary>>) -> {}.
-...|      ~~~~~~~~~~~~~~~

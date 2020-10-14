@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e30.erlt:19:37
-Parse Error
- 19| remote_dynamic_call3(Fun) -> remote:Fun().
-...|                                     ^

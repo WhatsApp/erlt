@@ -1,0 +1,4 @@
+-- ERROR -------------------------------- examples/err_syntax/src/e14.erlt:20:22
+Parse Error
+ 20| -spec make_nil() -> [].
+...|                      ^

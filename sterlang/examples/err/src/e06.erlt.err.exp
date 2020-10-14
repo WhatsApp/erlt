@@ -1,0 +1,6 @@
+-- ERROR ---------------------------------------- examples/err/src/e06.erlt:18:6
+Type Mismatch
+Found:    boolean()
+Required: number()
+ 18|     -X.
+...|      ^

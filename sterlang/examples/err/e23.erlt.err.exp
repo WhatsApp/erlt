@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e23.erlt:16:14
-Type Mismatch
-Found:    {number()}
-Required: number()
- 16| foo() -> 1 + {1}.
-...|              ~~~

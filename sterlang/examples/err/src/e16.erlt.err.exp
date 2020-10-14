@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e16.erlt:17:15
+Type Mismatch
+Found:    number()
+Required: boolean()
+ 17|     X orelse (1 + Y).
+...|               ~~~~~

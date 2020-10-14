@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e05.erlt:16:23
-Type Mismatch
-Found:    string()
-Required: boolean()
- 16| foo() -> true andalso "should be boolean()".
-...|                       ~~~~~~~~~~~~~~~~~~~~~

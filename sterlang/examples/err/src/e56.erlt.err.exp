@@ -1,0 +1,6 @@
+-- ERROR ---------------------------------------- examples/err/src/e56.erlt:17:1
+Spec mismatch for call_id/1
+Specified:  `fun((A) -> B)`
+Elaborated: `fun((A) -> A)`
+ 17| -spec call_id(A) -> B.
+...| ~~~~~~~~~~~~~~~~~~~~~

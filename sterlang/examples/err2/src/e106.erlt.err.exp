@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err2/src/e106.erlt:21:8
+Type Mismatch
+Found:    number()
+Required: string()
+ 21|     Foo#foo.id.
+...|        ~~~~~~~

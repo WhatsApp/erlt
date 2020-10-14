@@ -1,4 +1,0 @@
--- WARNING -------------------- examples/pattern-error/redundant_enum1.erlt:22:7
-Useless Pattern
- 22| test1(ab.a{}) -> {}.
-...|       ~~~~~~

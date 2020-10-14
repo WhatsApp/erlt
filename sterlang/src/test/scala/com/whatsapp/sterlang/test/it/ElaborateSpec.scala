@@ -25,12 +25,12 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/pos")
-  testDir("examples/elm-core")
-  testDir("examples/dev")
-  testDir("examples/pattern")
-  smokeTestFile("examples/elm-core", "basics")
-  smokeTestDir("examples/dir")
+  testDir("examples/pos/src")
+  testDir("examples/elm_core/src")
+  testDir("examples/dev/src")
+  testDir("examples/pattern/src")
+  smokeTestFile("examples/elm_core/src", "basics")
+  smokeTestDir("examples/dir/src")
 
   private def smokeTestDir(iDirPath: String): Unit = {
     it(s"smoke test: $iDirPath") {
@@ -124,7 +124,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
     // Check pattern matching
     // TODO: apply to all files when ready.
-    if (new File(erltPath).getParent == "examples/pattern") {
+    if (new File(erltPath).getParent == "examples/pattern/src") {
       val patternWarnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annDefs)
       assert(patternWarnings.isEmpty)
     }

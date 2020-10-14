@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e63.erlt:17:24
-Unknown type: some_type/0
- 17| -enum my_enum() :: ctr{some_type()}.
-...|                        ~~~~~~~~~~~

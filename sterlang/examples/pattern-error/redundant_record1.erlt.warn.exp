@@ -1,4 +1,0 @@
--- WARNING ------------------ examples/pattern-error/redundant_record1.erlt:20:7
-Useless Pattern
- 20| test1(#(a = true)) -> {}.
-...|       ~~~~~~~~~~~

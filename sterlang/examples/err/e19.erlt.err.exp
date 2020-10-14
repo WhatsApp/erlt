@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e19.erlt:18:14
-Type Mismatch
-Found:    number()
-Required: boolean()
- 18|     X orelse some_int().
-...|              ~~~~~~~~~~

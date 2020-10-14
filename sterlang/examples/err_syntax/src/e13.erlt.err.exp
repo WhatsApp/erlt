@@ -1,0 +1,4 @@
+-- ERROR -------------------------------- examples/err_syntax/src/e13.erlt:19:14
+Parse Error
+ 19| attempt() -> catch catch_me_if_you_can().
+...|              ^

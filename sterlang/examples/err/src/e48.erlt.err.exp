@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/err/src/e48.erlt:16:15
+Infinite type
+#( x :: A, B ) <> A
+ 16| f04(X = #(x = X)) -> X.
+...|               ^

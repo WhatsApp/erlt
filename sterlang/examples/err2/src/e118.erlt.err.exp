@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------- examples/err2/src/e118.erlt:20:6
+Unconditional update. my_msg is message()
+ 20|     M#my_msg{message = "new message"}.
+...|      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

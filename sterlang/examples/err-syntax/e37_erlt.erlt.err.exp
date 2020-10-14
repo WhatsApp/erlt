@@ -1,4 +1,0 @@
--- ERROR ------------------------------- examples/err-syntax/e37_erlt.erlt:23:37
-Parse Error
- 23| update_map(Map, Key, Value) -> Map#(Key = Value).
-...|                                     ^

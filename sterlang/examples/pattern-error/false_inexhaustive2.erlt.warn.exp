@@ -1,7 +1,0 @@
--- WARNING ---------------- examples/pattern-error/false_inexhaustive2.erlt:19:1
-Possibly Missing Patterns
-missing: _, _
- 19| test(X, Y) when X =< Y -> {};
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- 20| test(X, Y) when X > Y -> {}.
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~

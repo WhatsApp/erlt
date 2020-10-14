@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e80.erlt:18:14
+Type Mismatch
+Found:    {A}
+Required: core:tuple1(A)
+ 18| tuple1(A) -> {A}.
+...|              ~~~

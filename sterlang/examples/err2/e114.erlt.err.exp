@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------ examples/err2/e114.erlt:24:9
-Illegal catch pattern
- 24|         {IllegalPattern} -> IllegalPattern
-...|         ~~~~~~~~~~~~~~~~

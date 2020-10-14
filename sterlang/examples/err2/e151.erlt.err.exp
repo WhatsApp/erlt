@@ -1,6 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e151.erlt:19:49
-Type Mismatch
-Found:    string()
-Required: bad_box(A)
- 19| -struct bad_box(A) :: {value = #bad_box{value = ""} :: bad_box(A)}.
-...|                                                 ^^

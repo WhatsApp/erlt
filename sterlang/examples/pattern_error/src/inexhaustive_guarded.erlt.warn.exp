@@ -1,0 +1,5 @@
+-- WARNING ----------- examples/pattern_error/src/inexhaustive_guarded.erlt:19:1
+Possibly Missing Patterns
+missing: _, _
+ 19| test1(X, Y) when X < Y -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

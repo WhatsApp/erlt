@@ -1,5 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e07.erlt:17:11
-Infinite type
-A <> fun((A) -> B)
- 17| f(T) -> f(fun f/1).
-...|           ~~~~~~~

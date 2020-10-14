@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e87.erlt:18:14
-Unknown type: unknown_type/0
- 18|     field :: unknown_type()
-...|              ~~~~~~~~~~~~~~

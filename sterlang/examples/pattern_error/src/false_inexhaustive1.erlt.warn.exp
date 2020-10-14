@@ -1,0 +1,9 @@
+-- WARNING ------------ examples/pattern_error/src/false_inexhaustive1.erlt:19:1
+Possibly Missing Patterns
+missing: true, true
+ 19| test(X, X) -> {};
+...| ~~~~~~~~~~~~~~~~~
+...| test(true, false) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~
+ 21| test(false, true) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~

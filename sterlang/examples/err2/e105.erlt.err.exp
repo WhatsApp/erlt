@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------ examples/err2/e105.erlt:20:8
-Unknown field #foo.unknown_field
- 20|     Foo#foo.unknown_field.
-...|        ~~~~~~~~~~~~~~~~~~

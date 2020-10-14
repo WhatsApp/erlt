@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e38.erlt:17:18
-Type Mismatch
-Found:    list(A)
-Required: boolean()
- 17|     case true of [true|T] -> 2 end.
-...|                  ~~~~~~~

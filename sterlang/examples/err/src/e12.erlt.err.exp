@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e12.erlt:18:16
+Type Mismatch
+Found:    #( id :: number(), location :: string() )
+Required: boolean()
+ 18|     X andalso (Y #(id = 2)).
+...|                ~~~~~~~~~~~

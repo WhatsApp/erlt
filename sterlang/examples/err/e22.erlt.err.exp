@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e22.erlt:17:17
-Type Mismatch
-Found:    #( x :: boolean() )
-Required: number()
- 17| foo() -> double(#(x = false)).
-...|                 ~~~~~~~~~~~~

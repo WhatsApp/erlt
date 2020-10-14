@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------- examples/err/src/e42.erlt:18:37
+Unknown type: box/2
+ 18| -struct box2(A, B) :: {wrong_box :: box(A, B)}.
+...|                                     ~~~~~~~~~

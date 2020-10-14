@@ -1,0 +1,5 @@
+-- WARNING ------------- examples/pattern_error/src/inexhaustive_list0.erlt:19:1
+Missing Patterns
+missing: []
+ 19| test1([_H | _T]) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~

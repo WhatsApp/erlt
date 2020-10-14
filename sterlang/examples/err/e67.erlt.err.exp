@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e67.erlt:17:18
-Duplicate type var: A
- 17| -type my_pair(A, A) :: A.
-...|                  ^

@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e82.erlt:18:10
-Type Mismatch
-Found:    binary()
-Required: number()
- 18|     << <<Bin>> || Bin <- [<<3,7,5,4,7>>] >>.
-...|          ~~~

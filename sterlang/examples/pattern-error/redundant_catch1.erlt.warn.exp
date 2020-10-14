@@ -1,4 +1,0 @@
--- WARNING ------------------- examples/pattern-error/redundant_catch1.erlt:26:5
-Useless Pattern
- 26|     #e0{} -> {}
-...|     ~~~~~

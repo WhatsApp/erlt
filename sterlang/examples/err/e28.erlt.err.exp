@@ -1,5 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e28.erlt:17:11
-Infinite type
-list(list(A)) <> list(A)
- 17|     [[Y], Y].
-...|           ^^

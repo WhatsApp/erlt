@@ -1,6 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e39.erlt:17:18
-Type Mismatch
-Found:    {A, B}
-Required: boolean()
- 17|     case true of {X, Y} -> X end.
-...|                  ~~~~~~

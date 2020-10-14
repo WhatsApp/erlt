@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e08.erlt:18:36
-Parse Error
- 18| -spec test (integer()) -> integer(); (boolean()) -> boolean().
-...|                                    ^

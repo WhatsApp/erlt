@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err2/src/e107.erlt:20:28
+Unknown field #foo.name
+ 20| test(Foo) when Foo == #foo{name = "anonymous"} ->
+...|                            ~~~~~~~~~~~~~~~~~~

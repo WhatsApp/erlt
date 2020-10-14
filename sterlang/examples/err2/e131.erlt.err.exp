@@ -1,5 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e131.erlt:17:47
-Shape extension type in a type definition
-Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only.
- 17| -opaque open_shape(Ext) :: #(id :: integer(), Ext).
-...|                                               ~~~

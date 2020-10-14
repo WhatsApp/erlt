@@ -25,7 +25,7 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/pattern-error")
+  testDir("examples/pattern_error/src")
 
   private def testDir(iDirPath: String): Unit = {
     import sys.process._

@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e66.erlt:17:18
-Duplicate type var: A
- 17| -enum my_enum(A, A) :: ctr{A}.
-...|                  ^

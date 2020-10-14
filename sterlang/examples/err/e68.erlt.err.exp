@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e68.erlt:17:17
-Unbound type variable: A
- 17| -enum e() :: e1{A}.
-...|                 ^

@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err2/src/e141.erlt:17:1
+Spec mismatch for get_foo/1
+Specified:  `fun((#( foo :: A, B )) -> A)`
+Elaborated: `fun((#( bar :: B, foo :: A, C )) -> A)`
+ 17| -spec get_foo(#(foo :: Foo, _)) -> Foo.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
