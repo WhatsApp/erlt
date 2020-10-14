@@ -14,5 +14,5 @@
 
 -module(e91).
 
--struct duplicate_struct() :: {}.
--struct duplicate_struct() :: {id :: integer()}.
+-struct duplicate_struct() :: ().
+-struct duplicate_struct() :: (id :: integer()).

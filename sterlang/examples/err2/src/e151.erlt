@@ -14,6 +14,6 @@
 
 -module(e151).
 
--struct ok_list_box(A) :: {list = [] :: list(A)}.
+-struct ok_list_box(A) :: (list = [] :: list(A)).
 
--struct bad_box(A) :: {value = #bad_box{value = ""} :: bad_box(A)}.
+-struct bad_box(A) :: (value = #bad_box{value = ""} :: bad_box(A)).

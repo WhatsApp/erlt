@@ -14,7 +14,7 @@
 
 -module(e113).
 
--message foo() :: {id :: integer()}.
+-message foo() :: (id :: integer()).
 
 -spec test() -> foo().
 test() ->

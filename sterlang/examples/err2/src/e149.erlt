@@ -14,6 +14,6 @@
 
 -module(e149).
 
--struct box(A) :: {value :: A}.
+-struct box(A) :: (value :: A).
 
--struct struct_with_bad_default() :: {id = #box{value = 1} :: box(string())}.
+-struct struct_with_bad_default() :: (id = #box{value = 1} :: box(string())).

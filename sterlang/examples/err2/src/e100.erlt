@@ -14,7 +14,7 @@
 
 -module(e100).
 
--struct my_record() :: {id :: integer(), hash :: integer()}.
+-struct my_record() :: (id :: integer(), hash :: integer()).
 
 update(Rec) ->
     Rec#my_record{id = []}.

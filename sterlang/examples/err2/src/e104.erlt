@@ -14,5 +14,5 @@
 
 -module(e104).
 
--struct box(A) :: {value :: box2(A)}.
+-struct box(A) :: (value :: box2(A)).
 -type box2(A) :: box(box2(A)).

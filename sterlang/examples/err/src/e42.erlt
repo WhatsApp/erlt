@@ -14,5 +14,5 @@
 
 -module(e42).
 
--struct box(A) :: {value :: A}.
--struct box2(A, B) :: {wrong_box :: box(A, B)}.
+-struct box(A) :: (value :: A).
+-struct box2(A, B) :: (wrong_box :: box(A, B)).

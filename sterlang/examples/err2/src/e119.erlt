@@ -14,7 +14,7 @@
 
 -module(e119).
 
--exception my_exn() :: {message :: string()}.
+-exception my_exn() :: (message :: string()).
 
 exn_select(E) ->
     E#my_exn.message.

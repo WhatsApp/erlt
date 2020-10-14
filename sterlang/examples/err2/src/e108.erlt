@@ -14,7 +14,7 @@
 
 -module(e108).
 
--struct foo() :: {id :: integer()}.
+-struct foo() :: (id :: integer()).
 
 -spec test(foo()) -> string().
 test(#foo{name = Name}) ->

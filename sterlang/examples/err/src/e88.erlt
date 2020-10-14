@@ -14,4 +14,4 @@
 
 -module(e88).
 
--struct box(A, A) :: {value :: A}.
+-struct box(A, A) :: (value :: A).

@@ -103,7 +103,7 @@ attribute -> '-' atom '(' attr_val ')' :
     build_attribute('$2', '$4', anno('$1','$5')).
 attribute -> '-' type_kind atom var_list '::' top_type :
     type_def('$2', '$3', '$4', '$6', anno('$1','$6')).
-attribute -> '-' struct_kind atom var_list '::' '{' field_defs '}' :
+attribute -> '-' struct_kind atom var_list '::' '(' field_defs ')' :
     struct_def('$2', '$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' 'spec' type_spec :
     type_spec('$3', anno('$1','$3')).

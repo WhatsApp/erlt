@@ -2,5 +2,5 @@
 Type Mismatch
 Found:    string()
 Required: number()
- 17| -struct struct_with_bad_default() :: {id = "" :: integer()}.
+ 17| -struct struct_with_bad_default() :: (id = "" :: integer()).
 ...|                                            ^^

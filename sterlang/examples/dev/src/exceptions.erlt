@@ -14,9 +14,9 @@
 
 -module(exceptions).
 
--exception not_found() :: {}.
--exception invocation_target_exception() :: {target :: exception()}.
--exception message_error() :: {message :: string()}.
+-exception not_found() :: ().
+-exception invocation_target_exception() :: (target :: exception()).
+-exception message_error() :: (message :: string()).
 
 -enum option(A) :: none{} | some{A}.
 

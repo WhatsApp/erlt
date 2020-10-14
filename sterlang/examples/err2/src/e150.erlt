@@ -14,6 +14,6 @@
 
 -module(e150).
 
--struct box(A) :: {value :: A}.
+-struct box(A) :: (value :: A).
 
--struct bad_struct(A, B) :: {box1 = #box{value = 1} :: A, box2 = #box{value = true} :: B}.
+-struct bad_struct(A, B) :: (box1 = #box{value = 1} :: A, box2 = #box{value = true} :: B).

@@ -2,5 +2,5 @@
 Type Mismatch
 Found:    string()
 Required: bad_box(A)
- 19| -struct bad_box(A) :: {value = #bad_box{value = ""} :: bad_box(A)}.
+ 19| -struct bad_box(A) :: (value = #bad_box{value = ""} :: bad_box(A)).
 ...|                                                 ^^

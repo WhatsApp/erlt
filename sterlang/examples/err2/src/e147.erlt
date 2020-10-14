@@ -14,4 +14,4 @@
 
 -module(e147).
 
--struct struct_with_bad_default() :: {id = "" :: integer()}.
+-struct struct_with_bad_default() :: (id = "" :: integer()).

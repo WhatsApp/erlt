@@ -14,7 +14,7 @@
 
 -module(e120).
 
--message my_msg() :: {message :: string()}.
+-message my_msg() :: (message :: string()).
 
 msg_select(E) ->
     M#my_msg.message.

@@ -14,18 +14,18 @@
 
 -module(structs).
 
--struct user() :: {name :: string(), id :: integer()}.
--struct manager() :: {user :: user()}.
--struct ok() :: {}.
--struct boxed_int() :: {int :: integer()}.
+-struct user() :: (name :: string(), id :: integer()).
+-struct manager() :: (user :: user()).
+-struct ok() :: ().
+-struct boxed_int() :: (int :: integer()).
 
--struct box(A) :: {value :: A}.
--struct box2(A, B) :: {value1 :: A, value2 :: B}.
+-struct box(A) :: (value :: A).
+-struct box2(A, B) :: (value1 :: A, value2 :: B).
 
 -spec test(user()) -> user().
 test(X) -> X.
 
--struct wrapped_int() :: {int_value = 0 :: integer()}.
+-struct wrapped_int() :: (int_value = 0 :: integer()).
 
 mk_user(Name, Id) ->
     #user{name = Name, id = Id}.

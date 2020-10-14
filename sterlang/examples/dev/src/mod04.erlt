@@ -24,7 +24,7 @@
 
 -import_type(mod03, [box2/1]).
 
--struct box3(A) :: {value :: A}.
+-struct box3(A) :: (value :: A).
 
 -spec mk_unit_remote_dot() -> mod03:unit0().
 mk_unit_remote_dot() -> mod03:unit0.unit0{}.

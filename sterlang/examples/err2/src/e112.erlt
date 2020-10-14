@@ -14,10 +14,10 @@
 
 -module(e112).
 
--message ping() :: {from :: pid()}.
--message pong() :: {in_answer_to :: message()}.
+-message ping() :: (from :: pid()).
+-message pong() :: (in_answer_to :: message()).
 
--exception foo() :: {id :: integer()}.
+-exception foo() :: (id :: integer()).
 
 loop_step(TimeOut, Default) ->
     receive

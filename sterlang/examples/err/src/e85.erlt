@@ -14,4 +14,4 @@
 
 -module(e85).
 
--struct box() :: {value :: Unbound}.
+-struct box() :: (value :: Unbound).

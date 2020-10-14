@@ -14,6 +14,6 @@
 
 -module(e87).
 
--struct bad_record() :: {
+-struct bad_record() :: (
     field :: unknown_type()
-}.
+).

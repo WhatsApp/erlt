@@ -14,4 +14,4 @@
 
 -module(e144).
 
--exception polymorphic_exn(A, B) :: {value_a :: A, value_b :: B}.
+-exception polymorphic_exn(A, B) :: (value_a :: A, value_b :: B).

@@ -14,4 +14,4 @@
 
 -module(e145).
 
--message polymorphic_msg(A) :: {value_a :: A}.
+-message polymorphic_msg(A) :: (value_a :: A).
