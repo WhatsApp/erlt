@@ -1,4 +1,4 @@
--lang([erlt]).
+
 -module(struct_fields).
 
 -export([local/0, duplicate/1]).

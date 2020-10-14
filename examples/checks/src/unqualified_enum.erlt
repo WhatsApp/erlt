@@ -1,4 +1,4 @@
--lang([erl2, st]).
+
 -module(unqualified_enum).
 
 -enum ab() :: a{} | b{}.

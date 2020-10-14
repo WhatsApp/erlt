@@ -1,4 +1,4 @@
--lang([erl2, st]).
+
 -module(shadow_var).
 
 %% Don't warn about normal shadowing in funs and comprehensions
