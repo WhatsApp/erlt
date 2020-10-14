@@ -1,4 +1,3 @@
--lang([erlt]).
 -module(erltodo).
 -export([main/1]).
 
@@ -29,9 +28,9 @@ loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
             display_stats(State),
             loop(State)
     end.
- 
+
  %% get and adapt user input
- 
+
 prompt(Todos) ->
      io:format("What would you like to do?\n"
             "1. add todo~n"
@@ -49,7 +48,7 @@ prompt(Todos) ->
              invalid_input(),
              prompt(Todos)
      end.
- 
+
  prompt_add_todo() ->
      case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
          {ok, TodoText} when is_list(TodoText) ->
@@ -59,7 +58,7 @@ prompt(Todos) ->
              invalid_input(),
              prompt_add_todo()
      end.
- 
+
  prompt_delete_todo(Todos) ->
      display_todos(Todos),
      case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
@@ -69,7 +68,7 @@ prompt(Todos) ->
              invalid_input(),
              prompt_delete_todo(Todos)
      end.
- 
+
 
 %% display stuff
 
@@ -100,7 +99,7 @@ display_todos(Todos) ->
 
 line() ->
     io:format("------~n").
- 
+
  invalid_input() ->
      io:format("invalid input~n").
 
@@ -113,4 +112,4 @@ with_indices(List) ->
  splice(Index, List) ->
      {Left, [_|Right]} = lists:split(Index - 1, List),
      Left ++ Right.
- 
+

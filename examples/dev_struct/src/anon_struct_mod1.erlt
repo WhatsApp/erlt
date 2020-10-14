@@ -1,5 +1,3 @@
--lang([erl2]).
-
 -module(anon_struct_mod1).
 
 -export([test/0, test_in_lc/1]).

@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
 -module(mod03).
 -export_type([unit0/0, boxed/1, either/2, rgb/0, pair/2, triple/3, my_list/1, option/1]).
 -export([

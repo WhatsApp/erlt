@@ -69,14 +69,6 @@
     errors = [] :: [err_warn_info()],
     warnings = [] :: [err_warn_info()],
     build_dir :: undefined | file:filename(),
-    % indicator of Erlang language flavor; valid combinations are
-    %
-    %    []                  -- erl1
-    %    [erl2 | erlt, dt], [erl2 | erlt]  -- dynamically typed erlt
-    %    [erl2 | erlt, st]          -- statically typed erlt
-    %    [erl2 | erlt, ffi]         -- ffi erlt
-    %    [erl2 | erlt, specs]       -- specs for a module which is somewhere else
-    lang = [] :: [erlt | erl2 | st | dt | ffi | specs],
     original_forms,
     global_defs :: undefined | erlt_defs:defs(),
     variable_state :: undefined | erlt:var_state(),
@@ -390,14 +382,7 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     gen_make_rule(Target, DepsFilenames).
 
 check_parse_errors(Forms, St0) ->
-    % NOTE: not checking for parse_errors for erl1 -- in order to precisely follow erlc
-    % behavior
-    case is_lang_erlt(St0) of
-        true ->
-            do_check_parse_errors(Forms, St0);
-        false ->
-            {ok, Forms, St0}
-    end.
+    do_check_parse_errors(Forms, St0).
 
 do_check_parse_errors(Forms, St0) ->
     % in normal Erlang compilation lexer, parser, and epp errors are reported by
@@ -540,12 +525,7 @@ compile_erl1_forms(Forms, St0) ->
     %% suppress some warnings in standard compiler because we have already
     %% warned about them in our custom lint pass.
     Opts0 = St0#compile.options -- [nowarn_unused_type, report_warnings, report_errors],
-    Forms1 =
-        case get_lang(St0) of
-            specs -> [{attribute, L, module, M} || {attribute, L, module, M} <- Forms];
-            _ -> Forms
-        end,
-    Ret = compile:noenv_forms(Forms1, [
+    Ret = compile:noenv_forms(Forms, [
         return_errors,
         return_warnings,
         nowarn_unused_type,
@@ -831,32 +811,12 @@ remove_file(Code, St) ->
     {ok, Code, St}.
 
 parse_module(Forms0, St0) ->
-    % try parsing as erlt first
-    Res = parse_module(Forms0, St0, _EppMod2 = erlt_epp),
-    case Res of
-        {ok, _Forms1, St1} ->
-            case is_lang_erlt(St1) of
-                true ->
-                    % this is erlt, we guessed it right => returning
-                    Res;
-                false ->
-                    % this is erl1, reparsing it as erl1
-                    %
-                    % NOTE, XXX: this is a temporary solution; it is unnecessarily expensive and only works for as long
-                    % as erlt syntax is an extension of erl1 syntax, which may not be true in the future
-                    parse_module(Forms0, St0, _EppMod1 = epp)
-            end;
-        % error
-        _ ->
-            Res
-    end.
+    parse_module(Forms0, St0, _EppMod2 = erlt_epp).
 
 parse_module(_Code, St0, EppMod) ->
     case do_parse_module(utf8, St0, EppMod) of
-        {ok, Fs0, St1} ->
-            % extract indicator of Erlang language flavor
-            {Lang, Fs1} = parse_lang(Fs0),
-            {ok, Fs1, St1#compile{lang = Lang, original_forms = Fs0}};
+        {ok, Fs, St1} ->
+            {ok, Fs, St1#compile{original_forms = Fs}};
         {error, _} = Ret ->
             Ret;
         {invalid_unicode, File, Line} ->
@@ -888,43 +848,23 @@ output_declarations(Code, #compile{defs_file = FileName} = St) ->
     {ok, Code, St#compile{has_written_defs_file = true}}.
 
 erlt_exception(Code, St) ->
-    case is_lang_erlt(St) of
-        true ->
-            Code1 = erlt_exception:parse_transform(Code, St#compile.options),
-            {ok, Code1, St};
-        false ->
-            {ok, Code, St}
-    end.
+    Code1 = erlt_exception:parse_transform(Code, St#compile.options),
+    {ok, Code1, St}.
 
 erlt_message(Code, St) ->
-    case is_lang_erlt(St) of
-        true ->
-            Code1 = erlt_message:parse_transform(Code, St#compile.options),
-            {ok, Code1, St};
-        false ->
-            {ok, Code, St}
-    end.
+    Code1 = erlt_message:parse_transform(Code, St#compile.options),
+    {ok, Code1, St}.
 
 erlt_track_vars(Code, St) ->
     VarState = erlt_vars:initialize_vars(Code),
     {ok, Code, St#compile{variable_state = VarState}}.
 
 erlt_import(Code, St) ->
-    case is_lang_erlt(St) of
-        true ->
-            Code1 = erlt_import:module(Code),
-            {ok, Code1, St};
-        false ->
-            {ok, Code, St}
-    end.
+    Code1 = erlt_import:module(Code),
+    {ok, Code1, St}.
 
 erlt_lint(Code, St) ->
-    case lists:member(get_lang(St), [dt, st, ffi]) of
-        true ->
-            do_erlt_lint(Code, St);
-        false ->
-            {ok, Code, St}
-    end.
+    do_erlt_lint(Code, St).
 
 do_erlt_lint(Code, St) ->
     Opts = St#compile.options,
@@ -937,20 +877,6 @@ do_erlt_lint(Code, St) ->
                 errors = St#compile.errors ++ Es
             }}
     end.
-
-parse_lang(Forms) ->
-    parse_lang(Forms, _Lang = [], _Acc = []).
-
-% NOTE: to count, -lang(...) has to preceed -module(...)
-parse_lang([], Lang, Acc) ->
-    {Lang, lists:reverse(Acc)};
-parse_lang([{attribute, _, module, _} | _] = Forms, Lang, Acc) ->
-    {Lang, lists:reverse(Acc, Forms)};
-parse_lang([{attribute, _, lang, Lang} | Rest], _, Acc) ->
-    % TODO: validate Lang -- see #compile{} definition for list of valid values
-    {Lang, lists:reverse(Acc, Rest)};
-parse_lang([Form | Rest], Lang, Acc) ->
-    parse_lang(Rest, Lang, [Form | Acc]).
 
 do_parse_module(
     DefEncoding,
@@ -1058,25 +984,6 @@ transform_module(Code0, #compile{options = Opt} = St) ->
             foldl_transform(Ts, Code, St)
     end.
 
-is_lang_erlt(St) ->
-    member(erl2, St#compile.lang) orelse member(erlt, St#compile.lang).
-
-is_lang_ffi(St) ->
-    member(ffi, St#compile.lang).
-
-is_lang_st(St) ->
-    member(st, St#compile.lang).
-
-is_lang_specs(St) ->
-    member(specs, St#compile.lang).
-
-get_lang(St) ->
-    case length(St#compile.lang) of
-        0 -> erl1;
-        1 -> dt;
-        2 -> lists:nth(2, lists:usort(St#compile.lang))
-    end.
-
 % defs files only depend on source_file
 can_be_dep_of_defs_file(Filename) ->
     filename:extension(Filename) =:= ?SOURCE_FILE_EXTENSION.
@@ -1087,31 +994,19 @@ get_compile_deps(Forms, St) ->
     AttrDeps ++ TypedDeps.
 
 get_erlt_deps(Forms, St0) ->
-    RawDeps =
-        case {is_lang_st(St0), is_lang_ffi(St0)} of
-            {true, _} -> erlt_deps:st_deps(Forms);
-            {_, true} -> erlt_deps:ffi_deps(Forms);
-            {_, _} -> erlt_deps:dt_deps(Forms)
-        end,
+    RawDeps = erlt_deps:dt_deps(Forms),
     F = St0#compile.ifile,
     [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
 
 erlt_typecheck(Code, St) ->
-    case
-        is_lang_erlt(St) andalso (is_lang_ffi(St) orelse is_lang_st(St) orelse is_lang_specs(St))
-    of
-        true ->
-            run_sterlang(St),
-            {ok, Code, St};
-        _ ->
-            {ok, Code, St}
-    end.
+    run_sterlang(St),
+    {ok, Code, St}.
 
 run_sterlang(St) ->
     SterlangDir = filename:join(St#compile.build_dir, "sterlang"),
     EtfFile = filename:join(SterlangDir, St#compile.filename ++ ".etf"),
     ok = filelib:ensure_dir(EtfFile),
-    Code1 = normalize_for_typecheck(St#compile.original_forms, is_lang_ffi(St)),
+    Code1 = normalize_for_typecheck(St#compile.original_forms),
     CodeETF = erlang:term_to_binary(Code1),
     ok = file:write_file(EtfFile, CodeETF),
 
@@ -1167,14 +1062,9 @@ do_invoke_sterlang(_CheckCmd, _BinDir) ->
     {FakeExitCode, FakeOutput}.
 
 erlt_to_erl1(Code, St) ->
-    case is_lang_erlt(St) of
-        true ->
-            case erlt_struct:module(Code, St#compile.global_defs) of
-                Forms when is_list(Forms) ->
-                    do_erlt_to_erl1(Forms, St)
-            end;
-        false ->
-            {ok, Code, St}
+    case erlt_struct:module(Code, St#compile.global_defs) of
+        Forms when is_list(Forms) ->
+            do_erlt_to_erl1(Forms, St)
     end.
 
 do_erlt_to_erl1(Code, St) ->
@@ -1598,17 +1488,9 @@ restore_expand_module([F | Fs]) ->
 restore_expand_module([]) ->
     [].
 
-is_fun_form({function, _, _, _, _}) -> true;
-is_fun_form(_) -> false.
-
 %% Turn annotation fields into a uniform format for export to the type checker
-normalize_for_typecheck(Forms, Ffi) ->
-    Forms1 =
-        case Ffi of
-            false -> Forms;
-            true -> [F || F <- Forms, not is_fun_form(F)]
-        end,
-    [erlt_parse:map_anno(fun normalize_loc/1, F) || F <- Forms1].
+normalize_for_typecheck(Forms) ->
+    [erlt_parse:map_anno(fun normalize_loc/1, F) || F <- Forms].
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(Line) when is_integer(Line) ->

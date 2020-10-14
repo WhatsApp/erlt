@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, ffi]).
 -module(string_ffi).
 
 -export_type([string_ffi/0, string_alias/0]).
