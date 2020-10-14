@@ -8,20 +8,33 @@ clean:
 
 test-ir: $(DIRS:%=test-ir/%)
 
+clean-ir:
+	find _build -name build -delete || true
+
+test-beam: $(DIRS:%=test-beam/%)
+
+ir: clean-ir build
+
 # The generated .erl files are not actually used in compilation
 # but are there for humans to read. Not actually "ir"
-ir: $(DIRS:%=ir/%)
+test-ir/%: ir
+	@# only include .erl files
+	diff -r -x sterlang -x '*.defs' -x '*.D' _build/default/lib/$*/build $*/ir-spec
 
-ir/%: clean build
-	@mkdir -p _build/default/lib/$*/test_output 
-	../test_util/beam_to_erl.escript _build/default/lib/$*/ebin _build/default/lib/$*/test_output/
-
-test-ir/%: ir/%
-	diff -r _build/default/lib/$*/test_output $*/ir-spec
+# test `erlt --------> beam -> disassembly`
+# matches `erlt -> erl -> beam -> disassembly`
+test-beam/%: ir
+	rm -rf _build/default/lib/$*/test_ouptput
+	mkdir -p _build/default/lib/$*/test_output/from_erl
+	mkdir -p _build/default/lib/$*/test_output/from_beam
+	../test_util/disassemble.escript --beam _build/default/lib/$*/ebin _build/default/lib/$*/test_output/from_beam
+	../test_util/disassemble.escript --erl _build/default/lib/$*/build _build/default/lib/$*/test_output/from_erl
+	diff -r _build/default/lib/$*/test_output/from_beam _build/default/lib/$*/test_output/from_erl
 
 update-ir-spec/%: ir
 	@rm -rf $*/ir-spec
-	cp -r _build/default/lib/$*/test_output $*/ir-spec
+	@mkdir $*/ir-spec
+	cp _build/default/lib/$*/build/*.erl $*/ir-spec
 
 update-ir-spec: $(DIRS:%=update-ir-spec/%)
 
@@ -30,7 +43,7 @@ test-others:
 	# $(MAKE) -C dev_module_record/src erl2c-records
 	$(MAKE) -C checks/src test
 
-test: test-ir test-others
+test: test-ir test-beam test-others
 
-.PHONY: build clean ir test-ir update-ir-spec
+.PHONY: build clean ir test-ir update-ir-spec test-beam
 
