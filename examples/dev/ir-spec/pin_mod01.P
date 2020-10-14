@@ -2,7 +2,7 @@
 
 -module(pin_mod01).
 
--export([f/1,g/1,h/1,i/3,i2/4,j/2,k/2,m/2]).
+-export([f/1,g/1,h/1,i/3,i2/4,j/2,j2/1,k/2,m/2,p/2,q/3]).
 
 f(X) ->
     Y = 42,
@@ -72,6 +72,15 @@ j(Elem, List) ->
                  end,
                  List).
 
+j2(X) ->
+    begin
+        __pin_o7 = X,
+        fun Test(__pin_i7) when __pin_i7 =:= __pin_o7 ->
+                Test(X)
+        end
+    end,
+    ok.
+
 k(X, Y) ->
     case X of
         {a, X} ->
@@ -94,20 +103,35 @@ k(X, Y) ->
 
 m(X, Y) ->
     begin
-        __pin_o7 = X,
-        __pin_o8 = Y,
-        fun({foo, __pin_i7, Z}) when __pin_i7 =:= __pin_o7 ->
+        __pin_o8 = X,
+        __pin_o9 = Y,
+        fun({foo, __pin_i8, Z}) when __pin_i8 =:= __pin_o8 ->
                Z;
-           ({bar, __pin_i7, Z}) when __pin_i7 =:= __pin_o7 ->
+           ({bar, __pin_i8, Z}) when __pin_i8 =:= __pin_o8 ->
                case X of
                    {ok, X} ->
                        {ok, Z};
                    error ->
                        error
                end;
-           ({baz, __pin_i8, Z}) when __pin_i8 =:= __pin_o8 ->
+           ({baz, __pin_i9, Z}) when __pin_i9 =:= __pin_o9 ->
                Z
         end
+    end.
+
+p(F, Class) ->
+    Term = {x, 42},
+    try
+        F()
+    catch
+        Class:Term ->
+            "oops"
+    end.
+
+q(Bin, Size, B) ->
+    case Bin of
+        <<B:Size/binary>> ->
+            ok
     end.
 
 
