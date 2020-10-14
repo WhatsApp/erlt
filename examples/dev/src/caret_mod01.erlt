@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2]).
 -module(caret_mod01).
 
 -export([f/1, g/1, h/1, i/2]).

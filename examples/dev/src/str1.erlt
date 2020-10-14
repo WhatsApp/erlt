@@ -1,5 +1,4 @@
 % adapted from: https://github.com/WhatsApp/erlt/issues/171
--lang([erlt]).
 -module(str1).
 
 -export_type([str1/0]).

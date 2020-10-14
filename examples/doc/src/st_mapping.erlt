@@ -12,7 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
 -module(st_mapping).
 
 %% 1:1 mapping of basic types:

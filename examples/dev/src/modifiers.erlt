@@ -1,4 +1,3 @@
--lang([erl2]).
 -module(modifiers).
 
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
@@ -15,11 +14,11 @@ ffi(X) ->
 empty() ->
     maps:empty().
 
--spec get(Key, map(Key, Value)) -> Value. 
+-spec get(Key, map(Key, Value)) -> Value.
 get(Key, Map) ->
     maps:get(Key, Map).
 
--spec put(Key, Value, map(Key, Value)) -> map(Key, Value). 
+-spec put(Key, Value, map(Key, Value)) -> map(Key, Value).
 put(Key, Value, Map) ->
     maps:put(Key, Value, Map).
 

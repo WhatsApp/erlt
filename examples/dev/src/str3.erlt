@@ -1,4 +1,3 @@
--lang([erlt]).
 -module(str3).
 
 -export_type([str3/0]).
