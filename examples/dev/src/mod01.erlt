@@ -93,7 +93,7 @@ update_shape1(S, A) ->
     S#(a = A).
 
 %% Generic updates are allowed
--spec update_shape2(#(a :: A | B), A) -> #(a :: A | B).
+-spec update_shape2(#(a :: A,  B), A) -> #(a :: A,  B).
 update_shape2(S, A) ->
     S#(a = A).
 
@@ -104,13 +104,13 @@ update_shape3(S) ->
     S#(a = B0, b = A0).
 
 %% Generic updates are forbidden
--spec update_shape4(#(a :: A, b :: A | C)) -> #(a :: A, b :: A | C).
+-spec update_shape4(#(a :: A, b :: A,  C)) -> #(a :: A, b :: A,  C).
 update_shape4(S) ->
    A0 = S#(a),
    B0 = S#(a),
    S#(a = B0, b = A0).
 
--spec access_shape(#(id :: Id, location :: Location | _A)) -> {Id, Location}.
+-spec access_shape(#(id :: Id, location :: Location,  _A)) -> {Id, Location}.
 access_shape(S) ->
     {S#(id), S#(location)}.
 
