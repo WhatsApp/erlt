@@ -32,9 +32,7 @@ handle_beam(BeamFilename, OutDir) ->
     write_dis(Mod, Dis, OutDir).
 
 handle_erl(File, OutDir, Opts) ->
-    {ok, Mod, Asm} = compile:file(File, [to_asm, binary, report_errors | Opts]),
-    AsmOpts = [from_asm, report, no_postopt, binary],
-    {ok, _Mod, Beam} = compile:forms(Asm, AsmOpts),
+    {ok, Mod, Beam} = compile:file(File, [binary, report_errors | Opts]),
     Dis = beam_to_dis(Mod, Beam),
     write_dis(Mod, Dis, OutDir).
 
