@@ -1130,7 +1130,7 @@ foldl_transform([], Code, St) ->
 
 write_erl1(Forms, #compile{build_dir = BuildDir, filename = SourceFilename}) ->
     ErlFilename = filename:join(BuildDir, filename:basename(SourceFilename, ".erlt") ++ ".erl"),
-    {ok, File} = file:open(ErlFilename, [write]),
+    {ok, File} = file:open(ErlFilename, [write, {encoding, utf8}]),
     try
         [
             begin
