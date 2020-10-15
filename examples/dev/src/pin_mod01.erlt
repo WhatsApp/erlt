@@ -16,7 +16,7 @@
 
 -export([f/1, g/1, h/1, i/3, i2/4, j/2, j2/1, k/2, m/2, p/2, q/3]).
 
-[dynamic]
+[unchecked]
 f(X) ->
     Y = 42,
     case X of
@@ -24,7 +24,7 @@ f(X) ->
         Z -> {this, Z}
     end.
 
-[dynamic]
+[unchecked]
 g(X) ->
     Y = 42,
     case X of
@@ -33,22 +33,22 @@ g(X) ->
         Z -> {other, Z}
     end.
 
-[dynamic]
+[unchecked]
 h(X) ->
     Y = 42,
     {ok, ^Y} = X,  % assert
     true.
 
-[dynamic]
+[unchecked]
 i(Elem, List1, List2) ->
     Foo = 42,
     [found || ^Elem <- List1, {foo, ^Foo}<-List2].
 
-[dynamic]
+[unchecked]
 i2(Elem, List1, List2, List3) ->
     [Elem || ^Elem <- List1, {foo, ^Elem}<-List2, {bar, ^Elem}<-List3].
 
-[dynamic]
+[unchecked]
 j(Elem, List) ->
     Foo = 42,
     lists:filter(fun(^Elem) -> true;
@@ -57,7 +57,7 @@ j(Elem, List) ->
                  end,
                  List).
 
-[dynamic]
+[unchecked]
 j2(X) ->
     %% works
     fun Test(^X) -> Test(X) end,
@@ -65,7 +65,7 @@ j2(X) ->
     %% fun Test(^Test) -> Test(Test) end
     ok.
 
-[dynamic]
+[unchecked]
 k(X, Y) ->
     case X of
         {a, ^X} -> {b, X};
@@ -80,7 +80,7 @@ k(X, Y) ->
             end
     end.
 
-[dynamic]
+[unchecked]
 m(X, Y) ->
     fun ({foo, ^X, Z}) -> Z;
         ({bar, ^X, Z}) ->
@@ -91,7 +91,7 @@ m(X, Y) ->
         ({baz, ^Y, Z}) -> Z
     end.
 
-[dynamic]
+[unchecked]
 p(F, Class) ->
     Term = {x, 42},
     try
@@ -100,7 +100,7 @@ p(F, Class) ->
         ^Class, ^Term, _ -> "oops"
     end.
 
-[dynamic]
+[unchecked]
 q(Bin, Size, B) ->
     case Bin of
         <<^B:Size/binary>> -> ok
