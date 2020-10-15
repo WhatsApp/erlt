@@ -104,7 +104,7 @@ m(X, Y) ->
 
 p(F, Class) ->
     Term = {x, 42},
-    try F() catch Class:Term -> "oops" end.
+    try F() catch Class:Term -> "oops 🍌" end.
 
 q(Bin, Size, B) ->
     case Bin of <<B:Size/binary>> -> ok end.

@@ -97,7 +97,7 @@ p(F, Class) ->
     try
         F()
     catch
-        ^Class, ^Term, _ -> "oops"
+        ^Class, ^Term, _ -> "oops 🍌"
     end.
 
 [unchecked]
