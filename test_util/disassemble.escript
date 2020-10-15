@@ -5,7 +5,7 @@
 %% adapted from https://github.com/erlang/otp/blob/39e2dc5709f3df0e7b4533fa45820d7140b82d4c/scripts/diffable
 %% changes:
 %%     - remove unneeded stuff
-%%     - add strip_fun_numbers/1 -- note that this makes the disassembly lossy
+%%     - add clean_fun_numbers/1 -- note that this makes the disassembly lossy
 
 -mode(compile).
 
@@ -100,24 +100,19 @@ renumber_disasm_func([[A, OpCode | Ops0] | Is], Labels) ->
             error ->
                 Spaces
         end,
-    Ops1 = [strip_fun_numbers(Op) || Op <- Ops0],
+    Ops1 = [clean_fun_numbers(Op) || Op <- Ops0],
     Ops2 = [replace_label(Op, Labels) || Op <- Ops1],
     Ops = handle_special_instrs(OpCode, Ops2),
     [[Left, OpCode | Ops] | renumber_disasm_func(Is, Labels)];
 renumber_disasm_func([], _) ->
     [].
 
-%% @doc strip the numbers from fun names
-%% the numbers in (example) `"#Fun<erltodo.1.90332858>`
-%% don't seem to be used in the disassembly and the last segment (90332858 in this case)
-%% appears to be chaotic
-strip_fun_numbers(Op) ->
-    case re:run(Op, "^`#Fun<.+>`$") of
-        {match, _} ->
-            <<"`#Fun<>`">>;
-        nomatch ->
-            Op
-    end.
+%% @doc replace the last segment of numbers from fun names with 0.
+%% Example: <<"`#Fun<mod01.1.90332858>`">> becomes <<"`#Fun<mod01.1.0>`">>
+%% Reason: the numbers don't seemed to be used anywhere and the last segment
+%% (90332858 in this case) appears to be chaotic.
+clean_fun_numbers(Op) ->
+    re:replace(Op, "#Fun<(.+?)\\.(.+?)\\.(.+?)>", "#Fun<\\1.\\2.0>").
 
 handle_special_instrs(<<"i_get_hash_cId">>, [Key, _Hash, Dst]) ->
     [Key, hash_value(), Dst];
