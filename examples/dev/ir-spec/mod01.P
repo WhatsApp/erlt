@@ -17,11 +17,13 @@
          mk_cons/2,
          mk_tuple/3,
          mk_tuple2/1,
-         mk_map/2,
-         update_map1/2,
-         update_map3/1,
-         access_map/1,
-         access_map2/1,
+         mk_shape/2,
+         update_shape1/2,
+         update_shape2/2,
+         update_shape3/1,
+         update_shape4/1,
+         access_shape/1,
+         access_shape2/1,
          mk_seq/0,
          is_empty/1,
          is_empty2/1,
@@ -152,33 +154,47 @@ mk_tuple(A, B, C) ->
 mk_tuple2(A) ->
     {1, 2, 3, A}.
 
--spec mk_map(A, B) -> #{a := A, b := B}.
+-spec mk_shape(A, B) -> #{a := A, b := B}.
 
-mk_map(A, B) ->
+mk_shape(A, B) ->
     #{a => A, b => B}.
 
--spec update_map1(#{a := A}, A) -> #{a := A}.
+-spec update_shape1(#{a := A}, A) -> #{a := A}.
 
-update_map1(M, A) ->
-    M#{a := A}.
+update_shape1(S, A) ->
+    S#{a => A}.
 
--spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
+-spec update_shape2(#{a := A, atom() => any()}, A) ->
+                       #{a := A, atom() => any()}.
 
-update_map3(M) ->
-    A0 = map_get(a, M),
-    B0 = map_get(a, M),
-    M#{a := B0, b := A0}.
+update_shape2(S, A) ->
+    S#{a => A}.
 
--spec access_map(#{id := Id, location := Location, _ := _}) ->
-                    {Id, Location}.
+-spec update_shape3(#{a := A, b := A}) -> #{a := A, b := A}.
 
-access_map(M) ->
-    {map_get(id, M), map_get(location, M)}.
+update_shape3(S) ->
+    A0 = map_get(a, S),
+    B0 = map_get(a, S),
+    S#{a => B0, b => A0}.
 
--spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
+-spec update_shape4(#{a := A, b := A, atom() => any()}) ->
+                       #{a := A, b := A, atom() => any()}.
 
-access_map2(M) ->
-    map_get(inner2, map_get(inner1, M)).
+update_shape4(S) ->
+    A0 = map_get(a, S),
+    B0 = map_get(a, S),
+    S#{a => B0, b => A0}.
+
+-spec access_shape(#{id := Id, location := Location, atom() => any()}) ->
+                      {Id, Location}.
+
+access_shape(S) ->
+    {map_get(id, S), map_get(location, S)}.
+
+-spec access_shape2(#{inner1 := #{inner2 := A}}) -> A.
+
+access_shape2(S) ->
+    map_get(inner2, map_get(inner1, S)).
 
 -spec mk_seq() -> {integer(), integer()}.
 
@@ -524,7 +540,7 @@ none_id(A) ->
 noreturn_id(A) ->
     none_id(A).
 
--spec number_id(none()) -> none().
+-spec number_id(number()) -> number().
 
 number_id(A) ->
     A.

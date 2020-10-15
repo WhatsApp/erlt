@@ -17,12 +17,15 @@
 -export([test_bins/0]).
 
 -spec test_bins() -> ok.
+[unchecked]
 test_bins() ->
     match_bins(mk_bins()).
 
+[unchecked]
 mk_bins() ->
     [<<>>, <<1>>, <<1:12>>, <<1.5:64/float>>, <<1:2/integer-unit:8>>, << (<<2>>)/binary >>].
 
+[unchecked]
 match_bins([<<>> | Rest]) -> match_bins(Rest);
 match_bins([Next|Rest]) ->
     case Next of

@@ -18,6 +18,7 @@
 -export([length/1, length_ffi/1]).
 
 -spec length(string()) -> integer().
+[unchecked]
 length(S) ->
     erlang:length(S).
 
@@ -29,5 +30,6 @@ length_ffi(S) ->
     length_ffi_help(S).
 
 -spec length_ffi_help(string_ffi()) -> integer().
+[unchecked]
 length_ffi_help(S) ->
     erlang:length(S).

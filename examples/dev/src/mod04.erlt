@@ -37,7 +37,6 @@ zero_remote_dot(U, Val) ->
     mod03.unit0.unit0{} -> Val
 end.
 
-%% This is not supported - see https://github.com/WhatsApp/erl2/issues/3
 %%-spec zero_remote1(mod03:unit0(), V) -> V.
 %%zero_remote1(mod03:unit0{}, Val) -> Val.
 

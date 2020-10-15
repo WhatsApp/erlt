@@ -2,6 +2,7 @@
 
 -export([t1/2]).
 
+[unchecked]
 t1(F, Class) ->
     try
         F()
