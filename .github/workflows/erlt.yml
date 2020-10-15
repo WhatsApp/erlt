@@ -14,25 +14,6 @@ jobs:
         run:  "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: check formatting
         run:  rebar3 fmt --check || (echo "please run 'rebar3 fmt --write'" && $(exit 1))
-      - name: check builds
-        run:  cd ./examples && rebar3 compile
+      - name: test
+        run:  cd ./examples && make test
 
-      - name: "test-ir for examples/calc"
-        run: "cd ./examples && make test-ir/calc"
-      - name: "test-ir for examples/dev"
-        run: "cd ./examples && make test-ir/dev"
-      - name: "test-ir for examples/dev_dots"
-        run: "cd ./examples && make test-ir/dev_dots"
-      - name: "test-ir for examples/dev_enum"
-        run: "cd ./examples && make test-ir/dev_enum"
-      - name: "test-ir for examples/dev_struct"
-        run: "cd ./examples && make test-ir/dev_struct"
-      - name: "test-ir for examples/doc"
-        run: "cd ./examples && make test-ir/doc"
-      - name: "test-ir for examples/elm_core"
-        run: "cd ./examples && make test-ir/elm_core"
-      - name: "test-ir for examples/erltodo/"
-        run: "cd ./examples && make test-ir/erltodo"
-      - name: "run checks for examples/checks/"
-        run: "cd ./examples && make -C checks/src test"
-      
