@@ -1,11 +1,24 @@
 #!/usr/bin/env escript
-
-%% -*- erlang -*-
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
 
 %% adapted from https://github.com/erlang/otp/blob/39e2dc5709f3df0e7b4533fa45820d7140b82d4c/scripts/diffable
 %% changes:
 %%     - remove unneeded stuff
 %%     - add clean_fun_numbers/1 -- note that this makes the disassembly lossy
+
+%% -*- erlang -*-
 
 -mode(compile).
 
