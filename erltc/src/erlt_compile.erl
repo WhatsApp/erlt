@@ -1134,7 +1134,7 @@ write_erl1(Forms, #compile{build_dir = BuildDir, filename = SourceFilename}) ->
     try
         [
             begin
-                Chars = erl_pp:form(Form),
+                Chars = erl_prettypr:format(Form),
                 io:put_chars(File, Chars),
                 io:nl(File),
                 io:nl(File)
