@@ -1,8 +1,6 @@
 -file("dev/src/match.erlt", 1).
 
-
 -module(match).
-
 
 -export([id/1,
          f1/0,
@@ -18,106 +16,67 @@
          f13/2,
          f14/1]).
 
-
-id(X) ->
-    X.
-
+id(X) -> X.
 
 -spec f1() -> {integer(), integer()}.
 
-
-f1() ->
-    {_X, _Y} = {1, 2}.
-
+f1() -> {_X, _Y} = {1, 2}.
 
 -spec f2() -> integer().
-
 
 f2() ->
     Y = 1,
     _X = Y.
 
-
 f3(X, T) ->
     case X of
-        1 ->
-            _Y = 2;
-        2 ->
-            _Y = 3;
+        1 -> _Y = 2;
+        2 -> _Y = 3;
         _ ->
             Z = T,
             _Y = Z
     end.
 
-
 -spec f6(A, A) -> {A, A}.
 
-
-f6(X, X) ->
-    {X, X}.
-
+f6(X, X) -> {X, X}.
 
 -spec f7(A, A) -> {A, A}.
 
-
-f7(X, Y = X) ->
-    {X, Y}.
-
+f7(X, Y = X) -> {X, Y}.
 
 -spec f8({A, B}, {A, B}) -> {A, B}.
 
-
-f8({X, Y} = Z, {X, Y} = Z) ->
-    Z.
-
+f8({X, Y} = Z, {X, Y} = Z) -> Z.
 
 -spec f9({A, B}, {A, B}) -> {A, B}.
 
-
 f9(P1, P2) ->
-    case {P1, P2} of
-        {{X, Y} = Z, {X, Y} = Z} ->
-            Z
-    end.
-
+    case {P1, P2} of {{X, Y} = Z, {X, Y} = Z} -> Z end.
 
 -spec f10() -> {integer(), integer()}.
 
-
-f10() ->
-    {X, X} = {1, 1}.
-
+f10() -> {X, X} = {1, 1}.
 
 -spec f11([{E, E}]) -> E.
-
 
 f11(L) ->
     [{E, E}, {E, E}] = L,
     E.
 
-
 -spec f12({{A, A}, {A, A}}) -> {A, A}.
 
-
-f12({{E1, E2}, {E2, E1}} = {E6, E6}) ->
-    E6.
-
+f12({{E1, E2}, {E2, E1}} = {E6, E6}) -> E6.
 
 -spec f13({A, A}, A) -> A.
 
-
-f13(_P = {E3, E3}, E3) ->
-    _X = E3.
-
+f13(_P = {E3, E3}, E3) -> _X = E3.
 
 -spec f14({{A, A}, {A, A}}) -> {A, A}.
-
 
 f14(P) ->
     ({{El1, El2}, {El1, El2}} = {X, X}) = P,
     X.
-
-
 
 
 
