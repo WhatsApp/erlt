@@ -1074,8 +1074,6 @@ erlt_to_erl1(Code, St) ->
             do_erlt_to_erl1(Forms, St)
     end.
 
-% We write classic erlang files for humans to read.
-% These aren't used later in the compiler.
 do_erlt_to_erl1(Code, St0) ->
     Transforms = [erlt_enum, erlt_anon_struct, erlt_modifiers, erlt_dots, erlt_pinning],
     case foldl_transform(Transforms, Code, St0) of
@@ -1128,6 +1126,8 @@ foldl_transform([T | Ts], Code0, St) ->
 foldl_transform([], Code, St) ->
     {ok, Code, St}.
 
+% @doc We write classic erlang files for humans to read.
+% These aren't used later in the compiler.
 write_erl1(Forms, #compile{build_dir = BuildDir, filename = SourceFilename}) ->
     ErlFilename = filename:join(BuildDir, filename:basename(SourceFilename, ".erlt") ++ ".erl"),
     {ok, File} = file:open(ErlFilename, [write, {encoding, utf8}]),
