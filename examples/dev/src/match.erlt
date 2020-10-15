@@ -14,8 +14,9 @@
 
 -module(match).
 
--export([f1/0, f2/0, f6/2, f7/2, f8/2, f9/2, f10/0, f11/1, f12/1, f13/2, f14/1]).
+-export([id/1, f1/0, f2/0, f3/2, f6/2, f7/2, f8/2, f9/2, f10/0, f11/1, f12/1, f13/2, f14/1]).
 
+[unchecked]
 id(X) -> X.
 
 -spec f1() -> {integer(), integer()}.
@@ -27,6 +28,7 @@ f2() ->
     Y = 1,
     _X = Y.
 
+[unchecked]
 f3(X, T) ->
     case X of
         1 -> _Y = 2;
@@ -54,7 +56,7 @@ f9(P1, P2) ->
         {{X, Y} = Z, {X, Y} = Z} -> Z
     end.
 
-%% Testing erl2ocaml for patterns bodies with repeated vars.
+%% Testing for patterns bodies with repeated vars.
 -spec f10() -> {integer(), integer()}.
 f10() ->
     {X, X} = {1, 1}.

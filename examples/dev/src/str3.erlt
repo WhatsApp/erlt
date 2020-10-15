@@ -1,9 +1,13 @@
 -module(str3).
 
 -export_type([str3/0]).
--export([mk_str2/0]).
+-export([mk_str2/0, mk_str3/0]).
 
 -struct str3 :: (str2 = #str2:str2{} :: str2:str2()).
+
+[unchecked]
 mk_str2() -> #str2:str2{}.
+
+[unchecked]
 mk_str3() -> #str3{}.
 
