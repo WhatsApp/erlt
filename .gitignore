@@ -1,5 +1,5 @@
 *.swp
-_build/
+_build
 rebar3.crashdump
 .idea
 .metals
