@@ -2,13 +2,15 @@
 
 -module(struct_mod01).
 
--export_type([foo/0,bar/1,default_with_default/0]).
+-export_type([foo/0,bar/1,default_with_default/0,unicodestruct/0]).
 
 -export([foo/0,bar/0,baz/0,pattern/3,guard/1,field/1,update/1,index/1]).
 
 -type bar(A) :: {'$#struct_mod01:bar', A, foo()}.
 
 -type baz() :: {'$#struct_mod01:baz', bar(integer())}.
+
+-type unicodestruct() :: {'$#struct_mod01:unicodestruct', string()}.
 
 -type in_pattern() :: {'$#struct_mod01:in_pattern'}.
 
