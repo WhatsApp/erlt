@@ -1,7 +1,9 @@
 ERLS := $(sort $(wildcard *.erlt))
 
+export PATH := ../../../_build/default/bin:$(PATH)
+
 test: erltc
-	set -e; $(foreach erl, $(ERLS), ./_test_checks.escript $(erl);)
+	./_test_checks.escript $(ERLS)
 
 erltc:
 	cd ../../.. && rebar3 compile

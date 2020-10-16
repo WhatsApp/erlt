@@ -16,29 +16,55 @@
 
 -mode(compile).
 
-main([ErltFile]) ->
-    {ok, Cwd} = file:get_cwd(),
-    BinDir = filename:dirname(filename:dirname(filename:dirname(Cwd))),
-    Erltc = filename:join(BinDir, "_build/default/bin/erltc"),
-    ExpOutputFile = ErltFile ++ ".exp",
-    {ok, ExpOutput} =  file:read_file(ExpOutputFile),
-    ExpOutPutStr = binary_to_list(ExpOutput),
-    {ExitCode, ActualOutPut} = eunit_lib:command(Erltc ++ " +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile),
-    case ExitCode of
-        0 ->
-            io:format("`erltc ~s` has not failed~n", [ErltFile]),
-            halt(2);
-        _ ->
-            ok
+main(Files) ->
+    Run = fun(ErltFile) ->
+        ExpOutputFile = ErltFile ++ ".exp",
+        case file:read_file(ExpOutputFile) of
+            {error, Reason} ->
+                {error, "expectation file ~ts not found: ~ts", [ExpOutputFile, file:format_error(Reason)]};
+            {ok, ExpOutput} ->
+                Command = "erltc +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile,
+                case eunit_lib:command(Command) of
+                    {0, _} ->
+                        {error, "`~ts` has not failed~n", [Command]};
+                    {_, ActualOutput} ->
+                        case string:find(ActualOutput, ExpOutput, leading) of
+                            nomatch ->
+                                {error,
+                                    "`~ts`~nExpected to see an output with:~n~n~s~nGot:~n~n~s~n",
+                                    [Command, ExpOutput, ActualOutput]};
+                            _ ->
+                                io:format("OK (~s)~n", [ErltFile]),
+                                ok
+                        end
+                end
+        end
     end,
-    case string:str(ActualOutPut, ExpOutPutStr) of
-        0 ->
-            io:format(
-                "`erltc ~s`~nExpected to see an output with:~n~n~s~nGot:~n~n~s~n",
-                [ErltFile, ExpOutPutStr, ActualOutPut]
-            ),
-            halt(2);
-        _ ->
-            io:format("OK (~s)~n", [ErltFile]),
-            ok
+
+    case parallel(Run, Files) of
+        [] ->
+            ok;
+        Errors ->
+            lists:foreach(fun({error, Fmt, Args}) -> io:format(Fmt, Args) end, Errors)
+    end.
+
+parallel(Fun, List) ->
+    N = erlang:system_info(schedulers) * 2,
+    parallel_loop(Fun, List, N, [], []).
+
+parallel_loop(_, [], _, [], Errors) ->
+    Errors;
+parallel_loop(Fun, [Elem | Rest], N, Refs, Errors) when length(Refs) < N ->
+    {_, Ref} = erlang:spawn_monitor(fun() -> exit(Fun(Elem)) end),
+    parallel_loop(Fun, Rest, N, [Ref | Refs], Errors);
+parallel_loop(Fun, List, N, Refs0, Errors) ->
+    receive
+        {'DOWN', Ref, process, _, ok} ->
+            Refs = Refs0 -- [Ref],
+            parallel_loop(Fun, List, N, Refs, Errors);
+        {'DOWN', Ref, process, _, {error, _, _} = Error} ->
+            Refs = Refs0 -- [Ref],
+            parallel_loop(Fun, List, N, Refs, [Error | Errors]);
+        {'DOWN', _Ref, process, _, Crash} ->
+            exit(Crash)
     end.
