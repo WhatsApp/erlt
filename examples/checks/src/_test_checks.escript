@@ -21,7 +21,7 @@ main(Files) ->
         ExpOutputFile = ErltFile ++ ".exp",
         case file:read_file(ExpOutputFile) of
             {error, Reason} ->
-                {error, "expectation file ~ts not found: ~ts", [ExpOutputFile, file:format_error(Reason)]};
+                {error, "expectation file ~ts not found: ~ts~n", [ExpOutputFile, file:format_error(Reason)]};
             {ok, ExpOutput} ->
                 Command = "erltc +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile,
                 case eunit_lib:command(Command) of
