@@ -1802,7 +1802,7 @@ pattern({cons, _Line, H, T}, Vt, Old, Bvt, St0) ->
     {vtmerge_pat(Hvt, Tvt), vtmerge_pat(Bvt1, Bvt2), St2};
 pattern({tuple, _Line, Ps}, Vt, Old, Bvt, St) ->
     pattern_list(Ps, Vt, Old, Bvt, St);
-pattern({enum, Line, Name, Variant, Fields}, Old, Vt, Bvt, St0) ->
+pattern({enum, Line, Name, Variant, Fields}, Vt, Old, Bvt, St0) ->
     Result = check_enum(Line, Name, Variant, St0, fun(ResolvedName, Defs, St) ->
         pattern_fields(Fields, ResolvedName, Defs, Vt, Old, Bvt, St)
     end),

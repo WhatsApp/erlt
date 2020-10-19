@@ -14,7 +14,7 @@
 
 -module(enum_mod01).
 
--export([f/0, g/0, p/0, q/1, r/1, s/2]).
+-export([f/0, g/0, p/0, q/1, r/2, s/2]).
 
 
 %% old style tagged tuple for comparison
@@ -52,12 +52,14 @@ p() ->
 q(X) ->
     possibly.some{value = X}.
 
--spec r(possibly(T)) -> [T].
-r(E) ->
+-spec r(possibly(T), T) -> [T].
+r(E, Y) ->
     case E of
         possibly.none ->
             [];
         possibly.some{value = X} when X =:= possibly.none ->
+            [];
+        possibly.some{value = ^Y} ->
             [];
         possibly.some{value = X} ->
             [X]
