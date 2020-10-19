@@ -70,8 +70,6 @@ package object sterlang {
       Ast.TypeId(Ast.LocalName("reference"), 0),
       Ast.TypeId(Ast.LocalName("term"), 0),
       Ast.TypeId(Ast.LocalName("timeout"), 0),
-      Ast.TypeId(Ast.LocalName("node"), 0),
-      Ast.TypeId(Ast.LocalName("no_return"), 0),
       Ast.TypeId(Ast.LocalName("char"), 0),
       Ast.TypeId(Ast.LocalName("boolean"), 0),
       Ast.TypeId(Ast.LocalName("list"), 1),
