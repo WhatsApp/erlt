@@ -2,7 +2,7 @@
 
 -module(enum_mod04).
 
--export_type([foo/0, bar/0]).
+-export_type([foo/0, bar/0, baz/0]).
 
 -export([expr/0, pattern/3, guard/3]).
 
@@ -12,8 +12,12 @@
                 integer(),
                 integer()}.
 
+-type baz() :: {'$#enum_mod04:baz.x', any()}.
+
 expr() ->
-    {{'$#enum_mod04:foo.x'}, {'$#enum_mod04:bar.x', 1, 2}}.
+    {{'$#enum_mod04:foo.x'},
+     {'$#enum_mod04:bar.x', 1, 2},
+     {'$#enum_mod04:baz.x', #{id => 1}}}.
 
 pattern({'$#enum_mod04:foo.x'},
         {'$#enum_mod04:bar.x', 1, B}, B) ->
