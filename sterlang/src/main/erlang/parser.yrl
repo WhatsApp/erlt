@@ -29,6 +29,9 @@ function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_max
 pat_expr pat_expr_max shape_pat_expr struct_pat_expr enum_pat_expr
+tuple_pat_expr list_pat_expr tail_pat_expr binary_pat_expr bin_pat_elements
+bin_pat_element bit_pat_expr shape_tuple_pat shape_fields_pat shape_field_pat
+struct_tuple_pat struct_fields_pat struct_field_pat
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
@@ -217,11 +220,12 @@ pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
+pat_expr_max -> '^' var : {pinned_var, anno('$1', '$2'), element(3, '$2')}.
 pat_expr_max -> var : '$1'.
 pat_expr_max -> atomic : '$1'.
-pat_expr_max -> list : '$1'.
-pat_expr_max -> binary : '$1'.
-pat_expr_max -> tuple : '$1'.
+pat_expr_max -> list_pat_expr : '$1'.
+pat_expr_max -> binary_pat_expr : '$1'.
+pat_expr_max -> tuple_pat_expr : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
 enum_pat_expr -> atom '.' atom :
@@ -233,12 +237,34 @@ enum_pat_expr -> remote_id '.' atom :
 enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
-shape_pat_expr -> '#' shape_tuple :
+shape_pat_expr -> '#' shape_tuple_pat :
 	{shape, anno('$1','$2'),strip_shape_tuple('$2')}.
-shape_pat_expr -> pat_expr_max '#' shape_tuple :
+shape_pat_expr -> pat_expr_max '#' shape_tuple_pat :
 	{shape, anno('$1','$3'),'$1',strip_shape_tuple('$3')}.
 
-struct_pat_expr -> '#' struct_name struct_tuple :
+tuple_pat_expr -> '{' '}'           : {tuple,anno('$1','$2'),[]}.
+tuple_pat_expr -> '{' pat_exprs '}' : {tuple,anno('$1','$3'),'$2'}.
+
+list_pat_expr -> '[' ']'                    : {nil,  anno('$1','$2')}.
+list_pat_expr -> '[' pat_expr tail_pat_expr : {cons, anno('$1','$3'),'$2','$3'}.
+
+tail_pat_expr -> ']'                        : {nil,  anno('$1')}.
+tail_pat_expr -> '|' pat_expr ']'           : '$2'.
+tail_pat_expr -> ',' pat_expr tail_pat_expr : {cons, anno('$2','$3'),'$2','$3'}.
+
+binary_pat_expr -> '<<' '>>' : {bin,anno('$1','$2'),[]}.
+binary_pat_expr -> '<<' bin_pat_elements '>>' : {bin,anno('$1','$3'),'$2'}.
+
+bin_pat_elements -> bin_pat_element : ['$1'].
+bin_pat_elements -> bin_pat_element ',' bin_pat_elements : ['$1'|'$3'].
+
+bin_pat_element -> bit_pat_expr opt_bit_size_expr opt_bit_type_list :
+	{bin_element,anno('$1',filter_defaults(['$3', '$2', '$1'])),'$1','$2',strip_bit_type_list('$3')}.
+
+bit_pat_expr -> prefix_op pat_expr_max : ?mkop1('$1', '$2').
+bit_pat_expr -> pat_expr_max : '$1'.
+
+struct_pat_expr -> '#' struct_name struct_tuple_pat :
 	{struct, anno('$1', '$3'), '$2', element(1, '$3')}.
 
 list -> '[' ']'       : {nil,  anno('$1','$2')}.
@@ -314,6 +340,14 @@ shape_fields -> shape_field ',' shape_fields : ['$1' | '$3'].
 
 shape_field -> atom '=' expr : {shape_field, anno('$1','$3'), '$1', '$3'}.
 
+shape_tuple_pat -> '(' ')' : {shape_tuple, anno('$1','$2'), []}.
+shape_tuple_pat -> '(' shape_fields_pat ')' : {shape_tuple, anno('$1','$3'), '$2'}.
+
+shape_fields_pat -> shape_field_pat : ['$1'].
+shape_fields_pat -> shape_field_pat ',' shape_fields_pat : ['$1' | '$3'].
+
+shape_field_pat -> atom '=' pat_expr : {shape_field, anno('$1','$3'), '$1', '$3'}.
+
 struct_expr -> '#' struct_name struct_tuple :
 	{struct, anno('$1','$3'), '$2', element(1, '$3')}.
 struct_expr -> expr_max '#' struct_name '.' atom :
@@ -335,6 +369,14 @@ struct_fields -> struct_field : ['$1'].
 struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
 
 struct_field -> atom '=' expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
+
+struct_tuple_pat -> '{' '}'                   : {[],   anno('$1', '$2')}.
+struct_tuple_pat -> '{' struct_fields_pat '}' : {'$2', anno('$1', '$3')}.
+
+struct_fields_pat -> struct_field_pat : ['$1'].
+struct_fields_pat -> struct_field_pat ',' struct_fields_pat : ['$1' | '$3'].
+
+struct_field_pat -> atom '=' pat_expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
 
 function_call -> remote_id argument_list :
 	{call, anno('$1','$2'), '$1', element(1, '$2')}.
@@ -431,7 +473,6 @@ prefix_op -> '+' : '$1'.
 prefix_op -> '-' : '$1'.
 prefix_op -> 'bnot' : '$1'.
 prefix_op -> 'not' : '$1'.
-prefix_op -> '^' : '$1'.
 
 mult_op -> '/' : '$1'.
 mult_op -> '*' : '$1'.
