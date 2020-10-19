@@ -1,2 +1,5 @@
-shadow_var.erlt:12:10: variable 'Y' is already bound - must write '^Y' to use value in pattern
-shadow_var.erlt:14:14: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:22:10: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:24:14: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:37:10: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:42:19: variable 'Y' is already bound - must write '^Y' to use value in pattern
+shadow_var.erlt:47:18: variable 'Y' is already bound - must write '^Y' to use value in pattern

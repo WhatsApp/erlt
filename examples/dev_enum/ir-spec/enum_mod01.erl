@@ -2,7 +2,7 @@
 
 -module(enum_mod01).
 
--export([f/0, g/0, p/0, q/1, r/1, s/2]).
+-export([f/0, g/0, p/0, q/1, r/2, s/2]).
 
 -opaque maybe(T) :: {some, T} | none.
 
@@ -31,14 +31,15 @@ p() -> {'$#enum_mod01:possibly.none'}.
 
 q(X) -> {'$#enum_mod01:possibly.some', X}.
 
--spec r(possibly(T)) -> [T].
+-spec r(possibly(T), T) -> [T].
 
-r(E) ->
+r(E, Y) ->
     case E of
         {'$#enum_mod01:possibly.none'} -> [];
         {'$#enum_mod01:possibly.some', X}
             when X =:= {'$#enum_mod01:possibly.none'} ->
             [];
+        {'$#enum_mod01:possibly.some', Y} -> [];
         {'$#enum_mod01:possibly.some', X} -> [X]
     end.
 
