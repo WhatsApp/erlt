@@ -46,8 +46,6 @@ keep_error(illegal_dot, _Def) ->
     true;
 keep_error(illegal_caret, _Def) ->
     true;
-keep_error(illegal_enum, _Def) ->
-    true;
 keep_error({redefine_enum, _T, _C}, _Def) ->
     true;
 keep_error({undefined_enum, _E}, _Def) ->
@@ -396,12 +394,8 @@ format_error(illegal_guard_expr) ->
 format_error(illegal_map_construction) ->
     "only association operators '=>' are allowed in map construction";
 %% --- enums ---
-format_error(illegal_enum) ->
-    "only unqualified enum constructors are allowed in an enum type definition";
-format_error(unqualified_enum) ->
-    "unqualified enum constructors may only be used in an enum definition";
 format_error({redefine_enum, T, C}) ->
-    io_lib:format("constructor ~tw already defined in enum ~tw", [C, T]);
+    io_lib:format("variant ~tw already defined in enum ~tw", [C, T]);
 format_error({private_enum, N}) ->
     io_lib:format("enum ~ts is not exported", [format_name(N)]);
 format_error({undefined_enum, N}) ->
@@ -3446,7 +3440,7 @@ check_enum_types(_EnumLine, EnumName, Variants, SeenVars, St) ->
 check_variants([{variant, Line, {atom, _, Name}, Fields} | Rest], Enum, Seen, SeenVars, St) ->
     case is_map_key(Name, Seen) of
         true ->
-            add_error(Line, {redefine_enum, Enum, Name}, St);
+            {SeenVars, add_error(Line, {redefine_enum, Enum, Name}, St)};
         false ->
             {SeenVars1, St1} = check_field_defs(Fields, {enum, Enum, Name}, SeenVars, St),
             check_variants(Rest, Enum, Seen#{Name => []}, SeenVars1, St1)
