@@ -19,7 +19,8 @@
 expr() ->
     {
         enum_mod04:foo.x,
-        enum_mod04:bar.x{a = 1, b = 2}
+        enum_mod04:bar.x{a = 1, b = 2},
+        enum_mod04:baz.x
     }.
 
 pattern(enum_mod04:foo.x, enum_mod04:bar.x{a = 1, b = B}, B) ->
