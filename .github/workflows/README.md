@@ -12,7 +12,7 @@ Recommended:
 
 - [vscode-language-dhall](https://github.com/PanAeon/vscode-language-dhall)
 - [vscode-dhall-lsp-server](https://github.com/PanAeon/vscode-dhall-lsp-server)
-- For best IDE experience: `cabal install dhall-lsp-server` which requires GHC Haskell and cabal.
+- For best IDE experience: `cabal install dhall-lsp-server` which requires [GHC Haskell](https://www.haskell.org/ghcup/) and cabal.
 
 ## Edit and Generate
 
