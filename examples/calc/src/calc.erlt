@@ -25,17 +25,17 @@ calculate(Env, Input) ->
 
 eval(Env, Expr) ->
     case Expr of
-        calc_core.expr.number{N} ->
+        calc_core:expr.number{n = N} ->
             N;
-        calc_core.expr.add{E1, E2} ->
+        calc_core:expr.add{a = E1, b = E2} ->
             eval(Env, E1) + eval(Env, E2);
-        calc_core.expr.subtr{E1, E2} ->
+        calc_core:expr.subtr{a = E1, b = E2} ->
             eval(Env, E1) - eval(Env, E2);
-        calc_core.expr.mult{E1, E2} ->
+        calc_core:expr.mult{a = E1, b = E2} ->
             eval(Env, E1) * eval(Env, E2);
-        calc_core.expr.divd{E1, E2} ->
+        calc_core:expr.divd{a = E1, b = E2} ->
             eval(Env, E1) / eval(Env, E2);
-        calc_core.expr.var{Name} ->
+        calc_core:expr.var{v = Name} ->
             lookup(Name, Env)
     end.
 
