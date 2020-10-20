@@ -169,7 +169,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Fields1, Acc3} = do_traverse_list(Fields0, Acc2, Pre, Post, Ctx),
             Post({struct, Line, Expr1, Name1, Fields1}, Acc3, Ctx);
         {field, Line, Name0, Value0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Name1, Acc1} = do_traverse_atom_or_node(Name0, Acc0, Pre, Post, Ctx),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
             Post({field, Line, Name1, Value1}, Acc2, Ctx);
         {struct_field, Line, Expr0, Name0, Value0} ->
@@ -191,16 +191,12 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {bin, Line, Values0} ->
             {Values1, Acc1} = do_traverse_list(Values0, Acc0, Pre, Post, Ctx),
             Post({bin, Line, Values1}, Acc1, Ctx);
-        {bin_element, Line, Expr0, Size0, Type} when Size0 =/= default ->
+        {bin_element, Line, Expr0, Size0, Type} ->
             %% don't recurse into Type, it's not AST, but special syntax
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
             %% bin field size are never patterns, but (limited) expressions
-            {Size1, Acc2} = do_traverse(Size0, Acc1, Pre, Post, pattern_to_expr(Ctx)),
+            {Size1, Acc2} = do_traverse_atom_or_node(Size0, Acc1, Pre, Post, pattern_to_expr(Ctx)),
             Post({bin_element, Line, Expr1, Size1, Type}, Acc2, Ctx);
-        {bin_element, Line, Expr0, default, Type} ->
-            %% don't recurse into Type, it's not AST, but special syntax
-            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            Post({bin_element, Line, Expr1, default, Type}, Acc1, Ctx);
         {call, Line, Name0, Args0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
@@ -277,13 +273,9 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
             Post({type, Line, struct, Name1, Fields1}, Acc2, Ctx);
-        {field_definition, Line, Name0, undefined, Type0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Type1, Acc2} = do_traverse(Type0, Acc1, Pre, Post, Ctx),
-            Post({field_definition, Line, Name1, undefined, Type1}, Acc2, Ctx);
         {field_definition, Line, Name0, Default0, Type0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Default1, Acc2} = do_traverse(Default0, Acc1, Pre, Post, guard),
+            {Name1, Acc1} = do_traverse_atom_or_node(Name0, Acc0, Pre, Post, Ctx),
+            {Default1, Acc2} = do_traverse_atom_or_node(Default0, Acc1, Pre, Post, guard),
             {Type1, Acc3} = do_traverse(Type0, Acc2, Pre, Post, Ctx),
             Post({field_definition, Line, Name1, Default1, Type1}, Acc3, Ctx);
         {type, Line, open_anon_struct, Args0, Var} ->
@@ -326,6 +318,11 @@ do_traverse_guards(List0, Acc0, Pre, Post) ->
     {List2, Acc2} = lists:mapfoldl(Fun, Acc1, List1),
     {{guard_or, _, List3}, Acc3} = Post({guard_or, 0, List2}, Acc2, guard),
     {List3, Acc3}.
+
+do_traverse_atom_or_node(Atom, Acc, _Pre, _Post, _Ctx) when is_atom(Atom) ->
+    {Atom, Acc};
+do_traverse_atom_or_node(Node, Acc, Pre, Post, Ctx) when is_tuple(Node) ->
+    do_traverse(Node, Acc, Pre, Post, Ctx).
 
 pattern_to_expr(pattern) -> expr;
 pattern_to_expr(Other) -> Other.
