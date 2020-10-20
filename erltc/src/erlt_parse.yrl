@@ -42,7 +42,7 @@ fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings dot_atom
+atomic strings
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
