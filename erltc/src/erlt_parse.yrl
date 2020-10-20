@@ -34,7 +34,7 @@ pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
-tuple enum_expr anon_struct_expr
+tuple enum_expr anon_struct_expr anon_fields anon_field
 struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
@@ -137,6 +137,7 @@ anon_field_defs -> non_default_field_def                     : ['$1'].
 anon_field_defs -> non_default_field_def ',' anon_field_defs : build_anon_struct_internals_type('$1', '$3').
 
 field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+field_def -> type : {field_definition, ?anno('$1'), positional, undefined, '$1'}.
 field_def -> non_default_field_def : '$1'.
 
 non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
@@ -289,7 +290,7 @@ expr_max -> binary : '$1'.
 expr_max -> list_comprehension : '$1'.
 expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
-expr_max -> '(' expr ')' : ?set_anno('$2', ?anno('$1', '$3')).
+expr_max -> '(' expr ')' : ?set_anno('$2', [parens | ensure_anno_list(?anno('$1', '$3'))]).
 expr_max -> 'begin' exprs 'end' : {block,?anno('$1','$3'),'$2'}.
 expr_max -> if_expr : '$1'.
 expr_max -> case_expr : '$1'.
@@ -317,7 +318,7 @@ pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
 anon_struct_pat_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_pat_expr -> '#' '(' fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+anon_struct_pat_expr -> '#' '(' anon_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -391,12 +392,12 @@ enum_expr -> expr_remote '.' atom '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_expr -> '#' '(' fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+anon_struct_expr -> '#' '(' anon_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
 anon_struct_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_expr -> expr_max '#' '(' fields ')' :
+anon_struct_expr -> expr_max '#' '(' anon_fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
 anon_struct_expr -> expr_max '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_expr -> anon_struct_expr '#' '(' fields ')' :
+anon_struct_expr -> anon_struct_expr '#' '(' anon_fields ')' :
     {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
 anon_struct_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
 anon_struct_expr -> anon_struct_expr '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
@@ -447,7 +448,12 @@ struct_tuple -> '{' fields '}' : '$2'.
 fields -> field : ['$1'].
 fields -> field ',' fields : ['$1' | '$3'].
 
-field -> atom '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
+field -> expr : build_field('$1').
+
+anon_fields -> anon_field : ['$1'].
+anon_fields -> anon_field ',' anon_fields : ['$1' | '$3'].
+
+anon_field -> atom '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 
@@ -1157,6 +1163,18 @@ parse_term(Tokens) ->
         {error, _} = Err ->
             Err
     end.
+
+build_field({match, Anno, Name, Expr} = Match) ->
+    case lists:member(parens, Anno) of
+        true ->
+            {field, Anno, positional, Match};
+        false when is_record(Name, atom, 3) ->
+            {field, Anno, Name, Expr};
+        false ->
+            ret_err(Anno, "match expressions in fields have to be wrapped in parentheses")
+    end;
+build_field(Expr) ->
+    {field, ?anno(Expr), positional, Expr}.
 
 -type attributes() ::
     'export' |
