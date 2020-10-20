@@ -1,4 +1,5 @@
 -- types for GitHub Actions types
+-- from https://github.com/regadas/github-actions-dhall/
 -- in a shared file so all workflow files have the same pinned version
 let Actions =
       https://raw.githubusercontent.com/regadas/github-actions-dhall/master/package.dhall sha256:cc677589e6d7e13705d106ec6b90cbaa643942b2721ec30af6e256cfcdc925ed
