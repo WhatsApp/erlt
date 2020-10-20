@@ -17,12 +17,14 @@
 -export_type([expr/0]).
 -export([expr_number/1, expr_add/2, expr_subtr/2, expr_mult/2, expr_divd/2, expr_var/1]).
 
--enum expr() :: (number{n :: integer()}
-              , add  {a :: expr(), b :: expr()}
-              , subtr{a :: expr(), b :: expr()}
-              , mult {a :: expr(), b :: expr()}
-              , divd {a :: expr(), b :: expr()}
-              , var{v :: atom()}).
+-enum expr() :: (
+    number{n :: integer()},
+    add  {a :: expr(), b :: expr()},
+    subtr{a :: expr(), b :: expr()},
+    mult {a :: expr(), b :: expr()},
+    divd {a :: expr(), b :: expr()},
+    var{v :: atom()}
+).
 
 %% helper functions to be invoked from erl1
 -spec expr_number(integer()) -> expr().
