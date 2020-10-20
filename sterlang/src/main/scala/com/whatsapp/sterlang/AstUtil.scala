@@ -33,6 +33,8 @@ object AstUtil {
         List.empty
       case VarPat(v) =>
         List(v)
+      case PinnedVarPat(v) =>
+        List(v)
       case TuplePat(pats) =>
         pats.flatMap(collectPatVars)
       case ShapePat(fields) =>
@@ -521,6 +523,8 @@ object AstUtil {
       case WildPat() =>
         Set.empty[String]
       case VarPat(v) =>
+        Set.empty[String]
+      case PinnedVarPat(v) =>
         Set.empty[String]
       case TuplePat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)

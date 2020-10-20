@@ -112,6 +112,7 @@ object AnnAst {
   case class WildPat()(val r: Doc.Range)(val typ: Type) extends Pat
   case class LiteralPat(value: Ast.Val)(val r: Doc.Range)(val typ: Type) extends Pat
   case class VarPat(name: String)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class PinnedVarPat(name: String)(val r: Doc.Range)(val typ: Type) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
   case class TuplePat(elements: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
   case class NilPat()(val r: Doc.Range)(val typ: Type) extends Pat

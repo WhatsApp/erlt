@@ -1,0 +1,19 @@
+-- WARNING -------------------- examples/pattern_error/src/pinned_vars.erlt:23:5
+Missing Patterns
+missing: {_, false}
+ 23|     case {Y, B} of
+...|     ~~~~~~~~~~~~~~
+...|         {^X, true} -> true
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 25|     end.
+...| ~~~~~~~
+
+-- WARNING -------------------- examples/pattern_error/src/pinned_vars.erlt:29:5
+Missing Patterns
+missing: {false, _}
+ 29|     case {B, Y} of
+...|     ~~~~~~~~~~~~~~
+...|         {true, ^X} -> true
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 31|     end.
+...| ~~~~~~~

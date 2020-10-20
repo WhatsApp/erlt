@@ -234,6 +234,7 @@ object Ast {
   sealed trait Pat { val r: Doc.Range }
   case class WildPat()(val r: Doc.Range) extends Pat
   case class VarPat(v: String)(val r: Doc.Range) extends Pat
+  case class PinnedVarPat(v: String)(val r: Doc.Range) extends Pat
   case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
   case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat

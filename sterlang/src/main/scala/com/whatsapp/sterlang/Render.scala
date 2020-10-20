@@ -106,6 +106,8 @@ case class Render(vars: Vars) {
     pat match {
       case AnnAst.WildPat() =>
       // nothing
+      case AnnAst.PinnedVarPat(_) =>
+      // nothing
       case AnnAst.VarPat(v) =>
         val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(pat.typ))
         val typeSchemaString = typeSchema(fakeTypeScheme, TypesMode)

@@ -28,6 +28,8 @@ object PatternsConvert {
         MatchPattern(r(anno), convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         VariablePattern(r(anno), name)
+      case ETuple(List(EAtom("pinned_var"), anno, EAtom(name))) =>
+        PinnedVariablePattern(r(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(ePats))) =>
         TuplePattern(r(anno), ePats.map(convertPat))
       case ETuple(List(EAtom("nil"), anno)) =>

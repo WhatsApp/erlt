@@ -164,6 +164,8 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
         )
       case _: AnnAst.BinPat =>
         CtrApp(AbstractCtr(pattern.r), Nil)
+      case _: AnnAst.PinnedVarPat =>
+        CtrApp(AbstractCtr(pattern.r), Nil)
       case AnnAst.NilPat() =>
         CtrApp(EmptyList, Nil)
       case AnnAst.ConsPat(head, tail) =>

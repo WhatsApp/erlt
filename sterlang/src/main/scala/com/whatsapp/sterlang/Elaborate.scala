@@ -217,6 +217,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabWildPat(wildPat, ts, d, env, penv, gen)
       case varPat: Ast.VarPat =>
         elabVarPat(varPat, ts, d, env, penv, gen)
+      case pinnedVarPat: Ast.PinnedVarPat =>
+        elabPinnedVarPat(pinnedVarPat, ts, d, env, penv, gen)
       case andPat: Ast.AndPat =>
         elabAndPat(andPat, ts, d, env, penv, gen)
       case tuplePat: Ast.TuplePat =>
@@ -929,13 +931,37 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (PreAnnPat, Env, PEnv) = {
     val Ast.VarPat(v) = p
 
-    if (penv(v)) {
-      val t1 = TU.instantiate(d, env(v))
-      val t2 = TU.instantiate(d, ts)
-      unify(p.r, t1, t2)
-      (AnnAst.VarPat(v)(p.r), env, penv)
-    } else {
-      (AnnAst.VarPat(v)(p.r), env + (v -> ts), penv + v)
+    (env.get(v), penv(v)) match {
+      case (Some(_), false) =>
+        throw new AlreadyBoundVar(p.r, v)
+      case (Some(ts1), true) =>
+        val t1 = TU.instantiate(d, ts1)
+        val t2 = TU.instantiate(d, ts)
+        unify(p.r, t1, t2)
+        (AnnAst.VarPat(v)(p.r), env, penv)
+      case (None, _) =>
+        (AnnAst.VarPat(v)(p.r), env + (v -> ts), penv + v)
+    }
+  }
+
+  private def elabPinnedVarPat(
+      p: Ast.PinnedVarPat,
+      ts: ST.TypeSchema,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (PreAnnPat, Env, PEnv) = {
+    val Ast.PinnedVarPat(v) = p
+
+    env.get(v) match {
+      case Some(ts1) =>
+        val t1 = TU.instantiate(d, ts1)
+        val t2 = TU.instantiate(d, ts)
+        unify(p.r, t1, t2)
+        (AnnAst.PinnedVarPat(v)(p.r), env, penv)
+      case None =>
+        throw new UnboundVar(p.r, v)
     }
   }
 

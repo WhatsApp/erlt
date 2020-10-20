@@ -1,0 +1,49 @@
+-module(pinned_vars).
+
+-struct my_struct(A) :: (id1 :: A, id2 :: A).
+-enum my_enum(A) :: (ctr{A, A}).
+
+t01(A, B) ->
+    case A of
+        ^B -> true
+    end.
+
+t02(A, B) ->
+    case A of
+        {^B} -> true
+    end.
+
+t03(A, B) ->
+    case A of
+        [^B] -> true
+    end.
+
+t04(A, B) ->
+    case A of
+        #(id = ^B) -> B + 10
+    end.
+
+t05(X, B, C) ->
+    case X of
+        #my_struct{id1 = ^B, id2 = ^C} -> B + C
+    end.
+
+t06(X, B, C) ->
+    case X of
+        my_enum.ctr{^B, ^C} -> B + C
+    end.
+
+t07(Binary, Elem1, Elem2) ->
+    case Binary of
+        <<^Elem1, ^Elem2:10/binary>> -> true
+    end.
+
+t08(Binary, Elem, Size) ->
+    case Binary of
+        <<^Size, ^Elem:Size/binary>> -> Size
+    end.
+
+t09(Binary) ->
+    case Binary of
+        <<Size, Elem:Size/binary>> -> {Size, Elem}
+    end.

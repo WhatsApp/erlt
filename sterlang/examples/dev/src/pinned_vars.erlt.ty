@@ -1,0 +1,9 @@
+-spec t01(A, A) -> boolean().
+-spec t02({A}, A) -> boolean().
+-spec t03(list(A), A) -> boolean().
+-spec t04(#( id :: number(), A ), number()) -> number().
+-spec t05(my_struct(number()), number(), number()) -> number().
+-spec t06(my_enum(number()), number(), number()) -> number().
+-spec t07(binary(), number(), binary()) -> boolean().
+-spec t08(binary(), binary(), number()) -> number().
+-spec t09(binary()) -> {number(), binary()}.

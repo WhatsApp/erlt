@@ -23,6 +23,7 @@ object Patterns {
   sealed trait Pattern { val r: Doc.Range }
   case class LiteralPattern(literal: Literal) extends Pattern { val r: Doc.Range = literal.r }
   case class MatchPattern(r: Doc.Range, pat: Pattern, arg: Pattern) extends Pattern
+  case class PinnedVariablePattern(r: Doc.Range, name: String) extends Pattern
   case class VariablePattern(r: Doc.Range, name: String) extends Pattern
   case class TuplePattern(r: Doc.Range, elems: List[Pattern]) extends Pattern
   case class NilPattern(r: Doc.Range) extends Pattern

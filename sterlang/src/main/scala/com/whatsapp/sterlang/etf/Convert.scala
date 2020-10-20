@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.etf
 
-import com.whatsapp.sterlang.{Ast, ParseError, Doc, UnsupportedSyntaxError}
+import com.whatsapp.sterlang.{Ast, ParseError, UnsupportedSyntaxError}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Patterns, Types}
 
 object Convert {
@@ -138,6 +138,8 @@ object Convert {
         Ast.WildPat()(p)
       case Patterns.VariablePattern(p, name) =>
         Ast.VarPat(name)(p)
+      case Patterns.PinnedVariablePattern(p, name) =>
+        Ast.PinnedVarPat(name)(p)
       case Patterns.LiteralPattern(literal) =>
         literal match {
           case Exprs.AtomLiteral(p, "true") =>
