@@ -457,6 +457,14 @@ format_error({illegal_field_default_call, {F, A}}) ->
     io_lib:format("call to local/imported function ~tw/~w is illegal in defaults", [F, A]);
 format_error(illegal_field_default) ->
     "illegal default expression";
+format_error({extra_positional_field, Actual, Expected, R}) ->
+    Msg = "~p positional fields provided when ~p expected in ~ts",
+    io_lib:format(Msg, [Actual, Expected, format_reference(R)]);
+format_error({missing_positional_field, Actual, Expected, R}) ->
+    Msg = "~p positional fields provided when ~p expected in ~ts",
+    io_lib:format(Msg, [Actual, Expected, format_reference(R)]);
+format_error(positional_after_labelled_field) ->
+    "positional field defined after labelled fields";
 %% --- variables ----
 format_error({unbound_var, V}) ->
     io_lib:format("variable ~w is unbound", [V]);
@@ -1945,7 +1953,7 @@ pattern({tuple, _Line, Ps}, Vt, Old, St) ->
     pattern_list(Ps, Vt, Old, St);
 pattern({enum, Line, Name, Variant, Fields}, Vt, Old, St0) ->
     Result = check_enum(Line, Name, Variant, St0, fun(ResolvedName, Defs, St) ->
-        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, St)
+        pattern_fields(Fields, Line, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
 pattern({map, _Line, Ps}, Vt, Old, St) ->
@@ -1954,7 +1962,7 @@ pattern({anon_struct, _Line, Pfs}, Vt, Old, St) ->
     check_anon_struct_pattern_fields(Pfs, Vt, Old, [], St, []);
 pattern({struct, Line, Name, Fields}, Vt, Old, St0) ->
     Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
-        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, St)
+        pattern_fields(Fields, Line, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
 pattern({struct_index, Line, Name, Field}, _Vt, _Old, St0) ->
@@ -3056,13 +3064,13 @@ resolve_importable_name(Other, St) ->
     {invalid, add_error(element(2, Other), invalid_name, St)}.
 
 remote_struct_field_map({attribute, _, struct, {_, {type, _, struct, _, Fields}, _}}) ->
-    fields_map(Fields).
+    field_defs(Fields).
 
 remote_enum_variants_map({attribute, _, enum, {_, {type, _, enum, _, Variants}, _}}) ->
     enum_variants_map(Variants).
 
 field({atom, La, F}, Name, Defs, St) ->
-    case Defs =:= unavailable orelse is_map_key(F, Defs) of
+    case Defs =:= unavailable orelse is_map_key(F, element(2, Defs)) of
         true ->
             {[], St};
         false ->
@@ -3070,22 +3078,28 @@ field({atom, La, F}, Name, Defs, St) ->
     end.
 
 init_fields(Fields, Line, Name, Defs, Vt0, St0) ->
-    {SeenFields, Uvt, St} = check_fields(Fields, Name, Defs, Vt0, St0, fun expr/3),
-    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Defs, fun expr/3, Uvt, St)}.
+    {SeenFields, Uvt, St} = check_fields(Line, Fields, Name, Defs, Vt0, St0, fun expr/3),
+    {Uvt, ensure_all_labelled_fields(Line, Name, SeenFields, Defs, fun expr/3, Uvt, St)}.
 
 init_fields_guard(Fields, Line, Name, Definitions, Vt0, St0) ->
-    {SeenFields, Uvt, St} = check_fields(Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
-    {Uvt, ensure_all_field_values(Line, Name, SeenFields, Definitions, fun gexpr/3, Uvt, St)}.
+    {SeenFields, Uvt, St} = check_fields(Line, Fields, Name, Definitions, Vt0, St0, fun gexpr/3),
+    {Uvt, ensure_all_labelled_fields(Line, Name, SeenFields, Definitions, fun gexpr/3, Uvt, St)}.
 
-update_fields(Fields, _Line, Name, Defs, Vt0, St0) ->
-    {_SeenFields, Uvt, St} = check_fields(Fields, Name, Defs, Vt0, St0, fun expr/3),
+update_fields(Fields, Line, Name, Defs0, Vt0, St0) ->
+    %% Updates don't support specifying positional fields
+    Defs =
+        case Defs0 of
+            unavailable -> unavailable;
+            {_Positional, Labelled} -> {0, Labelled}
+        end,
+    {_SeenFields, Uvt, St} = check_fields(Line, Fields, Name, Defs, Vt0, St0, fun expr/3),
     {Uvt, St}.
 
-ensure_all_field_values(_Line, _Name, _SeenFields, unavailable, _Expand, _Vt, St) ->
+ensure_all_labelled_fields(_Line, _Name, _SeenFields, unavailable, _Expand, _Vt, St) ->
     St;
-ensure_all_field_values(Line, Name, SeenFields, Definitions, Expand, Vt, St0) ->
+ensure_all_labelled_fields(Line, Name, SeenFields, {_, Definitions}, Expand, Vt, St0) ->
     Fun = fun(Field, Default0, St) ->
-        case member(Field, SeenFields) of
+        case is_map_key(Field, SeenFields) of
             true ->
                 St;
             false when Default0 =/= undefined ->
@@ -3155,51 +3169,84 @@ check_anon_struct_pattern_fields(
 check_anon_struct_pattern_fields([], Vt, _Old, New, St, _) ->
     {Vt, New, St}.
 
-check_fields(Fields, Name, Defs, Vt0, St0, CheckFun) ->
-    Fun = fun(Field, {Sfsa, Vta, Sta}) ->
-        {Sfsb, {Vtb, Stb}} = check_field(Field, Name, Defs, Vt0, Sta, Sfsa, CheckFun),
-        {Sfsb, vtmerge_pat(Vta, Vtb), Stb}
+check_fields(OuterLine, Fields, Name, Defs, Vt0, St0, CheckFun) ->
+    Check = fun(Value, Vt, St) ->
+        {Vt1, St1} = CheckFun(Value, Vt0, St),
+        {vtmerge_pat(Vt, Vt1), St1}
     end,
-    foldl(Fun, {[], [], St0}, Fields).
+    check_fields_common(Check, [], St0, Fields, Name, OuterLine, Defs).
 
-check_field({field, Lf, {atom, La, F}, Val}, Name, Defs, Vt, St, Sfs, CheckFun) ->
-    case member(F, Sfs) of
+pattern_fields(Fields, OuterLine, Name, Defs, Vt0, Old, St0) ->
+    Check = fun(Value, {Vt, New}, St) ->
+        {Vt1, New1, St1} = pattern(Value, Vt0, Old, St),
+        {{vtmerge_pat(Vt, Vt1), vtmerge_pat(New, New1)}, St1}
+    end,
+    {_Seen, {Uvt, Unew}, St1} =
+        check_fields_common(Check, {[], []}, St0, Fields, Name, OuterLine, Defs),
+    {Uvt, Unew, St1}.
+
+check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, unavailable) ->
+    check_fields(Fun, Acc, St, Fields, 0, Name, OuterLine, unavailable, unavailable);
+check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, {Positional, Defs}) ->
+    check_fields(Fun, Acc, St, Fields, 0, Name, OuterLine, Positional, Defs).
+
+check_fields(Fun, Acc, St, [FieldNode | Rest], Seen, Name, OuterLine, Pos, Defs) ->
+    case FieldNode of
+        {field, Line, {atom, _, Field}, Value} ->
+            check_labelled(Fun, Acc, St, Line, Field, Value, Rest, Seen, Name, OuterLine, Pos, Defs);
+        {field, Line, positional, Value} ->
+            check_positional(Fun, Acc, St, Line, Value, Rest, Seen, Name, OuterLine, Pos, Defs)
+    end;
+check_fields(_Fun, Acc, St0, [], Seen0, Name, OuterLine, Pos, _Defs) ->
+    {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
+    {Seen, Acc, St}.
+
+check_labelled(Fun, Acc, St0, Line, Field, Value, Rest, Seen0, Name, OuterLine, Pos, Defs) ->
+    {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
+    case is_map_key(Field, Seen) of
         true ->
-            {Sfs, {[], add_error(Lf, {redefine_field, Name, F}, St)}};
+            St1 = add_error(Line, {redefine_field, Name, Field}, St),
+            check_fields(Fun, Acc, St1, Rest, Seen, Name, OuterLine, Pos, Defs);
+        false when Defs =:= unavailable; is_map_key(Field, Defs) ->
+            {Acc1, St1} = Fun(Value, Acc, St),
+            check_fields(Fun, Acc1, St1, Rest, Seen#{Field => []}, Name, OuterLine, Pos, Defs);
         false ->
-            {[F | Sfs],
-                case Defs =:= unavailable orelse is_map_key(F, Defs) of
-                    true -> CheckFun(Val, Vt, St);
-                    false -> {[], add_error(La, {undefined_field, Name, F}, St)}
-                end}
+            St1 = add_error(Line, {undefined_field, Name, Field}, St),
+            check_fields(Fun, Acc, St1, Rest, Seen#{Field => []}, Name, OuterLine, Pos, Defs)
     end.
 
-pattern_fields(Fs, Name, Defs, Vt0, Old, St0) ->
-    CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, St) end,
-    {_SeenFields, Uvt, Unew, St1} =
-        foldl(
-            fun(Field, {Sfsa, Vta, Newa, Sta}) ->
-                case check_field(Field, Name, Defs, Vt0, Sta, Sfsa, CheckFun) of
-                    {Sfsb, {Vtb, Stb}} ->
-                        {Sfsb, vtmerge_pat(Vta, Vtb), [], Stb};
-                    {Sfsb, {Vtb, Newb, Stb}} ->
-                        {Sfsb, vtmerge_pat(Vta, Vtb), vtmerge_pat(Newa, Newb), Stb}
-                end
-            end,
-            {[], [], [], St0},
-            Fs
-        ),
-    {Uvt, Unew, St1}.
+check_positional(Fun, Acc, St, Line, Value, Rest, Seen, Name, OuterLine, Pos, Defs) ->
+    case is_map(Seen) of
+        true ->
+            St1 = add_error(Line, positional_after_labelled_field, St),
+            check_fields(Fun, Acc, St1, Rest, Seen, Name, OuterLine, Pos, Defs);
+        false when Pos =:= unavailable; Seen < Pos ->
+            {Acc1, St1} = Fun(Value, Acc, St),
+            check_fields(Fun, Acc1, St1, Rest, Seen + 1, Name, OuterLine, Pos, Defs);
+        false ->
+            St1 = add_error(Line, {extra_positional_field, Seen + 1, Pos, Name}, St),
+            check_fields(Fun, Acc, St1, Rest, Seen + 1, Name, OuterLine, Pos, Defs)
+    end.
+
+ensure_all_positional_fields(Line, Name, Seen, Pos, St) ->
+    case is_integer(Seen) of
+        true when Pos =:= unavailable; Seen >= Pos -> {#{}, St};
+        true -> {#{}, add_error(Line, {missing_positional_field, Seen, Pos, Name}, St)};
+        false -> {Seen, St}
+    end.
 
 %% Does not do any checking, this is done in check_type
 struct_def(Loc, {type, _, struct, {atom, _, Name}, Fields}, TypeArity, St) ->
-    St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, fields_map(Fields)}}}.
+    St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, field_defs(Fields)}}}.
 
-fields_map(Fields) ->
-    maps:from_list([
-        {Field, Default}
-        || {field_definition, _, {atom, _, Field}, Default, _Type} <- Fields
-    ]).
+field_defs(Fields) -> field_defs(Fields, [], 0).
+
+field_defs([{field_definition, _, positional, undefined, _Type} | Rest], Acc, Num) ->
+    field_defs(Rest, Acc, Num + 1);
+field_defs([{field_definition, _, {atom, _, Field}, Default, _Type} | Rest], Acc, Num) ->
+    field_defs(Rest, [{Field, Default} | Acc], Num);
+field_defs([], Acc, Num) ->
+    {Num, maps:from_list(Acc)}.
 
 %% Does not do any checking, this is done in check type
 enum_def(Loc, {type, _, enum, {atom, _, Name}, Variants}, TypeArity, St) ->
@@ -3207,7 +3254,7 @@ enum_def(Loc, {type, _, enum, {atom, _, Name}, Variants}, TypeArity, St) ->
 
 enum_variants_map(Variants) ->
     maps:from_list([
-        {Name, fields_map(Fields)}
+        {Name, field_defs(Fields)}
         || {variant, _, {atom, _, Name}, Fields} <- Variants
     ]).
 
@@ -3525,17 +3572,32 @@ check_struct_types(_StructLine, StructName, Fields, SeenVars, St) ->
     check_field_defs(Fields, {struct, StructName}, SeenVars, St).
 
 check_field_defs(Fields, ParentName, SeenVars0, St0) ->
-    Fun = fun({field_definition, Line, {atom, _, Name}, Default, Type}, {SeenVars, St, FieldsAcc}) ->
-        St1 =
-            case is_map_key(Name, FieldsAcc) of
-                true -> add_error(Line, {redefine_field, ParentName, Name}, St);
-                false -> St
-            end,
-        St2 = check_field_default(Default, ParentName, St1),
-        {SeenVars1, St3} = check_type(Type, SeenVars, St2),
-        {SeenVars1, St3, FieldsAcc#{Name => Type}}
-    end,
-    {SeenVars, St, _} = lists:foldl(Fun, {SeenVars0, St0, #{}}, Fields),
+    check_field_defs(SeenVars0, St0, 0, Fields, ParentName).
+
+check_field_defs(SeenVars, St, SeenFields0, [{field_definition, Line, {atom, _, Name}, Default, Type} | Rest], ParentName) ->
+    {SeenFields, St1} =
+        case is_integer(SeenFields0) of
+            true ->
+                {#{Name => Type}, St};
+            false when is_map_key(Name, SeenFields0) ->
+                {SeenFields0, add_error(Line, {redefine_field, ParentName, Name}, St)};
+            false ->
+                {SeenFields0#{Name => Type}, St}
+        end,
+    St2 = check_field_default(Default, ParentName, St1),
+    {SeenVars1, St3} = check_type(Type, SeenVars, St2),
+    check_field_defs(SeenVars1, St3, SeenFields, Rest, ParentName);
+check_field_defs(SeenVars, St, SeenFields0, [{field_definition, Line, positional, undefined, Type} | Rest], ParentName) ->
+    {SeenFields, St1} =
+        case is_integer(SeenFields0) of
+            true ->
+                {SeenFields0 + 1, St};
+            false ->
+                {SeenFields0, add_error(Line, positional_after_labelled_field, St)}
+        end,
+    {SeenVars1, St2} = check_type(Type, SeenVars, St1),
+    check_field_defs(SeenVars1, St2, SeenFields, Rest, ParentName);
+check_field_defs(SeenVars, St, _SeenFields, [], _ParentName) ->
     {SeenVars, St}.
 
 check_field_default(undefined, _StructName, St) ->
