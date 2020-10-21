@@ -1891,13 +1891,13 @@ head(Ps, Vt, St0) ->
     head(Ps, Vt, [], St0).
 
 head([P | Ps], Vt, Old, St0) ->
-    {Pvt, Bvt1, St1} = pattern(P, Vt, Old, [], St0),
+    {Pvt, Bvt1, St1} = pattern(P, Vt, Old, St0),
     {Psvt, Bvt2, St2} = head(Ps, Vt, Old, St1),
     {vtmerge_pat(Pvt, Psvt), vtmerge_pat(Bvt1, Bvt2), St2};
 head([], _Vt, _Env, St) ->
     {[], [], St}.
 
-%% pattern(Pattern, VarTable, Old, BinVarTable, State) ->
+%% pattern(Pattern, VarTable, Old, State) ->
 %%                  {UpdVarTable,BinVarTable,State}.
 %%  Check pattern return variables. Old is the set of variables used for
 %%  deciding whether an occurrence is a binding occurrence or a use, and
@@ -1912,89 +1912,89 @@ head([], _Vt, _Env, St) ->
 
 pattern(P, Vt, St) ->
     % No imported pattern variables
-    pattern(P, Vt, [], [], St).
+    pattern(P, Vt, [], St).
 
-pattern({var, _Line, '_'}, _Vt, _Old, _Bvt, St) ->
+pattern({var, _Line, '_'}, _Vt, _Old, St) ->
     %Ignore anonymous variable
     {[], [], St};
-pattern({var, Line, V}, _Vt, Old, Bvt, St) ->
-    pat_var(V, Line, Old, Bvt, St);
-pattern({op, _, '^', {var, Line, V}}, Vt, _Old, _Bvt, St) when V =/= '_' ->
+pattern({var, Line, V}, _Vt, Old, St) ->
+    pat_var(V, Line, Old, [], St);
+pattern({op, _, '^', {var, Line, V}}, Vt, _Old, St) when V =/= '_' ->
     %% this is checked like a normal expression variable,
     %% since it will actually become a guard test
     {Vt1, St1} = expr_var(V, Line, Vt, St),
     {Vt1, [], St1};
-pattern({char, _Line, _C}, _Vt, _Old, _Bvt, St) ->
+pattern({char, _Line, _C}, _Vt, _Old, St) ->
     {[], [], St};
-pattern({integer, _Line, _I}, _Vt, _Old, _Bvt, St) ->
+pattern({integer, _Line, _I}, _Vt, _Old, St) ->
     {[], [], St};
-pattern({float, _Line, _F}, _Vt, _Old, _Bvt, St) ->
+pattern({float, _Line, _F}, _Vt, _Old, St) ->
     {[], [], St};
-pattern({atom, Line, A}, _Vt, _Old, _Bvt, St) ->
+pattern({atom, Line, A}, _Vt, _Old, St) ->
     {[], [], keyword_warning(Line, A, St)};
-pattern({string, _Line, _S}, _Vt, _Old, _Bvt, St) ->
+pattern({string, _Line, _S}, _Vt, _Old, St) ->
     {[], [], St};
-pattern({nil, _Line}, _Vt, _Old, _Bvt, St) ->
+pattern({nil, _Line}, _Vt, _Old, St) ->
     {[], [], St};
-pattern({cons, _Line, H, T}, Vt, Old, Bvt, St0) ->
-    {Hvt, Bvt1, St1} = pattern(H, Vt, Old, Bvt, St0),
-    {Tvt, Bvt2, St2} = pattern(T, Vt, Old, Bvt, St1),
+pattern({cons, _Line, H, T}, Vt, Old, St0) ->
+    {Hvt, Bvt1, St1} = pattern(H, Vt, Old, St0),
+    {Tvt, Bvt2, St2} = pattern(T, Vt, Old, St1),
     {vtmerge_pat(Hvt, Tvt), vtmerge_pat(Bvt1, Bvt2), St2};
-pattern({tuple, _Line, Ps}, Vt, Old, Bvt, St) ->
-    pattern_list(Ps, Vt, Old, Bvt, St);
-pattern({enum, Line, Name, Variant, Fields}, Vt, Old, Bvt, St0) ->
+pattern({tuple, _Line, Ps}, Vt, Old, St) ->
+    pattern_list(Ps, Vt, Old, St);
+pattern({enum, Line, Name, Variant, Fields}, Vt, Old, St0) ->
     Result = check_enum(Line, Name, Variant, St0, fun(ResolvedName, Defs, St) ->
-        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, Bvt, St)
+        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
-pattern({map, _Line, Ps}, Vt, Old, Bvt, St) ->
-    pattern_map(Ps, Vt, Old, Bvt, St);
-pattern({anon_struct, _Line, Pfs}, Vt, Old, Bvt, St) ->
-    check_anon_struct_pattern_fields(Pfs, Vt, Old, Bvt, St, []);
-pattern({struct, Line, Name, Fields}, Vt, Old, Bvt, St0) ->
+pattern({map, _Line, Ps}, Vt, Old, St) ->
+    pattern_map(Ps, Vt, Old, St);
+pattern({anon_struct, _Line, Pfs}, Vt, Old, St) ->
+    check_anon_struct_pattern_fields(Pfs, Vt, Old, [], St, []);
+pattern({struct, Line, Name, Fields}, Vt, Old, St0) ->
     Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
-        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, Bvt, St)
+        pattern_fields(Fields, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
-pattern({struct_index, Line, Name, Field}, _Vt, _Old, _Bvt, St0) ->
+pattern({struct_index, Line, Name, Field}, _Vt, _Old, St0) ->
     Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
         field(Field, ResolvedName, Defs, St)
     end),
     expr_check_result_in_pattern(Result);
-pattern({bin, _, Fs}, Vt, Old, Bvt, St) ->
-    pattern_bin(Fs, Vt, Old, Bvt, St);
-pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, Bvt, St) ->
-    pattern(R, Vt, Old, Bvt, St);
-pattern({op, _Line, '++', {cons, Li, {char, _L2, _C}, T}, R}, Vt, Old, Bvt, St) ->
+pattern({bin, _, Fs}, Vt, Old, St) ->
+    pattern_bin(Fs, Vt, Old, St);
+pattern({op, _Line, '++', {nil, _}, R}, Vt, Old, St) ->
+    pattern(R, Vt, Old, St);
+pattern({op, _Line, '++', {cons, Li, {char, _L2, _C}, T}, R}, Vt, Old, St) ->
     %Char unimportant here
-    pattern({op, Li, '++', T, R}, Vt, Old, Bvt, St);
-pattern({op, _Line, '++', {cons, Li, {integer, _L2, _I}, T}, R}, Vt, Old, Bvt, St) ->
+    pattern({op, Li, '++', T, R}, Vt, Old, St);
+pattern({op, _Line, '++', {cons, Li, {integer, _L2, _I}, T}, R}, Vt, Old, St) ->
     %Weird, but compatible!
-    pattern({op, Li, '++', T, R}, Vt, Old, Bvt, St);
-pattern({op, _Line, '++', {string, _Li, _S}, R}, Vt, Old, Bvt, St) ->
+    pattern({op, Li, '++', T, R}, Vt, Old, St);
+pattern({op, _Line, '++', {string, _Li, _S}, R}, Vt, Old, St) ->
     %String unimportant here
-    pattern(R, Vt, Old, Bvt, St);
-pattern({op, _Line, '.', E, {atom, _, _}}, Vt, Old, Bvt, St) ->
+    pattern(R, Vt, Old, St);
+pattern({op, _Line, '.', E, {atom, _, _}}, Vt, Old, St) ->
     %% we only allow the right hand side to be an atom: X.a, but not X.Y
-    pattern(E, Vt, Old, Bvt, St);
-pattern({op, Line, '.', _, _}, _Vt, _Old, _Bvt, St) ->
+    pattern(E, Vt, Old, St);
+pattern({op, Line, '.', _, _}, _Vt, _Old, St) ->
     {[], [], add_error(Line, illegal_dot, St)};
-pattern({match, _Line, Pat1, Pat2}, Vt, Old, Bvt, St0) ->
-    {Lvt, Bvt1, St1} = pattern(Pat1, Vt, Old, Bvt, St0),
-    {Rvt, Bvt2, St2} = pattern(Pat2, Vt, Old, Bvt, St1),
+pattern({match, _Line, Pat1, Pat2}, Vt, Old, St0) ->
+    {Lvt, Bvt1, St1} = pattern(Pat1, Vt, Old, St0),
+    {Rvt, Bvt2, St2} = pattern(Pat2, Vt, Old, St1),
     St3 = reject_invalid_alias(Pat1, Pat2, Vt, St2),
     {vtmerge_pat(Lvt, Rvt), vtmerge_pat(Bvt1, Bvt2), St3};
 %% Catch legal constant expressions, including unary +,-.
-pattern(Pat, _Vt, _Old, _Bvt, St) ->
+pattern(Pat, _Vt, _Old, St) ->
     case is_pattern_expr(Pat) of
         true -> {[], [], St};
         false -> {[], [], add_error(element(2, Pat), illegal_pattern, St)}
     end.
 
-pattern_list(Ps, Vt, Old, Bvt0, St) ->
+pattern_list(Ps, Vt, Old, St) ->
     foldl(
         fun(P, {Psvt, Bvt, St0}) ->
-            {Pvt, Bvt1, St1} = pattern(P, Vt, Old, Bvt0, St0),
+            {Pvt, Bvt1, St1} = pattern(P, Vt, Old, St0),
             {vtmerge_pat(Pvt, Psvt), vtmerge_pat(Bvt, Bvt1), St1}
         end,
         {[], [], St},
@@ -2108,7 +2108,7 @@ is_pattern_expr_1({op, _Line, Op, A1, A2}) ->
 is_pattern_expr_1(_Other) ->
     false.
 
-pattern_map(Ps, Vt, Old, Bvt, St) ->
+pattern_map(Ps, Vt, Old, St) ->
     foldl(
         fun
             ({map_field_assoc, L, _, _}, {Psvt, Bvt0, St0}) ->
@@ -2116,23 +2116,23 @@ pattern_map(Ps, Vt, Old, Bvt, St) ->
             ({map_field_exact, _L, K, V}, {Psvt, Bvt0, St0}) ->
                 St1 = St0#lint{gexpr_context = map_key},
                 {Kvt, St2} = gexpr(K, Vt, St1),
-                {Vvt, Bvt2, St3} = pattern(V, Vt, Old, Bvt, St2),
+                {Vvt, Bvt2, St3} = pattern(V, Vt, Old, St2),
                 {vtmerge_pat(vtmerge_pat(Kvt, Vvt), Psvt), vtmerge_pat(Bvt0, Bvt2), St3}
         end,
         {[], [], St},
         Ps
     ).
 
-%% pattern_bin([Element], VarTable, Old, BinVarTable, State) ->
+%% pattern_bin([Element], VarTable, Old, State) ->
 %%           {UpdVarTable,UpdBinVarTable,State}.
 %%  Check a pattern group. BinVarTable are used binsize variables.
 
-pattern_bin(Es, Vt, Old, Bvt0, St0) ->
+pattern_bin(Es, Vt, Old, St0) ->
     {_Sz, Esvt, Bvt, St1} = foldl(
         fun(E, Acc) ->
             pattern_element(E, Vt, Old, Acc)
         end,
-        {0, [], Bvt0, St0},
+        {0, [], [], St0},
         Es
     ),
     {Esvt, Bvt, St1}.
@@ -3141,7 +3141,7 @@ check_anon_struct_pattern_fields(
         true ->
             {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
         false ->
-            {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, Bvt, St),
+            {Vt1, Bvt1, St1} = pattern(Val, Vt, Old, St),
             check_anon_struct_pattern_fields(
                 Fields,
                 vtmerge_pat(Vt, Vt1),
@@ -3173,8 +3173,8 @@ check_field({field, Lf, {atom, La, F}, Val}, Name, Defs, Vt, St, Sfs, CheckFun) 
                 end}
     end.
 
-pattern_fields(Fs, Name, Defs, Vt0, Old, Bvt, St0) ->
-    CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, Bvt, St) end,
+pattern_fields(Fs, Name, Defs, Vt0, Old, St0) ->
+    CheckFun = fun(Val, Vt, St) -> pattern(Val, Vt, Old, St) end,
     {_SeenFields, Uvt, Bvt1, St1} =
         foldl(
             fun(Field, {Sfsa, Vta, Bvt1, Sta}) ->
@@ -4085,7 +4085,7 @@ handle_generator(P, E, Vt, Uvt, St0) ->
     %% Forget variables local to E immediately.
     Vt1 = vtupdate(vtold(Evt, Vt), Vt),
     {_, St2} = check_unused_vars(Evt, Vt, St1),
-    {Pvt, Binvt, St3} = pattern(P, Vt1, [], [], St2),
+    {Pvt, Binvt, St3} = pattern(P, Vt1, [], St2),
     %% Have to keep fresh variables separated from used variables somehow
     %% in order to handle for example X = foo(), [X || <<X:X>> <- bar()].
     %%                                1           2      2 1
