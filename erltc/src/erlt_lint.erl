@@ -3123,42 +3123,44 @@ check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, unavailable) ->
 check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, {Positional, Defs}) ->
     check_fields(Fun, Acc, St, Fields, 0, Name, OuterLine, Positional, Defs).
 
-check_fields(Fun, Acc, St, [FieldNode | Rest], Seen, Name, OuterLine, Pos, Defs) ->
-    case FieldNode of
-        {field, Line, {atom, _, Field}, Value} ->
-            check_labelled(Fun, Acc, St, Line, Field, Value, Rest, Seen, Name, OuterLine, Pos, Defs);
-        {field, Line, positional, Value} ->
-            check_positional(Fun, Acc, St, Line, Value, Rest, Seen, Name, OuterLine, Pos, Defs)
-    end;
+check_fields(Fun, Acc, St0, [FieldNode | Rest], Seen0, Name, OuterLine, Pos, Defs) ->
+    {Seen1, Acc1, St1} =
+        case FieldNode of
+            {field, Line, {atom, _, Field}, Value} ->
+                {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
+                check_labelled(Fun, Acc, St, Line, Field, Value, Seen, Name, Defs);
+            {field, Line, positional, Value} ->
+                check_positional(Fun, Acc, St0, Line, Value, Seen0, Name, Pos)
+        end,
+    check_fields(Fun, Acc1, St1, Rest, Seen1, Name, OuterLine, Pos, Defs);
 check_fields(_Fun, Acc, St0, [], Seen0, Name, OuterLine, Pos, _Defs) ->
     {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
     {Seen, Acc, St}.
 
-check_labelled(Fun, Acc, St0, Line, Field, Value, Rest, Seen0, Name, OuterLine, Pos, Defs) ->
-    {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
+check_labelled(Fun, Acc, St, Line, Field, Value, Seen, Name, Defs) ->
     case is_map_key(Field, Seen) of
         true ->
             St1 = add_error(Line, {redefine_field, Name, Field}, St),
-            check_fields(Fun, Acc, St1, Rest, Seen, Name, OuterLine, Pos, Defs);
+            {Seen, Acc, St1};
         false when Defs =:= unavailable; is_map_key(Field, Defs) ->
             {Acc1, St1} = Fun(Value, Acc, St),
-            check_fields(Fun, Acc1, St1, Rest, Seen#{Field => []}, Name, OuterLine, Pos, Defs);
+            {Seen#{Field => []}, Acc1, St1};
         false ->
             St1 = add_error(Line, {undefined_field, Name, Field}, St),
-            check_fields(Fun, Acc, St1, Rest, Seen#{Field => []}, Name, OuterLine, Pos, Defs)
+            {Seen#{Field => []}, Acc, St1}
     end.
 
-check_positional(Fun, Acc, St, Line, Value, Rest, Seen, Name, OuterLine, Pos, Defs) ->
+check_positional(Fun, Acc, St, Line, Value, Seen, Name, Pos) ->
     case is_map(Seen) of
         true ->
             St1 = add_error(Line, positional_after_labelled_field, St),
-            check_fields(Fun, Acc, St1, Rest, Seen, Name, OuterLine, Pos, Defs);
+            {Seen, Acc, St1};
         false when Pos =:= unavailable; Seen < Pos ->
             {Acc1, St1} = Fun(Value, Acc, St),
-            check_fields(Fun, Acc1, St1, Rest, Seen + 1, Name, OuterLine, Pos, Defs);
+            {Seen + 1, Acc1, St1};
         false ->
             St1 = add_error(Line, {extra_positional_field, Seen + 1, Pos, Name}, St),
-            check_fields(Fun, Acc, St1, Rest, Seen + 1, Name, OuterLine, Pos, Defs)
+            {Seen + 1, Acc, St1}
     end.
 
 ensure_all_positional_fields(Line, Name, Seen, Pos, St) ->
@@ -3507,29 +3509,24 @@ check_struct_types(_StructLine, StructName, Fields, SeenVars, St) ->
 check_field_defs(Fields, ParentName, SeenVars0, St0) ->
     check_field_defs(SeenVars0, St0, 0, Fields, ParentName).
 
-check_field_defs(SeenVars, St, SeenFields0, [{field_definition, Line, {atom, _, Name}, Default, Type} | Rest], ParentName) ->
-    {SeenFields, St1} =
-        case is_integer(SeenFields0) of
-            true ->
-                {#{Name => Type}, St};
-            false when is_map_key(Name, SeenFields0) ->
-                {SeenFields0, add_error(Line, {redefine_field, ParentName, Name}, St)};
-            false ->
-                {SeenFields0#{Name => Type}, St}
-        end,
-    St2 = check_field_default(Default, ParentName, St1),
-    {SeenVars1, St3} = check_type(Type, SeenVars, St2),
-    check_field_defs(SeenVars1, St3, SeenFields, Rest, ParentName);
-check_field_defs(SeenVars, St, SeenFields0, [{field_definition, Line, positional, undefined, Type} | Rest], ParentName) ->
-    {SeenFields, St1} =
-        case is_integer(SeenFields0) of
-            true ->
-                {SeenFields0 + 1, St};
-            false ->
-                {SeenFields0, add_error(Line, positional_after_labelled_field, St)}
-        end,
+check_field_defs(SeenVars, St0, SeenFields0, [Field | Rest], ParentName) ->
+    {field_definition, Line, FieldName, Default, Type} = Field,
+    St1 = check_field_default(Default, ParentName, St0),
     {SeenVars1, St2} = check_type(Type, SeenVars, St1),
-    check_field_defs(SeenVars1, St2, SeenFields, Rest, ParentName);
+    {SeenFields, St3} =
+        case FieldName of
+            {atom, _, Name} when is_integer(SeenFields0) ->
+                {#{Name => Type}, St2};
+            {atom, _, Name} when not is_map_key(Name, SeenFields0) ->
+                {SeenFields0#{Name => Type}, St2};
+            {atom, _, Name} ->
+                {SeenFields0, add_error(Line, {redefine_field, ParentName, Name}, St2)};
+            positional when is_integer(SeenFields0) ->
+                {SeenFields0 + 1, St2};
+            positional ->
+                {SeenFields0, add_error(Line, positional_after_labelled_field, St2)}
+        end,
+    check_field_defs(SeenVars1, St3, SeenFields, Rest, ParentName);
 check_field_defs(SeenVars, St, _SeenFields, [], _ParentName) ->
     {SeenVars, St}.
 
