@@ -367,7 +367,7 @@ format_error({redefine_builtin_type_import, {F, A}}) ->
     );
 format_error({deprecated, MFA, String, Rel}) ->
     io_lib:format(
-        "~s is deprecated and will be removed in ~s; use ~s",
+        "~s is deprecated and will be removed in ~s; ~s",
         [format_mfa(MFA), Rel, String]
     );
 format_error({deprecated, MFA, String}) when is_list(String) ->
