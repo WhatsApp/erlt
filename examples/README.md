@@ -37,12 +37,6 @@ erltc --build compile --src-dir examples/calc/src --build-dir examples/_build/de
 
 Copy the command for the example you want to focus on.
 
-You can do the same for IR with:
-
-```sh
-DEBUG=1 rebar3 as ir compile | grep 'erltc --build' | sed G
-```
-
 > Note: the rebar plugin does not shell out to erltc: it passes a list of strings in memory.
 
 # To run tests
