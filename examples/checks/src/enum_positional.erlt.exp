@@ -1,0 +1,7 @@
+enum_positional.erlt:7:43: positional field defined after labelled fields
+enum_positional.erlt:15:9: 0 positional fields provided when 1 expected in enum enum.variant
+enum_positional.erlt:15:30: positional field defined after labelled fields
+enum_positional.erlt:16:9: 0 positional fields provided when 1 expected in enum enum.variant
+enum_positional.erlt:17:27: 2 positional fields provided when 1 expected in enum enum.variant
+enum_positional.erlt:19:9: field b of enum enum2.variant has no initializer or default value
+enum_positional.erlt:19:35: positional field defined after labelled fields

@@ -61,11 +61,14 @@ variant_info(Mod, Enum, {variant, _, {atom, Line, Tag}, Fields}) ->
     String = "$#" ++ atom_to_list(Mod) ++ ":" ++ atom_to_list(Enum) ++ "." ++ atom_to_list(Tag),
     RuntimeTag = list_to_atom(String),
     Anno = erl_anno:set_generated(true, Line),
-    FieldsMap = [
-        {Name, Default}
-        || {field_definition, _, {atom, _, Name}, Default, _Type} <- Fields
-    ],
-    {Tag, {{atom, Anno, RuntimeTag}, FieldsMap}}.
+    {Tag, {{atom, Anno, RuntimeTag}, fields_map(Fields)}}.
+
+fields_map([{field_definition, _, {atom, _, Name}, Default, _Type} | Rest]) ->
+    [{Name, Default} | fields_map(Rest)];
+fields_map([{field_definition, _, positional, undefined, _Type} | Rest]) ->
+    [positional | fields_map(Rest)];
+fields_map([]) ->
+    [].
 
 rewrite({attribute, Line, enum, {Name, Type, Vars}}, Context, form) ->
     Union = build_type_union(Type, Context),
@@ -97,25 +100,31 @@ get_remote_definition(Module, Name, Context) ->
     enum_info(Module, Type).
 
 variant_init(Fields, Defs) ->
-    Fun = fun({Name, Default}) ->
-        case find_field(Name, Fields) of
-            {field, _, _, Value} -> Value;
-            error when Default =/= undefined -> Default
-        end
+    Fun = fun
+        (positional, [{field, _, positional, Expr} | Rest]) ->
+            {Expr, Rest};
+        ({Name, Default}, LabelledFields) ->
+            case find_field(Name, LabelledFields) of
+                {field, _, _, Value} -> {Value, LabelledFields};
+                error when Default =/= undefined -> {Default, LabelledFields}
+            end
     end,
-    lists:map(Fun, Defs).
+    element(1, lists:mapfoldl(Fun, Fields, Defs)).
 
 variant_pattern(Fields, Defs) ->
-    Fun = fun({Name, _Default}) ->
-        case find_field(Name, Fields) of
-            {field, _, _, Value} ->
-                Value;
-            error ->
-                Anno = erl_anno:set_generated(true, erl_anno:new(1)),
-                {var, Anno, '_'}
-        end
+    Fun = fun
+        (positional, [{field, _, positional, Expr} | Rest]) ->
+            {Expr, Rest};
+        ({Name, _Default}, LabelledFields) ->
+            case find_field(Name, LabelledFields) of
+                {field, _, _, Value} ->
+                    {Value, LabelledFields};
+                error ->
+                    Anno = erl_anno:set_generated(true, erl_anno:new(1)),
+                    {{var, Anno, '_'}, LabelledFields}
+            end
     end,
-    lists:map(Fun, Defs).
+    element(1, lists:mapfoldl(Fun, Fields, Defs)).
 
 find_field(Name, [{field, _, {atom, _, Name}, _} = Field | _]) ->
     Field;
