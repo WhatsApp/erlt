@@ -3069,12 +3069,17 @@ remote_struct_field_map({attribute, _, struct, {_, {type, _, struct, _, Fields},
 remote_enum_variants_map({attribute, _, enum, {_, {type, _, enum, _, Variants}, _}}) ->
     enum_variants_map(Variants).
 
-field({atom, La, F}, Name, Defs, St) ->
-    case Defs =:= unavailable orelse is_map_key(F, element(2, Defs)) of
-        true ->
-            {[], St};
-        false ->
-            {[], add_error(La, {undefined_field, Name, F}, St)}
+field(_Field, _Name, unavailable, St) ->
+    {[], St};
+field({atom, Line, Field}, Name, {_, Defs}, St) ->
+    case is_map_key(Field, Defs) of
+        true -> {[], St};
+        false -> {[], add_error(Line, {undefined_field, Name, Field}, St)}
+    end;
+field({integer, Line, Field}, Name, {Pos, _}, St) ->
+    case Field < Pos of
+        true -> {[], St};
+        false -> {[], add_error(Line, {undefined_field, Name, Field}, St)}
     end.
 
 init_fields(Fields, Line, Name, Defs, Vt0, St0) ->
