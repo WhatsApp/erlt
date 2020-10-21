@@ -1,7 +1,7 @@
 -- see ./README.md for dhall setup
-let Shared = ./util/util.dhall
-let Actions = Shared.Actions
-let run = Shared.run
+let Util = ./shared/util.dhall
+let Actions = Util.Actions
+let run = Util.run
 
 in  Actions.Workflow::{
     , name = "ErlT CI"
