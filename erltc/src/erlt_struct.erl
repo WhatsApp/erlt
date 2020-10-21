@@ -103,6 +103,8 @@ rewrite({struct_field, Line, Expr, Name, Field}, Context, guard) ->
 rewrite({struct_index, Line, Name, {atom, _, Field}}, Context, _) ->
     {_RuntimeTag, Def} = get_definition(Name, Context),
     {{integer, Line, find_index(Field, Def, 2)}, Context};
+rewrite({struct_index, Line, _Name, {integer, _, Field}}, Context, _) ->
+    {{integer, Line, Field + 2}, Context};
 rewrite(Other, Context, _) ->
     {Other, Context}.
 
@@ -183,18 +185,40 @@ find_index(Name, [{Name, _} | _Rest], Acc) ->
 find_index(Name, [_ | Rest], Acc) ->
     find_index(Name, Rest, Acc + 1).
 
-struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field) ->
+struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw}) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
-    Pattern = struct_pattern([{field, GenLine, Field, Var}], Def),
+    Pattern = field_pattern(Line, find_index(FieldRaw, Def, 0), Var, Def),
+    {'case', GenLine, Expr, [
+        {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
+        {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
+    ]};
+struct_field_expr(Line, Expr, RuntimeTag, Def, {integer, _, FieldRaw}) ->
+    Var = gen_var(Line, positional),
+    GenLine = erl_anno:set_generated(true, Line),
+    Pattern = field_pattern(Line, FieldRaw, Var, Def),
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
         {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
     ]}.
 
+field_pattern(Line, FieldId, Var, Defs) ->
+    Wildcard = {var, Line, '_'},
+    Fun = fun
+        (_, Num) when Num =:= FieldId ->
+            {Var, Num + 1};
+        (_, Num) ->
+            {Wildcard, Num + 1}
+    end,
+    element(1, lists:mapfoldl(Fun, 0, Defs)).
+
 struct_field_guard(Line, Expr, Def, {atom, _, FieldRaw}) ->
     GenLine = erl_anno:set_generated(true, Line),
     Index = {integer, GenLine, find_index(FieldRaw, Def, 2)},
+    ?CALL(GenLine, erlang, element, [Index, Expr]);
+struct_field_guard(Line, Expr, _Def, {integer, _, FieldRaw}) ->
+    GenLine = erl_anno:set_generated(true, Line),
+    Index = {integer, GenLine, FieldRaw + 2},
     ?CALL(GenLine, erlang, element, [Index, Expr]).
 
 struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->

@@ -38,7 +38,7 @@ tuple enum_expr anon_struct_expr anon_fields anon_field
 struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
-fun_expr fun_clause fun_clauses atom_or_var integer_or_var
+fun_expr fun_clause fun_clauses atom_or_var atom_or_integer integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
@@ -327,7 +327,7 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-struct_pat_expr -> '#' local_or_remote_name '.' atom :
+struct_pat_expr -> '#' local_or_remote_name '.' atom_or_integer :
 	{struct_index, ?anno('$1', '$4'), '$2', '$4'}.
 struct_pat_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
@@ -426,13 +426,13 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-struct_expr -> '#' local_or_remote_name '.' atom :
+struct_expr -> '#' local_or_remote_name '.' atom_or_integer :
     {struct_index, ?anno('$1', '$4'), '$2', '$4'}.
 struct_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
-struct_expr -> expr_max '#' local_or_remote_name '.' atom :
+struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_integer :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> struct_expr '#' local_or_remote_name '.' atom :
+struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_integer :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
 struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
@@ -515,6 +515,9 @@ fun_expr -> 'fun' fun_clauses 'end' :
 
 atom_or_var -> atom : '$1'.
 atom_or_var -> var : '$1'.
+
+atom_or_integer -> atom : '$1'.
+atom_or_integer -> integer : '$1'.
 
 integer_or_var -> integer : '$1'.
 integer_or_var -> var : '$1'.

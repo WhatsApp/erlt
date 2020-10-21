@@ -16,7 +16,7 @@
 
 -export_type([foo/0, bar/1]).
 
--export([foo/0, bar/0, baz/0, pattern/3, guard/1]).%, field/1, index/1]).
+-export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1, index/1]).
 
 -struct bar(A) :: (A, foo()).
 
@@ -42,11 +42,11 @@ pattern(#foo{}, #bar{B, _}, #in_pattern{}) -> B.
 guard(Value) when Value =:= #bar{1, 2} ->
     ok.
 
-% field(Value) when Value#bar.0 =:= 1 ->
-%     Value#bar.1.
+field(Value) when Value#bar.0 =:= 1 ->
+    Value#bar.1.
 
 update(Value) ->
     Value#mixed{a = 2}.
 
-% index(#bar.0) when #bar.0 =:= 2 ->
-%     #bar.1.
+index(#bar.0) when #bar.0 =:= 2 ->
+    #bar.1.
