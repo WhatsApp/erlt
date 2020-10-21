@@ -2,11 +2,11 @@ let Util = ./util.dhall
 
 let run = Util.run
 
+let checkout = Util.checkout
+
 let Actions = Util.Actions
 
 let usesWith = Util.usesWith
-
-let checkout = Actions.Step::{ uses = Some "actions/checkout@v1" }
 
 let setUpJava =
       usesWith
@@ -45,52 +45,39 @@ let buildJar =
             ( toMap
                 { name = jarName
                 , path = "sterlang/target/scala-2.13/${jarName}"
+                , retention-period = "3"
                 }
             )
         ]
       }
 
+-- creates a native image.
+-- The caller uses `toUploadSteps` to decide
+-- what to do with the native image
 let toNativeImageJob =
+      λ(toUploadSteps : Text → List Actions.Step.Type) →
       λ(nativeName : Text) →
       λ(runsOn : Actions.RunsOn.Type) →
         Actions.Job::{
         , needs = Some [ "buildJar" ]
         , runs-on = runsOn
         , steps =
-          [ checkout
-          , setUpJava
-          , usesWith
-              "Setup GraalVM Environment"
-              "DeLaGuardo/setup-graalvm@2.0"
-              (toMap { graalvm-version = "20.1.0.java11" })
-          , run "Install Native Image Plugin" "gu install native-image"
-          , usesWith
-              "Get JAR Artifact"
-              "actions/download-artifact@v2"
-              (toMap { name = jarName })
-          , run "ls" "ls -lah"
-          , run
-              "Build native image '${nativeName}'"
-              "native-image --no-server --no-fallback -O4 -jar ${jarName} ${nativeName}"
-          , usesWith
-              "upload artifacts"
-              "actions/upload-artifact@v2"
-              (toMap { name = nativeName, path = nativeName })
-          ]
+              [ setUpJava
+              , usesWith
+                  "Setup GraalVM Environment"
+                  "DeLaGuardo/setup-graalvm@2.0"
+                  (toMap { graalvm-version = "20.1.0.java11" })
+              , run "Install Native Image Plugin" "gu install native-image"
+              , usesWith
+                  "Get JAR Artifact"
+                  "actions/download-artifact@v2"
+                  (toMap { name = jarName })
+              , run "ls" "ls -lah"
+              , run
+                  "Build native image '${nativeName}'"
+                  "native-image --no-server --no-fallback -O4 -jar ${jarName} ${nativeName}"
+              ]
+            # toUploadSteps nativeName
         }
 
-let genSterlangJobs =
-      λ(nativeArtifactSuffix : Text) →
-        let ubuntuBinary =
-              toNativeImageJob
-                ("sterlang-linux" ++ nativeArtifactSuffix)
-                Actions.RunsOn.Type.ubuntu-latest
-
-        let macBinary =
-              toNativeImageJob
-                ("sterlang-mac" ++ nativeArtifactSuffix)
-                Actions.RunsOn.Type.macos-latest
-
-        in  { buildJar, test, macBinary, ubuntuBinary }
-
-in  genSterlangJobs
+in  { buildJar, test, toNativeImageJob }

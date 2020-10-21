@@ -3,7 +3,8 @@ jobs:
   buildJar:
     runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v1"
+      - name: Checkout
+        uses: "actions/checkout@v2"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -15,55 +16,12 @@ jobs:
         with:
           name: sterlang.jar
           path: sterlang/target/scala-2.13/sterlang.jar
-  macBinary:
-    needs:
-      - buildJar
-    runs-on: macos-latest
-    steps:
-      - uses: "actions/checkout@v1"
-      - name: Set up Java
-        uses: "actions/setup-java@v1"
-        with:
-          java-version: '11'
-      - name: Setup GraalVM Environment
-        uses: "DeLaGuardo/setup-graalvm@2.0"
-        with:
-          graalvm-version: "20.1.0.java11"
-      - name: Install Native Image Plugin
-        run: gu install native-image
-      - name: Get JAR Artifact
-        uses: "actions/download-artifact@v2"
-        with:
-          name: sterlang.jar
-      - name: ls
-        run: ls -lah
-      - name: "Build native image 'sterlang-mac-draft'"
-        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-mac-draft
-      - name: upload artifacts
-        uses: "actions/upload-artifact@v2"
-        with:
-          name: sterlang-mac-draft
-          path: sterlang-mac-draft
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: "actions/checkout@v1"
-      - name: Set up Java
-        uses: "actions/setup-java@v1"
-        with:
-          java-version: '11'
-      - name: Erlang version
-        run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
-      - name: test and coverage
-        run: "cd sterlang; sbt clean coverage test coverageReport"
-      - name: test
-        run: "cd ./examples && make test"
-  ubuntuBinary:
+          retention-period: '3'
+  linuxBinary:
     needs:
       - buildJar
     runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v1"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -87,6 +45,51 @@ jobs:
         with:
           name: sterlang-linux-draft
           path: sterlang-linux-draft
+          retention-period: '3'
+  macBinary:
+    needs:
+      - buildJar
+    runs-on: macos-latest
+    steps:
+      - name: Set up Java
+        uses: "actions/setup-java@v1"
+        with:
+          java-version: '11'
+      - name: Setup GraalVM Environment
+        uses: "DeLaGuardo/setup-graalvm@2.0"
+        with:
+          graalvm-version: "20.1.0.java11"
+      - name: Install Native Image Plugin
+        run: gu install native-image
+      - name: Get JAR Artifact
+        uses: "actions/download-artifact@v2"
+        with:
+          name: sterlang.jar
+      - name: ls
+        run: ls -lah
+      - name: "Build native image 'sterlang-mac-draft'"
+        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-mac-draft
+      - name: upload artifacts
+        uses: "actions/upload-artifact@v2"
+        with:
+          name: sterlang-mac-draft
+          path: sterlang-mac-draft
+          retention-period: '3'
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: "actions/checkout@v2"
+      - name: Set up Java
+        uses: "actions/setup-java@v1"
+        with:
+          java-version: '11'
+      - name: Erlang version
+        run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+      - name: test and coverage
+        run: "cd sterlang; sbt clean coverage test coverageReport"
+      - name: test
+        run: "cd ./examples && make test"
 name: Sterlang CI
 on:
   push:
