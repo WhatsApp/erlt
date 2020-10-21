@@ -108,8 +108,8 @@ filter_map(F, Xs) -> foldr(maybe_cons(F), [], Xs).
 
 maybe_cons(F, Mx, Xs) ->
     case F(Mx) of
-        {969696, maybe, maybe, just, X} -> cons(X, Xs);
-        {969696, maybe, maybe, nothing} -> Xs
+        {'$#maybe:maybe.just', X} -> cons(X, Xs);
+        {'$#maybe:maybe.nothing'} -> Xs
     end.
 
 -spec maybe_cons(fun((A) -> maybe:maybe(B))) -> fun((A,
@@ -150,23 +150,15 @@ any(_Pred, []) -> false.
 
 -spec maximum([A]) -> maybe:maybe(A).
 
-maximum([]) -> {969696, maybe, maybe, nothing};
+maximum([]) -> {'$#maybe:maybe.nothing'};
 maximum([H | T]) ->
-    {969696,
-     maybe,
-     maybe,
-     just,
-     foldl(fun basics:max/2, H, T)}.
+    {'$#maybe:maybe.just', foldl(fun basics:max/2, H, T)}.
 
 -spec minimum([A]) -> maybe:maybe(A).
 
-minimum([]) -> {969696, maybe, maybe, nothing};
+minimum([]) -> {'$#maybe:maybe.nothing'};
 minimum([H | T]) ->
-    {969696,
-     maybe,
-     maybe,
-     just,
-     foldl(fun basics:min/2, H, T)}.
+    {'$#maybe:maybe.just', foldl(fun basics:min/2, H, T)}.
 
 -spec sum([integer()]) -> integer().
 
@@ -209,13 +201,13 @@ is_empty([]) -> true.
 
 -spec head([A]) -> maybe:maybe(A).
 
-head([H | _]) -> {969696, maybe, maybe, just, H};
-head([]) -> {969696, maybe, maybe, nothing}.
+head([H | _]) -> {'$#maybe:maybe.just', H};
+head([]) -> {'$#maybe:maybe.nothing'}.
 
 -spec tail([A]) -> maybe:maybe([A]).
 
-tail([_ | T]) -> {969696, maybe, maybe, just, T};
-tail([]) -> {969696, maybe, maybe, nothing}.
+tail([_ | T]) -> {'$#maybe:maybe.just', T};
+tail([]) -> {'$#maybe:maybe.nothing'}.
 
 -spec take(integer(), [A]) -> [A].
 

@@ -158,19 +158,19 @@ max(X1, X2) ->
 
 max(X1) -> fun (X2) -> basics:max(X1, X2) end.
 
--type order() :: {969696, basics, order, lt} |
-                 {969696, basics, order, eq} |
-                 {969696, basics, order, gt}.
+-type order() :: {'$#basics:order.lt'} |
+                 {'$#basics:order.eq'} |
+                 {'$#basics:order.gt'}.
 
 -spec compare(A, A) -> order().
 
 compare(X1, X2) ->
     case lt(X1, X2) of
-        true -> {969696, basics, order, lt};
+        true -> {'$#basics:order.lt'};
         false ->
             case eq(X1, X2) of
-                true -> {969696, basics, order, eq};
-                false -> {969696, basics, order, gt}
+                true -> {'$#basics:order.eq'};
+                false -> {'$#basics:order.gt'}
             end
     end.
 
@@ -298,15 +298,12 @@ always(A, _) -> A.
 
 always(A) -> fun (X) -> always(A, X) end.
 
--type never() :: {969696,
-                  basics,
-                  never,
-                  just_one_more,
+-type never() :: {'$#basics:never.just_one_more',
                   never()}.
 
 -spec never(never()) -> _.
 
-never({969696, basics, never, just_one_more, Nvr}) ->
+never({'$#basics:never.just_one_more', Nvr}) ->
     never(Nvr).
 
 

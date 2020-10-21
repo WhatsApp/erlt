@@ -28,8 +28,8 @@ empty() -> maps:new().
 
 get(Key, Map) ->
     case maps:find(Key, Map) of
-        {ok, Value} -> {969696, maybe, maybe, just, Value};
-        error -> {969696, maybe, maybe, nothing}
+        {ok, Value} -> {'$#maybe:maybe.just', Value};
+        error -> {'$#maybe:maybe.nothing'}
     end.
 
 -spec size(map(_K, _V)) -> integer().
