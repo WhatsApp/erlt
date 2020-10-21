@@ -37,13 +37,13 @@ jobs:
           name: sterlang.jar
       - name: ls
         run: ls -lah
-      - name: "Build native image 'sterlang-mac-draft'"
-        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-mac-draft
+      - name: "Build native image 'sterlang-mac-release'"
+        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-mac-release
       - name: upload artifacts
         uses: "actions/upload-artifact@v2"
         with:
-          name: sterlang-mac-draft
-          path: sterlang-mac-draft
+          name: sterlang-mac-release
+          path: sterlang-mac-release
   test:
     runs-on: ubuntu-latest
     steps:
@@ -80,15 +80,15 @@ jobs:
           name: sterlang.jar
       - name: ls
         run: ls -lah
-      - name: "Build native image 'sterlang-linux-draft'"
-        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-linux-draft
+      - name: "Build native image 'sterlang-linux-release'"
+        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-linux-release
       - name: upload artifacts
         uses: "actions/upload-artifact@v2"
         with:
-          name: sterlang-linux-draft
-          path: sterlang-linux-draft
-name: Sterlang CI
+          name: sterlang-linux-release
+          path: sterlang-linux-release
+name: Sterlang CI Release
 on:
   push:
-    paths:
-      - "sterlang/**"
+    branches:
+      - "releases/**"
