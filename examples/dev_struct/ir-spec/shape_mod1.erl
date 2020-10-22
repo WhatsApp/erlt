@@ -1,6 +1,6 @@
--file("dev_struct/src/anon_struct_mod1.erlt", 1).
+-file("dev_struct/src/shape_mod1.erlt", 1).
 
--module(anon_struct_mod1).
+-module(shape_mod1).
 
 -export([test/0, test_in_lc/1]).
 
