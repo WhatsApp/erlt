@@ -1,5 +1,5 @@
-DIRS := dev dev_enum dev_struct doc elm_core
-# calc erltodo
+DIRS := calc dev dev_enum dev_struct doc elm_core
+# erltodo
 
 build:
 	rebar3 compile

@@ -15,17 +15,16 @@ calculate(Env, Input) ->
 
 eval(Env, Expr) ->
     case Expr of
-        {969696, calc_core, expr, number, N} -> N;
-        {969696, calc_core, expr, add, E1, E2} ->
+        {'$#calc_core:expr.number', N} -> N;
+        {'$#calc_core:expr.add', E1, E2} ->
             eval(Env, E1) + eval(Env, E2);
-        {969696, calc_core, expr, subtr, E1, E2} ->
+        {'$#calc_core:expr.subtr', E1, E2} ->
             eval(Env, E1) - eval(Env, E2);
-        {969696, calc_core, expr, mult, E1, E2} ->
+        {'$#calc_core:expr.mult', E1, E2} ->
             eval(Env, E1) * eval(Env, E2);
-        {969696, calc_core, expr, divd, E1, E2} ->
+        {'$#calc_core:expr.divd', E1, E2} ->
             eval(Env, E1) / eval(Env, E2);
-        {969696, calc_core, expr, var, Name} ->
-            lookup(Name, Env)
+        {'$#calc_core:expr.var', Name} -> lookup(Name, Env)
     end.
 
 lookup(A, [{A, V} | _]) -> V;
