@@ -8,13 +8,9 @@
                   [string()],
                   integer()}.
 
--type choice() :: {969696,
-                   erltodo,
-                   choice,
-                   add,
-                   TodoText :: string()} |
-                  {969696, erltodo, choice, delete, Index :: integer()} |
-                  {969696, erltodo, choice, view_stats}.
+-type choice() :: {'$#erltodo:choice.add', string()} |
+                  {'$#erltodo:choice.delete', integer()} |
+                  {'$#erltodo:choice.view_stats'}.
 
 -spec main(term()) -> no_return().
 
@@ -24,13 +20,13 @@ loop({'$#erltodo:state', Todos, DeletedCount} =
          State) ->
     display_todos(Todos),
     case prompt(Todos) of
-        {969696, erltodo, choice, add, TodoText} ->
+        {'$#erltodo:choice.add', TodoText} ->
             loop({'$#erltodo:state', [TodoText | Todos], 0});
-        {969696, erltodo, choice, delete, Index} ->
+        {'$#erltodo:choice.delete', Index} ->
             loop({'$#erltodo:state',
                   splice(Index, Todos),
                   DeletedCount + 1});
-        {969696, erltodo, choice, view_stats} ->
+        {'$#erltodo:choice.view_stats'} ->
             display_stats(State),
             loop(State)
     end.
@@ -41,7 +37,7 @@ prompt(Todos) ->
     case io:read("Enter a number followed by a dot: ") of
         {ok, 1} -> prompt_add_todo();
         {ok, 2} -> prompt_delete_todo(Todos);
-        {ok, 3} -> {969696, erltodo, choice, view_stats};
+        {ok, 3} -> {'$#erltodo:choice.view_stats'};
         {ok, _} ->
             invalid_input(),
             prompt(Todos)
@@ -52,7 +48,7 @@ prompt_add_todo() ->
                  "a dot. Example: \"buy eggs\".: ")
         of
         {ok, TodoText} when erlang:is_list(TodoText) ->
-            {969696, erltodo, choice, add, TodoText};
+            {'$#erltodo:choice.add', TodoText};
         {ok, Res} ->
             erlang:display(Res),
             invalid_input(),
@@ -65,7 +61,7 @@ prompt_delete_todo(Todos) ->
                  "to delete followed by a dot. ")
         of
         {ok, Id} when erlang:is_integer(Id) ->
-            {969696, erltodo, choice, delete, Id};
+            {'$#erltodo:choice.delete', Id};
         {ok, _} ->
             invalid_input(),
             prompt_delete_todo(Todos)
