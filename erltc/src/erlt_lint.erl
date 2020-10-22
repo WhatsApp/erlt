@@ -156,7 +156,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
 -type ta() :: {atom(), arity()}.
 -type module_or_mfa() :: module() | mfa().
 
--type gexpr_context() :: 'guard' | 'bin_seg_size' | 'map_key'.
+-type gexpr_context() :: 'guard' | 'bin_seg_size' | 'map_key' | 'field_default'.
 
 -record(typeinfo, {attr, line}).
 %% Usage of records, functions, and imports. The variable table, which
@@ -239,8 +239,7 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     %Variables in binary pattern
     bvt = none :: 'none' | [any()],
     %Context of guard expression
-    gexpr_context = guard ::
-        gexpr_context(),
+    gexpr_context = guard :: gexpr_context(),
     % Enum definitions
     enums = #{} :: #{atom() => #{atom() => term()}},
     % Global definition database
@@ -831,6 +830,10 @@ add_error(Anno, E0, #lint{gexpr_context = Context} = St) ->
                 illegal_bitsize;
             {{illegal_guard_local_call, FA}, bin_seg_size} ->
                 {illegal_bitsize_local_call, FA};
+            {illegal_guard_expr, field_default} ->
+                illegal_field_default;
+            {{illegal_goard_local_call, FA}, field_default} ->
+                {illegal_field_default_local_call, FA};
             {_, _} ->
                 E0
         end,
@@ -3604,18 +3607,10 @@ check_field_defs(SeenVars, St, _SeenFields, [], _ParentName) ->
 
 check_field_default(undefined, _StructName, St) ->
     St;
-check_field_default(Expr, Name, St = #lint{errors = OriginalErrors}) ->
-    St1 = St#lint{errors = [], default_expansion = cerl_sets:from_list([Name])},
-    {_, St2 = #lint{errors = NewErrors}} = gexpr(Expr, [], St1),
-    Errors = lists:map(fun translate_field_default_error/1, NewErrors) ++ OriginalErrors,
-    St2#lint{errors = Errors, default_expansion = skip}.
-
-translate_field_default_error({File, {Loc, Mod, illegal_guard_expr}}) ->
-    {File, {Loc, Mod, illegal_field_default}};
-translate_field_default_error({File, {Loc, Mod, {illegal_guard_local_call, Call}}}) ->
-    {File, {Loc, Mod, {illegal_field_default_local_call, Call}}};
-translate_field_default_error(Other) ->
-    Other.
+check_field_default(Expr, Name, St) ->
+    St1 = St#lint{gexpr_context = field_default, default_expansion = cerl_sets:from_list([Name])},
+    {_, St2} = gexpr(Expr, [], St1),
+    St2#lint{gexpr_context = gexpr, default_expansion = skip}.
 
 used_type(TypePair, L, #lint{usage = Usage, file = File} = St) ->
     OldUsed = Usage#usage.used_types,
