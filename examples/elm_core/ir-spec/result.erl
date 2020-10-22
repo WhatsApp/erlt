@@ -19,19 +19,14 @@
 
 -import_type({maybe, [{maybe, 1}]}).
 
--type result(Error, Value) :: {969696,
-                               result,
-                               result,
-                               ok,
+-type result(Error, Value) :: {'$#result:result.ok',
                                Value} |
-                              {969696, result, result, err, Error}.
+                              {'$#result:result.err', Error}.
 
 -spec with_default(A, result(_, A)) -> A.
 
-with_default(_Def, {969696, result, result, ok, A}) ->
-    A;
-with_default(Def, {969696, result, result, err, _E}) ->
-    Def.
+with_default(_Def, {'$#result:result.ok', A}) -> A;
+with_default(Def, {'$#result:result.err', _E}) -> Def.
 
 -spec with_default(A) -> fun((result(_, A)) -> A).
 
@@ -40,10 +35,10 @@ with_default(Def) ->
 
 -spec map(fun((A) -> B), result(X, A)) -> result(X, B).
 
-map(Func, {969696, result, result, ok, A}) ->
-    {969696, result, result, ok, Func(A)};
-map(_Func, {969696, result, result, err, E}) ->
-    {969696, result, result, err, E}.
+map(Func, {'$#result:result.ok', A}) ->
+    {'$#result:result.ok', Func(A)};
+map(_Func, {'$#result:result.err', E}) ->
+    {'$#result:result.err', E}.
 
 -spec map(fun((A) -> B)) -> fun((result(X,
                                         A)) -> result(X, B)).
@@ -53,14 +48,14 @@ map(Func) -> fun (Res) -> map(Func, Res) end.
 -spec map2(fun((A, B) -> C), result(X, A),
            result(X, B)) -> result(X, C).
 
-map2(_Func, {969696, result, result, err, X}, _) ->
-    {969696, result, result, err, X};
-map2(_Func, {969696, result, result, ok, _},
-     {969696, result, result, err, X}) ->
-    {969696, result, result, err, X};
-map2(Func, {969696, result, result, ok, A},
-     {969696, result, result, ok, B}) ->
-    {969696, result, result, ok, Func(A, B)}.
+map2(_Func, {'$#result:result.err', X}, _) ->
+    {'$#result:result.err', X};
+map2(_Func, {'$#result:result.ok', _},
+     {'$#result:result.err', X}) ->
+    {'$#result:result.err', X};
+map2(Func, {'$#result:result.ok', A},
+     {'$#result:result.ok', B}) ->
+    {'$#result:result.ok', Func(A, B)}.
 
 -spec map2(fun((A, B) -> C)) -> fun((result(X, A),
                                      result(X, B)) -> result(X, C)).
@@ -71,12 +66,10 @@ map2(Func) ->
 -spec and_then(fun((A) -> result(X, B)),
                result(X, A)) -> result(X, B).
 
-and_then(Callback,
-         {969696, result, result, ok, Value}) ->
+and_then(Callback, {'$#result:result.ok', Value}) ->
     Callback(Value);
-and_then(_Callback,
-         {969696, result, result, err, Msg}) ->
-    {969696, result, result, err, Msg}.
+and_then(_Callback, {'$#result:result.err', Msg}) ->
+    {'$#result:result.err', Msg}.
 
 -spec and_then(fun((A) -> result(X,
                                  B))) -> fun((result(X, A)) -> result(X, B)).
@@ -87,10 +80,10 @@ and_then(Callback) ->
 -spec map_error(fun((X) -> Y),
                 result(X, A)) -> result(Y, A).
 
-map_error(_F, {969696, result, result, ok, V}) ->
-    {969696, result, result, ok, V};
-map_error(F, {969696, result, result, err, E}) ->
-    {969696, result, result, err, F(E)}.
+map_error(_F, {'$#result:result.ok', V}) ->
+    {'$#result:result.ok', V};
+map_error(F, {'$#result:result.err', E}) ->
+    {'$#result:result.err', F(E)}.
 
 -spec map_error(fun((X) -> Y)) -> fun((result(X,
                                               A)) -> result(Y, A)).
@@ -99,17 +92,17 @@ map_error(F) -> fun (Res) -> map_error(F, Res) end.
 
 -spec to_maybe(result(_, A)) -> maybe:maybe(A).
 
-to_maybe({969696, result, result, ok, V}) ->
-    {969696, maybe, maybe, just, V};
-to_maybe({969696, result, result, err, _}) ->
-    {969696, maybe, maybe, nothing}.
+to_maybe({'$#result:result.ok', V}) ->
+    {'$#maybe:maybe.just', V};
+to_maybe({'$#result:result.err', _}) ->
+    {'$#maybe:maybe.nothing'}.
 
 -spec from_maybe(X, maybe:maybe(A)) -> result(X, A).
 
-from_maybe(_Err, {969696, maybe, maybe, just, V}) ->
-    {969696, result, result, ok, V};
-from_maybe(Err, {969696, maybe, maybe, nothing}) ->
-    {969696, result, result, err, Err}.
+from_maybe(_Err, {'$#maybe:maybe.just', V}) ->
+    {'$#result:result.ok', V};
+from_maybe(Err, {'$#maybe:maybe.nothing'}) ->
+    {'$#result:result.err', Err}.
 
 -spec from_maybe(X) -> fun((maybe:maybe(A)) -> result(X,
                                                       A)).
@@ -119,8 +112,8 @@ from_maybe(Err) ->
 
 -spec is_ok(result(_, _)) -> boolean().
 
-is_ok({969696, result, result, ok, _}) -> true;
-is_ok({969696, result, result, err, _}) -> false.
+is_ok({'$#result:result.ok', _}) -> true;
+is_ok({'$#result:result.err', _}) -> false.
 
 
 

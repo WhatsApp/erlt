@@ -36,8 +36,8 @@ get(Key, Map) -> map_ffi:get(Key, Map).
 
 member(Key, Map) ->
     case get(Key, Map) of
-        {969696, maybe, maybe, just, _} -> true;
-        {969696, maybe, maybe, nothing} -> false
+        {'$#maybe:maybe.just', _} -> true;
+        {'$#maybe:maybe.nothing'} -> false
     end.
 
 -spec size(map(_K, _V)) -> integer().
@@ -62,9 +62,9 @@ remove(Key, Map) -> map_ffi:remove(Key, Map).
 
 update(Key, Alter, Map) ->
     case Alter(get(Key, Map)) of
-        {969696, maybe, maybe, just, Value} ->
+        {'$#maybe:maybe.just', Value} ->
             insert(Key, Value, Map);
-        {969696, maybe, maybe, nothing} -> remove(Key, Map)
+        {'$#maybe:maybe.nothing'} -> remove(Key, Map)
     end.
 
 -spec singleton(K, V) -> map(K, V).
