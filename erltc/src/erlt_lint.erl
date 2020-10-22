@@ -2480,7 +2480,12 @@ gexpr({call, Line, {atom, _La, F}, As}, Vt, St0) ->
         true ->
             %% Assert that it is auto-imported.
             true = erl_internal:bif(F, A),
-            {Asvt, St1};
+            case St0#lint.gexpr_context =:= field_default of
+                true when {F, A} =:= {node, 0}; {F, A} =:= {self, 0} ->
+                    {Asvt, add_error(Line, illegal_field_default, St1)};
+                _ ->
+                    {Asvt, St1}
+            end;
         false ->
             case
                 is_local_function(St1#lint.locals, {F, A}) orelse
@@ -2496,8 +2501,15 @@ gexpr({call, Line, {remote, _Lr, {atom, _Lm, erlang}, {atom, _Lf, F}}, As}, Vt, 
     {Asvt, St1} = gexpr_list(As, Vt, St0),
     A = length(As),
     case erl_internal:guard_bif(F, A) orelse is_gexpr_op(F, A) of
-        true -> {Asvt, St1};
-        false -> {Asvt, add_error(Line, illegal_guard_expr, St1)}
+        true ->
+            case St0#lint.gexpr_context =:= field_default of
+                true when {F, A} =:= {node, 0}; {F, A} =:= {self, 0} ->
+                    {Asvt, add_error(Line, illegal_field_default, St1)};
+                _ ->
+                    {Asvt, St1}
+            end;
+        false ->
+            {Asvt, add_error(Line, illegal_guard_expr, St1)}
     end;
 gexpr({op, Line, Op, A}, Vt, St0) ->
     {Avt, St1} = gexpr(A, Vt, St0),
