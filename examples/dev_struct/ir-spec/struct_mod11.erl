@@ -45,18 +45,28 @@ field(Value)
     when erlang:is_record(Value, '$#struct_mod11:bar', 3)
              orelse fail,
          erlang:element(2, Value) =:= 1 ->
-    case Value of
-        {'$#struct_mod11:bar', _, StructGenVar@0@positional} ->
-            StructGenVar@0@positional;
-        _ -> erlang:error({badstruct, '$#struct_mod11:bar'})
-    end.
+    {case Value of
+         {'$#struct_mod11:bar', _, StructGenVar@0@positional} ->
+             StructGenVar@0@positional;
+         _ -> erlang:error({badstruct, '$#struct_mod11:bar'})
+     end,
+     case case Value of
+              {'$#struct_mod11:bar', _, StructGenVar@2@positional} ->
+                  StructGenVar@2@positional;
+              _ -> erlang:error({badstruct, '$#struct_mod11:bar'})
+          end
+         of
+         {'$#struct_mod11:mixed', _, StructGenVar@1@a} ->
+             StructGenVar@1@a;
+         _ -> erlang:error({badstruct, '$#struct_mod11:mixed'})
+     end}.
 
 update(Value) ->
     case Value of
         {'$#struct_mod11:mixed',
-         StructGenVar@1@positional,
+         StructGenVar@3@positional,
          _} ->
-            {'$#struct_mod11:mixed', StructGenVar@1@positional, 2};
+            {'$#struct_mod11:mixed', StructGenVar@3@positional, 2};
         _ -> erlang:error({badstruct, '$#struct_mod11:mixed'})
     end.
 

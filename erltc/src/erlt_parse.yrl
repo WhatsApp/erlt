@@ -38,7 +38,7 @@ tuple enum_expr anon_struct_expr anon_fields anon_field
 struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
-fun_expr fun_clause fun_clauses atom_or_var atom_or_integer integer_or_var
+fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
@@ -327,8 +327,8 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-struct_pat_expr -> '#' local_or_remote_name '.' atom_or_integer :
-	{struct_index, ?anno('$1', '$4'), '$2', '$4'}.
+struct_pat_expr -> '#' local_or_remote_name '.' atom_or_var :
+	{struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_pat_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
 
@@ -426,14 +426,14 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-struct_expr -> '#' local_or_remote_name '.' atom_or_integer :
-    {struct_index, ?anno('$1', '$4'), '$2', '$4'}.
+struct_expr -> '#' local_or_remote_name '.' atom_or_var :
+    {struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
-struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_integer :
-    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_integer :
-    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_var :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
+struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_var :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
 struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
 struct_expr -> struct_expr '#' local_or_remote_name struct_tuple :
@@ -515,9 +515,6 @@ fun_expr -> 'fun' fun_clauses 'end' :
 
 atom_or_var -> atom : '$1'.
 atom_or_var -> var : '$1'.
-
-atom_or_integer -> atom : '$1'.
-atom_or_integer -> integer : '$1'.
 
 integer_or_var -> integer : '$1'.
 integer_or_var -> var : '$1'.
@@ -1178,6 +1175,19 @@ build_field({match, Anno, Name, Expr} = Match) ->
     end;
 build_field(Expr) ->
     {field, ?anno(Expr), positional, Expr}.
+
+field_index({atom, _, _} = Atom) -> Atom;
+field_index({var, Anno, Name}) ->
+    case atom_to_list(Name) of
+        "_" ++ Num ->
+            try {integer, Anno, list_to_integer(Num)}
+            catch
+                error:badarg ->
+                    ret_err(Anno, "field index needs to be an atom or an underscore-prefixed integer")
+            end;
+        _ ->
+            ret_err(Anno, "field index needs to be an atom or an underscore-prefixed integer")
+    end.
 
 -type attributes() ::
     'export' |
