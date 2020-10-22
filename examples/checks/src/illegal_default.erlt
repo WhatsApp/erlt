@@ -1,0 +1,11 @@
+-module(illegal_default).
+
+-struct foo :: (
+    a = local() :: integer(),
+    b = {node(), self()} :: any(),
+    c = {erlang:node(), erlang:self()} :: any(),
+    d = float(1) :: float(),
+    e = io:put_chars("What?!") :: any()
+).
+
+local() -> 1.

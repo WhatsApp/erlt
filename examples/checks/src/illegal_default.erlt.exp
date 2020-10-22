@@ -1,0 +1,6 @@
+illegal_default.erlt:4:9: call to local/imported function local/0 is illegal in guard
+illegal_default.erlt:5:10: illegal default expression
+illegal_default.erlt:5:18: illegal default expression
+illegal_default.erlt:6:10: illegal default expression
+illegal_default.erlt:6:25: illegal default expression
+illegal_default.erlt:8:9: illegal default expression
