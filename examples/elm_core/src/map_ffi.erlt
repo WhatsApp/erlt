@@ -31,7 +31,7 @@ empty() ->
 get(Key, Map) ->
     case maps:find(Key, Map) of
         {ok,Value} -> maybe.just{Value};
-        error -> maybe.nothing{}
+        error -> maybe.nothing
     end.
 
 -spec size(map(_K,_V)) -> integer().
