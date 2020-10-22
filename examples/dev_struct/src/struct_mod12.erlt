@@ -12,24 +12,28 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(enum_mod11).
+-module(struct_mod12).
 
--export([expr/0, pattern/3, guard/3]).
-
--export_type([bar/0, baz/0]).
-
--enum bar :: (x{integer(), integer()}).
-
--enum baz :: (x{integer(), a :: integer()}).
+-export([expr/0, pattern/3, guard/3, field/1, update/1, index/1]).
 
 expr() ->
     {
-        bar.x{1, 2},
-        baz.x{1, a = 2}
+        #struct_mod11:bar{1, #struct_mod11:foo{}},
+        #struct_mod11:mixed{1, a = 2}
     }.
 
-pattern(bar.x{1, B}, baz.x{1, a = B}, B) ->
+
+pattern(#struct_mod11:bar{B, _}, #struct_mod11:mixed{B, a = B}, B) ->
     B.
 
-guard(Value1, Value2, B) when Value1 =:= bar.x{1, B}, Value2 =:= baz.x{1, a = B} ->
+guard(Value1, Value2, B) when Value1 =:= #struct_mod11:bar{1, B}, Value2 =:= #struct_mod11:mixed{1, a = B} ->
     ok.
+
+field(Value) when Value#struct_mod11:bar.0 =:= 1 ->
+    Value#struct_mod11:bar.1.
+
+update(Value) ->
+    Value#struct_mod11:mixed{a = 2}.
+
+index(#struct_mod11:bar.0) when #struct_mod11:bar.0 =:= 2 ->
+    #struct_mod11:bar.1.

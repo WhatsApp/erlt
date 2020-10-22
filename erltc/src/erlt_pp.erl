@@ -503,11 +503,15 @@ variant_fields(Fields, Opts) ->
 
 fields(Left, Right, FieldVals, Opts) ->
     {L, _, R} = inop_prec('='),
-    Fields = [
-        [lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)]
-        || {field, _, Name, Value} <- FieldVals
-    ],
+    Fields = fields_loop(FieldVals, L, R, Opts),
     {seq, Left, Right, [$,], Fields}.
+
+fields_loop([{field, _, positional, Value} | Rest], L, R, Opts) ->
+    [lexpr(Value, Opts) | fields_loop(Rest, L, R, Opts)];
+fields_loop([{field, _, Name, Value} | Rest], L, R, Opts) ->
+    [[lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)] | fields_loop(Rest, L, R, Opts)];
+fields_loop([], _, _, _) ->
+    [].
 
 variant_def({variant, _, Name, []}, Opts) ->
     ltype(Name, Opts);
@@ -515,6 +519,8 @@ variant_def({variant, _, Name, Fields}, Opts) ->
     FieldsF = lists:map(fun(Field) -> field_def(Field, Opts) end, Fields),
     {first, ltype(Name, Opts), {seq, ${, $}, [$,], FieldsF}}.
 
+field_def({field_definition, _, positional, undefined, Type}, Opts) ->
+    ltype(Type, Opts);
 field_def({field_definition, _, Name, undefined, Type}, Opts) ->
     [ltype(Name, Opts), " :: ", ltype(Type, Opts)];
 field_def({field_definition, _, Name, Default, Type}, Opts) ->
