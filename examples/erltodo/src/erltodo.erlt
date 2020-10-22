@@ -6,10 +6,11 @@
     deleted_count = 0 :: integer()
 ).
 
--enum choice() ::
-    add{TodoText :: string()}
-    | delete{Index :: integer()}
-    | view_stats{}.
+-enum choice() :: (
+      add{todo_text :: string()}
+    , delete{index :: integer()}
+    , view_stats
+).
 
 -spec main(term()) -> no_return().
 main(_Argv) ->
@@ -20,11 +21,11 @@ main(_Argv) ->
 loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
     display_todos(Todos),
     case prompt(Todos) of
-        choice.add{TodoText} ->
+        choice.add{todo_text = TodoText} ->
             loop(#state{todos = [TodoText|Todos]});
-        choice.delete{Index} ->
+        choice.delete{index = Index} ->
             loop(#state{todos = splice(Index, Todos), deleted_count = DeletedCount + 1});
-        choice.view_stats{} ->
+        choice.view_stats ->
             display_stats(State),
             loop(State)
     end.
@@ -43,7 +44,7 @@ prompt(Todos) ->
          {ok, 2} ->
              prompt_delete_todo(Todos);
          {ok, 3} ->
-             choice.view_stats{};
+             choice.view_stats;
          {ok, _} ->
              invalid_input(),
              prompt(Todos)
@@ -52,7 +53,7 @@ prompt(Todos) ->
  prompt_add_todo() ->
      case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
          {ok, TodoText} when is_list(TodoText) ->
-                 choice.add{TodoText};
+                 choice.add{todo_text = TodoText};
          {ok, Res} ->
             erlang:display(Res),
              invalid_input(),
@@ -63,7 +64,7 @@ prompt(Todos) ->
      display_todos(Todos),
      case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
          {ok, Id} when is_integer(Id) ->
-             choice.delete{Id};
+             choice.delete{index = Id};
          {ok, _} ->
              invalid_input(),
              prompt_delete_todo(Todos)
