@@ -275,8 +275,8 @@ format_error({missing_qlc_hrl, A}) ->
     io_lib:format("qlc:q/~w called, but \"qlc.hrl\" not included", [A]);
 format_error({redefine_import, {{F, A}, M}}) ->
     io_lib:format("function ~tw/~w already imported from ~w", [F, A, M]);
-format_error({redefine_import_type, {{F, A}, M}}) ->
-    io_lib:format("type ~tw/~w already imported from ~w", [F, A, M]);
+format_error({redefine_import_type, {{F, _}, M}}) ->
+    io_lib:format("type ~tw already imported from ~w", [F, M]);
 format_error({bad_inline, {F, A}}) ->
     io_lib:format("inlined function ~tw/~w undefined", [F, A]);
 format_error({invalid_deprecated, D}) ->
@@ -585,8 +585,6 @@ format_error({renamed_type, OldName, NewName}) ->
     );
 format_error({redefine_type, {TypeName, _Arity}}) ->
     io_lib:format("type ~tw already defined", [TypeName]);
-format_error({redefine_imported_type, {TypeName, _Arity}}) ->
-    io_lib:format("type ~tw already imported", [TypeName]);
 format_error({type_syntax, Constr}) ->
     io_lib:format("bad ~tw type", [Constr]);
 format_error(old_abstract_code) ->
@@ -1724,14 +1722,14 @@ imported(F, A, St) ->
 import_type(Line, {Mod, Ts}, St00) ->
     St = check_module_name(Mod, Line, St00),
     Mts = ordsets:from_list(Ts),
-    case check_type_imports(Line, Mts, St#lint.imp_types) of
+    case check_type_imports(Line, Mts, St#lint.imp_types, St#lint.types) of
         [] ->
             St#lint{imp_types = add_imports(Mod, Mts, St#lint.imp_types)};
         Ets ->
             {Err, St1} =
                 foldl(
                     fun
-                        ({type, {T, A}, _}, {Err, St0}) ->
+                        ({built_in, {T, A}}, {Err, St0}) ->
                             %% bif_clash and no_auto also applies to builtin types
                             Warn = is_warn_enabled(bif_clash, St0),
                             AutoImpSup = is_autoimport_suppressed(St0#lint.no_auto, {T, A}),
@@ -1746,8 +1744,10 @@ import_type(Line, {Mod, Ts}, St00) ->
                                     true ->
                                         St0
                                 end};
-                        (Et, {_Err, St0}) ->
-                            {true, add_error(Line, {redefine_import_type, Et}, St0)}
+                        ({local, NA}, {_Err, St0}) ->
+                            {true, add_error(Line, {redefine_type, NA}, St0)};
+                        ({remote, NA, From}, {_Err, St0}) ->
+                            {true, add_error(Line, {redefine_import_type, {NA, From}}, St0)}
                     end,
                     {false, St},
                     Ets
@@ -1760,24 +1760,27 @@ import_type(Line, {Mod, Ts}, St00) ->
             end
     end.
 
-check_type_imports(_Line, Ts, Is) ->
-    foldl(
-        fun(T, Ets) ->
-            case orddict:find(T, Is) of
-                {ok, Mod} ->
-                    [{T, Mod} | Ets];
-                error ->
-                    {N, A} = T,
-                    case erl_internal:is_type(N, A) of
-                        true ->
-                            [{type, T, erlang} | Ets];
+check_type_imports(_Line, Candidates, Imports, Types0) ->
+    Types = maps:to_list(Types0),
+    lists:flatmap(
+        fun({N, A} = T) ->
+            Search = fun({{Name, _}, _}) -> Name =:= N end,
+            case lists:search(Search, Types) of
+                {value, {NA, _}} ->
+                    [{local, NA}];
+                false ->
+                    case lists:search(Search, Imports) of
+                        {value, {NA, Module}} ->
+                            [{remote, NA, Module}];
                         false ->
-                            Ets
+                            case erl_internal:is_type(N, A) of
+                                true -> [{built_in, T}];
+                                false -> []
+                            end
                     end
             end
         end,
-        [],
-        Ts
+        Candidates
     ).
 
 imported_type(Name, St) ->
@@ -3337,9 +3340,9 @@ check_redefined_type(Line, Name, Arity, #lint{types = Types, imp_types = Imports
         true ->
             add_error(Line, {redefine_type, {Name, Arity}}, St);
         false ->
-            case lists:any(fun({{N, _}, _}) -> N =:= Name end, Imports) of
-                true ->
-                    add_error(Line, {redefine_imported_type, {Name, Arity}}, St);
+            case lists:search(fun({{N, _}, _}) -> N =:= Name end, Imports) of
+                {value, Redefine} ->
+                    add_error(Line, {redefine_import_type, Redefine}, St);
                 false ->
                     St
             end
