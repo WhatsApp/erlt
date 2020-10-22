@@ -61,9 +61,6 @@ object TypesConvert {
         TupleTypeAny(r(anno))
       case ETuple(List(EAtom("type"), anno, EAtom("tuple"), EList(types))) =>
         TupleTypeTyped(r(anno), types.map(convertType))
-      // af_type_union
-      case ETuple(List(EAtom("type"), anno, EAtom("union"), EList(types))) =>
-        UnionType(r(anno), types.map(convertType))
       // af_type_variable
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         TypeVariable(r(anno), name)

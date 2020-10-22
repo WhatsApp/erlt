@@ -378,9 +378,6 @@ object Convert {
       case Types.AnyMap(p) =>
         // banned
         throw new UnsupportedSyntaxError(p, "Bad map type")
-      case Types.UnionType(p, _) =>
-        // banned
-        throw new UnsupportedSyntaxError(p, "Union type")
     }
 
   private def convertEnumCtr(variant: Forms.EnumVariantDecl): Ast.EnumCtr = {

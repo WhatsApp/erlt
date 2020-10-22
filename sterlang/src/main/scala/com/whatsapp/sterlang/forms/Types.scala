@@ -40,7 +40,6 @@ object Types {
   case class TupleTypeAny(r: Doc.Range) extends TupleType
   case class TupleTypeTyped(r: Doc.Range, params: List[Type]) extends TupleType
 
-  case class UnionType(r: Doc.Range, elems: List[Type]) extends Type
   case class TypeVariable(r: Doc.Range, v: String) extends Type
   case class UserType(r: Doc.Range, name: String, params: List[Type]) extends Type
 

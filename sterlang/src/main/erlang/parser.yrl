@@ -123,7 +123,6 @@ top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
 
 top_type -> var '::' top_type             : {ann_type, anno('$1','$3'), ['$1','$3']}.
-top_type -> type '|' top_type             : lift_unions('$1','$3').
 top_type -> type                          : '$1'.
 
 type -> '(' top_type ')'                      : '$2'.
@@ -510,11 +509,6 @@ type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
 find_arity_from_specs([Spec | _]) ->
     {type, _, 'fun', [{type, _, product, Args}, _]} = Spec,
     length(Args).
-
-lift_unions(T1, {type, _Aa, union, List}) ->
-    {type, anno(T1), union, [T1 | List]};
-lift_unions(T1, T2) ->
-    {type, anno(T1), union, [T1, T2]}.
 
 build_gen_type({atom, _, tuple}, Aa) ->
     {type, Aa, tuple, any};
