@@ -439,10 +439,10 @@ format_error({undefined_struct, N}) ->
     io_lib:format("struct ~ts undefined", [format_name(N)]);
 format_error({private_struct, N}) ->
     io_lib:format("struct ~ts is not exported", [format_name(N)]);
-format_error({reuse_anon_struct_field, F}) ->
-    io_lib:format("field ~tw used more than once in anonymous struct", [F]);
-format_error({redefine_anon_struct_field, F}) ->
-    io_lib:format("field ~tw already defined in anonymous struct type", [F]);
+format_error({reuse_shape_field, F}) ->
+    io_lib:format("field ~tw used more than once in the same shape", [F]);
+format_error({redefine_shape_field, F}) ->
+    io_lib:format("field ~tw already defined for this shape type", [F]);
 format_error({redefine_field, R, F}) ->
     io_lib:format("field ~tw already defined in ~ts", [F, format_reference(R)]);
 format_error(bad_multi_field_init) ->
@@ -1958,8 +1958,8 @@ pattern({enum, Line, Name, Variant, Fields}, Vt, Old, St0) ->
     expr_check_result_in_pattern(Result);
 pattern({map, _Line, Ps}, Vt, Old, St) ->
     pattern_map(Ps, Vt, Old, St);
-pattern({anon_struct, _Line, Pfs}, Vt, Old, St) ->
-    check_anon_struct_pattern_fields(Pfs, Vt, Old, [], St, []);
+pattern({shape, _Line, Pfs}, Vt, Old, St) ->
+    check_shape_pattern_fields(Pfs, Vt, Old, St, []);
 pattern({struct, Line, Name, Fields}, Vt, Old, St0) ->
     Result = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
         pattern_fields(Fields, Line, ResolvedName, Defs, Vt, Old, St)
@@ -2437,12 +2437,12 @@ gexpr({map, _Line, Src, Es}, Vt, St) ->
     {Svt, St1} = gexpr(Src, Vt, St),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun gexpr_list/3),
     {vtmerge(Svt, Fvt), St2};
-gexpr({anon_struct, _Line, Fields}, Vt, St) ->
-    check_anon_struct_fields(Fields, Vt, St, fun gexpr/3);
-gexpr({anon_struct_update, _Line, Expr, Fields}, Vt, St) ->
+gexpr({shape, _Line, Fields}, Vt, St) ->
+    check_shape_fields(Fields, Vt, St, fun gexpr/3);
+gexpr({shape_update, _Line, Expr, Fields}, Vt, St) ->
     {Svt, St1} = gexpr(Expr, Vt, St),
-    check_anon_struct_fields(Fields, vtmerge(Vt, Svt), St1, fun gexpr/3);
-gexpr({anon_struct_field, _Line, Expr, _Field}, Vt, St) ->
+    check_shape_fields(Fields, vtmerge(Vt, Svt), St1, fun gexpr/3);
+gexpr({shape_field, _Line, Expr, _Field}, Vt, St) ->
     gexpr(Expr, Vt, St);
 gexpr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(ResolvedName, Defs, St1) ->
@@ -2686,12 +2686,12 @@ expr({map, _Line, Src, Es}, Vt, St) ->
     {Svt, St1} = expr(Src, Vt, St),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun expr_list/3),
     {vtupdate(Svt, Fvt), St2};
-expr({anon_struct, _Line, Fields}, Vt, St) ->
-    check_anon_struct_fields(Fields, Vt, St, fun expr/3);
-expr({anon_struct_update, _Line, Expr, Fields}, Vt, St0) ->
+expr({shape, _Line, Fields}, Vt, St) ->
+    check_shape_fields(Fields, Vt, St, fun expr/3);
+expr({shape_update, _Line, Expr, Fields}, Vt, St0) ->
     {Evt, St1} = expr(Expr, Vt, St0),
-    check_anon_struct_fields(Fields, vtmerge(Vt, Evt), St1, fun expr/3);
-expr({anon_struct_field, _Line, Expr, _Field}, Vt, St0) ->
+    check_shape_fields(Fields, vtmerge(Vt, Evt), St1, fun expr/3);
+expr({shape_field, _Line, Expr, _Field}, Vt, St0) ->
     expr(Expr, Vt, St0);
 expr({struct, Line, Name, Fields}, Vt, St) ->
     check_struct(Line, Name, St, fun(ResolvedName, Defs, St1) ->
@@ -3129,10 +3129,10 @@ verify_no_recursive_defaults(Line, Expr, Name, Field, Expand, Vt, St) ->
             St2#lint{default_expansion = ExpansionState}
     end.
 
-check_anon_struct_fields(Fields, Vt, St, CheckFun) ->
-    check_anon_struct_fields(Fields, Vt, St, CheckFun, []).
+check_shape_fields(Fields, Vt, St, CheckFun) ->
+    check_shape_fields(Fields, Vt, St, CheckFun, []).
 
-check_anon_struct_fields(
+check_shape_fields(
     [{field, Lf, {atom, _La, F}, Val} | Fields],
     Vt,
     St,
@@ -3141,38 +3141,36 @@ check_anon_struct_fields(
 ) ->
     case member(F, UsedFields) of
         true ->
-            {[], add_error(Lf, {reuse_anon_struct_field, F}, St)};
+            {[], add_error(Lf, {reuse_shape_field, F}, St)};
         false ->
             {Vt1, St1} = CheckFun(Val, Vt, St),
-            check_anon_struct_fields(Fields, vtmerge(Vt, Vt1), St1, CheckFun, [F | UsedFields])
+            check_shape_fields(Fields, vtmerge(Vt, Vt1), St1, CheckFun, [F | UsedFields])
     end;
-check_anon_struct_fields([], Vt, St, _CheckFun, _) ->
+check_shape_fields([], Vt, St, _CheckFun, _) ->
     {Vt, St}.
 
-check_anon_struct_pattern_fields(
+check_shape_pattern_fields(
     [{field, Lf, {atom, _La, F}, Val} | Fields],
     Vt,
     Old,
-    New,
     St,
     UsedFields
 ) ->
     case member(F, UsedFields) of
         true ->
-            {[], [], add_error(Lf, {reuse_anon_struct_field, F}, St)};
+            {[], [], add_error(Lf, {reuse_shape_field, F}, St)};
         false ->
-            {Vt1, New1, St1} = pattern(Val, Vt, Old, St),
-            check_anon_struct_pattern_fields(
+            {Vt1, New, St1} = pattern(Val, Vt, Old, St),
+            check_shape_pattern_fields(
                 Fields,
                 vtmerge_pat(Vt, Vt1),
-                Old,
-                vtmerge_pat(New, New1),
+                vtmerge_pat(Old, New),
                 St1,
                 [F | UsedFields]
             )
     end;
-check_anon_struct_pattern_fields([], Vt, _Old, New, St, _) ->
-    {Vt, New, St}.
+check_shape_pattern_fields([], Vt, Old, St, _) ->
+    {Vt, Old, St}.
 
 check_fields(OuterLine, Fields, Name, Defs, Vt0, St0, CheckFun) ->
     Check = fun(Value, Vt, St) ->
@@ -3471,11 +3469,11 @@ check_type({type, L, binary, [Base, Unit]}, SeenVars, St) ->
     {SeenVars, St1};
 check_type({type, La, enum, {atom, _, Name}, Variants}, SeenVars, St) ->
     check_enum_types(La, Name, Variants, SeenVars, St);
-check_type({type, _L, open_anon_struct, Fields, Var}, SeenVars, St) ->
+check_type({type, _L, open_shape, Fields, Var}, SeenVars, St) ->
     {SeenVars1, St1} = check_type(Var, SeenVars, St),
-    check_anon_struct_types(Fields, SeenVars1, St1);
-check_type({type, _L, closed_anon_struct, Fields}, SeenVars, St) ->
-    check_anon_struct_types(Fields, SeenVars, St);
+    check_shape_types(Fields, SeenVars1, St1);
+check_type({type, _L, closed_shape, Fields}, SeenVars, St) ->
+    check_shape_types(Fields, SeenVars, St);
 check_type({type, La, struct, {atom, _, Tag}, Fields}, SeenVars, St) ->
     check_struct_types(La, Tag, Fields, SeenVars, St);
 check_type({type, _L, Tag, Args}, SeenVars, St) when
@@ -3539,10 +3537,10 @@ check_type(I, SeenVars, St) ->
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
     end.
 
-check_anon_struct_types(Fields, SeenVars, St) ->
-    check_anon_struct_types(Fields, SeenVars, St, #{}).
+check_shape_types(Fields, SeenVars, St) ->
+    check_shape_types(Fields, SeenVars, St, #{}).
 
-check_anon_struct_types(
+check_shape_types(
     [{field_definition, Line, {atom, _, Name}, undefined, Type} | Rest],
     SeenVars,
     St,
@@ -3551,12 +3549,12 @@ check_anon_struct_types(
     case is_map_key(Name, FieldsAcc) of
         true ->
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
-            {SeenVars1, add_error(Line, {redefine_anon_struct_field, Name}, St1)};
+            {SeenVars1, add_error(Line, {redefine_shape_field, Name}, St1)};
         false ->
             {SeenVars1, St1} = check_type(Type, SeenVars, St),
-            check_anon_struct_types(Rest, SeenVars1, St1, FieldsAcc#{Name => Type})
+            check_shape_types(Rest, SeenVars1, St1, FieldsAcc#{Name => Type})
     end;
-check_anon_struct_types([], SeenVars, St, _Fields) ->
+check_shape_types([], SeenVars, St, _Fields) ->
     {SeenVars, St}.
 
 %% Enum types only appear in enum definitions

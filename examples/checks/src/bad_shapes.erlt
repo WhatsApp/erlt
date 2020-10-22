@@ -1,8 +1,10 @@
 
 
--module(bad_anon_structs).
+-module(bad_shapes).
 
 -export([test/0, test/1]).
+
+-export_type([my_map/2, bad_type/0]).
 
 -spec test() -> #(a::integer(), a::float()).
 

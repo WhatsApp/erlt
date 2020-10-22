@@ -22,7 +22,7 @@ There are only few differences:
   (Right now it does it by forbidding ambiguity)
 * ErlT DT is explicit about already bound and free variables in patterns.
   (Right now it does it by forbidding ambiguity)
-* It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and anonymous structs](./doc/05_structs.md).
+* It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and shapes](./doc/05_structs.md).
 * The new [`import_type`](07_import_type.md) construct allows using types from
   remote modules via short names.
 

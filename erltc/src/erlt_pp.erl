@@ -627,7 +627,7 @@ lexpr({struct, _, Tag, Elts}, Prec, Opts) ->
     {P, R} = preop_prec('#'),
     El = {first, "#", {first, lexpr(Tag, R, Opts), fields(${, $}, Elts, Opts)}},
     maybe_paren(P, Prec, El);
-lexpr({anon_struct, _, Fields}, Prec, Opts) ->
+lexpr({shape, _, Fields}, Prec, Opts) ->
     {P, _R} = preop_prec('#'),
     El = {first, "#", fields($(, $), Fields, Opts)},
     maybe_paren(P, Prec, El);
