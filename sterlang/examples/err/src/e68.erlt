@@ -14,4 +14,4 @@
 
 -module(e68).
 % Unbound variable in definition
--enum e() :: e1{A}.
+-enum e() :: (e1{A}).

@@ -23,7 +23,7 @@
 
 -import_type(maybe, [maybe/1]).
 
--enum result(Error, Value) :: ok{Value} | err{Error}.
+-enum result(Error, Value) :: (ok{Value}, err{Error}).
 
 -spec with_default(A, result(_, A)) -> A.
 with_default(_Def, result.ok{A}) -> A;
@@ -68,11 +68,11 @@ map_error(F) ->
 
 -spec to_maybe(result(_, A)) -> maybe(A).
 to_maybe(result.ok{V}) -> maybe.just{V};
-to_maybe(result.err{_}) -> maybe.nothing{}.
+to_maybe(result.err{_}) -> maybe.nothing.
 
 -spec from_maybe(X, maybe(A)) -> result(X, A).
 from_maybe(_Err, maybe.just{V}) -> result.ok{V};
-from_maybe(Err, maybe.nothing{}) -> result.err{Err}.
+from_maybe(Err, maybe.nothing) -> result.err{Err}.
 
 -spec from_maybe(X) -> fun((maybe(A)) -> result(X, A)).
 from_maybe(Err) ->

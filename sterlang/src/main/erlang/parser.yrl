@@ -49,7 +49,7 @@ opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
 top_type top_types type field_defs field_def
 fun_type
 type_spec
-shape_field_types shape_field_type struct_kind var_list vars.
+shape_field_types shape_field_type struct_kind var_list vars enum_variants enum_variant.
 
 Terminals
 char integer float atom string var
@@ -64,7 +64,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'struct' 'exception' 'message' 'type_kind' % helper
+'spec' 'struct' 'exception' 'message' 'type_kind' 'enum' % helper
 dot.
 
 Expect 0.
@@ -103,6 +103,8 @@ attribute -> '-' atom '(' attr_val ')' :
     build_attribute('$2', '$4', anno('$1','$5')).
 attribute -> '-' type_kind atom var_list '::' top_type :
     type_def('$2', '$3', '$4', '$6', anno('$1','$6')).
+attribute -> '-' enum atom var_list '::' '(' enum_variants ')' :
+    type_def(enum, '$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' struct_kind atom var_list '::' '(' field_defs ')' :
     struct_def('$2', '$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' 'spec' type_spec :
@@ -139,6 +141,12 @@ type -> '#' '(' shape_field_types ')'         : build_shape_type(anno('$1', '$4'
 type -> '{' '}'                               : {type, anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                     : {type, anno('$1','$3'), tuple, '$2'}.
 type -> 'fun' '(' fun_type ')'                : '$3'.
+
+enum_variant -> atom                          : {type, anno('$1'), enum, '$1', []}.
+enum_variant -> atom '{' top_types '}'        : {type, anno('$1', '$4'), enum, '$1', '$3'}.
+
+enum_variants -> enum_variant                   : ['$1'].
+enum_variants -> enum_variant ',' enum_variants : ['$1'|'$3'].
 
 fun_type -> '(' ')' '->' top_type :
     {type, anno('$1','$4'), 'fun', [{type, anno('$1','$4'), product, []}, '$4']}.
@@ -220,12 +228,12 @@ pat_expr_max -> binary : '$1'.
 pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
-enum_pat_expr -> atom '.' atom '{' '}' :
-    {enum, anno('$1','$5'), '$1', '$3', []}.
+enum_pat_expr -> atom '.' atom :
+    {enum, anno('$1','$3'), '$1', '$3', []}.
 enum_pat_expr -> atom '.' atom '{' pat_exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
-enum_pat_expr -> remote_id '.' atom '{' '}' :
-    {enum, anno('$1','$5'), '$1', '$3', []}.
+enum_pat_expr -> remote_id '.' atom :
+    {enum, anno('$1','$3'), '$1', '$3', []}.
 enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
@@ -286,12 +294,12 @@ tuple -> '{' '}' : {tuple,anno('$1','$2'),[]}.
 tuple -> '{' exprs '}' : {tuple,anno('$1','$3'),'$2'}.
 
 %% This is called from expr
-enum_expr -> atom '.' atom '{' '}' :
-    {enum, anno('$1','$5'), '$1', '$3', []}.
+enum_expr -> atom '.' atom :
+    {enum, anno('$1','$3'), '$1', '$3', []}.
 enum_expr -> atom '.' atom '{' exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
-enum_expr -> remote_id '.' atom '{' '}' :
-    {enum, anno('$1','$5'), '$1', '$3', []}.
+enum_expr -> remote_id '.' atom :
+    {enum, anno('$1','$3'), '$1', '$3', []}.
 enum_expr -> remote_id '.' atom '{' exprs '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
@@ -482,14 +490,16 @@ parse_form([{'-', A1}, {atom, A2, message} | Tokens]) ->
 parse_form([{'-', A1}, {atom, _, type} | Tokens]) ->
     parse([{'-', A1}, {type_kind, type} | Tokens]);
 parse_form([{'-', A1}, {atom, _, enum} | Tokens]) ->
-    parse([{'-', A1}, {type_kind, enum} | Tokens]);
+    parse([{'-', A1}, {enum} | Tokens]);
 parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
     parse([{'-', A1}, {type_kind, opaque} | Tokens]);
 parse_form(Tokens) ->
     parse(Tokens).
 
 type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
-    {attribute, Aa, Kind, {Name, Type, Args}}.
+    {attribute, Aa, Kind, {Name, Type, Args}};
+type_def(enum, {atom, _, Name}, Args, Variants, Aa) ->
+    {attribute, Aa, enum, {Name, Args, Variants}}.
 
 struct_def({StructKind, _}, {atom, _An, StructName}, Args, Fields, Aa) ->
     {attribute, Aa, StructKind, {StructName, Args, Fields}}.

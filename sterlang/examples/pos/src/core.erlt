@@ -16,13 +16,13 @@
 -export_type([option/1]).
 -export([getOrElse/2]).
 
--enum option(A) :: none{} | some{A}.
+-enum option(A) :: (none, some{A}).
 
 -spec getOrElse(option(A), A) -> A.
 getOrElse(Opt, Alt) ->
     case Opt of
         option.some{X} -> X;
-        option.none{} -> Alt
+        option.none -> Alt
     end.
 
 any() -> any().

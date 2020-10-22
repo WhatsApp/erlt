@@ -44,19 +44,17 @@ object FormsConvert {
       // export_type
       case ETuple(List(EAtom("attribute"), _anno, EAtom("export_type"), EList(typesIds))) =>
         ExportType(typesIds.map(convertIdWithArity))
-      // af_type_decl
       case ETuple(
             List(
               EAtom("attribute"),
               anno,
-              EAtom(attr @ ("type" | "opaque" | "enum")),
+              EAtom(attr @ ("type" | "opaque")),
               ETuple(List(EAtom(typeName), absType, EList(vars))),
             )
           ) =>
         val typeAttr: TypeAttr = attr match {
           case "type"   => Type
           case "opaque" => Opaque
-          case "enum"   => Enum
         }
         val abstractType = TypesConvert.convertType(absType)
         val params = vars.map(TypesConvert.convertVar)
@@ -73,6 +71,10 @@ object FormsConvert {
             List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
         StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), MsgStruct)
+      case ETuple(
+            List(EAtom("attribute"), anno, EAtom("enum"), ETuple(List(EAtom(name), EList(vars), EList(enumVariants))))
+          ) =>
+        EnumDecl(r(anno), name, vars.map(TypesConvert.convertVar), enumVariants.map(enumVariantDecl))
       // af_function_spec
       case ETuple(
             List(
@@ -113,6 +115,12 @@ object FormsConvert {
             Some(ExprsConvert.convertExp(expr))
         }
         StructFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
+    }
+
+  def enumVariantDecl(term: ETerm): EnumVariantDecl =
+    term match {
+      case ETuple(List(EAtom("type"), anno, EAtom("enum"), name, EList(params))) =>
+        EnumVariantDecl(r(anno), convertAtomLit(name), params.map(TypesConvert.convertType))
     }
 
   def convertAtomLit(term: ETerm): String =

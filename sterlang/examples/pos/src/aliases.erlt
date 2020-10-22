@@ -23,7 +23,7 @@ mk_pair1(X, Y) -> {X, Y}.
 
 mk_pair2(X, Y) -> {X, Y}.
 
--enum p_con(A) :: con{pair(A)}.
+-enum p_con(A) :: (con{pair(A)}).
 
 mk_con(X, Y) ->
     p_con.con{{X, X}}.

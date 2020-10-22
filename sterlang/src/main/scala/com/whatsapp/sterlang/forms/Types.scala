@@ -43,7 +43,6 @@ object Types {
   case class UnionType(r: Doc.Range, elems: List[Type]) extends Type
   case class TypeVariable(r: Doc.Range, v: String) extends Type
   case class UserType(r: Doc.Range, name: String, params: List[Type]) extends Type
-  case class EnumCtr(r: Doc.Range, ctr: String, types: List[Type]) extends Type
 
   case class StructFieldType(name: String, tp: Type)
 

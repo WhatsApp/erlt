@@ -14,4 +14,4 @@
 
 -module(e66).
 % Duplicate type variable A
--enum my_enum(A, A) :: ctr{A}.
+-enum my_enum(A, A) :: (ctr{A}).

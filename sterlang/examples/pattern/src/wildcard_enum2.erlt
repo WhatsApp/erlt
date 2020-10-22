@@ -15,8 +15,8 @@
 -module(wildcard_enum2).
 -export([test1/2]).
 
--enum ab() :: a{} | b{}.
+-enum ab() :: (a, b).
 
 -spec test1(ab(), ab()) -> {}.
-test1(ab.a{}, ab.b{}) -> {};
+test1(ab.a, ab.b) -> {};
 test1(_, _) -> {}.

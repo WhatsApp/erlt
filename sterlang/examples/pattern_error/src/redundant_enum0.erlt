@@ -15,9 +15,9 @@
 -module(redundant_enum0).
 -export([test1/1]).
 
--enum ab() :: a{} | b{}.
+-enum ab() :: (a, b).
 
 -spec test1(ab()) -> {}.
-test1(ab.a{}) -> {};
-test1(ab.b{}) -> {};
-test1(ab.a{}) -> {}.
+test1(ab.a) -> {};
+test1(ab.b) -> {};
+test1(ab.a) -> {}.

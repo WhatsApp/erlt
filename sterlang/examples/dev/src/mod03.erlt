@@ -20,29 +20,29 @@
   first/1, second/1, call_this_mod/1
 ]).
 
--enum unit0() :: unit0{}.
--enum boxed(A) :: boxed{A}.
--enum either(A, B) :: left{A} | right {B}.
--enum rgb() :: r{} | g{} | b{}.
--enum pair(A, B) :: pair{A,B}.
--enum triple(A,B,C) :: triple{A,B,C}.
--enum my_list(A) :: cons{A, my_list(A)} | nil{}.
--enum option(A) :: none{} | some{A}.
+-enum unit0() :: (unit0).
+-enum boxed(A) :: (boxed{A}).
+-enum either(A, B) :: (left{A}, right {B}).
+-enum rgb() :: (r, g, b).
+-enum pair(A, B) :: (pair{A,B}).
+-enum triple(A,B,C) :: (triple{A,B,C}).
+-enum my_list(A) :: (cons{A, my_list(A)}, nil).
+-enum option(A) :: (none, some{A}).
 
 -struct box1(A) :: (value :: A).
 -struct box2(A) :: (value :: A).
 
 -spec mk_rgb() -> rgb().
-mk_rgb() -> rgb.r{}.
+mk_rgb() -> rgb.r.
 
 -spec mk_triple(A) -> triple(A, A, A).
 mk_triple(A) -> triple.triple{A, A, A}.
 
 -spec mk_none() -> option(_).
-mk_none() -> option.none{}.
+mk_none() -> option.none.
 
 -spec mk_unit() -> unit0().
-mk_unit() -> unit0.unit0{}.
+mk_unit() -> unit0.unit0.
 
 -spec mk_box(A) -> boxed(A).
 mk_box(A) -> boxed.boxed{A}.
@@ -54,7 +54,7 @@ mk_left(A) -> either.left{A}.
 mk_right(B) -> either.right{B}.
 
 -spec zero(unit0(), V) -> V.
-zero(unit0.unit0{}, Val) -> Val.
+zero(unit0.unit0, Val) -> Val.
 
 -spec unbox(boxed(E)) -> E.
 unbox(Boxed) ->

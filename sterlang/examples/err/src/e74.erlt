@@ -15,4 +15,4 @@
 -module(e74).
 -type unit1() :: {}.
 % Duplicate type
--enum unit1(A) :: ctr{A}.
+-enum unit1(A) :: (ctr{A}).

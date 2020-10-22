@@ -41,7 +41,7 @@ basic_values() ->
     {}.
 
 enums() ->
-    None = core:option.none{},
+    None = core:option.none,
     SomeInt = core:option.some{1},
     SomeStr = core:option.some{"str"},
     L1 = [None, SomeInt],
@@ -66,7 +66,8 @@ pieces() ->
     #(n = N1, st = S1, z = Z1) = My_rec,
     #(n = N, st = St, z = Z) = My_rec,
     Rec1 = #(n = N, z = Z),
-    #(n = NVal) = My_rec,
+    % TODO - pinned vars
+    % #(n = NVal) = My_rec,
     % transforming record:
     My_rec1 = My_rec #(n = 2),
     My_pair = {1, []},
@@ -155,19 +156,19 @@ id03(A) -> (A).
 
 % enums
 
--enum my_option(A) :: none{} | some{A}.
--enum my_list(A) :: nil{} | cons{A, my_list(A)}.
+-enum my_option(A) :: (none, some{A}).
+-enum my_list(A) :: (nil, cons{A, my_list(A)}).
 
 isDefined1(Opt) ->
     case Opt of
-        my_option.none{} -> false;
+        my_option.none -> false;
         my_option.some{_} -> true
     end.
 
 map1(F, Xs) ->
     case Xs of
-        my_list.nil{} ->
-            my_list.nil {};
+        my_list.nil ->
+            my_list.nil;
         my_list.cons{X1, Xs1} ->
             my_list.cons{F(X1), map1(F, Xs1)}
     end.
@@ -177,11 +178,11 @@ to_bools(Xs) ->
 
 onlySome(Xs) ->
     case Xs of
-        my_list.nil{} ->
-            my_list.nil{};
+        my_list.nil ->
+            my_list.nil;
         my_list.cons{X1, Xs1} ->
             case X1 of
-                my_option.none{} ->
+                my_option.none ->
                     onlySome(Xs1);
                 my_option.some{A} ->
                     my_list.cons{my_option.some{A}, onlySome(Xs1)}
@@ -189,7 +190,7 @@ onlySome(Xs) ->
     end.
 
 dec_opt(Opt) ->
-    my_option.none{} = Opt,
+    my_option.none = Opt,
     1.
 
 dec_opt2(Opt) ->
@@ -201,7 +202,7 @@ dec_opt3(Opt, V1, V2) ->
     [F(V1) | [F(V2)]].
 
 dec_opt4(X, Y, Z) ->
-    Id = fun (X) -> X end,
+    Id = fun (X1) -> X1 end,
     OptId = my_option.some{Id},
     my_option.some{Id1} = OptId,
     my_option.some{Id2} = OptId,

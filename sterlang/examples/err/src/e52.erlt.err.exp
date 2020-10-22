@@ -1,4 +1,4 @@
 -- ERROR --------------------------------------- examples/err/src/e52.erlt:18:12
 Unknown enum constructor: unknown_ctr/0
- 18| test() -> [my_enum.unknown_ctr{}].
-...|            ~~~~~~~~~~~~~~~~~~~~~
+ 18| test() -> [my_enum.unknown_ctr].
+...|            ~~~~~~~~~~~~~~~~~~~

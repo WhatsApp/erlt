@@ -29,6 +29,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/elm_core/src")
   testDir("examples/dev/src")
   testDir("examples/pattern/src")
+  testDir("examples/sterlang/src")
   smokeTestFile("examples/elm_core/src", "basics")
   smokeTestDir("examples/dir/src")
 

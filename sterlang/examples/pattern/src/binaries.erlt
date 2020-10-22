@@ -25,7 +25,7 @@ test2(<<0, _/binary>>) -> {};
 test2(<<1, _/binary>>) -> {}.
 
 % They don't generate false redundancy warnings with wildcards.
--spec test2(binary()) -> {}.
+-spec test3(binary()) -> {}.
 test3(<<0, _/binary>>) -> {};
 test3(_) -> {}.
 
@@ -38,4 +38,3 @@ test4(<<0, _/binary>>) -> {}.
 -spec test5(boolean(), binary()) -> {}.
 test5(true, <<0, _/binary>>) -> {};
 test5(false, <<0, _/binary>>) -> {}.
-

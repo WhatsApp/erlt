@@ -68,7 +68,7 @@
 -spec identifier_id(identifier()) -> identifier().
 -spec iodata_id(iodata()) -> iodata().
 -spec iolist_id(iolist()) -> iolist().
--spec map_id(map(A, B)) -> map(A, B).
+-spec map_id(A) -> A.
 -spec none_id(none()) -> none().
 -spec noreturn_id(none()) -> none().
 -spec number_id(none()) -> none().

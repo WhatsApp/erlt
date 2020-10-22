@@ -14,4 +14,4 @@
 
 -module(e70).
 % Useless variable
--enum e(A) :: e1{}.
+-enum e(A) :: (e1).

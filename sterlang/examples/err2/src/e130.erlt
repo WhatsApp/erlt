@@ -14,4 +14,4 @@
 
 -module(e130).
 
--enum my_enum(Ext) :: ctr{#(id :: integer(), Ext)}.
+-enum my_enum(Ext) :: (ctr{#(id :: integer(), Ext)}).

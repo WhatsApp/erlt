@@ -13,6 +13,6 @@
 %% limitations under the License.
 
 -module(e54).
--enum my_enum() :: ctr{}.
-%% %% enum constructor with a wrong arity
+-enum my_enum() :: (ctr).
+%% enum constructor with a wrong arity
 test() -> [my_enum.ctr{1}].

@@ -14,11 +14,11 @@
 
 -module(core).
 -export_type([option/1, tuple1/1]).
--enum option(A) :: none{} | some{A}.
+-enum option(A) :: (none, some{A}).
 -opaque tuple1(A) :: {A}.
 
 getOrElse(Opt, Alt) ->
   case Opt of
       option.some{X} -> X;
-      option.none{} -> Alt
+      option.none -> Alt
   end.

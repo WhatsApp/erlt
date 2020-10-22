@@ -14,4 +14,4 @@
 
 -module(e63).
 % Unknown type some_type
--enum my_enum() :: ctr{some_type()}.
+-enum my_enum() :: (ctr{some_type()}).

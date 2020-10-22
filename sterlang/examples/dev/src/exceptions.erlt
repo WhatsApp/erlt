@@ -18,15 +18,15 @@
 -exception invocation_target_exception() :: (target :: exception()).
 -exception message_error() :: (message :: string()).
 
--enum option(A) :: none{} | some{A}.
+-enum option(A) :: (none, some{A}).
 
-mk_exn(option.none{}) ->
+mk_exn(option.none) ->
     #not_found{};
 mk_exn(option.some{Target}) ->
     #invocation_target_exception{target = Target}.
 
 get_target(#not_found{}) ->
-    option.none{};
+    option.none;
 get_target(#invocation_target_exception{target = Target}) ->
     option.some{Target}.
 

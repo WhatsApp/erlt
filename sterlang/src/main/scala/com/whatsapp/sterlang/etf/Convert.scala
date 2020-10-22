@@ -50,16 +50,6 @@ object Convert {
       case Forms.TypeDecl(p, typeAttr, typeName, params, body) =>
         val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         typeAttr match {
-          case Forms.Enum =>
-            val enumCons =
-              body match {
-                case Types.UnionType(_, elems) =>
-                  elems.map(convertEnumCtr)
-                case single =>
-                  List(convertEnumCtr(single))
-              }
-            val enumDef = Ast.EnumDef(typeName, typeParams, enumCons)(p)
-            Some(Ast.EnumElem(enumDef))
           case Forms.Type =>
             val typeAlias = Ast.TypeAlias(typeName, typeParams, convertType(body))(p)
             Some(Ast.TypeAliasElem(typeAlias))
@@ -77,6 +67,10 @@ object Convert {
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
+      case Forms.EnumDecl(p, name, params, enumVariants) =>
+        val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
+        val enumDef = Ast.EnumDef(name, typeParams, enumVariants.map(convertEnumCtr))(p)
+        Some(Ast.EnumElem(enumDef))
       case Forms.StructDecl(p, name, eParams, eFields, kind) =>
         val params = eParams.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         val fields = eFields.map(convertStructFieldDecl)
@@ -384,21 +378,15 @@ object Convert {
       case Types.AnyMap(p) =>
         // banned
         throw new UnsupportedSyntaxError(p, "Bad map type")
-      case Types.EnumCtr(p, _, _) =>
-        // banned
-        throw new UnsupportedSyntaxError(p, "Enum ctr used as a type")
       case Types.UnionType(p, _) =>
         // banned
         throw new UnsupportedSyntaxError(p, "Union type")
     }
 
-  private def convertEnumCtr(tp: Types.Type): Ast.EnumCtr =
-    tp match {
-      case Types.EnumCtr(p, name, params) =>
-        Ast.EnumCtr(name, params.map(convertType))(p)
-      case _ =>
-        throw new UnsupportedSyntaxError(tp.r, "Enum ctr is expected")
-    }
+  private def convertEnumCtr(variant: Forms.EnumVariantDecl): Ast.EnumCtr = {
+    val Forms.EnumVariantDecl(p, name, params) = variant
+    Ast.EnumCtr(name, params.map(convertType))(p)
+  }
 
   private def convertKeyValueType(assoc: Types.ShapeField): Ast.Field[Ast.Type] = {
     val Types.ShapeField(p, Types.AtomType(_, field), v) = assoc

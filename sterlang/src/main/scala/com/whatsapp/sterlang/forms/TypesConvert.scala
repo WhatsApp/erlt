@@ -31,16 +31,6 @@ object TypesConvert {
       // af_bitstring_type
       case ETuple(List(EAtom("type"), anno, EAtom("binary"), EList(List()))) =>
         BitstringType(r(anno))
-      case ETuple(
-            List(
-              EAtom("type"),
-              anno,
-              EAtom("enum"),
-              ETuple(List(EAtom("atom"), _anno1, EAtom(ctrName))),
-              EList(args),
-            )
-          ) =>
-        EnumCtr(r(anno), ctrName, args.map(convertType))
       // af_function_type
       case ETuple(
             List(

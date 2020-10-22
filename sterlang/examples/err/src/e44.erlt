@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 -module(e44).
--enum box(A) :: box{A}.
--enum e1() :: e1{}.
--enum e2() :: e2{}.
-foo(E) -> case E of box.box{e1.e1{}} -> 1; box.box{e2.e2{}} -> 2 end.
+-enum box(A) :: (box{A}).
+-enum e1() :: (e1).
+-enum e2() :: (e2).
+foo(E) -> case E of box.box{e1.e1} -> 1; box.box{e2.e2} -> 2 end.

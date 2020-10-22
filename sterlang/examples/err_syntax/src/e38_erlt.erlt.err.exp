@@ -1,5 +1,0 @@
--- ERROR --------------------------- examples/err_syntax/src/e38_erlt.erlt:17:16
-Unsupported Syntax
-Enum ctr is expected
- 17| -enum box() :: integer().
-...|                ~~~~~~~~~

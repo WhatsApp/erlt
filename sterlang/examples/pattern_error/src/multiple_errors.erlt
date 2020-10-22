@@ -15,14 +15,14 @@
 -module(multiple_errors).
 -export([test1/1, test2/1, test3/1]).
 
--enum ab() :: a{} | b{}.
+-enum ab() :: (a, b).
 
 -spec test1(ab()) -> {}.
-test1(ab.a{}) -> {}.
+test1(ab.a) -> {}.
 
 -spec test2(ab()) -> {}.
-test2(ab.b{}) -> {}.
+test2(ab.b) -> {}.
 
 -spec test3(ab()) -> {}.
-test3(ab.a{}) -> {};
-test3(ab.a{}) -> {}.
+test3(ab.a) -> {};
+test3(ab.a) -> {}.

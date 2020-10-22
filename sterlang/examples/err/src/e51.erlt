@@ -14,4 +14,4 @@
 
 -module(e51).
 %% unknown enum in patterns
-test(unknown_enum.ctr{}) -> 1.
+test(unknown_enum.ctr) -> 1.

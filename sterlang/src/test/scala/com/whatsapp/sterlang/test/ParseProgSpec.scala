@@ -31,9 +31,9 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
       testProg(
         """
           |-module(test).
-          |-enum box(A) :: box{A}.
+          |-enum box(A) :: (box{A}).
           |-type boxAlias(A) :: box(A).
-          |-enum box2(A) :: box2{A}.
+          |-enum box2(A) :: (box2{A}).
           |-type boxAlias2(A) :: box2(A).
           |-spec box_id(boxAlias(A)) -> boxAlias(A).
           |box_id(X) -> X.

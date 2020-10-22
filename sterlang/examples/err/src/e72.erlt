@@ -13,5 +13,5 @@
 %% limitations under the License.
 
 -module(e72).
-% Useless variable
--enum e(A) :: e1{} | e1{A}.
+% Duplicate constructor
+-enum e(A) :: (e1, e1{A}).

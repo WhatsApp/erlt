@@ -13,11 +13,11 @@
 %% limitations under the License.
 
 -module(e61).
--enum box(A) :: box{A}.
+-enum box(A) :: (box{A}).
 -type box_alias(A) :: box(A).
 -type box_alias2(A) :: box_alias(box_alias(A)).
 
--enum box2(A, B) :: box2{A, B}.
+-enum box2(A, B) :: (box2{A, B}).
 -type box2_alias(A) :: box2(A, A).
 % cyclic type alias
 -type cyclic_box(A, B) :: box2(box(box(A)), cyclic_box(box2_alias(box_alias2(B)), box2_alias(box_alias2(B)))).

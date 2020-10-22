@@ -48,7 +48,6 @@ val N: number()
 val St: string()
 val Z: list(C)
 val Rec1: #( n :: number(), z :: list(D) )
-val NVal: number()
 val My_rec1: #( n :: number(), st :: string(), z :: list(E) )
 val My_pair: {number(), list(F)}
 val Elem1: number()
@@ -144,7 +143,7 @@ val X: A
 val Y: B
 val Z: C
 val Id: fun((D) -> D)
-val X: D
+val X1: D
 val OptId: my_option(fun((E) -> E))
 val Id1: fun((F) -> F)
 val Id2: fun((G) -> G)

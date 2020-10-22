@@ -31,7 +31,6 @@ object Forms {
   type IdWithArity = (String, Int)
 
   sealed trait TypeAttr
-  case object Enum extends TypeAttr
   case object Type extends TypeAttr
   case object Opaque extends TypeAttr
 
@@ -50,6 +49,12 @@ object Forms {
       fields: List[StructFieldDecl],
       kind: StructKind,
   ) extends Form
+  case class EnumDecl(
+      r: Doc.Range,
+      name: String,
+      params: List[TypeVariable],
+      variants: List[EnumVariantDecl],
+  ) extends Form
   case class TypeDecl(
       r: Doc.Range,
       typeAttr: TypeAttr,
@@ -63,4 +68,5 @@ object Forms {
   case class Error(pos: Doc.Pos) extends Form
 
   case class StructFieldDecl(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type)
+  case class EnumVariantDecl(r: Doc.Range, name: String, argTypes: List[Type])
 }

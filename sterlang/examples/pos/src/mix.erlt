@@ -76,7 +76,7 @@ rich_record_example() ->
         )
     ).
 
--enum rec_rec2(A) :: rec_rec2{A, core:option(rec_rec2(A))}.
+-enum rec_rec2(A) :: (rec_rec2{A, core:option(rec_rec2(A))}).
 
 name(RecRec) ->
     case RecRec of
@@ -92,7 +92,7 @@ unBox(Rec) ->
     core:getOrElse(next(Rec), Rec).
 
 
--enum rec(A) :: rec{#(name :: A, next :: core:option(rec(A)))}.
+-enum rec(A) :: (rec{#(name :: A, next :: core:option(rec(A)))}).
 
 unRec(Rec) ->
     case Rec of rec.rec{X} -> X end.

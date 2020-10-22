@@ -1,12 +1,12 @@
 -module(n08).
--enum option(A) :: none{} | some{A}.
+-enum option(A) :: (none, some{A}).
 %% simulating it via Variant
--enum recRec1(A) :: recRec1{A, option(A)}.
+-enum recRec1(A) :: (recRec1{A, option(A)}).
 
 getOrElse(Opt, Alt) ->
   case Opt of
       option.some{X} -> X;
-      option.none{} -> Alt
+      option.none -> Alt
   end.
 
 %% the type for rec cannot be expressed without recursion

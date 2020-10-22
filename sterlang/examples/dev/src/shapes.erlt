@@ -14,7 +14,7 @@
 
 -module(shapes).
 
--spec get_id(#(id :: A, B)) -> A.
+-spec get_id(#(id :: A, _)) -> A.
 get_id(Shape) -> Shape#(id).
 
 -spec test() -> list(integer()).

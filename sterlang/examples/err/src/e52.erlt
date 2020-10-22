@@ -13,6 +13,6 @@
 %% limitations under the License.
 
 -module(e52).
--enum my_enum() :: ctr{}.
+-enum my_enum() :: (ctr).
 %% unknown enum constructor in expressions
-test() -> [my_enum.unknown_ctr{}].
+test() -> [my_enum.unknown_ctr].

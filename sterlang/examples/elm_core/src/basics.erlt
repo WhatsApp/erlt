@@ -28,8 +28,8 @@
 %% FUNCTION HELPERS
 -export_type([never/0]).
 -export([composeL/2, composeL/1, composeR/2, composeR/1,
-    apR/2, apR/1, apL/2, apL/1,
-    identity/1, always/2, always/1, never/1]).
+         apR/2, apR/1, apL/2, apL/1,
+         identity/1, always/2, always/1, never/1]).
 
 
 %% MATHEMATICS
@@ -119,18 +119,18 @@ max(X1, X2) ->
 -spec max(A) -> fun((A) -> A).
 max(X1) -> fun(X2) -> basics:max(X1, X2) end.
 
--enum order() :: lt{} | eq {} | gt{}.
+-enum order() :: (lt, eq, gt).
 
 -spec compare(A, A) -> order().
 compare(X1, X2) ->
     case lt(X1, X2) of
-        true -> order.lt{};
-false ->
-case eq(X1, X2) of
-true -> order.eq{};
-false -> order.gt{}
-end
-end.
+        true -> order.lt;
+        false ->
+            case eq(X1, X2) of
+                true -> order.eq;
+                false -> order.gt
+            end
+    end.
 
 -spec compare(A) -> fun((A) -> order()).
 compare(X1) -> fun(X2) -> compare(X1, X2) end.
@@ -229,7 +229,7 @@ always(A, _) -> A.
 -spec always(A) -> fun((_) -> A).
 always(A) -> fun(X) -> always(A, X) end.
 
--enum never() :: just_one_more{never()}.
+-enum never() :: (just_one_more{never()}).
 
 -spec never(never()) -> _.
 never(never.just_one_more{Nvr}) -> never(Nvr).

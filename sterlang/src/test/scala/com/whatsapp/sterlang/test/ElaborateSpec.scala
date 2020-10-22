@@ -56,8 +56,8 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
       val input =
         """
           |-module(test).
-          |-enum box() :: box{}.
-          |b() -> box.box{}.
+          |-enum box() :: (box).
+          |b() -> box.box.
           |""".stripMargin
       val output =
         """-spec b() -> box().
@@ -69,7 +69,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
       val input =
         """
           |-module(test).
-          |-enum box(A) :: box{A}.
+          |-enum box(A) :: (box{A}).
           |box1(X) -> box.box{X}.
           |box2(X) -> box.box{{X, X}}.
           |""".stripMargin
@@ -84,10 +84,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
       val input =
         """
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
-          |mkNone(A) -> option.none{}.
+          |-enum option(A) :: (none, some{A}).
+          |mkNone(A) -> option.none.
           |mkSome(A) -> option.some{A}.
-          |none() -> option.none{}.
+          |none() -> option.none.
           |someInt() -> mkSome(0).
           |someStr() -> mkSome("").
           |optInts() -> [none(), someInt()].
@@ -109,7 +109,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
       val input =
         """
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
+          |-enum option(A) :: (none, some{A}).
           |mkSome(A) -> option.some{A}.
           |someInt() -> mkSome(0).
           |someStr() -> mkSome("").
@@ -124,28 +124,28 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
       val input =
         """
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
-          |-enum num() :: z{} | s{num()}.
-          |-enum my_list(A) ::  nil{} | cons{A, my_list(A)}.
+          |-enum option(A) :: (none, some{A}).
+          |-enum num() :: (z, s{num()}).
+          |-enum my_list(A) ::  (nil, cons{A, my_list(A)}).
           |getOpt(Opt, DefVal) ->
           |  case Opt of
           |      option.some{A} -> A;
-          |      option.none{} -> DefVal
+          |      option.none -> DefVal
           |  end.
           |next(X) -> num.s{X}.
           |prev(X) ->
           |  case X of
           |      num.s{X1} -> X1;
-          |      num.z{} -> num.z{}
+          |      num.z -> num.z
           |  end.
           |append(Xs, Ys) ->
           |  case Xs of
-          |      my_list.nil{} -> Ys;
+          |      my_list.nil -> Ys;
           |      my_list.cons{X1, Xs1} -> my_list.cons{X1, append(Xs1, Ys)}
           |  end.
           |map(Xs, F) ->
           |  case Xs of
-          |      my_list.nil{} -> my_list.nil{};
+          |      my_list.nil -> my_list.nil;
           |      my_list.cons{X1, Xs1} -> my_list.cons{F(X1), map(Xs1, F)}
           |  end.
           |""".stripMargin

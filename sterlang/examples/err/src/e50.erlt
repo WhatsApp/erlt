@@ -15,4 +15,4 @@
 -module(e50).
 %% unknown enum in expressions
 test() ->
-    [unknown_enum.ctr{}].
+    [unknown_enum.ctr].

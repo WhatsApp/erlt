@@ -14,4 +14,4 @@
 
 -module(e65).
 % Unknown type remote:some_type
--enum my_enum() :: ctr{remote:some_type()}.
+-enum my_enum() :: (ctr{remote:some_type()}).
