@@ -1,5 +1,4 @@
--- ERROR -------------------------------- examples/err_syntax/src/e01.erlt:17:12
-Unsupported Syntax
-Atom literal
+-- ERROR -------------------------------- examples/err_syntax/src/e01.erlt:17:16
+Parse Error
  17| -spec test(atom) -> atom.
-...|            ~~~~
+...|                ^

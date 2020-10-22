@@ -369,9 +369,6 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.AtomType(p, _) =>
-        // banned
-        throw new UnsupportedSyntaxError(p, "Atom literal")
       case Types.TupleTypeAny(p) =>
         // banned
         throw new UnsupportedSyntaxError(p, "Bad tuple type")
@@ -386,7 +383,7 @@ object Convert {
   }
 
   private def convertKeyValueType(assoc: Types.ShapeField): Ast.Field[Ast.Type] = {
-    val Types.ShapeField(p, Types.AtomType(_, field), v) = assoc
+    val Types.ShapeField(p, field, v) = assoc
     Ast.Field(field, convertType(v))(p)
   }
 }

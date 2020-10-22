@@ -25,9 +25,6 @@ object TypesConvert {
       // af_annotated_type
       case ETuple(List(EAtom("ann_type"), anno, EList(List(af_anno, tp)))) =>
         AnnotatedType(r(anno), convertVar(af_anno), convertType(tp))
-      // af_atom
-      case ETuple(List(EAtom("atom"), anno, EAtom(atomVal))) =>
-        AtomType(r(anno), atomVal)
       // af_bitstring_type
       case ETuple(List(EAtom("type"), anno, EAtom("binary"), EList(List()))) =>
         BitstringType(r(anno))
@@ -81,8 +78,15 @@ object TypesConvert {
 
   def convertShapeField(term: ETerm): ShapeField =
     term match {
-      case ETuple(List(EAtom("type"), anno, EAtom("shape_field"), EList(List(kType, vType)))) =>
-        ShapeField(r(anno), convertType(kType), convertType(vType))
+      case ETuple(
+            List(
+              EAtom("type"),
+              anno,
+              EAtom("shape_field"),
+              EList(List(ETuple(List(EAtom("atom"), _, EAtom(field))), vType)),
+            )
+          ) =>
+        ShapeField(r(anno), field, convertType(vType))
     }
 
   def convertFunSpecType(term: ETerm): FunType =

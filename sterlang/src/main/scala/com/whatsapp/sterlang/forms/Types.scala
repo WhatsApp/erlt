@@ -23,7 +23,6 @@ object Types {
   sealed trait Type { val r: Doc.Range }
   // For use cases like spec id(Input :: atom()) -> atom.
   case class AnnotatedType(r: Doc.Range, tv: TypeVariable, tp: Type) extends Type
-  case class AtomType(r: Doc.Range, atom: String) extends Type
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class BitstringType(r: Doc.Range) extends Type
   case class FunType(r: Doc.Range, args: List[Type], resType: Type) extends Type
@@ -31,7 +30,7 @@ object Types {
 
   case class Shape(r: Doc.Range, assocs: List[ShapeField]) extends Type
   case class OpenShape(r: Doc.Range, assocs: List[ShapeField], restType: Type) extends Type
-  case class ShapeField(r: Doc.Range, keyType: Type, valueType: Type)
+  case class ShapeField(r: Doc.Range, keyType: String, valueType: Type)
 
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
   case class RemoteType(r: Doc.Range, module: String, name: String, params: List[Type]) extends Type

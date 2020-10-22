@@ -127,9 +127,6 @@ top_type -> type                          : '$1'.
 
 type -> '(' top_type ')'                      : '$2'.
 type -> var                                   : '$1'.
-type -> atom                                  : '$1'.
-type -> atom '{' '}'                          : {type, anno('$1', '$3'), enum, '$1', []}.
-type -> atom '{' top_types '}'                : {type, anno('$1', '$4'), enum, '$1', '$3'}.
 type -> atom '(' ')'                          : build_gen_type('$1', anno('$1', '$3')).
 type -> atom '(' top_types ')'                : build_type('$1', '$3', anno('$1', '$4')).
 type -> atom ':' atom '(' ')'                 : {remote_type, anno('$1','$5'), ['$1', '$3', []]}.
