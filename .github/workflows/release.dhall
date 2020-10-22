@@ -51,7 +51,7 @@ let sterlangLinuxUpload =
         Actions.RunsOn.Type.ubuntu-latest
 
 let uploadErltcBinary =
-      let binaryName = "erltc.escript"
+      let binaryName = "erltc"
 
       in  Actions.Job::{
           , runs-on = Actions.RunsOn.Type.ubuntu-latest
@@ -64,19 +64,27 @@ let uploadErltcBinary =
                     "Erlang version"
                     "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
                 , run "escriptize" "rebar3 escriptize"
-                , run "mv escript" "mv ./_build/default/bin/erltc ${binaryName}"
+                , run
+                    "prevent conflict between '${binaryName}' file and directory"
+                    "rm -rf '${binaryName}'"
+                , run
+                    "mv escript"
+                    "mv ./_build/default/bin/erltc '${binaryName}'"
                 ]
               # uploadToRelease binaryName
           }
 
-in  Actions.Workflow::{
-    , name = "Upload release binary"
-    , on = Actions.On::{ release = Some { types = [ "created" ] } }
-    , jobs = toMap
-        { sterlangMacUpload
-        , sterlangLinuxUpload
-        , uploadErltcBinary
-          -- the sterlang mac and linux binary jobs require the jar to be built first
-        , buildJar = Sterlang.buildJar
-        }
-    }
+in    Actions.Workflow::{
+      , name = "Upload release binary"
+      , on = Actions.On::{=}
+      , jobs = toMap
+          { sterlangMacUpload
+          , sterlangLinuxUpload
+          , uploadErltcBinary
+            -- the sterlang mac and linux binary jobs require the jar to be built first
+          , buildJar = Sterlang.buildJar
+          }
+      }
+    -- we merge this part in using `//`
+    -- because github-actions-dhall is missing types for { on : release }
+    ⫽ { on.release = Some { types = [ "created" ] } }
