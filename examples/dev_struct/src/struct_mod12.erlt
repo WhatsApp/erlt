@@ -29,11 +29,11 @@ pattern(#struct_mod11:bar{B, _}, #struct_mod11:mixed{B, a = B}, B) ->
 guard(Value1, Value2, B) when Value1 =:= #struct_mod11:bar{1, B}, Value2 =:= #struct_mod11:mixed{1, a = B} ->
     ok.
 
-field(Value) when Value#struct_mod11:bar.0 =:= 1 ->
-    Value#struct_mod11:bar.1.
+field(Value) when Value#struct_mod11:bar._0 =:= 1 ->
+    Value#struct_mod11:bar._1.
 
 update(Value) ->
     Value#struct_mod11:mixed{a = 2}.
 
-index(#struct_mod11:bar.0) when #struct_mod11:bar.0 =:= 2 ->
-    #struct_mod11:bar.1.
+index(#struct_mod11:bar._0) when #struct_mod11:bar._0 =:= 2 ->
+    #struct_mod11:bar._1.
