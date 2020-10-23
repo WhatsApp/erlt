@@ -1,2 +1,3 @@
 import_type_redef.erlt:6:1: type f already imported from foo
-import_type_redef.erlt:10:1: type f already imported from foo
+import_type_redef.erlt:8:1: type a imported twice
+import_type_redef.erlt:12:1: type f already imported from foo

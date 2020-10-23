@@ -276,6 +276,8 @@ format_error({redefine_import, {{F, A}, M}}) ->
     io_lib:format("function ~tw/~w already imported from ~w", [F, A, M]);
 format_error({redefine_import_type, {{F, _}, M}}) ->
     io_lib:format("type ~tw already imported from ~w", [F, M]);
+format_error({import_type_duplicate, {F, _}}) ->
+    io_lib:format("type ~tw imported twice", [F]);
 format_error({bad_inline, {F, A}}) ->
     io_lib:format("inlined function ~tw/~w undefined", [F, A]);
 format_error({invalid_deprecated, D}) ->
@@ -1724,12 +1726,11 @@ imported(F, A, St) ->
 -spec import_type(line(), import_type(), lint_state()) -> lint_state().
 import_type(Line, {Mod, Ts}, St00) ->
     St = check_module_name(Mod, Line, St00),
-    Mts = ordsets:from_list(Ts),
-    case check_type_imports(Line, Mts, St#lint.imp_types, St#lint.types) of
-        [] ->
-            St#lint{imp_types = add_imports(Mod, Mts, St#lint.imp_types)};
-        Ets ->
-            {Err, St1} =
+    case check_type_imports(Ts, St#lint.imp_types, St#lint.types) of
+        {Imports, []} ->
+            St#lint{imp_types = add_imports(Mod, Imports, St#lint.imp_types)};
+        {Imports, Errors} ->
+            {ReportError, St1} =
                 foldl(
                     fun
                         ({built_in, {T, A}}, {Err, St0}) ->
@@ -1750,41 +1751,46 @@ import_type(Line, {Mod, Ts}, St00) ->
                         ({local, NA}, {_Err, St0}) ->
                             {true, add_error(Line, {redefine_type, NA}, St0)};
                         ({remote, NA, From}, {_Err, St0}) ->
-                            {true, add_error(Line, {redefine_import_type, {NA, From}}, St0)}
+                            {true, add_error(Line, {redefine_import_type, {NA, From}}, St0)};
+                        ({duplicate, NA}, {_Err, St0}) ->
+                            {true, add_error(Line, {import_type_duplicate, NA}, St0)}
                     end,
                     {false, St},
-                    Ets
+                    Errors
                 ),
             if
-                not Err ->
-                    St1#lint{imp_types = add_imports(Mod, Mts, St#lint.imp_types)};
+                not ReportError ->
+                    St1#lint{imp_types = add_imports(Mod, Imports, St#lint.imp_types)};
                 true ->
                     St1
             end
     end.
 
-check_type_imports(_Line, Candidates, Imports, Types0) ->
+check_type_imports(Candidates, Imports, Types0) ->
     Types = maps:to_list(Types0),
-    lists:flatmap(
-        fun({N, A} = T) ->
-            Search = fun({{Name, _}, _}) -> Name =:= N end,
-            case lists:search(Search, Types) of
-                {value, {NA, _}} ->
-                    [{local, NA}];
-                false ->
-                    case lists:search(Search, Imports) of
-                        {value, {NA, Module}} ->
-                            [{remote, NA, Module}];
-                        false ->
-                            case erl_internal:is_type(N, A) of
-                                true -> [{built_in, T}];
-                                false -> []
-                            end
-                    end
-            end
-        end,
-        Candidates
-    ).
+    Fun = fun({N, A} = T, {Acc, Err}) ->
+        case lists:search(fun({Name, _}) -> Name =:= N end, Acc) of
+            {value, NA} ->
+                {Acc, [{duplicate, NA} | Err]};
+            false ->
+                Search = fun({{Name, _}, _}) -> Name =:= N end,
+                case lists:search(Search, Types) of
+                    {value, {NA, _}} ->
+                        {Acc, [{local, NA} | Err]};
+                    false ->
+                        case lists:search(Search, Imports) of
+                            {value, {NA, Module}} ->
+                                {Acc, [{remote, NA, Module} | Err]};
+                            false ->
+                                case erl_internal:is_type(N, A) of
+                                    true -> {Acc, [{built_in, T} | Err]};
+                                    false -> {[T | Acc], Err}
+                                end
+                        end
+                end
+        end
+    end,
+    lists:foldl(Fun, {[], []}, Candidates).
 
 imported_type(Name, St) ->
     case [I || {{T, _}, _} = I <- St#lint.imp_types, T =:= Name] of
