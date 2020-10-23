@@ -45,7 +45,7 @@ let buildJar =
             ( toMap
                 { name = jarName
                 , path = "sterlang/target/scala-2.13/${jarName}"
-                , retention-period = "3"
+                , retention-period = "8"
                 }
             )
         ]
