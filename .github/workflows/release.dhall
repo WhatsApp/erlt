@@ -87,4 +87,5 @@ in    Actions.Workflow::{
       }
     -- we merge this part in using `//`
     -- because github-actions-dhall is missing types for { on : release }
+    -- https://github.com/regadas/github-actions-dhall/issues/23
     ⫽ { on.release = Some { types = [ "created" ] } }
