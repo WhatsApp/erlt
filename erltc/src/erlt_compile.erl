@@ -838,8 +838,8 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     AllDefFiles = filelib:wildcard(filename:join(BuildDir, "*" ++ ?DefFileSuffix)),
     Defs = lists:foldl(
         fun(File, Acc) ->
-            {ok, Forms} = erlt_epp:parse_file(File, []),
-            erlt_defs:add_definitions(Forms, Acc)
+            {ok, EtfDefs} = file:read_file(File),
+            erlt_defs:add_definitions(binary_to_term(EtfDefs), Acc)
         end,
         erlt_defs:new(),
         AllDefFiles
@@ -847,11 +847,8 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     {ok, Code, St#compile{global_defs = Defs}}.
 
 output_declarations(Code, #compile{defs_file = FileName} = St) ->
-    Output = [
-        unicode:characters_to_binary(erlt_pp:form(Form, [full_bifs]))
-        || Form <- erlt_defs:normalise_definitions(Code)
-    ],
-    file:write_file(FileName, Output),
+    Output = term_to_binary(erlt_defs:normalise_definitions(Code)),
+    file:write_file(FileName, Output, [sync]),
     {ok, Code, St#compile{has_written_defs_file = true}}.
 
 erlt_exception(Code, St) ->
