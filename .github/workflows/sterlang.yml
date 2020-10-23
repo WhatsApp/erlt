@@ -45,7 +45,7 @@ jobs:
         with:
           name: sterlang-linux-draft
           path: sterlang-linux-draft
-          retention-period: '3'
+          retention-period: '8'
   macBinary:
     needs:
       - buildJar
@@ -74,7 +74,7 @@ jobs:
         with:
           name: sterlang-mac-draft
           path: sterlang-mac-draft
-          retention-period: '3'
+          retention-period: '8'
   test:
     runs-on: ubuntu-latest
     steps:

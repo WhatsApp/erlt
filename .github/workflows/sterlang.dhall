@@ -1,7 +1,9 @@
 -- see ./README.md for dhall setup
-let Actions = (./shared/util.dhall).Actions
+let Util = ./shared/util.dhall
 
-let usesWith = (./shared/util.dhall).usesWith
+let Actions = Util.Actions
+
+let usesWith = Util.usesWith
 
 let Sterlang = ./shared/gen-sterlang-jobs.dhall
 
@@ -11,7 +13,10 @@ let upload =
             "upload artifacts"
             "actions/upload-artifact@v2"
             ( toMap
-                { name = nativeName, path = nativeName, retention-period = "3" }
+                { name = nativeName
+                , path = nativeName
+                , retention-period = Util.DEFAULT_RETENTION_PERIOD
+                }
             )
         ]
 
