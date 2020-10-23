@@ -1,0 +1,13 @@
+bad_types.erlt:7:16: Only the generic binary() type is allowed for binaries
+bad_types.erlt:9:17: Only the generic binary() type is allowed for binaries
+bad_types.erlt:11:18: Range types are not allowed, use integer() instead
+bad_types.erlt:13:18: Singleton type 0 is not allowed use integer() instead
+bad_types.erlt:15:19: Singleton type hello is not allowed use atom() or an enum instead
+bad_types.erlt:17:21: Generic map() type is not allowed
+bad_types.erlt:19:23: Generic tuple() type is not allowed
+bad_types.erlt:21:23: Union types are not allowed in ErlT
+bad_types.erlt:23:19: type variable 'A' is only used once (is unbound)
+bad_types.erlt:25:26: type variable 'A' is only used once (is unbound)
+bad_types.erlt:27:26: _ is not a valid type
+bad_types.erlt:29:17: Union types are not allowed in ErlT
+bad_types.erlt:30:109: type any_type() undefined

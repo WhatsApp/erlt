@@ -16,7 +16,7 @@
 
 -export([test_bins/0]).
 
--spec test_bins() -> ok.
+-spec test_bins() -> atom().
 [unchecked]
 test_bins() ->
     match_bins(mk_bins()).

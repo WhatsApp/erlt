@@ -642,7 +642,7 @@ Erlang code.
 -export([normalise/1, abstract/1, tokens/1, tokens/2]).
 -export([abstract/2, dotted_name/1, balance_dotted/1, fold_dots/1]).
 -export([inop_prec/1, preop_prec/1, func_prec/0, max_prec/0]).
--export([type_inop_prec/1, type_preop_prec/1]).
+-export([type_inop_prec/1, type_preop_prec/1, is_default_type/2]).
 -export([
     map_anno/2,
     fold_anno/3,
@@ -1334,7 +1334,7 @@ build_type({atom, A, Name}, Types) ->
     {Tag, A, Name, Types}.
 
 type_tag(TypeName, NumberOfTypeVariables) ->
-    case erl_internal:is_type(TypeName, NumberOfTypeVariables) of
+    case is_default_type(TypeName, NumberOfTypeVariables) of
         true -> type;
         false -> user_type
     end.
@@ -2134,4 +2134,7 @@ dotted_butlast_1(_) -> [].
 dotted_striplast(Name) ->
     concat_dotted(dotted_butlast(Name)).
 
+
+is_default_type(Name, NumberOfTypeVariables) ->
+    erl_internal:is_type(Name, NumberOfTypeVariables).
 %% vim: ft=erlang

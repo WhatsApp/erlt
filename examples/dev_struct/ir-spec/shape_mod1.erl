@@ -5,7 +5,7 @@
 -export([test/0, test_in_lc/1]).
 
 test() ->
-    [test(X)
+    [{test(X), test2(X)}
      || X
             <- [#{},
                 #{a => 1, b => 2},
@@ -24,19 +24,20 @@ test() ->
                                  location => {25, 36}}),
     ok = access_map2(#{inner1 => #{inner2 => ok}}).
 
--spec test(#{a := 1, b := #{c := 2, atom() => any()},
-             atom() => any()}) -> really_ok;
-          (#{atom() => any()}) -> ok;
-          (any()) -> not_ok.
+-spec test(#{a := integer(),
+             b := #{c := integer(), atom() => any()},
+             atom() => any()}) -> atom().
 
 test(A) when A =:= #{a => 1, b => #{c => 2}} ->
     closed_ok;
 test(#{a := 1, b := #{c := 2}}) -> open_ok;
 test(A) when erlang:map_get(b, A) =:= 2 -> ok;
-test(A) when A =:= (#{a => 1})#{b => 2} -> ok;
-test(#{a := 1}) -> ok;
-test(#{}) -> ok;
-test(_) -> not_ok.
+test(A) when A =:= (#{a => 1})#{b => #{c => 2}} -> ok;
+test(#{a := 1}) -> ok.
+
+-spec test2(#{atom() => any()}) -> atom().
+
+test2(#{}) -> ok.
 
 test_in_lc(List) -> [Id || #{id := Id} <- List].
 

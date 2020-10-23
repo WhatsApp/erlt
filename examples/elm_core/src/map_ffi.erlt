@@ -21,13 +21,16 @@
 
 -import_type(maybe, [maybe/1]).
 
--opaque map(K, V) :: #{K => V}.
+[unchecked, opaque]
+-type map(K, V) :: term().
 
 -spec empty() -> map(_K, _V).
+[unchecked]
 empty() ->
     maps:new().
 
 -spec get(K, map(K, V)) -> maybe(V).
+[unchecked]
 get(Key, Map) ->
     case maps:find(Key, Map) of
         {ok,Value} -> maybe.just{Value};
@@ -35,45 +38,56 @@ get(Key, Map) ->
     end.
 
 -spec size(map(_K,_V)) -> integer().
+[unchecked]
 size(Map) ->
     maps:size(Map).
 
 -spec insert(K, V, map(K, V)) -> map(K, V).
+[unchecked]
 insert(Key, Value, Map) ->
     maps:put(Key, Value, Map).
 
 -spec remove(K, map(K, V)) -> map(K, V).
+[unchecked]
 remove(Key, Map) ->
     maps:remove(Key, Map).
 
 -spec fold(fun((K, V, R) -> R), R, map(K, V)) -> R.
+[unchecked]
 fold(F, Acc, Map) ->
     maps:fold(F, Acc, Map).
 
 -spec union(map(K, V), map(K, V)) -> map(K, V).
+[unchecked]
 union(Map1, Map2) ->
     maps:merge(Map1, Map2).
 
 -spec filter(fun((K, V) -> boolean()), map(K, V)) -> map(K, V).
+[unchecked]
 filter(F, Map) ->
     maps:filter(F, Map).
 
 -spec map(fun((K, A) -> B), map(K, A)) -> map(K, B).
+[unchecked]
 map(F, Map) ->
     maps:map(F, Map).
 
 -spec keys(map(K, _V)) -> list(K).
+[unchecked]
 keys(Map) ->
     maps:keys(Map).
 
 -spec values(map(_K, V)) -> list(V).
+[unchecked]
 values(Map) ->
     maps:values(Map).
 
 -spec to_list(map(K, V)) -> list({K, V}).
+[unchecked]
 to_list(Map) ->
     maps:to_list(Map).
 
 -spec from_list(list({K, V})) -> map(K, V).
+[unchecked]
 from_list(List) ->
     maps:from_list(List).

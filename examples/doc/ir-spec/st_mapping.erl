@@ -64,10 +64,6 @@
 
 -type no_return_alias() :: no_return().
 
--type map_alias(A, B) :: #{A => B}.
-
--type map_string_int() :: #{string() => integer()}.
-
 -type rec_with_int_id() :: #{id := integer()}.
 
 -type rec_with_generic_id(A) :: #{id := A}.

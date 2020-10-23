@@ -557,6 +557,22 @@ format_error({reused_typevar, Name}) ->
     io_lib:format("type variable ~tw appears multiple times in type arguments", [Name]);
 format_error(underscore_type) ->
     "_ is not a valid type";
+format_error({singleton_type, Name}) when is_integer(Name) ->
+    io_lib:format("Singleton type ~tw is not allowed use integer() instead", [Name]);
+format_error({singleton_type, Name}) when is_atom(Name) ->
+    io_lib:format("Singleton type ~tw is not allowed use atom() or an enum instead", [Name]);
+format_error(union_type) ->
+    io_lib:format("Union types are not allowed in ErlT", []);
+format_error(binary_type) ->
+    io_lib:format("Only the generic binary() type is allowed for binaries", []);
+format_error(range_type) ->
+    io_lib:format("Range types are not allowed, use integer() instead", []);
+format_error(map_type_any) ->
+    io_lib:format("Generic map() type is not allowed", []);
+format_error(map_type_not_any) ->
+    io_lib:format("Map types are not allowed, use anonymous structs", []);
+format_error(tuple_type) ->
+    io_lib:format("Generic tuple() type is not allowed", []);
 format_error({bad_export_type, _ETs}) ->
     io_lib:format("bad export_type declaration", []);
 format_error({duplicated_export_type, {T, A}}) ->
@@ -1035,6 +1051,8 @@ function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
+    St;
+function_state({attribute, _L, dynamic, _Val}, St) ->
     St;
 function_state({attribute, La, Attr, _Val}, St) ->
     add_error(La, {attribute, Attr}, St);
@@ -1771,7 +1789,7 @@ check_type_imports(_Line, Ts, Is) ->
                     [{T, Mod} | Ets];
                 error ->
                     {N, A} = T,
-                    case erl_internal:is_type(N, A) of
+                    case is_default_type({N, A}) of
                         true ->
                             [{type, T, erlang} | Ets];
                         false ->
@@ -3420,10 +3438,10 @@ check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]}, SeenVars, 
                 Args
             )
     end;
-check_type({integer, _L, _}, SeenVars, St) ->
-    {SeenVars, St};
-check_type({atom, _L, _}, SeenVars, St) ->
-    {SeenVars, St};
+check_type({integer, Line, I}, SeenVars, St) ->
+    {SeenVars, add_error(Line, {singleton_type, I}, St)};
+check_type({atom, Line, A}, SeenVars, St) ->
+    {SeenVars, add_error(Line, {singleton_type, A}, St)};
 check_type({var, L, '_'}, SeenVars, St) ->
     case maps:find('_', SeenVars) of
         {ok, predefined} -> {SeenVars, St};
@@ -3450,38 +3468,20 @@ check_type({type, L, 'fun', [Dom, Range]}, SeenVars, St) ->
             _ -> add_error(L, {type_syntax, 'fun'}, St)
         end,
     check_type({type, nowarn(), product, [Dom, Range]}, SeenVars, St1);
-check_type({type, L, range, [From, To]}, SeenVars, St) ->
-    St1 =
-        case {erl_eval:partial_eval(From), erl_eval:partial_eval(To)} of
-            {{integer, _, X}, {integer, _, Y}} when X < Y -> St;
-            _ -> add_error(L, {type_syntax, range}, St)
-        end,
-    {SeenVars, St1};
-check_type({type, _L, map, any}, SeenVars, St) ->
-    {SeenVars, St};
-check_type({type, _L, map, Pairs}, SeenVars, St) ->
-    lists:foldl(
-        fun(Pair, {AccSeenVars, AccSt}) ->
-            check_type(Pair, AccSeenVars, AccSt)
-        end,
-        {SeenVars, St},
-        Pairs
-    );
+check_type({type, L, range, [_From, _To]}, SeenVars, St) ->
+    {SeenVars, add_error(L, range_type, St)};
+check_type({type, L, map, any}, SeenVars, St) ->
+    {SeenVars, add_error(L, map_type_any, St)};
+check_type({type, L, map, _Pairs}, SeenVars, St) ->
+    {SeenVars, add_error(L, map_type_not_any, St)};
 check_type({type, _L, map_field_assoc, [Dom, Range]}, SeenVars, St) ->
     check_type({type, nowarn(), product, [Dom, Range]}, SeenVars, St);
-check_type({type, _L, tuple, any}, SeenVars, St) ->
-    {SeenVars, St};
-check_type({type, _L, any}, SeenVars, St) ->
-    {SeenVars, St};
-check_type({type, L, binary, [Base, Unit]}, SeenVars, St) ->
-    St1 =
-        case {erl_eval:partial_eval(Base), erl_eval:partial_eval(Unit)} of
-            {{integer, _, BaseVal}, {integer, _, UnitVal}} when BaseVal >= 0, UnitVal >= 0 ->
-                St;
-            _ ->
-                add_error(L, {type_syntax, binary}, St)
-        end,
-    {SeenVars, St1};
+check_type({type, L, tuple, any}, SeenVars, St) ->
+    {SeenVars, add_error(L, tuple_type, St)};
+check_type({type, L, any}, SeenVars, St) ->
+    {SeenVars, add_error(L, any_type, St)};
+check_type({type, L, binary, [_Base, _Unit]}, SeenVars, St) ->
+    {SeenVars, add_error(L, binary_type, St)};
 check_type({type, La, enum, {atom, _, Name}, Variants}, SeenVars, St) ->
     check_enum_types(La, Name, Variants, SeenVars, St);
 check_type({type, _L, open_shape, Fields, Var}, SeenVars, St) ->
@@ -3491,9 +3491,15 @@ check_type({type, _L, closed_shape, Fields}, SeenVars, St) ->
     check_shape_types(Fields, SeenVars, St);
 check_type({type, La, struct, {atom, _, Tag}, Fields}, SeenVars, St) ->
     check_struct_types(La, Tag, Fields, SeenVars, St);
-check_type({type, _L, Tag, Args}, SeenVars, St) when
-    Tag =:= product; Tag =:= union; Tag =:= tuple
-->
+check_type({type, L, union, Args}, SeenVars, St) ->
+    lists:foldl(
+        fun(T, {AccSeenVars, AccSt}) ->
+            check_type(T, AccSeenVars, AccSt)
+        end,
+        {SeenVars, add_error(L, union_type, St)},
+        Args
+    );
+check_type({type, _L, Tag, Args}, SeenVars, St) when Tag =:= product; Tag =:= tuple ->
     lists:foldl(
         fun(T, {AccSeenVars, AccSt}) ->
             check_type(T, AccSeenVars, AccSt)
@@ -3543,8 +3549,6 @@ check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
         {SeenVars, St1},
         Args
     );
-check_type([{typed_record_field, Field, _T} | _], SeenVars, St) ->
-    {SeenVars, add_error(element(2, Field), old_abstract_code, St)};
 check_type(I, SeenVars, St) ->
     io:format("~p~n", [I]),
     case erl_eval:partial_eval(I) of
@@ -3631,8 +3635,8 @@ is_default_type({exception, 0}) ->
     true;
 is_default_type({message, 0}) ->
     true;
-is_default_type({Name, NumberOfTypeVariables}) ->
-    erl_internal:is_type(Name, NumberOfTypeVariables).
+is_default_type({TypeName, Arity}) ->
+    erlt_parse:is_default_type(TypeName, Arity).
 
 is_newly_introduced_builtin_type({Name, _}) when is_atom(Name) -> false.
 

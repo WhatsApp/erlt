@@ -4,10 +4,6 @@
 
 -export([f/0, g/0, p/0, q/1, r/2, s/2]).
 
--opaque maybe(T) :: {some, T} | none.
-
--export_type([maybe/1]).
-
 -type possibly(T) :: {'$#enum_mod01:possibly.some', T} |
                      {'$#enum_mod01:possibly.none'}.
 
@@ -15,11 +11,7 @@
 
 -type pair(T1, T2) :: {'$#enum_mod01:pair.p', T1, T2}.
 
--spec f() -> maybe(any()).
-
 f() -> none.
-
--spec g() -> maybe(boolean()).
 
 g() -> {some, true}.
 

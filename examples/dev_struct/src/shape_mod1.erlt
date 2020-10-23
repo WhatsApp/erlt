@@ -3,7 +3,7 @@
 -export([test/0, test_in_lc/1]).
 
 test() ->
-    [test(X) || X <- [#(),
+    [{test(X), test2(X)} || X <- [#(),
                       #(a=1, b=2),
                       #(a=1, b=2)#(),
                       #(a=1)#(b=2)#(),
@@ -19,17 +19,16 @@ test() ->
     {x, {25,36}} = access_map(#(id=x, location={25,36})),
     ok = access_map2(#(inner1=#(inner2=ok))).
 
--spec test(#(a::1, b::#(c::2, _), _)) -> really_ok;
-          (#(_)) -> ok;
-          (any()) -> not_ok.
+-spec test(#(a::integer(), b::#(c::integer(), _), _)) -> atom().
 
 test(A) when A =:= #(a=1,b=#(c=2)) -> closed_ok;
 test(#(a=1,b=#(c=2))) -> open_ok;
 test(A) when A#(b) =:= 2 -> ok;
-test(A) when A =:= #(a=1)#(b=2) -> ok;
-test(#(a=1)) -> ok;
-test(#()) -> ok;
-test(_) -> not_ok.
+test(A) when A =:= #(a=1)#(b=#(c=2)) -> ok;
+test(#(a=1)) -> ok.
+
+-spec test2(#(_)) -> atom().
+test2(#()) -> ok.
 
 test_in_lc(List) ->
     [Id || #(id = Id) <- List ].

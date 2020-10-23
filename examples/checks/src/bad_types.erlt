@@ -1,0 +1,31 @@
+
+
+-module(bad_types).
+
+-export([test/0]).
+
+-type bin() :: <<_:1>>.
+
+-type bin2() :: <<>>.
+
+-type range() :: 1..3.
+
+-type s_int() :: 0.
+
+-type s_atom() :: hello.
+
+-type map_type() :: map().
+
+-type tuple_type() :: tuple().
+
+-type union_type() :: atom() | integer().
+
+-type param_type1(A) :: integer().
+
+-type unparam_type1() :: A.
+
+-type unparam_type2() :: _.
+
+-spec test() -> bin() | bin2() | range() | s_int() | s_atom() | 
+    map_type() | tuple_type() | union_type() | param_type1(integer()) | unparam_type1() | unparam_type2() | any_type().
+test() -> {0,0}.

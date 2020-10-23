@@ -31,9 +31,13 @@
     comp1/2, comp2/2, comp3/2, comp4/2, comp5/2, comp6/2, comp7/2, comp8/2,
     guard1/2, guard2/3,
     p_match_tuple0/1, p_match_tuple1/1, p_match_invoke/0,
-    any_id/1, atom_id/1, binary_id/1, bitstring_id/1, byte_id/1, float_id/1, identifier_id/1,
-    iodata_id/1, iolist_id/1, map_id/1, none_id/1, noreturn_id/1,
-    number_id/1, pid_id/1, port_id/1, reference_id/1, term_id/1, timeout_id/1, ints_id/1,
+    % any_id/1, 
+    atom_id/1, binary_id/1, bitstring_id/1,
+    % byte_id/1, 
+    float_id/1, 
+    % identifier_id/1, iodata_id/1, iolist_id/1, map_id/1, none_id/1, noreturn_id/1, number_id/1,
+    pid_id/1, port_id/1, reference_id/1, term_id/1, 
+    %timeout_id/1, ints_id/1,
     mk_my_pair/2
 ]).
 
@@ -63,7 +67,7 @@ mk_float() ->
 mk_string() ->
     "Erlang String".
 
--spec mk_char() -> char().
+-spec mk_char() -> number().
 mk_char() ->
     $c.
 
@@ -348,8 +352,8 @@ p_match_invoke() ->
     p_match_tuple0({}),
     p_match_tuple1({{}}).
 
--spec any_id(any()) -> any().
-any_id(A) -> A.
+% -spec any_id(any()) -> any()().
+% any_id(A) -> A.
 
 -spec atom_id(atom()) -> atom().
 atom_id(A) -> A.
@@ -360,29 +364,29 @@ binary_id(A) -> A.
 -spec bitstring_id(bitstring()) -> bitstring().
 bitstring_id(A) -> A.
 
--spec byte_id(byte()) -> byte().
-byte_id(A) -> A.
+% -spec byte_id(byte()) -> byte().
+% byte_id(A) -> A.
 
 -spec float_id(float()) -> float().
 float_id(X) -> X.
 
--spec identifier_id(identifier()) -> identifier().
-identifier_id(A) -> A.
+% -spec identifier_id(identifier()) -> identifier().
+% identifier_id(A) -> A.
 
--spec iodata_id(iodata()) -> iodata().
-iodata_id(A) -> A.
+% -spec iodata_id(iodata()) -> iodata().
+% iodata_id(A) -> A.
 
--spec iolist_id(iolist()) -> iolist().
-iolist_id(A) -> A.
+% -spec iolist_id(iolist()) -> iolist().
+% iolist_id(A) -> A.
 
--spec map_id(#{A => B}) -> #{A => B}.
+-spec map_id(#(_)) -> #(_).
 map_id(M) -> M.
 
--spec none_id(none()) -> none().
-none_id(A) -> A.
+% -spec none_id(none()) -> none().
+% none_id(A) -> A.
 
--spec noreturn_id(no_return()) -> no_return().
-noreturn_id(A) -> none_id(A).
+% -spec noreturn_id(no_return()) -> no_return().
+% noreturn_id(A) -> none_id(A).
 
 -spec number_id(number()) -> number().
 number_id(A) -> A.
@@ -399,11 +403,11 @@ reference_id(A) -> A.
 -spec term_id(term()) -> term().
 term_id(A) -> A.
 
--spec timeout_id(timeout()) -> timeout().
-timeout_id(A) -> A.
+% -spec timeout_id(timeout()) -> timeout().
+% timeout_id(A) -> A.
 
--spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
-ints_id(X) -> X.
+% -spec ints_id({neg_integer(), non_neg_integer(), pos_integer()}) -> {neg_integer(), non_neg_integer(), pos_integer()}.
+% ints_id(X) -> X.
 
 -type my_pair2(A) :: mod01:my_pair(A, A).
 -type my_pair(A, B) :: {A, B}.
