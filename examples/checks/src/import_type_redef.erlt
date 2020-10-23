@@ -5,6 +5,8 @@
 
 -import_type(bar, [f/2]).
 
+-import_type(baz, [a/0, a/1]).
+
 -export([f/0]).
 
 -type f() :: integer().
