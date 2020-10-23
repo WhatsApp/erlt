@@ -29,4 +29,6 @@ let usesWith =
         , `with` = Some `with`
         }
 
-in  { Actions, run, checkout, usesWith }
+let DEFAULT_RETENTION_PERIOD = "8"
+
+in  { Actions, run, checkout, usesWith, DEFAULT_RETENTION_PERIOD }
