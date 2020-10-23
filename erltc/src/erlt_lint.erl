@@ -1052,8 +1052,6 @@ function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
     St;
-function_state({attribute, _L, dynamic, _Val}, St) ->
-    St;
 function_state({attribute, La, Attr, _Val}, St) ->
     add_error(La, {attribute, Attr}, St);
 function_state({F, L, N, A, Cs}, St) when ?IS_FUNCTION(F) ->
