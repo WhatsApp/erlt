@@ -152,8 +152,8 @@ class AstChecks(val context: Context) {
       }
     }
     var fieldNames = Set.empty[String]
-    for (f <- structDef.fields) {
-      if (fieldNames(f.label)) {
+    for (f @ LblFieldDecl(label, _, _) <- structDef.fields) {
+      if (fieldNames(label)) {
         throw new DuplicateFields(f.r, List(f.label))
       }
       fieldNames = fieldNames + f.label

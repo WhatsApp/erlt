@@ -31,7 +31,11 @@ object AnnAst {
     val r: Doc.Range
   }
 
-  case class Field[A](label: String, value: A)
+  sealed trait Field[A] {
+    val value: A
+  }
+  case class LblField[A](label: String, value: A) extends Field[A]
+  case class PosField[A](value: A) extends Field[A]
 
   sealed trait Exp extends Node {
     val typ: Type
@@ -85,9 +89,9 @@ object AnnAst {
   case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val r: Doc.Range) extends Exp
   case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
 
-  case class ShapeCreateExp(fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeCreateExp(fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
-  case class ShapeUpdateExp(exp: Exp, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
   case class EnumExp(enum: String, ctr: String, args: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type) extends Node {
@@ -117,7 +121,7 @@ object AnnAst {
   case class TuplePat(elements: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
   case class NilPat()(val r: Doc.Range)(val typ: Type) extends Pat
   case class BinPat(elements: List[BinElementPat])(val r: Doc.Range)(val typ: Type) extends Pat
-  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class ShapePat(fields: List[LblField[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
   case class ConsPat(head: Pat, tail: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
   case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
   case class EnumPat(enum: String, ctr: String, args: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat

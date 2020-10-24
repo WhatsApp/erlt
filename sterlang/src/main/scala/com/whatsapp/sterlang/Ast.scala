@@ -150,8 +150,8 @@ object Ast {
   case class WildTypeVar()(val r: Doc.Range) extends Type
   case class TypeVar(name: String)(val r: Doc.Range) extends Type
   case class TupleType(params: List[Type])(val r: Doc.Range) extends Type
-  case class ShapeType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
-  case class OpenShapeType(fields: List[Field[Type]], extType: ShapeExtType)(val r: Doc.Range) extends Type
+  case class ShapeType(fields: List[LblField[Type]])(val r: Doc.Range) extends Type
+  case class OpenShapeType(fields: List[LblField[Type]], extType: ShapeExtType)(val r: Doc.Range) extends Type
   case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
   case class ListType(elemType: Type)(val r: Doc.Range) extends Type
   case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type
@@ -161,7 +161,7 @@ object Ast {
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
-  case class StructDef(name: String, params: List[TypeVar], fields: List[StructField], kind: StructKind)(
+  case class StructDef(name: String, params: List[TypeVar], fields: List[FieldDecl], kind: StructKind)(
       val r: Doc.Range
   )
   case class EnumCtr(name: String, argTypes: List[Type])(val r: Doc.Range)
@@ -177,9 +177,9 @@ object Ast {
   case class StringExp(s: String)(val r: Doc.Range) extends Exp
   case class VarExp(v: VarName)(val r: Doc.Range) extends Exp
 
-  case class ShapeCreateExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class ShapeCreateExp(fields: List[LblField[Exp]])(val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
-  case class ShapeUpdateExp(exp: Exp, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[LblField[Exp]])(val r: Doc.Range) extends Exp
 
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
   case class EnumExp(enumName: Name, ctr: String, args: List[Exp])(val r: Doc.Range) extends Exp
@@ -206,8 +206,20 @@ object Ast {
   case class ValDef(pat: Pat, exp: Exp)
   case class Fun(name: LocalFunName, clauses: List[Clause])(val r: Doc.Range)
 
-  case class Field[A](label: String, value: A)(val r: Doc.Range)
-  case class StructField(label: String, tp: Type, default: Option[Exp])(val r: Doc.Range)
+  sealed trait Field[A] {
+    val value: A
+    val r: Doc.Range
+  }
+  case class LblField[A](label: String, value: A)(val r: Doc.Range) extends Field[A]
+  case class PosField[A](value: A)(val r: Doc.Range) extends Field[A]
+
+  sealed trait FieldDecl {
+    val tp: Type
+    val r: Doc.Range
+  }
+  case class LblFieldDecl(label: String, tp: Type, default: Option[Exp])(val r: Doc.Range) extends FieldDecl
+  case class PosFieldDecl(tp: Type)(val r: Doc.Range) extends FieldDecl
+
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)
@@ -236,7 +248,7 @@ object Ast {
   case class VarPat(v: String)(val r: Doc.Range) extends Pat
   case class PinnedVarPat(v: String)(val r: Doc.Range) extends Pat
   case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
-  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class ShapePat(fields: List[LblField[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
   case class EnumPat(enumName: Name, ctr: String, pats: List[Pat])(val r: Doc.Range) extends Pat
   case class NilPat()(val r: Doc.Range) extends Pat

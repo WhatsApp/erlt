@@ -49,3 +49,7 @@ val X: A
 val X: A
 val Y: A
 val mk_wrapped_int/0: fun(() -> wrapped_int())
+val mk_mixed1/0: fun(() -> mixed_struct1(number()))
+val mk_mixed2/0: fun(() -> mixed_struct2(list(number()), number()))
+val match_mixed1/1: fun((mixed_struct1(number())) -> boolean())
+val match_mixed2/1: fun((mixed_struct2(list(number()), number())) -> boolean())

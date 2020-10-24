@@ -48,13 +48,13 @@ class Expander(
       case Ast.TupleType(params) =>
         MT.TupleType(params.map(mkType(_, sub)))
       case Ast.ShapeType(fields) =>
-        val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
+        val tFields = fields.map { case Ast.LblField(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero: T.RowType = T.RowEmptyType
         val rowType = tFields.foldRight(zero)(T.RowFieldType)
         MT.ShapeType(rowType)
       case Ast.OpenShapeType(fields, extType) =>
         val lbls = fields.map(_.label).toSet
-        val tFields = fields.map { case Ast.Field(n, tp) => T.Field(n, mkType(tp, sub)) }
+        val tFields = fields.map { case Ast.LblField(n, tp) => T.Field(n, mkType(tp, sub)) }
         val zero = extType match {
           case Left(Ast.WildTypeVar()) =>
             T.RowVarType(rtGen(lbls))
@@ -82,13 +82,13 @@ class Expander(
       case Ast.TupleType(params) =>
         MST.TupleType(params.map(mkSType(_, sub)))
       case Ast.ShapeType(fields) =>
-        val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
+        val tFields = fields.map { case Ast.LblField(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero: ST.RowType = ST.RowEmptyType
         val rowType = tFields.foldRight(zero)(ST.RowFieldType)
         MST.RecordType(rowType)
       case Ast.OpenShapeType(fields, extType) =>
         val lbls = fields.map(_.label).toSet
-        val tFields = fields.map { case Ast.Field(n, tp) => ST.Field(n, mkSType(tp, sub)) }
+        val tFields = fields.map { case Ast.LblField(n, tp) => ST.Field(n, mkSType(tp, sub)) }
         val zero = extType match {
           case Left(Ast.WildTypeVar()) =>
             ST.RowVarType(rtGen(lbls))

@@ -105,16 +105,18 @@ object FormsConvert {
         (name, arity.intValue)
     }
 
-  def structFieldDecl(term: ETerm): StructFieldDecl =
+  def structFieldDecl(term: ETerm): FieldDecl =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, fieldNameLit, dValue, eType)) =>
+      case ETuple(List(EAtom("field_definition"), anno, EAtom("positional"), _, eType)) =>
+        PosFieldDecl(r(anno), TypesConvert.convertType(eType))
+      case ETuple(List(EAtom("field_definition"), anno, fieldNameLit, dValue, eType)) =>
         val defaultValue = dValue match {
           case EAtom("undefined") =>
             None
           case expr =>
             Some(ExprsConvert.convertExp(expr))
         }
-        StructFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
+        LblFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
     }
 
   def enumVariantDecl(term: ETerm): EnumVariantDecl =

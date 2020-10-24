@@ -27,6 +27,9 @@ test(X) -> X.
 
 -struct wrapped_int() :: (int_value = 0 :: integer()).
 
+-struct mixed_struct1(A) :: (A, failover :: A).
+-struct mixed_struct2(A, B) :: (A, failover :: B).
+
 mk_user(Name, Id) ->
     #user{name = Name, id = Id}.
 
@@ -86,3 +89,15 @@ pat_box2(#box2{value1 = X, value2 = Y}) -> Y.
 
 mk_wrapped_int() ->
     #wrapped_int{}.
+
+mk_mixed1() ->
+    #mixed_struct1{1, failover = 2}.
+
+mk_mixed2() ->
+    #mixed_struct2{[1, 2], failover = 2}.
+
+match_mixed1(#mixed_struct1{1, failover = 2}) ->
+    true.
+
+match_mixed2(#mixed_struct2{[1, 2], failover = 2}) ->
+    true.

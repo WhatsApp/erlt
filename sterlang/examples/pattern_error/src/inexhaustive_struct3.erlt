@@ -12,15 +12,11 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(core).
--export_type([mixed/1, option/1, tuple1/1]).
--enum option(A) :: (none, some{A}).
--opaque tuple1(A) :: {A}.
+-module(inexhaustive_struct3).
+-export([test1/1]).
 
--struct mixed(A) :: (A, second :: A).
+-struct r() :: (boolean(), a :: boolean(), b :: boolean()).
 
-getOrElse(Opt, Alt) ->
-  case Opt of
-      option.some{X} -> X;
-      option.none -> Alt
-  end.
+-spec test1(r()) -> {}.
+test1(#r{false}) -> {};
+test1(#r{true, b = false}) -> {}.

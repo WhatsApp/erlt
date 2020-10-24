@@ -254,11 +254,13 @@ object ExprsConvert {
     TypeSpecifier(spec)
   }
 
-  def structField(term: ETerm): StructField = {
-    val ETuple(List(EAtom("struct_field"), anno, eName, exp)) = term
-    val ETuple(List(EAtom("atom"), _, EAtom(name))) = eName
-    StructField(r(anno), name, convertExp(exp))
-  }
+  def structField(term: ETerm): Field =
+    term match {
+      case ETuple(List(EAtom("struct_field"), anno, EAtom("undefined"), exp)) =>
+        PosField(r(anno), convertExp(exp))
+      case ETuple(List(EAtom("struct_field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
+        LblField(r(anno), name, convertExp(exp))
+    }
 
   def convertAssoc(term: ETerm): ShapeField =
     term match {

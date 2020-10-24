@@ -41,11 +41,10 @@ object Exprs {
   case class Bin(r: Doc.Range, elems: List[BinElement]) extends Expr
   case class BinaryOp(r: Doc.Range, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(r: Doc.Range, op: String, exp1: Expr) extends Expr
-  case class LocalStructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
-  case class RemoteStructCreate(r: Doc.Range, module: String, structName: String, fields: List[StructField])
-      extends Expr
-  case class LocalStructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[StructField]) extends Expr
-  case class RemoteStructUpdate(r: Doc.Range, exp: Expr, module: String, structName: String, fields: List[StructField])
+  case class LocalStructCreate(r: Doc.Range, structName: String, fields: List[Field]) extends Expr
+  case class RemoteStructCreate(r: Doc.Range, module: String, structName: String, fields: List[Field]) extends Expr
+  case class LocalStructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[Field]) extends Expr
+  case class RemoteStructUpdate(r: Doc.Range, exp: Expr, module: String, structName: String, fields: List[Field])
       extends Expr
   case class LocalStructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
   case class RemoteStructSelect(r: Doc.Range, struct: Expr, module: String, structName: String, fieldName: String)
@@ -80,7 +79,10 @@ object Exprs {
   case class TypeSpecifierList(specifiers: List[TypeSpecifier]) extends TypeSpecifiers
   case class TypeSpecifier(id: String)
 
-  case class StructField(r: Doc.Range, fieldName: String, value: Expr)
+  sealed trait Field
+  case class LblField(r: Doc.Range, fieldName: String, value: Expr) extends Field
+  case class PosField(r: Doc.Range, value: Expr) extends Field
+
   case class ShapeField(r: Doc.Range, k: Expr, v: Expr)
 
   sealed trait Qualifier

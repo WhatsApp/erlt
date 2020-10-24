@@ -119,8 +119,9 @@ field_defs -> '$empty'                    : [].
 field_defs -> field_def                   : ['$1'].
 field_defs -> field_def ',' field_defs    : ['$1'|'$3'].
 
-field_def -> atom '::' top_type           : {struct_field, anno('$1', '$3'), '$1', 'undefined', '$3'}.
-field_def -> atom '=' expr '::' type      : {struct_field, anno('$1', '$5'), '$1', '$3', '$5'}.
+field_def -> type                         : {field_definition, anno('$1'), 'positional', 'undefined', '$1'}.
+field_def -> atom '::' type               : {field_definition, anno('$1', '$3'), '$1', 'undefined', '$3'}.
+field_def -> atom '=' expr '::' type      : {field_definition, anno('$1', '$5'), '$1', '$3', '$5'}.
 
 top_types -> top_type                     : ['$1'].
 top_types -> top_type ',' top_types       : ['$1'|'$3'].
@@ -370,6 +371,7 @@ struct_fields -> struct_field : ['$1'].
 struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
 
 struct_field -> atom '=' expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
+struct_field ->          expr : {struct_field, anno('$1'), 'undefined', '$1'}.
 
 struct_tuple_pat -> '{' '}'                   : {[],   anno('$1', '$2')}.
 struct_tuple_pat -> '{' struct_fields_pat '}' : {'$2', anno('$1', '$3')}.
@@ -378,6 +380,7 @@ struct_fields_pat -> struct_field_pat : ['$1'].
 struct_fields_pat -> struct_field_pat ',' struct_fields_pat : ['$1' | '$3'].
 
 struct_field_pat -> atom '=' pat_expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
+struct_field_pat ->          pat_expr : {struct_field, anno('$1'), 'undefined', '$1'}.
 
 function_call -> remote_id argument_list :
 	{call, anno('$1','$2'), '$1', element(1, '$2')}.

@@ -337,8 +337,10 @@ object AstUtil {
       case StructDef(name, params, fields, kind) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val fields1 = fields.map {
-          case StructField(label, tp, default) =>
-            StructField(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
+          case LblFieldDecl(label, tp, default) =>
+            LblFieldDecl(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
+          case PosFieldDecl(tp) =>
+            PosFieldDecl(globalizeType(module, names)(tp))(Doc.ZRange)
         }
         StructDef(name1, params, fields1, kind)(Doc.ZRange)
     }
@@ -371,10 +373,10 @@ object AstUtil {
       case TupleType(params) =>
         TupleType(params.map(globalizeType(module, names)))(tp.r)
       case ShapeType(fields) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        val fields1 = fields.map { f => LblField(f.label, globalizeType(module, names)(f.value))(f.r) }
         ShapeType(fields1)(tp.r)
       case OpenShapeType(fields, rt) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        val fields1 = fields.map { f => LblField(f.label, globalizeType(module, names)(f.value))(f.r) }
         OpenShapeType(fields1, rt)(tp.r)
       case FunType(argTypes, resType) =>
         FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.r)
@@ -409,7 +411,12 @@ object AstUtil {
       program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.r) }
     val structDefs1 =
       program.structDefs.map { structDef =>
-        val nFields = structDef.fields.map(f => StructField(f.label, normalizeType(program)(f.tp), f.default)(f.r))
+        val nFields = structDef.fields.map {
+          case f @ LblFieldDecl(label, tp, default) =>
+            LblFieldDecl(label, normalizeType(program)(tp), default)(f.r)
+          case f @ PosFieldDecl(tp) =>
+            PosFieldDecl(normalizeType(program)(tp))(f.r)
+        }
         structDef.copy(fields = nFields)(structDef.r)
       }
     val specs1 =
@@ -429,9 +436,9 @@ object AstUtil {
       case TupleType(ts) =>
         TupleType(ts.map(normalizeType(program)))(tp.r)
       case ShapeType(fields) =>
-        ShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
+        ShapeType(fields.map(f => LblField(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
       case OpenShapeType(fields, rt) =>
-        OpenShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
+        OpenShapeType(fields.map(f => LblField(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
       case FunType(args, res) =>
         FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.r)
       case ListType(et) =>

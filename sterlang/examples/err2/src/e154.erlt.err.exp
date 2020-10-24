@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------- examples/err2/src/e154.erlt:20:5
+Got 0 positional field(s) instead of 1
+ 20|     #mixed_struct{failover = 2}.
+...|     ~~~~~~~~~~~~~~~~~~~~~~~~~~~

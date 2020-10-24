@@ -63,6 +63,8 @@ class UnknownStructField(range: Doc.Range, structName: String, fieldName: String
     extends RangedError(range, s"Unknown field #$structName.$fieldName", None)
 class UnInitializedStructField(range: Doc.Range, structName: String, fieldName: String)
     extends RangedError(range, s"Uninitialized field #$structName.$fieldName", None)
+class PosFieldMismatch(range: Doc.Range, actual: Int, expect: Int)
+    extends RangedError(range, s"Got $actual positional field(s) instead of $expect", None)
 class UnconditionalExceptionUpdate(range: Doc.Range, structName: String)
     extends RangedError(range, s"Unconditional update. $structName is exception()", None)
 class UnconditionalMessageUpdate(range: Doc.Range, structName: String)

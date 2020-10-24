@@ -154,13 +154,26 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
           allFieldNames.map(f => patternFieldsMap.get(f).map(simplify).getOrElse(Wildcard)),
         )
       case AnnAst.StructPat(name, patternFields) =>
-        val patternFieldsMap = patternFields.map { f => (f.label, f.value) }.toMap
+        val posFields = patternFields.collect { case pf: AnnAst.PosField[AnnAst.Pat] => pf }
+        val lblFields = patternFields.collect { case lf: AnnAst.LblField[AnnAst.Pat] => lf }
+
+        val lblFieldsMap = lblFields.map { f => (f.label, f.value) }.toMap
+        val posFieldsMap = posFields.zipWithIndex.map { case (f, i) => (s"_$i", f.value) }.toMap
+        val allFieldsMap = lblFieldsMap ++ posFieldsMap
+
         val structDef = program.structDefs.find(_.name == name).get
-        val allFieldNames = structDef.fields.map(_.label).sorted
+        val posFieldDecls = structDef.fields.collect { case pf: Ast.PosFieldDecl => pf }
+        val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
+
+        val posFieldNames = posFieldDecls.indices.map(i => s"_$i")
+        val lblFieldNames = lblFieldDecls.map(_.label)
+
+        val allFieldNames = (lblFieldNames ++ posFieldNames).sorted
+
         val ctr = if (structDef.kind == Ast.StrStruct) Struct else OpenStruct
         CtrApp(
           ctr(name, allFieldNames),
-          allFieldNames.map(f => patternFieldsMap.get(f).map(simplify).getOrElse(Wildcard)),
+          allFieldNames.map(f => allFieldsMap.get(f).map(simplify).getOrElse(Wildcard)),
         )
       case _: AnnAst.BinPat =>
         CtrApp(AbstractCtr(pattern.r), Nil)

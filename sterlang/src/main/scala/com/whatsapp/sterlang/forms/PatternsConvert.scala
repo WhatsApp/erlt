@@ -18,7 +18,6 @@ package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.etf._
 
-import com.whatsapp.sterlang.forms.Exprs._
 import com.whatsapp.sterlang.forms.Patterns._
 
 object PatternsConvert {
@@ -110,11 +109,12 @@ object PatternsConvert {
         )
     }
 
-  def structFieldPattern(term: ETerm): StructFieldPattern =
+  def structFieldPattern(term: ETerm): FieldPattern =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, eName, ePat)) =>
-        val AtomLiteral(_, name) = ExprsConvert.literal(eName)
-        StructFieldPattern(r(anno), name, convertPat(ePat))
+      case ETuple(List(EAtom("struct_field"), anno, EAtom("undefined"), exp)) =>
+        PosFieldPattern(r(anno), convertPat(exp))
+      case ETuple(List(EAtom("struct_field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
+        LblFieldPattern(r(anno), name, convertPat(exp))
     }
 
   def convertShapeFieldPattern(term: ETerm): ShapeFieldPattern =

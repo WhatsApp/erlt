@@ -46,7 +46,7 @@ object Forms {
       r: Doc.Range,
       name: String,
       params: List[TypeVariable],
-      fields: List[StructFieldDecl],
+      fields: List[FieldDecl],
       kind: StructKind,
   ) extends Form
   case class EnumDecl(
@@ -67,6 +67,9 @@ object Forms {
   case object EOF extends Form
   case class Error(pos: Doc.Pos) extends Form
 
-  case class StructFieldDecl(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type)
+  sealed trait FieldDecl
+  case class LblFieldDecl(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type) extends FieldDecl
+  case class PosFieldDecl(r: Doc.Range, tp: Type) extends FieldDecl
+
   case class EnumVariantDecl(r: Doc.Range, name: String, argTypes: List[Type])
 }

@@ -18,3 +18,7 @@
 -spec test_box2(box2(A, A)) -> boolean().
 -spec pat_box2(box2(A, A)) -> A.
 -spec mk_wrapped_int() -> wrapped_int().
+-spec mk_mixed1() -> mixed_struct1(number()).
+-spec mk_mixed2() -> mixed_struct2(list(number()), number()).
+-spec match_mixed1(mixed_struct1(number())) -> boolean().
+-spec match_mixed2(mixed_struct2(list(number()), number())) -> boolean().

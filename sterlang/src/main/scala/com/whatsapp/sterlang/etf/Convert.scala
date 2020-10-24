@@ -89,10 +89,12 @@ object Convert {
       case Forms.MsgStruct => Ast.MsgStruct
     }
 
-  private def convertStructFieldDecl(structFieldDecl: Forms.StructFieldDecl): Ast.StructField =
+  private def convertStructFieldDecl(structFieldDecl: Forms.FieldDecl): Ast.FieldDecl =
     structFieldDecl match {
-      case Forms.StructFieldDecl(p, name, default, tp) =>
-        Ast.StructField(name, convertType(tp), default.map(convertExpr))(p)
+      case Forms.LblFieldDecl(p, name, default, tp) =>
+        Ast.LblFieldDecl(name, convertType(tp), default.map(convertExpr))(p)
+      case Forms.PosFieldDecl(p, tp) =>
+        Ast.PosFieldDecl(convertType(tp))(p)
     }
 
   private def convertFunClause(funClause: Exprs.Clause): Ast.Clause =
@@ -171,7 +173,7 @@ object Convert {
       case Patterns.ShapePattern(p, fields) =>
         val pats = fields map { elem =>
           val Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) = elem.key
-          Ast.Field[Ast.Pat](label, convertPattern(elem.value))(elem.r)
+          Ast.LblField[Ast.Pat](label, convertPattern(elem.value))(elem.r)
         }
         Ast.ShapePat(pats)(p)
       case Patterns.BinPattern(p, elems) =>
@@ -328,16 +330,26 @@ object Convert {
         specifiers.flatMap(s => typeSpecifiersMapping.get(s.id)).headOption
     }
 
-  private def convertShapeField(assoc: Exprs.ShapeField): Ast.Field[Ast.Exp] = {
+  private def convertShapeField(assoc: Exprs.ShapeField): Ast.LblField[Ast.Exp] = {
     val Exprs.ShapeField(p, Exprs.AtomLiteral(_, label), e) = assoc
-    Ast.Field(label, convertExpr(e))(p)
+    Ast.LblField(label, convertExpr(e))(p)
   }
 
-  private def convertStructField(field: Exprs.StructField): Ast.Field[Ast.Exp] =
-    Ast.Field(field.fieldName, convertExpr(field.value))(field.r)
+  private def convertStructField(field: Exprs.Field): Ast.Field[Ast.Exp] =
+    field match {
+      case Exprs.LblField(r, fieldName, value) =>
+        Ast.LblField(fieldName, convertExpr(value))(r)
+      case Exprs.PosField(r, value) =>
+        Ast.PosField(convertExpr(value))(r)
+    }
 
-  private def convertStructFieldPattern(field: Patterns.StructFieldPattern): Ast.Field[Ast.Pat] =
-    Ast.Field(field.fieldName, convertPattern(field.pat))(field.r)
+  private def convertStructFieldPattern(field: Patterns.FieldPattern): Ast.Field[Ast.Pat] =
+    field match {
+      case Patterns.LblFieldPattern(r, fieldName, value) =>
+        Ast.LblField(fieldName, convertPattern(value))(r)
+      case Patterns.PosFieldPattern(r, value) =>
+        Ast.PosField(convertPattern(value))(r)
+    }
 
   private def convertType(tp: Types.Type): Ast.Type =
     tp match {
@@ -348,7 +360,7 @@ object Convert {
       case Types.FunType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
       case Types.Shape(p, fieldTypes) =>
-        Ast.ShapeType(fieldTypes.map(convertKeyValueType))(p)
+        Ast.ShapeType(fieldTypes.map(converShapeFieldType))(p)
       case Types.OpenShape(p, fieldType, extType) =>
         val eType = extType match {
           case Types.TypeVariable(p, "_") =>
@@ -356,7 +368,7 @@ object Convert {
           case Types.TypeVariable(p, v) =>
             Right(Ast.TypeVar(v)(p))
         }
-        Ast.OpenShapeType(fieldType.map(convertKeyValueType), eType)(p)
+        Ast.OpenShapeType(fieldType.map(converShapeFieldType), eType)(p)
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
@@ -384,8 +396,8 @@ object Convert {
     Ast.EnumCtr(name, params.map(convertType))(p)
   }
 
-  private def convertKeyValueType(assoc: Types.ShapeField): Ast.Field[Ast.Type] = {
+  private def converShapeFieldType(assoc: Types.ShapeField): Ast.LblField[Ast.Type] = {
     val Types.ShapeField(p, field, v) = assoc
-    Ast.Field(field, convertType(v))(p)
+    Ast.LblField(field, convertType(v))(p)
   }
 }
