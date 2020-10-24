@@ -82,7 +82,7 @@ The tests for erltc come in these two flavors:
 
 ### stErlang tests
 
-    cd sterlang; sbt assembly
+    cd sterlang; sbt test
 
 ## Development
 
