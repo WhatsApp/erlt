@@ -12,3 +12,5 @@
 -spec first(pair(A, B)) -> A.
 -spec second(pair(A, B)) -> B.
 -spec call_this_mod(pair(A, B)) -> pair(A, B).
+-spec box_ast_pair(number(), number(), list(A)) -> box1({ast(B), ast(A)}).
+-spec un_box_ast_pair(box1({ast(A), ast(B)})) -> #( l :: list(B), n :: number(), p :: number() ).

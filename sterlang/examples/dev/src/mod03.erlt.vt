@@ -30,3 +30,12 @@ val call_this_mod/1: fun((pair(A, B)) -> pair(A, B))
 val P: pair(A, B)
 val A: A
 val B: B
+val box_ast_pair/3: fun((number(), number(), list(B)) -> box1({ast(A), ast(B)}))
+val P: number()
+val N: number()
+val L: list(B)
+val un_box_ast_pair/1: fun((box1({ast(A), ast(B)})) -> #( l :: list(B), n :: number(), p :: number() ))
+val P: number()
+val N: number()
+val P: number()
+val L: list(B)

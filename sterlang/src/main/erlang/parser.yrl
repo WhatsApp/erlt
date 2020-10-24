@@ -31,13 +31,13 @@ expr expr_max
 pat_expr pat_expr_max shape_pat_expr struct_pat_expr enum_pat_expr
 tuple_pat_expr list_pat_expr tail_pat_expr binary_pat_expr bin_pat_elements
 bin_pat_element bit_pat_expr shape_tuple_pat shape_fields_pat shape_field_pat
-struct_tuple_pat struct_fields_pat struct_field_pat
+struct_tuple_pat fields_pat field_pat
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
 tuple enum_expr
-struct_expr struct_tuple struct_field struct_fields struct_name
+struct_expr struct_tuple field fields struct_name
 shape_expr shape_tuple shape_field shape_fields
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses
@@ -143,7 +143,7 @@ type -> '{' top_types '}'                     : {type, anno('$1','$3'), tuple, '
 type -> 'fun' '(' fun_type ')'                : '$3'.
 
 enum_variant -> atom                          : {type, anno('$1'), enum, '$1', []}.
-enum_variant -> atom '{' top_types '}'        : {type, anno('$1', '$4'), enum, '$1', '$3'}.
+enum_variant -> atom '{' field_defs '}'       : {type, anno('$1', '$4'), enum, '$1', '$3'}.
 
 enum_variants -> enum_variant                   : ['$1'].
 enum_variants -> enum_variant ',' enum_variants : ['$1'|'$3'].
@@ -232,11 +232,11 @@ pat_expr_max -> '(' pat_expr ')' : '$2'.
 
 enum_pat_expr -> atom '.' atom :
     {enum, anno('$1','$3'), '$1', '$3', []}.
-enum_pat_expr -> atom '.' atom '{' pat_exprs '}' :
+enum_pat_expr -> atom '.' atom '{' fields_pat '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 enum_pat_expr -> remote_id '.' atom :
     {enum, anno('$1','$3'), '$1', '$3', []}.
-enum_pat_expr -> remote_id '.' atom '{' pat_exprs '}' :
+enum_pat_expr -> remote_id '.' atom '{' fields_pat '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
 shape_pat_expr -> '#' shape_tuple_pat :
@@ -320,11 +320,11 @@ tuple -> '{' exprs '}' : {tuple,anno('$1','$3'),'$2'}.
 %% This is called from expr
 enum_expr -> atom '.' atom :
     {enum, anno('$1','$3'), '$1', '$3', []}.
-enum_expr -> atom '.' atom '{' exprs '}' :
+enum_expr -> atom '.' atom '{' fields '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 enum_expr -> remote_id '.' atom :
     {enum, anno('$1','$3'), '$1', '$3', []}.
-enum_expr -> remote_id '.' atom '{' exprs '}' :
+enum_expr -> remote_id '.' atom '{' fields '}' :
     {enum, anno('$1','$6'), '$1', '$3', '$5'}.
 
 shape_expr -> '#' shape_tuple :
@@ -364,23 +364,23 @@ struct_expr -> struct_expr '#' struct_name struct_tuple :
 struct_name -> atom : element(3, '$1').
 struct_name -> atom ':' atom : {remote, anno('$1', '$3'), '$1', '$3'}.
 
-struct_tuple -> '{' '}'               : {[],   anno('$1', '$2')}.
-struct_tuple -> '{' struct_fields '}' : {'$2', anno('$1', '$3')}.
+struct_tuple -> '{' '}'        : {[],   anno('$1', '$2')}.
+struct_tuple -> '{' fields '}' : {'$2', anno('$1', '$3')}.
 
-struct_fields -> struct_field : ['$1'].
-struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
+fields -> field : ['$1'].
+fields -> field ',' fields : ['$1' | '$3'].
 
-struct_field -> atom '=' expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
-struct_field ->          expr : {struct_field, anno('$1'), 'undefined', '$1'}.
+field -> atom '=' expr : {field, anno('$1', '$3'), '$1', '$3'}.
+field ->          expr : {field, anno('$1'), 'undefined', '$1'}.
 
-struct_tuple_pat -> '{' '}'                   : {[],   anno('$1', '$2')}.
-struct_tuple_pat -> '{' struct_fields_pat '}' : {'$2', anno('$1', '$3')}.
+struct_tuple_pat -> '{' '}'            : {[],   anno('$1', '$2')}.
+struct_tuple_pat -> '{' fields_pat '}' : {'$2', anno('$1', '$3')}.
 
-struct_fields_pat -> struct_field_pat : ['$1'].
-struct_fields_pat -> struct_field_pat ',' struct_fields_pat : ['$1' | '$3'].
+fields_pat -> field_pat : ['$1'].
+fields_pat -> field_pat ',' fields_pat : ['$1' | '$3'].
 
-struct_field_pat -> atom '=' pat_expr : {struct_field, anno('$1', '$3'), '$1', '$3'}.
-struct_field_pat ->          pat_expr : {struct_field, anno('$1'), 'undefined', '$1'}.
+field_pat -> atom '=' pat_expr : {field, anno('$1', '$3'), '$1', '$3'}.
+field_pat ->          pat_expr : {field, anno('$1'), 'undefined', '$1'}.
 
 function_call -> remote_id argument_list :
 	{call, anno('$1','$2'), '$1', element(1, '$2')}.

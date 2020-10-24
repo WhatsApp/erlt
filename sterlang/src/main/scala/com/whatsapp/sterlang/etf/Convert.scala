@@ -73,7 +73,7 @@ object Convert {
         Some(Ast.EnumElem(enumDef))
       case Forms.StructDecl(p, name, eParams, eFields, kind) =>
         val params = eParams.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
-        val fields = eFields.map(convertStructFieldDecl)
+        val fields = eFields.map(convertFieldDecl)
         val eStructType = Ast.StructDef(name, params, fields, convertStructKind(kind))(p)
         Some(Ast.StructElem(eStructType))
       case Forms.EOF =>
@@ -89,7 +89,7 @@ object Convert {
       case Forms.MsgStruct => Ast.MsgStruct
     }
 
-  private def convertStructFieldDecl(structFieldDecl: Forms.FieldDecl): Ast.FieldDecl =
+  private def convertFieldDecl(structFieldDecl: Forms.FieldDecl): Ast.FieldDecl =
     structFieldDecl match {
       case Forms.LblFieldDecl(p, name, default, tp) =>
         Ast.LblFieldDecl(name, convertType(tp), default.map(convertExpr))(p)
@@ -166,10 +166,10 @@ object Convert {
         Ast.NilPat()(p)
       case Patterns.ConsPattern(p, hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
-      case Patterns.LocalEnumPattern(p, enum, ctr, args) =>
-        Ast.EnumPat(Ast.LocalName(enum), ctr, args.map(convertPattern))(p)
+      case Patterns.LocalEnumPattern(p, enum, ctr, fields) =>
+        Ast.EnumPat(Ast.LocalName(enum), ctr, fields.map(convertFieldPat))(p)
       case Patterns.RemoteEnumPattern(p, module, enum, ctr, args) =>
-        Ast.EnumPat(Ast.RemoteName(module, enum), ctr, args.map(convertPattern))(p)
+        Ast.EnumPat(Ast.RemoteName(module, enum), ctr, args.map(convertFieldPat))(p)
       case Patterns.ShapePattern(p, fields) =>
         val pats = fields map { elem =>
           val Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) = elem.key
@@ -188,9 +188,9 @@ object Convert {
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
         throw new UnsupportedSyntaxError(p, "Calculation in patterns")
       case Patterns.LocalStructPattern(p, structName, fields) =>
-        Ast.StructPat(Ast.LocalName(structName), fields.map(convertStructFieldPattern))(p)
+        Ast.StructPat(Ast.LocalName(structName), fields.map(convertFieldPat))(p)
       case Patterns.RemoteStructPattern(p, module, structName, fields) =>
-        Ast.StructPat(Ast.RemoteName(module, structName), fields.map(convertStructFieldPattern))(p)
+        Ast.StructPat(Ast.RemoteName(module, structName), fields.map(convertFieldPat))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -223,10 +223,10 @@ object Convert {
         Ast.NilExp()(p)
       case Exprs.Cons(p, hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
-      case Exprs.LocalEnum(p, enum, ctr, args) =>
-        Ast.EnumExp(Ast.LocalName(enum), ctr, args.map(convertExpr))(p)
+      case Exprs.LocalEnum(p, enum, ctr, fields) =>
+        Ast.EnumExp(Ast.LocalName(enum), ctr, fields.map(convertFieldExp))(p)
       case Exprs.RemoteEnum(p, module, enum, ctr, args) =>
-        Ast.EnumExp(Ast.RemoteName(module, enum), ctr, args.map(convertExpr))(p)
+        Ast.EnumExp(Ast.RemoteName(module, enum), ctr, args.map(convertFieldExp))(p)
       case Exprs.ShapeCreate(p, entries) =>
         Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
       case Exprs.ShapeUpdate(p, exp, entries) =>
@@ -279,13 +279,13 @@ object Convert {
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.LocalStructCreate(p, structName, fields) =>
-        Ast.StructCreate(Ast.LocalName(structName), fields.map(convertStructField))(p)
+        Ast.StructCreate(Ast.LocalName(structName), fields.map(convertFieldExp))(p)
       case Exprs.RemoteStructCreate(p, module, structName, fields) =>
-        Ast.StructCreate(Ast.RemoteName(module, structName), fields.map(convertStructField))(p)
+        Ast.StructCreate(Ast.RemoteName(module, structName), fields.map(convertFieldExp))(p)
       case Exprs.LocalStructUpdate(p, struct, structName, fields) =>
-        Ast.StructUpdate(convertExpr(struct), Ast.LocalName(structName), fields.map(convertStructField))(p)
+        Ast.StructUpdate(convertExpr(struct), Ast.LocalName(structName), fields.map(convertFieldExp))(p)
       case Exprs.RemoteStructUpdate(p, struct, module, structName, fields) =>
-        Ast.StructUpdate(convertExpr(struct), Ast.RemoteName(module, structName), fields.map(convertStructField))(p)
+        Ast.StructUpdate(convertExpr(struct), Ast.RemoteName(module, structName), fields.map(convertFieldExp))(p)
       case Exprs.LocalStructSelect(p, struct, structName, fieldName) =>
         Ast.StructSelect(convertExpr(struct), Ast.LocalName(structName), fieldName)(p)
       case Exprs.RemoteStructSelect(p, struct, module, structName, fieldName) =>
@@ -335,7 +335,7 @@ object Convert {
     Ast.LblField(label, convertExpr(e))(p)
   }
 
-  private def convertStructField(field: Exprs.Field): Ast.Field[Ast.Exp] =
+  private def convertFieldExp(field: Exprs.Field): Ast.Field[Ast.Exp] =
     field match {
       case Exprs.LblField(r, fieldName, value) =>
         Ast.LblField(fieldName, convertExpr(value))(r)
@@ -343,7 +343,7 @@ object Convert {
         Ast.PosField(convertExpr(value))(r)
     }
 
-  private def convertStructFieldPattern(field: Patterns.FieldPattern): Ast.Field[Ast.Pat] =
+  private def convertFieldPat(field: Patterns.FieldPattern): Ast.Field[Ast.Pat] =
     field match {
       case Patterns.LblFieldPattern(r, fieldName, value) =>
         Ast.LblField(fieldName, convertPattern(value))(r)
@@ -392,8 +392,8 @@ object Convert {
     }
 
   private def convertEnumCtr(variant: Forms.EnumVariantDecl): Ast.EnumCtr = {
-    val Forms.EnumVariantDecl(p, name, params) = variant
-    Ast.EnumCtr(name, params.map(convertType))(p)
+    val Forms.EnumVariantDecl(p, name, fields) = variant
+    Ast.EnumCtr(name, fields.map(convertFieldDecl))(p)
   }
 
   private def converShapeFieldType(assoc: Types.ShapeField): Ast.LblField[Ast.Type] = {

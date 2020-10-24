@@ -42,8 +42,9 @@ object AstUtil {
         allPats.flatMap(collectPatVars)
       case AndPat(p1, p2) =>
         collectPatVars(p1) ++ collectPatVars(p2)
-      case EnumPat(_, _, pats) =>
-        pats.flatMap(collectPatVars)
+      case EnumPat(_, _, fields) =>
+        val allPats = fields.map(_.value)
+        allPats.flatMap(collectPatVars)
       case NilPat() =>
         List.empty
       case ConsPat(hPat, tPat) =>
@@ -160,8 +161,8 @@ object AstUtil {
         freeVars(struct, m)
       case TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
-      case EnumExp(enumName, dataCon, args) =>
-        args.flatMap(freeVars(_, m)).toSet
+      case EnumExp(enumName, dataCon, fields) =>
+        fields.flatMap(f => freeVars(f.value, m)).toSet
       case NilExp() =>
         Set.empty
       case Bin(elems) =>
@@ -328,8 +329,14 @@ object AstUtil {
       case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val cons1 = cons.map {
-          case EnumCtr(cName, tps) =>
-            EnumCtr(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
+          case EnumCtr(cName, fields) =>
+            val fields1 = fields.map {
+              case LblFieldDecl(label, tp, default) =>
+                LblFieldDecl(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
+              case PosFieldDecl(tp) =>
+                PosFieldDecl(globalizeType(module, names)(tp))(Doc.ZRange)
+            }
+            EnumCtr(cName, fields1)(Doc.ZRange)
         }
         EnumDef(name1, params, cons1)(Doc.ZRange)
     }
@@ -401,8 +408,16 @@ object AstUtil {
     }
 
   def normalizeTypes(program: Program): Program = {
-    def normEnumCtr(ctr: EnumCtr): EnumCtr =
-      ctr.copy(argTypes = ctr.argTypes.map(normalizeType(program)))(ctr.r)
+    def normEnumCtr(ctr: EnumCtr): EnumCtr = {
+      val nFields = ctr.fields.map {
+        case f @ LblFieldDecl(label, tp, default) =>
+          LblFieldDecl(label, normalizeType(program)(tp), default)(f.r)
+        case f @ PosFieldDecl(tp) =>
+          PosFieldDecl(normalizeType(program)(tp))(f.r)
+      }
+      ctr.copy(fields = nFields)(ctr.r)
+    }
+
     val enumDefs1 =
       program.enumDefs.map { ed => ed.copy(ctrs = ed.ctrs.map(normEnumCtr))(ed.r) }
     val typeAliases1 =
@@ -490,7 +505,7 @@ object AstUtil {
   }
 
   private def getDepEnumDef(enumDef: EnumDef): Set[String] =
-    enumDef.ctrs.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
+    enumDef.ctrs.flatMap(_.fields.map(_.tp)).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
   private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
@@ -541,14 +556,14 @@ object AstUtil {
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
-      case EnumPat(enumName, _, pats) =>
+      case EnumPat(enumName, _, fields) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]
           case RemoteName(module, _) =>
             Set(module)
         }
-        pats.map(getDepPat).foldLeft(ctrDep)(_ ++ _)
+        fields.map(f => getDepPat(f.value)).foldLeft(ctrDep)(_ ++ _)
       case NilPat() =>
         Set.empty[String]
       case BinPat(elems) =>
@@ -595,14 +610,14 @@ object AstUtil {
         getDepExp(struct)
       case TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
-      case EnumExp(enumName, ctr, args) =>
+      case EnumExp(enumName, ctr, fields) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]
           case RemoteName(module, _) =>
             Set(module)
         }
-        args.map(getDepExp).foldLeft(ctrDep)(_ ++ _)
+        fields.map(f => getDepExp(f.value)).foldLeft(ctrDep)(_ ++ _)
       case NilExp() =>
         Set.empty
       case Bin(elems) =>

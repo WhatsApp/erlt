@@ -1,4 +1,4 @@
 -- ERROR --------------------------------------- examples/err/src/e54.erlt:18:12
-Unknown enum constructor: ctr/1
+Got 1 positional field(s) instead of 0
  18| test() -> [my_enum.ctr{1}].
 ...|            ~~~~~~~~~~~~~~

@@ -43,7 +43,7 @@ object PatternsConvert {
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
         UnOpPattern(r(anno), op, convertPat(ePat1))
       case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
-        LocalStructPattern(r(anno), structName, eStructFieldPatterns.map(structFieldPattern))
+        LocalStructPattern(r(anno), structName, eStructFieldPatterns.map(fieldPattern))
       case ETuple(
             List(
               EAtom("struct"),
@@ -59,7 +59,7 @@ object PatternsConvert {
               EList(eStructFieldPatterns),
             )
           ) =>
-        RemoteStructPattern(r(anno), module, structName, eStructFieldPatterns.map(structFieldPattern))
+        RemoteStructPattern(r(anno), module, structName, eStructFieldPatterns.map(fieldPattern))
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapePattern(r(anno), eAssocs.map(convertShapeFieldPattern))
       case ETuple(
@@ -68,10 +68,10 @@ object PatternsConvert {
               anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
-              EList(eArgs),
+              EList(eFields),
             )
           ) =>
-        LocalEnumPattern(r(anno), enum, ctr, eArgs.map(convertPat))
+        LocalEnumPattern(r(anno), enum, ctr, eFields.map(fieldPattern))
       case ETuple(
             List(
               EAtom("enum"),
@@ -85,10 +85,10 @@ object PatternsConvert {
                 )
               ),
               ETuple(List(EAtom("atom"), _anno3, EAtom(ctr))),
-              EList(eArgs),
+              EList(eFields),
             )
           ) =>
-        RemoteEnumPattern(r(anno), module, enum, ctr, eArgs.map(convertPat))
+        RemoteEnumPattern(r(anno), module, enum, ctr, eFields.map(fieldPattern))
       case _ =>
         val literal = ExprsConvert.literal(term)
         LiteralPattern(literal)
@@ -109,11 +109,11 @@ object PatternsConvert {
         )
     }
 
-  def structFieldPattern(term: ETerm): FieldPattern =
+  def fieldPattern(term: ETerm): FieldPattern =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, EAtom("undefined"), exp)) =>
+      case ETuple(List(EAtom("field"), anno, EAtom("undefined"), exp)) =>
         PosFieldPattern(r(anno), convertPat(exp))
-      case ETuple(List(EAtom("struct_field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
+      case ETuple(List(EAtom("field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
         LblFieldPattern(r(anno), name, convertPat(exp))
     }
 

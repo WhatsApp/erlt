@@ -13,13 +13,14 @@
 %% limitations under the License.
 
 -module(mod03).
--export_type([unit0/0, boxed/1, either/2, rgb/0, pair/2, triple/3, my_list/1, option/1, box1/1, box2/1]).
+-export_type([unit0/0, boxed/1, either/2, rgb/0, pair/2, triple/3, my_list/1, option/1, box1/1, box2/1, ast/1, pos/1]).
 -export([
   mk_rgb/0, mk_triple/1, mk_none/0, mk_unit/0, mk_box/1, mk_left/1, mk_right/1,
   zero/2, unbox/1, un_either/1, un_pair/1,
   first/1, second/1, call_this_mod/1
 ]).
 
+-type pos(A) :: A.
 -enum unit0() :: (unit0).
 -enum boxed(A) :: (boxed{A}).
 -enum either(A, B) :: (left{A}, right {B}).
@@ -28,6 +29,8 @@
 -enum triple(A,B,C) :: (triple{A,B,C}).
 -enum my_list(A) :: (cons{A, my_list(A)}, nil).
 -enum option(A) :: (none, some{A}).
+
+-enum ast(A) :: (n{pos :: pos(number()), n :: number()}, l{pos :: pos(number()), l :: list(A)}).
 
 -struct box1(A) :: (value :: A).
 -struct box2(A) :: (value :: A).
@@ -87,3 +90,9 @@ call_this_mod(P) ->
   case P of
     mod03:pair.pair{A, B} -> mod03:pair.pair{A, B}
   end.
+
+box_ast_pair(P, N, L) ->
+    #box1{value = {ast.n{pos = P, n = N}, ast.l{pos = P, l = L}}}.
+
+un_box_ast_pair(#box1{value = {ast.n{pos = P, n = N}, ast.l{pos = P, l = L}}}) ->
+    #(p = P, n = N, l = L).

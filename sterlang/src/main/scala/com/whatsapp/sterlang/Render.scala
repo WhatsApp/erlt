@@ -129,8 +129,8 @@ case class Render(vars: Vars) {
       case AnnAst.ConsPat(hPat, tPat) =>
         renderPat(buf)(hPat)
         renderPat(buf)(tPat)
-      case AnnAst.EnumPat(_, _, pats) =>
-        pats.foreach(renderPat(buf))
+      case AnnAst.EnumPat(_, _, fields) =>
+        fields.foreach { f => renderPat(buf)(f.value) }
 
       case AnnAst.BinPat(elems) =>
         elems.foreach { elem =>
@@ -254,8 +254,8 @@ case class Render(vars: Vars) {
       case AnnAst.ConsExp(h, t) =>
         renderExp(buf)(h)
         renderExp(buf)(t)
-      case AnnAst.EnumExp(_, _, exprs) =>
-        exprs.foreach(renderExp(buf))
+      case AnnAst.EnumExp(_, _, fields) =>
+        fields.foreach(f => renderExp(buf)(f.value))
 
       case AnnAst.TryCatchExp(tryBody, catchBranches, after) =>
         renderBody(buf)(tryBody)

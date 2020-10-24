@@ -62,15 +62,15 @@ object FormsConvert {
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), StrStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), StrStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), ExnStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), ExnStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(structFieldDecl), MsgStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), MsgStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("enum"), ETuple(List(EAtom(name), EList(vars), EList(enumVariants))))
           ) =>
@@ -105,7 +105,7 @@ object FormsConvert {
         (name, arity.intValue)
     }
 
-  def structFieldDecl(term: ETerm): FieldDecl =
+  def fieldDecl(term: ETerm): FieldDecl =
     term match {
       case ETuple(List(EAtom("field_definition"), anno, EAtom("positional"), _, eType)) =>
         PosFieldDecl(r(anno), TypesConvert.convertType(eType))
@@ -121,8 +121,8 @@ object FormsConvert {
 
   def enumVariantDecl(term: ETerm): EnumVariantDecl =
     term match {
-      case ETuple(List(EAtom("type"), anno, EAtom("enum"), name, EList(params))) =>
-        EnumVariantDecl(r(anno), convertAtomLit(name), params.map(TypesConvert.convertType))
+      case ETuple(List(EAtom("type"), anno, EAtom("enum"), name, EList(fields))) =>
+        EnumVariantDecl(r(anno), convertAtomLit(name), fields.map(fieldDecl))
     }
 
   def convertAtomLit(term: ETerm): String =

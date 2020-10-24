@@ -60,7 +60,7 @@ object ExprsConvert {
       case ETuple(List(EAtom("op"), anno, EAtom(op), eExp1)) =>
         UnaryOp(r(anno), op, convertExp(eExp1))
       case ETuple(List(EAtom("struct"), anno, EAtom(name), EList(fields))) =>
-        LocalStructCreate(r(anno), name, fields.map(structField))
+        LocalStructCreate(r(anno), name, fields.map(field))
       case ETuple(
             List(
               EAtom("struct"),
@@ -76,9 +76,9 @@ object ExprsConvert {
               EList(fields),
             )
           ) =>
-        RemoteStructCreate(r(anno), module, structName, fields.map(structField))
+        RemoteStructCreate(r(anno), module, structName, fields.map(field))
       case ETuple(List(EAtom("struct"), anno, eExp, EAtom(name), EList(fields))) =>
-        LocalStructUpdate(r(anno), convertExp(eExp), name, fields.map(structField))
+        LocalStructUpdate(r(anno), convertExp(eExp), name, fields.map(field))
       case ETuple(
             List(
               EAtom("struct"),
@@ -95,7 +95,7 @@ object ExprsConvert {
               EList(fields),
             )
           ) =>
-        RemoteStructUpdate(r(anno), convertExp(eExp), module, structName, fields.map(structField))
+        RemoteStructUpdate(r(anno), convertExp(eExp), module, structName, fields.map(field))
       case ETuple(List(EAtom("struct_field"), anno, eExp, EAtom(structName), eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
@@ -137,10 +137,10 @@ object ExprsConvert {
               anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
-              EList(eArgs),
+              EList(eFields),
             )
           ) =>
-        LocalEnum(r(anno), enum, ctr, eArgs.map(convertExp))
+        LocalEnum(r(anno), enum, ctr, eFields.map(field))
       case ETuple(
             List(
               EAtom("enum"),
@@ -154,10 +154,10 @@ object ExprsConvert {
                 )
               ),
               ETuple(List(EAtom("atom"), _anno3, EAtom(ctr))),
-              EList(eArgs),
+              EList(eFields),
             )
           ) =>
-        RemoteEnum(r(anno), module, enum, ctr, eArgs.map(convertExp))
+        RemoteEnum(r(anno), module, enum, ctr, eFields.map(field))
       case ETuple(List(EAtom("lc"), anno, eTemplate, EList(eQualifiers))) =>
         ListComprehension(r(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), anno, eTemplate, EList(eQualifiers))) =>
@@ -254,11 +254,11 @@ object ExprsConvert {
     TypeSpecifier(spec)
   }
 
-  def structField(term: ETerm): Field =
+  def field(term: ETerm): Field =
     term match {
-      case ETuple(List(EAtom("struct_field"), anno, EAtom("undefined"), exp)) =>
+      case ETuple(List(EAtom("field"), anno, EAtom("undefined"), exp)) =>
         PosField(r(anno), convertExp(exp))
-      case ETuple(List(EAtom("struct_field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
+      case ETuple(List(EAtom("field"), anno, ETuple(List(EAtom("atom"), _, EAtom(name))), exp)) =>
         LblField(r(anno), name, convertExp(exp))
     }
 

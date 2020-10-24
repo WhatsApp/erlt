@@ -122,14 +122,27 @@ class AstChecks(val context: Context) {
 
   private def checkEnumDef(program: Program, enumDef: EnumDef): Unit = {
     checkUniqueCtrs(enumDef.ctrs)
+    enumDef.ctrs.foreach { ctr =>
+      var fieldNames = Set.empty[String]
+      for (f @ LblFieldDecl(label, _, _) <- ctr.fields) {
+        if (fieldNames(label)) {
+          throw new DuplicateFields(f.r, List(f.label))
+        }
+        fieldNames = fieldNames + f.label
+      }
+    }
     val bound = collectParams(enumDef.params)
     val used = enumDef.ctrs
       .map { con =>
-        con.argTypes.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        con.fields.map(f => collectRHSTypeVars(bound)(f.tp)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       }
       .foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(enumDef.params, used)
-    enumDef.ctrs.foreach { con => con.argTypes.foreach(expandType(program, Set.empty)) }
+    enumDef.ctrs.foreach { ctr =>
+      ctr.fields.foreach { f =>
+        expandType(program, Set.empty)(f.tp)
+      }
+    }
   }
 
   private def checkUniqueCtrs(ctrs: List[EnumCtr]): Unit = {

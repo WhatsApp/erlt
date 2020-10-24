@@ -39,7 +39,7 @@ object PatternChecker {
   private case class Shape(fields: List[String]) extends Ctr
   private case class Struct(struct: String, fields: List[String]) extends Ctr
   private case class OpenStruct(struct: String, fields: List[String]) extends Ctr
-  private case class EnumCtr(enum: String, ctr: String) extends Ctr
+  private case class EnumCtr(enum: String, ctr: String, fields: List[String]) extends Ctr
 
   /** An unknown constructor of some/any data type.
     *
@@ -107,8 +107,10 @@ object PatternChecker {
         val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
         fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"#$struct{", sep = ", ", end = "}")
 
-      case CtrApp(EnumCtr(enum, ctr), args) =>
-        s"$enum.$ctr${tuple(args)}"
+      case CtrApp(EnumCtr(enum, ctr, fieldNames), args) =>
+        // Remove fields mapped to wildcards to reduce clutter
+        val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
+        fields.map(f => s"${f._1} = ${show(f._2)}").mkString(start = s"$enum.$ctr{", sep = ", ", end = "}")
 
       case CtrApp(AbstractCtr(_), _) =>
         "_"
@@ -175,6 +177,28 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
           ctr(name, allFieldNames),
           allFieldNames.map(f => allFieldsMap.get(f).map(simplify).getOrElse(Wildcard)),
         )
+      case AnnAst.EnumPat(enum, ctr, patternFields) =>
+        val posFields = patternFields.collect { case pf: AnnAst.PosField[AnnAst.Pat] => pf }
+        val lblFields = patternFields.collect { case lf: AnnAst.LblField[AnnAst.Pat] => lf }
+
+        val lblFieldsMap = lblFields.map { f => (f.label, f.value) }.toMap
+        val posFieldsMap = posFields.zipWithIndex.map { case (f, i) => (s"_$i", f.value) }.toMap
+        val allFieldsMap = lblFieldsMap ++ posFieldsMap
+
+        val enumDef = context.enumDefs.find(_.name == enum).get
+        val ctrDef = enumDef.ctrs.find(_.name == ctr).get
+        val posFieldDecls = ctrDef.fields.collect { case pf: Ast.PosFieldDecl => pf }
+        val lblFieldDecls = ctrDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
+
+        val posFieldNames = posFieldDecls.indices.map(i => s"_$i")
+        val lblFieldNames = lblFieldDecls.map(_.label)
+
+        val allFieldNames = (lblFieldNames ++ posFieldNames).sorted
+
+        CtrApp(
+          EnumCtr(enum, ctr, allFieldNames),
+          allFieldNames.map(f => allFieldsMap.get(f).map(simplify).getOrElse(Wildcard)),
+        )
       case _: AnnAst.BinPat =>
         CtrApp(AbstractCtr(pattern.r), Nil)
       case _: AnnAst.PinnedVarPat =>
@@ -183,8 +207,6 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
         CtrApp(EmptyList, Nil)
       case AnnAst.ConsPat(head, tail) =>
         CtrApp(Cons, List(simplify(head), simplify(tail)))
-      case AnnAst.EnumPat(enum, ctr, args) =>
-        CtrApp(EnumCtr(enum, ctr), args.map(simplify))
     }
 
   private def checkNode(node: AnnAst.Node, warnings: ListBuffer[PatternWarning]): Unit = {
@@ -410,9 +432,18 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
       case Shape(_)                  => Some(Set(ctr))
       case Struct(_, _)              => Some(Set(ctr))
       case OpenStruct(_, _)          => None
-      case EnumCtr(enum, _) =>
+      case EnumCtr(enum, _, _) =>
         val enumDef = context.enumDefs.find(_.name == enum).get
-        val ctrs = enumDef.ctrs.map(c => EnumCtr(enum, c.name))
+        val ctrs = enumDef.ctrs.map { c =>
+          val posFieldDecls = c.fields.collect { case pf: Ast.PosFieldDecl => pf }
+          val lblFieldDecls = c.fields.collect { case lf: Ast.LblFieldDecl => lf }
+
+          val posFieldNames = posFieldDecls.indices.map(i => s"_$i")
+          val lblFieldNames = lblFieldDecls.map(_.label)
+
+          val allFieldNames = (lblFieldNames ++ posFieldNames).sorted
+          EnumCtr(enum, c.name, allFieldNames)
+        }
         Some(ctrs.toSet)
       // $COVERAGE-OFF$ unreachable
       case AbstractCtr(_) => throw new IllegalArgumentException()
@@ -429,9 +460,7 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, va
       case Shape(fields)         => fields.length
       case Struct(_, fields)     => fields.length
       case OpenStruct(_, fields) => fields.length
-      case EnumCtr(enum, ctrName) =>
-        val enumDef = context.enumDefs.find(_.name == enum).get
-        enumDef.ctrs.find(_.name == ctrName).get.argTypes.length
-      case AbstractCtr(_) => 0
+      case EnumCtr(_, _, fields) => fields.length
+      case AbstractCtr(_)        => 0
     }
 }

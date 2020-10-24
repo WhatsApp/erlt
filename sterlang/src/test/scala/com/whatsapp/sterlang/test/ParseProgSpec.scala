@@ -41,10 +41,18 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
           |""".stripMargin,
         Program(
           enumDefs = List(
-            EnumDef("box", List(TypeVar("A")(ZRange)), List(EnumCtr("box", List(TypeVar("A")(ZRange)))(ZRange)))(
+            EnumDef(
+              "box",
+              List(TypeVar("A")(ZRange)),
+              List(EnumCtr("box", List(PosFieldDecl(TypeVar("A")(ZRange))(ZRange)))(ZRange)),
+            )(
               ZRange
             ),
-            EnumDef("box2", List(TypeVar("A")(ZRange)), List(EnumCtr("box2", List(TypeVar("A")(ZRange)))(ZRange)))(
+            EnumDef(
+              "box2",
+              List(TypeVar("A")(ZRange)),
+              List(EnumCtr("box2", List(PosFieldDecl(TypeVar("A")(ZRange))(ZRange)))(ZRange)),
+            )(
               ZRange
             ),
           ),

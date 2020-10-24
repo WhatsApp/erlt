@@ -12,20 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(pinned_vars).
--export([test1/3, test2/3]).
+-module(e157).
 
-%% pinned vars are similar to "binaries" -
-%% or abstract pattern for pattern checks
+-enum my_enum(A) :: (ctr{id :: A}).
 
--spec test1(A, A, boolean()) -> boolean().
-test1(X, Y, B) ->
-    case {Y, B} of
-        {^X, true} -> true
-    end.
-
--spec test2(A, A, boolean()) -> boolean().
-test2(X, Y, B) ->
-    case {B, Y} of
-        {true, ^X} -> true
-    end.
+mk() ->
+    my_enum.ctr{id = 1, id = 2}.

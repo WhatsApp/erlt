@@ -71,5 +71,5 @@ object Forms {
   case class LblFieldDecl(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type) extends FieldDecl
   case class PosFieldDecl(r: Doc.Range, tp: Type) extends FieldDecl
 
-  case class EnumVariantDecl(r: Doc.Range, name: String, argTypes: List[Type])
+  case class EnumVariantDecl(r: Doc.Range, name: String, fields: List[FieldDecl])
 }

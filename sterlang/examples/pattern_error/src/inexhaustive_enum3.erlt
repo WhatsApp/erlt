@@ -12,20 +12,10 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(pinned_vars).
--export([test1/3, test2/3]).
+-module(inexhaustive_enum2).
 
-%% pinned vars are similar to "binaries" -
-%% or abstract pattern for pattern checks
+-enum bool_box() :: (box{b1 :: boolean(), b2 :: boolean()}).
 
--spec test1(A, A, boolean()) -> boolean().
-test1(X, Y, B) ->
-    case {Y, B} of
-        {^X, true} -> true
-    end.
+test1(bool_box.box{b1 = false}) -> {}.
 
--spec test2(A, A, boolean()) -> boolean().
-test2(X, Y, B) ->
-    case {B, Y} of
-        {true, ^X} -> true
-    end.
+test2(bool_box.box{b1 = _, b2 = false}) -> {}.

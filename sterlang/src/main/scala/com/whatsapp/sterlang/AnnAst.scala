@@ -92,7 +92,7 @@ object AnnAst {
   case class ShapeCreateExp(fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
   case class ShapeUpdateExp(exp: Exp, fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class EnumExp(enum: String, ctr: String, args: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
+  case class EnumExp(enum: String, ctr: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type) extends Node {
     override val r: Doc.Range = Doc.merge(pat.r, value.r)
@@ -124,7 +124,7 @@ object AnnAst {
   case class ShapePat(fields: List[LblField[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
   case class ConsPat(head: Pat, tail: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
   case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
-  case class EnumPat(enum: String, ctr: String, args: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class EnumPat(enum: String, ctr: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

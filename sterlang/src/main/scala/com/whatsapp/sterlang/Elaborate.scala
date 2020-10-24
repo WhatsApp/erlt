@@ -521,8 +521,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     checkPosFields(exp.r, posFields, posFieldDecls)
     checkUniqueFields(exp.r, lblFields.map(_.label))
-    checkStructLblFields(fields, structDef)
-    checkStructInit(exp.r, fields, structDef)
+    checkLblFields(lblFields, lblFieldDecls)
+    checkFieldInits(exp.r, lblFields, lblFieldDecls)
 
     val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val eSub: Expander.Sub =
@@ -571,15 +571,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
 
     val lblFields = fields.collect { case lf: Ast.LblField[Ast.Exp] => lf }
+    val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
     checkUniqueFields(exp.r, lblFields.map(_.label))
-    checkStructLblFields(fields, structDef)
+    checkLblFields(lblFields, lblFieldDecls)
 
     val sub = structDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val eSub: Expander.Sub =
       sub.view.mapValues(Left(_)).toMap
     val typeConParams = structDef.params.map(p => sub(p.name))
 
-    val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
     val fieldTypes = lblFieldDecls.map(f => f.label -> f.tp).toMap
     val lblFields1 = for (lblField <- lblFields) yield {
       val fieldType = expander.mkType(fieldTypes(lblField.label), eSub)
@@ -619,7 +619,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val fieldDef =
       lblFieldDecls.find(_.label == fieldName) match {
         case Some(f) => f
-        case None    => throw new UnknownStructField(exp.r, nName.stringId, fieldName)
+        case None    => throw new UnknownField(exp.r, fieldName)
       }
 
     val structType = MT.NamedType(nName.stringId, typeConParams)
@@ -835,37 +835,54 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabEnumExp(exp: Ast.EnumExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.EnumExp(eName, cName, args) = exp
+    val Ast.EnumExp(eName, cName, fields) = exp
     val nName = normalizeTypeName(eName)
     val expander = dExpander(d)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(ed) => ed
-      case None     => throw new UnknownEnum(exp.r, nName.stringId)
+      case None =>
+        throw new UnknownEnum(exp.r, nName.stringId)
     }
-    val sub =
-      enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
+    val enumCtr = enumDef.ctrs.find(con => con.name == cName) match {
+      case Some(ec) => ec
+      case None     => throw new UnknownEnumCon(exp.r, cName)
+    }
+
+    val lblFields = fields.collect { case lf: Ast.LblField[Ast.Exp] => lf }
+    val lblFieldDecls = enumCtr.fields.collect { case lf: Ast.LblFieldDecl => lf }
+    val posFields = fields.collect { case pf: Ast.PosField[Ast.Exp] => pf }
+    val posFieldDecls = enumCtr.fields.collect { case pf: Ast.PosFieldDecl => pf }
+
+    checkPosFields(exp.r, posFields, posFieldDecls)
+    checkUniqueFields(exp.r, lblFields.map(_.label))
+    checkLblFields(lblFields, lblFieldDecls)
+    checkFieldInits(exp.r, lblFields, lblFieldDecls)
+
+    val sub = enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val eSub: Expander.Sub =
       sub.view.mapValues(Left(_)).toMap
 
     val typeConParams = enumDef.params.map(p => sub(p.name))
     val namedType = MT.NamedType(enumDef.name, typeConParams)
-    val eNamedType = expander.expandType(namedType)
-    val arity = args.size
+    val expType = expander.expandType(namedType)
 
-    val enumCtr = enumDef.ctrs.find(con => con.name == cName && con.argTypes.size == arity) match {
-      case Some(ec) => ec
-      case None     => throw new UnknownEnumCon(exp.r, s"$cName/$arity")
+    val posFieldTypes = posFieldDecls.map(f => f.tp)
+    val posFields1 = for ((posField, posType) <- posFields.zip(posFieldTypes)) yield {
+      val fieldType = expander.mkType(posType, eSub)
+      val eFieldType = expander.expandType(fieldType)
+      AnnAst.PosField(elab(posField.value, eFieldType, d, env))
     }
 
-    val args1 = for ((arg, argType) <- args.zip(enumCtr.argTypes)) yield {
-      val contentType = expander.mkType(argType, eSub)
-      val eContentType = expander.expandType(contentType)
-      elab(arg, eContentType, d, env)
+    val lblFieldTypes = lblFieldDecls.map(f => f.label -> f.tp).toMap
+    val lblFields1 = for (lblField <- lblFields) yield {
+      val fieldType = expander.mkType(lblFieldTypes(lblField.label), eSub)
+      val eFieldType = expander.expandType(fieldType)
+      AnnAst.LblField(lblField.label, elab(lblField.value, eFieldType, d, env))
     }
 
-    unify(exp.r, ty, eNamedType)
-    AnnAst.EnumExp(eName.stringId, cName, args1)(typ = ty, r = exp.r)
+    unify(exp.r, ty, expType)
+    AnnAst.EnumExp(eName.stringId, cName, posFields1 ++ lblFields1)(typ = ty, r = exp.r)
   }
 
   private def elabBlockExp(exp: Ast.BlockExpr, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
@@ -1216,39 +1233,61 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (PreAnnPat, Env, PEnv) = {
     val expander = dExpander(d)
-    val Ast.EnumPat(eName, cName, pats) = p
+    val Ast.EnumPat(eName, cName, fields) = p
     val nName = normalizeTypeName(eName)
-    val t = TU.instantiate(d, ts)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(definition) => definition
       case None             => throw new UnknownEnum(p.r, nName.stringId)
     }
+    val enumCtr = enumDef.ctrs.find(con => con.name == cName) match {
+      case Some(ec) => ec
+      case None     => throw new UnknownEnumCon(p.r, cName)
+    }
+
+    val lblFields = fields.collect { case lf: Ast.LblField[Ast.Pat] => lf }
+    val lblFieldDecls = enumCtr.fields.collect { case lf: Ast.LblFieldDecl => lf }
+    val posFields = fields.collect { case pf: Ast.PosField[Ast.Pat] => pf }
+    val posFieldDecls = enumCtr.fields.collect { case pf: Ast.PosFieldDecl => pf }
+
+    checkPosFields(p.r, posFields, posFieldDecls)
+    checkUniqueFields(p.r, lblFields.map(_.label))
+    checkLblFields(lblFields, lblFieldDecls)
+
+    val t = TU.instantiate(d, ts)
     val sub = enumDef.params.map(tv => tv.name -> freshTypeVar(d)).toMap
     val eSub: Expander.Sub =
       sub.view.mapValues(Left(_)).toMap
     val typeConParams = enumDef.params.map(p => sub(p.name))
     val namedType = MT.NamedType(enumDef.name, typeConParams)
-    val eNamedType = expander.expandType(namedType)
-    unify(p.r, t, eNamedType)
+    val expType = expander.expandType(namedType)
 
-    val arity = pats.size
-    val enumCtr = enumDef.ctrs.find(con => con.name == cName && con.argTypes.size == arity) match {
-      case Some(ec) => ec
-      case None     => throw new UnknownEnumCon(p.r, s"$cName/$arity")
-    }
+    unify(p.r, t, expType)
+
     var envAcc = env
     var penvAcc = penv
-    val argPats1 = for ((argType, pat) <- enumCtr.argTypes.zip(pats)) yield {
-      val contentType = expander.mkType(argType, eSub)
-      val eContentType = expander.expandType(contentType)
-      val (pat1, env1, penv1) = elpat(pat, eContentType, d, envAcc, penvAcc, gen)
+
+    val posFieldTypes = posFieldDecls.map(f => f.tp)
+    val posFields1 = for ((posField, posType) <- posFields.zip(posFieldTypes)) yield {
+      val fieldType = expander.mkType(posType, eSub)
+      val eFieldType = expander.expandType(fieldType)
+      val (pat1, env1, penv1) = elpat(posField.value, eFieldType, d, envAcc, penvAcc, gen)
       envAcc = env1
       penvAcc = penv1
-      pat1
+      AnnAst.PosField(pat1)
     }
 
-    (AnnAst.EnumPat(nName.stringId, cName, argPats1)(r = p.r), envAcc, penvAcc)
+    val lblFieldTypes = lblFieldDecls.map(f => f.label -> f.tp).toMap
+    val lblFields1 = for (lblField <- lblFields) yield {
+      val fieldType = expander.mkType(lblFieldTypes(lblField.label), eSub)
+      val eFieldType = expander.expandType(fieldType)
+      val (pat1, env1, penv1) = elpat(lblField.value, eFieldType, d, envAcc, penvAcc, gen)
+      envAcc = env1
+      penvAcc = penv1
+      AnnAst.LblField(lblField.label, pat1)
+    }
+
+    (AnnAst.EnumPat(nName.stringId, cName, posFields1 ++ lblFields1)(r = p.r), envAcc, penvAcc)
   }
 
   private def elabStructPat(
@@ -1271,7 +1310,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     checkPosFields(p.r, posFields, posFieldDecls)
     checkUniqueFields(p.r, lblFields.map(_.label))
-    checkStructLblFields(fields, structDef)
+    checkLblFields(lblFields, lblFieldDecls)
 
     val t = TU.instantiate(d, ts)
 
@@ -1355,23 +1394,23 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
-  private def checkStructLblFields(usedFields: List[Ast.Field[_]], structDef: Ast.StructDef): Unit = {
-    val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
-    val lblUsedFields = usedFields.collect { case lf: Ast.LblField[_] => lf }
-    val labels = lblFieldDecls.map(_.label).toSet
-    for (f <- lblUsedFields) {
+  private def checkLblFields(usedFields: List[Ast.LblField[_]], declFields: List[Ast.LblFieldDecl]): Unit = {
+    val labels = declFields.map(_.label).toSet
+    for (f <- usedFields) {
       if (!labels(f.label))
-        throw new UnknownStructField(f.r, structDef.name, f.label)
+        throw new UnknownField(f.r, f.label)
     }
   }
 
-  private def checkStructInit(pos: Doc.Range, fields: List[Ast.Field[_]], structDef: Ast.StructDef): Unit = {
-    val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
-    val lblInitFields = fields.collect { case lf: Ast.LblField[_] => lf }
-    val initialized = lblInitFields.map(_.label).toSet
-    for (f <- lblFieldDecls) {
+  private def checkFieldInits(
+      pos: Doc.Range,
+      fields: List[Ast.LblField[_]],
+      decFields: List[Ast.LblFieldDecl],
+  ): Unit = {
+    val initialized = fields.map(_.label).toSet
+    for (f <- decFields) {
       if (f.default.isEmpty && !initialized(f.label))
-        throw new UnInitializedStructField(pos, structDef.name, f.label)
+        throw new UnInitializedField(pos, f.label)
     }
   }
 
