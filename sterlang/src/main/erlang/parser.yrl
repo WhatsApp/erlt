@@ -194,6 +194,7 @@ expr -> expr_max : '$1'.
 remote_id -> atom ':' atom : {remote, anno('$1','$3'), '$1', '$3'}.
 
 expr_max -> expr_max '#' '(' atom ')' : {shape_field, anno('$1','$5'), '$1', '$4'}.
+expr_max -> '^' var : {pinned_var, anno('$1', '$2'), element(3, '$2')}.
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
@@ -215,9 +216,6 @@ pat_expr -> pat_expr list_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr add_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
-pat_expr -> shape_pat_expr : '$1'.
-pat_expr -> struct_pat_expr : '$1'.
-pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
 pat_expr_max -> '^' var : {pinned_var, anno('$1', '$2'), element(3, '$2')}.
@@ -226,6 +224,9 @@ pat_expr_max -> atomic : '$1'.
 pat_expr_max -> list_pat_expr : '$1'.
 pat_expr_max -> binary_pat_expr : '$1'.
 pat_expr_max -> tuple_pat_expr : '$1'.
+pat_expr_max -> shape_pat_expr : '$1'.
+pat_expr_max -> struct_pat_expr : '$1'.
+pat_expr_max -> enum_pat_expr : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
 enum_pat_expr -> atom '.' atom :

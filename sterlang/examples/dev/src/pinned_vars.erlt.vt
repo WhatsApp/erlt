@@ -30,3 +30,6 @@ val t09/1: fun((binary()) -> {number(), binary()})
 val Binary: binary()
 val Size: number()
 val Elem: binary()
+val t10/2: fun((A, A) -> A)
+val X: A
+val Y: A

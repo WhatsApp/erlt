@@ -47,3 +47,6 @@ t09(Binary) ->
     case Binary of
         <<Size, Elem:Size/binary>> -> {Size, Elem}
     end.
+
+t10(X, Y) ->
+    ^X = Y.

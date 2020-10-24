@@ -7,3 +7,4 @@
 -spec t07(binary(), number(), binary()) -> boolean().
 -spec t08(binary(), binary(), number()) -> number().
 -spec t09(binary()) -> {number(), binary()}.
+-spec t10(A, A) -> A.
