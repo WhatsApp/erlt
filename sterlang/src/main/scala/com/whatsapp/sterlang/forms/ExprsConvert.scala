@@ -30,7 +30,7 @@ object ExprsConvert {
         Clause(r(anno), pats, guards, exps)
     }
 
-  def convertIfClause(term: ETerm): IfClause =
+  private def convertIfClause(term: ETerm): IfClause =
     term match {
       case ETuple(List(EAtom("clause"), _anno, EList(List()), EList(eGuards), EList(eExps))) =>
         val guards = eGuards.map(convertGuard)
@@ -118,9 +118,9 @@ object ExprsConvert {
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
-        ShapeCreate(r(anno), eAssocs.map(convertAssoc))
+        ShapeCreate(r(anno), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>
-        ShapeUpdate(r(anno), convertExp(eExp), eAssocs.map(convertAssoc))
+        ShapeUpdate(r(anno), convertExp(eExp), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape_field"), anno, eExp, eFieldName)) =>
         val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         ShapeSelect(r(anno), convertExp(eExp), fieldName)
@@ -209,7 +209,7 @@ object ExprsConvert {
         literal(term)
     }
 
-  def convertGuard(term: ETerm): Guard = {
+  private def convertGuard(term: ETerm): Guard = {
     val EList(tests) = term
     Guard(tests.map(ExprsConvert.convertExp))
   }
@@ -231,7 +231,7 @@ object ExprsConvert {
         FloatLiteral(r(anno), value)
     }
 
-  def convertBinElement(term: ETerm): BinElement =
+  private def convertBinElement(term: ETerm): BinElement =
     term match {
       case ETuple(List(EAtom("bin_element"), _anno, eExp, eSize, eTypeSpecifiers)) =>
         val size = eSize match {
@@ -249,12 +249,12 @@ object ExprsConvert {
         TypeSpecifierList(specifiers.map(convertTypeSpecifier))
     }
 
-  def convertTypeSpecifier(term: ETerm): TypeSpecifier = {
+  private def convertTypeSpecifier(term: ETerm): TypeSpecifier = {
     val EAtom(spec) = term
     TypeSpecifier(spec)
   }
 
-  def field(term: ETerm): Field =
+  private def field(term: ETerm): Field =
     term match {
       case ETuple(List(EAtom("field"), anno, EAtom("undefined"), exp)) =>
         PosField(r(anno), convertExp(exp))
@@ -262,13 +262,13 @@ object ExprsConvert {
         LblField(r(anno), name, convertExp(exp))
     }
 
-  def convertAssoc(term: ETerm): ShapeField =
+  private def convertShapeField(term: ETerm): ShapeField =
     term match {
       case ETuple(List(EAtom("shape_field"), anno, eExp1, eExp2)) =>
         ShapeField(r(anno), convertExp(eExp1), convertExp(eExp2))
     }
 
-  def convertQualifier(term: ETerm): Qualifier =
+  private def convertQualifier(term: ETerm): Qualifier =
     term match {
       case ETuple(List(EAtom("generate"), _anno, ePat, eExp)) =>
         LGenerate(PatternsConvert.convertPat(ePat), convertExp(eExp))

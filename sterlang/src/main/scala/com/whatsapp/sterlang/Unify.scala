@@ -18,7 +18,7 @@ package com.whatsapp.sterlang
 
 import scala.collection.immutable.TreeSet
 
-class Unify(val vars: Vars) {
+class Unify(private val vars: Vars) {
 
   case class UnifyError(s: String) extends Exception(s)
 

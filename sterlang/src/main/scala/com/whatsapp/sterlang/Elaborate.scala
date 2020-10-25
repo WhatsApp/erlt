@@ -40,7 +40,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def freshRTypeVar(d: T.Depth)(kind: T.RtVarKind): T.RowTypeVar =
     vars.rVar(T.RowOpen(d, kind))
 
-  def unify(pos: Doc.Range, t1: T.Type, t2: T.Type): Unit = {
+  private def unify(pos: Doc.Range, t1: T.Type, t2: T.Type): Unit = {
     val required = Render(vars).typ(t1)
     val found = Render(vars).typ(t2)
     try {

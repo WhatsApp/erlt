@@ -52,7 +52,7 @@ class AstChecks(val context: Context) {
       checkShapeExtensions(spec.funType)
     }
 
-  def checkUniqueTypes(program: Program): Unit = {
+  private def checkUniqueTypes(program: Program): Unit = {
     var typeNames = Set.empty[String]
     for (ta <- program.typeAliases) {
       if (typeNames(ta.name)) throw new DuplicateType(ta.r, ta.name)
@@ -73,7 +73,7 @@ class AstChecks(val context: Context) {
     }
   }
 
-  def checkUniqueFuns(program: Program): Unit = {
+  private def checkUniqueFuns(program: Program): Unit = {
     var funNames = Set.empty[String]
     for (fun <- program.funs) {
       if (funNames(fun.name.stringId)) throw new DuplicateFun(fun.r, fun.name.stringId)

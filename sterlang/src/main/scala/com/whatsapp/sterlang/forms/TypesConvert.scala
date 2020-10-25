@@ -76,7 +76,7 @@ object TypesConvert {
         Types.TypeVariable(r(anno), name)
     }
 
-  def convertShapeField(term: ETerm): ShapeField =
+  private def convertShapeField(term: ETerm): ShapeField =
     term match {
       case ETuple(
             List(

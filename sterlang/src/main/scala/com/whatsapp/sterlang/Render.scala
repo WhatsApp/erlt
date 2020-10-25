@@ -42,7 +42,7 @@ object Render {
   }
 }
 
-case class Render(vars: Vars) {
+case class Render(private val vars: Vars) {
   import Render._
 
   // Renders specs. A spec per line

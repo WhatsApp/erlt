@@ -122,7 +122,7 @@ object PatternChecker {
   *
   * Based on [[http://moscova.inria.fr/~maranget/papers/warn/warn.pdf Warnings for pattern matching]].
   */
-class PatternChecker(private val tu: TypesUtil, private val context: Context, val program: Ast.Program) {
+class PatternChecker(private val tu: TypesUtil, private val context: Context, private val program: Ast.Program) {
   import PatternChecker._
 
   /** Returns a list of all pattern matching related issues in the given functions and their subexpressions. */

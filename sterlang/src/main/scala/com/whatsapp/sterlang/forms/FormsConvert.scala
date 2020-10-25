@@ -26,7 +26,7 @@ object FormsConvert {
     eforms.map(convertForm)
   }
 
-  def convertForm(term: ETerm): Form =
+  private def convertForm(term: ETerm): Form =
     term match {
       case ETuple(List(EAtom("attribute"), _anno, EAtom("ffi"))) =>
         FFI
@@ -99,13 +99,13 @@ object FormsConvert {
         Error(Doc.Pos(line.toInt, column.toInt))
     }
 
-  def convertIdWithArity(term: ETerm): IdWithArity =
+  private def convertIdWithArity(term: ETerm): IdWithArity =
     term match {
       case ETuple(List(EAtom(name), ELong(arity))) =>
         (name, arity.intValue)
     }
 
-  def fieldDecl(term: ETerm): FieldDecl =
+  private def fieldDecl(term: ETerm): FieldDecl =
     term match {
       case ETuple(List(EAtom("field_definition"), anno, EAtom("positional"), _, eType)) =>
         PosFieldDecl(r(anno), TypesConvert.convertType(eType))
@@ -119,7 +119,7 @@ object FormsConvert {
         LblFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
     }
 
-  def enumVariantDecl(term: ETerm): EnumVariantDecl =
+  private def enumVariantDecl(term: ETerm): EnumVariantDecl =
     term match {
       case ETuple(List(EAtom("type"), anno, EAtom("enum"), name, EList(fields))) =>
         EnumVariantDecl(r(anno), convertAtomLit(name), fields.map(fieldDecl))
@@ -131,7 +131,7 @@ object FormsConvert {
         atomVal
     }
 
-  def convertSpecFunId(term: ETerm): IdWithArity = {
+  private def convertSpecFunId(term: ETerm): IdWithArity = {
     val ETuple(List(EAtom(fName), ELong(value))) = term
     (fName, value.intValue)
   }

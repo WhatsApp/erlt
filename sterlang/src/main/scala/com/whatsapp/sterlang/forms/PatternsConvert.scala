@@ -94,7 +94,7 @@ object PatternsConvert {
         LiteralPattern(literal)
     }
 
-  def convertPatternBinElement(term: ETerm): BinElementPattern =
+  private def convertPatternBinElement(term: ETerm): BinElementPattern =
     term match {
       case ETuple(List(EAtom("bin_element"), anno, ePat, eSize, eTypeSpecifiers)) =>
         val size = eSize match {
@@ -109,7 +109,7 @@ object PatternsConvert {
         )
     }
 
-  def fieldPattern(term: ETerm): FieldPattern =
+  private def fieldPattern(term: ETerm): FieldPattern =
     term match {
       case ETuple(List(EAtom("field"), anno, EAtom("undefined"), exp)) =>
         PosFieldPattern(r(anno), convertPat(exp))
@@ -117,7 +117,7 @@ object PatternsConvert {
         LblFieldPattern(r(anno), name, convertPat(exp))
     }
 
-  def convertShapeFieldPattern(term: ETerm): ShapeFieldPattern =
+  private def convertShapeFieldPattern(term: ETerm): ShapeFieldPattern =
     term match {
       case ETuple(List(EAtom("shape_field"), anno, e1, e2)) =>
         ShapeFieldPattern(r(anno), convertPat(e1), convertPat(e2))
