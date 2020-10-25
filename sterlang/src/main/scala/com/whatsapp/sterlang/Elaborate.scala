@@ -99,7 +99,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val uncheckedEnv =
       for {
         Ast.UncheckedFun(name) <- program.uncheckedFuns
-        spec <- context.specs.find(_.name.stringId == name.stringId)
+        spec <- program.specs.find(_.name.stringId == name.stringId)
       } yield name.stringId -> getSpecSchema(spec, 0)
 
     val env1 = context.env ++ uncheckedEnv
@@ -903,7 +903,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val expander = dExpander(d)
     def freshSType(): ST.Type = ST.PlainType(freshTypeVar(d))
     def freshSRType(kind: Set[String]): ST.RowType = ST.RowVarType(freshRTypeVar(d)(kind))
-    val sFunType = context.specs.find(_.name.stringId == fun.name) match {
+    val sFunType = program.specs.find(_.name.stringId == fun.name) match {
       case Some(spec) =>
         val specFType = spec.funType
         val sVars = AstUtil.collectNamedTypeVars(specFType)
@@ -1386,7 +1386,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def checkSpec(fName: String, elabSchema: ST.TypeSchema, d: Int): Unit =
-    context.specs.find(_.name.stringId == fName).foreach { spec =>
+    program.specs.find(_.name.stringId == fName).foreach { spec =>
       val specSchema: ST.TypeSchema = getSpecSchema(spec, d)
       // it's important to use Render#scheme,
       // since type we get - it doesn't have proper ordering of vars

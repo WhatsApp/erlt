@@ -139,7 +139,7 @@ object Main {
       val schema = TU.generalize(0)(expSpecType)
       name -> schema
     }.toMap
-    Context(enumDefs, structDefs, List.empty, aliases, opaques, env)
+    Context(enumDefs, structDefs, aliases, opaques, env)
   }
 
   def loadProgram(file: String): Ast.Program = {
