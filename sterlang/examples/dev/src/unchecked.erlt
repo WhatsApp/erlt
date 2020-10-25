@@ -16,6 +16,12 @@
 
 -export([length/1]).
 
+[opaque, unchecked]
+-type t1(K, V) :: term().
+
+[unchecked, opaque]
+-type t2(K, V) :: term().
+
 -spec length(list(_)) -> number().
 [unchecked]
 length(L) -> erlang:length(L).

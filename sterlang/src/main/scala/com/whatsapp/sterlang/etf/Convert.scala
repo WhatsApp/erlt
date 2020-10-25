@@ -81,6 +81,9 @@ object Convert {
         Some(Ast.StructElem(eStructType))
       case Forms.EOF =>
         None
+      case Forms.UncheckedTypeDecl(r, typeName, params) =>
+        val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
+        Some(Ast.UncheckedOpaqueElem(Ast.UncheckedOpaque(typeName, typeParams)(r)))
       case Forms.Error(loc) =>
         throw ParseError(loc)
     }

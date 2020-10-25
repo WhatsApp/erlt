@@ -97,6 +97,16 @@ object FormsConvert {
         Error(Doc.Pos(line.toInt, column.toInt))
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
         Error(Doc.Pos(line.toInt, column.toInt))
+      case ETuple(
+            List(
+              EAtom("attribute"),
+              anno,
+              EAtom("unchecked_type"),
+              ETuple(List(EAtom(typeName), EList(vars))),
+            )
+          ) =>
+        val params = vars.map(TypesConvert.convertVar)
+        UncheckedTypeDecl(r(anno), typeName, params)
     }
 
   private def convertIdWithArity(term: ETerm): IdWithArity =

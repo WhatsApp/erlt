@@ -62,6 +62,7 @@ object Forms {
       params: List[TypeVariable],
       abstractType: Type,
   ) extends Form
+  case class UncheckedTypeDecl(r: Doc.Range, typeName: String, params: List[TypeVariable]) extends Form
   case class Spec(r: Doc.Range, id: IdWithArity, types: List[FunType]) extends Form
   case class Function(r: Doc.Range, name: String, arity: Int, clauses: List[Clause]) extends Form
   case class UncheckedFunction(name: String, arity: Int) extends Form

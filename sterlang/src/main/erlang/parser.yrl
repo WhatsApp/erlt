@@ -67,7 +67,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'struct' 'exception' 'message' 'type_attr'  'opaque_attr' 'enum' % helper
+'spec' 'struct' 'exception' 'message' 'type_attr'  'opaque_attr' 'enum' 'unchecked_opaque' % helper
 dot.
 
 Expect 0.
@@ -106,6 +106,8 @@ attribute -> '-' atom '(' attr_val ')' :
     build_attribute('$2', '$4', anno('$1','$5')).
 attribute -> '-' type_attr atom var_list '::' top_type :
     type_def('$3', '$4', '$6', anno('$1','$6')).
+attribute -> unchecked_opaque '-' type_attr atom var_list '::' top_type :
+    unchecked_type_def('$4', '$5', anno('$2','$7')).
 attribute -> '-' opaque_attr atom var_list '::' top_type :
     opaque_def('$3', '$4', '$6', anno('$1','$6')).
 attribute -> '-' enum atom var_list '::' '(' enum_variants ')' :
@@ -523,6 +525,10 @@ end).
     {op, anno(OpAnno, A), __Op, A}
 end).
 
+parse_form([{'[', _}, {atom, _, unchecked}, {',', _}, {atom, _, opaque}, {']', _}, {'-', A1}, {atom, _, type} | Tokens]) ->
+    parse([{unchecked_opaque}, {'-', A1}, {type_attr} | Tokens]);
+parse_form([{'[', _}, {atom, _, opaque}, {',', _}, {atom, _, unchecked}, {']', _}, {'-', A1}, {atom, _, type} | Tokens]) ->
+    parse([{unchecked_opaque}, {'-', A1}, {type_attr} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, spec} | Tokens]) ->
     parse([{'-', A1}, {'spec', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, struct} | Tokens]) ->
@@ -542,6 +548,9 @@ parse_form(Tokens) ->
 
 type_def({atom, _, Name}, Args, Type, Aa) ->
     {attribute, Aa, type, {Name, Type, Args}}.
+
+unchecked_type_def({atom, _, Name}, Args, Aa) ->
+    {attribute, Aa, unchecked_type, {Name, Args}}.
 
 opaque_def({atom, _, Name}, Args, Type, Aa) ->
     {attribute, Aa, opaque, {Name, Type, Args}}.

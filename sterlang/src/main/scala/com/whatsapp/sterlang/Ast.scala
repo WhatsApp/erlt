@@ -160,6 +160,7 @@ object Ast {
 
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
+  case class UncheckedOpaque(name: String, params: List[TypeVar])(val r: Doc.Range)
   case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
   case class StructDef(name: String, params: List[TypeVar], fields: List[FieldDecl], kind: StructKind)(
       val r: Doc.Range
@@ -270,6 +271,7 @@ object Ast {
       structDefs: List[StructDef],
       typeAliases: List[TypeAlias],
       opaques: List[Opaque],
+      uncheckedOpaques: List[UncheckedOpaque],
       specs: List[Spec],
       exports: Set[(String, Int)],
       imports: Map[LocalFunName, RemoteFunName],
@@ -297,6 +299,7 @@ object Ast {
   case class TypeAliasElem(typeAlias: TypeAlias) extends ProgramElem
   case class StructElem(structDef: StructDef) extends ProgramElem
   case class OpaqueElem(opaque: Opaque) extends ProgramElem
+  case class UncheckedOpaqueElem(uncheckedOpaque: UncheckedOpaque) extends ProgramElem
   case class CompileElem(options: List[String]) extends ProgramElem
 
   case class RawProgram(elems: List[ProgramElem]) {
@@ -309,6 +312,7 @@ object Ast {
         structDefs = elems.collect { case e: StructElem => e.structDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
         opaques = elems.collect { case e: OpaqueElem => e.opaque },
+        uncheckedOpaques = elems.collect { case e: UncheckedOpaqueElem => e.uncheckedOpaque },
         specs = elems.collect { case e: SpecElem => e.spec },
         exports = elems.collect { case e: ExportElem => e.ids }.flatten.toSet,
         imports = elems
