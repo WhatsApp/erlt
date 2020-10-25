@@ -58,32 +58,31 @@ object Doc {
       val underline = if (text.length > 2) '~' else '^'
       def space(c: Char): Char = ' '
       def under(c: Char): Char = underline
-      val textLines = text.split('\n').toList
+      val t1 :: tail = text.split('\n').toList
+
       // dropping the last \n
       val suffix1 = suffix.dropRight(1)
 
-      textLines match {
-        case t1 :: Nil =>
+      if (tail.isEmpty) {
+        List(
+          line(start) ++ "| " ++ prefix ++ t1 ++ suffix1,
+          "...| " ++ prefix.map(space) ++ t1.map(under),
+        ).mkString("\n")
+      } else {
+        val t2 = tail.last
+        val between = tail.dropRight(1)
+
+        List(
           List(
-            line(start) ++ "| " ++ prefix ++ t1 ++ suffix1,
+            line(start) ++ "| " ++ prefix ++ t1,
             "...| " ++ prefix.map(space) ++ t1.map(under),
-          ).mkString("\n")
-
-        case t1 :: tail =>
-          val t2 = tail.last
-          val between = tail.dropRight(1)
-
+          ),
+          between.flatMap(l => List("...| " ++ l, "...| " ++ l.map(under))),
           List(
-            List(
-              line(start) ++ "| " ++ prefix ++ t1,
-              "...| " ++ prefix.map(space) ++ t1.map(under),
-            ),
-            between.flatMap(l => List("...| " ++ l, "...| " ++ l.map(under))),
-            List(
-              line(end) ++ "| " ++ t2 + suffix1,
-              "...| " ++ t2.map(under),
-            ),
-          ).flatten.mkString("\n")
+            line(end) ++ "| " ++ t2 + suffix1,
+            "...| " ++ t2.map(under),
+          ),
+        ).flatten.mkString("\n")
       }
     }
   }

@@ -29,7 +29,7 @@ object Types {
   case class AnyMap(r: Doc.Range) extends Type
 
   case class Shape(r: Doc.Range, assocs: List[ShapeField]) extends Type
-  case class OpenShape(r: Doc.Range, assocs: List[ShapeField], restType: Type) extends Type
+  case class OpenShape(r: Doc.Range, assocs: List[ShapeField], restType: TypeVariable) extends Type
   case class ShapeField(r: Doc.Range, keyType: String, valueType: Type)
 
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type

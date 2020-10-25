@@ -243,10 +243,10 @@ object ExprsConvert {
 
   def convertTypeSpecifiers(term: ETerm): TypeSpecifiers =
     term match {
-      case EAtom("default") =>
-        DefaultTypeSpecifier
       case EList(specifiers) =>
         TypeSpecifierList(specifiers.map(convertTypeSpecifier))
+      case _ =>
+        DefaultTypeSpecifier
     }
 
   private def convertTypeSpecifier(term: ETerm): TypeSpecifier = {

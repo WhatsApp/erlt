@@ -312,6 +312,10 @@ object Convert {
         Ast.ReceiveExp(clauses.map(convertCaseClause), None)(p)
       case Exprs.ReceiveWithTimeout(p, clauses, timeout, body) =>
         Ast.ReceiveExp(clauses.map(convertCaseClause), Some(Ast.AfterBody(convertExpr(timeout), convertBody(body))))(p)
+      case _ =>
+        // $COVERAGE-OFF$ unreachable
+        throw new IllegalStateException(e.toString)
+      // $COVERAGE-ON$
     }
 
   private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {

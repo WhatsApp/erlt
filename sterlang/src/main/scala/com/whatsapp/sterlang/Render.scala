@@ -403,7 +403,8 @@ case class Render(private val vars: Vars) {
 
     def typ(sType: STypes.Type): String =
       sType match {
-        case STypes.PlainType(Types.VarType(typeVar)) =>
+        case STypes.PlainType(vt) =>
+          val Types.VarType(typeVar) = vt
           freeTypeVarNames(typeVar)
         case STypes.ConType(tyCon, types, rowTypes) =>
           conType(tyCon, types, rowTypes)
