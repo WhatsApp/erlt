@@ -162,7 +162,8 @@ shape_field_type -> atom '::' top_type                      : {type, anno('$1', 
 attr_val -> expr             : '$1'.
 attr_val -> expr ',' exprs   : ['$1' | '$3'].
 
-function -> function_clauses : build_function('$1').
+function -> '[' atom ']' function_clauses : build_unchecked_function('$2', '$4').
+function -> function_clauses              : build_function('$1').
 
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
@@ -601,12 +602,18 @@ farity_list({nil, _An}) ->
 farity_list(Other) ->
     ret_err(anno(Other), "bad function arity").
 
-%% build_function([Clause]) -> {function,Anno,Name,Arity,[Clause]}
-
 build_function(Cs) ->
     Name = element(3, hd(Cs)),
     Arity = length(element(4, hd(Cs))),
     {function, anno(hd(Cs), Cs), Name, Arity, check_clauses(Cs, Name, Arity)}.
+
+build_unchecked_function({atom, _, unchecked}, Cs) ->
+    Name = element(3, hd(Cs)),
+    Arity = length(element(4, hd(Cs))),
+    {unchecked_function, Name, Arity};
+build_unchecked_function({atom, A, _}, _) ->
+    ret_err(A, "bad modifier").
+
 
 %% build_fun(Anno, [Clause]) -> {'fun',Anno,{clauses,[Clause]}}.
 

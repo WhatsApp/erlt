@@ -62,8 +62,9 @@ object Forms {
       params: List[TypeVariable],
       abstractType: Type,
   ) extends Form
-  case class FunctionSpec(r: Doc.Range, id: IdWithArity, types: List[FunType]) extends Form
-  case class FunctionDecl(r: Doc.Range, name: String, arity: Int, clauses: List[Clause]) extends Form
+  case class Spec(r: Doc.Range, id: IdWithArity, types: List[FunType]) extends Form
+  case class Function(r: Doc.Range, name: String, arity: Int, clauses: List[Clause]) extends Form
+  case class UncheckedFunction(name: String, arity: Int) extends Form
   case object EOF extends Form
   case class Error(pos: Doc.Pos) extends Form
 

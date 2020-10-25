@@ -75,7 +75,6 @@ object FormsConvert {
             List(EAtom("attribute"), anno, EAtom("enum"), ETuple(List(EAtom(name), EList(vars), EList(enumVariants))))
           ) =>
         EnumDecl(r(anno), name, vars.map(TypesConvert.convertVar), enumVariants.map(enumVariantDecl))
-      // af_function_spec
       case ETuple(
             List(
               EAtom("attribute"),
@@ -86,11 +85,12 @@ object FormsConvert {
           ) =>
         val funId = convertSpecFunId(eFunId)
         val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
-        FunctionSpec(r(anno), funId, typeList)
-      // af_function_decl
+        Spec(r(anno), funId, typeList)
       case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
         val clauses = clauseSeq.map(ExprsConvert.convertClause)
-        FunctionDecl(r(anno), name, arity.intValue, clauses)
+        Function(r(anno), name, arity.intValue, clauses)
+      case ETuple(List(EAtom("unchecked_function"), EAtom(name), ELong(arity))) =>
+        UncheckedFunction(name, arity.intValue)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
       case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>

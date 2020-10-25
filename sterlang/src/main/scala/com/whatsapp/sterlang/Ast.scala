@@ -205,6 +205,7 @@ object Ast {
   case class AfterBody(timeout: Exp, body: Body)
   case class ValDef(pat: Pat, exp: Exp)
   case class Fun(name: LocalFunName, clauses: List[Clause])(val r: Doc.Range)
+  case class UncheckedFun(name: LocalFunName)
 
   sealed trait Field[A] {
     val value: A
@@ -275,6 +276,7 @@ object Ast {
       exportTypes: Set[(String, Int)],
       importTypes: Map[LocalFunName, RemoteFunName],
       funs: List[Fun],
+      uncheckedFuns: List[UncheckedFun],
   ) {
     val typeMap: Map[LocalName, RemoteName] =
       importTypes.map { case (k, v) => LocalName(k.name) -> RemoteName(v.module, v.name) }
@@ -283,6 +285,7 @@ object Ast {
   // "High-level" program element
   sealed trait ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
+  case class UncheckedFunElem(fun: UncheckedFun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
   case object FfiElem extends ProgramElem
   case class ModuleElem(module: String) extends ProgramElem
@@ -322,6 +325,7 @@ object Ast {
           .flatten
           .toMap,
         funs = elems.collect { case e: FunElem => e.fun },
+        uncheckedFuns = elems.collect { case e: UncheckedFunElem => e.fun },
       )
     }
   }

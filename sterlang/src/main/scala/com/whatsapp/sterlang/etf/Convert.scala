@@ -57,16 +57,19 @@ object Convert {
             val opaque = Ast.Opaque(typeName, typeParams, convertType(body))(p)
             Some(Ast.OpaqueElem(opaque))
         }
-      case Forms.FunctionSpec(specP, (name, arity), types) =>
+      case Forms.Spec(specP, (name, arity), types) =>
         val List(Types.FunType(p, params, res)) = types
         val funType = Ast.FunType(params.map(convertType), convertType(res))(p)
         val funName = new Ast.LocalFunName(name, arity)
         val spec = Ast.Spec(funName, funType)(specP)
         Some(Ast.SpecElem(spec))
-      case Forms.FunctionDecl(p, name, arity, clauses) =>
+      case Forms.Function(p, name, arity, clauses) =>
         val funName = new Ast.LocalFunName(name, arity)
         val fun = Ast.Fun(funName, clauses.map(convertFunClause))(p)
         Some(Ast.FunElem(fun))
+      case Forms.UncheckedFunction(name, arity) =>
+        val funName = new Ast.LocalFunName(name, arity)
+        Some(Ast.UncheckedFunElem(Ast.UncheckedFun(funName)))
       case Forms.EnumDecl(p, name, params, enumVariants) =>
         val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         val enumDef = Ast.EnumDef(name, typeParams, enumVariants.map(convertEnumCtr))(p)

@@ -117,6 +117,7 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
               ),
             )(ZRange),
           ),
+          uncheckedFuns = List.empty,
           opaques = List.empty,
           exports = Set.empty,
           exportTypes = Set.empty,
