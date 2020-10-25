@@ -324,6 +324,7 @@ object AstUtil {
         program.structDefs.map(_.name),
         program.typeAliases.map(_.name),
         program.opaques.map(_.name),
+        program.uncheckedOpaques.map(_.name),
       ).flatten.toSet
     val enumDefs1 = program.enumDefs.collect {
       case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
@@ -364,11 +365,15 @@ object AstUtil {
           FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.r)
         Spec(name1, funType1)(Doc.ZRange)
     }
-    val opaques = program.opaques.collect {
-      case Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
+    val opaques1 = program.opaques.map {
+      case Opaque(name, params, _) =>
         TypeId(RemoteName(module, name), params.size)
     }
-    ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques)
+    val opaques2 = program.uncheckedOpaques.collect {
+      case UncheckedOpaque(name, params) if program.exportTypes((name, params.size)) =>
+        TypeId(RemoteName(module, name), params.size)
+    }
+    ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques1 ++ opaques2)
   }
 
   private def globalizeType(module: String, names: Set[String])(tp: Type): Type =

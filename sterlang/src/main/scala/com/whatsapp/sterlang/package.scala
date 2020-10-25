@@ -31,12 +31,16 @@ package object sterlang {
       val opaqueAliases = program.opaques.map { opaque =>
         Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.r)
       }
+      val localOpaques = program.uncheckedOpaques.map {
+        case Ast.UncheckedOpaque(name, params) =>
+          Ast.TypeId(Ast.LocalName(name), params.size)
+      }
       Context(
         enumDefs ++ program.enumDefs,
         structDefs ++ program.structDefs,
         specs ++ program.specs,
         aliases ++ program.typeAliases ++ opaqueAliases,
-        opaques,
+        opaques ++ localOpaques,
         env,
       )
     }
@@ -47,6 +51,9 @@ package object sterlang {
       structDefs: List[Ast.StructDef],
       aliases: List[Ast.TypeAlias],
       specs: List[Ast.Spec],
+      // includes both:
+      // -opaque
+      // -export_type + [opaque unchecked]
       opaques: List[Ast.TypeId],
   )
 

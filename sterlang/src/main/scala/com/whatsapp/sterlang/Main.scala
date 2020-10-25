@@ -135,7 +135,8 @@ object Main {
       val eSub: Expander.Sub =
         sub.view.mapValues(Left(_)).toMap
       val specType = expander.mkType(funType, eSub)
-      val schema = TU.generalize(0)(specType)
+      val expSpecType = expander.expandType(specType)
+      val schema = TU.generalize(0)(expSpecType)
       name -> schema
     }.toMap
     Context(enumDefs, structDefs, List.empty, aliases, opaques, env)

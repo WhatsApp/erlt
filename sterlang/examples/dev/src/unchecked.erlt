@@ -14,7 +14,8 @@
 
 -module(unchecked).
 
--export([length/1]).
+-export([length/1, test1/0, xx/0, xx2/0]).
+-export_type([t1/2, t2/2, x2/0]).
 
 [opaque, unchecked]
 -type t1(K, V) :: term().
@@ -22,9 +23,37 @@
 [unchecked, opaque]
 -type t2(K, V) :: term().
 
+-type x1() :: t1(boolean(), boolean()).
+-type x2() :: t2(x1(), x1()).
+
 -spec length(list(_)) -> number().
 [unchecked]
 length(L) -> erlang:length(L).
 
 lengths(Ls) ->
     [length(L) || L <- Ls].
+
+-spec test1() -> t1(number(), boolean()).
+[unchecked]
+test1() ->
+    1.
+
+-spec test2() -> unchecked:t1(boolean(), number()).
+[unchecked]
+test2() ->
+    1.
+
+-spec test() -> t1(number(), boolean()).
+test() ->
+    test1().
+
+-spec xx() -> x2().
+[unchecked]
+xx() -> [].
+
+-spec xx2() -> t2(x1(), x1()).
+[unchecked]
+xx2() -> [].
+
+testme() ->
+    [xx(), xx2()].

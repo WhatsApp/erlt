@@ -65,3 +65,10 @@ slice(Binary, SliceSize) ->
 
 lengths(Ls) ->
     map(fun unchecked:length/1, Ls).
+
+-spec t1() -> unchecked:t1(number(), boolean()).
+t1() ->
+    unchecked:test1().
+
+xxx() ->
+    [unchecked:xx(), unchecked:xx2()].
