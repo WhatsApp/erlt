@@ -28,8 +28,6 @@ object FormsConvert {
 
   private def convertForm(term: ETerm): Form =
     term match {
-      case ETuple(List(EAtom("attribute"), _anno, EAtom("ffi"))) =>
-        FFI
       // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
         Module(name)

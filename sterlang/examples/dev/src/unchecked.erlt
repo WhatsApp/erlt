@@ -31,7 +31,7 @@
 length(L) -> erlang:length(L).
 
 lengths(Ls) ->
-    [length(L) || L <- Ls].
+    [unchecked:length(L) || L <- Ls].
 
 -spec test1() -> t1(number(), boolean()).
 [unchecked]

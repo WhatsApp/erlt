@@ -123,7 +123,6 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
           exports = Set.empty,
           exportTypes = Set.empty,
           module = "test",
-          lang = ST,
           imports = Map.empty,
           importTypes = Map.empty,
         ),

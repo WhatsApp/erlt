@@ -112,9 +112,6 @@ object Ast {
   val binOps: Map[String, BinOp] =
     binOps1 ++ binOps2
 
-  sealed trait Lang
-  case object ST extends Lang
-  case object FFI extends Lang
   case class TypeId(name: Name, arity: Int)
   sealed trait Name {
     val stringId: String
@@ -265,7 +262,6 @@ object Ast {
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 
   case class Program(
-      lang: Lang,
       module: String,
       enumDefs: List[EnumDef],
       structDefs: List[StructDef],
@@ -289,7 +285,6 @@ object Ast {
   case class FunElem(fun: Fun) extends ProgramElem
   case class UncheckedFunElem(fun: UncheckedFun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
-  case object FfiElem extends ProgramElem
   case class ModuleElem(module: String) extends ProgramElem
   case class ExportElem(ids: List[(String, Int)]) extends ProgramElem
   case class ImportElem(module: String, ids: List[LocalFunName]) extends ProgramElem
@@ -303,10 +298,8 @@ object Ast {
   case class CompileElem(options: List[String]) extends ProgramElem
 
   case class RawProgram(elems: List[ProgramElem]) {
-    def program: Program = {
-      val lang: Lang = if (elems.contains(FfiElem)) FFI else ST
+    def program: Program =
       Program(
-        lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
         structDefs = elems.collect { case e: StructElem => e.structDef },
@@ -331,6 +324,5 @@ object Ast {
         funs = elems.collect { case e: FunElem => e.fun },
         uncheckedFuns = elems.collect { case e: UncheckedFunElem => e.fun },
       )
-    }
   }
 }

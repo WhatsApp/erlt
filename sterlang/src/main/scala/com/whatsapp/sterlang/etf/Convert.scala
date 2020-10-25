@@ -35,8 +35,6 @@ object Convert {
 
   def convertForm(form: Forms.Form): Option[Ast.ProgramElem] =
     form match {
-      case Forms.FFI =>
-        Some(Ast.FfiElem)
       case Forms.Module(name) =>
         Some(Ast.ModuleElem(name))
       case Forms.Export(ids) =>

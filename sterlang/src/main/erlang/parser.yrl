@@ -605,8 +605,6 @@ build_attribute({atom, _, import}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import, {Mod, farity_list(ImpList)}};
 build_attribute({atom, _, import_type}, [{atom, _, Mod}, ImpList], Aa) ->
     {attribute, Aa, import_type, {Mod, farity_list(ImpList)}};
-build_attribute({atom, _, lang}, {atom, _, ffi}, Aa) ->
-    {attribute, Aa, ffi};
 build_attribute(_, _, Aa) ->
     ret_err(Aa, "bad attribute").
 
@@ -693,16 +691,12 @@ merge_anno({Start1,_}, {_,End2}) ->
 
 main(["-ifile", IFile, "-ofile", OFile]) ->
     Forms = parse_file(IFile),
-    Lang = parse_lang(Forms),
-    Forms1 = normalize_for_typecheck(Forms, Lang),
-    CodeETF = erlang:term_to_binary(Forms1),
+    CodeETF = erlang:term_to_binary(Forms),
     ok = filelib:ensure_dir(OFile),
     ok = file:write_file(OFile, CodeETF);
 main(["-ast", Filename]) ->
     Forms = parse_file(Filename),
-    Lang = parse_lang(Forms),
-    Forms1 = normalize_for_typecheck(Forms, Lang),
-    io:format("Forms:\n~p\n", [Forms1]);
+    io:format("Forms:\n~p\n", [Forms]);
 main(["-idir", IDir, "-odir", ODir]) ->
     {ok, Files} = file:list_dir(IDir),
     SortedFiles = lists:sort(Files),
@@ -720,21 +714,6 @@ main(["-idir", IDir, "-odir", ODir]) ->
         ErlFiles
     ),
     ok.
-
-parse_lang(Forms) ->
-    Langs = [ffi || {attribute, _, ffi} <- Forms],
-    case Langs of [] -> st; _ -> ffi end.
-
-normalize_for_typecheck(Forms, Lang) ->
-    Forms1 =
-        case Lang of
-            st -> Forms;
-            ffi -> [F || F <- Forms, not is_fun_form(F)]
-        end,
-    Forms1.
-
-is_fun_form({function, _, _, _, _}) -> true;
-is_fun_form(_) -> false.
 
 parse_file(Filename) ->
     {ok, Data} = file:read_file(Filename),

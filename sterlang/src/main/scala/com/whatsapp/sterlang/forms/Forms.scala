@@ -36,7 +36,6 @@ object Forms {
 
   sealed trait Form
 
-  case object FFI extends Form
   case class Module(name: String) extends Form
   case class Export(ids: List[IdWithArity]) extends Form
   case class Import(module: String, ids: List[IdWithArity]) extends Form
