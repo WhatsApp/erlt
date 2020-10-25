@@ -14,6 +14,11 @@
 
 -module(unchecked).
 
+-export([length/1]).
+
 -spec length(list(_)) -> number().
 [unchecked]
 length(L) -> erlang:length(L).
+
+lengths(Ls) ->
+    [length(L) || L <- Ls].

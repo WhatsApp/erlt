@@ -55,7 +55,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   def elaborate(): (List[AnnAst.Fun], Env) = {
     checkStructDefs()
-    elaborateFuns(program.funs)
+    elaborateFuns()
   }
 
   private def checkStructDefs(): Unit = {
@@ -89,19 +89,28 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     }
   }
 
-  private def elaborateFuns(funs: List[Ast.Fun]): (List[AnnAst.Fun], Env) = {
+  private def elaborateFuns(): (List[AnnAst.Fun], Env) = {
+    val funs = program.funs
     val names = funs.map(_.name.stringId)
     val fMap = funs.map { f => f.name.stringId -> f }.toMap
     val sccNames = AstUtil.buildSCC(funs, program.module)
     val sccFuns = sccNames.map(_.map(fMap))
-    val (sccFuns1, env) = elabSccFuns(sccFuns)
+
+    val uncheckedEnv =
+      for {
+        Ast.UncheckedFun(name) <- program.uncheckedFuns
+        spec <- context.specs.find(_.name.stringId == name.stringId)
+      } yield name.stringId -> getSpecSchema(spec, 0)
+
+    val env1 = context.env ++ uncheckedEnv
+    val (sccFuns1, env2) = elabSccFuns(sccFuns, env1)
     val afMap = sccFuns1.flatten.map { f => f.name -> f }.toMap
     val afuns2 = names.map(afMap)
-    (afuns2, env)
+    (afuns2, env2)
   }
 
-  private def elabSccFuns(sccFuns: List[List[Ast.Fun]]): (List[List[AnnAst.Fun]], Env) = {
-    var envAcc = context.env
+  private def elabSccFuns(sccFuns: List[List[Ast.Fun]], env: Env): (List[List[AnnAst.Fun]], Env) = {
+    var envAcc = env
     val sccFuns1 = for ((funs, d) <- sccFuns.zipWithIndex) yield {
       val funClauses = funs.map(f => Function(f.name.stringId, f.clauses)(r = f.r))
       val (funs1, env1) = elabFuns(funClauses, d, envAcc)
@@ -1358,23 +1367,27 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   // --- Some additional checks ---
 
-  private def checkSpec(fName: String, elabSchema: ST.TypeSchema, d: Int): Unit = {
+  private def getSpecSchema(spec: Ast.Spec, d: Int): ST.TypeSchema = {
     val expander = dExpander(d)
+    val specFType = spec.funType
+    val sVars = AstUtil.collectNamedTypeVars(specFType)
+    val rVars = AstUtil.collectNamedRowTypeVars(specFType)
+
+    val sSub: Expander.Sub =
+      sVars.map { v => v -> Left(freshTypeVar(d)) }.toMap
+    val rSub: Expander.Sub =
+      rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(d, kind)) }.toMap
+    val eSub: Expander.Sub =
+      sSub ++ rSub
+    val specType = expander.mkType(specFType, eSub)
+    val eSpecType = expander.expandType(specType)
+    val specSchema = TU.generalize(d)(eSpecType)
+    specSchema
+  }
+
+  private def checkSpec(fName: String, elabSchema: ST.TypeSchema, d: Int): Unit =
     context.specs.find(_.name.stringId == fName).foreach { spec =>
-      val specFType = spec.funType
-      val sVars = AstUtil.collectNamedTypeVars(specFType)
-      val rVars = AstUtil.collectNamedRowTypeVars(specFType)
-
-      val sSub: Expander.Sub =
-        sVars.map { v => v -> Left(freshTypeVar(d)) }.toMap
-      val rSub: Expander.Sub =
-        rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(d, kind)) }.toMap
-      val eSub: Expander.Sub =
-        sSub ++ rSub
-      val specType = expander.mkType(specFType, eSub)
-      val eSpecType = expander.expandType(specType)
-      val specSchema = TU.generalize(d)(eSpecType)
-
+      val specSchema: ST.TypeSchema = getSpecSchema(spec, d)
       // it's important to use Render#scheme,
       // since type we get - it doesn't have proper ordering of vars
       val elabNormString = Render(vars).scheme(elabSchema)
@@ -1384,7 +1397,6 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         throw new SpecError(spec.r, fName, specNormString, elabNormString)
       }
     }
-  }
 
   private def checkUniqueFields(pos: Doc.Range, fields: List[String]): Unit = {
     val uniqueIds = fields.distinct

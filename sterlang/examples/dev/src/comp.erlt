@@ -62,3 +62,6 @@ pixels(RGB) ->
 
 slice(Binary, SliceSize) ->
     [ Slice || <<Slice:SliceSize/binary>> <= Binary].
+
+lengths(Ls) ->
+    map(fun unchecked:length/1, Ls).

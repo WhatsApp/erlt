@@ -12,3 +12,4 @@
 -spec rgb(binary()) -> list({number(), number(), number()}).
 -spec pixels(list({number(), number(), number()})) -> binary().
 -spec slice(binary(), number()) -> list(binary()).
+-spec lengths(list(list(A))) -> list(number()).

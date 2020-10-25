@@ -1,1 +1,1 @@
-
+-spec lengths(list(list(A))) -> list(number()).

@@ -1,1 +1,3 @@
-
+val lengths/1: fun((list(list(A))) -> list(number()))
+val Ls: list(list(A))
+val L: list(A)
