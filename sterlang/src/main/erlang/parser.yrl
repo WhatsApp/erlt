@@ -67,7 +67,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<='
 '<<' '>>'
 '!' '=' '::'
-'spec' 'struct' 'exception' 'message' 'type_kind' 'enum' % helper
+'spec' 'struct' 'exception' 'message' 'type_attr'  'opaque_attr' 'enum' % helper
 dot.
 
 Expect 0.
@@ -104,10 +104,12 @@ struct_kind -> 'message'   : '$1'.
 
 attribute -> '-' atom '(' attr_val ')' :
     build_attribute('$2', '$4', anno('$1','$5')).
-attribute -> '-' type_kind atom var_list '::' top_type :
-    type_def('$2', '$3', '$4', '$6', anno('$1','$6')).
+attribute -> '-' type_attr atom var_list '::' top_type :
+    type_def('$3', '$4', '$6', anno('$1','$6')).
+attribute -> '-' opaque_attr atom var_list '::' top_type :
+    opaque_def('$3', '$4', '$6', anno('$1','$6')).
 attribute -> '-' enum atom var_list '::' '(' enum_variants ')' :
-    type_def(enum, '$3', '$4', '$7', anno('$1','$8')).
+    enum_def('$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' struct_kind atom var_list '::' '(' field_defs ')' :
     struct_def('$2', '$3', '$4', '$7', anno('$1','$8')).
 attribute -> '-' 'spec' type_spec :
@@ -529,18 +531,22 @@ parse_form([{'-', A1}, {atom, A2, exception} | Tokens]) ->
     parse([{'-', A1}, {'exception', A2} | Tokens]);
 parse_form([{'-', A1}, {atom, A2, message} | Tokens]) ->
     parse([{'-', A1}, {'message', A2} | Tokens]);
+parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
+    parse([{'-', A1}, {opaque_attr} | Tokens]);
 parse_form([{'-', A1}, {atom, _, type} | Tokens]) ->
-    parse([{'-', A1}, {type_kind, type} | Tokens]);
+    parse([{'-', A1}, {type_attr} | Tokens]);
 parse_form([{'-', A1}, {atom, _, enum} | Tokens]) ->
     parse([{'-', A1}, {enum} | Tokens]);
-parse_form([{'-', A1}, {atom, _, opaque} | Tokens]) ->
-    parse([{'-', A1}, {type_kind, opaque} | Tokens]);
 parse_form(Tokens) ->
     parse(Tokens).
 
-type_def({type_kind, Kind}, {atom, _, Name}, Args, Type, Aa) ->
-    {attribute, Aa, Kind, {Name, Type, Args}};
-type_def(enum, {atom, _, Name}, Args, Variants, Aa) ->
+type_def({atom, _, Name}, Args, Type, Aa) ->
+    {attribute, Aa, type, {Name, Type, Args}}.
+
+opaque_def({atom, _, Name}, Args, Type, Aa) ->
+    {attribute, Aa, opaque, {Name, Type, Args}}.
+
+enum_def({atom, _, Name}, Args, Variants, Aa) ->
     {attribute, Aa, enum, {Name, Args, Variants}}.
 
 struct_def({StructKind, _}, {atom, _An, StructName}, Args, Fields, Aa) ->
