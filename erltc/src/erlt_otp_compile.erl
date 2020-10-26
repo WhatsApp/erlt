@@ -29,16 +29,30 @@
 -export([options/0]).
 -export([env_compiler_options/0]).
 
+-ifdef(OTP_INCLUDES).
 %% Erlc interface.
 -export([compile/3, compile_beam/3, compile_asm/3, compile_core/3]).
+-endif.
 
 %% Utility functions for compiler passes.
 -export([run_sub_passes/2]).
 
 -export_type([option/0]).
 
+-ifdef(OTP_INCLUDES).
 -include("erl_compile.hrl").
 -include("core_parse.hrl").
+-else.
+%% copied from core_parse.hrl to keep things simple
+-record(c_literal, {anno = [] :: list(), val :: any()}).
+-record(c_module, {
+    anno = [] :: list(),
+    name :: cerl:cerl(),
+    exports :: [cerl:cerl()],
+    attrs :: [{cerl:cerl(), cerl:cerl()}],
+    defs :: [{cerl:cerl(), cerl:cerl()}]
+}).
+-endif.
 
 -import(lists, [
     member/2,
@@ -2336,6 +2350,8 @@ help([_ | T]) ->
 help(_) ->
     ok.
 
+-ifdef(OTP_INCLUDES).
+
 %% compile(AbsFileName, Outfilename, Options)
 %%   Compile entry point for erl_compile.
 
@@ -2372,6 +2388,9 @@ compile_core(File0, _OutFile, Opts) ->
         Other -> Other
     end.
 
+% OTP_INCLUDES
+-endif.
+
 shorten_filename(Name0) ->
     {ok, Cwd} = file:get_cwd(),
     case lists:prefix(Cwd, Name0) of
@@ -2383,6 +2402,8 @@ shorten_filename(Name0) ->
                 N -> N
             end
     end.
+
+-ifdef(OTP_INCLUDES).
 
 %% Converts generic compiler options to specific options.
 
@@ -2467,3 +2488,6 @@ pre_load() ->
     ],
     _ = code:ensure_modules_loaded(L),
     ok.
+
+% OTP_INCLUDES
+-endif.
