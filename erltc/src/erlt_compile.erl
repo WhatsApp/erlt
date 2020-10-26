@@ -192,11 +192,13 @@ do_file(File, Options0) ->
                 [
                     % TODO: do not remove the output file unless we know save_binary() is going to run
                     ?pass(remove_file),
-                    ?pass(collect_definitions)
+                    {unless, 'etf', {unless, 'defs', ?pass(collect_definitions)}}
                 ] ++
                     base_passes() ++
                     [
                         {iff, 'B', {src_listing, "B"}},
+                        {iff, 'etf', {binary_listing, "etf"}},
+                        {iff, 'defs', {binary_listing, "defs"}},
                         {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
@@ -729,6 +731,8 @@ select_passes([{src_listing, Ext} | _], _Opts) ->
     [{listing, fun(Code, St) -> src_listing(Ext, Code, St) end}];
 select_passes([{listing, Ext} | _], _Opts) ->
     [{listing, fun(Code, St) -> listing(Ext, Code, St) end}];
+select_passes([{binary_listing, Ext} | _], _Opts) ->
+    [{listing, fun(Code, St) -> binary_listing(Ext, Code, St) end}];
 select_passes([done | _], _Opts) ->
     [];
 select_passes([{done, Ext} | _], Opts) ->
@@ -1465,6 +1469,20 @@ pre_defs([]) ->
 
 inc_paths(Opts) ->
     [P || {i, P} <- Opts, is_list(P)].
+
+binary_listing(Ext, Code0, St0) ->
+    Code =
+        case Ext of
+            "defs" -> erlt_defs:normalise_definitions(Code0);
+            _ -> Code0
+        end,
+    Code1 = normalize_for_typecheck(Code),
+    Write = fun(Out, Forms) ->
+        ok = io:setopts(Out, [{encoding, latin1}]),
+        file:write(Out, term_to_binary(Forms))
+    end,
+    St = St0#compile{encoding = none},
+    listing(Write, Ext, Code1, St).
 
 src_listing(Ext, Code, St) ->
     listing(
