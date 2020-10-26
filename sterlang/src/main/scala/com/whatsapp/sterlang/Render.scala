@@ -51,7 +51,7 @@ case class Render(private val vars: Vars) {
       resetContext()
       val ts = env(f.name)
       // fun((ArgType1, ArgType2, ...) -> ResType)
-      val raw = typeSchema(ts, SpecsMode)
+      val raw = typeScheme(ts, SpecsMode)
       val inner = raw.substring(4, raw.length - 1)
       val slashIndex = f.name.lastIndexOf('/')
       val normV = f.name.substring(0, slashIndex)
@@ -62,22 +62,22 @@ case class Render(private val vars: Vars) {
 
   def typ(tp: Types.Type): String = {
     resetContext()
-    val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(tp))
-    typeSchema(fakeTypeScheme, TypesMode)
+    val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(tp))
+    typeScheme(fakeTypeScheme, TypesMode)
   }
 
   def typs(types: List[Types.Type]): String = {
     resetContext()
     val typeStrings = types.map { tp =>
-      val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(tp))
-      typeSchema(fakeTypeScheme, TypesMode)
+      val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(tp))
+      typeScheme(fakeTypeScheme, TypesMode)
     }
     typeStrings.mkString(", ")
   }
 
-  def scheme(s: STypes.TypeSchema): String = {
+  def scheme(s: STypes.TypeScheme): String = {
     resetContext()
-    typeSchema(s, SpecsMode)
+    typeScheme(s, SpecsMode)
   }
 
   // Renders all the variables. A variable per line
@@ -86,9 +86,9 @@ case class Render(private val vars: Vars) {
     funs.foreach { fun =>
       resetContext()
       val AnnAst.Fun(name, clauses, fType) = fun
-      val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(fType))
-      val typeSchemaString = typeSchema(fakeTypeScheme, TypesMode)
-      val pp = "val " + name + ": " + typeSchemaString
+      val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(fType))
+      val typeSchemeString = typeScheme(fakeTypeScheme, TypesMode)
+      val pp = "val " + name + ": " + typeSchemeString
 
       buf.append(pp)
 
@@ -109,9 +109,9 @@ case class Render(private val vars: Vars) {
       case AnnAst.PinnedVarPat(_) =>
       // nothing
       case AnnAst.VarPat(v) =>
-        val fakeTypeScheme = STypes.TypeSchema(List.empty, List.empty, STypes.PlainType(pat.typ))
-        val typeSchemaString = typeSchema(fakeTypeScheme, TypesMode)
-        val pp = "val " + v + ": " + typeSchemaString
+        val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(pat.typ))
+        val typeSchemeString = typeScheme(fakeTypeScheme, TypesMode)
+        val pp = "val " + v + ": " + typeSchemeString
         buf.append(pp)
       case AnnAst.AndPat(p1, p2) =>
         renderPat(buf)(p1)
@@ -296,7 +296,7 @@ case class Render(private val vars: Vars) {
   private val rtyVarSetEmpty: TreeSet[Types.RowTypeVar] =
     TreeSet.empty(vars.RVarOrdering)
 
-  private def type2typeSchema(t: Types.Type): STypes.Type =
+  private def type2typeScheme(t: Types.Type): STypes.Type =
     tu.generalize(Int.MaxValue)(t).body
 
   // sTypeVars:
@@ -329,12 +329,12 @@ case class Render(private val vars: Vars) {
         case STypes.PlainType(Types.VarType(v)) =>
           vars.tGet(v) match {
             case Types.Instance(t) =>
-              typ(type2typeSchema(t))
+              typ(type2typeScheme(t))
             case Types.Open(_) =>
               (ts, Info(freeTypeVars = tyVarSetEmpty + v))
           }
         case STypes.PlainType(t: Types.ConType) =>
-          typ(type2typeSchema(t))
+          typ(type2typeScheme(t))
         case STypes.ConType(tyc, sTypes, sRowTypes) =>
           val (sTypes1, infos1) = sTypes.map(typ).unzip
           val (sRowTypes1, infos2) = sRowTypes.map(rtyp).unzip
@@ -371,10 +371,10 @@ case class Render(private val vars: Vars) {
     freeRowTypeVarNames = TreeMap.empty(vars.RVarOrdering)
   }
 
-  private def typeSchema(schema: STypes.TypeSchema, mode: Mode): String = {
+  private def typeScheme(scheme: STypes.TypeScheme, mode: Mode): String = {
 
     val localNames = new RenderUtil
-    val (body, info) = collectInfo(schema.body)
+    val (body, info) = collectInfo(scheme.body)
 
     // schematic type vars: specs mode!
     val sVarNames: Map[Int, String] =

@@ -98,9 +98,9 @@ object METypes {
 // Schematic types
 object STypes {
 
-  // bound type in type schemas
+  // bound type in type schemes
   case class TypeVar(id: Int)
-  // bound row type variable in type schema
+  // bound row type variable in type schemes
   case class RowTypeVar(id: Int, kind: Set[String])
 
   // Types used in type schemes
@@ -119,7 +119,7 @@ object STypes {
 
   case class Field(label: String, value: Type)
 
-  case class TypeSchema(targs: List[TypeVar], rargs: List[RowTypeVar], body: Type)
+  case class TypeScheme(targs: List[TypeVar], rargs: List[RowTypeVar], body: Type)
 
   def SFunType(argTypes: List[Type], resultType: Type): Type =
     ConType(TyCons.FunTyCon(argTypes.length), argTypes ++ List(resultType), List())

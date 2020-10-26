@@ -100,7 +100,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       for {
         Ast.UncheckedFun(name) <- program.uncheckedFuns
         spec <- program.specs.find(_.name.stringId == name.stringId)
-      } yield name.stringId -> getSpecSchema(spec, 0)
+      } yield name.stringId -> getSpecScheme(spec, 0)
 
     val env1 = context.env ++ uncheckedEnv
     val (sccFuns1, env2) = elabSccFuns(sccFuns, env1)
@@ -210,14 +210,14 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         TU.generalize(d)(t)
       else
         // dummy type scheme
-        ST.TypeSchema(List.empty, List.empty, ST.PlainType(t))
+        ST.TypeScheme(List.empty, List.empty, ST.PlainType(t))
     val (prePat, env1, penv1) = elpat1(p, ts, d, env, penv, gen)
     (prePat(t), env1, penv1)
   }
 
   private def elpat1(
       p: Ast.Pat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -899,7 +899,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.BlockExp(body1)(r = exp.r)
   }
 
-  private def createTypeSchema(d: T.Depth)(fun: Function): ST.TypeSchema = {
+  private def createTypeScheme(d: T.Depth)(fun: Function): ST.TypeScheme = {
     val expander = dExpander(d)
     def freshSType(): ST.Type = ST.PlainType(freshTypeVar(d))
     def freshSRType(kind: Set[String]): ST.RowType = ST.RowVarType(freshRTypeVar(d)(kind))
@@ -920,15 +920,15 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         val arity = fun.clauses.head.pats.size
         ST.SFunType((1 to arity).map(_ => freshSType()).toList, freshSType())
     }
-    ST.TypeSchema(List.empty, List.empty, sFunType)
+    ST.TypeScheme(List.empty, List.empty, sFunType)
   }
 
   private def elabFuns(funs: List[Function], d: T.Depth, env: Env): (List[AnnAst.Fun], Env) = {
     val fNames = funs.map(_.name)
 
-    val funSchemas: List[ST.TypeSchema] = funs.map(createTypeSchema(d))
-    val envWithFuns = (fNames zip funSchemas).foldLeft(env)(_ + _)
-    val funTypes = funSchemas.map(TU.instantiate(d, _))
+    val funSchemes: List[ST.TypeScheme] = funs.map(createTypeScheme(d))
+    val envWithFuns = (fNames zip funSchemes).foldLeft(env)(_ + _)
+    val funTypes = funSchemes.map(TU.instantiate(d, _))
 
     val funs1: List[AnnAst.Fun] = (funs zip funTypes).map {
       case (fun, funType) =>
@@ -938,22 +938,22 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     // now the elaborated types are generalized back for future use
     // (outside of the bodies of these functions)
-    val funSchemas1 = TU.generalize_*(d)(funTypes)
+    val funSchemes1 = TU.generalize_*(d)(funTypes)
 
     // checking that provided specs are correct
-    funs1.zip(funSchemas1).foreach {
+    funs1.zip(funSchemes1).foreach {
       case (aFun, s) =>
         checkSpec(aFun.name, s, d)
     }
 
     // the resulting env contains generalized (polymorphic) types
-    val env1 = (fNames zip funSchemas1).foldLeft(env)(_ + _)
+    val env1 = (fNames zip funSchemes1).foldLeft(env)(_ + _)
     (funs1, env1)
   }
 
   private def elabWildPat(
       p: Ast.WildPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -966,7 +966,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabVarPat(
       p: Ast.VarPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -989,7 +989,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabPinnedVarPat(
       p: Ast.PinnedVarPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1010,7 +1010,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabAndPat(
       p: Ast.AndPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1027,7 +1027,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabTuplePat(
       p: Ast.TuplePat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1053,7 +1053,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabBoolPat(
       p: Ast.BoolPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1067,7 +1067,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabCharPat(
       p: Ast.CharPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1081,7 +1081,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabNumberPat(
       p: Ast.NumberPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1095,7 +1095,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStringPat(
       p: Ast.StringPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1109,7 +1109,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabListPat(
       p: Ast.NilPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1125,7 +1125,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabBinPat(
       p: Ast.BinPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1182,7 +1182,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabConsPat(
       p: Ast.ConsPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1201,7 +1201,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabShapePat(
       p: Ast.ShapePat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1235,7 +1235,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabEnumPat(
       p: Ast.EnumPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1301,7 +1301,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStructPat(
       p: Ast.StructPat,
-      ts: ST.TypeSchema,
+      ts: ST.TypeScheme,
       d: T.Depth,
       env: Env,
       penv: PEnv,
@@ -1367,7 +1367,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   // --- Some additional checks ---
 
-  private def getSpecSchema(spec: Ast.Spec, d: Int): ST.TypeSchema = {
+  private def getSpecScheme(spec: Ast.Spec, d: Int): ST.TypeScheme = {
     val expander = dExpander(d)
     val specFType = spec.funType
     val sVars = AstUtil.collectNamedTypeVars(specFType)
@@ -1381,17 +1381,17 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       sSub ++ rSub
     val specType = expander.mkType(specFType, eSub)
     val eSpecType = expander.expandType(specType)
-    val specSchema = TU.generalize(d)(eSpecType)
-    specSchema
+    val specScheme = TU.generalize(d)(eSpecType)
+    specScheme
   }
 
-  private def checkSpec(fName: String, elabSchema: ST.TypeSchema, d: Int): Unit =
+  private def checkSpec(fName: String, elabScheme: ST.TypeScheme, d: Int): Unit =
     program.specs.find(_.name.stringId == fName).foreach { spec =>
-      val specSchema: ST.TypeSchema = getSpecSchema(spec, d)
+      val specScheme = getSpecScheme(spec, d)
       // it's important to use Render#scheme,
       // since type we get - it doesn't have proper ordering of vars
-      val elabNormString = Render(vars).scheme(elabSchema)
-      val specNormString = Render(vars).scheme(specSchema)
+      val elabNormString = Render(vars).scheme(elabScheme)
+      val specNormString = Render(vars).scheme(specScheme)
 
       if (specNormString != elabNormString) {
         throw new SpecError(spec.r, fName, specNormString, elabNormString)

@@ -17,7 +17,7 @@
 package com.whatsapp
 
 package object sterlang {
-  type Env = Map[String, STypes.TypeSchema]
+  type Env = Map[String, STypes.TypeScheme]
 
   case class Context(
       enumDefs: List[Ast.EnumDef],
