@@ -1,0 +1,118 @@
+{
+  "name": "erlt-ls",
+  "displayName": "ErlT LS",
+  "version": "0.0.14",
+  "publisher": "erlang-ls",
+  "description": "The Visual Studio Code Extension for the ErlT Language Server",
+  "categories": [
+    "Programming Languages"
+  ],
+  "icon": "erlang_ls/images/erlang-ls-logo-small.png",
+  "homepage": "https://erlang-ls.github.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erlang-ls/vscode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/erlang-ls/vscode/issues"
+  },
+  "main": "./client/out/client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vscode:prepublish": "cd client && npm run compile",
+    "compile": "cd erlang_ls && rebar3 as debug escriptize && cd ../client && npm run compile",
+    "watch": "cd client && npm run watch",
+    "postinstall": "cd client && npm install"
+  },
+  "author": "erlang_ls",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.43.0"
+  },
+  "activationEvents": [
+    "onLanguage:erlang"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "ErlT LS",
+      "properties": {
+        "erlang_ls.trace.server": {
+          "scope": "window",
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the communication between VS Code and the Erlang language server."
+        },
+        "erlang_ls.serverPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Override the default path of the erlang_ls executable with a custom one."
+        },
+        "erlang_ls.logPath": {
+          "scope": "window",
+          "type": "string",
+          "default": "",
+          "description": "Override the default directory erlang_ls logs to."
+        },
+        "erlang_ls.logLevel": {
+          "scope": "window",
+          "enum": [
+            "none",
+            "debug",
+            "info",
+            "notice",
+            "warning",
+            "error",
+            "critical",
+            "alert",
+            "emergency"
+          ],
+          "default": "none",
+          "description": "Log level of LS server"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "erlang",
+        "aliases": [
+          "Erlang"
+        ],
+        "extensions": [
+          ".erlt",
+          ".erl",
+          ".hrl",
+          ".src",
+          ".escript",
+          ".config"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "erlang",
+        "scopeName": "source.erlang",
+        "path": "./erlang.tmbundle/Syntaxes/Erlang.plist"
+      }
+    ]
+  },
+  "files": [
+    "erlang_ls/_build/debug/bin/erlang_ls",
+    "erlang.tmbundle"
+  ],
+  "devDependencies": {
+    "@types/mocha": "^5.2.7",
+    "mocha": "^6.2.2",
+    "@types/node": "^12.12.0",
+    "eslint": "^6.4.0",
+    "@typescript-eslint/parser": "^2.3.0",
+    "typescript": "^3.8.3"
+  }
+}
