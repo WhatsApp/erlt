@@ -5,7 +5,7 @@ We use dhall to generate the yamls for our GitHub workflows.
 ## Prerequisites
 
 Required:
-- (Mac OS) `brew install dhall-json`
+- (Mac OS) `brew install dhall-json dhall`
 - other systems: other package managers
 
 Recommended:
