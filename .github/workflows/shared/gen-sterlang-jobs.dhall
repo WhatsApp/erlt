@@ -25,7 +25,7 @@ let test =
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
-        , run "test erlt" "cd ./examples && make test"
+        , run "assemble erltc" "rebar3 escriptize"
         , run
             "test and coverage stErlang"
             "cd sterlang; sbt clean coverage test coverageReport"

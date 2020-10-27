@@ -86,8 +86,8 @@ jobs:
           java-version: '11'
       - name: Erlang version
         run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
-      - name: test erlt
-        run: "cd ./examples && make test"
+      - name: assemble erltc
+        run: rebar3 escriptize
       - name: test and coverage stErlang
         run: "cd sterlang; sbt clean coverage test coverageReport"
 name: Sterlang CI
