@@ -143,7 +143,7 @@ object Main {
   }
 
   def loadProgram(file: String): Ast.Program = {
-    etf.programFromFile(file)
+    etf.programFromFileDev(file)
   }
 
   // $COVERAGE-OFF$ interactive
