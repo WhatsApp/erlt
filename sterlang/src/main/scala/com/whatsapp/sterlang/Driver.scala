@@ -21,7 +21,7 @@ import java.nio.file.{Files, Paths}
 
 import scala.collection.mutable
 
-object Main {
+object Driver {
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))
