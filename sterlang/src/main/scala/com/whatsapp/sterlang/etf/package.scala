@@ -46,12 +46,52 @@ package object etf {
     Ast.RawProgram(elems).program
   }
 
+  def moduleApiFromFileDev(path: String): ModuleApi = {
+    val etf = etfFromFileDev(path)
+    val forms = FormsConvertDev.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    val program = Ast.RawProgram(elems).program
+
+    ModuleApi(
+      enumDefs = program.enumDefs,
+      structDefs = program.structDefs,
+      aliases = program.typeAliases,
+      specs = program.specs,
+      opaques = List.empty,
+    )
+  }
+
+  def moduleApiFromFileErlt(path: String): ModuleApi = {
+    val etf = defsFromFileErlt(path)
+    val forms = FormsConvertErlt.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    val program = Ast.RawProgram(elems).program
+
+    ModuleApi(
+      enumDefs = program.enumDefs,
+      structDefs = program.structDefs,
+      aliases = program.typeAliases,
+      specs = program.specs,
+      opaques = List.empty,
+    )
+  }
+
   private def etfFromFileErlt(file: String): ETerm = {
     val etfPath = {
       val module = Paths.get(file).getFileName.toString.dropRight(5)
       val oDirPath = Files.createTempDirectory("sterlang")
       s"./erltc -o $oDirPath +etf $file".!!
       Paths.get(s"$oDirPath/$module.etf")
+    }
+    readEtf(etfPath)
+  }
+
+  private def defsFromFileErlt(file: String): ETerm = {
+    val etfPath = {
+      val module = Paths.get(file).getFileName.toString.dropRight(5)
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./erltc -o $oDirPath +defs $file".!!
+      Paths.get(s"$oDirPath/$module.defs")
     }
     readEtf(etfPath)
   }
