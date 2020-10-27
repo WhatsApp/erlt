@@ -57,14 +57,14 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def processIllSyntax(erltPath: String, etfPath: String): Unit = {
     try {
-      Main.loadProgram(etfPath)
+      Driver.loadProgram(etfPath)
       fail(s"$erltPath should generate an UnsupportedSyntaxError or a ParseError")
     } catch {
       case error: UnsupportedSyntaxError =>
-        val errMsg = Main.errorString(erltPath, fileContent(erltPath), error)
+        val errMsg = Driver.errorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
       case error: ParseError =>
-        val errMsg = Main.parseErrorString(erltPath, fileContent(erltPath), error)
+        val errMsg = Driver.parseErrorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
     }
   }
