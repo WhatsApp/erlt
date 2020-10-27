@@ -228,8 +228,6 @@ base_passes() ->
         ?pass(parse_module),
         ?pass(check_parse_errors),
         ?pass(extract_options),
-        ?pass(erlt_exception),
-        ?pass(erlt_message),
         ?pass(erlt_lint),
         ?pass(erlt_track_vars)
     ].
@@ -854,14 +852,6 @@ output_declarations(Code, #compile{defs_file = FileName} = St) ->
     Output = term_to_binary(erlt_defs:normalise_definitions(Code)),
     file:write_file(FileName, Output, [sync]),
     {ok, Code, St#compile{has_written_defs_file = true}}.
-
-erlt_exception(Code, St) ->
-    Code1 = erlt_exception:parse_transform(Code, St#compile.options),
-    {ok, Code1, St}.
-
-erlt_message(Code, St) ->
-    Code1 = erlt_message:parse_transform(Code, St#compile.options),
-    {ok, Code1, St}.
 
 erlt_track_vars(Code, St) ->
     VarState = erlt_vars:initialize_vars(Code),
