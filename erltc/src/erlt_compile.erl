@@ -55,29 +55,11 @@
 
 -type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
 
-% NOTE: slimmed down version of the original compile state
--record(compile, {
-    filename = "" :: file:filename(),
-    dir = "" :: file:filename(),
-    base = "" :: file:filename(),
-    ifile = "" :: file:filename(),
-    ofile = "" :: file:filename(),
-    module = [] :: module() | [],
-    %Options for compilation
-    options = [] :: [option()],
-    encoding = none :: none | erlt_epp:source_encoding(),
-    errors = [] :: [err_warn_info()],
-    warnings = [] :: [err_warn_info()],
-    build_dir :: undefined | file:filename(),
-    original_forms,
-    global_defs :: undefined | erlt_defs:defs(),
-    variable_state :: undefined | erlt:var_state(),
-    % path to .defs file (contains specs, types, enums, and structs)
-    defs_file :: undefined | file:filename(),
-    etf_file :: undefined | file:filename(),
-    % whether we have written a defs file to disk
-    has_written_defs_file = false :: boolean()
-}).
+%% needed for compile state record
+-type abstract_code() :: [erl_parse:abstract_form()].
+
+%% The compile state record, with our added fields
+-include("erlt_compile.hrl").
 
 -define(pass(P), {P, fun P/2}).
 
