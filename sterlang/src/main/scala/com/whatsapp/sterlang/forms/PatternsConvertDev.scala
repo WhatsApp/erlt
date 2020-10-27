@@ -20,7 +20,7 @@ import com.whatsapp.sterlang.etf._
 
 import com.whatsapp.sterlang.forms.Patterns._
 
-object PatternsConvert {
+object PatternsConvertDev {
   def convertPat(term: ETerm): Pattern =
     term match {
       case ETuple(List(EAtom("match"), anno, ePat1, ePat2)) =>
@@ -42,7 +42,14 @@ object PatternsConvert {
         BinOpPattern(r(anno), op, convertPat(ePat1), convertPat(ePat2))
       case ETuple(List(EAtom("op"), anno, EAtom(op), ePat1)) =>
         UnOpPattern(r(anno), op, convertPat(ePat1))
-      case ETuple(List(EAtom("struct"), anno, EAtom(structName), EList(eStructFieldPatterns))) =>
+      case ETuple(
+            List(
+              EAtom("struct"),
+              anno,
+              EAtom(structName),
+              EList(eStructFieldPatterns),
+            )
+          ) =>
         LocalStructPattern(r(anno), structName, eStructFieldPatterns.map(fieldPattern))
       case ETuple(
             List(
@@ -90,7 +97,7 @@ object PatternsConvert {
           ) =>
         RemoteEnumPattern(r(anno), module, enum, ctr, eFields.map(fieldPattern))
       case _ =>
-        val literal = ExprsConvert.literal(term)
+        val literal = ExprsConvertDev.literal(term)
         LiteralPattern(literal)
     }
 
@@ -99,13 +106,13 @@ object PatternsConvert {
       case ETuple(List(EAtom("bin_element"), anno, ePat, eSize, eTypeSpecifiers)) =>
         val size = eSize match {
           case EAtom("default") => None
-          case other            => Some(ExprsConvert.convertExp(other))
+          case other            => Some(ExprsConvertDev.convertExp(other))
         }
         BinElementPattern(
           r(anno),
           convertPat(ePat),
           size,
-          ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers),
+          ExprsConvertDev.convertTypeSpecifiers(eTypeSpecifiers),
         )
     }
 
