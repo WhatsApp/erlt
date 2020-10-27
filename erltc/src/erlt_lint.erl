@@ -4552,7 +4552,7 @@ vt_no_unused(Vt) -> [V || {_, {_, U, _L}} = V <- Vt, U =/= unused].
 %%  Make a copy of Expr converting all line numbers to Line.
 
 copy_expr(Expr, Anno) ->
-    erlt_parse:map_anno(fun(_A) -> Anno end, Expr).
+    erlt_ast:map_anno(Expr, fun(_) -> Anno end).
 
 %% check_remote_function(Line, ModuleName, FuncName, [Arg], State) -> State.
 %%  Perform checks on known remote calls.

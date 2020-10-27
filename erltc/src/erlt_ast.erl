@@ -17,7 +17,8 @@
 -export([
     prewalk/2, prewalk/3,
     postwalk/2, postwalk/3,
-    traverse/4
+    traverse/4,
+    map_anno/2
 ]).
 
 -type ctx() :: form | expr | guard | pattern | type.
@@ -39,6 +40,10 @@ postwalk(Ast, Fun) ->
 -spec postwalk(t(), any(), fun((t(), any(), ctx()) -> {t(), any()})) -> {t(), any()}.
 postwalk(Ast, Acc0, Fun) ->
     traverse(Ast, Acc0, fun(Node, Acc, _Ctx) -> {Node, Acc} end, Fun).
+
+-spec map_anno(t(), fun((erl_anno:anno()) -> erl_anno:anno())) -> t().
+map_anno(Ast, Fun) ->
+    prewalk(Ast, fun(Node, _Ctx) -> setelement(2, Node, Fun(element(2, Node))) end).
 
 -define(IS_ATOMIC(Kind),
     Kind =:= integer orelse
@@ -89,7 +94,7 @@ traverse(Ast, Acc, Pre, Post) ->
             {Node, Acc};
         {eof, _} = Node ->
             {Node, Acc};
-        Node when tuple_size(Node) >= 3 ->
+        Node when tuple_size(Node) >= 2 ->
             do_traverse(Node, Acc, Pre, Post, expr)
     end.
 
