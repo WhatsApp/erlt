@@ -1544,7 +1544,7 @@ restore_expand_module([]) ->
 
 %% Turn annotation fields into a uniform format for export to the type checker
 normalize_for_typecheck(Forms) ->
-    [erlt_parse:map_anno(fun normalize_loc/1, F) || F <- Forms].
+    erlt_ast:map_anno(Forms, fun normalize_loc/1).
 
 %% returns {{StartLine,StartColumn},{EndLine,EndColumn}}
 normalize_loc(Line) when is_integer(Line) ->

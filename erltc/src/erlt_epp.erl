@@ -1862,11 +1862,10 @@ interpret_file_attr([{attribute, Anno, file, {File, Line}} = Form | Forms], Delt
             end
     end;
 interpret_file_attr([Form0 | Forms], Delta, Fs) ->
-    F = fun(Anno) ->
+    Form = erlt_ast:map_anno(Form0, fun(Anno) ->
         Line = erl_anno:line(Anno),
         erl_anno:set_line(Line + Delta, Anno)
-    end,
-    Form = erlt_parse:map_anno(F, Form0),
+    end),
     [Form | interpret_file_attr(Forms, Delta, Fs)];
 interpret_file_attr([], _Delta, _Fs) ->
     [].
