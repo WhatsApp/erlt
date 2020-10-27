@@ -427,25 +427,7 @@ format_error_reason(Reason) ->
 -type err_warn_info() :: tuple().
 
 %% The compile state record.
--record(compile, {
-    filename = "" :: file:filename(),
-    dir = "" :: file:filename(),
-    base = "" :: file:filename(),
-    ifile = "" :: file:filename(),
-    ofile = "" :: file:filename(),
-    module = [] :: module() | [],
-    core_code = [] :: cerl:c_module() | [],
-    %Abstract code for debugger.
-    abstract_code = [] :: abstract_code(),
-    %Options for compilation
-    options = [] :: [option()],
-    %Options for module_info
-    mod_options = [] :: [option()],
-    encoding = none :: none | epp:source_encoding(),
-    errors = [] :: [err_warn_info()],
-    warnings = [] :: [err_warn_info()],
-    extra_chunks = [] :: [{binary(), binary()}]
-}).
+-include("erlt_compile.hrl").
 
 internal({forms, Forms}, Opts0) ->
     {_, Ps} = passes(forms, Opts0),
