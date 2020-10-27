@@ -22,6 +22,31 @@
 
 -module(erlt_otp_compile).
 
+%% our tweaks may make some local functions unused
+-compile(nowarn_unused_function).
+
+-define(COMPILE_MODULE, erlt_compile).
+-define(EPP_MODULE, erlt_epp).
+-define(PP_MODULE, erlt_pp).
+
+%% exported to be called from erlt_compile.erl
+-export([
+    clean_parse_transforms/1,
+    compile_options/1,
+    find_invalid_unicode/2,
+    internal_comp/5,
+    foldl_transform/3,
+    inc_paths/1,
+    listing/4,
+    parse_module/2,
+    pre_defs/1,
+    remove_file/2,
+    save_binary/2,
+    select_passes/2,
+    shorten_filename/1,
+    transforms/1
+]).
+
 %% High-level interface.
 -export([file/1, file/2, noenv_file/2, format_error/1, iofile/1]).
 -export([forms/1, forms/2, noenv_forms/2]).
@@ -369,7 +394,7 @@ format_error({native_crash, E, Stk}) ->
 format_error({open, E}) ->
     io_lib:format("open error '~ts'", [file:format_error(E)]);
 format_error({epp, E}) ->
-    epp:format_error(E);
+    ?EPP_MODULE:format_error(E);
 format_error(write_error) ->
     "error writing file";
 format_error({write_error, Error}) ->
@@ -586,7 +611,7 @@ comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St)
                 true ->
                     io:format(
                         "~p: warnings being treated as errors\n",
-                        [?MODULE]
+                        [?COMPILE_MODULE]
                     );
                 false ->
                     ok
@@ -629,7 +654,7 @@ werror(#compile{options = Opts, warnings = Ws}) ->
 %% messages_per_file([{File,[Message]}]) -> [{File,[Message]}]
 messages_per_file(Ms) ->
     T = lists:sort([{File, M} || {File, Messages} <- Ms, M <- Messages]),
-    PrioMs = [erl_scan, epp, erl_parse],
+    PrioMs = [erl_scan, ?EPP_MODULE, erl_parse],
     {Prio0, Rest} =
         lists:mapfoldl(
             fun(M, A) ->
@@ -783,9 +808,9 @@ select_passes([{pass, Mod} | Ps], Opts) ->
         end
     end,
     [{Mod, F} | select_passes(Ps, Opts)];
-select_passes([{src_listing, Ext} | _], _Opts) ->
+select_passes([{src_listing, Ext} | _], _Opts) when not is_function(Ext) ->
     [{listing, fun(Code, St) -> src_listing(Ext, Code, St) end}];
-select_passes([{listing, Ext} | _], _Opts) ->
+select_passes([{listing, Ext} | _], _Opts) when not is_function(Ext) ->
     [{listing, fun(Code, St) -> listing(Ext, Code, St) end}];
 select_passes([done | _], _Opts) ->
     [];
@@ -1083,7 +1108,7 @@ collect_asm_function([], Acc) ->
 beam_consult_asm(_Code, St) ->
     case file:consult(St#compile.ifile) of
         {ok, Forms0} ->
-            Encoding = epp:read_encoding(St#compile.ifile),
+            Encoding = ?EPP_MODULE:read_encoding(St#compile.ifile),
             {Module, Forms} = preprocess_asm_forms(Forms0),
             {ok, Forms, St#compile{module = Module, encoding = Encoding}};
         {error, E} ->
@@ -1161,9 +1186,12 @@ do_parse_module(DefEncoding, #compile{ifile = File, options = Opts, dir = Dir} =
             true -> filename:basename(SourceName0);
             false -> SourceName0
         end,
-    R = epp:parse_file(
+    R = ?EPP_MODULE:parse_file(
         File,
         [
+            %% get column and text info from scanner
+            {location, {1, 1}},
+            {scan_opts, [text]},
             {includes, [".", Dir | inc_paths(Opts)]},
             {source_name, SourceName},
             {macros, pre_defs(Opts)},
@@ -2055,8 +2083,8 @@ report_errors(#compile{options = Opts, errors = Errors}) ->
         true ->
             foreach(
                 fun
-                    ({{F, _L}, Eds}) -> list_errors(F, Eds);
-                    ({F, Eds}) -> list_errors(F, Eds)
+                    ({{F, _L}, Eds}) -> ?COMPILE_MODULE:list_errors(F, Eds, Opts);
+                    ({F, Eds}) -> ?COMPILE_MODULE:list_errors(F, Eds, Opts)
                 end,
                 Errors
             );
@@ -2076,8 +2104,8 @@ report_warnings(#compile{options = Opts, warnings = Ws0}) ->
         true ->
             Ws1 = flatmap(
                 fun
-                    ({{F, _L}, Eds}) -> format_message(F, P, Eds);
-                    ({F, Eds}) -> format_message(F, P, Eds)
+                    ({{F, _L}, Eds}) -> ?COMPILE_MODULE:format_message(F, P, Eds, Opts);
+                    ({F, Eds}) -> ?COMPILE_MODULE:format_message(F, P, Eds, Opts)
                 end,
                 Ws0
             ),
@@ -2197,7 +2225,7 @@ src_listing(Ext, Code, St) ->
 do_src_listing(Lf, Fs) ->
     Opts = [lists:keyfind(encoding, 1, io:getopts(Lf))],
     foreach(
-        fun(F) -> io:put_chars(Lf, [erl_pp:form(F, Opts), "\n"]) end,
+        fun(F) -> io:put_chars(Lf, [?PP_MODULE:form(F, Opts), "\n"]) end,
         Fs
     ).
 
@@ -2235,10 +2263,10 @@ to_dis(Code, #compile{module = Module, ofile = Outfile} = St) ->
     {ok, Code, St}.
 
 output_encoding(F, #compile{encoding = none}) ->
-    ok = io:setopts(F, [{encoding, epp:default_encoding()}]);
+    ok = io:setopts(F, [{encoding, ?EPP_MODULE:default_encoding()}]);
 output_encoding(F, #compile{encoding = Encoding}) ->
     ok = io:setopts(F, [{encoding, Encoding}]),
-    ok = io:fwrite(F, <<"%% ~s\n">>, [epp:encoding_to_string(Encoding)]).
+    ok = io:fwrite(F, <<"%% ~s\n">>, [?EPP_MODULE:encoding_to_string(Encoding)]).
 
 restore_expanded_types("E", {M, I, Fs0}) ->
     Fs = restore_expand_module(Fs0),
