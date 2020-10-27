@@ -84,6 +84,8 @@ object Convert {
         Some(Ast.UncheckedOpaqueElem(Ast.UncheckedOpaque(typeName, typeParams)(r)))
       case Forms.Error(loc) =>
         throw ParseError(loc)
+      case Forms.WildAttribute(_, _) =>
+        None
     }
 
   private def convertStructKind(strKind: Forms.StructKind): Ast.StructKind =
