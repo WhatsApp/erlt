@@ -218,7 +218,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {Generate, Line, Pattern0, Expr0} when Generate =:= generate; Generate =:= b_generate ->
             {Pattern1, Acc1} = do_traverse(Pattern0, Acc0, Pre, Post, pattern),
             {Expr1, Acc2} = do_traverse(Expr0, Acc1, Pre, Post, Ctx),
-            Post({generate, Line, Pattern1, Expr1}, Acc2, Ctx);
+            Post({Generate, Line, Pattern1, Expr1}, Acc2, Ctx);
         {block, Line, Exprs0} ->
             {Exprs1, Acc1} = do_traverse_list(Exprs0, Acc0, Pre, Post, Ctx),
             Post({block, Line, Exprs1}, Acc1, Ctx);
