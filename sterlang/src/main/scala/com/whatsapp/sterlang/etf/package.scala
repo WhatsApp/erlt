@@ -20,7 +20,7 @@ import sys.process._
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.forms.FormsConvert
+import com.whatsapp.sterlang.forms.FormsConvertDev
 
 package object etf {
 
@@ -32,21 +32,14 @@ package object etf {
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
 
-  def programFromFile(path: String): Ast.Program = {
-    val etf = etfFromFile(path)
-    val forms = FormsConvert.fromEtf(etf)
+  def programFromFileDev(path: String): Ast.Program = {
+    val etf = etfFromFileDev(path)
+    val forms = FormsConvertDev.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
   }
 
-  def programFromString(text: String): Ast.Program = {
-    val etf = etfFromString(text)
-    val forms = FormsConvert.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    Ast.RawProgram(elems).program
-  }
-
-  def etfFromFile(path: String): ETerm = {
+  private def etfFromFileDev(path: String): ETerm = {
     val etfPath =
       if (path.endsWith(".etf")) {
         Paths.get(path)
@@ -56,6 +49,13 @@ package object etf {
         tmp
       }
     readEtf(etfPath)
+  }
+
+  def programFromString(text: String): Ast.Program = {
+    val etf = etfFromString(text)
+    val forms = FormsConvertDev.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    Ast.RawProgram(elems).program
   }
 
   private def etfFromString(text: String): ETerm = {

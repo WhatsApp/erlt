@@ -20,7 +20,7 @@ import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.etf._
 import com.whatsapp.sterlang.forms.Forms._
 
-object FormsConvert {
+object FormsConvertDev {
   def fromEtf(term: ETerm): List[Form] = {
     val EList(eforms) = term
     eforms.map(convertForm)
@@ -28,18 +28,14 @@ object FormsConvert {
 
   private def convertForm(term: ETerm): Form =
     term match {
-      // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
         Module(name)
-      // af_export
       case ETuple(List(EAtom("attribute"), _anno, EAtom("export"), EList(ids))) =>
         Export(ids.map(convertIdWithArity))
-      // af_import
       case ETuple(List(EAtom("attribute"), _anno, EAtom("import"), ETuple(List(EAtom(module), EList(ids))))) =>
         Import(module, ids.map(convertIdWithArity))
       case ETuple(List(EAtom("attribute"), _anno, EAtom("import_type"), ETuple(List(EAtom(module), EList(ids))))) =>
         ImportType(module, ids.map(convertIdWithArity))
-      // export_type
       case ETuple(List(EAtom("attribute"), _anno, EAtom("export_type"), EList(typesIds))) =>
         ExportType(typesIds.map(convertIdWithArity))
       case ETuple(
@@ -54,25 +50,35 @@ object FormsConvert {
           case "type"   => Type
           case "opaque" => Opaque
         }
-        val abstractType = TypesConvert.convertType(absType)
-        val params = vars.map(TypesConvert.convertVar)
+        val abstractType = TypesConvertDev.convertType(absType)
+        val params = vars.map(TypesConvertDev.convertVar)
         TypeDecl(r(anno), typeAttr, typeName, params, abstractType)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("struct"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
+            List(
+              EAtom("attribute"),
+              anno,
+              EAtom("struct"),
+              ETuple(List(EAtom(name), EList(vars), EList(fields))),
+            )
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), StrStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvertDev.convertVar), fields.map(fieldDecl), StrStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("exception"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), ExnStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvertDev.convertVar), fields.map(fieldDecl), ExnStruct)
       case ETuple(
             List(EAtom("attribute"), anno, EAtom("message"), ETuple(List(EAtom(name), EList(vars), EList(fields))))
           ) =>
-        StructDecl(r(anno), name, vars.map(TypesConvert.convertVar), fields.map(fieldDecl), MsgStruct)
+        StructDecl(r(anno), name, vars.map(TypesConvertDev.convertVar), fields.map(fieldDecl), MsgStruct)
       case ETuple(
-            List(EAtom("attribute"), anno, EAtom("enum"), ETuple(List(EAtom(name), EList(vars), EList(enumVariants))))
+            List(
+              EAtom("attribute"),
+              anno,
+              EAtom("enum"),
+              ETuple(List(EAtom(name), EList(vars), EList(enumVariants))),
+            )
           ) =>
-        EnumDecl(r(anno), name, vars.map(TypesConvert.convertVar), enumVariants.map(enumVariantDecl))
+        EnumDecl(r(anno), name, vars.map(TypesConvertDev.convertVar), enumVariants.map(enumVariantDecl))
       case ETuple(
             List(
               EAtom("attribute"),
@@ -82,10 +88,10 @@ object FormsConvert {
             )
           ) =>
         val funId = convertSpecFunId(eFunId)
-        val typeList = eTypeList.map(TypesConvert.convertFunSpecType)
+        val typeList = eTypeList.map(TypesConvertDev.convertFunSpecType)
         Spec(r(anno), funId, typeList)
       case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
-        val clauses = clauseSeq.map(ExprsConvert.convertClause)
+        val clauses = clauseSeq.map(ExprsConvertDev.convertClause)
         Function(r(anno), name, arity.intValue, clauses)
       case ETuple(List(EAtom("unchecked_function"), EAtom(name), ELong(arity))) =>
         UncheckedFunction(name, arity.intValue)
@@ -103,7 +109,7 @@ object FormsConvert {
               ETuple(List(EAtom(typeName), EList(vars))),
             )
           ) =>
-        val params = vars.map(TypesConvert.convertVar)
+        val params = vars.map(TypesConvertDev.convertVar)
         UncheckedTypeDecl(r(anno), typeName, params)
     }
 
@@ -116,15 +122,15 @@ object FormsConvert {
   private def fieldDecl(term: ETerm): FieldDecl =
     term match {
       case ETuple(List(EAtom("field_definition"), anno, EAtom("positional"), _, eType)) =>
-        PosFieldDecl(r(anno), TypesConvert.convertType(eType))
+        PosFieldDecl(r(anno), TypesConvertDev.convertType(eType))
       case ETuple(List(EAtom("field_definition"), anno, fieldNameLit, dValue, eType)) =>
         val defaultValue = dValue match {
           case EAtom("undefined") =>
             None
           case expr =>
-            Some(ExprsConvert.convertExp(expr))
+            Some(ExprsConvertDev.convertExp(expr))
         }
-        LblFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvert.convertType(eType))
+        LblFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvertDev.convertType(eType))
     }
 
   private def enumVariantDecl(term: ETerm): EnumVariantDecl =
