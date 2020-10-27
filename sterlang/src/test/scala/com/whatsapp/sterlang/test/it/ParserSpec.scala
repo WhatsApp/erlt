@@ -24,16 +24,24 @@ class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
       moduleNames.foreach { m =>
         val erltPath = s"$iDirPath/$m.erlt"
         it(erltPath) {
-          testFile(iDirPath, m)
+          testModule(iDirPath, m)
+          testModuleApi(iDirPath, m)
         }
       }
     }
   }
 
-  def testFile(iDirPath: String, module: String): Unit = {
+  def testModule(iDirPath: String, module: String): Unit = {
     val inputFile = s"$iDirPath/$module.erlt"
     val devProgram = etf.programFromFileDev(inputFile)
     val erltProgram = etf.programFromFileErlt(inputFile)
     assert(devProgram === erltProgram)
+  }
+
+  def testModuleApi(iDirPath: String, module: String): Unit = {
+    val inputFile = s"$iDirPath/$module.erlt"
+    val devModuleApi = etf.moduleApiFromFileDev(inputFile)
+    val erltModuleApi = etf.moduleApiFromFileErlt(inputFile)
+    assert(devModuleApi === erltModuleApi)
   }
 }
