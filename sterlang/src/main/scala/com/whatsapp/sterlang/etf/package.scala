@@ -20,7 +20,7 @@ import sys.process._
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.forms.FormsConvertDev
+import com.whatsapp.sterlang.forms.{FormsConvertDev, FormsConvertErlt}
 
 package object etf {
 
@@ -37,6 +37,23 @@ package object etf {
     val forms = FormsConvertDev.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
+  }
+
+  def programFromFileErlt(path: String): Ast.Program = {
+    val etf = etfFromFileErlt(path)
+    val forms = FormsConvertErlt.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    Ast.RawProgram(elems).program
+  }
+
+  private def etfFromFileErlt(file: String): ETerm = {
+    val etfPath = {
+      val module = Paths.get(file).getFileName.toString.dropRight(5)
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./erltc -o $oDirPath +etf $file".!!
+      Paths.get(s"$oDirPath/$module.etf")
+    }
+    readEtf(etfPath)
   }
 
   private def etfFromFileDev(path: String): ETerm = {

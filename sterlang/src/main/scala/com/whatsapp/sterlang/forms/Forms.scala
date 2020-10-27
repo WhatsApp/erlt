@@ -67,6 +67,7 @@ object Forms {
   case class UncheckedFunction(name: String, arity: Int) extends Form
   case object EOF extends Form
   case class Error(pos: Doc.Pos) extends Form
+  case class WildAttribute(r: Doc.Range, name: String) extends Form
 
   sealed trait FieldDecl
   case class LblFieldDecl(r: Doc.Range, name: String, initValue: Option[Exprs.Expr], tp: Type) extends FieldDecl
