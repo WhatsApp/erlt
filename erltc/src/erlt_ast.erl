@@ -54,6 +54,8 @@ postwalk(Ast, Acc0, Fun) ->
         Kind =:= opaque orelse
         Kind =:= enum orelse
         Kind =:= struct orelse
+        Kind =:= exception orelse
+        Kind =:= message orelse
         Kind =:= unchecked_opaque
 ).
 
