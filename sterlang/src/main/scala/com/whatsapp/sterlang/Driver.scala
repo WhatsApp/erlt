@@ -22,6 +22,10 @@ import java.nio.file.{Files, Paths}
 import scala.collection.mutable
 
 object Driver {
+  sealed trait Mode
+  case object Dev extends Mode
+  case object Erlt extends Mode
+
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))
@@ -49,7 +53,7 @@ object Driver {
     val mainFile = etfFile.getOrElse(erltFile)
     val rawProgram =
       try {
-        loadProgram(mainFile)
+        loadProgram(mainFile, Erlt)
       } catch {
         // $COVERAGE-OFF$ interactive
         case error: ParseError =>
@@ -64,7 +68,7 @@ object Driver {
       }
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val depContext = loadContext(mainFile, program, vars)
+    val depContext = loadContext(mainFile, program, vars, Erlt)
     val context = depContext.extend(program)
 
     try {
@@ -97,8 +101,14 @@ object Driver {
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
-  def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context = {
-    val ext = mainFile.takeRight(mainFile.reverse.indexOf('.') + 1)
+  def loadContext(mainFile: String, program: Ast.Program, vars: Vars, mode: Mode): Context = {
+    val ext = mode match {
+      case Dev =>
+        mainFile.takeRight(mainFile.reverse.indexOf('.') + 1)
+      case Erlt =>
+        ".defs.etf"
+    }
+
     val dir = Paths.get(mainFile).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
@@ -110,7 +120,7 @@ object Driver {
       val module = queue.dequeue()
       val file = dir.resolve(module + ext).toFile
       if (file.exists()) {
-        val rawProgram = loadProgram(file.getPath)
+        val rawProgram = loadProgram(file.getPath, mode)
         val program = AstUtil.normalizeTypes(rawProgram)
         api = AstUtil.moduleApi(module, program) :: api
         val moduleDeps = AstUtil.getDeps(program)
@@ -142,9 +152,11 @@ object Driver {
     Context(enumDefs, structDefs, aliases, opaques, env)
   }
 
-  def loadProgram(file: String): Ast.Program = {
-    etf.programFromFileDev(file)
-  }
+  def loadProgram(file: String, mode: Mode): Ast.Program =
+    mode match {
+      case Dev  => etf.programFromFileDev(file)
+      case Erlt => etf.programFromFileErlt(file)
+    }
 
   // $COVERAGE-OFF$ interactive
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =

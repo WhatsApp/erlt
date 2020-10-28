@@ -42,11 +42,8 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
     import sys.process._
     it(s"smoke test: $iDirPath/$module.erlt") {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
       Driver.main(Array(s"$iDirPath/$module.erlt"))
-      Driver.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf"))
-      Driver.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf", "--check-patterns"))
+      Driver.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
     }
   }
 
@@ -99,10 +96,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
-    val rawProgram = Driver.loadProgram(etfPath)
+    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Driver.loadContext(etfPath, program, vars).extend(program)
+    val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 
