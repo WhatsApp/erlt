@@ -18,8 +18,8 @@
 
 
 %% old style tagged tuple for comparison
--opaque maybe(T) :: {some, T} | none.
--export_type([ maybe/1 ]).
+%-opaque maybe(T) :: term() % {some, T} | none.
+%-export_type([ maybe/1 ]).
 
 
 %% proper enum declarations
@@ -35,11 +35,11 @@
 %% -type t(T) :: possibly.some{T} | possibly.none{}.
 %% -export_type([ t/1 ]).
 
--spec f() -> maybe(any()).
+-spec f() -> term(). %maybe(any()).
 f() ->
     none.
 
--spec g() -> maybe(boolean()).
+-spec g() -> term(). %maybe(boolean()).
 g() ->
     {some, true}.
 
