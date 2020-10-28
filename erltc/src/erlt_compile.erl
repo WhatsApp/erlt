@@ -74,6 +74,7 @@
     variable_state :: undefined | erlt:var_state(),
     % path to .defs file (contains specs, types, enums, and structs)
     defs_file :: undefined | file:filename(),
+    etf_file :: undefined | file:filename(),
     % whether we have written a defs file to disk
     has_written_defs_file = false :: boolean()
 }).
@@ -81,6 +82,7 @@
 -define(pass(P), {P, fun P/2}).
 
 -define(DefFileSuffix, ".defs").
+-define(EtfFileSuffix, ".etf").
 
 % called by erltc.erl
 %
@@ -180,6 +182,7 @@ do_file(File, Options0) ->
                 ] ++
                     base_passes() ++
                     [
+                        ?pass(output_etf),
                         ?pass(erlt_typecheck),
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
@@ -582,7 +585,8 @@ internal_comp(Passes, Code0, File, Suffix, St0) ->
         base = Base,
         ifile = erlfile(Dir, Base, Suffix),
         ofile = objfile(Base, St0),
-        defs_file = filename:join(St0#compile.build_dir, Base ++ ?DefFileSuffix)
+        defs_file = filename:join(St0#compile.build_dir, Base ++ ?DefFileSuffix),
+        etf_file = filename:join(St0#compile.build_dir, Base ++ ?EtfFileSuffix)
     },
     Opts = St1#compile.options,
     Run0 =
@@ -851,7 +855,14 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
 output_declarations(Code, #compile{defs_file = FileName} = St) ->
     Output = term_to_binary(erlt_defs:normalise_definitions(Code)),
     file:write_file(FileName, Output, [sync]),
+    OutputSterlang = term_to_binary(normalize_for_typecheck(Code)),
+    file:write_file(FileName ++ ".etf", OutputSterlang, [sync]),
     {ok, Code, St#compile{has_written_defs_file = true}}.
+
+output_etf(Code, #compile{etf_file = FileName} = St) ->
+    Output = term_to_binary(normalize_for_typecheck(Code)),
+    file:write_file(FileName, Output, [sync]),
+    {ok, Code, St}.
 
 erlt_track_vars(Code, St) ->
     VarState = erlt_vars:initialize_vars(Code),
@@ -1001,29 +1012,23 @@ erlt_typecheck(Code, St) ->
     {ok, Code, St}.
 
 run_sterlang(St) ->
-    SterlangDir = filename:join(St#compile.build_dir, "sterlang"),
-    EtfFile = filename:join(SterlangDir, St#compile.filename ++ ".etf"),
-    ok = filelib:ensure_dir(EtfFile),
-    Code1 = normalize_for_typecheck(St#compile.original_forms),
-    CodeETF = erlang:term_to_binary(Code1),
-    ok = file:write_file(EtfFile, CodeETF),
-
     Erltc = escript:script_name(),
     BinDir = filename:dirname(Erltc),
-    SterlangNative = filename:join(BinDir, "sterlang"),
-    SterlangJar = filename:join(BinDir, "sterlang.jar"),
+    SterlangNative = filename:absname("sterlang"),
+    SterlangJar = filename:absname("sterlang.jar"),
     IFile = filename:absname(St#compile.ifile),
+    EtfFile = St#compile.etf_file,
     CheckCmd =
-        case filelib:is_regular(SterlangNative) of
-            true ->
+        case {filelib:is_regular(SterlangNative), filelib:is_regular(SterlangJar)} of
+            {true, _} ->
                 lists:append([
                     SterlangNative,
                     " ",
                     IFile,
                     " ",
-                    filename:absname(EtfFile)
+                    EtfFile
                 ]);
-            false ->
+            {_, true} ->
                 lists:append([
                     "java",
                     " ",
@@ -1033,11 +1038,19 @@ run_sterlang(St) ->
                     " ",
                     IFile,
                     " ",
-                    filename:absname(EtfFile)
-                ])
+                    EtfFile
+                ]);
+            _ ->
+                undefined
         end,
-    % io:format("Running: ~p~n", [CheckCmd]),
-    {ExitCode, Output} = do_invoke_sterlang(CheckCmd, BinDir),
+    {ExitCode, Output} =
+        case CheckCmd of
+            undefined ->
+                {0, ""};
+            _ ->
+                io:format("Running sterlang: ~p~n", [CheckCmd]),
+                eunit_lib:command(CheckCmd, BinDir)
+        end,
     case ExitCode of
         0 ->
             % TODO: check for warnings
@@ -1052,12 +1065,6 @@ run_sterlang(St) ->
             % NOTE: the error thrown here will be caught by internal_comp() -> Run0
             throw({error, St#compile{errors = [Error]}})
     end.
-
-%% Currently does nothing.
-do_invoke_sterlang(_CheckCmd, _BinDir) ->
-    FakeExitCode = 0,
-    FakeOutput = "",
-    {FakeExitCode, FakeOutput}.
 
 erlt_to_erl1(Code, St) ->
     case erlt_struct:module(Code, St#compile.global_defs) of
