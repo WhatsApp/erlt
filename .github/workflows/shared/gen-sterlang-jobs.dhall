@@ -25,10 +25,10 @@ let test =
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+        , run "assemble erltc" "rebar3 escriptize"
         , run
-            "test and coverage"
+            "test and coverage stErlang"
             "cd sterlang; sbt clean coverage test coverageReport"
-        , run "test" "cd ./examples && make test"
         ]
       }
 
