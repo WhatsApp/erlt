@@ -2,14 +2,13 @@
 
 -export([module/2, format_error/1]).
 
--record(state,
-    {
-        defined = #{} :: #{atom() => {unused, {var, erl_anno:anno(), atom()} | used}},
-        new_vars = [] :: [atom()],
-        allow_new_vars = false :: boolean(),
-        file :: string(),
-        errors = [] :: [{File::string(), ErrorString::string()}]}
-).
+-record(state, {
+    defined = #{} :: #{atom() => {unused, {var, erl_anno:anno(), atom()} | used}},
+    new_vars = [] :: [atom()],
+    allow_new_vars = false :: boolean(),
+    file :: string(),
+    errors = [] :: [{File :: string(), ErrorString :: string()}]
+}).
 
 format_error({reusing_var, Name}) ->
     io_lib:format("The type variable ~tw is already used in this variable list", [Name]);
@@ -37,7 +36,7 @@ format_error(any_argument_fun) ->
     "Funs with an undetermined number of arguments are not allowed by the type system".
 
 module(Ast, FileName) ->
-    case erlt_ast:postwalk(Ast, #state{file=FileName}, fun wrap_lint/3) of
+    case erlt_ast:postwalk(Ast, #state{file = FileName}, fun wrap_lint/3) of
         {_, #state{errors = []}} ->
             {ok, []};
         {_, #state{errors = Errors}} ->
@@ -47,23 +46,24 @@ module(Ast, FileName) ->
 wrap_lint(I, St, Ctx) ->
     {I, lint(I, St, Ctx)}.
 
-
 lint({attribute, _, file, {File, _Line}}, St, _) ->
-    St#state{file=File};
-lint({attribute, _, Type, {_Name, Def, Args}}, St, form) when Type =:= type; Type =:= enum; Type =:= struct; Type =:= opaque ->
+    St#state{file = File};
+lint({attribute, _, Type, {_Name, Def, Args}}, St, form) when
+    Type =:= type; Type =:= enum; Type =:= struct; Type =:= opaque
+->
     St1 = process_args(Args, St),
     ArgNames = maps:keys(St1#state.defined),
     St2 = process_def(Def, St1),
     check_args_used(ArgNames, St2);
 lint({attribute, _, unchecked_opaque, {_Name, _Def, Args}}, St, form) ->
-    St1 = process_args(Args, St#state{allow_new_vars=true}),
-    St1#state{defined=#{}, new_vars = [], allow_new_vars = false};
+    St1 = process_args(Args, St#state{allow_new_vars = true}),
+    St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
 lint({attribute, _, Kind, {_MFA, [TypeSig]}}, St, form) when Kind =:= spec; Kind =:= callback ->
     St1 = process_def(TypeSig, St),
-    St1#state{defined=#{}, new_vars = [], allow_new_vars = false};
+    St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
 lint({attribute, Line, Kind, {_MFA, _}}, St, form) when Kind =:= spec; Kind =:= callback ->
     add_error(Line, {multiple_specs, Kind}, St);
-lint(_I, St, _Ctx) -> 
+lint(_I, St, _Ctx) ->
     St.
 
 process_args([{var, Line, Name} = Var | Rest], St) ->
@@ -71,27 +71,29 @@ process_args([{var, Line, Name} = Var | Rest], St) ->
         #{Name := _Def} ->
             process_args(Rest, add_error(Line, {reusing_var, Name}, St));
         Defined ->
-        process_args(Rest, St#state{defined=maps:put(Name, {unused, Var}, Defined)})
+            process_args(Rest, St#state{defined = maps:put(Name, {unused, Var}, Defined)})
     end;
 process_args([], St) ->
     St.
 
-
-process_list([Type|Rest], St) ->
+process_list([Type | Rest], St) ->
     process_list(Rest, process_def(Type, St));
 process_list([], St) ->
     St.
 
 process_def(Type, St) ->
     case Type of
-        {var, Line, Name} = V -> 
+        {var, Line, Name} = V ->
             case St of
                 % Variable is an argument of a fun, but is already defined
                 % This is ok, we mark it as used.
                 #state{allow_new_vars = true, defined = #{Name := _Val}} ->
                     mark_variable_used(Name, St);
                 #state{allow_new_vars = true, new_vars = NewVars, defined = Defined} ->
-                    St#state{new_vars = [Name | NewVars], defined = maps:put(Name, {unused, V}, Defined)};
+                    St#state{
+                        new_vars = [Name | NewVars],
+                        defined = maps:put(Name, {unused, V}, Defined)
+                    };
                 #state{allow_new_vars = false, defined = #{Name := _Val}} ->
                     mark_variable_used(Name, St);
                 #state{} ->
@@ -101,9 +103,9 @@ process_def(Type, St) ->
             add_error(Line, {singleton_type, integer}, St);
         {char, Line, _C} ->
             add_error(Line, {singleton_type, char}, St);
-        {atom, Line, _A} -> 
+        {atom, Line, _A} ->
             add_error(Line, {singleton_type, atom}, St);
-        {op, Line, _Args} -> 
+        {op, Line, _Args} ->
             add_error(Line, arith_ops, St);
         {type, Line, map, any} ->
             add_error(Line, any_map, St);
@@ -155,13 +157,12 @@ process_def(Type, St) ->
 handle_fun({type, _Line, 'fun', [Args, ResultType]}, Guards, St) ->
     Val = St#state.allow_new_vars,
     Old = St#state.new_vars,
-    St1 = process_def(Args, St#state{allow_new_vars=true, new_vars=[]}),
+    St1 = process_def(Args, St#state{allow_new_vars = true, new_vars = []}),
     %NewVars = St1#state.new_vars,
     St2 = process_list([ResultType | Guards], St1),
-    St2#state{allow_new_vars=Val, new_vars = Old}.
-    
+    St2#state{allow_new_vars = Val, new_vars = Old}.
 
-mark_variable_used(Name, St) -> St#state{defined=maps:put(Name, used, St#state.defined)}.
+mark_variable_used(Name, St) -> St#state{defined = maps:put(Name, used, St#state.defined)}.
 
 is_unsupported(constraint) -> true;
 is_unsupported(union) -> true;
@@ -171,8 +172,8 @@ is_unsupported(range) -> true;
 is_unsupported(binary) -> true;
 is_unsupported(_) -> false.
 
-check_args_used([Arg|Rest], St) ->
-    Defined = St#state.defined,  
+check_args_used([Arg | Rest], St) ->
+    Defined = St#state.defined,
     case Defined of
         #{Arg := used} ->
             check_args_used(Rest, St);
@@ -180,17 +181,16 @@ check_args_used([Arg|Rest], St) ->
             check_args_used(Rest, add_error(Line, {unused_arg, Arg}, St))
     end;
 check_args_used([], St) ->
-    St#state{allow_new_vars=false, new_vars=[], defined=#{}}.    
+    St#state{allow_new_vars = false, new_vars = [], defined = #{}}.
 
 add_error(Anno, E, St) ->
-     {File, Location} = loc(Anno, St),
-     St#state{errors = [{File, {Location, erlt_lint_types, E}} | St#state.errors]}.
-
+    {File, Location} = loc(Anno, St),
+    St#state{errors = [{File, {Location, erlt_lint_types, E}} | St#state.errors]}.
 
 %% copied from erlt_lint.erl
 pack_errors(Es) ->
     {Es1, _} = lists:mapfoldl(fun({File, E}, I) -> {{File, {I, E}}, I - 1} end, -1, Es),
-   lists:map(
+    lists:map(
         fun({File, EIs}) -> {File, lists:map(fun({_I, E}) -> E end, EIs)} end,
         pack_warnings(Es1)
     ).
@@ -212,5 +212,3 @@ loc(Anno, St) ->
         undefined -> {St#state.file, Location};
         File -> {File, Location}
     end.
-
-    
