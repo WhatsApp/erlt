@@ -19,7 +19,7 @@ ir: clean-ir build
 # but are there for humans to read. Not actually "ir"
 test-ir/%: ir
 	@# only include .erl files
-	diff -r -x sterlang -x '*.defs' -x '*.D' _build/default/lib/$*/build $*/ir-spec
+	diff -r -x sterlang -x '*.defs' -x '*.etf' -x '*.D' _build/default/lib/$*/build $*/ir-spec
 
 # test `erlt --------> beam -> disassembly`
 # matches `erlt -> erl -> beam -> disassembly`
