@@ -26,6 +26,7 @@
 -compile(nowarn_unused_function).
 
 -define(COMPILE_MODULE, erlt_compile).
+-define(MESSAGE_MODULE, erlt_messages).
 -define(EPP_MODULE, erlt_epp).
 -define(PP_MODULE, erlt_pp).
 
@@ -2083,8 +2084,8 @@ report_errors(#compile{options = Opts, errors = Errors}) ->
         true ->
             foreach(
                 fun
-                    ({{F, _L}, Eds}) -> ?COMPILE_MODULE:list_errors(F, Eds, Opts);
-                    ({F, Eds}) -> ?COMPILE_MODULE:list_errors(F, Eds, Opts)
+                    ({{F, _L}, Eds}) -> ?MESSAGE_MODULE:list_errors(F, Eds, Opts);
+                    ({F, Eds}) -> ?MESSAGE_MODULE:list_errors(F, Eds, Opts)
                 end,
                 Errors
             );
@@ -2104,8 +2105,8 @@ report_warnings(#compile{options = Opts, warnings = Ws0}) ->
         true ->
             Ws1 = flatmap(
                 fun
-                    ({{F, _L}, Eds}) -> ?COMPILE_MODULE:format_message(F, P, Eds, Opts);
-                    ({F, Eds}) -> ?COMPILE_MODULE:format_message(F, P, Eds, Opts)
+                    ({{F, _L}, Eds}) -> ?MESSAGE_MODULE:format_message(F, P, Eds, Opts);
+                    ({F, Eds}) -> ?MESSAGE_MODULE:format_message(F, P, Eds, Opts)
                 end,
                 Ws0
             ),
