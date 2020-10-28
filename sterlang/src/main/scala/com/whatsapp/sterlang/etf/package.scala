@@ -77,12 +77,15 @@ package object etf {
   }
 
   private def etfFromFileErlt(file: String): ETerm = {
-    val etfPath = {
-      val module = Paths.get(file).getFileName.toString.dropRight(5)
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./erltc -o $oDirPath +etf $file".!!
-      Paths.get(s"$oDirPath/$module.etf")
-    }
+    val etfPath =
+      if (file.endsWith(".etf") || file.endsWith(".defs")) {
+        Paths.get(file)
+      } else {
+        val module = Paths.get(file).getFileName.toString.dropRight(5)
+        val oDirPath = Files.createTempDirectory("sterlang")
+        s"./erltc -o $oDirPath +etf $file".!!
+        Paths.get(s"$oDirPath/$module.etf")
+      }
     readEtf(etfPath)
   }
 

@@ -55,11 +55,11 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   private def processIllTyped(erltPath: String, etfPath: String): Unit = {
-    val rawProgram = Driver.loadProgram(etfPath)
+    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Driver.loadContext(etfPath, program, vars).extend(program)
+      val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborate()
