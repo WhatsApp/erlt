@@ -78,7 +78,6 @@
          identifier_id/1,
          iodata_id/1,
          iolist_id/1,
-         map_id/1,
          none_id/1,
          noreturn_id/1,
          number_id/1,
@@ -438,10 +437,6 @@ iodata_id(A) -> A.
 -spec iolist_id(iolist()) -> iolist().
 
 iolist_id(A) -> A.
-
--spec map_id(#{A => B}) -> #{A => B}.
-
-map_id(M) -> M.
 
 -spec none_id(none()) -> none().
 

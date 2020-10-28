@@ -1,0 +1,13 @@
+bad_types.erlt:5:5: Singleton types of type integer are not supported in the type system
+bad_types.erlt:7:7: Singleton types of type integer are not supported in the type system
+bad_types.erlt:7:7: Singleton types of type integer are not supported in the type system
+bad_types.erlt:5:16: The binary type is not supported in the type system
+bad_types.erlt:5:20: Singleton types of type integer are not supported in the type system
+bad_types.erlt:7:17: The binary type is not supported in the type system
+bad_types.erlt:9:18: Singleton types of type integer are not supported in the type system
+bad_types.erlt:9:18: The range type is not supported in the type system
+bad_types.erlt:9:21: Singleton types of type integer are not supported in the type system
+bad_types.erlt:11:18: Singleton types of type integer are not supported in the type system
+bad_types.erlt:13:19: Singleton types of type atom are not supported in the type system
+bad_types.erlt:15:21: Untyped maps are not supported by the type system
+bad_types.erlt:17:26: The map type is not supported in the type system
