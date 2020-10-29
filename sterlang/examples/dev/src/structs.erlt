@@ -18,7 +18,6 @@
 -struct user() :: (name :: string(), id :: integer()).
 -struct manager() :: (user :: user()).
 -struct ok() :: ().
--struct boxed_int() :: (int :: integer()).
 
 -struct box(A) :: (value :: A).
 -struct box2(A, B) :: (value1 :: A, value2 :: B).
@@ -48,7 +47,7 @@ check_user(User) when User == #user{name = "anonymous", id = -1} ->
 
 check_users(User1, User2) when User1#user.id == User2#user.id ->
     #ok{};
-check_users(User1, User2) ->
+check_users(_User1, _User2) ->
     #ok{}.
 
 is_user(#user{}) -> true.
@@ -58,8 +57,6 @@ match_users(#user{id = Id}, #user{id = Id}) -> true.
 foo(#manager{user = User}) ->
     User.
 
-%% For the record): This is an illegal guard expression! - updating a record is forbidden!
-%% guard1(BoxedInt) when BoxedInt == BoxedInt#boxed_int{int = 3} -> true.
 
 mk_box_int() ->
     #box{value = 1}.
@@ -86,7 +83,7 @@ test_box2(B) ->
     B#box2.value1 == B#box2.value2.
 
 pat_box2(#box2{value1 = X, value2 = X}) -> X;
-pat_box2(#box2{value1 = X, value2 = Y}) -> Y.
+pat_box2(#box2{value1 = _X, value2 = Y}) -> Y.
 
 mk_wrapped_int() ->
     #wrapped_int{}.

@@ -46,11 +46,11 @@ sort(Lt, L) ->
     case L of
         [] ->
             [];
-        [H | T] ->
+        [_ | T] ->
             case T of
                 [] ->
                     L;
-                [Ht | Tt] ->
+                [_ | _] ->
                     {P1, P2} = split(L, [], []),
                     merge(Lt, sort(Lt, P1), sort (Lt, P2))
             end

@@ -16,8 +16,8 @@ val User: user()
 val check_users/2: fun((user(), user()) -> ok())
 val User1: user()
 val User2: user()
-val User1: user()
-val User2: user()
+val _User1: user()
+val _User2: user()
 val is_user/1: fun((user()) -> boolean())
 val match_users/2: fun((user(), user()) -> boolean())
 val Id: number()
@@ -46,7 +46,7 @@ val B: box2(A, A)
 val pat_box2/1: fun((box2(A, A)) -> A)
 val X: A
 val X: A
-val X: A
+val _X: A
 val Y: A
 val mk_wrapped_int/0: fun(() -> wrapped_int())
 val mk_mixed1/0: fun(() -> mixed_struct1(number()))

@@ -16,37 +16,41 @@
 -export([inferred_funs/0]).
 
 minimal() ->
-    X = 0,
-    Y = 1,
+    _X = 0,
+    _Y = 1,
     {}.
 
 basic_values() ->
     My_int = 0,
     My_str = "hello",
-    Empty_record = #(),
-    Unit = {},
-    Tuple1 = {1, 2},
-    Tuple2 = {My_int, My_str},
-    Int_list = [My_int, My_int],
+    _Empty_record = #(),
+    _Unit = {},
+    _Tuple1 = {1, 2},
+    _Tuple2 = {My_int, My_str},
+    _Int_list = [My_int, My_int],
 
-    My_profile_rec = #(name = "Ilya", languages = ["Erlang", "Scala"]),
-    Location_rec = #(city = "London", country = "UK"),
+    _My_profile_rec = #(name = "Ilya", languages = ["Erlang", "Scala"]),
+    _Location_rec = #(city = "London", country = "UK"),
 
-    Bool1 = true,
-    Bool2 = false,
+    _Bool1 = true,
+    _Bool2 = false,
 
     F_id = fun (X) -> X end,
-    F_first = fun (X1, Y1) -> X1 end,
-    F_second = fun (X2, Y2) -> Y2 end,
+    sink:sink(F_id),
+    F_first = fun (X1, _Y1) -> X1 end,
+    sink:sink(F_first),
+    F_second = fun (_X2, Y2) -> Y2 end,
+    sink:sink(F_second),
     F_const = fun () -> 1 end,
+    sink:sink(F_const),
     {}.
 
 enums() ->
     None = core:option.none,
     SomeInt = core:option.some{1},
     SomeStr = core:option.some{"str"},
-    L1 = [None, SomeInt],
-    L2 = [None, SomeStr],
+    _L1 = [None, SomeInt],
+    _L2 = [None, SomeStr],
     % ill-typed
     % L3 = [SomeInt, SomeStr],
     {}.
@@ -57,22 +61,22 @@ mkSome(X) -> core:option.some{X}.
 mkList(E1, E2) -> [E1, E2].
 
 funs() ->
-    V1 = mkSome(1),
-    V2 = mkSome(""),
+    _V1 = mkSome(1),
+    _V2 = mkSome(""),
     {}.
 
 pieces() ->
     My_rec = #(n = 1, st = "", z = []),
     NVal = My_rec#(n),
-    #(n = N1, st = S1, z = Z1) = My_rec,
-    #(n = N, st = St, z = Z) = My_rec,
+    #(n = _N1, st = _S1, z = _Z1) = My_rec,
+    #(n = N, st = _St, z = Z) = My_rec,
     Rec1 = #(n = N, z = Z),
-    % TODO - pinned vars
-    % #(n = NVal) = My_rec,
+    sink:sink(Rec1),
+    #(n = ^NVal) = My_rec,
     % transforming record:
-    My_rec1 = My_rec #(n = 2),
+    _My_rec1 = My_rec #(n = 2),
     My_pair = {1, []},
-    {Elem1, Elem2} = My_pair,
+    {_Elem1, _Elem2} = My_pair,
     {}.
 
 list1(L) ->
@@ -112,7 +116,7 @@ inside1() ->
     T.
 
 inside2() ->
-    T = fun Local (X) -> X end,
+    T = fun _Local (X) -> X end,
     T.
 
 get_id(R) ->
@@ -124,8 +128,8 @@ extract(#(id = Id)) -> #(id = Id).
 
 records_example() ->
     % polymorphism - get_id is polymorphic
-    Id1 = get_id(#(id = 1)),
-    Id2 = get_id(#(id = "id", key = 3)),
+    _Id1 = get_id(#(id = 1)),
+    _Id2 = get_id(#(id = "id", key = 3)),
 
     Rec1 = #(id = 1),
     Rec2 = #(id = 2, key = 3),
@@ -135,6 +139,7 @@ records_example() ->
     % val Rec_list = [rec1, rec2]
 
     Rec_list = [extract(Rec1), extract(Rec2)],
+    sink:sink(Rec_list),
     {}.
 
 % record is a special "kind" of types

@@ -24,7 +24,7 @@ f02({X, X}) ->
 f03({X, Y}, {Y, X}) ->
     X.
 
-f04(X = [Y|X]) ->
+f04(X = [_Y|X]) ->
     X.
 
 -spec inferred_funs() -> [term()].

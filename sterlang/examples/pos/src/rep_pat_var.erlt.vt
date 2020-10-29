@@ -11,5 +11,5 @@ val Y: A
 val X: B
 val f04/1: fun((list(A)) -> list(A))
 val X: list(A)
-val Y: A
+val _Y: A
 val X: list(A)

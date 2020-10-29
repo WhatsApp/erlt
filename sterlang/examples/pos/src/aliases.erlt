@@ -26,7 +26,7 @@ mk_pair2(X, Y) -> {X, Y}.
 
 -enum p_con(A) :: (con{pair(A)}).
 
-mk_con(X, Y) ->
+mk_con(X, _Y) ->
     p_con.con{{X, X}}.
 
 de_con(p_con.con{X}) -> X.

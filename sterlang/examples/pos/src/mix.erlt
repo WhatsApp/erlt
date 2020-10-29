@@ -104,6 +104,7 @@ unRec2(Rec) ->
 apply_add_id(Add_id, Rec) ->
     Rec1 = Add_id(Rec),
     Unused_id = Rec1#(id),
+    sink:sink(Unused_id),
     Rec1.
 
 add_id_empty_rec(#()) ->
@@ -116,6 +117,8 @@ add_id_rec_f(#(f = X)) ->
 rec_tricky() ->
     Rec1 = fun (X) -> apply_add_id(fun add_id_empty_rec/1, X) end,
     Rec2 = fun (X) -> apply_add_id(fun add_id_rec_f/1, X) end,
+    sink:sink(Rec1),
+    sink:sink(Rec2),
     {}.
 
 even(I) -> (I == 0) orelse odd(I - 1).

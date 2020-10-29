@@ -21,7 +21,7 @@
 -spec mk_pair1(A, A) -> this_pair(A).
 mk_pair1(X, Y) -> {X, Y}.
 
-mk_con(X, Y) ->
+mk_con(X, _Y) ->
     aliases:p_con.con{{X, X}}.
 
 -spec inferred_funs() -> [term()].
