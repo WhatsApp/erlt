@@ -8,8 +8,12 @@
 -export([invoke/1]).
 
 -spec invoke(#args{}) -> ok | error.
-invoke(#args{command = compile} = Args) ->
-    clean(Args),
+invoke(#args{command = compile, build_dir = BuildDir} = Args) ->
+    % BuildDir is erlt-specific, OK to wipe it. We do not remove the OutputDir (ebins)
+    % because those can be generated from other tools (such as rebar3 classic Erlang compiler).
+    % Note that this means our builds can be incorrect in a certain way: we don't remove the corresponding
+    % beam when an erlt source file is removed.
+    rmrf(BuildDir),
     try
         case do_phase("scan", Args) of
             ok ->
