@@ -14,6 +14,7 @@
 
 -module(mod04).
 
+-export([inferred_funs/0]).
 -export([
   mk_unit_remote_dot/0, mk_left_remote_dot/1, mk_right_remote_dot/1,
   zero_remote_dot/2, zero_remote1_dot/2,
@@ -91,3 +92,20 @@ select_from_box3(Box3) ->
     Box3#box3.value.
 update_box3(Box3, Value) ->
     Box3#box3{value = Value}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun mk_box1/1,
+    fun match_box1/1,
+    fun select_from_box1/1,
+    fun update_box1/2,
+    fun mk_box2/1,
+    fun match_box2/1,
+    fun select_from_box2/1,
+    fun update_box2/2,
+    fun mk_box3/1,
+    fun match_box3/1,
+    fun select_from_box3/1,
+    fun update_box3/2
+].

@@ -1,4 +1,5 @@
 -module(numbers).
+-export([foldl/3, length/1, add/2, add_number/2]).
 
 -spec foldl(fun((A, B) -> B), B, list(A)) -> B.
 foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);

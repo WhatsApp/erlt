@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(core).
+-export([inferred_funs/0]).
+
 -export_type([option/1]).
 -export([getOrElse/2]).
 
@@ -28,3 +30,7 @@ getOrElse(Opt, Alt) ->
 any() -> any().
 test_any() ->
     case {any()} of {F} -> {F == 1, F(1)} end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun test_any/0].

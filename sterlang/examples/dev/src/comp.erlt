@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(comp).
+-export([inferred_funs/0]).
 
 map(F, L) ->
     [F(X) || X <- L].
@@ -72,3 +73,25 @@ t1() ->
 
 xxx() ->
     [unchecked:xx(), unchecked:xx2()].
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun map/2,
+    fun filter/2,
+    fun strange_perm/3,
+    fun sort/1,
+    fun sort/2,
+    fun append/1,
+    fun flat_map/2,
+    fun list_from_binary/1,
+    fun binary_from_list1/1,
+    fun binary_from_list2/1,
+    fun even_from_binary/1,
+    fun rgb/1,
+    fun pixels/1,
+    fun slice/2,
+    fun lengths/1,
+    fun t1/0,
+    fun xxx/0
+].

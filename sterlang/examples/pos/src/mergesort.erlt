@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(mergesort).
+-export([inferred_funs/0]).
+
 split(L, Even, Odd) ->
     case L of
         [] ->
@@ -71,3 +73,10 @@ lt(S1, S2) ->
 
 main() ->
     mergesort(fun lt/2, []).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun main/0,
+    fun length/1
+].

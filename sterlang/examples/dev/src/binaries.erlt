@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(binaries).
+-export([inferred_funs/0]).
 
 b00() ->
     <<"literal">>.
@@ -93,3 +94,37 @@ b27(Binary) ->
     << <<X>> || <<X>> <= Binary, X > 100 >>.
 
 b28(<<Float/float>>) -> {Float}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun b00/0,
+    fun b01/0,
+    fun b02/1,
+    fun b03/1,
+    fun b04/1,
+    fun b05/1,
+    fun b06/1,
+    fun b07/1,
+    fun b08/1,
+    fun b09/1,
+    fun b10/1,
+    fun b11/1,
+    fun b12/0,
+    fun b13/0,
+    fun b14/0,
+    fun b15/0,
+    fun b16/1,
+    fun b17/4,
+    fun b18/4,
+    fun b19/1,
+    fun b20/1,
+    fun b21/1,
+    fun b22/1,
+    fun b23/1,
+    fun b24/1,
+    fun b25/4,
+    fun b26/4,
+    fun b27/1,
+    fun b28/1
+].

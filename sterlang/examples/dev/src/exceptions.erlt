@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(exceptions).
+-export([inferred_funs/0]).
 
 -exception not_found() :: ().
 -exception invocation_target_exception() :: (target :: exception()).
@@ -76,3 +77,15 @@ get_or_default(M, Default, Test) ->
     after
         Test == Default
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun mk_exn/1,
+    fun get_target/1,
+    fun get_message/1,
+    fun get_other/2,
+    fun get_other_with_guard/3,
+    fun get_message_with_guard/1,
+    fun get_or_default/3
+].

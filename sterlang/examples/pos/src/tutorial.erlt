@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(tutorial).
+-export([inferred_funs/0]).
 
 minimal() ->
     X = 0,
@@ -207,3 +208,44 @@ dec_opt4(X, Y, Z) ->
     my_option.some{Id1} = OptId,
     my_option.some{Id2} = OptId,
     {Id1(X), Id1(Y), Id2(Z)}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun minimal/0,
+    fun basic_values/0,
+    fun enums/0,
+    fun id/1,
+    fun mkSome/1,
+    fun mkList/2,
+    fun funs/0,
+    fun pieces/0,
+    fun list1/1,
+    fun list2/1,
+    fun list3/1,
+    fun list4/1,
+    fun map/2,
+    fun getIds/1,
+    fun global/2,
+    fun inside/1,
+    fun inside1/0,
+    fun inside2/0,
+    fun get_id/1,
+    fun extract/1,
+    fun records_example/0,
+    fun id_rec/1,
+    fun get_id1/1,
+    fun update_a_b/1,
+    fun swap_a_b/1,
+    fun id01/1,
+    fun id02/1,
+    fun id03/1,
+    fun isDefined1/1,
+    fun map1/2,
+    fun to_bools/1,
+    fun onlySome/1,
+    fun dec_opt/1,
+    fun dec_opt2/1,
+    fun dec_opt3/3,
+    fun dec_opt4/3
+].

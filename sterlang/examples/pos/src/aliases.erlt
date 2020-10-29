@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(aliases).
+-export([inferred_funs/0]).
 -export_type([pair/1]).
 -export_type([p_con/1]).
 
@@ -38,3 +39,15 @@ mk_pair_any1() ->
 -spec mk_pair_any2() -> pair(_).
 mk_pair_any2() ->
     {loop(), loop()}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun mk_pair1/2,
+    fun mk_pair2/2,
+    fun mk_con/2,
+    fun de_con/1,
+    fun loop/0,
+    fun mk_pair_any1/0,
+    fun mk_pair_any2/0
+].

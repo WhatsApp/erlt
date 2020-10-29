@@ -13,5 +13,11 @@
 %% limitations under the License.
 
 -module(e42).
+-export([inferred_funs/0]).
+
 foo(Rec) ->
     case Rec of #(x = false) -> 1; #(y = true) -> 2 end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

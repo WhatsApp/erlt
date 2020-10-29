@@ -15,7 +15,7 @@
 % edge cases for structural records
 -module(anonymous_structs_guards).
 
--export([]).
+-export([inferred_funs/0]).
 
 test1(X) ->
     if
@@ -35,3 +35,13 @@ test4(M) when M == M#(x = 1) -> true.
 
 %% More updates in guards
 test5(M) when M == M#(x = 1)#(y = 2) -> true.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test1/1,
+    fun test2/1,
+    fun test3/1,
+    fun test4/1,
+    fun test5/1
+].

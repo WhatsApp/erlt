@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(rem_aliases).
+-export([inferred_funs/0]).
+-export([mk_pair1/2]).
 
 -type this_pair(A) :: aliases:pair(A).
 
@@ -21,3 +23,7 @@ mk_pair1(X, Y) -> {X, Y}.
 
 mk_con(X, Y) ->
     aliases:p_con.con{{X, X}}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun mk_con/2].

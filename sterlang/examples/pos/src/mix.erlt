@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(mix).
+-export([inferred_funs/0]).
 
 %% Two selectors
 two_selectors(X) -> (X#(person))#(name).
@@ -131,3 +132,30 @@ dummy() -> loop({}).
 id(I) -> I.
 x_fun() -> id(2).
 y_fun() -> id({}).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun two_selectors/1,
+    fun seq_call/4,
+    fun sum_fr/2,
+    fun sum_fr_proxy/2,
+    fun add_f/1,
+    fun rich_record_example/0,
+    fun name/1,
+    fun next/1,
+    fun unBox/1,
+    fun unRec/1,
+    fun unRec2/1,
+    fun apply_add_id/2,
+    fun add_id_empty_rec/1,
+    fun add_id_rec_f/1,
+    fun rec_tricky/0,
+    fun even/1,
+    fun odd/1,
+    fun loop/1,
+    fun dummy/0,
+    fun id/1,
+    fun x_fun/0,
+    fun y_fun/0
+].

@@ -13,6 +13,13 @@
 %% limitations under the License.
 
 -module(test).
+-export([inferred_funs/0]).
 
 test_me() ->
     1 + 2.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test_me/0
+].

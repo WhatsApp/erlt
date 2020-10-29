@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(structs).
+-export([inferred_funs/0]).
 
 -struct user() :: (name :: string(), id :: integer()).
 -struct manager() :: (user :: user()).
@@ -101,3 +102,41 @@ match_mixed1(#mixed_struct1{1, failover = 2}) ->
 
 match_mixed2(#mixed_struct2{[1, 2], failover = 2}) ->
     true.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test/1,
+    fun mk_user/2,
+    fun update_user/3,
+    fun get_id/1,
+    fun get_man_id/1,
+    fun check_user/1,
+    fun check_users/2,
+    fun is_user/1,
+    fun match_users/2,
+    fun foo/1,
+    fun mk_box_int/0,
+    fun mk_box/1,
+    fun mk_box2/1,
+    fun update_box/2,
+    fun update_box2/2,
+    fun update_box2/3,
+    fun select_box2/1,
+    fun test_box2/1,
+    fun pat_box2/1,
+    fun mk_wrapped_int/0,
+    fun mk_mixed1/0,
+    fun mk_mixed2/0,
+    fun match_mixed1/1,
+    fun match_mixed2/1,
+    fun update_box2/3,
+    fun select_box2/1,
+    fun test_box2/1,
+    fun pat_box2/1,
+    fun mk_wrapped_int/0,
+    fun mk_mixed1/0,
+    fun mk_mixed2/0,
+    fun match_mixed1/1,
+    fun match_mixed2/1
+].
