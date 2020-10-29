@@ -34,13 +34,10 @@
 -export([
     clean_parse_transforms/1,
     compile_options/1,
-    find_invalid_unicode/2,
     internal_comp/5,
     foldl_transform/3,
-    inc_paths/1,
     listing/4,
     parse_module/2,
-    pre_defs/1,
     remove_file/2,
     save_binary/2,
     select_passes/2,
