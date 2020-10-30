@@ -14,5 +14,5 @@
 
 -module(e140).
 
--spec get_foo(#(foo :: Foo, Other)) -> Foo.
-get_foo(#(foo = Foo, bar = Bar)) -> Foo.
+-spec get_foo(#(foo :: Foo, _)) -> Foo.
+get_foo(#(foo = Foo, bar = _)) -> Foo.

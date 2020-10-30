@@ -16,5 +16,5 @@
 
 -message my_msg() :: (message :: string()).
 
-msg_select(E) ->
+msg_select(M) ->
     M#my_msg.message.

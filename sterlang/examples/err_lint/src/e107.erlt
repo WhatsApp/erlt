@@ -14,7 +14,7 @@
 
 -module(e107).
 
--struct foo() :: (id :: integer()).
+-struct foo() :: (id = 1 :: integer()).
 
 -spec test(foo()) -> string().
 test(Foo) when Foo == #foo{name = "anonymous"} ->

@@ -16,7 +16,7 @@
 
 %% Compare with examples/dev/shapes.erlt!
 %% Monomorphism restriction in action.
--spec test(fun((#(id :: integer(), B)) -> integer())) -> boolean().
+-spec test(fun((#(id :: integer(), _)) -> integer())) -> boolean().
 test(F) ->
     Shape1 = #(id = 1),
     Shape2 = #(id = 2, bar = 3),

@@ -15,6 +15,6 @@
 -module(repeated_variable_error2).
 -export([equals/2]).
 
--spec equals(integer(), A) -> boolean().
+-spec equals(integer(), _) -> boolean().
 equals(X, X) -> true;
 equals(_, _) -> false.

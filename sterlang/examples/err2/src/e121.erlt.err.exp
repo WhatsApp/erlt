@@ -1,6 +1,6 @@
 -- ERROR -------------------------------------- examples/err2/src/e121.erlt:20:1
-Spec mismatch for test_id/1
-Specified:  `fun((A) -> B)`
-Elaborated: `fun((A) -> A)`
- 20| -spec test_id(id(A)) -> id(B).
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Spec mismatch for test_id/2
+Specified:  `fun((A, B) -> B)`
+Elaborated: `fun((A, A) -> A)`
+ 20| -spec test_id(id(_), id(B)) -> id(B).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

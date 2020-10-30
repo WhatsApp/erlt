@@ -17,5 +17,5 @@
 -opaque id(A) :: A.
 
 % Expanding opaque locally
--spec test_id(id(A)) -> id(B).
-test_id(X) -> X.
+-spec test_id(id(_), id(B)) -> id(B).
+test_id(X, X) -> X.

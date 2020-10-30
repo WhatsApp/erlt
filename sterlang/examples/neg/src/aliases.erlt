@@ -1,6 +1,6 @@
 -module(aliases).
 -type pair(A, B) :: {A, B}.
 
--spec mk_pair(A) -> pair(A, B).
+-spec mk_pair(A) -> pair(A, _).
 mk_pair(X) ->
     {X, X}.

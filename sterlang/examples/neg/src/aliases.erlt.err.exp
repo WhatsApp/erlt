@@ -2,5 +2,5 @@
 Spec mismatch for mk_pair/1
 Specified:  `fun((A) -> {A, B})`
 Elaborated: `fun((A) -> {A, A})`
-  4| -spec mk_pair(A) -> pair(A, B).
+  4| -spec mk_pair(A) -> pair(A, _).
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
