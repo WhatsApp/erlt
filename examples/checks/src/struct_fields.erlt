@@ -1,7 +1,7 @@
 
 -module(struct_fields).
 
--export([local/0, duplicate/1]).
+-export([local/0, duplicate/1, another/1]).
 
 -export_type([struct/0]).
 
@@ -16,6 +16,8 @@ local() ->
         #struct{b = 1.0, does_not_exist = 10},
         #struct{does_not_exist = _} = #struct{b = 1.0}
     }.
+
+another(#struct{does_not_exist = Name}) -> Name.
 
 duplicate(#struct{a = 1, a = 2, b = 3}) ->
     #struct{a = 1, a = 2, b = 3}.

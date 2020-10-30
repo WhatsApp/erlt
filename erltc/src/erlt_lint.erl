@@ -3233,27 +3233,27 @@ check_fields(_Fun, Acc, St0, [], Seen0, Name, OuterLine, Pos, _Defs) ->
     {Seen, St} = ensure_all_positional_fields(OuterLine, Name, Seen0, Pos, St0),
     {Seen, Acc, St}.
 
-check_labelled(Fun, Acc, St, Line, Field, Value, Seen, Name, Defs) ->
+check_labelled(Fun, Acc0, St0, Line, Field, Value, Seen, Name, Defs) ->
+    {Acc, St} = Fun(Value, Acc0, St0),
     case is_map_key(Field, Seen) of
         true ->
             St1 = add_error(Line, {redefine_field, Name, Field}, St),
             {Seen, Acc, St1};
         false when Defs =:= unavailable; is_map_key(Field, Defs) ->
-            {Acc1, St1} = Fun(Value, Acc, St),
-            {Seen#{Field => []}, Acc1, St1};
+            {Seen#{Field => []}, Acc, St};
         false ->
             St1 = add_error(Line, {undefined_field, Name, Field}, St),
             {Seen#{Field => []}, Acc, St1}
     end.
 
-check_positional(Fun, Acc, St, Line, Value, Seen, Name, Pos) ->
+check_positional(Fun, Acc0, St0, Line, Value, Seen, Name, Pos) ->
+    {Acc, St} = Fun(Value, Acc0, St0),
     case is_map(Seen) of
         true ->
             St1 = add_error(Line, positional_after_labelled_field, St),
             {Seen, Acc, St1};
         false when Pos =:= unavailable; Seen < Pos ->
-            {Acc1, St1} = Fun(Value, Acc, St),
-            {Seen + 1, Acc1, St1};
+            {Seen + 1, Acc, St};
         false ->
             St1 = add_error(Line, {extra_positional_field, Seen + 1, Pos, Name}, St),
             {Seen + 1, Acc, St1}
