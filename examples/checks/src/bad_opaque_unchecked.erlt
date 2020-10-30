@@ -1,10 +1,8 @@
 
 -module(bad_opaque_unchecked).
 
--export_type([bad/1, badder/1]).
+-export_type([bad/1]).
 
 [opaque, unchecked]
 -type bad(X) :: 2.
 
-[opaque, unchecked]
--type badder(_) :: term().

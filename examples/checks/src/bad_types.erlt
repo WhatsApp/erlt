@@ -12,6 +12,8 @@
 
 -type s_atom() :: hello.
 
+-type s_char() :: $a.
+
 -type map_type() :: map().
 
 -type map_type2(A, B) :: #{A => B}.
@@ -30,12 +32,16 @@
 
 -type union_type() :: atom() | integer().
 
--type param_type1(_A) :: integer().
+-type param_type1(A) :: integer().
 
 -type unparam_type1() :: {A,A}.
 
+-type bad_shape_type() :: #(id :: atom(), A).
+
+[opaque, unchecked]
+-type badder(_) :: term().
 
 -spec test() -> bin() | bin2() | range() | s_int() | s_atom() | map_type2(integer(), integer()) | fun_type() |
-    anon_fun_type() | non_empty() | empty() | record() |
+    anon_fun_type() | non_empty() | empty() | record() | badder(bad_shape_type()) |
     map_type() | tuple_type() | union_type() | param_type1(integer()) | unparam_type1().
 test() -> {0,0}.

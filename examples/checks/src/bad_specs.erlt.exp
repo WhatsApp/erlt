@@ -1,0 +1,2 @@
+bad_specs.erlt:5:10: When guards for fun types are not supported by the type system
+bad_specs.erlt:5:24: The constraint type is not supported by the type system

@@ -11,27 +11,31 @@
 }).
 
 format_error({reusing_var, Name}) ->
-    io_lib:format("The type variable ~tw is already used in this variable list", [Name]);
+    io_lib:format("type variable ~tw appears multiple times in type arguments", [Name]);
 format_error({unused_arg, Name}) ->
     io_lib:format("The type argument ~tw is not used in the definition", [Name]);
 format_error({unsupported_type, Name}) ->
-    io_lib:format("The ~tw type is not supported in the type system", [Name]);
+    io_lib:format("The ~tw type is not supported by the type system", [Name]);
 format_error({singleton_type, Name}) ->
-    io_lib:format("Singleton types of type ~tw are not supported in the type system", [Name]);
+    io_lib:format("Singleton types of type ~tw are not supported by the type system", [Name]);
 format_error({using_undefined_var, Name}) ->
     io_lib:format("The type variable ~tw is undefined", [Name]);
 format_error({multiple_specs, Kind}) ->
     io_lib:format("When defining a -~w using multiple specs separated by ';' is not allowed", [Kind]);
+format_error(underscore_in_type_arguments) ->
+    "_ is not a valid name for a type argument";
 format_error(arith_ops) ->
     "Arithmetic expressions are not supported by the type system";
 format_error(any_tuple) ->
     "Variable size tuples are not supported by the type system";
 format_error(any_map) ->
     "Untyped maps are not supported by the type system";
-format_error(non_empty_list) ->
+format_error(nonempty_list) ->
     "Non empty lists are not supported by the type system";
 format_error(untyped_fun_type) ->
     "Fun types without type information are not supported by the type system";
+format_error(when_guarded_fun) ->
+    "When guards for fun types are not supported by the type system";
 format_error(any_argument_fun) ->
     "Funs with an undetermined number of arguments are not allowed by the type system".
 
@@ -66,6 +70,8 @@ lint({attribute, Line, Kind, {_MFA, _}}, St, form) when Kind =:= spec; Kind =:= 
 lint(_I, St, _Ctx) ->
     St.
 
+process_args([{var, Line, '_'} | Rest], St) ->
+    process_args(Rest, add_error(Line, underscore_in_type_arguments, St));
 process_args([{var, Line, Name} = Var | Rest], St) ->
     case St#state.defined of
         #{Name := _Def} ->
@@ -83,6 +89,13 @@ process_list([], St) ->
 
 process_def(Type, St) ->
     case Type of
+        {var, Line, '_'} ->
+            case St of
+                #state{allow_new_vars = true} ->
+                    St;
+                #state{allow_new_vars = false} -> 
+                    add_error(Line, {unsupported_type, '_'}, St)
+            end;
         {var, Line, Name} = V ->
             case St of
                 % Variable is an argument of a fun, but is already defined
@@ -108,13 +121,13 @@ process_def(Type, St) ->
         {op, Line, _Args} ->
             add_error(Line, arith_ops, St);
         {type, Line, map, any} ->
-            add_error(Line, any_map, St);
+            add_error(Line, {unsupported_type, map}, St);
         {type, Line, tuple, any} ->
             add_error(Line, any_tuple, St);
         {type, Line, nil, _Args} ->
             add_error(Line, {singleton_type, '[]'}, St);
-        {type, Line, non_empty_list, _Args} ->
-            add_error(Line, non_empty_list, St);
+        {type, Line, nonempty_list, _Args} ->
+            add_error(Line, nonempty_list, St);
         {type, _Line, enum, _Name0, Variants0} ->
             process_list(Variants0, St);
         {variant, _Line, _Name0, Fields0} ->
@@ -135,15 +148,17 @@ process_def(Type, St) ->
             process_def(ResultType, add_error(Line, any_argument_fun, St));
         {type, _Line, 'fun', [_Args, _ResultType]} = Fun ->
             handle_fun(Fun, [], St);
+        %% Process subtypes of union and map in order to avoid lots of unused args and type warnings.
+        {type, Line, Unsupported, Args} when Unsupported =:= map; Unsupported =:= union ->
+            add_error(Line, {unsupported_type, Unsupported}, process_list(Args, St));
         {type, Line, Name, Args} ->
-            St1 =
-                case is_unsupported(Name) of
-                    true ->
-                        add_error(Line, {unsupported_type, Name}, St);
-                    false ->
-                        St
-                end,
-            process_list(Args, St1);
+            case is_unsupported(Name) of
+                true ->
+                    %% Stop processing other unsupported types
+                    add_error(Line, {unsupported_type, Name}, St);
+                false ->
+                    process_list(Args, St)
+            end;
         {type, _, any} ->
             St;
         {ann_type, _Line, [_NonTypeVariable, RealType]} ->
@@ -165,7 +180,6 @@ handle_fun({type, _Line, 'fun', [Args, ResultType]}, Guards, St) ->
 mark_variable_used(Name, St) -> St#state{defined = maps:put(Name, used, St#state.defined)}.
 
 is_unsupported(constraint) -> true;
-is_unsupported(union) -> true;
 is_unsupported(record) -> true;
 is_unsupported(map) -> true;
 is_unsupported(range) -> true;

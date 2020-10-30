@@ -97,7 +97,7 @@ rec6(Rec) ->
 rec7(Rec) ->
     Rec#(id).
 
-%%-spec rec8(#(year :: integer() | _)) -> #(year :: integer(), _).
+%%-spec rec8(#(year :: integer() | A)) -> #(year :: integer(), A).
 %%rec8(Rec) ->
 %%    Rec#(year = 2046).
 

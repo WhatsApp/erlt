@@ -1,0 +1,6 @@
+-module(bad_specs).
+
+-export([foo/1]).
+
+-spec foo(A) -> A when A :: integer().
+foo(X) -> X.

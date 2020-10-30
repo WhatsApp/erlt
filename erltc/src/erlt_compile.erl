@@ -230,8 +230,8 @@ base_passes() ->
         ?pass(extract_options),
         ?pass(erlt_exception),
         ?pass(erlt_message),
-        ?pass(erlt_lint),
         ?pass(erlt_lint_types),
+        ?pass(erlt_lint),
         ?pass(erlt_track_vars)
     ].
 

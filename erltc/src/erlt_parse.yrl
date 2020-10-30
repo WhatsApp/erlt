@@ -1299,9 +1299,9 @@ build_constraint(LHS, Type) ->
     {type, ?anno(LHS), constraint, [IsSubType, [LHS, Type]]}.
 
 lift_unions(T1, {type, _Aa, union, List}) ->
-    {type, ?anno(T1), union, [T1 | List]};
+    {type, ?anno(T1, List), union, [T1 | List]};
 lift_unions(T1, T2) ->
-    {type, ?anno(T1), union, [T1, T2]}.
+    {type, ?anno(T1, T2), union, [T1, T2]}.
 
 build_gen_type({atom, Aa, tuple}) ->
     {type, Aa, tuple, any};
