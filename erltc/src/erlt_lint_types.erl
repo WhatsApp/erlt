@@ -91,7 +91,7 @@ process_def(Type, St) ->
             case St of
                 #state{allow_new_vars = true} ->
                     St;
-                #state{allow_new_vars = false} -> 
+                #state{allow_new_vars = false} ->
                     add_error(Line, {unsupported_type, '_'}, St)
             end;
         {var, Line, Name} = V ->
