@@ -294,7 +294,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Fun1, Acc1} = do_traverse(Fun0, Acc0, Pre, Post, Ctx),
             {Guards1, Acc2} = do_traverse_list(Guards0, Acc1, Pre, Post, Ctx),
             Post({type, Line, 'bounded_fun', [Fun1, Guards1]}, Acc2, Ctx);
-        %% The first argument to the constraint is the typoe of constraint followed by a list.
+        %% The first argument to the constraint is the type of constraint followed by a list.
         {type, Line, constraint, [Constraint, Args0]} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             Post({type, Line, constraint, [Constraint, Args1]}, Acc1, Ctx);
