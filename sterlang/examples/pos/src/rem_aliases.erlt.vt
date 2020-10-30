@@ -3,4 +3,4 @@ val X: A
 val Y: A
 val mk_con/2: fun((A, B) -> aliases:p_con(A))
 val X: A
-val Y: B
+val _Y: B

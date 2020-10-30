@@ -17,7 +17,8 @@
 -export([
     prewalk/2, prewalk/3,
     postwalk/2, postwalk/3,
-    traverse/4
+    traverse/4,
+    map_anno/2
 ]).
 
 -type ctx() :: form | expr | guard | pattern | type.
@@ -40,6 +41,10 @@ postwalk(Ast, Fun) ->
 postwalk(Ast, Acc0, Fun) ->
     traverse(Ast, Acc0, fun(Node, Acc, _Ctx) -> {Node, Acc} end, Fun).
 
+-spec map_anno(t(), fun((erl_anno:anno()) -> erl_anno:anno())) -> t().
+map_anno(Ast, Fun) ->
+    prewalk(Ast, fun(Node, _Ctx) -> setelement(2, Node, Fun(element(2, Node))) end).
+
 -define(IS_ATOMIC(Kind),
     Kind =:= integer orelse
         Kind =:= float orelse
@@ -54,6 +59,8 @@ postwalk(Ast, Acc0, Fun) ->
         Kind =:= opaque orelse
         Kind =:= enum orelse
         Kind =:= struct orelse
+        Kind =:= exception orelse
+        Kind =:= message orelse
         Kind =:= unchecked_opaque
 ).
 
@@ -87,7 +94,7 @@ traverse(Ast, Acc, Pre, Post) ->
             {Node, Acc};
         {eof, _} = Node ->
             {Node, Acc};
-        Node when tuple_size(Node) >= 3 ->
+        Node when tuple_size(Node) >= 2 ->
             do_traverse(Node, Acc, Pre, Post, expr)
     end.
 
@@ -216,7 +223,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {Generate, Line, Pattern0, Expr0} when Generate =:= generate; Generate =:= b_generate ->
             {Pattern1, Acc1} = do_traverse(Pattern0, Acc0, Pre, Post, pattern),
             {Expr1, Acc2} = do_traverse(Expr0, Acc1, Pre, Post, Ctx),
-            Post({generate, Line, Pattern1, Expr1}, Acc2, Ctx);
+            Post({Generate, Line, Pattern1, Expr1}, Acc2, Ctx);
         {block, Line, Exprs0} ->
             {Exprs1, Acc1} = do_traverse_list(Exprs0, Acc0, Pre, Post, Ctx),
             Post({block, Line, Exprs1}, Acc1, Ctx);

@@ -97,7 +97,7 @@
     %% Note: hooks are not handled.
     _ =
         try
-            erlt_parse:map_anno(fun(A) when is_list(A) -> A end, T)
+            erlt_ast:map_anno(T, fun(A) when is_list(A) -> A end)
         catch
             _:_ ->
                 erlang:error(badarg, [T])

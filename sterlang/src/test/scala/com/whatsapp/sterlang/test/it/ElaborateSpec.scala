@@ -29,24 +29,21 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   testDir("examples/elm_core/src")
   testDir("examples/dev/src")
   testDir("examples/pattern/src")
-  testDir("examples/sterlang/src")
+  testDir("examples/sterlang-dev/src")
   smokeTestFile("examples/elm_core/src", "basics")
   smokeTestDir("examples/dir/src")
 
   private def smokeTestDir(iDirPath: String): Unit = {
     it(s"smoke test: $iDirPath") {
-      Main.main(Array(iDirPath))
+      Driver.main(Array(iDirPath))
     }
   }
 
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
     import sys.process._
     it(s"smoke test: $iDirPath/$module.erlt") {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
-      Main.main(Array(s"$iDirPath/$module.erlt"))
-      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf"))
-      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf", "--check-patterns"))
+      Driver.main(Array(s"$iDirPath/$module.erlt"))
+      Driver.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
     }
   }
 
@@ -99,10 +96,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
-    val rawProgram = Main.loadProgram(etfPath)
+    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(etfPath, program, vars).extend(program)
+    val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 

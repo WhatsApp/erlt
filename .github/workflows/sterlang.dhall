@@ -15,7 +15,7 @@ let upload =
             ( toMap
                 { name = nativeName
                 , path = nativeName
-                , retention-period = Util.DEFAULT_RETENTION_PERIOD
+                , retention-days = Util.DEFAULT_RETENTION_DAYS
                 }
             )
         ]

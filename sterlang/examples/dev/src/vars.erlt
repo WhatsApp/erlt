@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(vars).
+-export([inferred_funs/0]).
 
 % very artificial test - to check printing of type vars after Z
 test_vars() ->
@@ -47,3 +48,8 @@ test_vars() ->
     {ReverseTuple, ShapeToTuple, TupleToShape}.
 
 
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test_vars/0
+].

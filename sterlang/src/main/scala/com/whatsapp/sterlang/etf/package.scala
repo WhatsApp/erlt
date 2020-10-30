@@ -20,7 +20,7 @@ import sys.process._
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.forms.FormsConvert
+import com.whatsapp.sterlang.forms.{FormsConvertDev, FormsConvertErlt}
 
 package object etf {
 
@@ -32,21 +32,74 @@ package object etf {
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
 
-  def programFromFile(path: String): Ast.Program = {
-    val etf = etfFromFile(path)
-    val forms = FormsConvert.fromEtf(etf)
+  def programFromFileDev(path: String): Ast.Program = {
+    val etf = etfFromFileDev(path)
+    val forms = FormsConvertDev.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
   }
 
-  def programFromString(text: String): Ast.Program = {
-    val etf = etfFromString(text)
-    val forms = FormsConvert.fromEtf(etf)
+  def programFromFileErlt(path: String): Ast.Program = {
+    val etf = etfFromFileErlt(path)
+    val forms = FormsConvertErlt.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
   }
 
-  def etfFromFile(path: String): ETerm = {
+  def moduleApiFromFileDev(path: String): ModuleApi = {
+    val etf = etfFromFileDev(path)
+    val forms = FormsConvertDev.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    val program = Ast.RawProgram(elems).program
+
+    ModuleApi(
+      enumDefs = program.enumDefs,
+      structDefs = program.structDefs,
+      aliases = program.typeAliases,
+      specs = program.specs,
+      opaques = List.empty,
+    )
+  }
+
+  def moduleApiFromFileErlt(path: String): ModuleApi = {
+    val etf = defsFromFileErlt(path)
+    val forms = FormsConvertErlt.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    val program = Ast.RawProgram(elems).program
+
+    ModuleApi(
+      enumDefs = program.enumDefs,
+      structDefs = program.structDefs,
+      aliases = program.typeAliases,
+      specs = program.specs,
+      opaques = List.empty,
+    )
+  }
+
+  private def etfFromFileErlt(file: String): ETerm = {
+    val etfPath =
+      if (file.endsWith(".etf") || file.endsWith(".defs")) {
+        Paths.get(file)
+      } else {
+        val module = Paths.get(file).getFileName.toString.dropRight(5)
+        val oDirPath = Files.createTempDirectory("sterlang")
+        s"./erltc -o $oDirPath +etf $file".!!
+        Paths.get(s"$oDirPath/$module.etf")
+      }
+    readEtf(etfPath)
+  }
+
+  private def defsFromFileErlt(file: String): ETerm = {
+    val etfPath = {
+      val module = Paths.get(file).getFileName.toString.dropRight(5)
+      val oDirPath = Files.createTempDirectory("sterlang")
+      s"./erltc -o $oDirPath +defs $file".!!
+      Paths.get(s"$oDirPath/$module.defs")
+    }
+    readEtf(etfPath)
+  }
+
+  private def etfFromFileDev(path: String): ETerm = {
     val etfPath =
       if (path.endsWith(".etf")) {
         Paths.get(path)
@@ -56,6 +109,13 @@ package object etf {
         tmp
       }
     readEtf(etfPath)
+  }
+
+  def programFromString(text: String): Ast.Program = {
+    val etf = etfFromString(text)
+    val forms = FormsConvertDev.fromEtf(etf)
+    val elems = forms.flatMap(Convert.convertForm)
+    Ast.RawProgram(elems).program
   }
 
   private def etfFromString(text: String): ETerm = {

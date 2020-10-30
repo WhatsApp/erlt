@@ -19,7 +19,7 @@ package com.whatsapp.sterlang.forms
 import com.whatsapp.sterlang.etf._
 import com.whatsapp.sterlang.forms.Types._
 
-object TypesConvert {
+object TypesConvertDev {
   def convertType(term: ETerm): Type =
     term match {
       // af_annotated_type
@@ -49,8 +49,8 @@ object TypesConvert {
       case ETuple(List(EAtom("remote_type"), anno, EList(List(moduleLit, typeNameLit, EList(args))))) =>
         RemoteType(
           r(anno),
-          FormsConvert.convertAtomLit(moduleLit),
-          FormsConvert.convertAtomLit(typeNameLit),
+          FormsConvertDev.convertAtomLit(moduleLit),
+          FormsConvertDev.convertAtomLit(typeNameLit),
           args.map(convertType),
         )
       // af_tuple_type

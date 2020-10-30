@@ -28,6 +28,8 @@
     {call, Anno, {remote, Anno, {atom, Anno, Mod}, {atom, Anno, Fun}}, Args}
 ).
 
+-define(IS_STRUCT(S), (S =:= struct orelse S =:= exception orelse S =:= message)).
+
 module(Forms, DefDb) ->
     Context = init_context(Forms, DefDb),
     put(struct_gen_var, 0),
@@ -52,7 +54,7 @@ local_rewriter(Forms) ->
 init_context(Forms, DefDb) ->
     Res = [M || {attribute, _, module, M} <- Forms],
     [Module] = Res,
-    Structs = [Def || {attribute, _, struct, Def} <- Forms],
+    Structs = [Def || {attribute, _, Struct, Def} <- Forms, ?IS_STRUCT(Struct)],
     #context{
         module = Module,
         structs = init_structs(Structs, Module),
@@ -75,7 +77,8 @@ fields_map([{field_definition, _, positional, undefined, _Type} | Rest]) ->
 fields_map([]) ->
     [].
 
-rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) ->
+rewrite({attribute, Line, Struct, Def}, Context, _Ctx) when ?IS_STRUCT(Struct) ->
+    {TypeName, StructType, Args} = Def,
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
     {RuntimeTag, _} = map_get(Tag, Context#context.structs),
     FieldTypes = [Type || {field_definition, _, _Name, _Default, Type} <- Fields],

@@ -17,10 +17,7 @@ val T2: list(A)
 val sort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))
 val Lt: fun((A, A) -> boolean())
 val L: list(A)
-val H: A
 val T: list(A)
-val Ht: A
-val Tt: list(A)
 val P1: list(A)
 val P2: list(A)
 val mergesort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))

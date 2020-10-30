@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(shapes).
+-export([inferred_funs/0]).
+-export([get_id/1, test/0]).
 
 -spec get_id(#(id :: A, _)) -> A.
 get_id(Shape) -> Shape#(id).
@@ -26,3 +28,9 @@ test() ->
 
 test2(S1, S2) ->
     {S1#(id), S2#(id)}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test2/2
+].

@@ -21,6 +21,8 @@
     types = #{}
 }).
 
+-define(IS_STRUCT(S), (S =:= struct orelse S =:= exception orelse S =:= message)).
+
 module(Forms) ->
     Context = init(Forms),
     erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Context, Ctx) end).
@@ -43,7 +45,7 @@ init([{attribute, _, opaque, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, unchecked_opaque, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
-init([{attribute, _, struct, {Name, _, _}} | Rest], Functions, Types) ->
+init([{attribute, _, Struct, {Name, _, _}} | Rest], Functions, Types) when ?IS_STRUCT(Struct) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, enum, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);

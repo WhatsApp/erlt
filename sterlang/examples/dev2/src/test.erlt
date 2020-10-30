@@ -12,9 +12,14 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(redundant_empty).
--export([test1/0]).
+-module(test).
+-export([inferred_funs/0]).
 
--spec test1() -> {}.
-test1() -> {};
-test1() -> {}.
+test_me() ->
+    1 + 2.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test_me/0
+].

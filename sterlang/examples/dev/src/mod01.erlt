@@ -36,6 +36,7 @@
     number_id/1, pid_id/1, port_id/1, reference_id/1, term_id/1, timeout_id/1, ints_id/1,
     mk_my_pair/2
 ]).
+-export([inferred_funs/0]).
 
 -spec id(Arg1::X) -> X.
 id(X) ->
@@ -407,3 +408,11 @@ float_as_int() -> 3.14.
 float_pat(3.14) -> "pi".
 
 char_pat($a) -> $b.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun float_as_int/0,
+    fun float_pat/1,
+    fun char_pat/1
+].

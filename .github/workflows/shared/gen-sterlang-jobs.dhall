@@ -25,10 +25,10 @@ let test =
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+        , run "assemble erltc" "rebar3 escriptize"
         , run
-            "test and coverage"
+            "test and coverage stErlang"
             "cd sterlang; sbt clean coverage test coverageReport"
-        , run "test" "cd ./examples && make test"
         ]
       }
 
@@ -45,7 +45,7 @@ let buildJar =
             ( toMap
                 { name = jarName
                 , path = "sterlang/target/scala-2.13/${jarName}"
-                , retention-period = Util.DEFAULT_RETENTION_PERIOD
+                , retention-days = Util.DEFAULT_RETENTION_DAYS
                 }
             )
         ]

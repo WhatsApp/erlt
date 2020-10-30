@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(rep_pat_var).
+-export([inferred_funs/0]).
+
 f01(X, X) ->
     X.
 
@@ -22,5 +24,9 @@ f02({X, X}) ->
 f03({X, Y}, {Y, X}) ->
     X.
 
-f04(X = [Y|X]) ->
+f04(X = [_Y|X]) ->
     X.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun f01/2, fun f02/1, fun f03/2, fun f04/1].

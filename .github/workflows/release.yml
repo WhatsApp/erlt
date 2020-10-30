@@ -16,7 +16,7 @@ jobs:
         with:
           name: sterlang.jar
           path: sterlang/target/scala-2.13/sterlang.jar
-          retention-period: '8'
+          retention-days: '8'
   sterlangLinuxUpload:
     needs:
       - buildJar

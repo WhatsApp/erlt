@@ -29,9 +29,7 @@ test2(<<1, _/binary>>) -> {}.
 test3(<<0, _/binary>>) -> {};
 test3(_) -> {}.
 
-% They don't generate true redundancy warnings either.
 -spec test4(binary()) -> {}.
-test4(<<0, _/binary>>) -> {};
 test4(<<0, _/binary>>) -> {}.
 
 % They play well with other patterns.

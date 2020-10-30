@@ -1,0 +1,5 @@
+-module(sink).
+-export([sink/1]).
+
+-spec sink(_) -> {}.
+sink(_) -> {}.

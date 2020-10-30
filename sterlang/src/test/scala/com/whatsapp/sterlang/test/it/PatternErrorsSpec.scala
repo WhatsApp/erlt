@@ -48,16 +48,16 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   private def processIllPatterns(erltPath: String, etfPath: String): Unit = {
-    val rawProgram = Main.loadProgram(etfPath)
+    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(etfPath, program, vars).extend(program)
+    val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
     new AstChecks(context).check(program)
     val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborate()
     val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annotatedFunctions)
     assert(warnings.nonEmpty)
 
-    val actualErr = warnings.map(Main.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
+    val actualErr = warnings.map(Driver.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
     if (generateOut) {
       val expPath = Paths.get(erltPath + ".warn.exp")
       Files.write(expPath, actualErr.getBytes)

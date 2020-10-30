@@ -45,6 +45,8 @@
 
 -define(IS_FUNCTION(F), (F =:= function orelse F =:= unchecked_function)).
 
+-define(IS_STRUCT(S), (S =:= struct orelse S =:= exception orelse S =:= message)).
+
 %% keeping only our added errors and warnings; the real linter will run later
 
 %% our added checks
@@ -895,7 +897,7 @@ pre_scan([{attribute, L, compile, C} | Fs], St) ->
     end;
 %% structs and enums can appear in any order, scan for definitions before
 %% actual checking begins
-pre_scan([{attribute, Loc, struct, {_, TypeDef, Args}} | Fs], St) ->
+pre_scan([{attribute, Loc, Struct, {_, TypeDef, Args}} | Fs], St) when ?IS_STRUCT(Struct) ->
     pre_scan(Fs, struct_def(Loc, TypeDef, length(Args), St));
 pre_scan([{attribute, Loc, enum, {_, TypeDef, Args}} | Fs], St) ->
     pre_scan(Fs, enum_def(Loc, TypeDef, length(Args), St));
@@ -1000,8 +1002,8 @@ attribute_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St)
     type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     type_def(enum, L, TypeName, TypeDef, Args, St);
-attribute_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    type_def(struct, L, TypeName, TypeDef, Args, St);
+attribute_state({attribute, L, Struct, {TypeName, TypeDef, Args}}, St) when ?IS_STRUCT(Struct) ->
+    type_def(Struct, L, TypeName, TypeDef, Args, St);
 attribute_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 attribute_state({attribute, L, callback, {Fun, Types}}, St) ->
@@ -1030,8 +1032,8 @@ function_state({attribute, L, unchecked_opaque, {TypeName, TypeDef, Args}}, St) 
     type_def(unchecked_opaque, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, enum, {TypeName, TypeDef, Args}}, St) ->
     type_def(enum, L, TypeName, TypeDef, Args, St);
-function_state({attribute, L, struct, {TypeName, TypeDef, Args}}, St) ->
-    type_def(struct, L, TypeName, TypeDef, Args, St);
+function_state({attribute, L, Struct, {TypeName, TypeDef, Args}}, St) when ?IS_STRUCT(Struct) ->
+    type_def(Struct, L, TypeName, TypeDef, Args, St);
 function_state({attribute, L, spec, {Fun, Types}}, St) ->
     spec_decl(L, Fun, Types, St);
 function_state({attribute, _L, dialyzer, _Val}, St) ->
@@ -3875,7 +3877,7 @@ check_local_opaque_types(St) ->
             AccSt;
         (_Type, #typeinfo{attr = enum}, AccSt) ->
             AccSt;
-        (_Type, #typeinfo{attr = struct}, AccSt) ->
+        (_Type, #typeinfo{attr = Struct}, AccSt) when ?IS_STRUCT(Struct) ->
             AccSt;
         (_Type, #typeinfo{attr = unchecked_opaque}, AccSt) ->
             AccSt;
@@ -4550,7 +4552,7 @@ vt_no_unused(Vt) -> [V || {_, {_, U, _L}} = V <- Vt, U =/= unused].
 %%  Make a copy of Expr converting all line numbers to Line.
 
 copy_expr(Expr, Anno) ->
-    erlt_parse:map_anno(fun(_A) -> Anno end, Expr).
+    erlt_ast:map_anno(Expr, fun(_) -> Anno end).
 
 %% check_remote_function(Line, ModuleName, FuncName, [Arg], State) -> State.
 %%  Perform checks on known remote calls.

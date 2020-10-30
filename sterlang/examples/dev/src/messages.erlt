@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(messages).
+-export([inferred_funs/0]).
 
 -message ping() :: (from :: pid()).
 -message pong() :: (in_answer_to :: message()).
@@ -35,3 +36,12 @@ receive_guard(Pid) ->
     receive
         #ping{from = Pid1} when Pid1 == Pid -> "ping"
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun get_from/1,
+    fun mk_pong/1,
+    fun loop_step/2,
+    fun receive_guard/1
+].

@@ -55,11 +55,11 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   private def processIllTyped(erltPath: String, etfPath: String): Unit = {
-    val rawProgram = Main.loadProgram(etfPath)
+    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Main.loadContext(etfPath, program, vars).extend(program)
+      val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborate()
@@ -69,7 +69,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       fail(s"$erltPath should not type-check")
     } catch {
       case error: RangedError =>
-        val actualErr = Main.errorString(erltPath, fileContent(erltPath), error)
+        val actualErr = Driver.errorString(erltPath, fileContent(erltPath), error)
         if (generateOut) {
           val expPath = Paths.get(erltPath + ".err.exp")
           Files.write(expPath, actualErr.getBytes)
