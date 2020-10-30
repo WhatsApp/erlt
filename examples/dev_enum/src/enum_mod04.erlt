@@ -28,7 +28,7 @@ expr() ->
     {
         ?MODULE:foo.x,
         ?MODULE:bar.x{a = 1, b = 2},
-        ?MODULE:baz.x
+        ?MODULE:baz.x{}
     }.
 
 pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->

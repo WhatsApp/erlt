@@ -137,7 +137,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {enum, Line, Name0, Constr0, Values0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
-            {Values1, Acc3} = do_traverse_list(Values0, Acc2, Pre, Post, Ctx),
+            {Values1, Acc3} = do_traverse_atom_or_list(Values0, Acc2, Pre, Post, Ctx),
             Post({enum, Line, Name1, Constr1, Values1}, Acc3, Ctx);
         {map, Line, Values0} ->
             {Values1, Acc1} = do_traverse_list(Values0, Acc0, Pre, Post, Ctx),
@@ -274,7 +274,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post({type, Line, enum, Name1, Variants1}, Acc2, Ctx);
         {variant, Line, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_atom_or_list(Fields0, Acc1, Pre, Post, Ctx),
             Post({variant, Line, Name1, Fields1}, Acc2, Ctx);
         {type, Line, struct, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
@@ -339,6 +339,11 @@ do_traverse_atom_or_node(Atom, Acc, _Pre, _Post, _Ctx) when is_atom(Atom) ->
     {Atom, Acc};
 do_traverse_atom_or_node(Node, Acc, Pre, Post, Ctx) when is_tuple(Node) ->
     do_traverse(Node, Acc, Pre, Post, Ctx).
+
+do_traverse_atom_or_list(Atom, Acc, _Pre, _Post, _Ctx) when is_atom(Atom) ->
+    {Atom, Acc};
+do_traverse_atom_or_list(List, Acc, Pre, Post, Ctx) when is_list(List) ->
+    do_traverse_list(List, Acc, Pre, Post, Ctx).
 
 pattern_to_expr(pattern) -> expr;
 pattern_to_expr(Other) -> Other.

@@ -24,7 +24,7 @@
 
 -enum in_pattern :: (x).
 
--enum default_with_default :: (x{x = baz.x :: baz()}).
+-enum default_with_default :: (x{x = baz.x{} :: baz()}).
 
 -enum foo :: (x).
 
@@ -35,7 +35,7 @@ bar() ->
     bar.x{a = 1, b = foo.x}.
 
 baz() ->
-    {baz.x, default_with_default.x}.
+    {baz.x{}, default_with_default.x{}}.
 
 pattern(foo.x, bar.x{b = B}, in_pattern.x) -> B.
 

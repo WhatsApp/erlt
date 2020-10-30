@@ -63,6 +63,8 @@ variant_info(Mod, Enum, {variant, _, {atom, Line, Tag}, Fields}) ->
     Anno = erl_anno:set_generated(true, Line),
     {Tag, {{atom, Anno, RuntimeTag}, fields_map(Fields)}}.
 
+fields_map(none) ->
+    none;
 fields_map([{field_definition, _, {atom, _, Name}, Default, _Type} | Rest]) ->
     [{Name, Default} | fields_map(Rest)];
 fields_map([{field_definition, _, positional, undefined, _Type} | Rest]) ->
@@ -99,6 +101,8 @@ get_remote_definition(Module, Name, Context) ->
         erlt_defs:find_enum(Module, Name, Context#context.defs_db),
     enum_info(Module, Type).
 
+variant_init(none, none) ->
+    [];
 variant_init(Fields, Defs) ->
     Fun = fun
         (positional, [{field, _, positional, Expr} | Rest]) ->
@@ -111,6 +115,8 @@ variant_init(Fields, Defs) ->
     end,
     element(1, lists:mapfoldl(Fun, Fields, Defs)).
 
+variant_pattern(none, none) ->
+    [];
 variant_pattern(Fields, Defs) ->
     Fun = fun
         (positional, [{field, _, positional, Expr} | Rest]) ->
@@ -137,6 +143,9 @@ build_type_union({type, Line, enum, {atom, _, Name}, Variants}, Context) ->
     Defs = map_get(Name, Context#context.enums),
     {type, Line, union, [variant_type(Variant, Defs) || Variant <- Variants]}.
 
+variant_type({variant, Line, {atom, _, Name}, none}, Defs) ->
+    {RuntimeTag, none} = map_get(Name, Defs),
+    {type, Line, tuple, [RuntimeTag]};
 variant_type({variant, Line, {atom, _, Name}, Fields}, Defs) ->
     {RuntimeTag, _} = map_get(Name, Defs),
     FieldTypes = [Type || {field_definition, _, _Name, _Default, Type} <- Fields],
