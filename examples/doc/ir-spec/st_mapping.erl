@@ -64,10 +64,6 @@
 
 -type no_return_alias() :: no_return().
 
--type map_alias(A, B) :: #{A => B}.
-
--type map_string_int() :: #{string() => integer()}.
-
 -type rec_with_int_id() :: #{id := integer()}.
 
 -type rec_with_generic_id(A) :: #{id := A}.
@@ -107,7 +103,7 @@ rec6(Rec) -> Rec#{year => 2046}.
 
 rec7(Rec) -> erlang:map_get(id, Rec).
 
-update_x(R, X) -> R#{x := X}.
+update_x(R, X) -> R#{x => X}.
 
 
 

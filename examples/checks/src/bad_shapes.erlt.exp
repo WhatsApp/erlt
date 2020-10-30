@@ -1,5 +1,4 @@
 bad_shapes.erlt:9:33: field a already defined for this shape type
 bad_shapes.erlt:11:34: field id already defined for this shape type
-bad_shapes.erlt:13:37: type variable 'A' is only used once (is unbound)
-bad_shapes.erlt:16:11: field a used more than once in the same shape
-bad_shapes.erlt:18:13: field a used more than once in the same shape
+bad_shapes.erlt:14:11: field a used more than once in the same shape
+bad_shapes.erlt:16:13: field a used more than once in the same shape

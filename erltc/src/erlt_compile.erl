@@ -218,6 +218,7 @@ base_passes() ->
         ?pass(save_original_forms),
         ?pass(check_parse_errors),
         ?pass(extract_options),
+        ?pass(erlt_lint_types),
         ?pass(erlt_lint),
         ?pass(erlt_track_vars)
     ].
@@ -626,6 +627,17 @@ erlt_import(Code, St) ->
 erlt_lint(Code, St) ->
     Opts = St#compile.options,
     case erlt_lint:module(Code, St#compile.ifile, St#compile.global_defs, Opts) of
+        {ok, Ws} ->
+            {ok, Code, St#compile{warnings = St#compile.warnings ++ Ws}};
+        {error, Es, Ws} ->
+            {error, St#compile{
+                warnings = St#compile.warnings ++ Ws,
+                errors = St#compile.errors ++ Es
+            }}
+    end.
+
+erlt_lint_types(Code, St) ->
+    case erlt_lint_types:module(Code, St#compile.ifile) of
         {ok, Ws} ->
             {ok, Code, St#compile{warnings = St#compile.warnings ++ Ws}};
         {error, Es, Ws} ->

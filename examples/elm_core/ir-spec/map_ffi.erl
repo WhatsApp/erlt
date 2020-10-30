@@ -18,7 +18,7 @@
 
 -import_type({maybe, [{maybe, 1}]}).
 
--opaque map(K, V) :: #{K => V}.
+-type map(_K, _V) :: term().
 
 -spec empty() -> map(_K, _V).
 

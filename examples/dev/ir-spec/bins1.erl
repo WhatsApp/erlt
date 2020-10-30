@@ -4,7 +4,7 @@
 
 -export([test_bins/0]).
 
--spec test_bins() -> ok.
+-spec test_bins() -> atom().
 
 test_bins() -> match_bins(mk_bins()).
 

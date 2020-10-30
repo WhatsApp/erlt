@@ -1,0 +1,20 @@
+bad_types.erlt:5:16: The binary type is not supported by the type system
+bad_types.erlt:7:17: The binary type is not supported by the type system
+bad_types.erlt:9:18: The range type is not supported by the type system
+bad_types.erlt:11:18: Singleton types of type integer are not supported by the type system
+bad_types.erlt:13:19: Singleton types of type atom are not supported by the type system
+bad_types.erlt:15:19: Singleton types of type char are not supported by the type system
+bad_types.erlt:17:21: The map type is not supported by the type system
+bad_types.erlt:19:26: The map type is not supported by the type system
+bad_types.erlt:23:30: Funs with an undetermined number of arguments are not allowed by the type system
+bad_types.erlt:25:22: Non empty lists are not supported by the type system
+bad_types.erlt:27:18: Singleton types of type '[]' are not supported by the type system
+bad_types.erlt:29:19: The record type is not supported by the type system
+bad_types.erlt:31:23: Variable size tuples are not supported by the type system
+bad_types.erlt:33:23: The union type is not supported by the type system
+bad_types.erlt:35:19: The type argument 'A' is not used in the definition
+bad_types.erlt:37:27: The type variable 'A' is undefined
+bad_types.erlt:37:29: The type variable 'A' is undefined
+bad_types.erlt:39:43: The type variable 'A' is undefined
+bad_types.erlt:42:14: _ is not a valid name for a type argument
+bad_types.erlt:44:17: The union type is not supported by the type system

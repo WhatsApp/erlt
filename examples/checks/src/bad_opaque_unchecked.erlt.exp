@@ -1,2 +1,1 @@
 bad_opaque_unchecked.erlt:6:1: opaque unchecked type must be term()
-bad_opaque_unchecked.erlt:10:14: _ is not a valid type
