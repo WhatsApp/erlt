@@ -126,7 +126,8 @@ vars -> var : ['$1'].
 variant_defs -> variant_def ',' variant_defs : ['$1' | '$3'].
 variant_defs -> variant_def : ['$1'].
 
-variant_def -> atom : {variant, ?anno('$1'), '$1', []}.
+variant_def -> atom : {variant, ?anno('$1'), '$1', none}.
+variant_def -> atom '{' '}' : {variant, ?anno('$1'), '$1', []}.
 variant_def -> atom '{' field_defs '}' : {variant, ?anno('$1', '$4'), '$1', '$3'}.
 
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
@@ -333,7 +334,9 @@ struct_pat_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', '$3'}.
 
 enum_pat_expr -> local_or_remote_name '.' atom :
-    {enum, ?anno('$1', '$3'), '$1', '$3', []}.
+    {enum, ?anno('$1', '$3'), '$1', '$3', none}.
+enum_pat_expr -> local_or_remote_name '.' '{' '}' :
+    {enum, ?anno('$1', '$4'), '$1', '$3', []}.
 enum_pat_expr -> local_or_remote_name '.' atom '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
@@ -387,7 +390,9 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 %% ideally this would use local_or_remote_name, but it causes conflicts with
 %% function call syntax
 enum_expr -> expr_remote '.' atom :
-    {enum, ?anno('$1', '$3'), '$1', '$3', []}.
+    {enum, ?anno('$1', '$3'), '$1', '$3', none}.
+enum_expr -> expr_remote '.' atom '{' '}' :
+    {enum, ?anno('$1', '$5'), '$1', '$3', []}.
 enum_expr -> expr_remote '.' atom '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 

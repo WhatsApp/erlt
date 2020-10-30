@@ -456,6 +456,10 @@ format_error({recursive_field, R, F}) ->
     io_lib:format("field ~tw of ~ts contains recursive default value", [F, format_reference(R)]);
 format_error({no_field_value, R, F}) ->
     io_lib:format("field ~tw of ~ts has no initializer or default value", [F, format_reference(R)]);
+format_error({no_fields_expected, R}) ->
+    io_lib:format("no fields defined for ~ts", [format_reference(R)]);
+format_error({no_fields_given, R}) ->
+    io_lib:format("expected fields for ~ts", [format_reference(R)]);
 format_error({illegal_field_default_call, {F, A}}) ->
     io_lib:format("call to local/imported function ~tw/~w is illegal in defaults", [F, A]);
 format_error(illegal_field_default) ->
@@ -3128,6 +3132,8 @@ update_fields(Fields, Line, Name, Defs0, Vt0, St0) ->
 
 ensure_all_labelled_fields(_Line, _Name, _SeenFields, unavailable, _Expand, _Vt, St) ->
     St;
+ensure_all_labelled_fields(_Line, _Name, _SeenFields, none, _Expand, _Vt, St) ->
+    St;
 ensure_all_labelled_fields(Line, Name, SeenFields, {_, Definitions}, Expand, Vt, St0) ->
     Fun = fun(Field, Default0, St) ->
         case is_map_key(Field, SeenFields) of
@@ -3214,6 +3220,14 @@ pattern_fields(Fields, OuterLine, Name, Defs, Vt0, Old, St0) ->
         check_fields_common(Check, {[], []}, St0, Fields, Name, OuterLine, Defs),
     {Uvt, Unew, St1}.
 
+check_fields_common(_Fun, Acc, St, none, _Name, _OuterLine, none) ->
+    {#{}, Acc, St};
+check_fields_common(_Fun, Acc, St, none, _Name, _OuterLine, unavailable) ->
+    {#{}, Acc, St};
+check_fields_common(_Fun, Acc, St, _Fields, Name, OuterLine, none) ->
+    {#{}, Acc, add_error(OuterLine, {no_fields_expected, Name}, St)};
+check_fields_common(_Fun, Acc, St, none, Name, OuterLine, {_, _}) ->
+    {#{}, Acc, add_error(OuterLine, {no_fields_given, Name}, St)};
 check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, unavailable) ->
     check_fields(Fun, Acc, St, Fields, 0, Name, OuterLine, unavailable, unavailable);
 check_fields_common(Fun, Acc, St, Fields, Name, OuterLine, {Positional, Defs}) ->
@@ -3270,6 +3284,7 @@ ensure_all_positional_fields(Line, Name, Seen, Pos, St) ->
 struct_def(Loc, {type, _, struct, {atom, _, Name}, Fields}, TypeArity, St) ->
     St#lint{structs = (St#lint.structs)#{Name => {Loc, TypeArity, field_defs(Fields)}}}.
 
+field_defs(none) -> none;
 field_defs(Fields) -> field_defs(Fields, [], 0).
 
 field_defs([{field_definition, _, positional, undefined, _Type} | Rest], Acc, Num) ->
@@ -3602,6 +3617,8 @@ check_variants([], _Enum, _Seen, SeenVars, St) ->
 check_struct_types(_StructLine, StructName, Fields, SeenVars, St) ->
     check_field_defs(Fields, {struct, StructName}, SeenVars, St).
 
+check_field_defs(none, _Parent_name, SeenVars, St) ->
+    {SeenVars, St};
 check_field_defs(Fields, ParentName, SeenVars0, St0) ->
     check_field_defs(SeenVars0, St0, 0, Fields, ParentName).
 
