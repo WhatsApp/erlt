@@ -28,8 +28,6 @@ format_error(arith_ops) ->
     "Arithmetic expressions are not supported by the type system";
 format_error(any_tuple) ->
     "Variable size tuples are not supported by the type system";
-format_error(any_map) ->
-    "Untyped maps are not supported by the type system";
 format_error(nonempty_list) ->
     "Non empty lists are not supported by the type system";
 format_error(untyped_fun_type) ->
