@@ -554,8 +554,8 @@ maybe_save_binary(Code, St) ->
             {ok, none, St}
     end.
 
-format_error({sterlang, ExitCode, Output}) ->
-    io_lib:format("sterlang exited with error code ~w: ~n~s~n", [ExitCode, Output]);
+format_error({sterlang, Output}) ->
+    io_lib:format("sterlang found a type error: ~n~s~n", [Output]);
 format_error({module_dependency, defs_dependency, Mod}) ->
     io_lib:format("can't find ~s.~s", [Mod, ?DefFileSuffix]);
 format_error({module_dependency, ModuleDepType, Mod}) ->
@@ -692,64 +692,60 @@ get_erlt_deps(Forms, St0) ->
     F = St0#compile.ifile,
     [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
 
+-record(sterlang_result, {
+    result :: {ok} | {error, string()},
+    mode :: native | jar | daemon | skipped,
+    erltc_time :: non_neg_integer(),
+    st_time :: non_neg_integer()
+}).
+
 erlt_typecheck(Code, St) ->
-    run_sterlang(St),
-    {ok, Code, St}.
-
-run_sterlang(St) ->
-    Erltc = escript:script_name(),
-    BinDir = filename:dirname(Erltc),
-    SterlangNative = filename:absname("sterlang"),
-    SterlangJar = filename:absname("sterlang.jar"),
-    IFile = filename:absname(St#compile.ifile),
-    EtfFile = St#compile.etf_file,
-    CheckCmd =
-        case {filelib:is_regular(SterlangNative), filelib:is_regular(SterlangJar)} of
-            {true, _} ->
-                lists:append([
-                    SterlangNative,
-                    " ",
-                    IFile,
-                    " ",
-                    EtfFile
-                ]);
-            {_, true} ->
-                lists:append([
-                    "java",
-                    " ",
-                    "-jar",
-                    " ",
-                    SterlangJar,
-                    " ",
-                    IFile,
-                    " ",
-                    EtfFile
-                ]);
-            _ ->
-                undefined
-        end,
-    {ExitCode, Output} =
-        case CheckCmd of
-            undefined ->
-                {0, ""};
-            _ ->
-                io:format("Running sterlang: ~p~n", [CheckCmd]),
-                eunit_lib:command(CheckCmd, BinDir)
-        end,
-    case ExitCode of
-        0 ->
-            % TODO: check for warnings
-            ok;
-        _ ->
-            ErrorFile = St#compile.filename,
-            Error =
-                {ErrorFile, [
-                    {_ErrorLine = 1, ?MODULE, {sterlang, ExitCode, Output}}
-                ]},
-
-            % NOTE: the error thrown here will be caught by internal_comp() -> Run0
-            throw({error, St#compile{errors = [Error]}})
+    R = #sterlang_result{result = Res} = run_sterlang(St),
+    member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
+    case Res of
+        {ok} ->
+            {ok, Code, St};
+        {error, ErrMessage} ->
+            Error = {St#compile.filename, [{_ErrorLine = none, ?MODULE, {sterlang, ErrMessage}}]},
+            {error, St#compile{errors = [Error]}}
     end.
+
+-spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
+log_sterlang_result(#sterlang_result{mode = M, result = R, erltc_time = T1, st_time = T2}, St) ->
+    io:format("===> erltc+sterlang: ~tp~n", [{St#compile.ifile, M, element(1, R), T1, T2}]),
+    true.
+
+-spec run_sterlang(#compile{}) -> #sterlang_result{}.
+run_sterlang(St) ->
+    Start = erlang:monotonic_time('millisecond'),
+    {IFile, EtfFile} = {filename:absname(St#compile.ifile), St#compile.etf_file},
+    {CmdMode, CheckCmd} =
+        case {filelib:is_regular("sterlang"), filelib:is_regular("sterlang.jar")} of
+            {true, _} ->
+                {native, lists:append(["sterlang ", IFile, " ", EtfFile])};
+            {_, true} ->
+                {jar, lists:append(["java -jar sterlang.jar", IFile, " ", EtfFile])};
+            _ ->
+                {undefined, undefined}
+        end,
+    {Mode, Result, SterlangTime} =
+        case {CmdMode, is_alive()} of
+            {undefined, false} ->
+                {skipped, {ok}, undefined};
+            {undefined, true} ->
+                {api, sterlangd@localhost} ! {check, self(), IFile, EtfFile},
+                receive
+                    {IFile, Res, StTime} -> {daemon, Res, StTime}
+                end;
+            _ ->
+                case eunit_lib:command(CheckCmd) of
+                    {0, _} -> {CmdMode, {ok}, undefined};
+                    {_, Output} -> {CmdMode, {error, Output}, undefined}
+                end
+        end,
+    End = erlang:monotonic_time('millisecond'),
+    Time = End - Start,
+    #sterlang_result{mode = Mode, result = Result, erltc_time = Time, st_time = SterlangTime}.
 
 erlt_to_erl1(Code, St) ->
     case erlt_struct:module(Code, St#compile.global_defs) of

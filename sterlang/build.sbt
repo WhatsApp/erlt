@@ -27,6 +27,7 @@ lazy val projectSetting = Seq(
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
   test in assembly := {},
+  fork in run := true,
 )
 
 lazy val sterlang = (project in file("."))
