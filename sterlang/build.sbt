@@ -20,7 +20,6 @@ lazy val projectSetting = Seq(
   name := "sterlang",
   description := "Statically Typed Erlang",
   scalacOptions ++= Seq("-deprecation", "-feature"),
-  libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
   test in assembly := {},
