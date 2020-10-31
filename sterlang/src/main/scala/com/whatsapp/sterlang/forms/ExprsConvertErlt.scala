@@ -145,10 +145,15 @@ object ExprsConvertErlt {
               anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
-              EList(eFields),
+              eFields,
             )
           ) =>
-        LocalEnum(r(anno), enum, ctr, eFields.map(field))
+        eFields match {
+          case EAtom("none") =>
+            LocalEnum(r(anno), enum, ctr, List.empty)
+          case EList(fields) =>
+            LocalEnum(r(anno), enum, ctr, fields.map(field))
+        }
       case ETuple(
             List(
               EAtom("enum"),
@@ -162,10 +167,15 @@ object ExprsConvertErlt {
                 )
               ),
               ETuple(List(EAtom("atom"), _anno3, EAtom(ctr))),
-              EList(eFields),
+              eFields,
             )
           ) =>
-        RemoteEnum(r(anno), module, enum, ctr, eFields.map(field))
+        eFields match {
+          case EAtom("none") =>
+            RemoteEnum(r(anno), module, enum, ctr, List.empty)
+          case EList(fields) =>
+            RemoteEnum(r(anno), module, enum, ctr, fields.map(field))
+        }
       case ETuple(List(EAtom("lc"), anno, eTemplate, EList(eQualifiers))) =>
         ListComprehension(r(anno), convertExp(eTemplate), eQualifiers.map(convertQualifier))
       case ETuple(List(EAtom("bc"), anno, eTemplate, EList(eQualifiers))) =>

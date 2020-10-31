@@ -74,10 +74,15 @@ object PatternsConvertErlt {
               anno,
               ETuple(List(EAtom("atom"), _anno1, EAtom(enum))),
               ETuple(List(EAtom("atom"), _anno2, EAtom(ctr))),
-              EList(eFields),
+              eFields,
             )
           ) =>
-        LocalEnumPattern(r(anno), enum, ctr, eFields.map(fieldPattern))
+        eFields match {
+          case EAtom("none") =>
+            LocalEnumPattern(r(anno), enum, ctr, List.empty)
+          case EList(fields) =>
+            LocalEnumPattern(r(anno), enum, ctr, fields.map(fieldPattern))
+        }
       case ETuple(
             List(
               EAtom("enum"),
@@ -91,10 +96,15 @@ object PatternsConvertErlt {
                 )
               ),
               ETuple(List(EAtom("atom"), _anno3, EAtom(ctr))),
-              EList(eFields),
+              eFields,
             )
           ) =>
-        RemoteEnumPattern(r(anno), module, enum, ctr, eFields.map(fieldPattern))
+        eFields match {
+          case EAtom("none") =>
+            RemoteEnumPattern(r(anno), module, enum, ctr, List.empty)
+          case EList(fields) =>
+            RemoteEnumPattern(r(anno), module, enum, ctr, fields.map(fieldPattern))
+        }
       case _ =>
         val literal = ExprsConvertErlt.literal(term)
         LiteralPattern(literal)
