@@ -27,8 +27,11 @@ let test =
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
         , run "assemble erltc" "rebar3 escriptize"
         , run
-            "test and coverage stErlang"
-            "cd sterlang; sbt clean coverage test coverageReport"
+            "compile stErlang"
+            "cd sterlang; sbt --client compile"
+        , run
+            "test stErlang"
+            "cd sterlang; sbt --client test"
         ]
       }
 
