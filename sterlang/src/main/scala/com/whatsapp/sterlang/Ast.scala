@@ -130,6 +130,7 @@ object Ast {
       require(obj.isInstanceOf[VarName])
       this.stringId == obj.asInstanceOf[VarName].stringId
     }
+    override def toString: String = stringId
   }
   class LocalVarName(private val name: String) extends VarName {
     override val stringId: String = name
