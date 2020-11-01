@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+val ciSensitiveScalacOptions =
+  if (sys.env.contains("GITHUB_ACTIONS")) Seq("-deprecation", "-feature", "-Xno-patmat-analysis")
+  else Seq("-deprecation", "-feature")
+
 lazy val projectSetting = Seq(
   scalaVersion := "2.13.3",
   organization := "whatsapp",
   name := "sterlang",
   description := "Statically Typed Erlang",
-  scalacOptions ++= Seq("-deprecation", "-feature"),
+  scalacOptions ++= ciSensitiveScalacOptions,
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
   test in assembly := {},
