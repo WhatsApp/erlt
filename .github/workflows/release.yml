@@ -9,6 +9,10 @@ jobs:
         uses: "actions/setup-java@v1"
         with:
           java-version: '11'
+      - name: Coursier Cache
+        uses: "coursier/cache-action@v3"
+        with:
+          root: sterlang
       - name: assembly sterlang.jar
         run: "cd sterlang; sbt assembly"
       - name: upload sterlang.jar

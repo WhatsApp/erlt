@@ -14,6 +14,12 @@ let setUpJava =
         "actions/setup-java@v1"
         (toMap { java-version = "11" })
 
+let coursierCache =
+      usesWith
+        "Coursier Cache"
+        "coursier/cache-action@v3"
+        (toMap { root = "sterlang" })
+
 let jarName = "sterlang.jar"
 
 let test =
@@ -22,6 +28,7 @@ let test =
       , steps =
         [ checkout
         , setUpJava
+        , coursierCache
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
@@ -41,6 +48,7 @@ let buildJar =
       , steps =
         [ checkout
         , setUpJava
+        , coursierCache
         , run "assembly sterlang.jar" "cd sterlang; sbt assembly"
         , usesWith
             "upload sterlang.jar"
