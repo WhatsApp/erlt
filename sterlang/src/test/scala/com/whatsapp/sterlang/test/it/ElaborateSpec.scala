@@ -34,14 +34,13 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   smokeTestDir("examples/dir/src")
 
   private def smokeTestDir(iDirPath: String): Unit = {
-    it(s"smoke test: $iDirPath") {
+    ignore(s"smoke test: $iDirPath") {
       Driver.main(Array(iDirPath))
     }
   }
 
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
-    import sys.process._
-    it(s"smoke test: $iDirPath/$module.erlt") {
+    ignore(s"smoke test: $iDirPath/$module.erlt") {
       Driver.main(Array(s"$iDirPath/$module.erlt"))
       Driver.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
     }

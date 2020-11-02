@@ -142,6 +142,7 @@ do_file(File, Options0) ->
                 % extract declarations from parsed module, and cache the parse tree
                 base_passes() ++
                     [
+                        ?pass(output_declarations_sterlang),
                         ?pass(erlt_import),
                         ?pass(output_declarations),
                         ?pass(output_compile_deps)
@@ -604,11 +605,15 @@ collect_definitions(Code, #compile{build_dir = BuildDir} = St) ->
     ),
     {ok, Code, St#compile{global_defs = Defs}}.
 
+output_declarations_sterlang(Code, #compile{defs_file = FileName} = St) ->
+    Defs = [Def || {attribute, _, _, _} = Def <- Code],
+    OutputSterlang = term_to_binary(normalize_for_typecheck(Defs)),
+    file:write_file(FileName ++ ".etf", OutputSterlang, [sync]),
+    {ok, Code, St}.
+
 output_declarations(Code, #compile{defs_file = FileName} = St) ->
     Output = term_to_binary(erlt_defs:normalise_definitions(Code)),
     file:write_file(FileName, Output, [sync]),
-    OutputSterlang = term_to_binary(normalize_for_typecheck(Code)),
-    file:write_file(FileName ++ ".etf", OutputSterlang, [sync]),
     {ok, Code, St#compile{has_written_defs_file = true}}.
 
 output_etf(Code, #compile{etf_file = FileName} = St) ->
