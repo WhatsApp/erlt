@@ -32,6 +32,7 @@ package object etf {
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
   case class EPid(pid: OtpErlangPid) extends ETerm
+  case class ERef(ref: OtpErlangRef) extends ETerm
 
   def programFromFileDev(path: String): Ast.Program = {
     val etf = etfFromFileDev(path)
@@ -133,6 +134,8 @@ package object etf {
         EString(otpString.stringValue())
       case otpPid: OtpErlangPid =>
         EPid(otpPid)
+      case otpRef: OtpErlangRef =>
+        ERef(otpRef)
     }
 
   def toJava(eTerm: ETerm): OtpErlangObject =
@@ -151,5 +154,7 @@ package object etf {
         new OtpErlangTuple(elems.map(toJava).toArray)
       case EPid(pid) =>
         pid
+      case ERef(ref) =>
+        ref
     }
 }

@@ -6,7 +6,7 @@ import java.util.concurrent.{Executor, Executors}
 import scala.annotation.tailrec
 import sys.process._
 import com.ericsson.otp.erlang.{OtpErlangPid, OtpMbox, OtpNode}
-import com.whatsapp.sterlang.etf.{EAtom, EPid, EString, ETuple, ELong}
+import com.whatsapp.sterlang.etf.{EAtom, EPid, ERef, EString, ETuple, ELong}
 
 object SterlangD extends Executor {
   def main(args: Array[String]): Unit = {
@@ -29,22 +29,22 @@ object SterlangD extends Executor {
     final def serve(): Unit = {
       val msg = etf.fromJava(mbox.receive())
       msg match {
-        case ETuple(List(EAtom("check"), EPid(from), EString(erltFile), EString(etfFile))) =>
-          executor.execute(() => handleCheck(from, erltFile, etfFile))
+        case ETuple(List(EAtom("check"), EPid(from), ref: ERef, EString(erltFile), EString(etfFile))) =>
+          executor.execute(() => handleCheck(from, ref, erltFile, etfFile))
         case EAtom("exit") =>
           return
       }
       serve()
     }
 
-    private def handleCheck(from: OtpErlangPid, erltFile: String, etfFile: String): Unit = {
+    private def handleCheck(from: OtpErlangPid, ref: ERef, erltFile: String, etfFile: String): Unit = {
       val start = System.currentTimeMillis()
       val result = processFile(erltFile, etfFile) match {
         case Some(errorString) => ETuple(List(EAtom("error"), EString(errorString)))
         case None              => ETuple(List(EAtom("ok")))
       }
       val sterlangTime = System.currentTimeMillis() - start
-      val response = ETuple(List(EString(erltFile), result, ELong(sterlangTime)))
+      val response = ETuple(List(ref, result, ELong(sterlangTime)))
       mbox.send(from, etf.toJava(response))
     }
 
