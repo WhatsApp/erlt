@@ -17,56 +17,70 @@
 package com.whatsapp.sterlang.test.it
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 import com.whatsapp.sterlang._
 
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
+  val mode: Driver.Mode = Driver.Dev
 
   testDir("examples/neg/src")
   testDir("examples/err/src")
   testDir("examples/err2/src")
 
-  def testDir(iDirPath: String): Unit = {
+  def testDir(srcDir: String): Unit = {
     import sys.process._
-    describe(iDirPath) {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
+    describe(srcDir) {
+      val buildDir =
+        Files.createTempDirectory("sterlang-test")
+      val modules =
+        new File(srcDir)
+          .listFiles()
+          .filter(f => f.isFile && f.getPath.endsWith(".erlt"))
+          .map(_.getName)
+          .map(_.dropRight(5))
+          .sorted
+      val moduleArgs =
+        modules.map(_ ++ ".erlt").mkString(" ")
 
-      val file = new File(iDirPath)
-      val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
+      mode match {
+        case Driver.Dev =>
+          s"./parser -idir $srcDir -odir $buildDir".!!
+        case Driver.Erlt =>
+          s"./erltc --build compile --src-dir $srcDir --build-dir $buildDir -o $buildDir $moduleArgs".!!
+      }
 
-      moduleNames.foreach { p =>
-        val erltPath = s"$iDirPath/$p.erlt"
-        val etfPath = s"$oDirPath/$p.etf"
+      modules.foreach { module =>
+        val erltPath = s"$srcDir/$module.erlt"
 
         if (erltPath.endsWith("core.erlt")) {
           ignore(erltPath) {}
         } else {
           it(erltPath) {
-            processIllTyped(erltPath, etfPath)
+            processIllTyped(module, srcDir, buildDir, mode)
           }
         }
       }
     }
   }
 
-  private def processIllTyped(erltPath: String, etfPath: String): Unit = {
-    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
+  private def processIllTyped(module: String, sourceDir: String, buildDir: Path, mode: Driver.Mode): Unit = {
+    val erltPath = s"$sourceDir/$module.erlt"
+    val mainFile = s"$buildDir/$module.etf"
+    val rawProgram = Driver.loadProgram(mainFile, mode)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
+      val context = Driver.loadContext(mainFile, program, vars, mode).extend(program)
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborate()
-      if (erltPath.contains("_unspeced")) {
+      if (module.contains("_unspeced")) {
         astChecks.checkPublicSpecs(program)
       }
-      fail(s"$erltPath should not type-check")
+      fail(s"$mainFile should not type-check")
     } catch {
       case error: RangedError =>
         val actualErr = Driver.errorString(erltPath, fileContent(erltPath), error)
