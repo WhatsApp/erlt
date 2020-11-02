@@ -555,7 +555,7 @@ maybe_save_binary(Code, St) ->
     end.
 
 format_error({sterlang, Output}) ->
-    io_lib:format("sterlang found a type error: ~n~s~n", [Output]);
+    io_lib:format("Type checking: ~n~s~n", [Output]);
 format_error({module_dependency, defs_dependency, Mod}) ->
     io_lib:format("can't find ~s.~s", [Mod, ?DefFileSuffix]);
 format_error({module_dependency, ModuleDepType, Mod}) ->
@@ -733,10 +733,23 @@ run_sterlang(St) ->
             {undefined, false} ->
                 {skipped, {ok}, undefined};
             {undefined, true} ->
+                Ref = erlang:monitor(process, {api, sterlangd@localhost}),
                 {api, sterlangd@localhost} ! {check, self(), IFile, EtfFile},
-                receive
-                    {IFile, Res, StTime} -> {daemon, Res, StTime}
-                end;
+                Res1 =
+                    receive
+                        {'DOWN', Ref, _, _, noconnection} ->
+                            {daemon, {error, "No connecttion to sterlangd@localhost"}, undefined};
+                        {'DOWN', Ref, _, _, Reason} ->
+                            Error = io_lib:format(
+                                "Connection to sterlangd@localhost failed. Reason: ~p",
+                                [Reason]
+                            ),
+                            {daemon, {error, Error}, undefined};
+                        {IFile, Res, StTime} ->
+                            {daemon, Res, StTime}
+                    end,
+                erlang:demonitor(Ref, [flush]),
+                Res1;
             _ ->
                 case eunit_lib:command(CheckCmd) of
                     {0, _} -> {CmdMode, {ok}, undefined};
