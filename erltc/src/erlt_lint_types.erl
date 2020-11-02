@@ -85,6 +85,11 @@ process_list([Type | Rest], St) ->
 process_list([], St) ->
     St.
 
+process_atom_or_list(Atom, St) when is_atom(Atom) ->
+    St;
+process_atom_or_list(List, St) when is_list(List) ->
+    process_list(List, St).
+
 process_def(Type, St) ->
     case Type of
         {var, Line, '_'} ->
@@ -129,7 +134,7 @@ process_def(Type, St) ->
         {type, _Line, enum, _Name0, Variants0} ->
             process_list(Variants0, St);
         {variant, _Line, _Name0, Fields0} ->
-            process_list(Fields0, St);
+            process_atom_or_list(Fields0, St);
         {type, _Line, struct, _Name0, Fields0} ->
             process_list(Fields0, St);
         {field_definition, _Line, _Name, _Default, FieldType} ->
