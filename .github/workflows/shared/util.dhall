@@ -8,11 +8,6 @@ let run =
       λ(run : Text) →
         Actions.Step::{ name = Some name, run = Some run }
 
-let run =
-      λ(name : Text) →
-      λ(run : Text) →
-        Actions.Step::{ name = Some name, run = Some run }
-
 let checkout =
       Actions.Step::{
       , name = Some "Checkout"
