@@ -127,7 +127,7 @@ object DriverDev extends Driver {
   }
 
   def loadProgram(file: String): Ast.Program =
-    EtfDev.programFromFileDev(file)
+    EtfDev.programFromFile(file)
 
   // $COVERAGE-OFF$ interactive
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =

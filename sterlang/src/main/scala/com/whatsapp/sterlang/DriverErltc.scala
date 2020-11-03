@@ -145,7 +145,7 @@ object DriverErltc extends Driver {
   }
 
   def loadProgram(file: String): Ast.Program =
-    EtfErltc.programFromFileErlt(file)
+    EtfErltc.programFromFile(file)
 
   // $COVERAGE-OFF$ interactive
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =

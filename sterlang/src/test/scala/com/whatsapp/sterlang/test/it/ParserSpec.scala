@@ -41,14 +41,14 @@ class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testModule(module: String, devDir: Path, erltcDir: Path): Unit = {
-    val devProgram = EtfDev.programFromFileDev(s"$devDir/$module.etf")
-    val erltProgram = EtfErltc.programFromFileErlt(s"$erltcDir/$module.etf")
+    val devProgram = EtfDev.programFromFile(s"$devDir/$module.etf")
+    val erltProgram = EtfErltc.programFromFile(s"$erltcDir/$module.etf")
     assert(devProgram === erltProgram)
   }
 
   def testModuleApi(module: String, devDir: Path, erltcDir: Path): Unit = {
-    val devModuleApi = EtfDev.moduleApiFromFileDev(s"$devDir/$module.etf")
-    val erltModuleApi = EtfErltc.moduleApiFromFileErlt(s"$erltcDir/$module.defs.etf")
+    val devModuleApi = EtfDev.moduleApiFromFile(s"$devDir/$module.etf")
+    val erltModuleApi = EtfErltc.moduleApiFromFile(s"$erltcDir/$module.defs.etf")
     assert(devModuleApi === erltModuleApi)
   }
 }

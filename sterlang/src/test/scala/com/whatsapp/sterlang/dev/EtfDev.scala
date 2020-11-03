@@ -5,10 +5,10 @@ import java.nio.file.{Files, Paths}
 import sys.process._
 import com.whatsapp.sterlang.dev.forms.FormsConvertDev
 import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
-import com.whatsapp.sterlang.{Ast, Convert, ModuleApi}
+import com.whatsapp.sterlang.{Ast, Convert, EtfApi, ModuleApi}
 
-object EtfDev {
-  def programFromFileDev(path: String): Ast.Program = {
+object EtfDev extends EtfApi {
+  def programFromFile(path: String): Ast.Program = {
     val etf = etfFromFileDev(path)
     val forms = FormsConvertDev.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
@@ -42,7 +42,7 @@ object EtfDev {
     readEtf(tmpEtf)
   }
 
-  def moduleApiFromFileDev(path: String): ModuleApi = {
+  def moduleApiFromFile(path: String): ModuleApi = {
     val etf = etfFromFileDev(path)
     val forms = FormsConvertDev.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
