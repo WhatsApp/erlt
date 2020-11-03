@@ -30,7 +30,7 @@
 %% TODO: implement forms() and potentialy other APIs supported by the standard compile.erl
 -export([file/2]).
 
-%% erltc interface.
+%% erlt interface.
 -export([compile/2]).
 
 -export([format_error/1]).
@@ -67,7 +67,7 @@
 -define(EtfFileSuffix, ".etf").
 
 %% NOTE: this is a wrapper around file/2 (both are exported)
-% called by erltc.erl
+% called by erlt.erl
 compile(File0, Options) ->
     File = shorten_filename(File0),
     case file(File, Options) of
@@ -697,8 +697,8 @@ erlt_typecheck(Code, St) ->
     {ok, Code, St}.
 
 run_sterlang(St) ->
-    Erltc = escript:script_name(),
-    BinDir = filename:dirname(Erltc),
+    Erlt = escript:script_name(),
+    BinDir = filename:dirname(Erlt),
     SterlangNative = filename:absname("sterlang"),
     SterlangJar = filename:absname("sterlang.jar"),
     IFile = filename:absname(St#compile.ifile),

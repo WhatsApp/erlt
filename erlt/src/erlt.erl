@@ -18,7 +18,7 @@
 %%
 %% %CopyrightEnd%
 
--module(erltc).
+-module(erlt).
 
 % NOTE: what you see below is based on copy-pasted erlang/lib/stdlib-3.7/src/erl_compile.erl (R21)
 -include_lib("kernel/include/file.hrl").
@@ -356,7 +356,7 @@ usage() ->
         {"-o name", "name output directory or file"},
         {"-pa path", "add path to the front of Erlang's code path"},
         {"-pz path", "add path to the end of Erlang's code path"},
-        % NOTE: this option is a no-op, because erltc is escript; on the other
+        % NOTE: this option is a no-op, because erlt is escript; on the other
         % hand, -smp is enabled by default these days, so it is a no-op in any
         % case
         {"-smp", "compile using SMP emulator"},
@@ -403,7 +403,7 @@ compile2(Files, #options{cwd = Cwd, includes = Incl} = Opts0) ->
             compile3(File, Cwd, Opts);
         _ ->
             % TODO, XXX: the reason we do not support compiling multiple .erl
-            % files in erltc, is because, as a first step, we need to know the
+            % files in erlt, is because, as a first step, we need to know the
             % order in which these files should be compiled. This is already
             % true for behaviors. And this is going to be increasingly
             % important in Erlang v2 as we start adding more features that rely
@@ -417,7 +417,7 @@ compile2(Files, #options{cwd = Cwd, includes = Incl} = Opts0) ->
             % implement caching for compile order information.
             io:put_chars(
                 ?STDERR,
-                "erltc expects only one input file, "
+                "erlt expects only one input file, "
                 "but more than one input files were given.\n"
             ),
             error
@@ -455,8 +455,8 @@ compile3(File, Cwd, Options) ->
             %
             % One thing we could do to make this compatible throughout is,
             % instead of escript, use a shell script or modified erlc.c to call
-            % erltc
-            io:put_chars(?STDERR, "erltc does not support compiling non .erlt files\n"),
+            % erlt
+            io:put_chars(?STDERR, "erlt does not support compiling non .erlt files\n"),
             error
     end.
 

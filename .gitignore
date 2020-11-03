@@ -3,7 +3,7 @@ _build/
 rebar3.crashdump
 .idea
 .metals
-erltc/src/erlt_parse.erl
+erlt/src/erlt_parse.erl
 
 # we have reason to believe that
 # old (unsupported) versions of rebar generate this
