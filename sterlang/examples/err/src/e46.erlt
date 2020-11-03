@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e46).
+-export([foo/1]).
+
 foo(E) -> case E of true -> 1; 2 -> 3 end.

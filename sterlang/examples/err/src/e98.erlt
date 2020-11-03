@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e98).
+-export([mk_record/1]).
 
 -struct foo() :: ().
 -struct bar() :: ().

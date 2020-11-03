@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e15).
+-export([foo/2]).
+
 foo(X, Y) ->
     1 + (X < Y).

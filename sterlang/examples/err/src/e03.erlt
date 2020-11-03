@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e03).
+-export([foo/0]).
+
 foo() -> "true" == true.

@@ -14,6 +14,8 @@
 
 -module(core).
 -export_type([mixed/1, option/1, tuple1/1]).
+-export([getOrElse/2]).
+
 -enum option(A) :: (none, some{A}).
 -opaque tuple1(A) :: {A}.
 

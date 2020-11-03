@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e43.erlt:17:33
+-- ERROR --------------------------------------- examples/err/src/e43.erlt:19:33
 Type Mismatch
 Found:    e2()
 Required: e1()
- 17| foo(E) -> case E of e1.e1 -> 1; e2.e2 -> 2 end.
+ 19| foo(E) -> case E of e1.e1 -> 1; e2.e2 -> 2 end.
 ...|                                 ~~~~~

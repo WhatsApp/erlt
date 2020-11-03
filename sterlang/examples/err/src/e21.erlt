@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e21).
+-export([foo/0]).
+
 double(X) -> X + X.
 foo() ->
     R = #(x = false),

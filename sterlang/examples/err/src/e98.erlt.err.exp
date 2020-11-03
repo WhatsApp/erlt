@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e98.erlt:23:17
+-- ERROR --------------------------------------- examples/err/src/e98.erlt:24:17
 Type Mismatch
 Found:    bar()
 Required: foo()
- 23|         true -> #bar{}
+ 24|         true -> #bar{}
 ...|                 ~~~~~~

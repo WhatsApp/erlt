@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e48).
+-export([f04/1]).
+
 f04(X = #(x = X)) -> X.

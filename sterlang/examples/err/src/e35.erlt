@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e35).
+-export([foo/0]).
+
 foo() -> [
     fun Foo(true) -> Foo(false) end,
     fun Foo({}) -> Foo({}) end

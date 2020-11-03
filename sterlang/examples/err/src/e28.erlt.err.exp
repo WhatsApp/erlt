@@ -1,5 +1,5 @@
--- ERROR --------------------------------------- examples/err/src/e28.erlt:17:11
+-- ERROR --------------------------------------- examples/err/src/e28.erlt:19:11
 Infinite type
 list(list(A)) <> list(A)
- 17|     [[Y], Y].
+ 19|     [[Y], Y].
 ...|           ^^

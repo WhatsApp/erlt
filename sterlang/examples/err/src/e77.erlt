@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e77).
+-export([foo/0]).
+
 % unknown type
 -spec foo() -> super_module:super_type().
 foo() -> 1.

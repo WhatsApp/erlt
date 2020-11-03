@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e04.erlt:16:23
+-- ERROR --------------------------------------- examples/err/src/e04.erlt:18:23
 Type Mismatch
 Found:    number()
 Required: boolean()
- 16| foo() -> true andalso 1.
+ 18| foo() -> true andalso 1.
 ...|                       ^

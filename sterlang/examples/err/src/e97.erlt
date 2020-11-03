@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e97).
+-export([bad_field/0]).
 
 -struct my_record() :: (id :: integer(), hash :: integer()).
 

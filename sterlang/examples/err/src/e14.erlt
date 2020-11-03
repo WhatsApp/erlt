@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e14).
+-export([foo/1]).
+
 foo(X) ->
     1 + (X andalso X).

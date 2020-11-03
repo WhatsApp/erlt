@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e17).
+-export([foo/2]).
+
 foo(X, Y) ->
     X + (not Y).

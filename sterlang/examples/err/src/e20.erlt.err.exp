@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e20.erlt:18:12
+-- ERROR --------------------------------------- examples/err/src/e20.erlt:20:12
 Type Mismatch
 Found:    boolean()
 Required: number()
- 18|     double(X orelse Y).
+ 20|     double(X orelse Y).
 ...|            ~~~~~~~~~~

@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e45).
-foo(E) -> case 1 of [true,false] -> 1 end.
+-export([foo/1]).
+
+foo(_) -> case 1 of [true,false] -> 1 end.

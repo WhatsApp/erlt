@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e32).
+-export([foo/1]).
+
 foo(C) -> (case C of true -> "" end) + 1.

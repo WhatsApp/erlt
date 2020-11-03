@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e46.erlt:16:32
+-- ERROR --------------------------------------- examples/err/src/e46.erlt:18:32
 Type Mismatch
 Found:    number()
 Required: boolean()
- 16| foo(E) -> case E of true -> 1; 2 -> 3 end.
+ 18| foo(E) -> case E of true -> 1; 2 -> 3 end.
 ...|                                ^

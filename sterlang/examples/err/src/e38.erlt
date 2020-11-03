@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e38).
-foo(X) ->
-    case true of [true|T] -> 2 end.
+-export([foo/1]).
+
+foo(_) ->
+    case true of [true|_] -> 2 end.

@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e20).
+-export([foo/2]).
+
 double(X) -> X + X.
 foo(X, Y) ->
     double(X orelse Y).

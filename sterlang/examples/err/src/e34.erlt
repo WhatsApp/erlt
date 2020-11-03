@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e34).
+-export([foo/0]).
+
 foo() -> [fun ([]) -> 1 end, fun ([]) -> "1"; ([_,_]) -> "2" end].

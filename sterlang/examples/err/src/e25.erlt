@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e25).
+-export([foo/2]).
+
 foo(C, X) ->
     case C of true -> {X}; false -> {X, X} end.

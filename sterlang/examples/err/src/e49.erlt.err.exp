@@ -1,5 +1,5 @@
--- ERROR --------------------------------------- examples/err/src/e49.erlt:16:29
+-- ERROR --------------------------------------- examples/err/src/e49.erlt:18:29
 Infinite type
 #( x :: #( x :: A, C ), B ) <> A
- 16| f04(X = #(x = Y), Y = #(x = X)) -> X.
+ 18| f04(X = #(x = Y), Y = #(x = X)) -> X.
 ...|                             ^

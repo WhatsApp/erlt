@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e44).
+-export([foo/1]).
+
 -enum box(A) :: (box{A}).
 -enum e1() :: (e1).
 -enum e2() :: (e2).

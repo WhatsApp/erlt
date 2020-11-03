@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e31).
+-export([foo/1]).
+
 foo(C) -> case C of [H|T] -> [T|H] end.

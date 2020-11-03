@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e30).
+-export([foo/1]).
+
 foo(C) -> case C of true -> [0|[]]; false -> [""|[]] end.

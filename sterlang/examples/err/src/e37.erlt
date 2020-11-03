@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e37).
+-export([foo/1]).
+
 foo(X) ->
     case X of [true] -> 2; false -> 1 end.

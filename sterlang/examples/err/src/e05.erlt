@@ -13,4 +13,6 @@
 %% limitations under the License.
 
 -module(e04).
+-export([foo/0]).
+
 foo() -> true andalso "should be boolean()".

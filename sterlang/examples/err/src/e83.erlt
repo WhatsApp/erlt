@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e83).
+-export([wrong_binary/1]).
 
 -spec wrong_binary(boolean()) -> integer().
 wrong_binary(X) ->

@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e19).
+-export([foo/1]).
+
 some_int() -> 1.
-foo(X, Y) ->
+foo(X) ->
     X orelse some_int().

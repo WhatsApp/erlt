@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e44.erlt:19:50
+-- ERROR --------------------------------------- examples/err/src/e44.erlt:21:50
 Type Mismatch
 Found:    e2()
 Required: e1()
- 19| foo(E) -> case E of box.box{e1.e1} -> 1; box.box{e2.e2} -> 2 end.
+ 21| foo(E) -> case E of box.box{e1.e1} -> 1; box.box{e2.e2} -> 2 end.
 ...|                                                  ~~~~~

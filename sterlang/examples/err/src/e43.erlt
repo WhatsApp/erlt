@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e43).
+-export([foo/1]).
+
 -enum e1() :: (e1). -enum e2() :: (e2).
 foo(E) -> case E of e1.e1 -> 1; e2.e2 -> 2 end.

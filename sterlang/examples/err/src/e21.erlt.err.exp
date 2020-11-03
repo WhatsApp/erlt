@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e21.erlt:19:12
+-- ERROR --------------------------------------- examples/err/src/e21.erlt:21:12
 Type Mismatch
 Found:    boolean()
 Required: number()
- 19|     double(R#(x)).
+ 21|     double(R#(x)).
 ...|            ~~~~~

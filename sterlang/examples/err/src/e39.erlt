@@ -13,5 +13,7 @@
 %% limitations under the License.
 
 -module(e39).
+-export([foo/0]).
+
 foo() ->
-    case true of {X, Y} -> X end.
+    case true of {X, _} -> X end.

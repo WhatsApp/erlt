@@ -13,7 +13,10 @@
 %% limitations under the License.
 
 -module(e56).
+-export([call_id/1]).
+
 % spec mismatch
 -spec call_id(_) -> _.
 call_id(X) -> id(X).
+
 id(X) -> X.

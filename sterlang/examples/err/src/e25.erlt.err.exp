@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e25.erlt:17:37
+-- ERROR --------------------------------------- examples/err/src/e25.erlt:19:37
 Type Mismatch
 Found:    {A, A}
 Required: {A}
- 17|     case C of true -> {X}; false -> {X, X} end.
+ 19|     case C of true -> {X}; false -> {X, X} end.
 ...|                                     ~~~~~~

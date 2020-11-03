@@ -13,8 +13,9 @@
 %% limitations under the License.
 
 -module(e81).
+-export([access_map/1]).
 
 -spec access_map(#(id :: Id, location :: Location, _)) -> #(id :: Id, location :: Location).
 access_map(M) ->
-    #(id = X, location = L) = M,
+    #(id = _, location = _) = M,
     M.

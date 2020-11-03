@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e17.erlt:17:10
+-- ERROR --------------------------------------- examples/err/src/e17.erlt:19:10
 Type Mismatch
 Found:    boolean()
 Required: number()
- 17|     X + (not Y).
+ 19|     X + (not Y).
 ...|          ~~~~~

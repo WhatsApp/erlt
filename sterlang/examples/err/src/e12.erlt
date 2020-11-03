@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e12).
+-export([foo/1]).
+
 foo(X) ->
     Y = #(id = 1, location = "unknown"),
     X andalso (Y #(id = 2)).

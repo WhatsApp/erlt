@@ -1,6 +1,6 @@
--- ERROR --------------------------------------- examples/err/src/e37.erlt:17:28
+-- ERROR --------------------------------------- examples/err/src/e37.erlt:19:28
 Type Mismatch
 Found:    boolean()
 Required: list(boolean())
- 17|     case X of [true] -> 2; false -> 1 end.
+ 19|     case X of [true] -> 2; false -> 1 end.
 ...|                            ~~~~~

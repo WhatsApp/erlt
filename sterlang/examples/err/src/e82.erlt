@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e82).
+-export([binary_test/0]).
 
 binary_test() ->
     << <<Bin>> || Bin <- [<<3,7,5,4,7>>] >>.

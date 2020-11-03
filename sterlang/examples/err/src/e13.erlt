@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e13).
-foo(X) ->
+-export([foo/0]).
+
+foo() ->
     Y = #(id1 = 1),
     Y #(id2 = 2).
