@@ -50,8 +50,8 @@ let sterlangLinuxUpload =
         "sterlang-linux"
         Actions.RunsOn.Type.ubuntu-latest
 
-let uploadErltcBinary =
-      let binaryName = "erltc"
+let uploadErltBinary =
+      let binaryName = "erlt"
 
       in  Actions.Job::{
           , runs-on = Actions.RunsOn.Type.ubuntu-latest
@@ -69,7 +69,7 @@ let uploadErltcBinary =
                     "rm -rf '${binaryName}'"
                 , run
                     "mv escript"
-                    "mv ./_build/default/bin/erltc '${binaryName}'"
+                    "mv ./_build/default/bin/erlt '${binaryName}'"
                 ]
               # uploadToRelease binaryName
           }
@@ -80,7 +80,7 @@ in    Actions.Workflow::{
       , jobs = toMap
           { sterlangMacUpload
           , sterlangLinuxUpload
-          , uploadErltcBinary
+          , uploadErltBinary
             -- the sterlang mac and linux binary jobs require the jar to be built first
           , buildJar = Sterlang.buildJar
           }

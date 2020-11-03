@@ -99,7 +99,7 @@ jobs:
           asset_name: sterlang-mac
           asset_path: sterlang-mac
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
-  uploadErltcBinary:
+  uploadErltBinary:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -108,12 +108,12 @@ jobs:
         run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: escriptize
         run: rebar3 escriptize
-      - name: "prevent conflict between 'erltc' file and directory"
-        run: "rm -rf 'erltc'"
+      - name: "prevent conflict between 'erlt' file and directory"
+        run: "rm -rf 'erlt'"
       - name: mv escript
-        run: "mv ./_build/default/bin/erltc 'erltc'"
-      - name: stat erltc
-        run: stat erltc
+        run: "mv ./_build/default/bin/erlt 'erlt'"
+      - name: stat erlt
+        run: stat erlt
       - env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         id: get_release_url
@@ -121,12 +121,12 @@ jobs:
         uses: "bruceadams/get-release@v1.2.2"
       - env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        name: upload release binary erltc
+        name: upload release binary erlt
         uses: "actions/upload-release-asset@v1.0.2"
         with:
           asset_content_type: application/octet-stream
-          asset_name: erltc
-          asset_path: erltc
+          asset_name: erlt
+          asset_path: erlt
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
 name: Upload release binary
 on:
