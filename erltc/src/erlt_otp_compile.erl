@@ -32,7 +32,6 @@
 
 %% exported to be called from erlt_compile.erl
 -export([
-    clean_parse_transforms/1,
     compile_options/1,
     internal_comp/5,
     foldl_transform/3,
@@ -45,7 +44,6 @@
     save_binary/2,
     select_passes/2,
     shorten_filename/1,
-    transforms/1,
     werror/1
 ]).
 
