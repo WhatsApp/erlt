@@ -15,30 +15,100 @@
 
 -module(erlt_shape).
 
+-include("erlt_ast.hrl").
+
 -export([parse_transform/2]).
 
-parse_transform(Forms, _Options) ->
-    erlt_ast:postwalk(Forms, fun(Node, Ctx) -> rewrite(Node, Ctx) end).
+-record(state, {
+    shape_vars = [] :: [atom()],
+    all_vars = [] :: [atom()],
+    % we collect all_vars while traversing type annotations
+    is_collecting = false
+}).
 
-rewrite({type, Line, closed_shape, Fields}, type) ->
+parse_transform(Forms0, _Options) ->
+    {Forms, _St} = erlt_ast:traverse(
+        Forms0,
+        #state{},
+        fun pre_walk/3,
+        fun post_walk/3
+    ),
+    Forms.
+
+pre_walk({attribute, _, Kind, _} = Node, St, _Ctx) when ?IS_TYPE(Kind) ->
+    {Node, St#state{is_collecting = true}};
+pre_walk({var, _Info, Name} = Node, #state{is_collecting = true} = St, _Ctx) ->
+    {Node, St#state{all_vars = [Name | St#state.all_vars]}};
+pre_walk({type, Line, closed_shape, Fields}, St, type) ->
     MapTypeFields = to_typed_map_fields(Fields),
-    {type, Line, map, MapTypeFields};
-rewrite({type, Line, open_shape, Fields, _Var}, type) ->
+    {{type, Line, map, MapTypeFields}, St};
+pre_walk({type, Line, open_shape, Fields, {var, _Line, VarName}}, St0, type) ->
     MapTypeFields = to_typed_map_fields(Fields),
-    {type, Line, map, MapTypeFields ++ [generic_open_shape_field_type(Line)]};
-rewrite({shape, Line, Fields}, pattern) ->
+    St = St0#state{shape_vars = [VarName | St0#state.shape_vars]},
+    {{type, Line, map, MapTypeFields ++ [generic_open_shape_field_type(Line)]}, St};
+pre_walk({shape, Line, Fields}, St, pattern) ->
     MapFields = to_map_fields(map_field_exact, Fields),
-    {map, Line, MapFields};
-rewrite({shape, Line, Fields}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+    {{map, Line, MapFields}, St};
+pre_walk({shape, Line, Fields}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
     MapFields = to_map_fields(map_field_assoc, Fields),
-    {map, Line, MapFields};
-rewrite({shape_update, Line, Expr, Fields}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+    {{map, Line, MapFields}, St};
+pre_walk({shape_update, Line, Expr, Fields}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
     MapFields = to_map_fields(map_field_assoc, Fields),
-    {map, Line, Expr, MapFields};
-rewrite({shape_field, Line, Expr, Field}, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
-    {call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [Field, Expr]};
-rewrite(Other, _) ->
-    Other.
+    {{map, Line, Expr, MapFields}, St};
+pre_walk({shape_field, Line, Expr, Field}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+    {{call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [Field, Expr]}, St};
+pre_walk(Other, St, _Ctx) ->
+    {Other, St}.
+
+post_walk({attribute, Line, Kind, {Name, Def0, Args0}}, St, _Forms) when ?IS_TYPE(Kind) ->
+    Args = [
+        {var, TheLine, transform_unused_shape_vars(TheName, St)}
+        || {var, TheLine, TheName} <- Args0
+    ],
+    {{attribute, Line, Kind, {Name, Def0, Args}}, #state{}};
+post_walk(
+    {attribute, Line, spec, {FA, [{type, Loc, 'fun', [{type, _, product, Args0} | _]} = F]}} =
+        Forms,
+    St,
+    _Forms
+) ->
+    Anno = erl_anno:set_generated(true, Line),
+    MapType = {type, Anno, map, [generic_open_shape_field_type(Anno)]},
+    % add guards for each row var: `-spec .... when RowVar :: #{atom() -> any()}`
+    Guards = [
+        {type, Anno, constraint, [{atom, Anno, is_subtype}, [{var, Anno, Name}, MapType]]}
+        || {var, _Line, Name} <- Args0, lists:member(Name, St#state.shape_vars)
+    ],
+    case Guards of
+        [] ->
+            {Forms, St};
+        _ ->
+            BoundedFun = {type, Loc, bounded_fun, [F, Guards]},
+            Node = {attribute, Line, spec, {FA, [BoundedFun]}},
+            {Node, St}
+    end;
+post_walk(Other, St, _Ctx) ->
+    {Other, St}.
+
+transform_unused_shape_vars(VarName, St) ->
+    Used = St#state.all_vars -- St#state.shape_vars,
+    IsUnusedShapeVar =
+        lists:member(VarName, St#state.shape_vars) andalso not lists:member(VarName, Used),
+    case IsUnusedShapeVar of
+        false ->
+            VarName;
+        true ->
+            Prepend = fun(Prefix, V) -> list_to_atom(Prefix ++ atom_to_list(V)) end,
+            NewVarName = Prepend("__ERLT_SHAPE_VAR_", VarName),
+            (fun NoConflict(V) ->
+                case lists:member(V, St#state.all_vars) of
+                    false -> V;
+                    true -> NoConflict(Prepend("_", V))
+                end
+            end)(
+                NewVarName
+            )
+    end.
 
 generic_open_shape_field_type(Line) ->
     {type, Line, map_field_assoc, [{type, Line, atom, []}, {type, Line, any, []}]}.

@@ -14,6 +14,8 @@
 
 -module(erlt_ast).
 
+-include("erlt_ast.hrl").
+
 -export([
     prewalk/2, prewalk/3,
     postwalk/2, postwalk/3,
@@ -44,35 +46,6 @@ postwalk(Ast, Acc0, Fun) ->
 -spec map_anno(t(), fun((erl_anno:anno()) -> erl_anno:anno())) -> t().
 map_anno(Ast, Fun) ->
     prewalk(Ast, fun(Node, _Ctx) -> setelement(2, Node, Fun(element(2, Node))) end).
-
--define(IS_ATOMIC(Kind),
-    Kind =:= integer orelse
-        Kind =:= float orelse
-        Kind =:= char orelse
-        Kind =:= atom orelse
-        Kind =:= string orelse
-        Kind =:= var
-).
-
--define(IS_TYPE(Kind),
-    Kind =:= type orelse
-        Kind =:= opaque orelse
-        Kind =:= enum orelse
-        Kind =:= struct orelse
-        Kind =:= exception orelse
-        Kind =:= message orelse
-        Kind =:= unchecked_opaque
-).
-
--define(IS_SPEC(Kind),
-    Kind =:= spec orelse
-        Kind =:= callback
-).
-
--define(IS_FUNCTION(Kind),
-    Kind =:= function orelse
-        Kind =:= unchecked_function
-).
 
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
     (t(), any(), ctx()) -> {t(), any()}
