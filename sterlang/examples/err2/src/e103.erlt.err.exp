@@ -1,6 +1,6 @@
--- ERROR ------------------------------------- examples/err2/src/e103.erlt:22:24
+-- ERROR ------------------------------------- examples/err2/src/e103.erlt:22:22
 Type Mismatch
 Found:    list(bar())
 Required: list(foo())
  22|     [Foo#foo{id = 1} | [Bar#bar{id = 2}]].
-...|                        ~~~~~~~~~~~~~~~~~
+...|                      ~~~~~~~~~~~~~~~~~~~~

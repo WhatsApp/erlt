@@ -3,4 +3,4 @@ Type Mismatch
 Found:    exception()
 Required: message()
  27|         #foo{}  -> "foo";
-...|         ~~~~~~
+...|         ^

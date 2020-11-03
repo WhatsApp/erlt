@@ -1,4 +1,4 @@
--- ERROR -------------------------------------- examples/err2/src/e119.erlt:21:6
+-- ERROR -------------------------------------- examples/err2/src/e119.erlt:21:5
 Unconditional select. my_exn is exception()
  21|     E#my_exn.message.
-...|      ~~~~~~~~~~~~~~~
+...|     ~~~~~~~~~~~~~~~~

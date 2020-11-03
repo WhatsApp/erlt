@@ -1,4 +1,4 @@
--- ERROR -------------------------------------- examples/err2/src/e120.erlt:21:6
+-- ERROR -------------------------------------- examples/err2/src/e120.erlt:21:5
 Unconditional select. my_msg is message()
  21|     M#my_msg.message.
-...|      ~~~~~~~~~~~~~~~
+...|     ~~~~~~~~~~~~~~~~
