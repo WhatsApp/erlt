@@ -1,6 +1,6 @@
--- ERROR ---------------------------------------- examples/neg/src/n09.erlt:4:12
+-- ERROR ----------------------------------------- examples/neg/src/n09.erlt:6:9
 Type Mismatch
 Found:    #( n :: number() )
 Required: #( n :: string(), A )
-  4|     Rec2 = Rec1 #(n = "String"),
-...|            ~~~~
+  6|     _ = Rec1 #(n = "String"),
+...|         ~~~~

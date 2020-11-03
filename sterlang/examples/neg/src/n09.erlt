@@ -1,5 +1,7 @@
 -module(n09).
+-export([test/0]).
+
 test() ->
     Rec1 = #(n = 1),
-    Rec2 = Rec1 #(n = "String"),
+    _ = Rec1 #(n = "String"),
     1.

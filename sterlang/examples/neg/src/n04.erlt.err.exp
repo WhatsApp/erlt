@@ -1,5 +1,5 @@
--- ERROR ---------------------------------------- examples/neg/src/n04.erlt:6:17
+-- ERROR ---------------------------------------- examples/neg/src/n04.erlt:8:17
 Infinite type
 #( self :: A ) <> A
-  6|         true -> R
+  8|         true -> R
 ...|                 ^

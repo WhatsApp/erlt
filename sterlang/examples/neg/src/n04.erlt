@@ -1,4 +1,6 @@
 -module(n04).
+-export([foo/2]).
+
 %% even simpler example of row circularity
 foo(B, R) ->
     if

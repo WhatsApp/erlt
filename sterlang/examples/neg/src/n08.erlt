@@ -1,4 +1,6 @@
 -module(n08).
+-export([unBox/2, name/1]).
+
 -enum option(A) :: (none, some{A}).
 %% simulating it via Variant
 -enum recRec1(A) :: (recRec1{A, option(A)}).
@@ -21,5 +23,5 @@ next(RecRec) ->
    end.
 
 %% this also goes to recursive types
-unBox(Rec, Alt) ->
+unBox(Rec, _) ->
   getOrElse(next(Rec), Rec).
