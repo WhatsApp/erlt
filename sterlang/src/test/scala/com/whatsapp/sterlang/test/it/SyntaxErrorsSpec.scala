@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.dev.DevDriver
+import com.whatsapp.sterlang.dev.DriverDev
 
 class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
@@ -58,14 +58,14 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def processIllSyntax(erltPath: String, etfPath: String): Unit = {
     try {
-      DevDriver.loadProgram(etfPath)
+      DriverDev.loadProgram(etfPath)
       fail(s"$erltPath should generate an UnsupportedSyntaxError or a ParseError")
     } catch {
       case error: UnsupportedSyntaxError =>
-        val errMsg = DevDriver.errorString(erltPath, fileContent(erltPath), error)
+        val errMsg = DriverDev.errorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
       case error: ParseError =>
-        val errMsg = DevDriver.parseErrorString(erltPath, fileContent(erltPath), error)
+        val errMsg = DriverDev.parseErrorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
     }
   }

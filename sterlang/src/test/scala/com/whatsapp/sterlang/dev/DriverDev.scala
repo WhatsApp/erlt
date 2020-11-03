@@ -1,28 +1,13 @@
-/*
- * Copyright (c) Facebook, Inc. and its affiliates.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package com.whatsapp.sterlang
+package com.whatsapp.sterlang.dev
 
 import java.io.File
 import java.nio.file.{Files, Paths}
 
+import com.whatsapp.sterlang._
+
 import scala.collection.mutable
 
-object ErltcDriver extends Driver {
-
+object DriverDev extends Driver {
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))
@@ -52,7 +37,6 @@ object ErltcDriver extends Driver {
       try {
         loadProgram(mainFile)
       } catch {
-        // $COVERAGE-OFF$ interactive
         case error: ParseError =>
           displayParseError(erltFile, text, error)
           sys.exit(2)
@@ -61,7 +45,6 @@ object ErltcDriver extends Driver {
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
           sys.exit(2)
-        // $COVERAGE-ON$
       }
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -99,8 +82,7 @@ object ErltcDriver extends Driver {
     vars.rVar(Types.RowOpen(0, kind))
 
   def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context = {
-    val ext = ".defs.etf"
-
+    val ext = mainFile.takeRight(mainFile.reverse.indexOf('.') + 1)
     val dir = Paths.get(mainFile).getParent
     val TU = new TypesUtil(vars)
     var loaded = Set.empty[String]
@@ -145,7 +127,7 @@ object ErltcDriver extends Driver {
   }
 
   def loadProgram(file: String): Ast.Program =
-    ErltcEtf.programFromFileErlt(file)
+    EtfDev.programFromFileDev(file)
 
   // $COVERAGE-OFF$ interactive
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =

@@ -7,7 +7,7 @@ import com.whatsapp.sterlang.dev.forms.FormsConvertDev
 import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
 import com.whatsapp.sterlang.{Ast, Convert, ModuleApi}
 
-object DevEtf {
+object EtfDev {
   def programFromFileDev(path: String): Ast.Program = {
     val etf = etfFromFileDev(path)
     val forms = FormsConvertDev.fromEtf(etf)

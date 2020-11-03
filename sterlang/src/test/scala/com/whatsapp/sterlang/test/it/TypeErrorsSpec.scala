@@ -20,14 +20,14 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.dev.DevDriver
+import com.whatsapp.sterlang.dev.DriverDev
 
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
   val dev = true
   val driver: Driver =
-    if (dev) DevDriver else ErltcDriver
+    if (dev) DriverDev else DriverErltc
 
   testDir("examples/neg/src")
   testDir("examples/err/src")

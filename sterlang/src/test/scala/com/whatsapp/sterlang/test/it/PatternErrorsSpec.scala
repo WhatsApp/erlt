@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.dev.DevDriver
+import com.whatsapp.sterlang.dev.DriverDev
 
 class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
@@ -49,16 +49,16 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   private def processIllPatterns(erltPath: String, etfPath: String): Unit = {
-    val rawProgram = DevDriver.loadProgram(etfPath)
+    val rawProgram = DriverDev.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = DevDriver.loadContext(etfPath, program, vars).extend(program)
+    val context = DriverDev.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annotatedFunctions, _) = new Elaborate(vars, context, program).elaborate()
     val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annotatedFunctions)
     assert(warnings.nonEmpty)
 
-    val actualErr = warnings.map(DevDriver.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
+    val actualErr = warnings.map(DriverDev.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
     if (generateOut) {
       val expPath = Paths.get(erltPath + ".warn.exp")
       Files.write(expPath, actualErr.getBytes)

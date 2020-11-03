@@ -19,12 +19,12 @@ package com.whatsapp.sterlang.test
 import java.io.StringWriter
 
 import com.whatsapp.sterlang._
-import com.whatsapp.sterlang.dev.DevEtf
+import com.whatsapp.sterlang.dev.EtfDev
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def testTyping(input: String, expOutput: String): Unit = {
-    val prog = DevEtf.programFromString(input)
+    val prog = EtfDev.programFromString(input)
     val vars = new Vars()
     val context = Context(prog.enumDefs, prog.structDefs, prog.typeAliases, Set.empty, Map.empty)
     val elaborate = new Elaborate(vars, context, prog)
@@ -35,7 +35,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testTypeError(input: String): Unit = {
-    val prog = DevEtf.programFromString(input)
+    val prog = EtfDev.programFromString(input)
     val sw = new StringWriter()
     try {
       val vars = new Vars()
