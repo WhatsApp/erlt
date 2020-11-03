@@ -733,23 +733,22 @@ run_sterlang(St) ->
             {undefined, false} ->
                 {skipped, {ok}, undefined};
             {undefined, true} ->
-                MyRef = make_ref(),
-                MonitorRef = erlang:monitor(process, {api, sterlangd@localhost}),
-                {api, sterlangd@localhost} ! {check, self(), MyRef, IFile, EtfFile},
+                Ref = erlang:monitor(process, {api, sterlangd@localhost}),
+                {api, sterlangd@localhost} ! {check, self(), Ref, IFile, EtfFile},
                 Res1 =
                     receive
-                        {'DOWN', MonitorRef, _, _, noconnection} ->
+                        {'DOWN', Ref, _, _, noconnection} ->
                             {daemon, {error, "No connecttion to sterlangd@localhost"}, undefined};
-                        {'DOWN', MonitorRef, _, _, Reason} ->
+                        {'DOWN', Ref, _, _, Reason} ->
                             Error = io_lib:format(
                                 "Connection to sterlangd@localhost failed. Reason: ~p",
                                 [Reason]
                             ),
                             {daemon, {error, Error}, undefined};
-                        {MyRef, Res, StTime} ->
+                        {Ref, Res, StTime} ->
                             {daemon, Res, StTime}
                     end,
-                erlang:demonitor(MonitorRef, [flush]),
+                erlang:demonitor(Ref, [flush]),
                 Res1;
             _ ->
                 case eunit_lib:command(CheckCmd) of
