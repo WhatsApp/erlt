@@ -20,11 +20,14 @@ import java.io.File
 import java.nio.file.{Files, Path, Paths}
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.dev.DevDriver
 
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
-  val mode: Driver.Mode = Driver.Dev
+  val dev = true
+  val driver: Driver =
+    if (dev) DevDriver else ErltcDriver
 
   testDir("examples/neg/src")
   testDir("examples/err/src")
@@ -45,11 +48,10 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val moduleArgs =
         modules.map(_ ++ ".erlt").mkString(" ")
 
-      mode match {
-        case Driver.Dev =>
-          s"./parser -idir $srcDir -odir $buildDir".!!
-        case Driver.Erlt =>
-          s"./erltc --build compile --src-dir $srcDir --build-dir $buildDir -o $buildDir $moduleArgs".!!
+      if (dev) {
+        s"./parser -idir $srcDir -odir $buildDir".!!
+      } else {
+        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDir -o $buildDir $moduleArgs".!!
       }
 
       modules.foreach { module =>
@@ -59,21 +61,21 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
           ignore(erltPath) {}
         } else {
           it(erltPath) {
-            processIllTyped(module, srcDir, buildDir, mode)
+            processIllTyped(module, srcDir, buildDir)
           }
         }
       }
     }
   }
 
-  private def processIllTyped(module: String, sourceDir: String, buildDir: Path, mode: Driver.Mode): Unit = {
+  private def processIllTyped(module: String, sourceDir: String, buildDir: Path): Unit = {
     val erltPath = s"$sourceDir/$module.erlt"
     val mainFile = s"$buildDir/$module.etf"
-    val rawProgram = Driver.loadProgram(mainFile, mode)
+    val rawProgram = driver.loadProgram(mainFile)
     val program = AstUtil.normalizeTypes(rawProgram)
     try {
       val vars = new Vars()
-      val context = Driver.loadContext(mainFile, program, vars, mode).extend(program)
+      val context = driver.loadContext(mainFile, program, vars).extend(program)
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborate()
@@ -83,7 +85,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       fail(s"$mainFile should not type-check")
     } catch {
       case error: RangedError =>
-        val actualErr = Driver.errorString(erltPath, fileContent(erltPath), error)
+        val actualErr = driver.errorString(erltPath, fileContent(erltPath), error)
         if (generateOut) {
           val expPath = Paths.get(erltPath + ".err.exp")
           Files.write(expPath, actualErr.getBytes)

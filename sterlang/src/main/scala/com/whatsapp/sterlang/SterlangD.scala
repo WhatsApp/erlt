@@ -51,14 +51,14 @@ object SterlangD extends Executor {
     private def processFile(erltFile: String, etfFile: String): Option[String] = {
       lazy val text = new String(Files.readAllBytes(Paths.get(erltFile)))
       val rawProgram =
-        try Driver.loadProgram(etfFile, Driver.Erlt)
+        try ErltcDriver.loadProgram(etfFile)
         catch {
-          case error: ParseError  => return Some(Driver.parseErrorString(erltFile, text, error))
-          case error: RangedError => return Some(Driver.errorString(erltFile, text, error))
+          case error: ParseError  => return Some(ErltcDriver.parseErrorString(erltFile, text, error))
+          case error: RangedError => return Some(ErltcDriver.errorString(erltFile, text, error))
         }
       val vars = new Vars()
       val program = AstUtil.normalizeTypes(rawProgram)
-      val context = Driver.loadContext(etfFile, program, vars, Driver.Erlt).extend(program)
+      val context = ErltcDriver.loadContext(etfFile, program, vars).extend(program)
       try {
         val astChecks = new AstChecks(context)
         astChecks.check(program)
@@ -66,7 +66,7 @@ object SterlangD extends Executor {
         elaborate.elaborate()
         None
       } catch {
-        case error: RangedError => Some(Driver.errorString(erltFile, text, error))
+        case error: RangedError => Some(ErltcDriver.errorString(erltFile, text, error))
       }
     }
   }

@@ -33,7 +33,7 @@ lazy val projectSetting = Seq(
 lazy val sterlang = (project in file("."))
   .settings(projectSetting)
   .settings(
-    mainClass in assembly := Some("com.whatsapp.sterlang.Driver"),
+    mainClass in assembly := Some("com.whatsapp.sterlang.ErltcDriver"),
     assemblyJarName in assembly := "sterlang.jar",
     resourceGenerators in Compile += parser.taskValue,
   )
