@@ -84,8 +84,8 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       }
       fail(s"$mainFile should not type-check")
     } catch {
-      case error: RangedError =>
-        val actualErr = driver.errorString(erltPath, fileContent(erltPath), error)
+      case error: RangeError =>
+        val actualErr = driver.rangeErrorString(erltPath, fileContent(erltPath), error)
         if (generateOut) {
           val expPath = Paths.get(erltPath + ".err.exp")
           Files.write(expPath, actualErr.getBytes)

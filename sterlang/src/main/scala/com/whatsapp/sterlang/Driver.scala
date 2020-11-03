@@ -19,6 +19,6 @@ package com.whatsapp.sterlang
 trait Driver {
   def loadProgram(file: String): Ast.Program
   def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context
-  def errorString(inputPath: String, inputContent: String, error: RangedError): String
-  def parseErrorString(inputPath: String, inputContent: String, error: ParseError): String
+  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String
+  def posErrorString(inputPath: String, inputContent: String, error: PosError): String
 }

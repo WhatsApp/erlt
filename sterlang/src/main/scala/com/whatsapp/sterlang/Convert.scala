@@ -82,7 +82,7 @@ object Convert {
         val typeParams = params.map { case Types.TypeVariable(p, n) => Ast.TypeVar(n)(p) }
         Some(Ast.UncheckedOpaqueElem(Ast.UncheckedOpaque(typeName, typeParams)(r)))
       case Forms.Error(loc) =>
-        throw ParseError(loc)
+        throw new ParseError(loc)
       case Forms.WildAttribute(_, _) =>
         None
     }

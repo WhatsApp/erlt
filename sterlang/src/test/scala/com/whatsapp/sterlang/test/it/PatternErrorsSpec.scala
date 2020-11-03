@@ -58,7 +58,7 @@ class PatternErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annotatedFunctions)
     assert(warnings.nonEmpty)
 
-    val actualErr = warnings.map(DriverDev.errorString(erltPath, fileContent(erltPath), _)).mkString("\n")
+    val actualErr = warnings.map(DriverDev.rangeErrorString(erltPath, fileContent(erltPath), _)).mkString("\n")
     if (generateOut) {
       val expPath = Paths.get(erltPath + ".warn.exp")
       Files.write(expPath, actualErr.getBytes)

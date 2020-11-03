@@ -16,6 +16,16 @@
 
 package com.whatsapp.sterlang
 
+sealed trait SterlangError
+case class PosError(pos: Doc.Pos, title: String)
+    extends Exception(s"$title at ${pos.line}:${pos.column}")
+    with SterlangError
+case class RangeError(range: Doc.Range, title: String, description: Option[String])
+    extends Exception(title)
+    with SterlangError {
+  val severity: Severity = Error
+}
+
 // Low-lever (encapsulate) unify error
 class UnifyError(msg: String) extends Exception(msg)
 case object Circularity extends UnifyError("Circularity")
@@ -31,74 +41,71 @@ sealed trait Severity
 case object Error extends Severity
 case object Warning extends Severity
 
-case class RangedError(range: Doc.Range, title: String, description: Option[String]) extends Exception(title) {
-  val severity: Severity = Error
-}
 class InfiniteTypeError(range: Doc.Range, t1: String, t2: String)
-    extends RangedError(range, s"Infinite type", Some(s"$t1 <> $t2"))
+    extends RangeError(range, s"Infinite type", Some(s"$t1 <> $t2"))
 class TypeMismatchError(range: Doc.Range, required: String, found: String)
-    extends RangedError(range, s"Type Mismatch", Some(s"Found:    $found\nRequired: $required"))
-class UnboundVar(range: Doc.Range, val name: String) extends RangedError(range, s"Unbound variable: $name", None)
+    extends RangeError(range, s"Type Mismatch", Some(s"Found:    $found\nRequired: $required"))
+class UnboundVar(range: Doc.Range, val name: String) extends RangeError(range, s"Unbound variable: $name", None)
 class AlreadyBoundVar(range: Doc.Range, val name: String)
-    extends RangedError(range, s"Already bound variable: $name", None)
-class UnknownEnum(range: Doc.Range, val enumName: String) extends RangedError(range, s"Unknown enum: $enumName", None)
+    extends RangeError(range, s"Already bound variable: $name", None)
+class UnknownEnum(range: Doc.Range, val enumName: String) extends RangeError(range, s"Unknown enum: $enumName", None)
 class UnknownEnumCon(range: Doc.Range, val enumConName: String)
-    extends RangedError(range, s"Unknown enum constructor: $enumConName", None)
+    extends RangeError(range, s"Unknown enum constructor: $enumConName", None)
 class SpecError(range: Doc.Range, val fName: String, val specType: String, val elabType: String)
-    extends RangedError(range, s"Spec mismatch for $fName", Some(s"Specified:  `$specType`\nElaborated: `$elabType`"))
+    extends RangeError(range, s"Spec mismatch for $fName", Some(s"Specified:  `$specType`\nElaborated: `$elabType`"))
 class InconsistentStructTypeParamsError(range: Doc.Range, val specParams: String, val elabParams: String)
-    extends RangedError(
+    extends RangeError(
       range,
       s"Inconsistent struct type params",
       Some(s"Specified:  `$specParams`\nElaborated: `$elabParams`"),
     )
 class DuplicateFields(range: Doc.Range, names: List[String])
-    extends RangedError(range, s"Duplicate fields: ${names.mkString(", ")}", None)
+    extends RangeError(range, s"Duplicate fields: ${names.mkString(", ")}", None)
 class CyclicTypeAlias(range: Doc.Range, aliasName: String)
-    extends RangedError(range, s"Cyclic type alias: $aliasName", None)
+    extends RangeError(range, s"Cyclic type alias: $aliasName", None)
 class UnknownType(range: Doc.Range, name: String, arity: Int)
-    extends RangedError(range, s"Unknown type: $name/$arity", None)
-class UnknownStruct(range: Doc.Range, name: String) extends RangedError(range, s"Unknown struct: #$name{}", None)
-class UnknownField(range: Doc.Range, fieldName: String) extends RangedError(range, s"Unknown field $fieldName", None)
+    extends RangeError(range, s"Unknown type: $name/$arity", None)
+class UnknownStruct(range: Doc.Range, name: String) extends RangeError(range, s"Unknown struct: #$name{}", None)
+class UnknownField(range: Doc.Range, fieldName: String) extends RangeError(range, s"Unknown field $fieldName", None)
 class UnInitializedField(range: Doc.Range, fieldName: String)
-    extends RangedError(range, s"Uninitialized field $fieldName", None)
+    extends RangeError(range, s"Uninitialized field $fieldName", None)
 class PosFieldMismatch(range: Doc.Range, actual: Int, expect: Int)
-    extends RangedError(range, s"Got $actual positional field(s) instead of $expect", None)
+    extends RangeError(range, s"Got $actual positional field(s) instead of $expect", None)
 class UnconditionalExceptionUpdate(range: Doc.Range, structName: String)
-    extends RangedError(range, s"Unconditional update. $structName is exception()", None)
+    extends RangeError(range, s"Unconditional update. $structName is exception()", None)
 class UnconditionalMessageUpdate(range: Doc.Range, structName: String)
-    extends RangedError(range, s"Unconditional update. $structName is message()", None)
+    extends RangeError(range, s"Unconditional update. $structName is message()", None)
 class UnconditionalExceptionSelect(range: Doc.Range, structName: String)
-    extends RangedError(range, s"Unconditional select. $structName is exception()", None)
+    extends RangeError(range, s"Unconditional select. $structName is exception()", None)
 class UnconditionalMessageSelect(range: Doc.Range, structName: String)
-    extends RangedError(range, s"Unconditional select. $structName is message()", None)
-class IllegalCatchPattern(range: Doc.Range) extends RangedError(range, s"Illegal catch pattern", None)
-class IllegalReceivePattern(range: Doc.Range) extends RangedError(range, s"Illegal receive pattern", None)
+    extends RangeError(range, s"Unconditional select. $structName is message()", None)
+class IllegalCatchPattern(range: Doc.Range) extends RangeError(range, s"Illegal catch pattern", None)
+class IllegalReceivePattern(range: Doc.Range) extends RangeError(range, s"Illegal receive pattern", None)
 class ExceptionType(range: Doc.Range, exceptionName: String)
-    extends RangedError(range, s"$exceptionName() is not a type. Did you mean `exception()`?", None)
+    extends RangeError(range, s"$exceptionName() is not a type. Did you mean `exception()`?", None)
 class MessageType(range: Doc.Range, messageName: String)
-    extends RangedError(range, s"$messageName() is not a type. Did you mean `message()`?", None)
+    extends RangeError(range, s"$messageName() is not a type. Did you mean `message()`?", None)
 class PolymorphicException(range: Doc.Range)
-    extends RangedError(range, s"Exception structs do not allow type parameters", None)
+    extends RangeError(range, s"Exception structs do not allow type parameters", None)
 class PolymorphicMessage(range: Doc.Range)
-    extends RangedError(range, s"Message structs do not allow type parameters", None)
-class DuplicateTypeVar(range: Doc.Range, v: String) extends RangedError(range, s"Duplicate type var: $v", None)
+    extends RangeError(range, s"Message structs do not allow type parameters", None)
+class DuplicateTypeVar(range: Doc.Range, v: String) extends RangeError(range, s"Duplicate type var: $v", None)
 class UnboundTypeVariable(range: Doc.Range, name: String)
-    extends RangedError(range, s"Unbound type variable: $name", None)
+    extends RangeError(range, s"Unbound type variable: $name", None)
 class RHSOpenShape(range: Doc.Range)
-    extends RangedError(
+    extends RangeError(
       range,
       s"Shape extension type in a type definition",
       Some("Shape extensions are not allowed in type definitions. Shape extensions are allowed in specs only."),
     )
 class TypeVarKindConflict(range: Doc.Range, varName: String)
-    extends RangedError(
+    extends RangeError(
       range,
       s"Plain type variable $varName is used as row type variable",
       Some("All occurrences of type variable should of the same kind (plain or row)"),
     )
 class InconsistentShapeExtension(range: Doc.Range, varName: String, prevKind: List[String], thisKind: List[String])
-    extends RangedError(
+    extends RangeError(
       range,
       s"Shape extension type variable $varName is used inconsistently",
       Some(
@@ -107,30 +114,30 @@ class InconsistentShapeExtension(range: Doc.Range, varName: String, prevKind: Li
       ),
     )
 class IllegalWildTypeVariable(range: Doc.Range)
-    extends RangedError(range, "Wild type variable is not allowed here", None)
-class UselessTypeVar(range: Doc.Range, name: String) extends RangedError(range, s"Useless type variable: $name", None)
+    extends RangeError(range, "Wild type variable is not allowed here", None)
+class UselessTypeVar(range: Doc.Range, name: String) extends RangeError(range, s"Useless type variable: $name", None)
 class DuplicateEnumCon(range: Doc.Range, name: String)
-    extends RangedError(range, s"Duplicate enum constructor: $name", None)
-class DuplicateType(range: Doc.Range, name: String) extends RangedError(range, s"Duplicate type: $name", None)
-class DuplicateStruct(range: Doc.Range, name: String) extends RangedError(range, s"Duplicate struct: #$name{}", None)
-class DuplicateFun(range: Doc.Range, name: String) extends RangedError(range, s"Duplicate fun: $name", None)
+    extends RangeError(range, s"Duplicate enum constructor: $name", None)
+class DuplicateType(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate type: $name", None)
+class DuplicateStruct(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate struct: #$name{}", None)
+class DuplicateFun(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate fun: $name", None)
 class UnSpecedExportedFun(range: Doc.Range, name: String)
-    extends RangedError(range, s"Fun: $name is exported, but lacks a spec", None)
+    extends RangeError(range, s"Fun: $name is exported, but lacks a spec", None)
 
-case class ParseError(pos: Doc.Pos) extends Exception(s"Parse error at ${pos.line}:${pos.column}")
+class ParseError(pos: Doc.Pos) extends PosError(pos, "Parse Error")
 class UnsupportedSyntaxError(range: Doc.Range, reason: String)
-    extends RangedError(range, s"Unsupported Syntax", Some(reason))
+    extends RangeError(range, s"Unsupported Syntax", Some(reason))
 
-sealed trait PatternWarning extends RangedError {
+sealed trait PatternWarning extends RangeError {
   override val severity: Severity = Warning
 }
 class MissingPatternsWarning(range: Doc.Range, confident: Boolean, exampleClause: String)
-    extends RangedError(
+    extends RangeError(
       range = range,
       title = (if (confident) "" else "Possibly ") + "Missing Patterns",
       description = Some(s"missing: $exampleClause"),
     )
     with PatternWarning
 class UselessPatternWarning(range: Doc.Range)
-    extends RangedError(range = range, title = "Useless Pattern", description = None)
+    extends RangeError(range = range, title = "Useless Pattern", description = None)
     with PatternWarning

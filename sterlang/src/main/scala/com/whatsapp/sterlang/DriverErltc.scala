@@ -53,13 +53,11 @@ object DriverErltc extends Driver {
         loadProgram(mainFile)
       } catch {
         // $COVERAGE-OFF$ interactive
-        case error: ParseError =>
-          displayParseError(erltFile, text, error)
+        case error: PosError =>
+          displayPosError(erltFile, text, error)
           sys.exit(2)
-        case error: RangedError =>
-          displayError(erltFile, text, error)
-          Console.err.println("DEBUG INFO:")
-          error.printStackTrace(Console.err)
+        case error: RangeError =>
+          displayRangeError(erltFile, text, error)
           sys.exit(2)
         // $COVERAGE-ON$
       }
@@ -78,7 +76,7 @@ object DriverErltc extends Driver {
       if (options.contains("--check-patterns")) {
         val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
         // $COVERAGE-OFF$ interactive
-        warnings.foreach(displayError(erltFile, text, _))
+        warnings.foreach(displayRangeError(erltFile, text, _))
         // $COVERAGE-ON$
       }
 
@@ -86,8 +84,8 @@ object DriverErltc extends Driver {
       astChecks.checkPublicSpecs(program)
     } catch {
       // $COVERAGE-OFF$ interactive
-      case error: RangedError =>
-        displayError(erltFile, text, error)
+      case error: RangeError =>
+        displayRangeError(erltFile, text, error)
         sys.exit(2)
       // $COVERAGE-ON$
     }
@@ -148,25 +146,25 @@ object DriverErltc extends Driver {
     EtfErltc.programFromFile(file)
 
   // $COVERAGE-OFF$ interactive
-  private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =
-    Console.println(errorString(inputPath, inputContent, error))
+  private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit =
+    Console.println(rangeErrorString(inputPath, inputContent, error))
 
-  private def displayParseError(inputPath: String, inputContent: String, error: ParseError): Unit =
-    Console.println(parseErrorString(inputPath, inputContent, error))
+  private def displayPosError(inputPath: String, inputContent: String, error: PosError): Unit =
+    Console.println(posErrorString(inputPath, inputContent, error))
   // $COVERAGE-ON$ interactive
 
-  def errorString(inputPath: String, inputContent: String, error: RangedError): String = {
-    val RangedError(range, title, description) = error
+  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
+    val RangeError(range, title, description) = error
     val ranger = Doc.Ranger(inputContent, range.start, range.end)
     val msgTitle = Doc.title(error.severity, inputPath, range.start)
     val descText = description.map(_ ++ "\n").getOrElse("")
     msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
   }
 
-  def parseErrorString(inputPath: String, inputContent: String, error: ParseError): String = {
-    val ParseError(pos) = error
+  def posErrorString(inputPath: String, inputContent: String, error: PosError): String = {
+    val PosError(pos, title) = error
     val locator = Doc.Locator(inputContent, pos)
     val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\nParse Error\n${locator.longString}\n"
+    s"$msgTitle\n$title\n${locator.longString}\n"
   }
 }

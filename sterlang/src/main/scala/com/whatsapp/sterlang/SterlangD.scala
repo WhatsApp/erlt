@@ -53,8 +53,8 @@ object SterlangD extends Executor {
       val rawProgram =
         try DriverErltc.loadProgram(etfFile)
         catch {
-          case error: ParseError  => return Some(DriverErltc.parseErrorString(erltFile, text, error))
-          case error: RangedError => return Some(DriverErltc.errorString(erltFile, text, error))
+          case error: ParseError => return Some(DriverErltc.posErrorString(erltFile, text, error))
+          case error: RangeError => return Some(DriverErltc.rangeErrorString(erltFile, text, error))
         }
       val vars = new Vars()
       val program = AstUtil.normalizeTypes(rawProgram)
@@ -66,7 +66,7 @@ object SterlangD extends Executor {
         elaborate.elaborate()
         None
       } catch {
-        case error: RangedError => Some(DriverErltc.errorString(erltFile, text, error))
+        case error: RangeError => Some(DriverErltc.rangeErrorString(erltFile, text, error))
       }
     }
   }
