@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.forms
 
 import com.whatsapp.sterlang.Doc
-import com.whatsapp.sterlang.etf.ETerm
+import com.whatsapp.sterlang.Etf.ETerm
 import com.whatsapp.sterlang.forms.Types._
 import com.whatsapp.sterlang.forms.Exprs._
 

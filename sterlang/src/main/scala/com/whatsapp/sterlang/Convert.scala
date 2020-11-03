@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.whatsapp.sterlang.etf
+package com.whatsapp.sterlang
 
-import com.whatsapp.sterlang.{Ast, ParseError, UnsupportedSyntaxError}
 import com.whatsapp.sterlang.forms.{Exprs, Forms, Patterns, Types}
 
 object Convert {

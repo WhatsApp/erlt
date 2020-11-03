@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.dev.forms
 
 import com.whatsapp.sterlang.UnsupportedSyntaxError
-import com.whatsapp.sterlang.etf._
+import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Exprs._
 import com.whatsapp.sterlang.forms.r
 

@@ -1,6 +1,6 @@
 package com.whatsapp.sterlang
 
-import com.whatsapp.sterlang.etf._
+import com.whatsapp.sterlang.Etf._
 
 package object forms {
   def r(term: ETerm): Doc.Range = {

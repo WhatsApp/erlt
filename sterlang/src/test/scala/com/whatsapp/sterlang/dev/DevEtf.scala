@@ -1,11 +1,11 @@
 package com.whatsapp.sterlang.dev
 
 import java.nio.file.{Files, Paths}
-import sys.process._
 
+import sys.process._
 import com.whatsapp.sterlang.dev.forms.FormsConvertDev
-import com.whatsapp.sterlang.etf.{Convert, ETerm, readEtf}
-import com.whatsapp.sterlang.{Ast, ModuleApi}
+import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
+import com.whatsapp.sterlang.{Ast, Convert, ModuleApi}
 
 object DevEtf {
   def programFromFileDev(path: String): Ast.Program = {

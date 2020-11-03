@@ -21,7 +21,7 @@ import java.nio.file.{Files, Path, Paths}
 import com.ericsson.otp.erlang._
 import com.whatsapp.sterlang.forms.FormsConvertErlt
 
-package object etf {
+object Etf {
 
   sealed trait ETerm
   case class EAtom(atom: String) extends ETerm
@@ -32,31 +32,6 @@ package object etf {
   case class ETuple(elems: List[ETerm]) extends ETerm
   case class EPid(pid: OtpErlangPid) extends ETerm
   case class ERef(ref: OtpErlangRef) extends ETerm
-
-  def programFromFileErlt(path: String): Ast.Program = {
-    val etf = etfFromFileErlt(path)
-    val forms = FormsConvertErlt.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    Ast.RawProgram(elems).program
-  }
-
-  def moduleApiFromFileErlt(path: String): ModuleApi = {
-    val etf = etfFromFileErlt(path)
-    val forms = FormsConvertErlt.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    val program = Ast.RawProgram(elems).program
-
-    ModuleApi(
-      enumDefs = program.enumDefs,
-      structDefs = program.structDefs,
-      aliases = program.typeAliases,
-      specs = program.specs,
-      opaques = List.empty,
-    )
-  }
-
-  private def etfFromFileErlt(file: String): ETerm =
-    readEtf(Paths.get(file))
 
   def readEtf(etfPath: Path): ETerm = {
     val etfBytes = Files.readAllBytes(etfPath)

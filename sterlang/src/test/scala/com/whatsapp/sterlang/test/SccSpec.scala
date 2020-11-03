@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang.test
 
 import com.whatsapp.sterlang.dev.DevEtf
-import com.whatsapp.sterlang.{AstUtil, etf}
+import com.whatsapp.sterlang.{AstUtil, Etf}
 
 class SccSpec extends org.scalatest.funspec.AnyFunSpec {
   def testScc(input: String, expSccs: List[List[String]]): Unit = {
