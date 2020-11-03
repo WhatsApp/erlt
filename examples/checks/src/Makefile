@@ -2,10 +2,10 @@ ERLS := $(sort $(wildcard *.erlt))
 
 export PATH := ../../../_build/default/bin:$(PATH)
 
-test: erltc
+test: erlt
 	./_test_checks.escript $(ERLS)
 
-erltc:
+erlt:
 	cd ../../.. && rebar3 compile
 
 .PHONY: test

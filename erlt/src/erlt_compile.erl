@@ -695,7 +695,7 @@ get_erlt_deps(Forms, St0) ->
 -record(sterlang_result, {
     result :: {ok} | {error, string()},
     mode :: native | jar | daemon | skipped,
-    erltc_time :: non_neg_integer(),
+    erlt_time :: non_neg_integer(),
     st_time :: non_neg_integer()
 }).
 
@@ -711,8 +711,8 @@ erlt_typecheck(Code, St) ->
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
-log_sterlang_result(#sterlang_result{mode = M, result = R, erltc_time = T1, st_time = T2}, St) ->
-    io:format("===> erltc+sterlang: ~tp~n", [{St#compile.ifile, M, element(1, R), T1, T2}]),
+log_sterlang_result(#sterlang_result{mode = M, result = R, erlt_time = T1, st_time = T2}, St) ->
+    io:format("===> erlt+sterlang: ~tp~n", [{St#compile.ifile, M, element(1, R), T1, T2}]),
     true.
 
 -spec run_sterlang(#compile{}) -> #sterlang_result{}.
@@ -758,7 +758,7 @@ run_sterlang(St) ->
         end,
     End = erlang:monotonic_time('millisecond'),
     Time = End - Start,
-    #sterlang_result{mode = Mode, result = Result, erltc_time = Time, st_time = SterlangTime}.
+    #sterlang_result{mode = Mode, result = Result, erlt_time = Time, st_time = SterlangTime}.
 
 erlt_to_erl1(Code, St) ->
     case erlt_struct:module(Code, St#compile.global_defs) of

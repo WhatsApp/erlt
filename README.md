@@ -1,7 +1,7 @@
 # erl2: Modern Erlang Project
 
 This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
-- ./erltc: erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
+- ./erlt: erlt is the compiler for ErlT (ST and DT). erlt does not compile classic Erlang or do type-checking.
 - ./sterlang: stErlang is standalone type-checker for ST
 - ./analyzer:  this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
 
@@ -50,7 +50,7 @@ See the [examples](examples/) folder.
 
 ## Building
 
-`erltc`:
+`erlt`:
 
 ```
 rebar3 compile
@@ -64,7 +64,7 @@ cd sterlang; sbt assembly
 
 ## Testing
 
-### erltc tests
+### erlt tests
 
 ``` sh
 make -C examples test # runs the tests in ./examples
@@ -73,11 +73,11 @@ make -C examples/<example-dir> # build the example in <example-dir>
 make -C examples/elm-core # build the example based on the Elm standard library
 ```
 
-The tests for erltc come in these two flavors:
+The tests for erlt come in these two flavors:
 - the tests under `./examples/check` verify compiler errors against .exp files. Run these with `make -C examples/check/src`
 - the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST.
     - See [./examples/README.md]( ./examples/README.md )for more information about running and updating these tests
-    - See also [erltc_architecture](./doc/08_compiler_architecture.md).
+    - See also [erlt_architecture](./doc/08_compiler_architecture.md).
 
 
 ### stErlang tests

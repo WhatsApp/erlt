@@ -23,7 +23,7 @@ main(Files) ->
             {error, Reason} ->
                 {error, "expectation file ~ts not found: ~ts~n", [ExpOutputFile, file:format_error(Reason)]};
             {ok, ExpOutput} ->
-                Command = "erltc +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile,
+                Command = "erlt +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile,
                 case eunit_lib:command(Command) of
                     {0, _} ->
                         {error, "`~ts` has not failed~n", [Command]};

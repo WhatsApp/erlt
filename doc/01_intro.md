@@ -39,7 +39,7 @@ involving parsing, ErlT FFI and ErlT ST.
 
 ## A bit on internals
 
-ErlT compiler is `erltc`.
+ErlT compiler is `erlt`.
 For ErlT DT files it runs additional checks and transformations, and finally
 transpiles ErlT code into classic erl1 code.
 For ErlT ST and FFI files in addition to checks and transpiling, it also runs
@@ -67,7 +67,7 @@ backend, or everything together) - the next sections explain different
 - IJ scala plugin is well usable
 
 StErlang can type-check ErlT files (and directories!) on its own (without being
-a part of erltc toolchain).
+a part of erlt toolchain).
 
 ```
 sbt:sterlang> run examples/elm-core

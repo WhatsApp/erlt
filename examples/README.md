@@ -16,20 +16,20 @@ These `.P` files are a classic Erlang representation of ErlT files.
 
 # To Focus on a Specific Example
 
-> Make sure erltc is on your PATH and points to `<repo-root>../_build/default/bin/`
+> Make sure erlt is on your PATH and points to `<repo-root>../_build/default/bin/`
 
 Run
 
 ```sh
-DEBUG=1 rebar3 compile | grep 'erltc --build' | sed G
+DEBUG=1 rebar3 compile | grep 'erlt --build' | sed G
 ```
 
 The output will look something like this:
 
 ```
-erltc --build compile --src-dir examples/dev_dots/src --build-dir examples/_build/default/lib/dev_dots/build -o examples/_build/default/lib/dev_dots/ebin -I examples/_build/default/lib/dev_dots/include -pa examples/_build/default/lib/dev_dots/ebin +debug_info +report_warnings dots_mod01.erlt
+erlt --build compile --src-dir examples/dev_dots/src --build-dir examples/_build/default/lib/dev_dots/build -o examples/_build/default/lib/dev_dots/ebin -I examples/_build/default/lib/dev_dots/include -pa examples/_build/default/lib/dev_dots/ebin +debug_info +report_warnings dots_mod01.erlt
 
-erltc --build compile --src-dir examples/calc/src --build-dir examples/_build/default/lib/calc/build -o examples/_build/default/lib/calc/ebin -I examples/_build/default/lib/calc/include -pa examples/_build/default/lib/calc/ebin +debug_info +report_warnings calc.erlt calc_core.erlt calc_parser_ffi.erlt
+erlt --build compile --src-dir examples/calc/src --build-dir examples/_build/default/lib/calc/build -o examples/_build/default/lib/calc/ebin -I examples/_build/default/lib/calc/include -pa examples/_build/default/lib/calc/ebin +debug_info +report_warnings calc.erlt calc_core.erlt calc_parser_ffi.erlt
 
 ...
 
@@ -37,7 +37,7 @@ erltc --build compile --src-dir examples/calc/src --build-dir examples/_build/de
 
 Copy the command for the example you want to focus on.
 
-> Note: the rebar plugin does not shell out to erltc: it passes a list of strings in memory.
+> Note: the rebar plugin does not shell out to erlt: it passes a list of strings in memory.
 
 # To run tests
 

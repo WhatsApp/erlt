@@ -19,35 +19,35 @@ class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
     describe(iDirPath) {
       val file = new File(iDirPath)
       val sterlangOutDir = Files.createTempDirectory("sterlang")
-      val erltcBuildDir = Files.createTempDirectory("erltc_build")
-      val erltcEBinDir = Files.createTempDirectory("erltc_ebin")
+      val erltBuildDir = Files.createTempDirectory("erlt_build")
+      val erltEBinDir = Files.createTempDirectory("erlt_ebin")
 
       val moduleNames =
         file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
       val moduleArgs = moduleNames.map(_ ++ ".erlt").mkString(" ")
 
       s"./parser -idir $iDirPath -odir $sterlangOutDir".!!
-      s"./erltc --build compile --src-dir $iDirPath --build-dir $erltcBuildDir -o $erltcEBinDir $moduleArgs".!!
+      s"./erlt --build compile --src-dir $iDirPath --build-dir $erltBuildDir -o $erltEBinDir $moduleArgs".!!
 
       moduleNames.foreach { m =>
         val erltPath = s"$iDirPath/$m.erlt"
         it(erltPath) {
-          testModule(m, sterlangOutDir, erltcBuildDir)
-          testModuleApi(m, sterlangOutDir, erltcBuildDir)
+          testModule(m, sterlangOutDir, erltBuildDir)
+          testModuleApi(m, sterlangOutDir, erltBuildDir)
         }
       }
     }
   }
 
-  def testModule(module: String, devDir: Path, erltcDir: Path): Unit = {
+  def testModule(module: String, devDir: Path, erltDir: Path): Unit = {
     val devProgram = etf.programFromFileDev(s"$devDir/$module.etf")
-    val erltProgram = etf.programFromFileErlt(s"$erltcDir/$module.etf")
+    val erltProgram = etf.programFromFileErlt(s"$erltDir/$module.etf")
     assert(devProgram === erltProgram)
   }
 
-  def testModuleApi(module: String, devDir: Path, erltcDir: Path): Unit = {
+  def testModuleApi(module: String, devDir: Path, erltDir: Path): Unit = {
     val devModuleApi = etf.moduleApiFromFileDev(s"$devDir/$module.etf")
-    val erltModuleApi = etf.moduleApiFromFileErlt(s"$erltcDir/$module.defs.etf")
+    val erltModuleApi = etf.moduleApiFromFileErlt(s"$erltDir/$module.defs.etf")
     assert(devModuleApi === erltModuleApi)
   }
 }
