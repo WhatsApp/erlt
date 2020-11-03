@@ -114,10 +114,6 @@ do_file(File, Options0) ->
                 compile
         end,
 
-    % TODO: make sure that "ERL_COMPILER_OPTIONS" environment variable if
-    % defined, does not specify parse_transforms. Otherwise, we are risking
-    % running parse_transforms twice. Plus, we are going to be restricting how
-    % parse transforms can be specified anyway.
     EnvCompilerOptions = ?OTP_COMPILE:env_compiler_options(),
     Options = fix_compile_options(Options0 ++ EnvCompilerOptions, CompileMode),
 
@@ -157,7 +153,6 @@ do_file(File, Options0) ->
                         ?pass(erlt_typecheck),
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
-                        ?pass(transform_module),
                         ?pass(compile_erl1_forms),
                         ?pass(maybe_save_binary)
                     ];
@@ -187,7 +182,6 @@ do_file(File, Options0) ->
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
                         {iff, 'A', {src_listing, "A"}},
-                        ?pass(transform_module),
                         ?pass(compile_erl1_forms),
                         ?pass(maybe_save_binary)
                     ]
@@ -702,28 +696,6 @@ erlt_lint_types(Code, St) ->
 extract_options(Code0, #compile{options = Opt} = St) ->
     %% Extract compile options from code into options field.
     {ok, Code0, St#compile{options = Opt ++ ?OTP_COMPILE:compile_options(Code0)}}.
-
-%% NOTE: many differences from compile.erl version
-transform_module(Code0, #compile{options = Opt} = St) ->
-    case ?OTP_COMPILE:transforms(Opt) of
-        [] ->
-            %% No parse transforms.
-            {ok, Code0, St};
-        Ts ->
-            %% Remove parse_transform attributes from the abstract code to
-            %% prevent parse transforms to be run more than once.
-            Code =
-                case is_makedep2_mode(Opt) of
-                    true ->
-                        % keep parse_transform attributes in place -- they are
-                        % going to be retrieved by a later
-                        % collect_erl1_compile_deps() pass
-                        Code0;
-                    false ->
-                        ?OTP_COMPILE:clean_parse_transforms(Code0)
-                end,
-            ?OTP_COMPILE:foldl_transform(Ts, Code, St)
-    end.
 
 % defs files only depend on source_file
 can_be_dep_of_defs_file(Filename) ->
