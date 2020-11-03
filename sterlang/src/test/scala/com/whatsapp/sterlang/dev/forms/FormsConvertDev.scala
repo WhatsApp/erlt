@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.whatsapp.sterlang.forms
+package com.whatsapp.sterlang.dev.forms
 
 import com.whatsapp.sterlang.Doc
-import com.whatsapp.sterlang.etf._
+import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Forms._
+import com.whatsapp.sterlang.forms.r
 
 object FormsConvertDev {
   def fromEtf(term: ETerm): List[Form] = {

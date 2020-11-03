@@ -3,7 +3,8 @@ package com.whatsapp.sterlang.test.it
 import java.io.File
 import java.nio.file.{Files, Path}
 
-import com.whatsapp.sterlang.etf
+import com.whatsapp.sterlang.dev.EtfDev
+import com.whatsapp.sterlang.{EtfErltc, Etf}
 
 class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
 
@@ -40,14 +41,14 @@ class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testModule(module: String, devDir: Path, erltcDir: Path): Unit = {
-    val devProgram = etf.programFromFileDev(s"$devDir/$module.etf")
-    val erltProgram = etf.programFromFileErlt(s"$erltcDir/$module.etf")
+    val devProgram = EtfDev.programFromFile(s"$devDir/$module.etf")
+    val erltProgram = EtfErltc.programFromFile(s"$erltcDir/$module.etf")
     assert(devProgram === erltProgram)
   }
 
   def testModuleApi(module: String, devDir: Path, erltcDir: Path): Unit = {
-    val devModuleApi = etf.moduleApiFromFileDev(s"$devDir/$module.etf")
-    val erltModuleApi = etf.moduleApiFromFileErlt(s"$erltcDir/$module.defs.etf")
+    val devModuleApi = EtfDev.moduleApiFromFile(s"$devDir/$module.etf")
+    val erltModuleApi = EtfErltc.moduleApiFromFile(s"$erltcDir/$module.defs.etf")
     assert(devModuleApi === erltModuleApi)
   }
 }

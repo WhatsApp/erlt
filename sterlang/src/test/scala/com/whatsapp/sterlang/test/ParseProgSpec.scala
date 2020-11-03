@@ -18,11 +18,12 @@ package com.whatsapp.sterlang.test
 
 import com.whatsapp.sterlang.Ast._
 import com.whatsapp.sterlang.Doc.ZRange
-import com.whatsapp.sterlang.etf
+import com.whatsapp.sterlang.dev.EtfDev
+import com.whatsapp.sterlang.Etf
 
 class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
   def testProg(input: String, expProg: Program): Unit = {
-    val prog = etf.programFromString(input)
+    val prog = EtfDev.programFromString(input)
     assert(prog === expProg)
   }
 

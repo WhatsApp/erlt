@@ -6,7 +6,7 @@ import java.util.concurrent.{Executor, Executors}
 import scala.annotation.tailrec
 import sys.process._
 import com.ericsson.otp.erlang.{OtpErlangPid, OtpMbox, OtpNode}
-import com.whatsapp.sterlang.etf.{EAtom, EPid, ERef, EString, ETuple, ELong}
+import com.whatsapp.sterlang.Etf.{EAtom, EPid, ERef, EString, ETuple, ELong}
 
 object SterlangD extends Executor {
   def main(args: Array[String]): Unit = {
@@ -27,7 +27,7 @@ object SterlangD extends Executor {
   private[SterlangD] class Server(mbox: OtpMbox, executor: Executor) {
     @tailrec
     final def serve(): Unit = {
-      val msg = etf.fromJava(mbox.receive())
+      val msg = Etf.fromJava(mbox.receive())
       msg match {
         case ETuple(List(EAtom("check"), EPid(from), ref: ERef, EString(erltFile), EString(etfFile))) =>
           executor.execute(() => handleCheck(from, ref, erltFile, etfFile))
@@ -45,20 +45,20 @@ object SterlangD extends Executor {
       }
       val sterlangTime = System.currentTimeMillis() - start
       val response = ETuple(List(ref, result, ELong(sterlangTime)))
-      mbox.send(from, etf.toJava(response))
+      mbox.send(from, Etf.toJava(response))
     }
 
     private def processFile(erltFile: String, etfFile: String): Option[String] = {
       lazy val text = new String(Files.readAllBytes(Paths.get(erltFile)))
       val rawProgram =
-        try Driver.loadProgram(etfFile, Driver.Erlt)
+        try DriverErltc.loadProgram(etfFile)
         catch {
-          case error: ParseError  => return Some(Driver.parseErrorString(erltFile, text, error))
-          case error: RangedError => return Some(Driver.errorString(erltFile, text, error))
+          case error: ParseError  => return Some(DriverErltc.parseErrorString(erltFile, text, error))
+          case error: RangedError => return Some(DriverErltc.errorString(erltFile, text, error))
         }
       val vars = new Vars()
       val program = AstUtil.normalizeTypes(rawProgram)
-      val context = Driver.loadContext(etfFile, program, vars, Driver.Erlt).extend(program)
+      val context = DriverErltc.loadContext(etfFile, program, vars).extend(program)
       try {
         val astChecks = new AstChecks(context)
         astChecks.check(program)
@@ -66,7 +66,7 @@ object SterlangD extends Executor {
         elaborate.elaborate()
         None
       } catch {
-        case error: RangedError => Some(Driver.errorString(erltFile, text, error))
+        case error: RangedError => Some(DriverErltc.errorString(erltFile, text, error))
       }
     }
   }

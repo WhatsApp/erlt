@@ -20,6 +20,7 @@ import java.io.{BufferedWriter, File, FileWriter}
 import java.nio.file.Files
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.dev.DriverDev
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
@@ -35,14 +36,14 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   private def smokeTestDir(iDirPath: String): Unit = {
     ignore(s"smoke test: $iDirPath") {
-      Driver.main(Array(iDirPath))
+      DriverDev.main(Array(iDirPath))
     }
   }
 
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
     ignore(s"smoke test: $iDirPath/$module.erlt") {
-      Driver.main(Array(s"$iDirPath/$module.erlt"))
-      Driver.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
+      DriverDev.main(Array(s"$iDirPath/$module.erlt"))
+      DriverDev.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
     }
   }
 
@@ -95,10 +96,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
-    val rawProgram = Driver.loadProgram(etfPath, Driver.Dev)
+    val rawProgram = DriverDev.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Driver.loadContext(etfPath, program, vars, Driver.Dev).extend(program)
+    val context = DriverDev.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 

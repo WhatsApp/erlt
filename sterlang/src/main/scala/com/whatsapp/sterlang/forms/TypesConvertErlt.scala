@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.etf._
+import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Types._
 
 object TypesConvertErlt {
