@@ -16,11 +16,10 @@
 
 package com.whatsapp.sterlang
 
-import sys.process._
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.forms.{FormsConvertDev, FormsConvertErlt}
+import com.whatsapp.sterlang.forms.FormsConvertErlt
 
 package object etf {
 
@@ -34,33 +33,11 @@ package object etf {
   case class EPid(pid: OtpErlangPid) extends ETerm
   case class ERef(ref: OtpErlangRef) extends ETerm
 
-  def programFromFileDev(path: String): Ast.Program = {
-    val etf = etfFromFileDev(path)
-    val forms = FormsConvertDev.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    Ast.RawProgram(elems).program
-  }
-
   def programFromFileErlt(path: String): Ast.Program = {
     val etf = etfFromFileErlt(path)
     val forms = FormsConvertErlt.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
-  }
-
-  def moduleApiFromFileDev(path: String): ModuleApi = {
-    val etf = etfFromFileDev(path)
-    val forms = FormsConvertDev.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    val program = Ast.RawProgram(elems).program
-
-    ModuleApi(
-      enumDefs = program.enumDefs,
-      structDefs = program.structDefs,
-      aliases = program.typeAliases,
-      specs = program.specs,
-      opaques = List.empty,
-    )
   }
 
   def moduleApiFromFileErlt(path: String): ModuleApi = {
@@ -81,34 +58,7 @@ package object etf {
   private def etfFromFileErlt(file: String): ETerm =
     readEtf(Paths.get(file))
 
-  private def etfFromFileDev(path: String): ETerm = {
-    val etfPath =
-      if (path.endsWith(".etf")) {
-        Paths.get(path)
-      } else {
-        val tmp = Files.createTempFile("sterlang", ".etf")
-        s"./parser -ifile $path -ofile $tmp".!!
-        tmp
-      }
-    readEtf(etfPath)
-  }
-
-  def programFromString(text: String): Ast.Program = {
-    val etf = etfFromString(text)
-    val forms = FormsConvertDev.fromEtf(etf)
-    val elems = forms.flatMap(Convert.convertForm)
-    Ast.RawProgram(elems).program
-  }
-
-  private def etfFromString(text: String): ETerm = {
-    val tmpErlT = Files.createTempFile("sterlang", ".erlt")
-    Files.write(tmpErlT, text.getBytes)
-    val tmpEtf = Files.createTempFile("sterlang", ".etf")
-    s"./parser -ifile $tmpErlT -ofile $tmpEtf".!!
-    readEtf(tmpEtf)
-  }
-
-  private def readEtf(etfPath: Path): ETerm = {
+  def readEtf(etfPath: Path): ETerm = {
     val etfBytes = Files.readAllBytes(etfPath)
     val otpObject = new OtpInputStream(etfBytes).read_any()
     val eTerm = fromJava(otpObject)

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.whatsapp.sterlang.forms
+package com.whatsapp.sterlang.dev.forms
 
 import com.whatsapp.sterlang.etf._
-
 import com.whatsapp.sterlang.forms.Patterns._
+import com.whatsapp.sterlang.forms.r
 
 object PatternsConvertDev {
   def convertPat(term: ETerm): Pattern =

@@ -3,9 +3,9 @@ package com.whatsapp.sterlang.dev
 import java.io.File
 import java.nio.file.{Files, Paths}
 
-import scala.collection.mutable
-
 import com.whatsapp.sterlang._
+
+import scala.collection.mutable
 
 object DevDriver extends Driver {
   def main(args: Array[String]): Unit = {
@@ -127,7 +127,7 @@ object DevDriver extends Driver {
   }
 
   def loadProgram(file: String): Ast.Program =
-    etf.programFromFileDev(file)
+    DevEtf.programFromFileDev(file)
 
   // $COVERAGE-OFF$ interactive
   private def displayError(inputPath: String, inputContent: String, error: RangedError): Unit =
