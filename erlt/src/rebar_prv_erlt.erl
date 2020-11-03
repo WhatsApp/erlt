@@ -61,7 +61,7 @@ clean_app(AppInfo) ->
     verbose_level() >= 1 andalso
         rebar_log:info("Cleaning ~s/~s", [rebar_app_info:name(AppInfo), ?SRC_DIR]),
     Argv = ["--build", "clean" | Options],
-    call_erltc(Argv).
+    call_erlt(Argv).
 
 handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
     BaseDir = rebar_app_info:dir(AppInfo),
@@ -94,7 +94,7 @@ handle_dir(Task, AppInfo, SrcDir, OutputDir, CommonOptions, ErltOpts) ->
                 Options,
                 Sources
             ]),
-            case call_erltc(Argv) of
+            case call_erlt(Argv) of
                 ok ->
                     % We run this *after* call_erlt_build(), because
                     % erlt_build will create "ebin" directory, without which
@@ -137,11 +137,11 @@ make_erlt_dir_options(AppInfo, SrcDir) ->
             EbinDir
         ].
 
--spec call_erltc([string]) -> ok | error.
-call_erltc(Argv) ->
+-spec call_erlt([string]) -> ok | error.
+call_erlt(Argv) ->
     Repro = string:join(Argv, " "),
-    rebar_log:log(debug, "calling erlt_build. You can reproduce with:~n erltc ~s", [Repro]),
-    erltc:api(Argv).
+    rebar_log:log(debug, "calling erlt_build. You can reproduce with:~n erlt ~s", [Repro]),
+    erlt:api(Argv).
 
 validate_app_info(AppInfo) ->
     RebarOpts = rebar_app_info:opts(AppInfo),

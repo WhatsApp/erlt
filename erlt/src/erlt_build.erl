@@ -87,7 +87,7 @@ print_usage() ->
         ]
     ]).
 
-% entry point when called from erltc.erl
+% entry point when called from erlt.erl
 
 -spec main([string]) -> ok | error.
 main(Argv) ->

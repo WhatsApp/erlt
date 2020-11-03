@@ -37,7 +37,7 @@ clean(#args{build_dir = BuildDir, output_dir = OutputDir}) ->
     rmrf(BuildDir),
     rmrf(OutputDir).
 
-% calls erltc Phase on InputFiles in parallel
+% calls erlt Phase on InputFiles in parallel
 do_phase(Phase, #args{input_files = InputFiles} = Args) ->
     F = fun(InputFile) -> do_file(Phase, Args, InputFile) end,
     case p_map(F, InputFiles) of
@@ -88,7 +88,7 @@ do_file(
             "-o",
             OutputDir
         ] ++ PhaseArgs ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
-    erltc:api(Args).
+    erlt:api(Args).
 
 %% UTILITIES
 

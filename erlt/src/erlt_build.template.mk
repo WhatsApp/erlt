@@ -17,7 +17,7 @@
 # low-level build system for Erlang
 #
 # This file should not be used directly, but instead
-# is an implementation detail of erltc. See ./erlt_build.erl for details.
+# is an implementation detail of erlt. See ./erlt_build.erl for details.
 #
 # Input parameters. MUST be defined above upon applyng this template.
 #
