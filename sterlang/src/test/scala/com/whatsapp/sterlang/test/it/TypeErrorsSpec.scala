@@ -23,12 +23,13 @@ import com.whatsapp.sterlang._
 
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
-  val generateOut = false
-  val mode: Driver.Mode = Driver.Dev
+  val generateOut = true
+  val mode: Driver.Mode = Driver.Erlt
 
   testDir("examples/neg/src")
   testDir("examples/err/src")
-  testDir("examples/err2/src")
+  // TODO - enable when https://github.com/WhatsApp/erlt/issues/330 is fixed
+  // testDir("examples/err2/src")
 
   def testDir(srcDir: String): Unit = {
     import sys.process._
