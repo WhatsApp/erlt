@@ -2,6 +2,8 @@ let Util = ./util.dhall
 
 let run = Util.run
 
+let runEnv = Util.runEnv
+
 let checkout = Util.checkout
 
 let Actions = Util.Actions
@@ -39,6 +41,15 @@ let test =
         , run
             "test stErlang"
             "cd sterlang; sbt --client test"
+        , runEnv
+            "test erltc + stErlang in dev mode"
+            ''
+            cd sterlang
+            sbt --client 'bgRunMain com.whatsapp.sterlang.SterlangD'
+            cd examples
+            rebar3 compile
+            ''
+            (toMap { ERL_FLAGS = "-args_file dev.vm.args" })
         ]
       }
 

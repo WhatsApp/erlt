@@ -29,6 +29,16 @@ let usesWith =
         , `with` = Some `with`
         }
 
+let runEnv =
+      λ(name : Text) →
+      λ(run : Text) →
+      λ(env : List { mapKey : Text, mapValue : Text }) →
+        Actions.Step::{
+        , name = Some name
+        , run = Some run
+        , env = Some env
+        }
+
 let DEFAULT_RETENTION_DAYS = "8"
 
-in  { Actions, run, checkout, usesWith, DEFAULT_RETENTION_DAYS }
+in  { Actions, run, runEnv, checkout, usesWith, DEFAULT_RETENTION_DAYS }

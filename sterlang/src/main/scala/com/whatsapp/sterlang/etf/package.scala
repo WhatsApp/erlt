@@ -31,6 +31,8 @@ package object etf {
   case class ELong(value: BigInt) extends ETerm
   case class EString(str: String) extends ETerm
   case class ETuple(elems: List[ETerm]) extends ETerm
+  case class EPid(pid: OtpErlangPid) extends ETerm
+  case class ERef(ref: OtpErlangRef) extends ETerm
 
   def programFromFileDev(path: String): Ast.Program = {
     val etf = etfFromFileDev(path)
@@ -113,7 +115,7 @@ package object etf {
     eTerm
   }
 
-  private def fromJava(jObject: OtpErlangObject): ETerm =
+  def fromJava(jObject: OtpErlangObject): ETerm =
     jObject match {
       case otpTuple: OtpErlangTuple =>
         val elems = otpTuple.elements().toList.map(fromJava)
@@ -130,5 +132,29 @@ package object etf {
         EDouble(otpDouble.doubleValue())
       case otpString: OtpErlangString =>
         EString(otpString.stringValue())
+      case otpPid: OtpErlangPid =>
+        EPid(otpPid)
+      case otpRef: OtpErlangRef =>
+        ERef(otpRef)
+    }
+
+  def toJava(eTerm: ETerm): OtpErlangObject =
+    eTerm match {
+      case EAtom(atom) =>
+        new OtpErlangAtom(atom)
+      case EDouble(d) =>
+        new OtpErlangDouble(d)
+      case EList(elems) =>
+        new OtpErlangList(elems.map(toJava).toArray)
+      case ELong(value) =>
+        new OtpErlangLong(value.bigInteger)
+      case EString(str) =>
+        new OtpErlangString(str)
+      case ETuple(elems) =>
+        new OtpErlangTuple(elems.map(toJava).toArray)
+      case EPid(pid) =>
+        pid
+      case ERef(ref) =>
+        ref
     }
 }
