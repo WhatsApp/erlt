@@ -35,11 +35,11 @@ lazy val sterlang = (project in file("."))
   .settings(
     mainClass in assembly := Some("com.whatsapp.sterlang.DriverErltc"),
     assemblyJarName in assembly := "sterlang.jar",
-    resourceGenerators in Compile += parser.taskValue,
+    resourceGenerators in Test += parser.taskValue,
   )
 
 val parser = taskKey[Seq[File]]("Generate parser command line utility")
-parser / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
+parser / fileInputs += (Test / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
 
 // TODO - restore after re-integration
 coverageMinimum := 98
@@ -47,14 +47,17 @@ coverageFailOnMinimum := true
 
 parser := {
   val log = streams.value.log
-  val erlangSrcDir = (Compile / sourceDirectory).value / "erlang"
+  val erlangSrcDir = (Test / sourceDirectory).value / "erlang"
   val parserInput = erlangSrcDir / "parser"
-  val parserOutput = (Compile / resourceManaged).value / "parser"
+  val parserOutput = (Test / resourceManaged).value / "parser"
 
   if (parser.inputFileChanges.hasChanges) {
     import scala.sys.process.Process
+    log.info("parser: erlc parser.yrl")
     Process(Seq("erlc", "parser.yrl"), erlangSrcDir).!!
+    log.info("parser: erlc parser.erl")
     Process(Seq("erlc", "parser.erl"), erlangSrcDir).!!
+    log.info("parser: escript make_escript.erl")
     Process(Seq("escript", "make_escript.erl"), erlangSrcDir).!!
   }
 
