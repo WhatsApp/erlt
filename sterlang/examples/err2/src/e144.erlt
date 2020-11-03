@@ -13,5 +13,6 @@
 %% limitations under the License.
 
 -module(e144).
+-export_type([polymorphic_exn/2]).
 
 -exception polymorphic_exn(A, B) :: (value_a :: A, value_b :: B).

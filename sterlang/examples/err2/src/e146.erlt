@@ -13,5 +13,6 @@
 %% limitations under the License.
 
 -module(e146).
+-export_type([polymorphic_msg/2]).
 
 -message polymorphic_msg(A, B) :: (value_a :: A, value_b :: B).

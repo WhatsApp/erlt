@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e139).
+-export([shape_with_foo_bar/1, shape_with_foo/1]).
 
 -spec shape_with_foo(#(foo :: Foo, Other)) -> #(foo :: Foo, Other).
 shape_with_foo(Shape) -> shape_with_foo_bar(Shape).

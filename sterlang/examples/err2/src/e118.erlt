@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e118).
+-export([msg_update/1]).
 
 -message my_msg() :: (message :: string()).
 

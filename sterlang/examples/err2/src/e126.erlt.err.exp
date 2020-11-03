@@ -1,6 +1,6 @@
--- ERROR ------------------------------------- examples/err2/src/e126.erlt:23:18
+-- ERROR ------------------------------------- examples/err2/src/e126.erlt:24:18
 Type Mismatch
 Found:    #()
 Required: #( a :: number() )
- 23|     test(Shape2, Shape1).
+ 24|     test(Shape2, Shape1).
 ...|                  ~~~~~~

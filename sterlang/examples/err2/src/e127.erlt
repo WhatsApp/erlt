@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e127).
+-export([foo/1]).
 
 foo(Shape) ->
     Shape1 = Shape#(id1 = 1),

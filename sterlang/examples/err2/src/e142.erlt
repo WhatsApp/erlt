@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e142).
+-export([test/1]).
 
 %% Compare with examples/dev/shapes.erlt!
 %% Monomorphism restriction in action.
@@ -20,6 +21,6 @@
 test(F) ->
     Shape1 = #(id = 1),
     Shape2 = #(id = 2, bar = 3),
-    T1 = F(Shape1),
-    T2 = F(Shape2),
+    F(Shape1),
+    F(Shape2),
     false.

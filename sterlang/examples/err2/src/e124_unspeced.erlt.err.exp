@@ -1,7 +1,7 @@
 -- ERROR ----------------------------- examples/err2/src/e124_unspeced.erlt:19:1
 Fun: my_map/2 is exported, but lacks a spec
- 19| my_map(F, []) ->
-...| ~~~~~~~~~~~~~~~~
+ 19| my_map(_F, []) ->
+...| ~~~~~~~~~~~~~~~~~
 ...|     [];
 ...| ~~~~~~~
 ...| my_map(F, [H | T]) ->

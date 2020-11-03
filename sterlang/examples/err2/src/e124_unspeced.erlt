@@ -16,7 +16,7 @@
 
 -export([my_map/2]).
 
-my_map(F, []) ->
+my_map(_F, []) ->
     [];
 my_map(F, [H | T]) ->
     [F(H) | my_map(F, T)].

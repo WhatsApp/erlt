@@ -1,6 +1,6 @@
--- ERROR -------------------------------------- examples/err2/src/e139.erlt:17:1
+-- ERROR -------------------------------------- examples/err2/src/e139.erlt:18:1
 Spec mismatch for shape_with_foo/1
 Specified:  `fun((#( foo :: A, B )) -> #( foo :: A, B ))`
 Elaborated: `fun((#( bar :: B, foo :: A, C )) -> #( bar :: B, foo :: A, C ))`
- 17| -spec shape_with_foo(#(foo :: Foo, Other)) -> #(foo :: Foo, Other).
+ 18| -spec shape_with_foo(#(foo :: Foo, Other)) -> #(foo :: Foo, Other).
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

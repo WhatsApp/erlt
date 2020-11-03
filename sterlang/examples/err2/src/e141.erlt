@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e141).
+-export([get_foo/1]).
 
 -spec get_foo(#(foo :: Foo, _)) -> Foo.
-get_foo(#(foo = Foo, bar = Bar)) -> Foo.
+get_foo(#(foo = Foo, bar = _)) -> Foo.

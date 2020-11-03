@@ -1,6 +1,6 @@
--- ERROR ------------------------------------- examples/err2/src/e127.erlt:19:18
+-- ERROR ------------------------------------- examples/err2/src/e127.erlt:20:18
 Type Mismatch
 Found:    #( id1 :: number(), A )
 Required: #( id :: number() )
- 19|     #(id = 2) == Shape1.
+ 20|     #(id = 2) == Shape1.
 ...|                  ~~~~~~

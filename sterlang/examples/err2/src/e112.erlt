@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e112).
+-export([loop_step/2]).
 
 -message ping() :: (from :: pid()).
 -message pong() :: (in_answer_to :: message()).

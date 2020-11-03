@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e113).
+-export([test/0]).
 
 -message foo() :: (id :: integer()).
 

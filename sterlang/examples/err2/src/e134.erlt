@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e134).
+-export([test/1]).
 
 -spec test(#(id :: integer(), TVar)) -> TVar.
 test(X) -> X.

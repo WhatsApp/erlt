@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e114).
+-export([get_message/1]).
 
 get_message(M) ->
     try

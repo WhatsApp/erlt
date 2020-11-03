@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e148).
+-export_type([struct_with_bad_default/0]).
 
 -struct box(A) :: (value :: A).
 

@@ -13,6 +13,8 @@
 %% limitations under the License.
 
 -module(e121).
+-export([test_id/2]).
+-export_type([id/1]).
 
 -opaque id(A) :: A.
 

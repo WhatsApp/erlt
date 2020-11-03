@@ -1,6 +1,6 @@
--- ERROR ------------------------------------- examples/err2/src/e147.erlt:17:44
+-- ERROR ------------------------------------- examples/err2/src/e147.erlt:18:44
 Type Mismatch
 Found:    string()
 Required: number()
- 17| -struct struct_with_bad_default() :: (id = "" :: integer()).
+ 18| -struct struct_with_bad_default() :: (id = "" :: integer()).
 ...|                                            ^^

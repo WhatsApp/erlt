@@ -13,5 +13,6 @@
 %% limitations under the License.
 
 -module(e147).
+-export_type([struct_with_bad_default/0]).
 
 -struct struct_with_bad_default() :: (id = "" :: integer()).

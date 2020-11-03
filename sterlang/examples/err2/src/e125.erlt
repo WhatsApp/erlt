@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e125).
+-export([test_me/0]).
 
 %% API
 test(X, Y) -> X == Y.

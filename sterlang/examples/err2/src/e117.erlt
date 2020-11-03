@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e117).
+-export([exn_update/1]).
 
 -exception my_exn() :: (message :: string()).
 

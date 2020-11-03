@@ -1,6 +1,6 @@
--- ERROR -------------------------------------- examples/err2/src/e112.erlt:26:9
+-- ERROR -------------------------------------- examples/err2/src/e112.erlt:27:9
 Type Mismatch
 Found:    exception()
 Required: message()
- 26|         #foo{}  -> "foo";
+ 27|         #foo{}  -> "foo";
 ...|         ~~~~~~

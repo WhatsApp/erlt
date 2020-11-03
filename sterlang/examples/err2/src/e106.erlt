@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e106).
+-export([test/1]).
 
 -struct foo() :: (id :: integer()).
 

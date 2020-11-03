@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e122).
+-export([test_f/1]).
 
 -type f(A, B) :: fun((A) -> B).
 

@@ -1,6 +1,6 @@
--- ERROR -------------------------------------- examples/err2/src/e101.erlt:22:5
+-- ERROR -------------------------------------- examples/err2/src/e101.erlt:23:5
 Type Mismatch
 Found:    foo()
 Required: bar()
- 22|     Foo#bar{id = 2}.
+ 23|     Foo#bar{id = 2}.
 ...|     ~~~
