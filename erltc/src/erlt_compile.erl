@@ -748,7 +748,7 @@ run_sterlang(St) ->
                 Res1 =
                     receive
                         {'DOWN', Ref, _, _, noconnection} ->
-                            {daemon, {error, undefined, "No connecttion to sterlangd@localhost"},
+                            {daemon, {error, undefined, "No connection to sterlangd@localhost"},
                                 undefined};
                         {'DOWN', Ref, _, _, Reason} ->
                             Error = io_lib:format(
