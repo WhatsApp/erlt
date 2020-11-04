@@ -3,4 +3,4 @@ Type Mismatch
 Found:    box(number())
 Required: number()
  20| -struct struct_with_bad_default() :: (id = #box{value = 1} :: integer()).
-...|                                            ~~~~~~~~~~~~~~
+...|                                            ~~~~~~~~~~~~~~~

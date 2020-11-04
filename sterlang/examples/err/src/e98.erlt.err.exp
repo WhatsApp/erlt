@@ -3,4 +3,4 @@ Type Mismatch
 Found:    bar()
 Required: foo()
  24|         true -> #bar{}
-...|                 ^
+...|                 ~~~~~~

@@ -3,4 +3,4 @@ Type Mismatch
 Found:    bar()
 Required: foo()
  22|     Foo#foo{id = 1} == Bar#bar{id = 2}.
-...|                        ~~~~~~~~~~~~~~
+...|                        ~~~~~~~~~~~~~~~
