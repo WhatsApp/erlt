@@ -555,7 +555,7 @@ maybe_save_binary(Code, St) ->
     end.
 
 format_error({sterlang, Output}) ->
-    io_lib:format("Type checking: ~n~s~n", [Output]);
+    io_lib:format("Type checking: ~n~s", [Output]);
 format_error({module_dependency, defs_dependency, Mod}) ->
     io_lib:format("can't find ~s.~s", [Mod, ?DefFileSuffix]);
 format_error({module_dependency, ModuleDepType, Mod}) ->
@@ -692,8 +692,12 @@ get_erlt_deps(Forms, St0) ->
     F = St0#compile.ifile,
     [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
 
+-type range() ::
+    {{Line1 :: integer(), Column1 :: integer()}, {Line2 :: integer(), Column2 :: integer()}}
+    | undefined.
+
 -record(sterlang_result, {
-    result :: {ok} | {error, string()},
+    result :: {ok} | {error, range(), string()},
     mode :: native | jar | daemon | skipped,
     erltc_time :: non_neg_integer(),
     st_time :: non_neg_integer()
@@ -705,9 +709,15 @@ erlt_typecheck(Code, St) ->
     case Res of
         {ok} ->
             {ok, Code, St};
-        {error, ErrMessage} ->
-            Error = {St#compile.filename, [{_ErrorLine = none, ?MODULE, {sterlang, ErrMessage}}]},
-            {error, St#compile{errors = [Error]}}
+        {error, Range, ErrMessage} ->
+            Location =
+                case Range of
+                    {Loc1, Loc2} -> [{location, Loc1}, {end_location, Loc2}];
+                    _ -> none
+                end,
+            Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
+            Errors = St#compile.errors ++ [Error],
+            {error, St#compile{errors = Errors}}
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
@@ -722,9 +732,9 @@ run_sterlang(St) ->
     {CmdMode, CheckCmd} =
         case {filelib:is_regular("sterlang"), filelib:is_regular("sterlang.jar")} of
             {true, _} ->
-                {native, lists:append(["sterlang ", IFile, " ", EtfFile])};
+                {native, lists:append(["./sterlang ", IFile, " ", EtfFile])};
             {_, true} ->
-                {jar, lists:append(["java -jar sterlang.jar", IFile, " ", EtfFile])};
+                {jar, lists:append(["java -jar sterlang.jar ", IFile, " ", EtfFile])};
             _ ->
                 {undefined, undefined}
         end,
@@ -734,17 +744,18 @@ run_sterlang(St) ->
                 {skipped, {ok}, undefined};
             {undefined, true} ->
                 Ref = erlang:monitor(process, {api, sterlangd@localhost}),
-                {api, sterlangd@localhost} ! {check, self(), Ref, IFile, EtfFile},
+                {api, sterlangd@localhost} ! {check, self(), Ref, EtfFile},
                 Res1 =
                     receive
                         {'DOWN', Ref, _, _, noconnection} ->
-                            {daemon, {error, "No connecttion to sterlangd@localhost"}, undefined};
+                            {daemon, {error, undefined, "No connecttion to sterlangd@localhost"},
+                                undefined};
                         {'DOWN', Ref, _, _, Reason} ->
                             Error = io_lib:format(
                                 "Connection to sterlangd@localhost failed. Reason: ~p",
                                 [Reason]
                             ),
-                            {daemon, {error, Error}, undefined};
+                            {daemon, {error, undefined, Error}, undefined};
                         {Ref, Res, StTime} ->
                             {daemon, Res, StTime}
                     end,
@@ -752,8 +763,11 @@ run_sterlang(St) ->
                 Res1;
             _ ->
                 case eunit_lib:command(CheckCmd) of
-                    {0, _} -> {CmdMode, {ok}, undefined};
-                    {_, Output} -> {CmdMode, {error, Output}, undefined}
+                    {0, StdOutOutput} ->
+                        {Res, StTime} = binary_to_term(list_to_binary(StdOutOutput)),
+                        {CmdMode, Res, StTime};
+                    {_, Output} ->
+                        {CmdMode, {error, undefined, Output}, undefined}
                 end
         end,
     End = erlang:monotonic_time('millisecond'),
