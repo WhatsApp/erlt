@@ -1,12 +1,11 @@
 package com.whatsapp.sterlang
 
-import java.nio.file.{Files, Paths}
 import java.util.concurrent.{Executor, Executors}
 
 import scala.annotation.tailrec
 import sys.process._
 import com.ericsson.otp.erlang.{OtpErlangPid, OtpMbox, OtpNode}
-import com.whatsapp.sterlang.Etf.{EAtom, EPid, ERef, EString, ETuple, ELong}
+import com.whatsapp.sterlang.Etf.{EAtom, ELong, EPid, ERef, EString, ETerm, ETuple}
 
 object SterlangD extends Executor {
   def main(args: Array[String]): Unit = {
@@ -29,32 +28,30 @@ object SterlangD extends Executor {
     final def serve(): Unit = {
       val msg = Etf.fromJava(mbox.receive())
       msg match {
-        case ETuple(List(EAtom("check"), EPid(from), ref: ERef, EString(erltFile), EString(etfFile))) =>
-          executor.execute(() => handleCheck(from, ref, erltFile, etfFile))
+        case ETuple(List(EAtom("check"), EPid(from), ref: ERef, EString(etfFile))) =>
+          executor.execute(() => handleCheck(from, ref, etfFile))
         case EAtom("exit") =>
           return
       }
       serve()
     }
 
-    private def handleCheck(from: OtpErlangPid, ref: ERef, erltFile: String, etfFile: String): Unit = {
+    private def handleCheck(from: OtpErlangPid, ref: ERef, etfFile: String): Unit = {
       val start = System.currentTimeMillis()
-      val result = processFile(erltFile, etfFile) match {
-        case Some(errorString) => ETuple(List(EAtom("error"), EString(errorString)))
-        case None              => ETuple(List(EAtom("ok")))
+      val result = processFile(etfFile) match {
+        case Some(error) => convertError(error)
+        case None        => ETuple(List(EAtom("ok")))
       }
       val sterlangTime = System.currentTimeMillis() - start
       val response = ETuple(List(ref, result, ELong(sterlangTime)))
       mbox.send(from, Etf.toJava(response))
     }
 
-    private def processFile(erltFile: String, etfFile: String): Option[String] = {
-      lazy val text = new String(Files.readAllBytes(Paths.get(erltFile)))
+    private def processFile(etfFile: String): Option[SterlangError] = {
       val rawProgram =
         try DriverErltc.loadProgram(etfFile)
         catch {
-          case error: ParseError => return Some(DriverErltc.posErrorString(erltFile, text, error))
-          case error: RangeError => return Some(DriverErltc.rangeErrorString(erltFile, text, error))
+          case error: SterlangError => return Some(error)
         }
       val vars = new Vars()
       val program = AstUtil.normalizeTypes(rawProgram)
@@ -66,8 +63,23 @@ object SterlangD extends Executor {
         elaborate.elaborate()
         None
       } catch {
-        case error: RangeError => Some(DriverErltc.rangeErrorString(erltFile, text, error))
+        case error: SterlangError => Some(error)
       }
     }
   }
+
+  private def convertPos(pos: Doc.Pos): ETerm =
+    ETuple(List(ELong(pos.line.toLong), ELong(pos.column.toLong)))
+
+  private def convertRange(range: Doc.Range): ETerm =
+    ETuple(List(convertPos(range.start), convertPos(range.end)))
+
+  private def convertError(error: SterlangError): ETerm =
+    error match {
+      case PosError(pos, title) =>
+        ETuple(List(EAtom("error"), convertPos(pos), EString(title)))
+      case RangeError(range, title, description) =>
+        val msg = (List(title) ++ description.toList).mkString("\n")
+        ETuple(List(EAtom("error"), convertRange(range), EString(msg)))
+    }
 }
