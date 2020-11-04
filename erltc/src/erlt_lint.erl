@@ -52,10 +52,6 @@
 %% our added checks
 keep_error({unpinned_var, _V, _In}, _Def) ->
     true;
-keep_error(dotted_module_name, _Def) ->
-    true;
-keep_error(illegal_dot, _Def) ->
-    true;
 keep_error(illegal_caret, _Def) ->
     true;
 keep_error({redefine_enum, _T, _C}, _Def) ->
@@ -413,12 +409,8 @@ format_error(illegal_bin_pattern) ->
     "binary patterns cannot be matched in parallel using '='";
 format_error(illegal_expr) ->
     "illegal expression";
-format_error(illegal_dot) ->
-    "illegal dot operator";
 format_error(illegal_caret) ->
     "operator ^ is only allowed in patterns";
-format_error(dotted_module_name) ->
-    "module names may not be dotted";
 format_error({illegal_guard_local_call, {F, A}}) ->
     io_lib:format("call to local/imported function ~tw/~w is illegal in guard", [F, A]);
 format_error(illegal_guard_expr) ->
@@ -2001,11 +1993,6 @@ pattern({op, _Line, '++', {cons, Li, {integer, _L2, _I}, T}, R}, Vt, Old, St) ->
 pattern({op, _Line, '++', {string, _Li, _S}, R}, Vt, Old, St) ->
     %String unimportant here
     pattern(R, Vt, Old, St);
-pattern({op, _Line, '.', E, {atom, _, _}}, Vt, Old, St) ->
-    %% we only allow the right hand side to be an atom: X.a, but not X.Y
-    pattern(E, Vt, Old, St);
-pattern({op, Line, '.', _, _}, _Vt, _Old, St) ->
-    {[], [], add_error(Line, illegal_dot, St)};
 pattern({match, _Line, Pat1, Pat2}, Vt, Old, St0) ->
     {Lvt, Lnew, St1} = pattern(Pat1, Vt, Old, St0),
     {Rvt, Rnew, St2} = pattern(Pat2, Vt, Old, St1),
@@ -2536,11 +2523,6 @@ gexpr({op, _, 'andalso', L, R}, Vt, St) ->
     gexpr_list([L, R], Vt, St);
 gexpr({op, _, 'orelse', L, R}, Vt, St) ->
     gexpr_list([L, R], Vt, St);
-gexpr({op, _, '.', E, {atom, _, _}}, Vt, St) ->
-    %% we only allow the right hand side to be an atom: X.a, but not X.Y
-    gexpr(E, Vt, St);
-gexpr({op, Line, '.', _, _}, _Vt, St) ->
-    {[], add_error(Line, illegal_dot, St)};
 gexpr({op, Line, Op, L, R}, Vt, St0) ->
     {Avt, St1} = gexpr_list([L, R], Vt, St0),
     case is_gexpr_op(Op, 2) of
@@ -2797,9 +2779,6 @@ expr({named_fun, Line, Name, Cs}, Vt, St0) ->
     {Csvt, St2} = fun_clauses(Cs, Nvt1, St1),
     {_, St3} = check_unused_vars(vtupdate(Csvt, Nvt0), [], St2),
     {vtold(Csvt, Vt), St3};
-expr({call, Line, {op, _, '.', {atom, _, ''}, F}, As}, Vt, St) ->
-    %% a '.'-prefixed call may have a dotted atom on the right hand side
-    expr({call, Line, F, As}, Vt, St);
 expr({call, Line, {remote, _, {atom, _, erlang}, {atom, _, is_record}}, [_, _]}, _Vt, St) ->
     {[], add_error(Line, unsupported_is_record, St)};
 expr({call, Line, {remote, _Lr, {atom, _Lm, M}, {atom, Lf, F}}, As}, Vt, St0) ->
@@ -2926,11 +2905,6 @@ expr({op, Line, Op, L, R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
     {Evt2, St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op, Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3), St2};
-expr({op, _Line, '.', E, {atom, _, _}}, Vt, St) ->
-    %% we only allow the right hand side to be an atom: X.a, but not X.Y
-    expr(E, Vt, St);
-expr({op, Line, '.', _, _}, _Vt, St) ->
-    {[], add_error(Line, illegal_dot, St)};
 expr({op, _Line, _Op, L, R}, Vt, St) ->
     expr_list([L, R], Vt, St);
 %They see the same variables
@@ -3463,9 +3437,6 @@ check_type({var, L, Name}, SeenVars, St) ->
             error -> maps:put(Name, {seen_once, L}, SeenVars)
         end,
     {NewSeenVars, St};
-%% check_type({op, _L, '.', T, {atom, _, _}}, SeenVars, St) ->
-%%     %% dot atom qualifier
-%%     check_type(T, SeenVars, St);
 check_type({type, L, bool, []}, SeenVars, St) ->
     {SeenVars, add_warning(L, {renamed_type, bool, boolean}, St)};
 check_type({type, L, 'fun', [Dom, Range]}, SeenVars, St) ->
@@ -3751,16 +3722,6 @@ is_fa(_) ->
     false.
 
 check_module_name(M, Line, St) ->
-    case erlt_parse:split_dotted(M) of
-        [_, "specs" | _] ->
-            check_module_name_1(M, Line, St);
-        [_, _ | _] ->
-            add_error(Line, dotted_module_name, St);
-        _ ->
-            check_module_name_1(M, Line, St)
-    end.
-
-check_module_name_1(M, Line, St) ->
     case is_latin1_name(M) of
         true -> St;
         false -> add_error(Line, non_latin1_module_unsupported, St)
