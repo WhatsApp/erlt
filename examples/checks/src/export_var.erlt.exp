@@ -1,1 +1,1 @@
-export_var.erlt:14:10: variable 'Y' exported from 'case' (line 8, column 5)
+export_var.erlt:14:12: variable 'Y' exported from 'case' (line 8, column 5)

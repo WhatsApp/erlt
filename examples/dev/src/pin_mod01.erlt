@@ -20,39 +20,39 @@
 f(X) ->
     Y = 42,
     case X of
-        ^Y -> {that, Y};
-        Z -> {this, Z}
+        ^Y -> {'that', Y};
+        Z -> {'this', Z}
     end.
 
 [unchecked]
 g(X) ->
     Y = 42,
     case X of
-        {foo, [^Y|Zs]} -> {that, Y, Zs};
-        {foo, [Z|Zs]} -> {this, Z, Zs};
-        Z -> {other, Z}
+        {'foo', [^Y|Zs]} -> {'that', Y, Zs};
+        {'foo', [Z|Zs]} -> {'this', Z, Zs};
+        Z -> {'other', Z}
     end.
 
 [unchecked]
 h(X) ->
     Y = 42,
-    {ok, ^Y} = X,  % assert
+    {'ok', ^Y} = X,  % assert
     true.
 
 [unchecked]
 i(Elem, List1, List2) ->
     Foo = 42,
-    [found || ^Elem <- List1, {foo, ^Foo}<-List2].
+    ['found' || ^Elem <- List1, {'foo', ^Foo}<-List2].
 
 [unchecked]
 i2(Elem, List1, List2, List3) ->
-    [Elem || ^Elem <- List1, {foo, ^Elem}<-List2, {bar, ^Elem}<-List3].
+    [Elem || ^Elem <- List1, {'foo', ^Elem}<-List2, {'bar', ^Elem}<-List3].
 
 [unchecked]
 j(Elem, List) ->
     Foo = 42,
     lists:filter(fun(^Elem) -> true;
-                    ({foo, ^Foo}) -> true;
+                    ({'foo', ^Foo}) -> true;
                     (_) -> false
                  end,
                  List).
@@ -63,37 +63,37 @@ j2(X) ->
     fun Test(^X) -> Test(X) end,
     %% not working yet
     %% fun Test(^Test) -> Test(Test) end
-    ok.
+    'ok'.
 
 [unchecked]
 k(X, Y) ->
     case X of
-        {a, ^X} -> {b, X};
-        {a, ^Y} when X < Y; Y > X -> {b, Y};
-        {b, ^Y} ->
+        {'a', ^X} -> {'b', X};
+        {'a', ^Y} when X < Y; Y > X -> {'b', Y};
+        {'b', ^Y} ->
             Z = {X, Y},
             case Y of
-                {c, ^X} -> {d, X};
-                {c, ^Y} when X < Y; Y > X -> {d, Y};
-                {d, ^X} -> {d, Y};
-                {d, ^Z} -> {z, Z}
+                {'c', ^X} -> {'d', X};
+                {'c', ^Y} when X < Y; Y > X -> {'d', Y};
+                {'d', ^X} -> {'d', Y};
+                {'d', ^Z} -> {'z', Z}
             end
     end.
 
 [unchecked]
 m(X, Y) ->
-    fun ({foo, ^X, Z}) -> Z;
-        ({bar, ^X, Z}) ->
+    fun ({'foo', ^X, Z}) -> Z;
+        ({'bar', ^X, Z}) ->
             case X of
-                {ok, ^X} -> {ok, Z};
-                error -> error
+                {'ok', ^X} -> {'ok', Z};
+                'error' -> 'error'
             end;
-        ({baz, ^Y, Z}) -> Z
+        ({'baz', ^Y, Z}) -> Z
     end.
 
 [unchecked]
 p(F, Class) ->
-    Term = {x, 42},
+    Term = {'x', 42},
     try
         F()
     catch
@@ -103,5 +103,5 @@ p(F, Class) ->
 [unchecked]
 q(Bin, Size, B) ->
     case Bin of
-        <<^B:Size/binary>> -> ok
+        <<^B:Size/binary>> -> 'ok'
     end.

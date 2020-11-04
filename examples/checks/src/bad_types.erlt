@@ -10,7 +10,7 @@
 
 -type s_int() :: 0.
 
--type s_atom() :: hello.
+-type s_atom() :: 'hello'.
 
 -type s_char() :: $a.
 

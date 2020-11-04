@@ -1960,6 +1960,8 @@ pattern({float, _Line, _F}, _Vt, _Old, St) ->
     {[], [], St};
 pattern({atom, Line, A}, _Vt, _Old, St) ->
     {[], [], keyword_warning(Line, A, St)};
+pattern({atom_expr, _, _}, _Vt, _Old, St) ->
+    {[], [], St};
 pattern({string, _Line, _S}, _Vt, _Old, St) ->
     {[], [], St};
 pattern({nil, _Line}, _Vt, _Old, St) ->
@@ -2433,6 +2435,8 @@ gexpr({float, _Line, _F}, _Vt, St) ->
     {[], St};
 gexpr({atom, Line, A}, _Vt, St) ->
     {[], keyword_warning(Line, A, St)};
+gexpr({atom_expr, _, _}, _Vt, St) ->
+    {[], St};
 gexpr({string, _Line, _S}, _Vt, St) ->
     {[], St};
 gexpr({nil, _Line}, _Vt, St) ->
@@ -2588,6 +2592,8 @@ is_gexpr({float, _L, _F}, _St) ->
     true;
 is_gexpr({atom, _L, _A}, _St) ->
     true;
+is_gexpr({atom_expr, _, _}, _St) ->
+    true;
 is_gexpr({string, _L, _S}, _St) ->
     true;
 is_gexpr({nil, _L}, _St) ->
@@ -2685,6 +2691,8 @@ expr({float, _Line, _F}, _Vt, St) ->
     {[], St};
 expr({atom, Line, A}, _Vt, St) ->
     {[], keyword_warning(Line, A, St)};
+expr({atom_expr, _, _}, _Vt, St) ->
+    {[], St};
 expr({string, _Line, _S}, _Vt, St) ->
     {[], St};
 expr({nil, _Line}, _Vt, St) ->
@@ -4013,9 +4021,9 @@ catch_head([_], _Line, _Vt0, St0) ->
     {[], St0}.
 
 validate_catch_kind({var, _, _}, St) -> St;
-validate_catch_kind({atom, _, exit}, St) -> St;
-validate_catch_kind({atom, _, error}, St) -> St;
-validate_catch_kind({atom, _, throw}, St) -> St;
+validate_catch_kind({atom_expr, _, exit}, St) -> St;
+validate_catch_kind({atom_expr, _, error}, St) -> St;
+validate_catch_kind({atom_expr, _, throw}, St) -> St;
 validate_catch_kind({op, _, '^', {var, _, _}}, St) -> St;
 validate_catch_kind(Other, St) -> add_error(element(2, Other), illegal_catch_kind, St).
 

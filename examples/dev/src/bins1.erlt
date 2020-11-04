@@ -29,11 +29,11 @@ mk_bins() ->
 match_bins([<<>> | Rest]) -> match_bins(Rest);
 match_bins([Next|Rest]) ->
     case Next of
-        <<1>> -> ok;
-        <<1:12>> -> ok;
-        <<1.5:64/float>> -> ok;
-        <<X:2/integer-unit:8>> when X =:= 1 -> ok;
-        << Bin/binary >> when Bin =:= <<2>> -> ok
+        <<1>> -> 'ok';
+        <<1:12>> -> 'ok';
+        <<1.5:64/float>> -> 'ok';
+        <<X:2/integer-unit:8>> when X =:= 1 -> 'ok';
+        << Bin/binary >> when Bin =:= <<2>> -> 'ok'
     end,
     match_bins(Rest);
-match_bins([]) -> ok.
+match_bins([]) -> 'ok'.

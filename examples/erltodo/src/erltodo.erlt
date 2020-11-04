@@ -41,13 +41,13 @@ prompt(Todos) ->
             "3. view stats~n~n"
     ),
      case io:read("Enter a number followed by a dot: ") of
-         {ok, 1} ->
+         {'ok', 1} ->
              prompt_add_todo();
-         {ok, 2} ->
+         {'ok', 2} ->
              prompt_delete_todo(Todos);
-         {ok, 3} ->
+         {'ok', 3} ->
              choice.view_stats;
-         {ok, _} ->
+         {'ok', _} ->
              invalid_input(),
              prompt(Todos)
      end.
@@ -55,9 +55,9 @@ prompt(Todos) ->
 [unchecked]
 prompt_add_todo() ->
     case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
-        {ok, TodoText} when is_list(TodoText) ->
+        {'ok', TodoText} when is_list(TodoText) ->
             choice.add{TodoText};
-        {ok, Res} ->
+         {'ok', Res} ->
             erlang:display(Res),
             invalid_input(),
             prompt_add_todo()
@@ -67,27 +67,26 @@ prompt_add_todo() ->
 prompt_delete_todo(Todos) ->
     display_todos(Todos),
     case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
-        {ok, Id} when is_integer(Id) ->
+        {'ok', Id} when is_integer(Id) ->
             choice.delete{Id};
-        {ok, _} ->
+        {'ok', _} ->
             invalid_input(),
             prompt_delete_todo(Todos)
     end.
-
 
 %% display stuff
 -spec display_stats(state()) -> atom().
 [unchecked]
 display_stats(#state{todos = [], deleted_count=0}) ->
     io:format("You haven't started yet: try creating and deleting todos~n"),
-    {ok, _} = io:read("type ok followed by a dot to continue. "),
-    ok;
+    {'ok', _} = io:read("type ok followed by a dot to continue. "),
+    'ok';
 display_stats(#state{todos = Todos, deleted_count = DeletedCount}) ->
     line(),
     io:format("You have ~p active todos and ~p deleted todos", [length(Todos), DeletedCount]),
     line(),
-    {ok, _} = io:read("type ok followed by a dot to continue. "),
-    ok.
+    {'ok', _} = io:read("type ok followed by a dot to continue. "),
+    'ok'.
 
 -spec display_todos(list(string())) -> atom().
 [unchecked]
@@ -95,7 +94,7 @@ display_todos([]) ->
     line(),
     io:format("You have no todos~n"),
     line(),
-    ok;
+    'ok';
 display_todos(Todos) ->
     line(),
     io:format("Your todos are:~n"),
@@ -103,7 +102,7 @@ display_todos(Todos) ->
         io:format("~p. ~p~n", [Index, Todo])
     || { Index, Todo } <- with_indices(Todos)],
     line(),
-    ok.
+    'ok'.
 
 [unchecked]
 line() ->
@@ -119,9 +118,7 @@ with_indices(List) ->
     Indices = lists:seq(length(List), 1, -1),
     lists:zip(Indices, List).
 
--spec splice(number(), list(A)) -> list(A).
 [unchecked]
 splice(Index, List) ->
     {Left, [_|Right]} = lists:split(Index - 1, List),
     Left ++ Right.
-

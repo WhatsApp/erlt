@@ -121,6 +121,8 @@ process_def(Type, St) ->
             add_error(Line, {singleton_type, char}, St);
         {atom, Line, _A} ->
             add_error(Line, {singleton_type, atom}, St);
+        {atom_expr, Line, _A} ->
+            add_error(Line, {singleton_type, atom}, St);
         {op, Line, _Args} ->
             add_error(Line, arith_ops, St);
         {type, Line, map, any} ->

@@ -1,3 +1,3 @@
 undefined_caret_var.erlt:7:4: variable 'X' is unbound
-undefined_caret_var.erlt:12:12: variable 'Q' is unbound
-undefined_caret_var.erlt:17:16: variable 'Q' is unbound
+undefined_caret_var.erlt:12:14: variable 'Q' is unbound
+undefined_caret_var.erlt:17:18: variable 'Q' is unbound
