@@ -16,53 +16,38 @@
 
 package com.whatsapp.sterlang
 
-import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.Paths
+
+import com.ericsson.otp.erlang.{OtpExternal, OtpOutputStream}
+import com.whatsapp.sterlang.Etf._
 
 import scala.collection.mutable
 
 object DriverErltc extends Driver {
 
-  def main(args: Array[String]): Unit = {
-    val options = args.toList.filter(_.startsWith("-")).toSet
-    val files = args.filter(a => !a.startsWith("-"))
-    process(options, files.toList)
-  }
+  def main(args: Array[String]): Unit =
+    process(args.toList)
 
-  private def process(options: Set[String], files: List[String]): Unit = {
-    files match {
-      case List(p) =>
-        val file = new File(p)
-        assert(file.exists())
-        if (file.isDirectory) {
-          val files: Array[File] = file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt"))
-          files.sortBy(_.getPath).foreach(f => processFile(options, f.getPath, None))
-        } else {
-          processFile(options, p, None)
-        }
-      case List(erltFile, etfFile) =>
-        processFile(options, erltFile, Some(etfFile))
+  private def process(files: List[String]): Unit = {
+    val List(_, etfFile) = files
+    val start = System.currentTimeMillis()
+    processFile(etfFile)
+    val sterlangTime = System.currentTimeMillis() - start
+    val result = processFile(etfFile) match {
+      case Some(error) => convertError(error)
+      case None        => ETuple(List(EAtom("ok")))
     }
+    val response = ETuple(List(result, ELong(sterlangTime)))
+    stdoutResponse(response)
   }
 
-  private def processFile(options: Set[String], erltFile: String, etfFile: Option[String]): Unit = {
-    lazy val text = new String(Files.readAllBytes(Paths.get(erltFile)))
-    val mainFile = etfFile.getOrElse(erltFile)
+  private def processFile(etfFile: String): Option[SterlangError] = {
+    val mainFile = etfFile
     val rawProgram =
-      try {
-        loadProgram(mainFile)
-      } catch {
-        // $COVERAGE-OFF$ interactive
-        case error: PosError =>
-          displayPosError(erltFile, text, error)
-          sys.exit(2)
-        case error: RangeError =>
-          displayRangeError(erltFile, text, error)
-          sys.exit(2)
-        // $COVERAGE-ON$
-      }
-    val program = AstUtil.normalizeTypes(rawProgram)
+      try loadProgram(mainFile)
+      catch { case error: SterlangError => return Some(error) }
     val vars = new Vars()
+    val program = AstUtil.normalizeTypes(rawProgram)
     val depContext = loadContext(mainFile, program, vars)
     val context = depContext.extend(program)
 
@@ -70,25 +55,17 @@ object DriverErltc extends Driver {
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       val elaborate = new Elaborate(vars, context, program)
-      val (annFuns, env) = elaborate.elaborate()
+      elaborate.elaborate()
 
-      // Check patterns and print warnings, if any.
-      if (options.contains("--check-patterns")) {
-        val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
-        // $COVERAGE-OFF$ interactive
-        warnings.foreach(displayRangeError(erltFile, text, _))
-        // $COVERAGE-ON$
-      }
-
+      // TODO - https://github.com/WhatsApp/erlt/issues/336
+      // if (options.contains("--check-patterns")) {
+      //  val warnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annFuns)
+      //  warnings.foreach(displayRangeError(erltFile, text, _))
+      //}
       // checking them in the very end - since it is possible to present inferred types here
       astChecks.checkPublicSpecs(program)
-    } catch {
-      // $COVERAGE-OFF$ interactive
-      case error: RangeError =>
-        displayRangeError(erltFile, text, error)
-        sys.exit(2)
-      // $COVERAGE-ON$
-    }
+      None
+    } catch { case error: SterlangError => Some(error) }
   }
 
   private def freshTypeVar(vars: Vars): Types.Type =
@@ -116,8 +93,6 @@ object DriverErltc extends Driver {
         val moduleDeps = AstUtil.getDeps(program)
         loaded += module
         moduleDeps.filterNot(loaded).foreach(queue.enqueue)
-      } else {
-        Console.println(s"Warning: cannot load module $module")
       }
     }
 
@@ -145,14 +120,6 @@ object DriverErltc extends Driver {
   def loadProgram(file: String): Ast.Program =
     EtfErltc.programFromFile(file)
 
-  // $COVERAGE-OFF$ interactive
-  private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit =
-    Console.println(rangeErrorString(inputPath, inputContent, error))
-
-  private def displayPosError(inputPath: String, inputContent: String, error: PosError): Unit =
-    Console.println(posErrorString(inputPath, inputContent, error))
-  // $COVERAGE-ON$ interactive
-
   def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
     val RangeError(range, title, description) = error
     val ranger = Doc.Ranger(inputContent, range.start, range.end)
@@ -166,5 +133,32 @@ object DriverErltc extends Driver {
     val locator = Doc.Locator(inputContent, pos)
     val msgTitle = Doc.title(Error, inputPath, pos)
     s"$msgTitle\n$title\n${locator.longString}\n"
+  }
+
+  private def convertPos(pos: Doc.Pos): ETerm =
+    ETuple(List(ELong(pos.line.toLong), ELong(pos.column.toLong)))
+
+  private def convertRange(range: Doc.Range): ETerm =
+    ETuple(List(convertPos(range.start), convertPos(range.end)))
+
+  private def convertError(error: SterlangError): ETerm =
+    error match {
+      case PosError(pos, title) =>
+        ETuple(List(EAtom("error"), convertPos(pos), EString(title)))
+      case RangeError(range, title, description) =>
+        val msg = (List(title) ++ description.toList).mkString("\n")
+        ETuple(List(EAtom("error"), convertRange(range), EString(msg)))
+    }
+
+  private def stdoutResponse(response: ETerm): Unit = {
+    val bytes = {
+      val outs = new OtpOutputStream()
+      outs.write(OtpExternal.versionTag)
+      outs.write_any(Etf.toJava(response))
+      outs.toByteArray
+    }
+
+    System.out.write(bytes)
+    System.out.flush()
   }
 }
