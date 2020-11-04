@@ -331,7 +331,7 @@ map_pat_expr -> map_pat_expr '#' map_tuple :
 struct_pat_expr -> '#' local_or_remote_name '.' atom_or_var :
 	{struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_pat_expr -> '#' local_or_remote_name struct_tuple :
-    {struct, ?anno('$1', '$3'), '$2', '$3'}.
+    {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
 
 enum_pat_expr -> local_or_remote_name '.' atom :
     {enum, ?anno('$1', '$3'), '$1', '$3', none}.
@@ -434,21 +434,21 @@ map_key -> expr : '$1'.
 struct_expr -> '#' local_or_remote_name '.' atom_or_var :
     {struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_expr -> '#' local_or_remote_name struct_tuple :
-    {struct, ?anno('$1', '$3'), '$2', '$3'}.
+    {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
 struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_var :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
 struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_var :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
 struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
-    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
+    {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
 struct_expr -> struct_expr '#' local_or_remote_name struct_tuple :
-    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
+    {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
 
 local_or_remote_name -> atom : '$1'.
 local_or_remote_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
-struct_tuple -> '{' '}' : [].
-struct_tuple -> '{' fields '}' : '$2'.
+struct_tuple -> '{' '}' : {[], ?anno('$1', '$2')}.
+struct_tuple -> '{' fields '}' : {'$2', ?anno('$1', '$3')}.
 
 fields -> field : ['$1'].
 fields -> field ',' fields : ['$1' | '$3'].
