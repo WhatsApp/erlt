@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/textmate/erlang.tmbundle.git
+	branch = master
+	commit = 136b56fe1e0f543d2b8b86ff66f524e70c621752
+	parent = d10da42aa856cb76939b8b35cccb669a0dffbd2f
+	method = merge
+	cmdver = 0.4.1
