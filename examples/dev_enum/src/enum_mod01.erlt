@@ -38,12 +38,12 @@
 -spec f() -> term(). %maybe(any()).
 [unchecked]
 f() ->
-    none.
+    'none'.
 
 -spec g() -> term(). %maybe(boolean()).
 [unchecked]
 g() ->
-    {some, true}.
+    {'some', true}.
 
 
 -spec p() -> possibly(any()).

@@ -13,4 +13,4 @@
 
 -spec f() -> foo:f(f(), atom()).
 f() ->
-    ok.
+    'ok'.

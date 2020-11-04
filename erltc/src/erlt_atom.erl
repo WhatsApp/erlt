@@ -1,4 +1,4 @@
-%% Copyright (c) Facebook, Inc. and its affiliates.
+%% Copyright (c) 2020 Facebook, Inc. and its affiliates.
 %%
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
@@ -12,13 +12,14 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(calc_parser_ffi).
+-module(erlt_atom).
 
--export([parse/1]).
+-export([parse_transform/2]).
 
--spec parse(string()) -> calc_core:expr().
-[unchecked]
-parse(Str) ->
-    {'ok', Tokens, _} = calc_lexer:string(Str),
-    {'ok', Expr} = calc_parser:parse(Tokens),
-    Expr.
+parse_transform(Forms, _Options) ->
+    erlt_ast:prewalk(Forms, fun rewrite/2).
+
+rewrite({atom_expr, Anno, Atom}, _) ->
+    {atom, Anno, Atom};
+rewrite(Other, _) ->
+    Other.

@@ -476,11 +476,12 @@ file_or_directory(Name) ->
     end.
 
 %% Makes an Erlang term given a string.
+%% Uses Erlang parser/compiler instead of erlt to avoid syntax conflicts
 
 make_term(Str) ->
-    case erlt_scan:string(Str) of
+    case erl_scan:string(Str) of
         {ok, Tokens, _} ->
-            case erlt_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
+            case erl_parse:parse_term(Tokens ++ [{dot, erl_anno:new(1)}]) of
                 {ok, Term} ->
                     Term;
                 {error, {_, _, Reason}} ->

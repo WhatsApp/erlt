@@ -50,6 +50,7 @@ map_anno(Ast, Fun) ->
         Kind =:= float orelse
         Kind =:= char orelse
         Kind =:= atom orelse
+        Kind =:= atom_expr orelse
         Kind =:= string orelse
         Kind =:= var
 ).

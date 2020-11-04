@@ -26,6 +26,7 @@ Nonterminals
 form
 modifier_list
 attribute attr_val
+term terms term_list term_tail term_tuple term_map term_map_fields term_map_field term_fun
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_remote expr_max
@@ -38,11 +39,12 @@ tuple enum_expr shape_expr shape_fields shape_field
 struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
-fun_expr fun_clause fun_clauses atom_or_var integer_or_var
+fun_expr fun_clause fun_clauses identifier_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings
+atomic atom_expr strings
+identifier
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -54,10 +56,11 @@ struct_def type_name vars field_defs field_def shape_field_defs non_default_fiel
 enum_def variant_defs variant_def.
 
 Terminals
-char integer float atom string var
+char integer float atom qatom string var
 
 '(' ')' ',' '->' '{' '}' '[' ']' '|' '||' '<-' ';' ':' '#' '.' '^'
 'after' 'begin' 'case' 'try' 'catch' 'end' 'fun' 'if' 'of' 'receive' 'when'
+'true' 'false'
 'andalso' 'orelse'
 'bnot' 'not'
 '*' '/' 'div' 'rem' 'band' 'and'
@@ -94,31 +97,39 @@ Left 170 '|'.
 Nonassoc 200 '..'.
 Nonassoc 500 '*'. % for binary expressions
 
+identifier -> atom : '$1'.
+identifier -> qatom : {atom, element(2, '$1'), element(3, '$1')}.
 
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
 form -> '[' modifier_list ']' function dot : ?set_anno(modified_function('$2', '$4'), ?anno('$1', '$4')).
-form -> '[' modifier_list ']' '-' atom type_def dot :
+form -> '[' modifier_list ']' '-' identifier type_def dot :
     ?set_anno(modified_type_def('$2', build_type_def(?anno('$4', '$6'), '$5', '$6')), ?anno('$1', '$6')).
 
-modifier_list -> atom : ['$1'].
-modifier_list -> atom ',' modifier_list : ['$1' | '$3'].
+modifier_list -> identifier : ['$1'].
+modifier_list -> identifier ',' modifier_list : ['$1' | '$3'].
 
-attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
-attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
-attribute -> '-' enum_like atom enum_def     : build_enum_def(?anno('$1', '$4'), '$3', '$4').
-attribute -> '-' type_like atom type_def     : build_type_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' identifier attr_val :
+    ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'spec' type_spec :
+    ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'callback' type_spec :
+    ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' struct_like identifier struct_def :
+    build_struct_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' enum_like identifier enum_def :
+    build_enum_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' type_like identifier type_def :
+    build_type_def(?anno('$1', '$4'), '$3', '$4').
 
 struct_def -> type_name '::' '(' ')' : {struct_def, ?anno('$1', '$4'), '$1', []}.
 struct_def -> type_name '::' '(' field_defs ')' : {struct_def, ?anno('$1', '$5'), '$1', '$4'}.
 
 enum_def -> type_name '::' '(' variant_defs ')' : {enum_def, ?anno('$1', '$5'), '$1', '$4'}.
 
-type_name -> atom : {call, ?anno('$1'), '$1', []}.
-type_name -> atom '(' ')' : {call, ?anno('$1', '$3'), '$1', []}.
-type_name -> atom '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
+type_name -> identifier : {call, ?anno('$1'), '$1', []}.
+type_name -> identifier '(' ')' : {call, ?anno('$1', '$3'), '$1', []}.
+type_name -> identifier '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
 
 vars -> var ',' vars : ['$1' | '$3'].
 vars -> var : ['$1'].
@@ -126,9 +137,9 @@ vars -> var : ['$1'].
 variant_defs -> variant_def ',' variant_defs : ['$1' | '$3'].
 variant_defs -> variant_def : ['$1'].
 
-variant_def -> atom : {variant, ?anno('$1'), '$1', none}.
-variant_def -> atom '{' '}' : {variant, ?anno('$1'), '$1', []}.
-variant_def -> atom '{' field_defs '}' : {variant, ?anno('$1', '$4'), '$1', '$3'}.
+variant_def -> identifier : {variant, ?anno('$1'), '$1', none}.
+variant_def -> identifier '{' '}' : {variant, ?anno('$1'), '$1', []}.
+variant_def -> identifier '{' field_defs '}' : {variant, ?anno('$1', '$4'), '$1', '$3'}.
 
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
@@ -137,17 +148,21 @@ shape_field_defs -> var                                       : {[], '$1'}.
 shape_field_defs -> non_default_field_def                     : ['$1'].
 shape_field_defs -> non_default_field_def ',' shape_field_defs : build_shape_internals_type('$1', '$3').
 
-field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-field_def -> type : {field_definition, ?anno('$1'), positional, undefined, '$1'}.
-field_def -> non_default_field_def : '$1'.
+field_def -> atom '=' expr '::' type :
+    {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+field_def -> type :
+    {field_definition, ?anno('$1'), positional, undefined, '$1'}.
+field_def -> non_default_field_def :
+    '$1'.
 
-non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
+non_default_field_def -> identifier '::' type :
+    {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
 
-spec_fun ->                       atom : '$1'.
-spec_fun ->              atom ':' atom : {'$1', '$3'}.
+spec_fun -> identifier : '$1'.
+spec_fun -> identifier ':' identifier : {'$1', '$3'}.
 
 type_def -> type_name '::' top_type : {type_def, ?anno('$1', '$3'), '$1', '$3'}.
 
@@ -161,7 +176,7 @@ type_sig -> fun_type 'when' type_guards   : {type, ?anno('$1','$3'), bounded_fun
 type_guards -> type_guard                 : ['$1'].
 type_guards -> type_guard ',' type_guards : ['$1'|'$3'].
 
-type_guard -> atom '(' top_types ')'   : build_compat_constraint('$1', '$3').
+type_guard -> identifier '(' top_types ')'   : build_compat_constraint('$1', '$3').
 type_guard -> var '::' top_type        : build_constraint('$1', '$3').
 
 top_types -> top_type                     : ['$1'].
@@ -177,12 +192,12 @@ type -> type mult_op type                 : ?mkop2('$1', '$2', '$3').
 type -> prefix_op type                    : ?mkop1('$1', '$2').
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> atom                          : '$1'.
-type -> atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
-type -> atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
-type -> atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
+type -> atom_expr                         : '$1'.
+type -> identifier '(' ')'                : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
+type -> identifier '(' top_types ')'      : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
+type -> identifier ':' identifier '(' ')' : {remote_type, ?anno('$1','$5'),
                                              ['$1', '$3', []]}.
-type -> atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
+type -> identifier ':' identifier '(' top_types ')' : {remote_type, ?anno('$1','$6'),
                                              ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
@@ -194,12 +209,11 @@ type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_shap
 type -> '#' '(' shape_field_defs ')'       : build_shape_type(?anno('$1', '$4'), '$3').
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
-type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
-type -> '#' atom '{' '}'                  : {type, ?anno('$1','$4'), record, ['$2']}.
-type ->
- '#' atom ':' atom '{' field_types '}'    : {type, ?anno('$1','$7'),
+type -> '#' identifier ':' identifier '{' '}' : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
+type -> '#' identifier '{' '}'            : {type, ?anno('$1','$4'), record, ['$2']}.
+type -> '#' identifier ':' identifier '{' field_types '}' : {type, ?anno('$1','$7'),
                                              record, [{qualified_record,'$2','$4'}|'$6']}.
-type -> '#' atom '{' field_types '}'      : {type, ?anno('$1','$5'),
+type -> '#' identifier '{' field_types '}' : {type, ?anno('$1','$5'),
                                              record, ['$2'|'$4']}.
 type -> binary_type                       : '$1'.
 type -> integer                           : '$1'.
@@ -227,7 +241,7 @@ map_pair_type  -> top_type ':=' top_type  : {type, ?anno('$1','$3'),
 field_types -> field_type                 : ['$1'].
 field_types -> field_type ',' field_types : ['$1'|'$3'].
 
-field_type -> atom '::' top_type          : {type, ?anno('$1','$3'), field_type,
+field_type -> identifier '::' top_type    : {type, ?anno('$1','$3'), field_type,
                                              ['$1', '$3']}.
 
 binary_type -> '<<' '>>'                  : {type, ?anno('$1','$2'),binary,
@@ -244,18 +258,17 @@ bin_base_type -> var ':' type          : build_bin_type(['$1'], '$3').
 
 bin_unit_type -> var ':' var '*' type  : build_bin_type(['$1', '$3'], '$5').
 
-attr_val -> expr                     : ['$1'].
-attr_val -> expr ',' exprs           : ['$1' | '$3'].
-attr_val -> '(' expr ',' exprs ')'   : ['$2' | '$4'].
+attr_val -> term                     : ['$1'].
+attr_val -> term ',' terms           : ['$1' | '$3'].
+attr_val -> '(' term ',' terms ')'   : ['$2' | '$4'].
 
 function -> function_clauses : build_function('$1').
 
 function_clauses -> function_clause : ['$1'].
 function_clauses -> function_clause ';' function_clauses : ['$1'|'$3'].
 
-function_clause -> atom clause_args clause_guard clause_body :
+function_clause -> identifier clause_args clause_guard clause_body :
 	{clause,?anno('$1','$4'),element(3, '$1'),'$2','$3','$4'}.
-
 
 clause_args -> pat_argument_list : element(1, '$1').
 
@@ -263,6 +276,46 @@ clause_guard -> 'when' guard : '$2'.
 clause_guard -> '$empty' : [].
 
 clause_body -> '->' exprs: '$2'.
+
+term -> char : '$1'.
+term -> integer : '$1'.
+term -> float : '$1'.
+term -> identifier : '$1'.
+term -> strings : '$1'.
+term -> 'true' : {atom, ?anno('$1'), true}.
+term -> 'false' : {atom, ?anno('$1'), false}.
+term -> term_list : '$1'.
+term -> term_tuple : '$1'.
+term -> term_map : '$1'.
+term -> binary : '$1'.
+term -> term_fun : '$1'.
+term -> '(' term ')' : '$2'.
+term -> term mult_op term : ?mkop2('$1', '$2', '$3').
+term -> prefix_op term : ?mkop1('$1', '$2').
+
+terms -> term : ['$1'].
+terms -> term ',' terms : ['$1' | '$3'].
+
+term_fun -> 'fun' identifier ':' identifier '/' integer :
+    {'fun', ?anno('$1', '$6'), {function, '$2', '$4', '$6'}}.
+
+term_tuple -> '{' '}' : {tuple, ?anno('$1', '$2'), []}.
+term_tuple -> '{' terms '}' : {tuple, ?anno('$1', '$3'), '$2'}.
+
+term_list -> '[' ']' : {nil, ?anno('$1', '$2')}.
+term_list -> '[' term term_tail : {cons, ?anno('$1', '$3'), '$2', '$3'}.
+
+term_tail -> ']' : {nil, ?anno('$1')}.
+term_tail -> '|' term ']' : ?set_anno('$2', ?anno('$1', '$3')).
+term_tail -> ',' term term_tail : {cons, ?anno('$2', '$3'), '$2', '$3'}.
+
+term_map -> '#' '{' '}' : {map, ?anno('$1', '$3'), []}.
+term_map -> '#' '{' term_map_fields '}' : {map, ?anno('$1', '$4'), '$3'}.
+
+term_map_fields -> term_map_field : ['$1'].
+term_map_fields -> term_map_field ',' term_map_fields : ['$1' | '$3'].
+
+term_map_field -> term '=>' term : {map_field_assoc, ?anno('$1', '$3'), '$1', '$3'}.
 
 expr -> 'catch' expr : {'catch',?anno('$1','$2'),'$2'}.
 expr -> expr '=' expr : {match,?anno('$1','$3'),'$1','$3'}.
@@ -279,10 +332,7 @@ expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
 expr -> shape_expr : '$1'.
 expr -> struct_expr : '$1'.
-expr -> expr_remote : '$1'.
-
-expr_remote -> expr_max ':' expr_max : {remote,?anno('$1','$3'),'$1','$3'}.
-expr_remote -> expr_max : '$1'.
+expr -> expr_max : '$1'.
 
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
@@ -298,6 +348,13 @@ expr_max -> case_expr : '$1'.
 expr_max -> receive_expr : '$1'.
 expr_max -> fun_expr : '$1'.
 expr_max -> try_expr : '$1'.
+
+expr_remote -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+expr_remote -> atom ':' expr_max : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+expr_remote -> expr_max ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+expr_remote -> expr_max ':' expr_max : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+expr_remote -> expr_max : '$1'.
+expr_remote -> atom : '$1'.
 
 pat_expr -> pat_expr '=' pat_expr : {match,?anno('$1','$3'),'$1','$3'}.
 pat_expr -> pat_expr comp_op pat_expr : ?mkop2('$1', '$2', '$3').
@@ -328,16 +385,16 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-struct_pat_expr -> '#' local_or_remote_name '.' atom_or_var :
+struct_pat_expr -> '#' local_or_remote_name '.' identifier_or_var :
 	{struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_pat_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
 
-enum_pat_expr -> local_or_remote_name '.' atom :
+enum_pat_expr -> local_or_remote_name '.' identifier :
     {enum, ?anno('$1', '$3'), '$1', '$3', none}.
 enum_pat_expr -> local_or_remote_name '.' '{' '}' :
     {enum, ?anno('$1', '$4'), '$1', '$3', []}.
-enum_pat_expr -> local_or_remote_name '.' atom '{' fields '}' :
+enum_pat_expr -> local_or_remote_name '.' identifier '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
@@ -368,8 +425,10 @@ opt_bit_type_list -> '$empty' : default.
 bit_type_list -> bit_type '-' bit_type_list : ['$1' | '$3'].
 bit_type_list -> bit_type : ['$1'].
 
-bit_type -> atom             : '$1'.
-bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
+bit_type -> identifier :
+    '$1'.
+bit_type -> identifier ':' integer :
+    {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
 
@@ -389,11 +448,11 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 
 %% ideally this would use local_or_remote_name, but it causes conflicts with
 %% function call syntax
-enum_expr -> expr_remote '.' atom :
+enum_expr -> expr_remote '.' identifier :
     {enum, ?anno('$1', '$3'), '$1', '$3', none}.
-enum_expr -> expr_remote '.' atom '{' '}' :
+enum_expr -> expr_remote '.' identifier '{' '}' :
     {enum, ?anno('$1', '$5'), '$1', '$3', []}.
-enum_expr -> expr_remote '.' atom '{' fields '}' :
+enum_expr -> expr_remote '.' identifier '{' fields '}' :
     {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 shape_expr -> '#' '(' ')' : {shape, ?anno('$1', '$3'), []}.
@@ -401,11 +460,11 @@ shape_expr -> '#' '(' shape_fields ')' : {shape, ?anno('$1', '$4'), '$3'}.
 shape_expr -> expr_max '#' '(' ')' : {shape_update, ?anno('$1', '$4'), '$1', []}.
 shape_expr -> expr_max '#' '(' shape_fields ')' :
     {shape_update, ?anno('$1', '$5'), '$1', '$4'}.
-shape_expr -> expr_max '#' '(' atom ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> expr_max '#' '(' identifier ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
 shape_expr -> shape_expr '#' '(' shape_fields ')' :
     {shape_update, ?anno('$1', '$5'), '$1', '$4'}.
 shape_expr -> shape_expr '#' '(' ')' : {shape_update, ?anno('$1', '$4'), '$1', []}.
-shape_expr -> shape_expr '#' '(' atom ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> shape_expr '#' '(' identifier ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
 
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -431,21 +490,21 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-struct_expr -> '#' local_or_remote_name '.' atom_or_var :
+struct_expr -> '#' local_or_remote_name '.' identifier_or_var :
     {struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
 struct_expr -> '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
-struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_var :
+struct_expr -> expr_max '#' local_or_remote_name '.' identifier_or_var :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
-struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_var :
+struct_expr -> struct_expr '#' local_or_remote_name '.' identifier_or_var :
     {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
 struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
 struct_expr -> struct_expr '#' local_or_remote_name struct_tuple :
     {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
 
-local_or_remote_name -> atom : '$1'.
-local_or_remote_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+local_or_remote_name -> identifier : '$1'.
+local_or_remote_name -> identifier ':' identifier : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
 struct_tuple -> '{' '}' : {[], ?anno('$1', '$2')}.
 struct_tuple -> '{' fields '}' : {'$2', ?anno('$1', '$3')}.
@@ -453,17 +512,18 @@ struct_tuple -> '{' fields '}' : {'$2', ?anno('$1', '$3')}.
 fields -> field : ['$1'].
 fields -> field ',' fields : ['$1' | '$3'].
 
+field -> atom '=' expr : {field, ?anno('$1', '$3'), '$1', '$3'}.
 field -> expr : build_field('$1').
 
 shape_fields -> shape_field : ['$1'].
 shape_fields -> shape_field ',' shape_fields : ['$1' | '$3'].
 
-shape_field -> atom '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
+shape_field -> identifier '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 
 function_call -> expr_remote argument_list :
-	{call,?anno('$1','$2'),'$1',element(1, '$2')}.
+	{call, ?anno('$1', '$2'), '$1', element(1, '$2')}.
 
 if_expr -> 'if' if_clauses 'end' : {'if',?anno('$1','$3'),'$2'}.
 
@@ -495,20 +555,15 @@ receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$6'),'$2','$4','$5'}.
 
 
-fun_expr -> 'fun' atom '/' integer :
-        case '$2'of
-            {atom,_,_} ->
-                {'fun',?anno('$1','$4'),{function,element(3, '$2'),element(3, '$4')}};
-            {op,_,'.',M,F} ->
-                {'fun',?anno('$1','$4'),{function,M,F,'$4'}}
-        end.
-fun_expr -> 'fun' atom_or_var ':' atom_or_var '/' integer_or_var :
-	{'fun',?anno('$1','$6'),{function,'$2','$4','$6'}}.
+fun_expr -> 'fun' identifier '/' integer :
+    {'fun',?anno('$1','$4'),{function,element(3, '$2'),element(3, '$4')}}.
+fun_expr -> 'fun' identifier_or_var ':' identifier_or_var '/' integer_or_var :
+    {'fun',?anno('$1','$6'),{function,'$2','$4','$6'}}.
 fun_expr -> 'fun' fun_clauses 'end' :
-	build_fun(?anno('$1','$3'), '$2').
+    build_fun(?anno('$1','$3'), '$2').
 
-atom_or_var -> atom : '$1'.
-atom_or_var -> var : '$1'.
+identifier_or_var -> identifier : '$1'.
+identifier_or_var -> var : '$1'.
 
 integer_or_var -> integer : '$1'.
 integer_or_var -> var : '$1'.
@@ -563,8 +618,12 @@ guard -> exprs ';' guard : ['$1'|'$3'].
 atomic -> char : '$1'.
 atomic -> integer : '$1'.
 atomic -> float : '$1'.
-atomic -> atom : '$1'.
+atomic -> atom_expr : '$1'.
 atomic -> strings : '$1'.
+atomic -> 'true' : {atom, ?anno('$1'), true}.
+atomic -> 'false' : {atom, ?anno('$1'), false}.
+
+atom_expr -> qatom : {atom_expr, element(2, '$1'), element(3, '$1')}.
 
 strings -> string : '$1'.
 strings -> string strings :
@@ -1136,8 +1195,9 @@ build_field({match, Anno, Name, Expr} = Match) ->
     case lists:member(parens, Anno) of
         true ->
             {field, Anno, positional, Match};
-        false when is_record(Name, atom, 3) ->
-            {field, Anno, Name, Expr};
+        false when is_record(Name, atom_expr, 3) ->
+            {atom_expr, AAnno, Name} = Name,
+            {field, Anno, {atom, AAnno, Name}, Expr};
         false ->
             ret_err(Anno, "match expressions in fields have to be wrapped in parentheses")
     end;

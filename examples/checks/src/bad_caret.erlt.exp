@@ -1,5 +1,5 @@
-bad_caret.erlt:8:10: operator ^ is only allowed in patterns
-bad_caret.erlt:13:29: illegal guard expression
+bad_caret.erlt:8:12: operator ^ is only allowed in patterns
+bad_caret.erlt:13:31: illegal guard expression
 bad_caret.erlt:20:10: illegal pattern
-bad_caret.erlt:21:15: illegal pattern
+bad_caret.erlt:21:17: illegal pattern
 bad_caret.erlt:22:18: operator ^ is only allowed in patterns
