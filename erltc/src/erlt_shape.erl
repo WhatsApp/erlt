@@ -26,6 +26,8 @@
     is_collecting = false
 }).
 
+-define(IS_EXPR_OR_GUARD(Ctx), Ctx =:= expr orelse Ctx =:= guard).
+
 parse_transform(Forms0, _Options) ->
     {Forms, _St} = erlt_ast:traverse(
         Forms0,
@@ -49,13 +51,13 @@ pre_walk({type, Line, open_shape, Fields, {var, _Line, VarName}}, St0, type) ->
 pre_walk({shape, Line, Fields}, St, pattern) ->
     MapFields = to_map_fields(map_field_exact, Fields),
     {{map, Line, MapFields}, St};
-pre_walk({shape, Line, Fields}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+pre_walk({shape, Line, Fields}, St, Ctx) when ?IS_EXPR_OR_GUARD(Ctx) ->
     MapFields = to_map_fields(map_field_assoc, Fields),
     {{map, Line, MapFields}, St};
-pre_walk({shape_update, Line, Expr, Fields}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+pre_walk({shape_update, Line, Expr, Fields}, St, Ctx) when ?IS_EXPR_OR_GUARD(Ctx) ->
     MapFields = to_map_fields(map_field_assoc, Fields),
     {{map, Line, Expr, MapFields}, St};
-pre_walk({shape_field, Line, Expr, Field}, St, Ctx) when Ctx =:= expr orelse Ctx =:= guard ->
+pre_walk({shape_field, Line, Expr, Field}, St, Ctx) when ?IS_EXPR_OR_GUARD(Ctx) ->
     {{call, Line, {remote, Line, {atom, Line, erlang}, {atom, Line, map_get}}, [Field, Expr]}, St};
 pre_walk(Other, St, _Ctx) ->
     {Other, St}.
@@ -98,16 +100,8 @@ transform_unused_shape_vars(VarName, St) ->
         false ->
             VarName;
         true ->
-            Prepend = fun(Prefix, V) -> list_to_atom(Prefix ++ atom_to_list(V)) end,
-            NewVarName = Prepend("__ERLT_SHAPE_VAR_", VarName),
-            (fun NoConflict(V) ->
-                case lists:member(V, St#state.all_vars) of
-                    false -> V;
-                    true -> NoConflict(Prepend("_", V))
-                end
-            end)(
-                NewVarName
-            )
+            NewVarName = atom_prepend("__ERLT_SHAPE_VAR_", VarName),
+            no_conflict(St#state.all_vars, NewVarName)
     end.
 
 generic_open_shape_field_type(Line) ->
@@ -121,3 +115,12 @@ to_typed_map_fields(Fields) ->
 
 to_map_fields(TypeOfMapField, Fields) ->
     [{TypeOfMapField, Line, Key, Value} || {field, Line, Key, Value} <- Fields].
+
+atom_prepend(Prefix, Atom) ->
+    list_to_atom(Prefix ++ atom_to_list(Atom)).
+
+no_conflict(OtherVars, Var) ->
+    case lists:member(Var, OtherVars) of
+        false -> Var;
+        true -> no_conflict(OtherVars, atom_prepend("_", Var))
+    end.
