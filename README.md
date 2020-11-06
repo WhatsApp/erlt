@@ -40,7 +40,14 @@ constructs (like list comprehensions or exceptions) are not supported yet.
 
 **ErlT FFI** allows DT code to be exposed via an ST API. See [modes](./doc/03_modes.md) for more information.
 
-## Repository Structure
+## Getting started using ErlT
+
+**More coming soon**
+
+
+## Working on the ErlT project itself
+
+### Repository Structure
 
 This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
 - `./erltc` - erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
@@ -49,8 +56,6 @@ This repository is for prototyping and collaborating around the ErlT language. I
 
 > See ./doc/08_compiler_architecture.md for more information about how these parts work together
 > See the top-level READMEs for each of these sub-directories for more information about a particular tool
-
-## Building & Testing ErlT
 
 ### Prerequisites
 
