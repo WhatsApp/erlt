@@ -41,7 +41,7 @@ doing this in erlt.
 We define type alises for page contents and the page server state.
 
 > type Page = String
-> type State = Map.Map Integer String
+> type State = Map.Map Integer Page
 
 This is the key step: the type of requests is a GADT, parameterised on
 the result type that the call will return. It is this type that
