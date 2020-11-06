@@ -1,0 +1,5 @@
+.bloop/
+.bsp/
+.idea/
+.metals/
+target/
