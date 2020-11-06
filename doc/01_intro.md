@@ -14,29 +14,6 @@ This documentation is not a tutorial or a manual for ErlT (yet).
 NB: this documentation reflects more about StErlang as ErlT frontend is not
 stable/precise yet.
 
-
-## How to play with ErlT
-
-### Prerequisites
-
-Prerequisites (on MacOS):
-
-```
-$ brew install erlang
-$ brew install sbt
-$ make
-$ cd sterlang; sbt assembly; cd ..
-```
-
-The similar is for Linux. - Install erlang and sbt via your favourite package
-manager.
-
-### Exploring
-
-See [examples](https://git.io/JfLLR) folder.
-[Calculator example](https://git.io/JfLLu) is a tiny end-to-end "showcase"
-involving parsing, ErlT FFI and ErlT ST.
-
 ## A bit on internals
 
 ErlT compiler is `erltc`.
@@ -48,16 +25,16 @@ type-checking procedures.
 The type checker (code name stErlang) is implemented in Scala.
 
 Type-checking works this way:
-- when processing a file in `st` or `ffi` mode, `erl2c` serialises the abstract
+- when processing a file in `st` or `ffi` mode, `erlt` serialises the abstract
 forms into [ETF](http://erlang.org/doc/apps/erts/erl_ext_dist.html)
-- then `erl2c` invokes stErlang to type-check the serialised forms
+- then `erlt` invokes stErlang to type-check the serialised forms
 - stErlang deserialises the forms (via
 [Jinterface](http://erlang.org/doc/apps/jinterface/jinterface_users_guide.html))
 and performs type-checking.
 
 ## Development
 
-You may be focused on some particular areas (like erl2c frontend, stErlang
+You may be focused on some particular areas (like ErlT frontend, stErlang
 backend, or everything together) - the next sections explain different
 "development modes".
 
@@ -89,9 +66,9 @@ Coverage report:
 sbt clean coverage test coverageReport
 ```
 
-### 2. `erl2c` frontend development
+### 2. `ErlT` frontend development
 
-`erl2c` relies on stErlang for type-checking. It supports invoking stErlang in
+`ErlT` relies on stErlang for type-checking. It supports invoking stErlang in
 [two ways](https://git.io/JJlhF):
 
 `java -jar sterlang.jar ...` - it uses the `sterlang.jar` you get by running
@@ -103,15 +80,15 @@ each time. We have a solution! - the native image of stErlang (through
 
 ```
 native-image --no-server --no-fallback -O4 \
-  -jar sterlang/target/scala-2.13/sterlang.jar erl2c/bin/sterlang
+  -jar sterlang/target/scala-2.13/sterlang.jar erlt/bin/sterlang
 ```
 
 If building native image via Graal is too heavy for you locally - you can just
 grab the latest version (for mac or linux) we build via GH
 [actions](https://git.io/JJlji): take `sterlang-mac` or `sterlang-linux`
-artifact, rename it to `sterlang` and place into `erl2c/bin` directory.
+artifact, rename it to `sterlang` and place into `erlt/bin` directory.
 
 (Caveat: on mac you have to de-quarantine it via
-`xattr -d com.apple.quarantine erl2c/bin/sterlang`).
+`xattr -d com.apple.quarantine erlt/bin/sterlang`).
 
 The native image is really fast - type-checking takes ~20-40ms for a file.

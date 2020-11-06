@@ -8,7 +8,7 @@ code bases.
 
 - **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
 - **[ErlT Reference](./docs/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
-- **[Examples](./examples/)** - A collection of small ErlT projects that demonstrate how the language can be used
+- **[Examples](./examples/README.md)** - A collection of small ErlT projects that demonstrate how the language can be used
 
 ## Introduction
 
@@ -52,11 +52,17 @@ This repository is for prototyping and collaborating around the ErlT language. I
 
 ## Building & Testing ErlT
 
-### Requirements
+### Prerequisites
 
 - [erlang](https://www.erlang.org/) with OTP 23 or higher
 - [rebar3](https://www.rebar3.org/) version 3.14.1 or higher
 - [sbt](https://www.scala-sbt.org/)
+
+Use your platform's standard mechanism for obtaining these tools, e.g. on MacOS:
+
+```
+brew install erlang rebar3 sbt
+```
 
 ### Building
 
@@ -92,7 +98,10 @@ The tests for erltc come in these two flavors:
 
 #### stErlang tests
 
-    cd sterlang; sbt test
+```
+cd sterlang/
+sbt test
+```
 
 ## Development
 
