@@ -97,7 +97,7 @@ let toNativeImageJob =
               , run "ls" "ls -lah"
               , run
                   "Build native image '${nativeName}'"
-                  "native-image --no-server --no-fallback -O4 -jar ${jarName} ${nativeName}"
+                  "native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar ${jarName} ${nativeName}"
               ]
             # toUploadSteps nativeName
         }

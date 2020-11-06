@@ -43,7 +43,7 @@ jobs:
       - name: ls
         run: ls -lah
       - name: "Build native image 'sterlang-linux'"
-        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-linux
+        run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-linux
       - name: stat sterlang-linux
         run: stat sterlang-linux
       - env:
@@ -82,7 +82,7 @@ jobs:
       - name: ls
         run: ls -lah
       - name: "Build native image 'sterlang-mac'"
-        run: native-image --no-server --no-fallback -O4 -jar sterlang.jar sterlang-mac
+        run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-mac
       - name: stat sterlang-mac
         run: stat sterlang-mac
       - env:
