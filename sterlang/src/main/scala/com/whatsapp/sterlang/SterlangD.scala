@@ -7,20 +7,12 @@ import sys.process._
 import com.ericsson.otp.erlang.{OtpErlangPid, OtpMbox, OtpNode}
 import com.whatsapp.sterlang.Etf.{EAtom, ELong, EPid, ERef, EString, ETerm, ETuple}
 
-object SterlangD extends Executor {
-  def main(args: Array[String]): Unit = {
+object SterlangD {
+  def serve(par: Int): Unit = {
     "epmd -daemon".!!
     val node = new OtpNode("sterlangd@localhost")
-    new Server(node.createMbox("api"), mkExecutor(args)).serve()
+    new Server(node.createMbox("api"), Executors.newFixedThreadPool(par)).serve()
     node.close()
-  }
-
-  override final def execute(command: Runnable): Unit = command.run()
-
-  private def mkExecutor(args: Array[String]): Executor = {
-    val optPar = if (args.isEmpty) None else args(0).toIntOption
-    optPar.foreach { p => assert(p > 0, s"SterlangD: parallelism should be positive. Got: $p") }
-    optPar.map(Executors.newFixedThreadPool).getOrElse(this)
   }
 
   private[SterlangD] class Server(mbox: OtpMbox, executor: Executor) {

@@ -26,14 +26,17 @@ import scala.collection.mutable
 object DriverErltc extends Driver {
 
   def main(args: Array[String]): Unit =
-    process(args.toList)
+    args match {
+      case Array("-d")      => SterlangD.serve(1)
+      case Array("-d", par) => SterlangD.serve(par.toIntOption.getOrElse(1))
+      case Array(file)      => process(file)
+      case _                => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
+    }
 
-  private def process(files: List[String]): Unit = {
-    val List(etfFile) = files
+  private def process(etfFile: String): Unit = {
     val start = System.currentTimeMillis()
-    processFile(etfFile)
     val sterlangTime = System.currentTimeMillis() - start
-    val result = processFile(etfFile) match {
+    val result = doProcessFile(etfFile) match {
       case Some(error) => convertError(error)
       case None        => ETuple(List(EAtom("ok")))
     }
@@ -41,7 +44,7 @@ object DriverErltc extends Driver {
     stdoutResponse(response)
   }
 
-  private def processFile(etfFile: String): Option[SterlangError] = {
+  private def doProcessFile(etfFile: String): Option[SterlangError] = {
     val mainFile = etfFile
     val rawProgram =
       try loadProgram(mainFile)
