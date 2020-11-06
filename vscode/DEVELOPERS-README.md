@@ -17,7 +17,6 @@ upstream source at some point.
 
 ```sh
 cd vscode # If not already there (this directory)
-git submodule update --init
 npm install
 npm run compile
 vsce package
