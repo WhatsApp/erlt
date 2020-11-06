@@ -15,3 +15,7 @@ erltc/src/erlt_parse.erl
 examples/rebar.lock
 
 *.lhs~
+
+# The .els files are used to communicate with the language server.
+# Should perhaps go into a tmpdir.
+*.els
