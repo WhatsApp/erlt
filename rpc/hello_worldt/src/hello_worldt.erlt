@@ -1,0 +1,21 @@
+-module(hello_worldt).
+
+-export([main/1]).
+
+-struct dup(A) :: (a :: fun((A) -> A), b :: A).
+
+id(A) -> A.
+
+-spec get_d() -> dup(integer()).
+get_d() ->
+    #dup{a = fun id/1, b = 1}.
+
+-spec gg(dup(A)) -> A.
+gg(D) ->
+    (D#dup.a)(D#dup.b).
+
+-spec main(term()) -> no_return().
+main(_Argv) ->
+    D = get_d(),
+    G = gg(D),
+    io:format("Hello World T~p~p~n", [hello_dep:f(), G]).

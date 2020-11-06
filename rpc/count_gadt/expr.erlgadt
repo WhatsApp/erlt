@@ -1,0 +1,30 @@
+%% An example of what Expr.hs could look like in erlt with GADTs
+
+-module(expr).
+
+-export([
+    eval/1
+]).
+
+-export_type([
+    expr/1
+]).
+
+-genum expr(Result) :: {
+    int(integer()) -> expr(integer()),
+    bool(boolean()) -> expr(boolean()),
+    str(string()) -> expr(string()),
+    add(expr(integer()), expr(integer())) -> expr(integer()),
+    mul(expr(integer()), expr(integer())) -> expr(integer()),
+    concat(expr(string()), expr(string())) -> expr(string()),
+    equal(expr(Result), expr(Result)) -> expr(boolean())
+}.
+
+-spec eval(expr(Result)) -> Result.
+eval(expr.int(I)) -> I;
+expr(expr.bool(B)) -> B;
+expr(expr.str(S)) -> S;
+expr(expr.add(I, J)) -> eval(I) + eval(J);
+expr(expr.mul(I, J)) -> eval(I) * eval(J);
+expr(expr.equal(X, Y)) -> eval(X) =:= eval(Y);
+expr(expr.concat(S, R)) -> eval(S) ++ eval(R).

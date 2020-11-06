@@ -1,0 +1,7 @@
+-name(count_server).
+
+-rpc equal(integer()) -> boolean().
+
+-rpc inc(integer()) -> no_return().
+
+-rpc dec(integer()) -> no_return().

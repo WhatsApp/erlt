@@ -1,0 +1,9 @@
+{application, count, [
+    {description, "count server"},
+    {vsn, "0.1"},
+    {registered, []},
+    {applications, [kernel, stdlib]},
+    {env, []},
+    {modules, []},
+    {licenses, ["Apache-2.0"]}
+]}.

@@ -1,0 +1,81 @@
+-module(count_server).
+
+-behavior(gen_server).
+
+-export([handle_call/3, handle_cast/2, init/1]).
+
+-export([start/2, stop/1, equal/2, closer/3, inc/2, dec/2]).
+
+-type input() :: integer().
+-type state() :: integer().
+
+%% This is an enum that approximates the GADT below
+-enum call_request() ::
+    equal{integer()}
+    | closer{integer(), integer()}.
+
+%% This generalized enum, that properly types handle_call
+%% -genum call_request(Result) :: {
+%%     equal(integer()) -> call_request(boolean()),
+%%     closer(integer(), integer()) -> call_request(integer())
+%% }.
+%% Waiting on https://github.com/WhatsApp/erlt/issues/269 to uncomment this.
+
+-enum cast_request() ::
+    inc{integer()}
+    | dec{integer()}.
+
+-spec start(gen_server:name(), input()) -> {ok, pid()}.
+start(Name, InitArgs) ->
+    gen_server:start_link({local, Name}, ?MODULE, InitArgs, []).
+
+-spec stop(gen_server:name()) -> ok.
+stop(Name) ->
+    gen_server:stop(Name).
+
+-spec equal(gen_server:name(), integer()) -> boolean().
+equal(Name, Arg0) ->
+    gen_server:call(Name, call_request.equal{Arg0}).
+
+-spec closer(gen_server:name(), integer(), integer()) -> integer().
+closer(Name, Arg0, Arg1) ->
+    gen_server:call(Name, call_request.closer{Arg0, Arg1}).
+
+-spec inc(gen_server:name(), integer()) -> ok.
+inc(Name, Arg0) ->
+    gen_server:cast(Name, cast_request.inc{Arg0}).
+
+-spec dec(gen_server:name(), integer()) -> ok.
+dec(Name, Arg0) ->
+    gen_server:cast(Name, cast_request.dec{Arg0}).
+
+-spec init(input()) -> {ok, state()}.
+init(Input) ->
+    {ok, Input}.
+
+% -spec handle_call(call_request(Result), pid(), state()) -> {reply, Result, state()}.
+-spec handle_call(call_request(), pid(), state()) -> {reply, term(), state()}.
+handle_call(Request, _From, State) ->
+    case Request of
+        call_request.equal{^State} ->
+            {reply, true, State};
+        call_request.equal{_} ->
+            {reply, false, State};
+        call_request.closer{Arg0, Arg1} ->
+            Result = handle_closer(Arg0, Arg1, State),
+            {reply, Result, State}
+    end.
+
+-spec handle_cast(cast_request(), state()) -> {noreply, state()}.
+handle_cast(Request, State) ->
+    case Request of
+        cast_request.inc{I} -> {noreply, State + I};
+        cast_request.dec{I} -> {noreply, State - I}
+    end.
+
+-spec handle_closer(integer(), integer(), state()) -> integer().
+handle_closer(I, J, S) ->
+    case abs(I - S) < abs(J - S) of
+        true -> I;
+        false -> J
+    end.

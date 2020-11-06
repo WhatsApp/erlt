@@ -1,0 +1,9 @@
+-lang([erl2, st]).
+
+-module(kitty_rpct).
+
+-rpc order_cat(string()) -> string().
+
+-rpc return_cat(string()) -> no_return().
+
+-rpc close_shop() -> ok.

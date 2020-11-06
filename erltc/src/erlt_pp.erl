@@ -36,7 +36,8 @@
     expr/1,
     expr/2,
     expr/3,
-    expr/4
+    expr/4,
+    type/1
 ]).
 
 -import(lists, [append/1, foldr/3, map/2, mapfoldl/3, reverse/1, reverse/2]).
@@ -199,6 +200,11 @@ expr(E, I, Options) ->
 expr(E, I, P, Options) ->
     ?TEST(E),
     frmt(lexpr(E, P, options(Options)), I, state(Options)).
+
+-spec type(Type) -> io_lib:chars() when Type :: erlt_parse:abstract_expr().
+type(T) ->
+    ?TEST(T),
+    frmt(ltype(T, 0, options(none)), state(none)).
 
 %%%
 %%% Local functions

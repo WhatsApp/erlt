@@ -66,7 +66,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' struct_like enum_like type_like % helper
+'spec' 'callback' 'rpc' struct_like enum_like type_like % helper
 dot.
 
 Expect 0.
@@ -107,6 +107,7 @@ modifier_list -> atom ',' modifier_list : ['$1' | '$3'].
 attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
+attribute -> '-' 'rpc' type_spec             : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
 attribute -> '-' enum_like atom enum_def     : build_enum_def(?anno('$1', '$4'), '$3', '$4').
 attribute -> '-' type_like atom type_def     : build_type_def(?anno('$1', '$4'), '$3', '$4').
@@ -703,7 +704,7 @@ Erlang code.
     {'attribute', anno(), 'spec',
         {{module(), function_name(), arity()}, af_function_type_list()}}.
 
--type spec_attr() :: 'callback' | 'spec'.
+-type spec_attr() :: 'callback' | 'rpc' | 'spec'.
 -type af_wild_attribute() :: {'attribute', anno(), atom(), any()}.
 -type af_function_decl() ::
     {'function', anno(), function_name(), arity(), af_clause_seq()}.
@@ -1084,6 +1085,10 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     NewTokens = [{'-', A1}, {'callback', A2} | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
+parse_form([{'-', A1}, {atom, A2, rpc} | Tokens]) ->
+    NewTokens = [{'-', A1}, {'rpc', A2} | Tokens],
+    ?ANNO_CHECK(NewTokens),
+    parse(NewTokens);
 parse_form([{'-', A1}, {atom, A2, TypeLike} = Atom | Tokens]) when
     TypeLike =:= type; TypeLike =:= opaque
 ->
@@ -1228,7 +1233,7 @@ check_bad_modifier_list([{atom, _A, unchecked} | Rest], UsedOpaque, false) ->
 check_bad_modifier_list([{atom, A, IllegalValue} | _Rest], _UsedOpaque, _UsedUnchecked) ->
     ret_err(A, io_lib:format("~tw is an illegal modifier", [IllegalValue])).
 
-build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
+build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback; Kind =:= rpc ->
     NewSpecFun =
         case SpecFun of
             {atom, _, Fun} ->

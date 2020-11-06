@@ -1,0 +1,8 @@
+-module(hello_dep).
+
+-export([f/0, g/0]).
+
+-include("hello_include.hrl").
+
+g() ->
+    "abc".
