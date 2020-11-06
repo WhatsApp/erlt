@@ -120,21 +120,6 @@ object DriverErltc extends Driver {
   def loadProgram(file: String): Ast.Program =
     EtfErltc.programFromFile(file)
 
-  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
-    val RangeError(range, title, description) = error
-    val ranger = Doc.Ranger(inputContent, range.start, range.end)
-    val msgTitle = Doc.title(error.severity, inputPath, range.start)
-    val descText = description.map(_ ++ "\n").getOrElse("")
-    msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
-  }
-
-  def posErrorString(inputPath: String, inputContent: String, error: PosError): String = {
-    val PosError(pos, title) = error
-    val locator = Doc.Locator(inputContent, pos)
-    val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\n$title\n${locator.longString}\n"
-  }
-
   private def convertPos(pos: Doc.Pos): ETerm =
     ETuple(List(ELong(pos.line.toLong), ELong(pos.column.toLong)))
 

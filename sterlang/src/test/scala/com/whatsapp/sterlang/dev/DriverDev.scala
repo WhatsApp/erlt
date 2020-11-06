@@ -4,6 +4,7 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.test.it.Util
 
 import scala.collection.mutable
 
@@ -129,26 +130,10 @@ object DriverDev extends Driver {
   def loadProgram(file: String): Ast.Program =
     EtfDev.programFromFile(file)
 
-  // $COVERAGE-OFF$ interactive
   private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit =
-    Console.println(rangeErrorString(inputPath, inputContent, error))
+    Console.println(Util.rangeErrorString(inputPath, inputContent, error))
 
   private def displayPosError(inputPath: String, inputContent: String, error: PosError): Unit =
-    Console.println(posErrorString(inputPath, inputContent, error))
-  // $COVERAGE-ON$ interactive
+    Console.println(Util.posErrorString(inputPath, inputContent, error))
 
-  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
-    val RangeError(range, title, description) = error
-    val ranger = Doc.Ranger(inputContent, range.start, range.end)
-    val msgTitle = Doc.title(error.severity, inputPath, range.start)
-    val descText = description.map(_ ++ "\n").getOrElse("")
-    msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
-  }
-
-  def posErrorString(inputPath: String, inputContent: String, error: PosError): String = {
-    val PosError(pos, title) = error
-    val locator = Doc.Locator(inputContent, pos)
-    val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\n$title\n${locator.longString}\n"
-  }
 }
