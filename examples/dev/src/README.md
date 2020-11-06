@@ -20,7 +20,7 @@ These default values are *inlined* during code generation. See ../ir-spec/str3.P
 In the following scenario, str3.erl should be recompiled when str1 is updated, but it currently is not:
 
 ```sh
-cd examples/dev/src && make clean && make -j 10 && touch str1.erl && make VERBOSE=2
+cd examples/dev && make clean && make -j 10 && touch str1.erl && make VERBOSE=2
 ```
 
 To debug our representation of the dependency graph:

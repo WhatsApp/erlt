@@ -31,7 +31,11 @@ object AnnAst {
     val r: Doc.Range
   }
 
-  case class Field[A](label: String, value: A)
+  sealed trait Field[A] {
+    val value: A
+  }
+  case class LblField[A](label: String, value: A) extends Field[A]
+  case class PosField[A](value: A) extends Field[A]
 
   sealed trait Exp extends Node {
     val typ: Type
@@ -52,12 +56,12 @@ object AnnAst {
   case class IfExp(bodies: List[Body])(val typ: Type, val r: Doc.Range) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val typ: Type, val r: Doc.Range) extends Exp
-  case class StructCreate(structName: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class StructUpdate(exp: Exp, structName: String, fields: List[Field[Exp]])(
+  case class StructCreate(struct: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructUpdate(exp: Exp, struct: String, fields: List[Field[Exp]])(
       val typ: Type,
       val r: Doc.Range,
   ) extends Exp
-  case class StructSelect(exp: Exp, structName: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructSelect(exp: Exp, struct: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
       val r: Doc.Range,
@@ -85,10 +89,10 @@ object AnnAst {
   case class NamedFnExp(name: String, clauses: List[Clause])(val typ: Type, val r: Doc.Range) extends Exp
   case class AppExp(function: Exp, arguments: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
 
-  case class ShapeCreateExp(fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeCreateExp(fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val typ: Type, val r: Doc.Range) extends Exp
-  case class ShapeUpdateExp(exp: Exp, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
-  case class EnumExp(enum: String, ctr: String, args: List[Exp])(val typ: Type, val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[LblField[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
+  case class EnumExp(enum: String, ctr: String, fields: List[Field[Exp]])(val typ: Type, val r: Doc.Range) extends Exp
 
   case class ValDef(pat: Pat, value: Exp, env: Env, depth: Int, typ: Type) extends Node {
     override val r: Doc.Range = Doc.merge(pat.r, value.r)
@@ -112,14 +116,15 @@ object AnnAst {
   case class WildPat()(val r: Doc.Range)(val typ: Type) extends Pat
   case class LiteralPat(value: Ast.Val)(val r: Doc.Range)(val typ: Type) extends Pat
   case class VarPat(name: String)(val r: Doc.Range)(val typ: Type) extends Pat
+  case class PinnedVarPat(name: String)(val r: Doc.Range)(val typ: Type) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
   case class TuplePat(elements: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
   case class NilPat()(val r: Doc.Range)(val typ: Type) extends Pat
   case class BinPat(elements: List[BinElementPat])(val r: Doc.Range)(val typ: Type) extends Pat
-  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class ShapePat(fields: List[LblField[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
   case class ConsPat(head: Pat, tail: Pat)(val r: Doc.Range)(val typ: Type) extends Pat
   case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
-  case class EnumPat(enum: String, ctr: String, args: List[Pat])(val r: Doc.Range)(val typ: Type) extends Pat
+  case class EnumPat(enum: String, ctr: String, fields: List[Field[Pat]])(val r: Doc.Range)(val typ: Type) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 

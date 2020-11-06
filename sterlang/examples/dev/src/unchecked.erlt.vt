@@ -1,0 +1,5 @@
+val lengths/1: fun((list(list(A))) -> list(number()))
+val Ls: list(list(A))
+val L: list(A)
+val test/0: fun(() -> t1(number(), boolean()))
+val testme/0: fun(() -> list(t2(t1(boolean(), boolean()), t1(boolean(), boolean()))))

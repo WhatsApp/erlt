@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e90.erlt:19:14
-Wild type variable is not allowed here
- 19|     field :: _
-...|              ^

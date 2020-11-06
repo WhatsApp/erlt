@@ -1,0 +1,8 @@
+
+-module(bad_opaque_unchecked).
+
+-export_type([bad/1]).
+
+[opaque, unchecked]
+-type bad(X) :: 2.
+

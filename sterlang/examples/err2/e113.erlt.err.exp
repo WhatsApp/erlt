@@ -1,4 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e113.erlt:20:17
-#foo{} is not a type. Did you mean `message()`?
- 20| -spec test() -> #foo{}.
-...|                 ~~~~~~

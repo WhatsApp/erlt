@@ -1,12 +1,12 @@
 type_vars.erlt:4:13: type variable 'A' appears multiple times in type arguments
-type_vars.erlt:5:10: _ is not a valid type
-type_vars.erlt:6:15: _ is not a valid type
+type_vars.erlt:5:10: _ is not a valid name for a type argument
+type_vars.erlt:6:15: The '_' type is not supported by the type system
 type_vars.erlt:8:15: type variable 'A' appears multiple times in type arguments
-type_vars.erlt:9:12: _ is not a valid type
-type_vars.erlt:10:21: _ is not a valid type
+type_vars.erlt:9:12: _ is not a valid name for a type argument
+type_vars.erlt:10:21: The '_' type is not supported by the type system
 type_vars.erlt:12:15: type variable 'A' appears multiple times in type arguments
-type_vars.erlt:13:12: _ is not a valid type
-type_vars.erlt:14:17: _ is not a valid type
+type_vars.erlt:13:12: _ is not a valid name for a type argument
+type_vars.erlt:14:17: The '_' type is not supported by the type system
 type_vars.erlt:16:13: type variable 'A' appears multiple times in type arguments
-type_vars.erlt:17:10: _ is not a valid type
-type_vars.erlt:18:17: _ is not a valid type
+type_vars.erlt:17:10: _ is not a valid name for a type argument
+type_vars.erlt:18:27: The '_' type is not supported by the type system

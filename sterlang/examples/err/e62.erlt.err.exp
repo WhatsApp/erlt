@@ -1,4 +1,0 @@
--- ERROR ------------------------------------------- examples/err/e62.erlt:18:20
-Unknown type: some_type/0
- 18| -type my_type() :: some_type().
-...|                    ~~~~~~~~~~~

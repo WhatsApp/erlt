@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e86.erlt:20:5
-Duplicate fields: field
- 20|     field :: string()
-...|     ~~~~~~~~~~~~~~~~~

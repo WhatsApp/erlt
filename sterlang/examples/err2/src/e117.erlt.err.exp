@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------- examples/err2/src/e117.erlt:21:6
+Unconditional update. my_exn is exception()
+ 21|     E#my_exn{message = "new message"}.
+...|      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

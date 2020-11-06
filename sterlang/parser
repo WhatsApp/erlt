@@ -1,1 +1,1 @@
-target/scala-2.13/resource_managed/main/parser
+target/scala-2.13/resource_managed/test/parser

@@ -1,0 +1,6 @@
+-module(n06).
+-export([foo/2]).
+
+foo(B, R) ->
+    % circularity
+    if B -> R#(x); true -> R end.

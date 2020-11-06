@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/err/src/e28.erlt:19:11
+Infinite type
+list(list(A)) <> list(A)
+ 19|     [[Y], Y].
+...|           ^^

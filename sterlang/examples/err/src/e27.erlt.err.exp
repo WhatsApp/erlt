@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e27.erlt:22:18
+Type Mismatch
+Found:    e1(fun(() -> string()))
+Required: e1(fun(() -> number()))
+ 22|         false -> e1.e1{fun () -> "1" end}
+...|                  ~~~~~~~~~~~~~~~~~~~~~~~~

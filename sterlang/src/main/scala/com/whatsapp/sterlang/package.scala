@@ -17,11 +17,11 @@
 package com.whatsapp
 
 package object sterlang {
-  type Env = Map[String, STypes.TypeSchema]
+  type Env = Map[String, STypes.TypeScheme]
 
   case class Context(
       enumDefs: List[Ast.EnumDef],
-      specs: List[Ast.Spec],
+      structDefs: List[Ast.StructDef],
       aliases: List[Ast.TypeAlias],
       opaques: Set[Ast.TypeId],
       env: Env,
@@ -30,11 +30,15 @@ package object sterlang {
       val opaqueAliases = program.opaques.map { opaque =>
         Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.r)
       }
+      val localOpaques = program.uncheckedOpaques.map {
+        case Ast.UncheckedOpaque(name, params) =>
+          Ast.TypeId(Ast.LocalName(name), params.size)
+      }
       Context(
         enumDefs ++ program.enumDefs,
-        specs ++ program.specs,
+        structDefs ++ program.structDefs,
         aliases ++ program.typeAliases ++ opaqueAliases,
-        opaques,
+        opaques ++ localOpaques,
         env,
       )
     }
@@ -42,8 +46,12 @@ package object sterlang {
 
   case class ModuleApi(
       enumDefs: List[Ast.EnumDef],
+      structDefs: List[Ast.StructDef],
       aliases: List[Ast.TypeAlias],
       specs: List[Ast.Spec],
+      // includes both:
+      // -opaque
+      // -export_type + [opaque unchecked]
       opaques: List[Ast.TypeId],
   )
 
@@ -60,21 +68,14 @@ package object sterlang {
       Ast.TypeId(Ast.LocalName("iolist"), 0),
       Ast.TypeId(Ast.LocalName("map"), 2),
       Ast.TypeId(Ast.LocalName("message"), 0),
-      Ast.TypeId(Ast.LocalName("neg_integer"), 0),
       Ast.TypeId(Ast.LocalName("none"), 0),
-      Ast.TypeId(Ast.LocalName("non_neg_integer"), 0),
       Ast.TypeId(Ast.LocalName("number"), 0),
       Ast.TypeId(Ast.LocalName("pid"), 0),
       Ast.TypeId(Ast.LocalName("port"), 0),
-      Ast.TypeId(Ast.LocalName("pos_integer"), 0),
       Ast.TypeId(Ast.LocalName("reference"), 0),
       Ast.TypeId(Ast.LocalName("term"), 0),
       Ast.TypeId(Ast.LocalName("timeout"), 0),
-      Ast.TypeId(Ast.LocalName("node"), 0),
-      Ast.TypeId(Ast.LocalName("no_return"), 0),
-      Ast.TypeId(Ast.LocalName("integer"), 0),
       Ast.TypeId(Ast.LocalName("char"), 0),
-      Ast.TypeId(Ast.LocalName("float"), 0),
       Ast.TypeId(Ast.LocalName("boolean"), 0),
       Ast.TypeId(Ast.LocalName("list"), 1),
       Ast.TypeId(Ast.LocalName("string"), 0),
@@ -82,6 +83,17 @@ package object sterlang {
 
   val nativeAliases: List[Ast.TypeAlias] =
     List(
+      Ast.TypeAlias("float", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("neg_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+        Doc.ZRange
+      ),
+      Ast.TypeAlias("non_neg_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+        Doc.ZRange
+      ),
+      Ast.TypeAlias("pos_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+        Doc.ZRange
+      ),
       Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.LocalName("atom"), List.empty)(Doc.ZRange))(Doc.ZRange),
       Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.LocalName("none"), List.empty)(Doc.ZRange))(Doc.ZRange),
     )

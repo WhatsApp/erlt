@@ -1,0 +1,153 @@
+val add/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val add/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val sub/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val sub/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val mul/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val mul/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val idiv/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val idiv/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val eq/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val eq/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val neq/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val neq/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val lt/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val lt/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val gt/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val gt/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val le/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val le/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val ge/2: fun((A, A) -> boolean())
+val X1: A
+val X2: A
+val ge/1: fun((A) -> fun((A) -> boolean()))
+val X1: A
+val X2: A
+val min/2: fun((A, A) -> A)
+val X1: A
+val X2: A
+val min/1: fun((A) -> fun((A) -> A))
+val X1: A
+val X2: A
+val max/2: fun((A, A) -> A)
+val X1: A
+val X2: A
+val max/1: fun((A) -> fun((A) -> A))
+val X1: A
+val X2: A
+val compare/2: fun((A, A) -> order())
+val X1: A
+val X2: A
+val compare/1: fun((A) -> fun((A) -> order()))
+val X1: A
+val X2: A
+val not/1: fun((boolean()) -> boolean())
+val B: boolean()
+val and/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val and/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val or/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val or/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val xor/2: fun((boolean(), boolean()) -> boolean())
+val B1: boolean()
+val B2: boolean()
+val xor/1: fun((boolean()) -> fun((boolean()) -> boolean()))
+val B1: boolean()
+val B2: boolean()
+val mod_by/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val mod_by/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val remainder_by/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val remainder_by/1: fun((number()) -> fun((number()) -> number()))
+val X1: number()
+val X2: number()
+val negate/1: fun((number()) -> number())
+val X: number()
+val abs/1: fun((number()) -> number())
+val X: number()
+val clamp/3: fun((number(), number(), number()) -> number())
+val Low: number()
+val High: number()
+val Num: number()
+val composeL/2: fun((fun((C) -> B), fun((A) -> C)) -> fun((A) -> B))
+val G: fun((C) -> B)
+val F: fun((A) -> C)
+val X: A
+val composeL/1: fun((fun((A) -> C)) -> fun((fun((B) -> A)) -> fun((B) -> C)))
+val G: fun((A) -> C)
+val F: fun((B) -> A)
+val composeR/2: fun((fun((A) -> C), fun((C) -> B)) -> fun((A) -> B))
+val F: fun((A) -> C)
+val G: fun((C) -> B)
+val X: A
+val composeR/1: fun((fun((B) -> A)) -> fun((fun((A) -> C)) -> fun((B) -> C)))
+val F: fun((B) -> A)
+val G: fun((A) -> C)
+val apR/2: fun((A, fun((A) -> B)) -> B)
+val X: A
+val F: fun((A) -> B)
+val apR/1: fun((A) -> fun((fun((A) -> B)) -> B))
+val X: A
+val F: fun((A) -> B)
+val apL/2: fun((fun((A) -> B), A) -> B)
+val F: fun((A) -> B)
+val X: A
+val apL/1: fun((fun((B) -> A)) -> fun((B) -> A))
+val F: fun((B) -> A)
+val X: B
+val identity/1: fun((A) -> A)
+val X: A
+val always/2: fun((A, B) -> A)
+val A: A
+val always/1: fun((A) -> fun((B) -> A))
+val A: A
+val X: B
+val never/1: fun((never()) -> A)
+val Nvr: never()

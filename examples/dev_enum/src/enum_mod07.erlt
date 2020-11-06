@@ -1,0 +1,41 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(enum_mod07).
+
+-export([expr/0, pattern/3, guard/3, remote_with_defaults/0]).
+
+-export_type([with_imported_default/0]).
+
+-import_type(enum_mod04, [foo/0, bar/0]).
+
+-enum with_imported_default :: (x{foo = foo.x :: foo()}).
+
+expr() ->
+    {
+        foo.x,
+        bar.x{a = 1, b = 2}
+    }.
+
+pattern(foo.x, bar.x{a = 1, b = B}, B) ->
+    B.
+
+guard(Value1, Value2, B) when Value1 =:= foo.x, Value2 =:= bar.x{a = 1, b = B} ->
+    ok.
+
+remote_with_defaults() ->
+    {
+        enum_mod03:default_with_default.x{},
+        ?MODULE:with_imported_default.x{}
+    }.

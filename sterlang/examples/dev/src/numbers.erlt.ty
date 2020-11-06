@@ -1,0 +1,4 @@
+-spec foldl(fun((A, B) -> B), B, list(A)) -> B.
+-spec length(list(A)) -> number().
+-spec add(number(), number()) -> number().
+-spec add_number(number(), number()) -> number().

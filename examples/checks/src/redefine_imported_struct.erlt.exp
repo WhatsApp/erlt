@@ -1,1 +1,2 @@
-redefine_imported_struct.erlt:6:1: type foo already imported
+redefine_imported_struct.erlt:6:1: type bar already defined
+redefine_imported_struct.erlt:9:1: type foo already imported from no_need_to_exist1

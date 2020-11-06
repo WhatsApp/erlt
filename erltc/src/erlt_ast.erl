@@ -17,7 +17,8 @@
 -export([
     prewalk/2, prewalk/3,
     postwalk/2, postwalk/3,
-    traverse/4
+    traverse/4,
+    map_anno/2
 ]).
 
 -type ctx() :: form | expr | guard | pattern | type.
@@ -40,6 +41,10 @@ postwalk(Ast, Fun) ->
 postwalk(Ast, Acc0, Fun) ->
     traverse(Ast, Acc0, fun(Node, Acc, _Ctx) -> {Node, Acc} end, Fun).
 
+-spec map_anno(t(), fun((erl_anno:anno()) -> erl_anno:anno())) -> t().
+map_anno(Ast, Fun) ->
+    prewalk(Ast, fun(Node, _Ctx) -> setelement(2, Node, Fun(element(2, Node))) end).
+
 -define(IS_ATOMIC(Kind),
     Kind =:= integer orelse
         Kind =:= float orelse
@@ -53,12 +58,20 @@ postwalk(Ast, Acc0, Fun) ->
     Kind =:= type orelse
         Kind =:= opaque orelse
         Kind =:= enum orelse
-        Kind =:= struct
+        Kind =:= struct orelse
+        Kind =:= exception orelse
+        Kind =:= message orelse
+        Kind =:= unchecked_opaque
 ).
 
 -define(IS_SPEC(Kind),
     Kind =:= spec orelse
         Kind =:= callback
+).
+
+-define(IS_FUNCTION(Kind),
+    Kind =:= function orelse
+        Kind =:= unchecked_function
 ).
 
 -spec traverse(t(), any(), fun((t(), any(), ctx()) -> {t(), any()}), fun(
@@ -81,7 +94,7 @@ traverse(Ast, Acc, Pre, Post) ->
             {Node, Acc};
         {eof, _} = Node ->
             {Node, Acc};
-        Node when tuple_size(Node) >= 3 ->
+        Node when tuple_size(Node) >= 2 ->
             do_traverse(Node, Acc, Pre, Post, expr)
     end.
 
@@ -98,9 +111,9 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         %% TODO: traverse other attributes that can have type defintions
         {attribute, _, _, _} ->
             Post(Node, Acc0, Ctx);
-        {function, Line, Name, Arity, Clauses} ->
+        {F, Line, Name, Arity, Clauses} when ?IS_FUNCTION(F) ->
             {Clauses1, Acc1} = do_traverse_list(Clauses, Acc0, Pre, Post, Ctx),
-            Post({function, Line, Name, Arity, Clauses1}, Acc1, Ctx);
+            Post({F, Line, Name, Arity, Clauses1}, Acc1, Ctx);
         {clause, Line, Head0, Guard0, Body0} ->
             {Head1, Acc1} = do_traverse_list(Head0, Acc0, Pre, Post, pattern),
             {Guard1, Acc2} = do_traverse_guards(Guard0, Acc1, Pre, Post),
@@ -124,7 +137,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {enum, Line, Name0, Constr0, Values0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
-            {Values1, Acc3} = do_traverse_list(Values0, Acc2, Pre, Post, Ctx),
+            {Values1, Acc3} = do_traverse_atom_or_list(Values0, Acc2, Pre, Post, Ctx),
             Post({enum, Line, Name1, Constr1, Values1}, Acc3, Ctx);
         {map, Line, Values0} ->
             {Values1, Acc1} = do_traverse_list(Values0, Acc0, Pre, Post, Ctx),
@@ -134,7 +147,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Values1, Acc2} = do_traverse_list(Values0, Acc1, Pre, Post, Ctx),
             Post({map, Line, Expr1, Values1}, Acc2, Ctx);
         {map_field_exact, Line, Key0, Value0} ->
-            %% erl_id_trans in patterns traverses key as expr
+            %% map keys are never pattern, but (limited) expressions
             {Key1, Acc1} = do_traverse(Key0, Acc0, Pre, Post, pattern_to_expr(Ctx)),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
             Post({map_field_exact, Line, Key1, Value1}, Acc2, Ctx);
@@ -142,17 +155,17 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Key1, Acc1} = do_traverse(Key0, Acc0, Pre, Post, Ctx),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
             Post({map_field_assoc, Line, Key1, Value1}, Acc2, Ctx);
-        {anon_struct, Line, Fields0} ->
+        {shape, Line, Fields0} ->
             {Fields1, Acc1} = do_traverse_list(Fields0, Acc0, Pre, Post, Ctx),
-            Post({anon_struct, Line, Fields1}, Acc1, Ctx);
-        {anon_struct_update, Line, Expr0, Fields0} ->
+            Post({shape, Line, Fields1}, Acc1, Ctx);
+        {shape_update, Line, Expr0, Fields0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
-            Post({anon_struct_update, Line, Expr1, Fields1}, Acc2, Ctx);
-        {anon_struct_field, Line, Expr0, Field0} ->
+            Post({shape_update, Line, Expr1, Fields1}, Acc2, Ctx);
+        {shape_field, Line, Expr0, Field0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
             {Field1, Acc2} = do_traverse(Field0, Acc1, Pre, Post, Ctx),
-            Post({anon_struct_field, Line, Expr1, Field1}, Acc2, Ctx);
+            Post({shape_field, Line, Expr1, Field1}, Acc2, Ctx);
         {struct, Line, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
@@ -162,10 +175,10 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Name1, Acc2} = do_traverse(Name0, Acc1, Pre, Post, Ctx),
             {Fields1, Acc3} = do_traverse_list(Fields0, Acc2, Pre, Post, Ctx),
             Post({struct, Line, Expr1, Name1, Fields1}, Acc3, Ctx);
-        {struct_field, Line, Name0, Value0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+        {field, Line, Name0, Value0} ->
+            {Name1, Acc1} = do_traverse_atom_or_node(Name0, Acc0, Pre, Post, Ctx),
             {Value1, Acc2} = do_traverse(Value0, Acc1, Pre, Post, Ctx),
-            Post({struct_field, Line, Name1, Value1}, Acc2, Ctx);
+            Post({field, Line, Name1, Value1}, Acc2, Ctx);
         {struct_field, Line, Expr0, Name0, Value0} ->
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
             {Name1, Acc2} = do_traverse(Name0, Acc1, Pre, Post, Ctx),
@@ -185,15 +198,12 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {bin, Line, Values0} ->
             {Values1, Acc1} = do_traverse_list(Values0, Acc0, Pre, Post, Ctx),
             Post({bin, Line, Values1}, Acc1, Ctx);
-        {bin_element, Line, Expr0, Size0, Type} when Size0 =/= default ->
+        {bin_element, Line, Expr0, Size0, Type} ->
             %% don't recurse into Type, it's not AST, but special syntax
             {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            {Size1, Acc2} = do_traverse(Size0, Acc1, Pre, Post, Ctx),
+            %% bin field size are never patterns, but (limited) expressions
+            {Size1, Acc2} = do_traverse_atom_or_node(Size0, Acc1, Pre, Post, pattern_to_expr(Ctx)),
             Post({bin_element, Line, Expr1, Size1, Type}, Acc2, Ctx);
-        {bin_element, Line, Expr0, default, Type} ->
-            %% don't recurse into Type, it's not AST, but special syntax
-            {Expr1, Acc1} = do_traverse(Expr0, Acc0, Pre, Post, Ctx),
-            Post({bin_element, Line, Expr1, default, Type}, Acc1, Ctx);
         {call, Line, Name0, Args0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
@@ -213,7 +223,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
         {Generate, Line, Pattern0, Expr0} when Generate =:= generate; Generate =:= b_generate ->
             {Pattern1, Acc1} = do_traverse(Pattern0, Acc0, Pre, Post, pattern),
             {Expr1, Acc2} = do_traverse(Expr0, Acc1, Pre, Post, Ctx),
-            Post({generate, Line, Pattern1, Expr1}, Acc2, Ctx);
+            Post({Generate, Line, Pattern1, Expr1}, Acc2, Ctx);
         {block, Line, Exprs0} ->
             {Exprs1, Acc1} = do_traverse_list(Exprs0, Acc0, Pre, Post, Ctx),
             Post({block, Line, Exprs1}, Acc1, Ctx);
@@ -258,32 +268,36 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             Post(Node, Acc0, Ctx);
         {type, _, tuple, any} ->
             Post(Node, Acc0, Ctx);
-        {type, Line, enum, Name0, Constr0, Args0} ->
+        {type, Line, enum, Name0, Variants0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
-            {Args1, Acc3} = do_traverse_list(Args0, Acc2, Pre, Post, Ctx),
-            Post({type, Line, enum, Name1, Constr1, Args1}, Acc3, Ctx);
-        {type, Line, enum, Constr0, Args0} ->
-            {Constr1, Acc1} = do_traverse(Constr0, Acc0, Pre, Post, Ctx),
-            {Args1, Acc2} = do_traverse_list(Args0, Acc1, Pre, Post, Ctx),
-            Post({type, Line, enum, Constr1, Args1}, Acc2, Ctx);
+            {Variants1, Acc2} = do_traverse_list(Variants0, Acc1, Pre, Post, Ctx),
+            Post({type, Line, enum, Name1, Variants1}, Acc2, Ctx);
+        {variant, Line, Name0, Fields0} ->
+            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Fields1, Acc2} = do_traverse_atom_or_list(Fields0, Acc1, Pre, Post, Ctx),
+            Post({variant, Line, Name1, Fields1}, Acc2, Ctx);
         {type, Line, struct, Name0, Fields0} ->
             {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
             {Fields1, Acc2} = do_traverse_list(Fields0, Acc1, Pre, Post, Ctx),
             Post({type, Line, struct, Name1, Fields1}, Acc2, Ctx);
-        {field_definition, Line, Name0, undefined, Type0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Type1, Acc2} = do_traverse(Type0, Acc1, Pre, Post, Ctx),
-            Post({field_definition, Line, Name1, undefined, Type1}, Acc2, Ctx);
         {field_definition, Line, Name0, Default0, Type0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
-            {Default1, Acc2} = do_traverse(Default0, Acc1, Pre, Post, guard),
+            {Name1, Acc1} = do_traverse_atom_or_node(Name0, Acc0, Pre, Post, Ctx),
+            {Default1, Acc2} = do_traverse_atom_or_node(Default0, Acc1, Pre, Post, guard),
             {Type1, Acc3} = do_traverse(Type0, Acc2, Pre, Post, Ctx),
             Post({field_definition, Line, Name1, Default1, Type1}, Acc3, Ctx);
-        {type, Line, open_anon_struct, Args0, Var} ->
+        {type, Line, open_shape, Args0, Var} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             {Var1, Acc2} = do_traverse(Var, Acc1, Pre, Post, Ctx),
-            Post({type, Line, open_anon_struct, Args1, Var1}, Acc2, Ctx);
+            Post({type, Line, open_shape, Args1, Var1}, Acc2, Ctx);
+        %% The first argument is the normal fun followed by a list of constarints.
+        {type, Line, 'bounded_fun', [Fun0, Guards0]} ->
+            {Fun1, Acc1} = do_traverse(Fun0, Acc0, Pre, Post, Ctx),
+            {Guards1, Acc2} = do_traverse_list(Guards0, Acc1, Pre, Post, Ctx),
+            Post({type, Line, 'bounded_fun', [Fun1, Guards1]}, Acc2, Ctx);
+        %% The first argument to the constraint is the type of constraint followed by a list.
+        {type, Line, constraint, [Constraint, Args0]} ->
+            {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
+            Post({type, Line, constraint, [Constraint, Args1]}, Acc1, Ctx);
         {type, Line, Name, Args0} ->
             {Args1, Acc1} = do_traverse_list(Args0, Acc0, Pre, Post, Ctx),
             Post({type, Line, Name, Args1}, Acc1, Ctx);
@@ -320,6 +334,16 @@ do_traverse_guards(List0, Acc0, Pre, Post) ->
     {List2, Acc2} = lists:mapfoldl(Fun, Acc1, List1),
     {{guard_or, _, List3}, Acc3} = Post({guard_or, 0, List2}, Acc2, guard),
     {List3, Acc3}.
+
+do_traverse_atom_or_node(Atom, Acc, _Pre, _Post, _Ctx) when is_atom(Atom) ->
+    {Atom, Acc};
+do_traverse_atom_or_node(Node, Acc, Pre, Post, Ctx) when is_tuple(Node) ->
+    do_traverse(Node, Acc, Pre, Post, Ctx).
+
+do_traverse_atom_or_list(Atom, Acc, _Pre, _Post, _Ctx) when is_atom(Atom) ->
+    {Atom, Acc};
+do_traverse_atom_or_list(List, Acc, Pre, Post, Ctx) when is_list(List) ->
+    do_traverse_list(List, Acc, Pre, Post, Ctx).
 
 pattern_to_expr(pattern) -> expr;
 pattern_to_expr(Other) -> Other.

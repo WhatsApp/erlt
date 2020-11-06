@@ -1,0 +1,4 @@
+-- ERROR --------------------------- examples/err_syntax/src/e36_erlt.erlt:23:11
+Parse Error
+ 23| mk_map1(#(Key = Value)) -> {Key, Value}.
+...|           ^

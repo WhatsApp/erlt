@@ -24,37 +24,38 @@ class TypesUtil(val vars: Vars) {
   val T = Types
   val ST = STypes
 
-  def generalize(d: Int)(t: T.Type): ST.TypeSchema =
+  def generalize(d: Int)(t: T.Type): ST.TypeScheme =
     generalize_*(d)(List(t)).head
 
-  def generalize_*(d: Int)(types: List[T.Type]): List[ST.TypeSchema] =
+  def generalize_*(d: Int)(types: List[T.Type]): List[ST.TypeScheme] =
     generalizeImpl(_ >= d)(types)
 
   // All (suitable according to gen) open variables are transformed into schematic variables
-  private def generalizeImpl(gen: T.Depth => Boolean)(types: List[T.Type]): List[ST.TypeSchema] = {
+  private def generalizeImpl(gen: T.Depth => Boolean)(types: List[T.Type]): List[ST.TypeScheme] = {
 
     var nextVarId = 0
-    var nextRowVarId = 0
 
     var tMap: TreeMap[T.TypeVar, ST.TypeVar] =
       TreeMap.empty(vars.TVarOrdering)
     var rMap: TreeMap[T.RowTypeVar, ST.RowTypeVar] =
       TreeMap.empty(vars.RVarOrdering)
-    val rargsBuffer: ListBuffer[T.RtVarKind] =
+    val targsBuffer: ListBuffer[ST.TypeVar] =
+      ListBuffer()
+    val rargsBuffer: ListBuffer[ST.RowTypeVar] =
       ListBuffer()
 
     def mkSTypeVar(v: T.TypeVar): ST.TypeVar = {
       val sTypeVar = ST.TypeVar(nextVarId)
       nextVarId = nextVarId + 1
       tMap = tMap + (v -> sTypeVar)
+      targsBuffer.append(sTypeVar)
       sTypeVar
     }
 
-    //  TODO - should not we make kind a part of SRowTypeVar?
     def mkSRowTypeVar(rv: T.RowTypeVar, k: T.RtVarKind): ST.RowTypeVar = {
-      val sRowTypeVar = ST.RowTypeVar(nextRowVarId)
-      nextRowVarId = nextRowVarId + 1
-      rargsBuffer.append(k)
+      val sRowTypeVar = ST.RowTypeVar(nextVarId, k)
+      nextVarId = nextVarId + 1
+      rargsBuffer.append(sRowTypeVar)
       rMap = rMap + (rv -> sRowTypeVar)
       sRowTypeVar
     }
@@ -112,24 +113,20 @@ class TypesUtil(val vars: Vars) {
     val bodies: List[ST.Type] =
       types.map(typ)
 
-    val targs = nextVarId
+    val targs = targsBuffer.toList
     val rargs = rargsBuffer.toList
 
     // TODO: will it be a difference if we generalize them one-by-one?
-    bodies.map(ST.TypeSchema(targs, rargs, _))
+    bodies.map(ST.TypeScheme(targs, rargs, _))
   }
 
   // dual to generalize, all schematic variables -> open variables
-  def instantiate(d: T.Depth, typSchema: ST.TypeSchema): T.Type = {
+  def instantiate(d: T.Depth, typeScheme: ST.TypeScheme): T.Type = {
 
     val tMap: Map[ST.TypeVar, T.TypeVar] =
-      (0 until typSchema.targs).map { i =>
-        ST.TypeVar(i) -> vars.tVar(T.Open(d))
-      }.toMap
+      typeScheme.targs.map(tv => tv -> vars.tVar(T.Open(d))).toMap
     val rMap: Map[ST.RowTypeVar, T.RowTypeVar] =
-      typSchema.rargs.zipWithIndex.map {
-        case (k, i) => ST.RowTypeVar(i) -> vars.rVar(T.RowOpen(d, k))
-      }.toMap
+      typeScheme.rargs.map(rtv => rtv -> vars.rVar(T.RowOpen(d, rtv.kind))).toMap
 
     def tSub(tMap: Map[ST.TypeVar, T.TypeVar])(sType: ST.Type): T.Type =
       sType match {
@@ -153,7 +150,7 @@ class TypesUtil(val vars: Vars) {
           T.RowVarType(rMap(rTsVar))
       }
 
-    tSub(tMap)(typSchema.body)
+    tSub(tMap)(typeScheme.body)
   }
 
   def labels(typ: T.Type): List[String] =

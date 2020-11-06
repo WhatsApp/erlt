@@ -1,1 +1,1 @@
-undefined_remote_enum.erlt:7:3: enum foo.bar undefined
+undefined_remote_enum.erlt:7:3: enum foo:bar undefined

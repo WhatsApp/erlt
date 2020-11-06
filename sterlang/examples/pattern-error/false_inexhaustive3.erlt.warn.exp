@@ -1,5 +1,0 @@
--- WARNING ---------------- examples/pattern-error/false_inexhaustive3.erlt:20:1
-Possibly Missing Patterns
-missing: _, _
- 20| test(_, _) when true -> {}.
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

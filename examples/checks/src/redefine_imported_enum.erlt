@@ -1,0 +1,8 @@
+-module(redefine_imported_enum).
+
+-enum bar(A) :: (box{val :: A}).
+
+-import_type(no_need_to_exist, [bar/0]).
+-import_type(no_need_to_exist, [foo/2]).
+
+-enum foo :: (a).

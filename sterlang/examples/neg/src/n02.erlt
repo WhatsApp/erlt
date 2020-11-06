@@ -1,0 +1,5 @@
+-module(n02).
+-export([f/1]).
+
+%% circularity
+f(_) -> f(fun f/1).

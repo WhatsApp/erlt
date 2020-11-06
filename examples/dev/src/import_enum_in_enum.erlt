@@ -1,5 +1,4 @@
--lang([erl2, st]).
--module('import_enum_in_enum').
+-module(import_enum_in_enum).
 -compile([warn_unused_import,warnings_as_errors]).
 
 -export([mk_ordered_pair/1, mk_pair/2]).
@@ -7,14 +6,14 @@
 
 -import_type(mod03, [pair/2]).
 
--enum maybe_pair() :: really_pair{pair(integer(),integer())} | empty{}.
+-enum maybe_pair() :: (really_pair{pair :: pair(integer(),integer())}, empty).
 
 
 -spec mk_pair(integer(),integer()) -> pair(integer(), integer()).
 
-mk_pair(A, B) -> pair.pair{A,B}.
+mk_pair(A, B) -> pair.pair{fst = A, snd = B}.
 
 -spec mk_ordered_pair(pair(integer(), integer())) -> maybe_pair().
 
-mk_ordered_pair(pair.pair{A, B} =  P) when A >= B -> maybe_pair.really_pair{P};
-mk_ordered_pair(pair.pair{A, B}) when A < B -> maybe_pair.empty{}.
+mk_ordered_pair(pair.pair{fst = A, snd = B} =  P) when A >= B -> maybe_pair.really_pair{pair = P};
+mk_ordered_pair(pair.pair{fst = A, snd = B}) when A < B -> maybe_pair.empty.

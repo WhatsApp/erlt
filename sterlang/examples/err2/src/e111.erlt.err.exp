@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err2/src/e111.erlt:20:17
+foo() is not a type. Did you mean `exception()`?
+ 20| -spec test() -> foo().
+...|                 ~~~~~

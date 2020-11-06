@@ -20,17 +20,18 @@ import java.io.StringWriter
 
 import com.whatsapp.sterlang.Doc.ZRange
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.dev.EtfDev
 
 class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   def testSpecError(input: String, expected: SpecError): Unit = {
-    val prog = etf.programFromString(input)
+    val prog = EtfDev.programFromString(input)
     val sw = new StringWriter()
     try {
       val vars = new Vars()
-      val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+      val context = Context(prog.enumDefs, prog.structDefs, prog.typeAliases, Set.empty, Map.empty)
       val elaborate = new Elaborate(vars, context, prog)
-      elaborate.elaborateFuns(prog.funs)
+      elaborate.elaborate()
       val actualOutput = sw.toString
       fail(actualOutput)
     } catch {
@@ -45,7 +46,6 @@ class ElaborateErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
     it("example1") {
       val input =
         """
-          |-lang(st).
           |-module(test).
           |-spec call_id(A) -> B.
           |call_id(X) -> id(X).

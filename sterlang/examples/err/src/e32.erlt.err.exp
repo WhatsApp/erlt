@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e32.erlt:18:12
+Type Mismatch
+Found:    string()
+Required: number()
+ 18| foo(C) -> (case C of true -> "" end) + 1.
+...|            ~~~~~~~~~~~~~~~~~~~~~~~~

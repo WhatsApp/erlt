@@ -1,4 +1,4 @@
--lang([erlt]).
+
 -module(unused_struct).
 
 -export([test/2]).

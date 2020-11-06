@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------- examples/err/src/e68.erlt:17:18
+Unbound type variable: A
+ 17| -enum e() :: (e1{A}).
+...|                  ^

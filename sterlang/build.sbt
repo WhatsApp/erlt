@@ -14,38 +14,50 @@
  * limitations under the License.
  */
 
+val ciSensitiveScalacOptions =
+  if (sys.env.contains("GITHUB_ACTIONS")) Seq("-deprecation", "-feature", "-Xno-patmat-analysis")
+  else Seq("-deprecation", "-feature")
+
 lazy val projectSetting = Seq(
   scalaVersion := "2.13.3",
   organization := "whatsapp",
   name := "sterlang",
   description := "Statically Typed Erlang",
-  scalacOptions ++= Seq("-deprecation", "-feature"),
-  libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1",
+  scalacOptions ++= ciSensitiveScalacOptions,
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
   Test / testOptions += Tests.Argument("-oD"),
+  test in assembly := {},
+  fork in run := true,
 )
 
 lazy val sterlang = (project in file("."))
   .settings(projectSetting)
   .settings(
-    mainClass in assembly := Some("com.whatsapp.sterlang.Main"),
+    mainClass in assembly := Some("com.whatsapp.sterlang.DriverErltc"),
     assemblyJarName in assembly := "sterlang.jar",
-    resourceGenerators in Compile += parser.taskValue,
+    resourceGenerators in Test += parser.taskValue,
   )
 
 val parser = taskKey[Seq[File]]("Generate parser command line utility")
-parser / fileInputs += (Compile / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
+parser / fileInputs += (Test / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
+
+// TODO - restore after re-integration
+coverageMinimum := 98
+coverageFailOnMinimum := true
 
 parser := {
   val log = streams.value.log
-  val erlangSrcDir = (Compile / sourceDirectory).value / "erlang"
+  val erlangSrcDir = (Test / sourceDirectory).value / "erlang"
   val parserInput = erlangSrcDir / "parser"
-  val parserOutput = (Compile / resourceManaged).value / "parser"
+  val parserOutput = (Test / resourceManaged).value / "parser"
 
   if (parser.inputFileChanges.hasChanges) {
     import scala.sys.process.Process
+    log.info("parser: erlc parser.yrl")
     Process(Seq("erlc", "parser.yrl"), erlangSrcDir).!!
+    log.info("parser: erlc parser.erl")
     Process(Seq("erlc", "parser.erl"), erlangSrcDir).!!
+    log.info("parser: escript make_escript.erl")
     Process(Seq("escript", "make_escript.erl"), erlangSrcDir).!!
   }
 

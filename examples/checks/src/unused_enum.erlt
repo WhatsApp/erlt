@@ -1,0 +1,18 @@
+-module(unused_enum).
+
+-export([test/2]).
+
+-export_type([used_exported/0]).
+
+-enum unused :: (x).
+
+-enum used_expr :: (x).
+
+-enum used_guard :: (x).
+
+-enum used_pattern :: (x).
+
+-enum used_exported :: (x).
+
+test(used_pattern.x, X) when X =:= used_guard.x ->
+    used_expr.x.

@@ -112,10 +112,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def getPatternMatches(beamFilePath: String): PatternMatches.PatternMatches = {
     System.err.println("loading " + beamFilePath)
-    connection.sendRPC("analyzer",
-      "pattern_matching_constructs",
-      new OtpErlangList(new OtpErlangString(beamFilePath)),
-    )
+    connection.sendRPC("analyzer", "pattern_matching_constructs", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
@@ -132,10 +129,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def getNonlinearClauses(beamFilePath: String): List[NonlinearClauses.NonlinearClause] = {
     System.err.println("loading " + beamFilePath)
-    connection.sendRPC("analyzer",
-      "nonlinear_clauses",
-      new OtpErlangList(new OtpErlangString(beamFilePath)),
-    )
+    connection.sendRPC("analyzer", "nonlinear_clauses", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
@@ -155,10 +149,7 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def getGuardedClauses(beamFilePath: String): List[GuardedClauses.GuardedClause] = {
     System.err.println("loading " + beamFilePath)
-    connection.sendRPC("analyzer",
-      "guarded_clauses",
-      new OtpErlangList(new OtpErlangString(beamFilePath)),
-    )
+    connection.sendRPC("analyzer", "guarded_clauses", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 

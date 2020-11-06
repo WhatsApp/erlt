@@ -18,19 +18,18 @@ package com.whatsapp.sterlang
 
 object SCC {
 
-  type Component = List[Vertex]
+  type Component = List[String]
 
-  case class Vertex(label: String)
-  case class Edge(from: Vertex, to: Vertex)
-  case class G(vertices: List[Vertex], edges: List[Edge])
+  case class Edge(from: String, to: String)
+  case class G(vertices: List[String], edges: List[Edge])
 
   case class State(
       graph: G,
       count: Int,
-      visited: Map[Vertex, Boolean],
-      dfNumber: Map[Vertex, Int],
-      lowlinks: Map[Vertex, Int],
-      stack: List[Vertex],
+      visited: Map[String, Boolean],
+      dfNumber: Map[String, Int],
+      lowlinks: Map[String, Int],
+      stack: List[String],
       components: List[Component],
   )
 
@@ -56,7 +55,7 @@ object SCC {
     state.components
   }
 
-  private def search(vertex: Vertex, state: State): State = {
+  private def search(vertex: String, state: State): State = {
 
     val newState =
       state.copy(
@@ -67,7 +66,7 @@ object SCC {
         stack = vertex :: state.stack,
       )
 
-    def processVertex(st: State, w: Vertex): State = {
+    def processVertex(st: State, w: String): State = {
       if (!st.visited(w)) {
         val st1 = search(w, st)
         val min = smallest(st1.lowlinks(w), st1.lowlinks(vertex))
@@ -96,7 +95,7 @@ object SCC {
   private def smallest(x: Int, y: Int): Int =
     if (x < y) x else y
 
-  private def adjacent(vertex: Vertex, state: State): List[Vertex] =
+  private def adjacent(vertex: String, state: State): List[String] =
     for { edge <- state.graph.edges if edge.from == vertex } yield edge.to
 
 }

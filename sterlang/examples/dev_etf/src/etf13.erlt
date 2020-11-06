@@ -1,0 +1,16 @@
+-module(etf13).
+
+-spec local_fun() -> fun((A, B) -> {A, B}).
+-export([local_fun/0, local_named_fun/0]).
+
+local_fun() ->
+    F = fun (X, Y) -> {X, Y} end,
+    F.
+
+-spec local_named_fun() -> fun(([_]) -> [_]).
+local_named_fun() ->
+    F = fun
+            Local([_|T]) -> Local(T);
+            Local([]) -> []
+        end,
+    F.

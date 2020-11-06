@@ -18,31 +18,30 @@ package com.whatsapp.sterlang.test
 
 import java.io.StringWriter
 
-import com.whatsapp.sterlang.{Ast, _}
+import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.dev.EtfDev
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
-  val S = Ast
 
   def testTyping(input: String, expOutput: String): Unit = {
-    val prog = etf.programFromString(input)
-    val sw = new StringWriter()
+    val prog = EtfDev.programFromString(input)
     val vars = new Vars()
-    val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+    val context = Context(prog.enumDefs, prog.structDefs, prog.typeAliases, Set.empty, Map.empty)
     val elaborate = new Elaborate(vars, context, prog)
-    val (annDefs, env) = elaborate.elaborateFuns(prog.funs)
-    TypePrinter2(vars, Some(sw)).printFunsTypeSchemes(annDefs, env)
-    val actualOutput = sw.toString
+    val (annDefs, env) = elaborate.elaborate()
+    val specStrings = Render(vars).specs(annDefs, env)
+    val actualOutput = specStrings.mkString("", "\n", "\n")
     assert(actualOutput == expOutput)
   }
 
   def testTypeError(input: String): Unit = {
-    val prog = etf.programFromString(input)
+    val prog = EtfDev.programFromString(input)
     val sw = new StringWriter()
     try {
       val vars = new Vars()
-      val context = Context(prog.enumDefs, prog.specs, prog.typeAliases, Set.empty, Map.empty)
+      val context = Context(prog.enumDefs, prog.structDefs, prog.typeAliases, Set.empty, Map.empty)
       val elaborate = new Elaborate(vars, context, prog)
-      elaborate.elaborateFuns(prog.funs)
+      elaborate.elaborate()
       val actualOutput = sw.toString
       fail(actualOutput)
     } catch {
@@ -57,10 +56,9 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("box()") {
       val input =
         """
-          |-lang(st).
           |-module(test).
-          |-enum box() :: box{}.
-          |b() -> box.box{}.
+          |-enum box() :: (box).
+          |b() -> box.box.
           |""".stripMargin
       val output =
         """-spec b() -> box().
@@ -71,9 +69,8 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("box(A)") {
       val input =
         """
-          |-lang(st).
           |-module(test).
-          |-enum box(A) :: box{A}.
+          |-enum box(A) :: (box{A}).
           |box1(X) -> box.box{X}.
           |box2(X) -> box.box{{X, X}}.
           |""".stripMargin
@@ -87,12 +84,11 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Option(A)") {
       val input =
         """
-          |-lang(st).
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
-          |mkNone(A) -> option.none{}.
+          |-enum option(A) :: (none, some{A}).
+          |mkNone(A) -> option.none.
           |mkSome(A) -> option.some{A}.
-          |none() -> option.none{}.
+          |none() -> option.none.
           |someInt() -> mkSome(0).
           |someStr() -> mkSome("").
           |optInts() -> [none(), someInt()].
@@ -102,9 +98,9 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
         """-spec mkNone(A) -> option(B).
           |-spec mkSome(A) -> option(A).
           |-spec none() -> option(A).
-          |-spec someInt() -> option(integer()).
+          |-spec someInt() -> option(number()).
           |-spec someStr() -> option(string()).
-          |-spec optInts() -> list(option(integer())).
+          |-spec optInts() -> list(option(number())).
           |-spec optStrs() -> list(option(string())).
           |""".stripMargin
       testTyping(input, output)
@@ -113,9 +109,8 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("Catching error") {
       val input =
         """
-          |-lang(st).
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
+          |-enum option(A) :: (none, some{A}).
           |mkSome(A) -> option.some{A}.
           |someInt() -> mkSome(0).
           |someStr() -> mkSome("").
@@ -129,30 +124,29 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     it("some case expressions") {
       val input =
         """
-          |-lang(st).
           |-module(test).
-          |-enum option(A) :: none{} | some{A}.
-          |-enum num() :: z{} | s{num()}.
-          |-enum my_list(A) ::  nil{} | cons{A, my_list(A)}.
+          |-enum option(A) :: (none, some{A}).
+          |-enum num() :: (z, s{num()}).
+          |-enum my_list(A) ::  (nil, cons{A, my_list(A)}).
           |getOpt(Opt, DefVal) ->
           |  case Opt of
           |      option.some{A} -> A;
-          |      option.none{} -> DefVal
+          |      option.none -> DefVal
           |  end.
           |next(X) -> num.s{X}.
           |prev(X) ->
           |  case X of
           |      num.s{X1} -> X1;
-          |      num.z{} -> num.z{}
+          |      num.z -> num.z
           |  end.
           |append(Xs, Ys) ->
           |  case Xs of
-          |      my_list.nil{} -> Ys;
+          |      my_list.nil -> Ys;
           |      my_list.cons{X1, Xs1} -> my_list.cons{X1, append(Xs1, Ys)}
           |  end.
           |map(Xs, F) ->
           |  case Xs of
-          |      my_list.nil{} -> my_list.nil{};
+          |      my_list.nil -> my_list.nil;
           |      my_list.cons{X1, Xs1} -> my_list.cons{F(X1), map(Xs1, F)}
           |  end.
           |""".stripMargin

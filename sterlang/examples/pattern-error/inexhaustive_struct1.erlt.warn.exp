@@ -1,5 +1,0 @@
--- WARNING --------------- examples/pattern-error/inexhaustive_struct1.erlt:22:1
-Missing Patterns
-missing: #r{a = true}
- 22| test1(#r{a = false}) -> {}.
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

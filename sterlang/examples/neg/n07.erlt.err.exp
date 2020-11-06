@@ -1,5 +1,0 @@
--- ERROR ------------------------------------------- examples/neg/n07.erlt:13:25
-Infinite type
-A <> #( next :: option(A), A )
- 13|   getOrElse(Rec#(next), Rec).
-...|                         ~~~

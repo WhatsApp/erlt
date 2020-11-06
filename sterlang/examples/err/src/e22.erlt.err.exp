@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e22.erlt:19:17
+Type Mismatch
+Found:    #( x :: boolean() )
+Required: number()
+ 19| foo() -> double(#(x = false)).
+...|                 ~~~~~~~~~~~~

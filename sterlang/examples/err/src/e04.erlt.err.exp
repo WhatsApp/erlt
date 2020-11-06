@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e04.erlt:18:23
+Type Mismatch
+Found:    number()
+Required: boolean()
+ 18| foo() -> true andalso 1.
+...|                       ^

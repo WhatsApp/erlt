@@ -1,0 +1,116 @@
+-module(erltodo).
+-export([main/1]).
+
+-struct state() :: (
+    todos = [] :: list(string()),
+    deleted_count = 0 :: integer()
+).
+
+-enum choice() :: (
+      add{string()}
+    , delete{integer()}
+    , view_stats
+).
+
+-spec main(term()) -> no_return().
+main(_Argv) ->
+    loop(#state{}).
+
+%% core logic using our struct and enum
+
+loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
+    display_todos(Todos),
+    case prompt(Todos) of
+        choice.add{TodoText} ->
+            loop(#state{todos = [TodoText|Todos]});
+        choice.delete{Index} ->
+            loop(#state{todos = splice(Index, Todos), deleted_count = DeletedCount + 1});
+        choice.view_stats ->
+            display_stats(State),
+            loop(State)
+    end.
+
+ %% get and adapt user input
+
+prompt(Todos) ->
+     io:format("What would you like to do?\n"
+            "1. add todo~n"
+            "2. delete todo~n"
+            "3. view stats~n~n"
+    ),
+     case io:read("Enter a number followed by a dot: ") of
+         {ok, 1} ->
+             prompt_add_todo();
+         {ok, 2} ->
+             prompt_delete_todo(Todos);
+         {ok, 3} ->
+             choice.view_stats;
+         {ok, _} ->
+             invalid_input(),
+             prompt(Todos)
+     end.
+
+ prompt_add_todo() ->
+     case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
+         {ok, TodoText} when is_list(TodoText) ->
+                 choice.add{TodoText};
+         {ok, Res} ->
+            erlang:display(Res),
+             invalid_input(),
+             prompt_add_todo()
+     end.
+
+ prompt_delete_todo(Todos) ->
+     display_todos(Todos),
+     case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
+         {ok, Id} when is_integer(Id) ->
+             choice.delete{Id};
+         {ok, _} ->
+             invalid_input(),
+             prompt_delete_todo(Todos)
+     end.
+
+
+%% display stuff
+
+display_stats(#state{todos = [], deleted_count=0}) ->
+    io:format("You haven't started yet: try creating and deleting todos~n"),
+    {ok, _} = io:read("type ok followed by a dot to continue. "),
+    ok;
+display_stats(#state{todos = Todos, deleted_count = DeletedCount}) ->
+    line(),
+    io:format("You have ~p active todos and ~p deleted todos", [length(Todos), DeletedCount]),
+    line(),
+    {ok, _} = io:read("type ok followed by a dot to continue. "),
+    ok.
+
+display_todos([]) ->
+    line(),
+    io:format("You have no todos~n"),
+    line(),
+    ok;
+display_todos(Todos) ->
+    line(),
+    io:format("Your todos are:~n"),
+    [
+        io:format("~p. ~p~n", [Index, Todo])
+    || { Index, Todo } <- with_indices(Todos)],
+    line(),
+    ok.
+
+line() ->
+    io:format("------~n").
+
+ invalid_input() ->
+     io:format("invalid input~n").
+
+%% utils
+
+with_indices(List) ->
+    Indices = lists:seq(length(List), 1, -1),
+    lists:zip(Indices, List).
+
+ splice(Index, List) ->
+     {Left, [_|Right]} = lists:split(Index - 1, List),
+     Left ++ Right.
+

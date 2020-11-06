@@ -41,16 +41,21 @@ object Exprs {
   case class Bin(r: Doc.Range, elems: List[BinElement]) extends Expr
   case class BinaryOp(r: Doc.Range, op: String, exp1: Expr, exp2: Expr) extends Expr
   case class UnaryOp(r: Doc.Range, op: String, exp1: Expr) extends Expr
-  case class StructCreate(r: Doc.Range, structName: String, fields: List[StructField]) extends Expr
-  case class StructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[StructField]) extends Expr
-  case class StructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class LocalStructCreate(r: Doc.Range, structName: String, fields: List[Field]) extends Expr
+  case class RemoteStructCreate(r: Doc.Range, module: String, structName: String, fields: List[Field]) extends Expr
+  case class LocalStructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[Field]) extends Expr
+  case class RemoteStructUpdate(r: Doc.Range, exp: Expr, module: String, structName: String, fields: List[Field])
+      extends Expr
+  case class LocalStructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
+  case class RemoteStructSelect(r: Doc.Range, struct: Expr, module: String, structName: String, fieldName: String)
+      extends Expr
   case class ShapeSelect(r: Doc.Range, exp: Expr, fieldName: String) extends Expr
   case class ShapeCreate(r: Doc.Range, entries: List[ShapeField]) extends Expr
   case class ShapeUpdate(r: Doc.Range, exp: Expr, entries: List[ShapeField]) extends Expr
   case class LocalCall(r: Doc.Range, fun: Expr, args: List[Expr]) extends Expr
   case class RemoteCall(r: Doc.Range, module: Expr, fun: Expr, args: List[Expr]) extends Expr
-  case class LocalEnum(r: Doc.Range, enum: String, ctr: String, args: List[Expr]) extends Expr
-  case class RemoteEnum(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Expr]) extends Expr
+  case class LocalEnum(r: Doc.Range, enum: String, ctr: String, fields: List[Field]) extends Expr
+  case class RemoteEnum(r: Doc.Range, module: String, enum: String, ctr: String, fields: List[Field]) extends Expr
   case class ListComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class BinaryComprehension(r: Doc.Range, template: Expr, qualifiers: List[Qualifier]) extends Expr
   case class Block(r: Doc.Range, exprs: List[Expr]) extends Expr
@@ -74,7 +79,10 @@ object Exprs {
   case class TypeSpecifierList(specifiers: List[TypeSpecifier]) extends TypeSpecifiers
   case class TypeSpecifier(id: String)
 
-  case class StructField(r: Doc.Range, fieldName: String, value: Expr)
+  sealed trait Field
+  case class LblField(r: Doc.Range, fieldName: String, value: Expr) extends Field
+  case class PosField(r: Doc.Range, value: Expr) extends Field
+
   case class ShapeField(r: Doc.Range, k: Expr, v: Expr)
 
   sealed trait Qualifier

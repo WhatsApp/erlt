@@ -1,0 +1,20 @@
+-spec mk_unit_remote_dot() -> mod03:unit0().
+-spec mk_left_remote_dot(A) -> mod03:either(A, B).
+-spec mk_right_remote_dot(A) -> mod03:either(B, A).
+-spec zero_remote_dot(mod03:unit0(), A) -> A.
+-spec zero_remote1_dot(mod03:unit0(), A) -> A.
+-spec un_pair_remote_dot(mod03:pair(A, B)) -> {A, B}.
+-spec funs() -> list(fun(() -> mod03:unit0())).
+-spec import1() -> mod03:unit0().
+-spec mk_box1(A) -> mod03:box1(A).
+-spec match_box1(mod03:box1(A)) -> A.
+-spec select_from_box1(mod03:box1(A)) -> A.
+-spec update_box1(mod03:box1(A), A) -> mod03:box1(A).
+-spec mk_box2(A) -> mod03:box2(A).
+-spec match_box2(mod03:box2(A)) -> A.
+-spec select_from_box2(mod03:box2(A)) -> A.
+-spec update_box2(mod03:box2(A), A) -> mod03:box2(A).
+-spec mk_box3(A) -> box3(A).
+-spec match_box3(box3(A)) -> A.
+-spec select_from_box3(box3(A)) -> A.
+-spec update_box3(box3(A), A) -> box3(A).

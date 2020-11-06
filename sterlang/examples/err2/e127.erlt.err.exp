@@ -1,6 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e127.erlt:20:18
-Type Mismatch
-Found:    #( id1 :: integer(), A )
-Required: #( id :: integer() )
- 20|     #(id = 2) == Shape1.
-...|                  ~~~~~~

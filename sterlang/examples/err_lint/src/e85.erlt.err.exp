@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------- examples/err/src/e85.erlt:17:28
+Unbound type variable: Unbound
+ 17| -struct box() :: (value :: Unbound).
+...|                            ~~~~~~~

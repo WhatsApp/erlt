@@ -24,24 +24,25 @@
 
 Nonterminals
 form
+modifier_list
 attribute attr_val
 function function_clauses function_clause
 clause_args clause_guard clause_body
 expr expr_remote expr_max
-pat_expr pat_expr_max map_pat_expr struct_pat_expr enum_pat_expr anon_struct_pat_expr
+pat_expr pat_expr_max map_pat_expr struct_pat_expr enum_pat_expr shape_pat_expr
 pat_argument_list pat_exprs
 list tail
 list_comprehension lc_expr lc_exprs
 binary_comprehension
-tuple enum_expr anon_struct_expr
-struct_expr struct_name struct_tuple struct_fields struct_field
+tuple enum_expr shape_expr shape_fields shape_field
+struct_expr local_or_remote_name struct_tuple fields field
 map_expr map_tuple map_field map_field_assoc map_field_exact map_fields map_key
 if_expr if_clause if_clauses case_expr cr_clause cr_clauses receive_expr
 fun_expr fun_clause fun_clauses atom_or_var integer_or_var
 try_expr try_catch try_clause try_clauses try_opt_stacktrace
 function_call argument_list
 exprs guard
-atomic strings dot_atom
+atomic strings
 prefix_op mult_op add_op list_op comp_op
 binary bin_elements bin_element bit_expr
 opt_bit_size_expr bit_size_expr opt_bit_type_list bit_type_list bit_type
@@ -49,7 +50,8 @@ type_def top_type top_types type
 type_sig type_sigs type_guard type_guards fun_type anon_fun_type binary_type
 type_spec spec_fun field_types field_type
 map_pair_types map_pair_type bin_base_type bin_unit_type
-struct_def type_name vars field_defs field_def anon_field_defs non_default_field_def.
+struct_def type_name vars field_defs field_def shape_field_defs non_default_field_def
+enum_def variant_defs variant_def.
 
 Terminals
 char integer float atom string var
@@ -64,7 +66,7 @@ char integer float atom string var
 '==' '/=' '=<' '<' '>=' '>' '=:=' '=/=' '<=' '=>' ':='
 '<<' '>>'
 '!' '=' '::' '..' '...'
-'spec' 'callback' struct_like type_like % helper
+'spec' 'callback' struct_like enum_like type_like % helper
 dot.
 
 Expect 0.
@@ -84,7 +86,6 @@ Left 500 mult_op.
 Unary 600 prefix_op.
 Nonassoc 700 '#'.
 Nonassoc 800 ':'.
-Left 900 '.'.
 
 %% Types
 
@@ -93,21 +94,27 @@ Left 170 '|'.
 Nonassoc 200 '..'.
 Nonassoc 500 '*'. % for binary expressions
 
+
 form -> attribute dot : '$1'.
 form -> function dot : '$1'.
+form -> '[' modifier_list ']' function dot : ?set_anno(modified_function('$2', '$4'), ?anno('$1', '$4')).
+form -> '[' modifier_list ']' '-' atom type_def dot :
+    ?set_anno(modified_type_def('$2', build_type_def(?anno('$4', '$6'), '$5', '$6')), ?anno('$1', '$6')).
+
+modifier_list -> atom : ['$1'].
+modifier_list -> atom ',' modifier_list : ['$1' | '$3'].
 
 attribute -> '-' atom attr_val               : ?set_anno(build_attribute('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'spec' type_spec            : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' 'callback' type_spec        : ?set_anno(build_type_spec('$2', '$3'), ?anno('$1','$3')).
 attribute -> '-' struct_like atom struct_def : build_struct_def(?anno('$1', '$4'), '$3', '$4').
+attribute -> '-' enum_like atom enum_def     : build_enum_def(?anno('$1', '$4'), '$3', '$4').
 attribute -> '-' type_like atom type_def     : build_type_def(?anno('$1', '$4'), '$3', '$4').
-
-dot_atom -> atom : '$1'.
-dot_atom -> '.' atom : ?mkop2({atom,?anno('$1'),''}, '$1', '$2').
-dot_atom -> dot_atom '.' atom : ?mkop2('$1', '$2', '$3').
 
 struct_def -> type_name '::' '(' ')' : {struct_def, ?anno('$1', '$4'), '$1', []}.
 struct_def -> type_name '::' '(' field_defs ')' : {struct_def, ?anno('$1', '$5'), '$1', '$4'}.
+
+enum_def -> type_name '::' '(' variant_defs ')' : {enum_def, ?anno('$1', '$5'), '$1', '$4'}.
 
 type_name -> atom : {call, ?anno('$1'), '$1', []}.
 type_name -> atom '(' ')' : {call, ?anno('$1', '$3'), '$1', []}.
@@ -116,13 +123,22 @@ type_name -> atom '(' vars ')' : {call, ?anno('$1', '$4'), '$1', '$3'}.
 vars -> var ',' vars : ['$1' | '$3'].
 vars -> var : ['$1'].
 
+variant_defs -> variant_def ',' variant_defs : ['$1' | '$3'].
+variant_defs -> variant_def : ['$1'].
+
+variant_def -> atom : {variant, ?anno('$1'), '$1', none}.
+variant_def -> atom '{' '}' : {variant, ?anno('$1'), '$1', []}.
+variant_def -> atom '{' field_defs '}' : {variant, ?anno('$1', '$4'), '$1', '$3'}.
+
 field_defs -> field_def ',' field_defs : ['$1' | '$3'].
 field_defs -> field_def : ['$1'].
 
-anon_field_defs -> non_default_field_def ',' anon_field_defs : ['$1' | '$3'].
-anon_field_defs -> non_default_field_def : ['$1'].
+shape_field_defs -> var                                       : {[], '$1'}.
+shape_field_defs -> non_default_field_def                     : ['$1'].
+shape_field_defs -> non_default_field_def ',' shape_field_defs : build_shape_internals_type('$1', '$3').
 
 field_def -> atom '=' expr '::' type : {field_definition, ?anno('$1', '$5'), '$1', '$3', '$5'}.
+field_def -> type : {field_definition, ?anno('$1'), positional, undefined, '$1'}.
 field_def -> non_default_field_def : '$1'.
 
 non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), '$1', undefined, '$3'}.
@@ -130,8 +146,8 @@ non_default_field_def -> atom '::' type : {field_definition, ?anno('$1', '$3'), 
 type_spec -> spec_fun type_sigs : {type_spec, ?anno('$1','$2'), '$1', '$2'}.
 type_spec -> '(' spec_fun type_sigs ')' : {type_spec, ?anno('$1','$4'), '$2', '$3'}.
 
-spec_fun ->                       dot_atom : fold_dots('$1').
-spec_fun ->              dot_atom ':' atom : {fold_dots('$1'), '$3'}.
+spec_fun ->                       atom : '$1'.
+spec_fun ->              atom ':' atom : {'$1', '$3'}.
 
 type_def -> type_name '::' top_type : {type_def, ?anno('$1', '$3'), '$1', '$3'}.
 
@@ -161,25 +177,21 @@ type -> type mult_op type                 : ?mkop2('$1', '$2', '$3').
 type -> prefix_op type                    : ?mkop1('$1', '$2').
 type -> '(' top_type ')'                  : '$2'.
 type -> var                               : '$1'.
-type -> dot_atom                          : fold_dots('$1').
-type -> dot_atom '{' '}'                  : ?set_anno(build_enum_type('$1', []), ?anno('$1', '$3')).
-type -> dot_atom '{' top_types '}'        : ?set_anno(build_enum_type('$1', '$3'), ?anno('$1', '$4')).
-type -> dot_atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
-type -> dot_atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
-type -> dot_atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
-                                             [fold_dots('$1'), '$3', []]}.
-type -> dot_atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
-                                             [fold_dots('$1'), '$3', '$5']}.
+type -> atom                          : '$1'.
+type -> atom '(' ')'                  : ?set_anno(build_gen_type('$1'), ?anno('$1', '$3')).
+type -> atom '(' top_types ')'        : ?set_anno(build_type('$1', '$3'), ?anno('$1', '$4')).
+type -> atom ':' atom '(' ')'         : {remote_type, ?anno('$1','$5'),
+                                             ['$1', '$3', []]}.
+type -> atom ':' atom '(' top_types ')' : {remote_type, ?anno('$1','$6'),
+                                             ['$1', '$3', '$5']}.
 type -> '[' ']'                           : {type, ?anno('$1','$2'), nil, []}.
 type -> '[' top_type ']'                  : {type, ?anno('$1','$3'), list, ['$2']}.
 type -> '[' top_type ',' '...' ']'        : {type, ?anno('$1','$5'),
                                              nonempty_list, ['$2']}.
 type -> '#' '{' '}'                       : {type, ?anno('$1','$3'), map, []}.
 type -> '#' '{' map_pair_types '}'        : {type, ?anno('$1','$4'), map, '$3'}.
-type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_anon_struct, []}.
-type -> '#' '(' var ')'                       : {type, ?anno('$1','$4'), open_anon_struct, [], '$3'}.
-type -> '#' '(' anon_field_defs ')'       : {type, ?anno('$1','$4'), closed_anon_struct, '$3'}.
-type -> '#' '(' anon_field_defs '|' var ')' : {type, ?anno('$1','$6'), open_anon_struct, '$3', '$5'}.
+type -> '#' '(' ')'                       : {type, ?anno('$1','$3'), closed_shape, []}.
+type -> '#' '(' shape_field_defs ')'       : build_shape_type(?anno('$1', '$4'), '$3').
 type -> '{' '}'                           : {type, ?anno('$1','$2'), tuple, []}.
 type -> '{' top_types '}'                 : {type, ?anno('$1','$3'), tuple, '$2'}.
 type -> '#' atom ':' atom '{' '}'         : {type, ?anno('$1','$6'), record, [{qualified_record,'$2','$4'}]}.
@@ -265,14 +277,13 @@ expr -> prefix_op expr : ?mkop1('$1', '$2').
 expr -> map_expr : '$1'.
 expr -> function_call : '$1'.
 expr -> enum_expr : '$1'.
-expr -> anon_struct_expr : '$1'.
+expr -> shape_expr : '$1'.
 expr -> struct_expr : '$1'.
 expr -> expr_remote : '$1'.
 
 expr_remote -> expr_max ':' expr_max : {remote,?anno('$1','$3'),'$1','$3'}.
 expr_remote -> expr_max : '$1'.
 
-expr_max -> expr_max '.' expr_max : ?mkop2('$1', '$2', '$3').
 expr_max -> var : '$1'.
 expr_max -> atomic : '$1'.
 expr_max -> list : '$1'.
@@ -280,7 +291,7 @@ expr_max -> binary : '$1'.
 expr_max -> list_comprehension : '$1'.
 expr_max -> binary_comprehension : '$1'.
 expr_max -> tuple : '$1'.
-expr_max -> '(' expr ')' : ?set_anno('$2', ?anno('$1', '$3')).
+expr_max -> '(' expr ')' : ?set_anno('$2', [parens | ensure_anno_list(?anno('$1', '$3'))]).
 expr_max -> 'begin' exprs 'end' : {block,?anno('$1','$3'),'$2'}.
 expr_max -> if_expr : '$1'.
 expr_max -> case_expr : '$1'.
@@ -295,12 +306,11 @@ pat_expr -> pat_expr add_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> pat_expr mult_op pat_expr : ?mkop2('$1', '$2', '$3').
 pat_expr -> prefix_op pat_expr : ?mkop1('$1', '$2').
 pat_expr -> map_pat_expr : '$1'.
-pat_expr -> anon_struct_pat_expr : '$1'.
+pat_expr -> shape_pat_expr : '$1'.
 pat_expr -> struct_pat_expr : '$1'.
 pat_expr -> enum_pat_expr : '$1'.
 pat_expr -> pat_expr_max : '$1'.
 
-pat_expr_max -> pat_expr_max '.' pat_expr_max : ?mkop2('$1', '$2', '$3').
 pat_expr_max -> var : '$1'.
 pat_expr_max -> atomic : '$1'.
 pat_expr_max -> list : '$1'.
@@ -308,13 +318,8 @@ pat_expr_max -> binary : '$1'.
 pat_expr_max -> tuple : '$1'.
 pat_expr_max -> '(' pat_expr ')' : '$2'.
 
-enum_pat_expr -> enum_pat_expr '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_pat_expr -> pat_expr_max '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_pat_expr -> enum_pat_expr '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
-enum_pat_expr -> pat_expr_max '{' pat_exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
-
-anon_struct_pat_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_pat_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
+shape_pat_expr -> '#' '(' ')' : {shape, ?anno('$1', '$3'), []}.
+shape_pat_expr -> '#' '(' shape_fields ')' : {shape, ?anno('$1', '$4'), '$3'}.
 
 map_pat_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -323,10 +328,17 @@ map_pat_expr -> pat_expr_max '#' map_tuple :
 map_pat_expr -> map_pat_expr '#' map_tuple :
 	{map, ?anno('$1','$3'),'$1',strip_map_tuple('$3')}.
 
-struct_pat_expr -> '#' struct_name '.' atom :
-	{struct_index, ?anno('$1', '$4'), '$2', '$4'}.
-struct_pat_expr -> '#' struct_name struct_tuple :
-    {struct, ?anno('$1', '$3'), '$2', '$3'}.
+struct_pat_expr -> '#' local_or_remote_name '.' atom_or_var :
+	{struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
+struct_pat_expr -> '#' local_or_remote_name struct_tuple :
+    {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
+
+enum_pat_expr -> local_or_remote_name '.' atom :
+    {enum, ?anno('$1', '$3'), '$1', '$3', none}.
+enum_pat_expr -> local_or_remote_name '.' '{' '}' :
+    {enum, ?anno('$1', '$4'), '$1', '$3', []}.
+enum_pat_expr -> local_or_remote_name '.' atom '{' fields '}' :
+    {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
 list -> '[' ']' : {nil,?anno('$1','$2')}.
 list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
@@ -334,7 +346,6 @@ list -> '[' expr tail : {cons,?anno('$1','$3'),'$2','$3'}.
 tail -> ']' : {nil,?anno('$1')}.
 tail -> '|' expr ']' : ?set_anno('$2',?anno('$1','$3')).
 tail -> ',' expr tail : {cons,?anno('$2','$3'),'$2','$3'}.
-
 
 binary -> '<<' '>>' : {bin,?anno('$1','$2'),[]}.
 binary -> '<<' bin_elements '>>' : {bin,?anno('$1','$3'),'$2'}.
@@ -362,7 +373,6 @@ bit_type -> atom ':' integer : {bit_type_unit, ?anno('$1', '$3'), '$1','$3'}.
 
 bit_size_expr -> expr_max : '$1'.
 
-
 list_comprehension -> '[' expr '||' lc_exprs ']' :
 	{lc,?anno('$1','$5'),'$2','$4'}.
 binary_comprehension -> '<<' expr_max '||' lc_exprs '>>' :
@@ -377,20 +387,25 @@ lc_expr -> binary '<=' expr : {b_generate,?anno('$1','$3'),'$1','$3'}.
 tuple -> '{' '}' : {tuple,?anno('$1','$2'),[]}.
 tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 
-%% This is called from expr
-enum_expr -> expr_remote '{' '}' : build_enum('$1',[],?anno('$1','$3')).
-enum_expr -> expr_remote '{' exprs '}' : build_enum('$1','$3',?anno('$1','$4')).
+%% ideally this would use local_or_remote_name, but it causes conflicts with
+%% function call syntax
+enum_expr -> expr_remote '.' atom :
+    {enum, ?anno('$1', '$3'), '$1', '$3', none}.
+enum_expr -> expr_remote '.' atom '{' '}' :
+    {enum, ?anno('$1', '$5'), '$1', '$3', []}.
+enum_expr -> expr_remote '.' atom '{' fields '}' :
+    {enum, ?anno('$1', '$6'), '$1', '$3', '$5'}.
 
-anon_struct_expr -> '#' '(' ')' : {anon_struct, ?anno('$1', '$3'), []}.
-anon_struct_expr -> '#' '(' struct_fields ')' : {anon_struct, ?anno('$1', '$4'), '$3'}.
-anon_struct_expr -> expr_max '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_expr -> expr_max '#' '(' struct_fields ')' :
-    {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_expr -> expr_max '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_expr -> anon_struct_expr '#' '(' struct_fields ')' :
-    {anon_struct_update, ?anno('$1', '$5'), '$1', '$4'}.
-anon_struct_expr -> anon_struct_expr '#' '(' ')' : {anon_struct_update, ?anno('$1', '$4'), '$1', []}.
-anon_struct_expr -> anon_struct_expr '#' '(' atom ')' : {anon_struct_field, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> '#' '(' ')' : {shape, ?anno('$1', '$3'), []}.
+shape_expr -> '#' '(' shape_fields ')' : {shape, ?anno('$1', '$4'), '$3'}.
+shape_expr -> expr_max '#' '(' ')' : {shape_update, ?anno('$1', '$4'), '$1', []}.
+shape_expr -> expr_max '#' '(' shape_fields ')' :
+    {shape_update, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> expr_max '#' '(' atom ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> shape_expr '#' '(' shape_fields ')' :
+    {shape_update, ?anno('$1', '$5'), '$1', '$4'}.
+shape_expr -> shape_expr '#' '(' ')' : {shape_update, ?anno('$1', '$4'), '$1', []}.
+shape_expr -> shape_expr '#' '(' atom ')' : {shape_field, ?anno('$1', '$5'), '$1', '$4'}.
 
 map_expr -> '#' map_tuple :
 	{map, ?anno('$1','$2'),strip_map_tuple('$2')}.
@@ -416,45 +431,39 @@ map_field_exact -> map_key ':=' expr :
 
 map_key -> expr : '$1'.
 
-struct_expr -> '#' struct_name '.' atom :
-    {struct_index, ?anno('$1', '$4'), '$2', '$4'}.
-struct_expr -> '#' struct_name struct_tuple :
-    {struct, ?anno('$1', '$3'), '$2', '$3'}.
-struct_expr -> expr_max '#' struct_name '.' atom :
-    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> struct_expr '#' struct_name '.' atom :
-    {struct_field, ?anno('$1', '$5'), '$1', '$3', '$5'}.
-struct_expr -> expr_max '#' struct_name struct_tuple :
-    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
-struct_expr -> struct_expr '#' struct_name struct_tuple :
-    {struct, ?anno('$1', '$4'), '$1', '$3', '$4'}.
+struct_expr -> '#' local_or_remote_name '.' atom_or_var :
+    {struct_index, ?anno('$1', '$4'), '$2', field_index('$4')}.
+struct_expr -> '#' local_or_remote_name struct_tuple :
+    {struct, ?anno('$1', '$3'), '$2', element(1, '$3')}.
+struct_expr -> expr_max '#' local_or_remote_name '.' atom_or_var :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
+struct_expr -> struct_expr '#' local_or_remote_name '.' atom_or_var :
+    {struct_field, ?anno('$1', '$5'), '$1', '$3', field_index('$5')}.
+struct_expr -> expr_max '#' local_or_remote_name struct_tuple :
+    {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
+struct_expr -> struct_expr '#' local_or_remote_name struct_tuple :
+    {struct, ?anno('$1', '$4'), '$1', '$3', element(1, '$4')}.
 
-struct_name -> atom : '$1'.
-struct_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
+local_or_remote_name -> atom : '$1'.
+local_or_remote_name -> atom ':' atom : {remote, ?anno('$1', '$3'), '$1', '$3'}.
 
-struct_tuple -> '{' '}' : [].
-struct_tuple -> '{' struct_fields '}' : '$2'.
+struct_tuple -> '{' '}' : {[], ?anno('$1', '$2')}.
+struct_tuple -> '{' fields '}' : {'$2', ?anno('$1', '$3')}.
 
-struct_fields -> struct_field : ['$1'].
-struct_fields -> struct_field ',' struct_fields : ['$1' | '$3'].
+fields -> field : ['$1'].
+fields -> field ',' fields : ['$1' | '$3'].
 
-struct_field -> atom '=' expr : {struct_field, ?anno('$1','$3'), '$1', '$3'}.
+field -> expr : build_field('$1').
+
+shape_fields -> shape_field : ['$1'].
+shape_fields -> shape_field ',' shape_fields : ['$1' | '$3'].
+
+shape_field -> atom '=' expr : {field, ?anno('$1','$3'), '$1', '$3'}.
 
 %% N.B. This is called from expr.
 
 function_call -> expr_remote argument_list :
 	{call,?anno('$1','$2'),'$1',element(1, '$2')}.
-function_call -> '.' expr_remote argument_list :
-        Anno = ?anno('$1','$3'),
-        {call,Anno,
-         case '$2' of
-             {remote,L,M,F} ->
-                 %% move dot inside remote
-                 {remote,L,?mkop2({atom,Anno,''},'$1',M),F};
-             _ ->
-                 ?mkop2({atom,Anno,''},'$1','$2')
-         end,
-         element(1, '$3')}.
 
 if_expr -> 'if' if_clauses 'end' : {'if',?anno('$1','$3'),'$2'}.
 
@@ -486,7 +495,7 @@ receive_expr -> 'receive' cr_clauses 'after' expr clause_body 'end' :
 	{'receive',?anno('$1','$6'),'$2','$4','$5'}.
 
 
-fun_expr -> 'fun' dot_atom '/' integer :
+fun_expr -> 'fun' atom '/' integer :
         case '$2'of
             {atom,_,_} ->
                 {'fun',?anno('$1','$4'),{function,element(3, '$2'),element(3, '$4')}};
@@ -531,15 +540,12 @@ try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
 try_clause -> pat_expr clause_guard clause_body :
 	A = ?anno('$1','$3'),
 	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
-try_clause -> atom ',' pat_expr try_opt_stacktrace clause_guard clause_body :
+try_clause -> pat_expr ',' pat_expr try_opt_stacktrace clause_guard clause_body :
 	A = ?anno('$1','$6'),
-	{clause,A,[{tuple,A,['$1','$3',{var,A,'$4'}]}],'$5','$6'}.
-try_clause -> var ',' pat_expr try_opt_stacktrace clause_guard clause_body :
-	A = ?anno('$1','$6'),
-	{clause,A,[{tuple,A,['$1','$3',{var,A,'$4'}]}],'$5','$6'}.
+	{clause,A,[{tuple,A,['$1','$3','$4']}],'$5','$6'}.
 
-try_opt_stacktrace -> ',' var : element(3, '$2').
-try_opt_stacktrace -> '$empty' : '_'.
+try_opt_stacktrace -> ',' pat_expr : '$2'.
+try_opt_stacktrace -> '$empty' : {var,0,'_'}.
 
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
@@ -628,18 +634,9 @@ Erlang code.
 
 -export([parse_form/1, parse_exprs/1, parse_term/1]).
 -export([normalise/1, abstract/1, tokens/1, tokens/2]).
--export([abstract/2, dotted_name/1, balance_dotted/1, fold_dots/1]).
+-export([abstract/2]).
 -export([inop_prec/1, preop_prec/1, func_prec/0, max_prec/0]).
 -export([type_inop_prec/1, type_preop_prec/1]).
--export([
-    map_anno/2,
-    fold_anno/3,
-    mapfold_anno/3,
-    new_anno/1,
-    anno_to_term/1,
-    anno_from_term/1
-]).
-
 -export([get_end_location/1]).
 
 %% The following directive is needed for (significantly) faster compilation
@@ -657,21 +654,6 @@ Erlang code.
 
 %% The following types are exported because they are used by syntax_tools
 -export_type([af_binelement/1, af_generator/0, af_remote_function/0]).
-
-%% stuff for dotted names
--export([
-    concat_dotted/1,
-    is_valid_dotted/1,
-    is_dotted/1,
-    split_dotted/1,
-    dotted_last/1,
-    dotted_butlast/1,
-    dotted_striplast/1
-]).
-
--type dotted_name() :: atom() | string().
-
--export_type([dotted_name/0]).
 
 %% Removed functions
 -removed([
@@ -1103,7 +1085,7 @@ parse_form([{'-', A1}, {atom, A2, callback} | Tokens]) ->
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form([{'-', A1}, {atom, A2, TypeLike} = Atom | Tokens]) when
-    TypeLike =:= type; TypeLike =:= opaque; TypeLike =:= enum
+    TypeLike =:= type; TypeLike =:= opaque
 ->
     NewTokens = [{'-', A1}, {type_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
@@ -1112,6 +1094,10 @@ parse_form([{'-', A1}, {atom, A2, StructLike} = Atom | Tokens]) when
     StructLike =:= struct; StructLike =:= message; StructLike =:= exception
 ->
     NewTokens = [{'-', A1}, {struct_like, A2}, Atom | Tokens],
+    ?ANNO_CHECK(NewTokens),
+    parse(NewTokens);
+parse_form([{'-', A1}, {atom, A2, EnumLike} = Atom | Tokens]) when EnumLike =:= enum ->
+    NewTokens = [{'-', A1}, {enum_like, A2}, Atom | Tokens],
     ?ANNO_CHECK(NewTokens),
     parse(NewTokens);
 parse_form(Tokens) ->
@@ -1148,6 +1134,31 @@ parse_term(Tokens) ->
             Err
     end.
 
+build_field({match, Anno, Name, Expr} = Match) ->
+    case lists:member(parens, Anno) of
+        true ->
+            {field, Anno, positional, Match};
+        false when is_record(Name, atom, 3) ->
+            {field, Anno, Name, Expr};
+        false ->
+            ret_err(Anno, "match expressions in fields have to be wrapped in parentheses")
+    end;
+build_field(Expr) ->
+    {field, ?anno(Expr), positional, Expr}.
+
+field_index({atom, _, _} = Atom) -> Atom;
+field_index({var, Anno, Name}) ->
+    case atom_to_list(Name) of
+        "_" ++ Num ->
+            try {integer, Anno, list_to_integer(Num)}
+            catch
+                error:badarg ->
+                    ret_err(Anno, "field index needs to be an atom or an underscore-prefixed integer")
+            end;
+        _ ->
+            ret_err(Anno, "field index needs to be an atom or an underscore-prefixed integer")
+    end.
+
 -type attributes() ::
     'export' |
     'file' |
@@ -1161,9 +1172,61 @@ build_struct_def(Anno, {atom, _, Attr}, {struct_def, DefAnno, Name, Fields}) ->
     Type = {type, DefAnno, struct, Tag, Fields},
     {attribute, Anno, Attr, {TypeName, Type, Args}}.
 
+build_enum_def(Anno, {atom, _, Attr}, {enum_def, DefAnno, Name, Constructors}) ->
+    {call, _, {atom, _, TypeName} = Tag, Args} = Name,
+    Type = {type, DefAnno, enum, Tag, Constructors},
+    {attribute, Anno, Attr, {TypeName, Type, Args}}.
+
 build_type_def(Anno, {atom, _, Attr}, {type_def, _DefAnno, Name, Type}) ->
     {call, _, {atom, _, TypeName}, Args} = Name,
     {attribute, Anno, Attr, {TypeName, Type, Args}}.
+
+modified_type_def(ModifierList, {attribute, Anno, Attr, TypeDef}) ->
+    case check_modifier_list(ModifierList) of
+        {{opaque, _A1}, {unchecked, _A2}} ->
+            {attribute, Anno, unchecked_opaque, TypeDef};
+        {opaque, _A1} ->
+            {attribute, Anno, opaque, TypeDef};
+        {unchecked, _A1} ->
+            case Attr of
+                opaque ->
+                    {attribute, Anno, unchecked_opaque, TypeDef};
+                _ ->
+                    ret_err(Anno, "Only opaque types can be unchecked")
+            end
+    end.
+
+modified_function(ModifierList, {function, Anno, Name, Arity, Clauses}) ->
+    case check_modifier_list(ModifierList) of
+        {unchecked, _A1} ->
+            {unchecked_function, Anno, Name, Arity, Clauses};
+        {opaque, A1} ->
+            ret_err(A1, "opaque is not a legal modifier for a function.");
+        {{opaque, A1}, {unchecked, _A2}} ->
+            ret_err(A1, "opaque is not a legal modifier for a function.")
+    end.
+
+check_modifier_list([{atom, A1, opaque}, {atom, A2, unchecked}]) ->
+    {{opaque, A1}, {unchecked, A2}};
+check_modifier_list([{atom, A1, unchecked}, {atom, A2, opaque}]) ->
+    {{opaque, A2}, {unchecked, A1}};
+check_modifier_list([{atom, A1, opaque}]) ->
+    {opaque, A1};
+check_modifier_list([{atom, A1, unchecked}]) ->
+    {unchecked, A1};
+check_modifier_list(ModifierList) ->
+    check_bad_modifier_list(ModifierList, false, false).
+
+check_bad_modifier_list([{atom, A, opaque} | _Rest], true, _UsedUnchecked) ->
+    ret_err(A, "opaque used twice in a modifier list");
+check_bad_modifier_list([{atom, _A, opaque} | Rest], false, UsedUnchecked) ->
+    check_bad_modifier_list(Rest, true, UsedUnchecked);
+check_bad_modifier_list([{atom, A, unchecked} | _Rest], _UsedOpaque, true) ->
+    ret_err(A, "unchecked used twice in a modifier list");
+check_bad_modifier_list([{atom, _A, unchecked} | Rest], UsedOpaque, false) ->
+    check_bad_modifier_list(Rest, UsedOpaque, true);
+check_bad_modifier_list([{atom, A, IllegalValue} | _Rest], _UsedOpaque, _UsedUnchecked) ->
+    ret_err(A, io_lib:format("~tw is an illegal modifier", [IllegalValue])).
 
 build_type_spec({Kind, Aa}, {type_spec, _TA, SpecFun, TypeSpecs}) when Kind =:= spec; Kind =:= callback ->
     NewSpecFun =
@@ -1206,9 +1269,9 @@ build_constraint(LHS, Type) ->
     {type, ?anno(LHS), constraint, [IsSubType, [LHS, Type]]}.
 
 lift_unions(T1, {type, _Aa, union, List}) ->
-    {type, ?anno(T1), union, [T1 | List]};
+    {type, ?anno(T1, List), union, [T1 | List]};
 lift_unions(T1, T2) ->
-    {type, ?anno(T1), union, [T1, T2]}.
+    {type, ?anno(T1, T2), union, [T1, T2]}.
 
 build_gen_type({atom, Aa, tuple}) ->
     {type, Aa, tuple, any};
@@ -1224,20 +1287,16 @@ build_bin_type([], Int) ->
 build_bin_type([{var, Aa, _} | _], _) ->
     ret_err(Aa, "Bad binary type").
 
-build_enum_type(Name, Types) ->
-    case erlt_parse:balance_dotted(Name) of
-        {op, A, '.', {op, A2, '.', M, E}, N} ->
-            {type, A, enum, {remote, A2, fold_dots(M), E}, N, Types};
-        {op, A, '.', E, N} ->
-            {type, A, enum, E, N, Types};
-        {atom, A, _} = N ->
-            {type, A, enum, N, Types};
-        Other ->
-            ret_err(?anno(Other), "bad enum type")
-    end.
+build_shape_internals_type(This, {Fields, Ext}) ->
+    {[This | Fields], Ext};
+build_shape_internals_type(This, Rest) when is_list(Rest) ->
+    [This | Rest].
 
-build_type({op, A, '.', M, N}, Types) ->
-    {remote_type, A, [fold_dots(M), N, Types]};
+build_shape_type(Anno, {Fields, Extension}) ->
+    {type, Anno, open_shape, Fields, Extension};
+build_shape_type(Anno, Fields) ->
+    {type, Anno, closed_shape, Fields}.
+
 build_type({atom, A, Name}, Types) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
@@ -1260,8 +1319,6 @@ abstract2(Term, Anno) ->
 %%	{attribute,Anno,file,{Name,Line}}
 %%	{attribute,Anno,Name,Val}
 
-build_attribute({atom, Aa, module}, [{op, _Am, '.', _L, _R} = M]) ->
-    build_attribute({atom, Aa, module}, [fold_dots(M)]);
 build_attribute({atom, Aa, module}, Val) ->
     case Val of
         [{atom, _Am, Module}] ->
@@ -1402,20 +1459,6 @@ strip_map_tuple({map_tuple, _Anno, List}) ->
 build_try(Try, Es, Scs, {Ccs, As, End}) ->
     {'try', ?anno(Try, End), Es, Scs, Ccs, As}.
 
-build_enum(Name, Elements, Anno) ->
-    case erlt_parse:balance_dotted(Name) of
-        {op, _, '.', {op, ModAnno, '.', Mod, Enum}, Ctr} ->
-            %% remote enum reference Mod.Enum.Constructor{...}
-            {enum, Anno, {remote, ModAnno, Mod, Enum}, Ctr, Elements};
-        {op, _, '.', Enum, Ctr} ->
-            %% local qualified enum reference Enum.Constructor{...}
-            {enum, Anno, Enum, Ctr, Elements};
-        {atom, _, _} ->
-            ret_err(Anno, "constructor missing enum qualifier");
-        _Other ->
-            ret_err(Anno, "bad enum")
-    end.
-
 -spec ret_err(_, _) -> no_return().
 ret_err(Anno, S) ->
     return_error(location(Anno), S).
@@ -1469,12 +1512,6 @@ normalise({map, _, Pairs} = M) ->
     );
 normalise({'fun', _, {function, {atom, _, M}, {atom, _, F}, {integer, _, A}}}) ->
     fun M:F/A;
-%% Dotted atom
-normalise({op, _, '.', _, _} = D) ->
-    case dotted_name(D) of
-        error -> erlang:error({badarg, D});
-        As -> list_to_atom(concat_dotted(As))
-    end;
 %% Special case for unary +/-.
 normalise({op, _, '+', {char, _, I}}) ->
     I;
@@ -1496,37 +1533,6 @@ normalise_list([H | T]) ->
     [normalise(H) | normalise_list(T)];
 normalise_list([]) ->
     [].
-
-fold_dots(A) ->
-    case dotted_name(A) of
-        error -> A;
-        As -> {atom, ?anno(A), list_to_atom(concat_dotted(As))}
-    end.
-
-dotted_name(Name) ->
-    dotted_name(Name, [], []).
-
-dotted_name({op, _, '.', E1, E2}, Es, As) ->
-    dotted_name(E1, [E2 | Es], As);
-dotted_name({atom, _, A}, [E | Es], As) ->
-    dotted_name(E, Es, [A | As]);
-dotted_name({atom, _, A}, [], As) ->
-    lists:reverse([A | As]);
-dotted_name(_, _, _) ->
-    error.
-
-%% ensure that dotted atoms are nested left-associatively even if
-%% parentheses were used to force another parse: X.(b.a) -> (X.b).a, and
-%% X.(p.(q.r)) -> (X.((p.q).r) -> (X.(p.q)).r) -> ((X.p).q).r)
-balance_dotted({op, L1, '.', E1, E2}) ->
-    case balance_dotted(E2) of
-        {op, L2, '.', E21, {atom, _, _} = E22} ->
-            {op, L2, '.', balance_dotted({op, L1, '.', E1, E21}), E22};
-        NewE2 ->
-            {op, L1, '.', balance_dotted(E1), NewE2}
-    end;
-balance_dotted(E) ->
-    E.
 
 -spec abstract(Data) -> AbsTerm when Data :: term(), AbsTerm :: abstract_expr().
 abstract(T) ->
@@ -1765,61 +1771,6 @@ type_preop_prec('#') -> {700, 800}.
     abstract_form() |
     abstract_type().
 
--spec map_anno(Fun, Abstr) -> NewAbstr when
-    Fun :: fun((Anno) -> NewAnno),
-    Anno :: erl_anno:anno(),
-    NewAnno :: erl_anno:anno(),
-    Abstr :: erlt_parse_tree() | form_info(),
-    NewAbstr :: erlt_parse_tree() | form_info().
-map_anno(F0, Abstr) ->
-    F = fun (A, Acc) -> {F0(A), Acc} end,
-    {NewAbstr, []} = modify_anno1(Abstr, [], F),
-    NewAbstr.
-
--spec fold_anno(Fun, Acc0, Abstr) -> Acc1 when
-    Fun :: fun((Anno, AccIn) -> AccOut),
-    Anno :: erl_anno:anno(),
-    Acc0 :: term(),
-    Acc1 :: term(),
-    AccIn :: term(),
-    AccOut :: term(),
-    Abstr :: erlt_parse_tree() | form_info().
-fold_anno(F0, Acc0, Abstr) ->
-    F = fun (A, Acc) -> {A, F0(A, Acc)} end,
-    {_, NewAcc} = modify_anno1(Abstr, Acc0, F),
-    NewAcc.
-
--spec mapfold_anno(Fun, Acc0, Abstr) -> {NewAbstr, Acc1} when
-    Fun :: fun((Anno, AccIn) -> {NewAnno, AccOut}),
-    Anno :: erl_anno:anno(),
-    NewAnno :: erl_anno:anno(),
-    Acc0 :: term(),
-    Acc1 :: term(),
-    AccIn :: term(),
-    AccOut :: term(),
-    Abstr :: erlt_parse_tree() | form_info(),
-    NewAbstr :: erlt_parse_tree() | form_info().
-mapfold_anno(F, Acc0, Abstr) ->
-    modify_anno1(Abstr, Acc0, F).
-
--spec new_anno(Term) -> Abstr when Term :: term(), Abstr :: erlt_parse_tree() | form_info().
-new_anno(Term) ->
-    F = fun (L, Acc) -> {erl_anno:new(L), Acc} end,
-    {NewAbstr, []} = modify_anno1(Term, [], F),
-    NewAbstr.
-
--spec anno_to_term(Abstr) -> term() when Abstr :: erlt_parse_tree() | form_info().
-anno_to_term(Abstract) ->
-    F = fun (Anno, Acc) -> {erl_anno:to_term(Anno), Acc} end,
-    {NewAbstract, []} = modify_anno1(Abstract, [], F),
-    NewAbstract.
-
--spec anno_from_term(Term) -> erlt_parse_tree() | form_info() when Term :: term().
-anno_from_term(Term) ->
-    F = fun (T, Acc) -> {erl_anno:from_term(T), Acc} end,
-    {NewTerm, []} = modify_anno1(Term, [], F),
-    NewTerm.
-
 %% make it easier to combine annotations when the second
 %% argument may be a list of nodes (possibly empty)
 anno(Left, []) -> ?anno(Left);
@@ -1872,189 +1823,5 @@ get_end_location(Anno) when is_list(Anno) ->
     end;
 get_end_location(Anno) ->
     erl_anno:end_location(Anno).
-
-%% Forms.
-modify_anno1({function, F, A}, Ac, _Mf) ->
-    {{function, F, A}, Ac};
-modify_anno1({function, M, F, A}, Ac, Mf) ->
-    {M1, Ac1} = modify_anno1(M, Ac, Mf),
-    {F1, Ac2} = modify_anno1(F, Ac1, Mf),
-    {A1, Ac3} = modify_anno1(A, Ac2, Mf),
-    {{function, M1, F1, A1}, Ac3};
-modify_anno1({attribute, A, exception, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, exception, {Name, Fields1}}, Ac2};
-modify_anno1({attribute, A, message, {Name, Fields}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Fields1, Ac2} = modify_anno1(Fields, Ac1, Mf),
-    {{attribute, A1, message, {Name, Fields1}}, Ac2};
-modify_anno1({attribute, A, spec, {Fun, Types}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute, A1, spec, {Fun, Types1}}, Ac2};
-modify_anno1({attribute, A, callback, {Fun, Types}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {Types1, Ac2} = modify_anno1(Types, Ac1, Mf),
-    {{attribute, A1, callback, {Fun, Types1}}, Ac2};
-modify_anno1({attribute, A, type, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, type, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, opaque, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, opaque, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, enum, {TypeName, TypeDef, Args}}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {TypeDef1, Ac2} = modify_anno1(TypeDef, Ac1, Mf),
-    {Args1, Ac3} = modify_anno1(Args, Ac2, Mf),
-    {{attribute, A1, enum, {TypeName, TypeDef1, Args1}}, Ac3};
-modify_anno1({attribute, A, Attr, Val}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {{attribute, A1, Attr, Val}, Ac1};
-modify_anno1({warning, W}, Ac, _Mf) ->
-    {{warning, W}, Ac};
-modify_anno1({error, W}, Ac, _Mf) ->
-    {{error, W}, Ac};
-modify_anno1({eof, L}, Ac, _Mf) ->
-    {{eof, L}, Ac};
-%% Expressions.
-modify_anno1({clauses, Cs}, Ac, Mf) ->
-    {Cs1, Ac1} = modify_anno1(Cs, Ac, Mf),
-    {{clauses, Cs1}, Ac1};
-modify_anno1({Tag, A}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {{Tag, A1}, Ac1};
-modify_anno1({Tag, A, E1}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {{Tag, A1, E11}, Ac2};
-modify_anno1({Tag, A, E1, E2}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{Tag, A1, E11, E21}, Ac3};
-modify_anno1({bin_element, A, E1, E2, TSL}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {{bin_element, A1, E11, E21, TSL}, Ac3};
-modify_anno1({Tag, A, E1, E2, E3}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
-    {{Tag, A1, E11, E21, E31}, Ac4};
-modify_anno1({Tag, A, E1, E2, E3, E4}, Ac, Mf) ->
-    {A1, Ac1} = Mf(A, Ac),
-    {E11, Ac2} = modify_anno1(E1, Ac1, Mf),
-    {E21, Ac3} = modify_anno1(E2, Ac2, Mf),
-    {E31, Ac4} = modify_anno1(E3, Ac3, Mf),
-    {E41, Ac5} = modify_anno1(E4, Ac4, Mf),
-    {{Tag, A1, E11, E21, E31, E41}, Ac5};
-modify_anno1([H | T], Ac, Mf) ->
-    {H1, Ac1} = modify_anno1(H, Ac, Mf),
-    {T1, Ac2} = modify_anno1(T, Ac1, Mf),
-    {[H1 | T1], Ac2};
-modify_anno1([], Ac, _Mf) ->
-    {[], Ac};
-modify_anno1(E, Ac, _Mf) when not is_tuple(E), not is_list(E) ->
-    {E, Ac}.
-
-%% support functions for dotted names (move elsewhere later)
-
-%% `concat_dotted' does not insert a leading dot if the first segment is
-%% the empty string or empty atom. However, if any of the segments after
-%% the first are empty, the result may contain leading, consecutive or
-%% dangling dot characters. Use 'is_valid_dotted' afterwards if needed.
-
--spec concat_dotted([dotted_name()]) -> string().
-concat_dotted(['' | T]) ->
-    concat_dotted_1(T);
-concat_dotted(["" | T]) ->
-    concat_dotted_1(T);
-concat_dotted(L) ->
-    concat_dotted_1(L).
-
-concat_dotted_1([H]) when is_atom(H) ->
-    atom_to_list(H);
-concat_dotted_1([H]) ->
-    H;
-concat_dotted_1([H | T]) when is_atom(H) ->
-    atom_to_list(H) ++ "." ++ concat_dotted_1(T);
-concat_dotted_1([H | T]) ->
-    H ++ "." ++ concat_dotted_1(T);
-concat_dotted_1([]) ->
-    "";
-concat_dotted_1(Name) ->
-    erlang:error({badarg, Name}).
-
-%% dotted names may not begin or end with a dot, or have consecutive dots
--spec is_valid_dotted(dotted_name()) -> boolean().
-is_valid_dotted(Name) when is_atom(Name) ->
-    is_valid_dotted(atom_to_list(Name));
-is_valid_dotted([$. | _]) ->
-    false;
-is_valid_dotted(Name) ->
-    is_valid_dotted_1(Name).
-
-is_valid_dotted_1([$.]) -> false;
-is_valid_dotted_1([$., $. | _]) -> false;
-is_valid_dotted_1([_ | T]) -> is_valid_dotted_1(T);
-is_valid_dotted_1([]) -> true;
-is_valid_dotted_1(_) -> false.
-
--spec split_dotted(dotted_name()) -> [string()].
-split_dotted(Name) when is_atom(Name) ->
-    split_dotted_1(atom_to_list(Name), []);
-split_dotted(Name) ->
-    split_dotted_1(Name, []).
-
-split_dotted_1([$. | T], Cs) ->
-    [lists:reverse(Cs) | split_dotted_1(T, [])];
-split_dotted_1([H | T], Cs) when is_integer(H), H >= 0 ->
-    split_dotted_1(T, [H | Cs]);
-split_dotted_1([], Cs) ->
-    [lists:reverse(Cs)];
-split_dotted_1(_, _) ->
-    erlang:error(badarg).
-
-%% This is equivalent to testing if `split_dotted(Name)' yields a list of
-%% length larger than one (i.e., if the name can be split into two or more
-%% segments), but is cheaper.
-
--spec is_dotted(dotted_name()) -> boolean().
-is_dotted(Name) when is_atom(Name) ->
-    is_dotted_1(atom_to_list(Name));
-is_dotted(Name) ->
-    is_dotted_1(Name).
-
-is_dotted_1([$. | _]) -> true;
-is_dotted_1([_ | T]) -> is_dotted_1(T);
-is_dotted_1([]) -> false;
-is_dotted_1(_) -> erlang:error(badarg).
-
--spec dotted_last(dotted_name()) -> string().
-dotted_last(Name) ->
-    %% can be done cheaper by not doing a full split
-    dotted_last_1(split_dotted(Name)).
-
-dotted_last_1([H]) -> H;
-dotted_last_1([_ | T]) -> dotted_last_1(T).
-
--spec dotted_butlast(dotted_name()) -> [string()].
-dotted_butlast(Name) ->
-    %% can be done cheaper by not doing a full split
-    dotted_butlast_1(split_dotted(Name)).
-
-dotted_butlast_1([H | T]) when T =/= [] -> [H | dotted_butlast_1(T)];
-dotted_butlast_1(_) -> [].
-
--spec dotted_striplast(dotted_name()) -> string().
-dotted_striplast(Name) ->
-    concat_dotted(dotted_butlast(Name)).
 
 %% vim: ft=erlang

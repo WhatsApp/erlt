@@ -12,15 +12,14 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, st]).
 -module(mod01).
 
 -export_type([my_pair2/1, my_pair/2]).
 -export([
     mod01F/1, id/1, arg13/3, arg23/3, arg33/3,
-    mk_int/0, mk_float/0, mk_string/0, mk_char/0, mk_nil/0, mk_cons/2, mk_tuple/3, mk_tuple2/1, mk_map/2,
-    update_map1/2, update_map3/1,
-    access_map/1, access_map2/1,
+    mk_int/0, mk_float/0, mk_string/0, mk_char/0, mk_nil/0, mk_cons/2, mk_tuple/3, mk_tuple2/1, mk_shape/2,
+    update_shape1/2, update_shape2/2, update_shape3/1, update_shape4/1,
+    access_shape/1, access_shape2/1,
     mk_seq/0, is_empty/1, is_empty2/1, with_as/1, block/2, is_empty_case/1, both_empty/2,
     call/2,
     fun_to_var/0, local_fun_to_var/2, local_n_fun/0,
@@ -33,7 +32,9 @@
     guard1/2, guard2/3,
     p_match_tuple0/1, p_match_tuple1/1, p_match_invoke/0,
     any_id/1, atom_id/1, binary_id/1, bitstring_id/1, byte_id/1, float_id/1, identifier_id/1,
-    iodata_id/1, iolist_id/1, map_id/1, none_id/1, noreturn_id/1,
+    iodata_id/1, iolist_id/1, 
+    %map_id/1,
+    none_id/1, noreturn_id/1,
     number_id/1, pid_id/1, port_id/1, reference_id/1, term_id/1, timeout_id/1, ints_id/1,
     mk_my_pair/2
 ]).
@@ -84,39 +85,39 @@ mk_tuple(A, B, C) ->
 mk_tuple2(A) ->
     {1, 2, 3, A}.
 
--spec mk_map(A, B) -> #{a := A, b := B}.
-mk_map(A, B) ->
-    #{a => A, b => B}.
+-spec mk_shape(A, B) -> #(a :: A, b :: B).
+mk_shape(A, B) ->
+    #(a = A, b = B).
 
--spec update_map1(#{a := A}, A) -> #{a := A}.
-update_map1(M, A) ->
-    M#{a := A}.
+-spec update_shape1(#(a :: A), A) -> #(a :: A).
+update_shape1(S, A) ->
+    S#(a = A).
+
+%% Generic updates are allowed
+-spec update_shape2(#(a :: A,  B), A) -> #(a :: A,  B).
+update_shape2(S, A) ->
+    S#(a = A).
+
+-spec update_shape3(#(a :: A, b :: A)) -> #(a :: A, b :: A).
+update_shape3(S) ->
+    A0 = S#(a),
+    B0 = S#(a),
+    S#(a = B0, b = A0).
 
 %% Generic updates are forbidden
-%%-spec update_map2(#{a := A, _ := _}, A) -> #{a := A, _ := _}.
-%%update_map2(M, A) ->
-%%    M#{a := A}.
+-spec update_shape4(#(a :: A, b :: A,  C)) -> #(a :: A, b :: A,  C).
+update_shape4(S) ->
+   A0 = S#(a),
+   B0 = S#(a),
+   S#(a = B0, b = A0).
 
--spec update_map3(#{a := A, b := A}) -> #{a := A, b := A}.
-update_map3(M) ->
-    A0 = M.a,
-    B0 = M.a,
-    M#{a := B0, b := A0}.
+-spec access_shape(#(id :: Id, location :: Location,  _A)) -> {Id, Location}.
+access_shape(S) ->
+    {S#(id), S#(location)}.
 
-%% Generic updates are forbidden
-%%-spec update_map4(#{a := A, b := A, _ := _}) -> #{a := A, b := A, _ := _}.
-%%update_map4(M) ->
-%%    A0 = M.a,
-%%    B0 = M.a,
-%%    M#{a := B0, b := A0}.
-
--spec access_map(#{id := Id, location := Location, _ := _}) -> {Id, Location}.
-access_map(M) ->
-    {M.id, M.location}.
-
--spec access_map2(#{inner1 := #{inner2 := A}}) -> A.
-access_map2(M) ->
-    M.inner1.inner2.
+-spec access_shape2(#(inner1 :: #(inner2 :: A))) -> A.
+access_shape2(S) ->
+    S#(inner1)#(inner2).
 
 -spec mk_seq() -> {integer(), integer()}.
 mk_seq() ->
@@ -376,8 +377,8 @@ iodata_id(A) -> A.
 -spec iolist_id(iolist()) -> iolist().
 iolist_id(A) -> A.
 
--spec map_id(#{A => B}) -> #{A => B}.
-map_id(M) -> M.
+%-spec map_id(#{A => B}) -> #{A => B}.
+%map_id(M) -> M.
 
 -spec none_id(none()) -> none().
 none_id(A) -> A.
@@ -385,7 +386,7 @@ none_id(A) -> A.
 -spec noreturn_id(no_return()) -> no_return().
 noreturn_id(A) -> none_id(A).
 
--spec number_id(none()) -> none().
+-spec number_id(number()) -> number().
 number_id(A) -> A.
 
 -spec pid_id(pid()) -> pid().

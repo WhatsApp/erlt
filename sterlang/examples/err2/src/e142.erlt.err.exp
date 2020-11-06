@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err2/src/e142.erlt:25:7
+Type Mismatch
+Found:    #( bar :: number(), id :: number() )
+Required: #( id :: number() )
+ 25|     F(Shape2),
+...|       ~~~~~~

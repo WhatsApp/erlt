@@ -1,0 +1,7 @@
+struct_positional.erlt:5:37: positional field defined after labelled fields
+struct_positional.erlt:13:9: 0 positional fields provided when 1 expected in struct struct
+struct_positional.erlt:13:25: positional field defined after labelled fields
+struct_positional.erlt:14:9: 0 positional fields provided when 1 expected in struct struct
+struct_positional.erlt:15:22: 2 positional fields provided when 1 expected in struct struct
+struct_positional.erlt:17:9: field b of struct struct2 has no initializer or default value
+struct_positional.erlt:17:30: positional field defined after labelled fields

@@ -22,7 +22,6 @@ object TyCons {
   case object ShapeTyCon extends TyCon
   case class TupleCon(arity: Int) extends TyCon
   case class NamedTyCon(name: String) extends TyCon
-  case class StructTyCon(name: String) extends TyCon
 }
 
 object Types {
@@ -68,10 +67,8 @@ object METypes {
   import TyCons._
 
   // Type construction
-  val IntType: ConType =
-    ConType(NamedTyCon("integer"), List(), List())
-  val FloatType: ConType =
-    ConType(NamedTyCon("float"), List(), List())
+  val NumberType: ConType =
+    ConType(NamedTyCon("number"), List(), List())
   val CharType: ConType =
     ConType(NamedTyCon("char"), List(), List())
   val BoolType: ConType =
@@ -96,17 +93,15 @@ object METypes {
     ConType(TupleCon(ts.size), ts, List())
   def NamedType(name: String, ts: List[Type]): ConType =
     ConType(NamedTyCon(name), ts, Nil)
-  def StructType(name: String): ConType =
-    ConType(StructTyCon(name), Nil, Nil)
 }
 
 // Schematic types
 object STypes {
 
-  // bound type in type schemas
+  // bound type in type schemes
   case class TypeVar(id: Int)
-  // bound row type variable in type schema
-  case class RowTypeVar(id: Int)
+  // bound row type variable in type schemes
+  case class RowTypeVar(id: Int, kind: Set[String])
 
   // Types used in type schemes
   sealed trait Type
@@ -124,9 +119,7 @@ object STypes {
 
   case class Field(label: String, value: Type)
 
-  // targs = number/size of type arguments, in this type scheme
-  //         Basically for i < targs, - all Open(i) are generalizable
-  case class TypeSchema(targs: Int, rargs: List[Types.RtVarKind], body: Type)
+  case class TypeScheme(targs: List[TypeVar], rargs: List[RowTypeVar], body: Type)
 
   def SFunType(argTypes: List[Type], resultType: Type): Type =
     ConType(TyCons.FunTyCon(argTypes.length), argTypes ++ List(resultType), List())
@@ -137,8 +130,8 @@ object MESTypes {
   import TyCons._
 
   // Type construction
-  val IntType: ConType =
-    ConType(NamedTyCon("integer"), List(), List())
+  val NumberType: ConType =
+    ConType(NamedTyCon("number"), List(), List())
   val BoolType: ConType =
     ConType(NamedTyCon("boolean"), List(), List())
   val StringType: ConType =
@@ -155,6 +148,4 @@ object MESTypes {
     ConType(TupleCon(ts.size), ts, List())
   def EnumType(name: String, ts: List[Type]): ConType =
     ConType(NamedTyCon(name), ts, Nil)
-  def StructType(name: String): ConType =
-    ConType(StructTyCon(name), List(), List())
 }

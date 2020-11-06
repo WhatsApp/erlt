@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e61.erlt:24:1
-Cyclic type alias: cyclic_box
- 24| -type cyclic_box(A, B) :: box2(box(box(A)), cyclic_box(box2_alias(box_alias2(B)), box2_alias(box_alias2(B)))).
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

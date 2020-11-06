@@ -1,6 +1,0 @@
--- ERROR ----------------------------------------- examples/err2/e103.erlt:22:24
-Type Mismatch
-Found:    list(#bar{})
-Required: list(#foo{})
- 22|     [Foo#foo{id = 1} | [Bar#bar{id = 2}]].
-...|                        ~~~~~~~~~~~~~~~~~

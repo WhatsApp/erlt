@@ -1,0 +1,2 @@
+redefine_imported_enum.erlt:5:1: type bar already defined
+redefine_imported_enum.erlt:8:1: type foo already imported from no_need_to_exist

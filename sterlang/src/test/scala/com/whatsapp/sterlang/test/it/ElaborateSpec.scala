@@ -16,36 +16,34 @@
 
 package com.whatsapp.sterlang.test.it
 
-import java.io.{BufferedWriter, File, FileWriter, StringWriter}
+import java.io.{BufferedWriter, File, FileWriter}
 import java.nio.file.Files
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.dev.DriverDev
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/pos")
-  testDir("examples/elm-core")
-  testDir("examples/dev")
-  testDir("examples/pattern")
-  smokeTestFile("examples/elm-core", "basics")
-  smokeTestDir("examples/dir")
+  testDir("examples/pos/src")
+  testDir("examples/elm_core/src")
+  testDir("examples/dev/src")
+  testDir("examples/pattern/src")
+  testDir("examples/sterlang-dev/src")
+  smokeTestFile("examples/elm_core/src", "basics")
+  smokeTestDir("examples/dir/src")
 
   private def smokeTestDir(iDirPath: String): Unit = {
-    it(s"smoke test: $iDirPath") {
-      Main.main(Array(iDirPath))
+    ignore(s"smoke test: $iDirPath") {
+      DriverDev.main(Array(iDirPath))
     }
   }
 
   private def smokeTestFile(iDirPath: String, module: String): Unit = {
-    import sys.process._
-    it(s"smoke test: $iDirPath/$module.erlt") {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
-      Main.main(Array(s"$iDirPath/$module.erlt"))
-      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf"))
-      Main.main(Array(s"$iDirPath/$module.erlt", s"$oDirPath/$module.etf", "--check-patterns"))
+    ignore(s"smoke test: $iDirPath/$module.erlt") {
+      DriverDev.main(Array(s"$iDirPath/$module.erlt"))
+      DriverDev.main(Array(s"$iDirPath/$module.erlt", "--check-patterns"))
     }
   }
 
@@ -71,7 +69,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFile(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, TypePrinter2.TypeSchemes, "_ty", "ty")
+    processFile(erltPath, etfPath, verbose = false, "_ty", "ty")
 
     val myOutput = fileContent(erltPath + "._ty")
     val expectedOut = fileContent(erltPath + ".ty")
@@ -81,7 +79,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
   }
 
   def testFileVerbose(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, TypePrinter2.Types, "_vt", "vt")
+    processFile(erltPath, etfPath, verbose = true, "_vt", "vt")
 
     val myOutput = fileContent(erltPath + "._vt")
     val expectedOut = fileContent(erltPath + ".vt")
@@ -97,38 +95,34 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     content
   }
 
-  def processFile(erltPath: String, etfPath: String, mode: TypePrinter2.Mode, tmpExt: String, outExt: String): Unit = {
-    val rawProgram = Main.loadProgram(etfPath)
+  def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
+    val rawProgram = DriverDev.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = Main.loadContext(etfPath, program, vars).extend(program)
+    val context = DriverDev.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
-    val (annDefs, env) = new Elaborate(vars, context, program).elaborateFuns(program.funs)
+    val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 
-    val sw = new StringWriter
-    val printer = TypePrinter2(vars, Some(sw))
-    mode match {
-      case TypePrinter2.TypeSchemes =>
-        printer.printFunsTypeSchemes(annDefs, env)
-      case TypePrinter2.Types =>
-        printer.printFuns(annDefs)
-    }
+    val lines =
+      if (verbose) Render(vars).varTypes(annDefs) else Render(vars).specs(annDefs, env)
+    val output =
+      lines.mkString("", "\n", "\n")
 
     {
       val w2 = new BufferedWriter(new FileWriter(erltPath + "." + tmpExt))
-      w2.write(sw.toString)
+      w2.write(output)
       w2.close()
     }
 
     if (generateOut) {
       val w = new BufferedWriter(new FileWriter(erltPath + "." + outExt))
-      w.write(sw.toString)
+      w.write(output)
       w.close()
     }
 
     // Check pattern matching
     // TODO: apply to all files when ready.
-    if (new File(erltPath).getParent == "examples/pattern") {
+    if (new File(erltPath).getParent == "examples/pattern/src") {
       val patternWarnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annDefs)
       assert(patternWarnings.isEmpty)
     }

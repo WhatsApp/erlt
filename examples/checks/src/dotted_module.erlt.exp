@@ -1,1 +1,1 @@
-dotted_module.erlt:3:1: module names may not be dotted
+dotted_module.erlt:2:2: bad module declaration

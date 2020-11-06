@@ -55,8 +55,8 @@
 -define(MAXLINE, 72).
 
 -type hook_function() ::
-    none |
-    fun(
+    none
+    | fun(
         (
             Expr :: erlt_parse:abstract_expr(),
             CurrentIndentation :: integer(),
@@ -66,9 +66,9 @@
     ).
 
 -type option() ::
-    {hook, hook_function()} |
-    {encoding, latin1 | unicode | utf8} |
-    {quote_singleton_atom_types, boolean()}.
+    {hook, hook_function()}
+    | {encoding, latin1 | unicode | utf8}
+    | {quote_singleton_atom_types, boolean()}.
 
 -type options() :: hook_function() | [option()].
 
@@ -97,7 +97,7 @@
     %% Note: hooks are not handled.
     _ =
         try
-            erlt_parse:map_anno(fun(A) when is_list(A) -> A end, T)
+            erlt_ast:map_anno(T, fun(A) when is_list(A) -> A end)
         catch
             _:_ ->
                 erlang:error(badarg, [T])
@@ -267,6 +267,8 @@ encoding(Options) ->
 
 lform({attribute, Line, Name, Arg}, Opts) ->
     lattribute({attribute, Line, Name, Arg}, Opts);
+lform({unchecked_function, Line, Name, Arity, Clauses}, Opts) ->
+    [leaf("[unchecked]\n"), lfunction({function, Line, Name, Arity, Clauses}, Opts)];
 lform({function, Line, Name, Arity, Clauses}, Opts) ->
     lfunction({function, Line, Name, Arity, Clauses}, Opts);
 %% These are specials to make it easier for the compiler.
@@ -289,6 +291,8 @@ lattribute({attribute, _Line, type, Type}, Opts) ->
     [typeattr(type, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, opaque, Type}, Opts) ->
     [typeattr(opaque, Type, Opts), leaf(".\n")];
+lattribute({attribute, _Line, unchecked_opaque, Type}, Opts) ->
+    [leaf("[unchecked, opaque]\n"), typeattr(type, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, enum, Type}, Opts) ->
     [typeattr(enum, Type, Opts), leaf(".\n")];
 lattribute({attribute, _Line, struct, Type}, Opts) ->
@@ -330,8 +334,6 @@ lattribute(Name, Arg, Options) ->
 abstract(Arg, #options{encoding = Encoding}) ->
     erlt_parse:abstract(Arg, [{encoding, Encoding}]).
 
-typeattr(struct, {TypeName, Type, []}, Opts) ->
-    {first, leaf("-struct "), typed(atom_to_list(TypeName), Type, Opts)};
 typeattr(Tag, {TypeName, Type, Args}, Opts) ->
     {first, leaf("-" ++ atom_to_list(Tag) ++ " "),
         typed(call({atom, a0(), TypeName}, Args, 0, Opts), Type, Opts)}.
@@ -386,8 +388,8 @@ ltype({type, _, 'fun', [{type, _, any}, _]} = FunType, _, Opts) ->
     [fun_type(['fun', $(], FunType, Opts), $)];
 ltype({type, _Line, 'fun', [{type, _, product, _}, _]} = FunType, _, Opts) ->
     [fun_type(['fun', $(], FunType, Opts), $)];
-ltype({type, _Line, enum, Tag, Vars}, _, Opts) ->
-    {first, lexpr(Tag, Opts), tuple_type(Vars, Opts, fun ltype/3)};
+ltype({type, _Line, enum, _Tag, Vars}, _, Opts) ->
+    {seq, $(, $), [$,], lists:map(fun(Var) -> variant_def(Var, Opts) end, Vars)};
 ltype({type, _Line, struct, _Name, Fields}, _, Opts) ->
     {seq, $(, $), [$,], lists:map(fun(Field) -> field_def(Field, Opts) end, Fields)};
 ltype({type, Line, T, Ts}, _, Opts) ->
@@ -494,14 +496,31 @@ ltypes(Ts, Opts, Prec) ->
 ltypes(Ts, Opts, F, Prec) ->
     [F(T, Prec, Opts) || T <- Ts].
 
-struct_fields(FieldVals, Opts) ->
-    {L, _, R} = inop_prec('='),
-    Fields = [
-        [lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)]
-        || {struct_field, _, Name, Value} <- FieldVals
-    ],
-    {seq, ${, $}, [$,], Fields}.
+variant_fields([], _Opts) ->
+    "";
+variant_fields(Fields, Opts) ->
+    fields(${, $}, Fields, Opts).
 
+fields(Left, Right, FieldVals, Opts) ->
+    {L, _, R} = inop_prec('='),
+    Fields = fields_loop(FieldVals, L, R, Opts),
+    {seq, Left, Right, [$,], Fields}.
+
+fields_loop([{field, _, positional, Value} | Rest], L, R, Opts) ->
+    [lexpr(Value, Opts) | fields_loop(Rest, L, R, Opts)];
+fields_loop([{field, _, Name, Value} | Rest], L, R, Opts) ->
+    [[lexpr(Name, L, Opts), " = ", lexpr(Value, R, Opts)] | fields_loop(Rest, L, R, Opts)];
+fields_loop([], _, _, _) ->
+    [].
+
+variant_def({variant, _, Name, []}, Opts) ->
+    ltype(Name, Opts);
+variant_def({variant, _, Name, Fields}, Opts) ->
+    FieldsF = lists:map(fun(Field) -> field_def(Field, Opts) end, Fields),
+    {first, ltype(Name, Opts), {seq, ${, $}, [$,], FieldsF}}.
+
+field_def({field_definition, _, positional, undefined, Type}, Opts) ->
+    ltype(Type, Opts);
 field_def({field_definition, _, Name, undefined, Type}, Opts) ->
     [ltype(Name, Opts), " :: ", ltype(Type, Opts)];
 field_def({field_definition, _, Name, Default, Type}, Opts) ->
@@ -602,11 +621,15 @@ lexpr({bc, _, E, Qs}, _Prec, Opts) ->
 %% {list,[{step,'<<',Lcl},'>>']};
 lexpr({tuple, _, Elts}, _, Opts) ->
     tuple(Elts, Opts);
-lexpr({enum, _, C, Elts}, _, Opts) ->
-    {first, lexpr(C, Opts), tuple(Elts, Opts)};
+lexpr({enum, _, Name, Variant, Elts}, Prec, Opts) ->
+    [lexpr(Name, Prec, Opts), ".", lexpr(Variant, Prec, Opts), variant_fields(Elts, Opts)];
 lexpr({struct, _, Tag, Elts}, Prec, Opts) ->
     {P, R} = preop_prec('#'),
-    El = {first, "#", {first, lexpr(Tag, R, Opts), struct_fields(Elts, Opts)}},
+    El = {first, "#", {first, lexpr(Tag, R, Opts), fields(${, $}, Elts, Opts)}},
+    maybe_paren(P, Prec, El);
+lexpr({shape, _, Fields}, Prec, Opts) ->
+    {P, _R} = preop_prec('#'),
+    El = {first, "#", fields($(, $), Fields, Opts)},
     maybe_paren(P, Prec, El);
 lexpr({map, _, Fs}, Prec, Opts) ->
     {P, _R} = preop_prec('#'),
@@ -642,14 +665,7 @@ lexpr({'fun', _, {function, F, A}}, _Prec, _Opts) ->
     [leaf("fun "), {atom, F}, leaf(format("/~w", [A]))];
 lexpr({'fun', L, {function, _, _} = Func, Extra}, Prec, Opts) ->
     {force_nl, fun_info(Extra), lexpr({'fun', L, Func}, Prec, Opts)};
-lexpr({'fun', L, {function, M, F, A}}, Prec, Opts) when is_atom(M), is_atom(F), is_integer(A) ->
-    %% For backward compatibility with pre-R15 abstract format.
-    Mod = erlt_parse:abstract(M),
-    Fun = erlt_parse:abstract(F),
-    Arity = erlt_parse:abstract(A),
-    lexpr({'fun', L, {function, Mod, Fun, Arity}}, Prec, Opts);
 lexpr({'fun', _, {function, M, F, A}}, _Prec, Opts) ->
-    %% New format in R15.
     NameItem = lexpr(M, Opts),
     CallItem = lexpr(F, Opts),
     ArityItem = lexpr(A, Opts),
@@ -669,8 +685,10 @@ lexpr({named_fun, _, Name, Cs, Extra}, _Prec, Opts) ->
         ]}};
 lexpr({call, _, {remote, _, {atom, _, M}, {atom, _, F} = N} = Name, Args}, Prec, Opts) ->
     case (not Opts#options.full_bifs) andalso erl_internal:bif(M, F, length(Args)) of
-        true ->
+        true when F =/= float ->
             call(N, Args, Prec, Opts);
+        true ->
+            call(Name, Args, Prec, Opts);
         false ->
             call(Name, Args, Prec, Opts)
     end;

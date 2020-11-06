@@ -23,6 +23,7 @@ object Patterns {
   sealed trait Pattern { val r: Doc.Range }
   case class LiteralPattern(literal: Literal) extends Pattern { val r: Doc.Range = literal.r }
   case class MatchPattern(r: Doc.Range, pat: Pattern, arg: Pattern) extends Pattern
+  case class PinnedVariablePattern(r: Doc.Range, name: String) extends Pattern
   case class VariablePattern(r: Doc.Range, name: String) extends Pattern
   case class TuplePattern(r: Doc.Range, elems: List[Pattern]) extends Pattern
   case class NilPattern(r: Doc.Range) extends Pattern
@@ -30,13 +31,18 @@ object Patterns {
   case class BinPattern(r: Doc.Range, elems: List[BinElementPattern]) extends Pattern
   case class BinOpPattern(r: Doc.Range, op: String, pat1: Pattern, pat2: Pattern) extends Pattern
   case class UnOpPattern(r: Doc.Range, op: String, pat1: Pattern) extends Pattern
-  case class StructPattern(r: Doc.Range, structName: String, fields: List[StructFieldPattern]) extends Pattern
+  case class LocalStructPattern(r: Doc.Range, structName: String, fields: List[FieldPattern]) extends Pattern
+  case class RemoteStructPattern(r: Doc.Range, module: String, structName: String, fields: List[FieldPattern])
+      extends Pattern
   case class ShapePattern(r: Doc.Range, elems: List[ShapeFieldPattern]) extends Pattern
-  case class LocalEnumPattern(r: Doc.Range, enum: String, ctr: String, args: List[Pattern]) extends Pattern
-  case class RemoteEnumPattern(r: Doc.Range, module: String, enum: String, ctr: String, args: List[Pattern])
+  case class LocalEnumPattern(r: Doc.Range, enum: String, ctr: String, fields: List[FieldPattern]) extends Pattern
+  case class RemoteEnumPattern(r: Doc.Range, module: String, enum: String, ctr: String, fields: List[FieldPattern])
       extends Pattern
 
   case class BinElementPattern(r: Doc.Range, pat: Pattern, size: Option[Expr], typeSpecifiers: TypeSpecifiers)
-  case class StructFieldPattern(r: Doc.Range, fieldName: String, pat: Pattern)
   case class ShapeFieldPattern(r: Doc.Range, key: Pattern, value: Pattern)
+
+  sealed trait FieldPattern
+  case class LblFieldPattern(r: Doc.Range, fieldName: String, value: Pattern) extends FieldPattern
+  case class PosFieldPattern(r: Doc.Range, value: Pattern) extends FieldPattern
 }

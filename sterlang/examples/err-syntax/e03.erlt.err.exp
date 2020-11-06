@@ -1,5 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e03.erlt:18:12
-Unsupported Syntax
-Bad map type
- 18| -spec test(map()) -> integer().
-...|            ~~~~~

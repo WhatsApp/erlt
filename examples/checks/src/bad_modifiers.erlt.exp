@@ -1,0 +1,9 @@
+bad_modifiers.erlt:5:1: syntax error before: [
+bad_modifiers.erlt:9:10: opaque used twice in a modifier list
+bad_modifiers.erlt:12:21: special is an illegal modifier
+bad_modifiers.erlt:16:1: Only opaque types can be unchecked
+bad_modifiers.erlt:18:12: syntax error before: ]
+bad_modifiers.erlt:21:2: syntax error before: ]
+bad_modifiers.erlt:24:2: fantastic is an illegal modifier
+bad_modifiers.erlt:29:13: unchecked used twice in a modifier list
+bad_modifiers.erlt:34:2: opaque is not a legal modifier for a function.

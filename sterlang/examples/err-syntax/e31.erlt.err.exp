@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e31.erlt:20:32
-Parse Error
- 20| remote_fun1(Fun) -> fun remote:Fun/0.
-...|                                ^

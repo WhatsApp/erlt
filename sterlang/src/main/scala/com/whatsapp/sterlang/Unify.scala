@@ -18,7 +18,7 @@ package com.whatsapp.sterlang
 
 import scala.collection.immutable.TreeSet
 
-class Unify(val vars: Vars) {
+class Unify(private val vars: Vars) {
 
   case class UnifyError(s: String) extends Exception(s)
 
@@ -65,10 +65,8 @@ class Unify(val vars: Vars) {
             case T.RowOpen(d1, k) =>
               vars.rSet(rtv1, T.RowOpen(Integer.min(d, d1), k))
               v match {
-                // $COVERAGE-OFF$ extensible-shapes
                 case URowTypeVar(rtv) if vars.rEq(rtv, rtv1) =>
                   throw RowCircularity
-                // $COVERAGE-ON$
                 case _ =>
                 // OK
               }

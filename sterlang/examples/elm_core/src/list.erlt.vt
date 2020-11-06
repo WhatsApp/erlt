@@ -1,0 +1,148 @@
+val singleton/1: fun((A) -> list(A))
+val Val: A
+val repeat/2: fun((number(), A) -> list(A))
+val N: number()
+val Val: A
+val repeat_help/3: fun((list(A), number(), A) -> list(A))
+val Res: list(A)
+val N: number()
+val _Val: A
+val Res: list(A)
+val N: number()
+val Val: A
+val range/2: fun((number(), number()) -> list(number()))
+val Lo: number()
+val Hi: number()
+val range_help/3: fun((number(), number(), list(number())) -> list(number()))
+val Lo: number()
+val Hi: number()
+val L: list(number())
+val _Lo: number()
+val _Hi: number()
+val L: list(number())
+val cons/2: fun((A, list(A)) -> list(A))
+val H: A
+val T: list(A)
+val map/2: fun((fun((A) -> B), list(A)) -> list(B))
+val F: fun((A) -> B)
+val H: A
+val T: list(A)
+val _F: fun((A) -> B)
+val indexed_map/2: fun((fun((number(), A) -> B), list(A)) -> list(B))
+val F: fun((number(), A) -> B)
+val Xs: list(A)
+val foldl/3: fun((fun((B, A) -> A), A, list(B)) -> A)
+val F: fun((B, A) -> A)
+val Acc: A
+val H: B
+val T: list(B)
+val _F: fun((B, A) -> A)
+val Acc: A
+val foldr/3: fun((fun((B, A) -> A), A, list(B)) -> A)
+val F: fun((B, A) -> A)
+val Acc: A
+val H: B
+val T: list(B)
+val _F: fun((B, A) -> A)
+val Acc: A
+val filter/2: fun((fun((A) -> boolean()), list(A)) -> list(A))
+val F: fun((A) -> boolean())
+val List: list(A)
+val X: A
+val Xs: list(A)
+val filter_map/2: fun((fun((A) -> maybe:maybe(B)), list(A)) -> list(B))
+val F: fun((A) -> maybe:maybe(B))
+val Xs: list(A)
+val maybe_cons/3: fun((fun((A) -> maybe:maybe(B)), A, list(B)) -> list(B))
+val F: fun((A) -> maybe:maybe(B))
+val Mx: A
+val Xs: list(B)
+val X: B
+val maybe_cons/1: fun((fun((B) -> maybe:maybe(A))) -> fun((B, list(A)) -> list(A)))
+val F: fun((B) -> maybe:maybe(A))
+val Mx: B
+val Xs: list(A)
+val length/1: fun((list(A)) -> number())
+val Xs: list(A)
+val I: number()
+val reverse/1: fun((list(A)) -> list(A))
+val Xs: list(A)
+val member/2: fun((A, list(A)) -> boolean())
+val X: A
+val Xs: list(A)
+val all/2: fun((fun((A) -> boolean()), list(A)) -> boolean())
+val Pred: fun((A) -> boolean())
+val H: A
+val T: list(A)
+val _Pred: fun((A) -> boolean())
+val any/2: fun((fun((A) -> boolean()), list(A)) -> boolean())
+val Pred: fun((A) -> boolean())
+val H: A
+val T: list(A)
+val _Pred: fun((A) -> boolean())
+val maximum/1: fun((list(A)) -> maybe:maybe(A))
+val H: A
+val T: list(A)
+val minimum/1: fun((list(A)) -> maybe:maybe(A))
+val H: A
+val T: list(A)
+val sum/1: fun((list(number())) -> number())
+val Ns: list(number())
+val product/1: fun((list(number())) -> number())
+val Ns: list(number())
+val append/2: fun((list(A), list(A)) -> list(A))
+val Xs: list(A)
+val Ys: list(A)
+val concat/1: fun((list(list(A))) -> list(A))
+val Lists: list(list(A))
+val concat_map/2: fun((fun((A) -> list(B)), list(A)) -> list(B))
+val F: fun((A) -> list(B))
+val Xs: list(A)
+val intersperse/2: fun((A, list(A)) -> list(A))
+val Sep: A
+val H: A
+val T: list(A)
+val Step: fun((A, list(A)) -> list(A))
+val X: A
+val Rest: list(A)
+val Spersed: list(A)
+val _Sep: A
+val map2/3: fun((fun((A, B) -> C), list(A), list(B)) -> list(C))
+val F: fun((A, B) -> C)
+val H1: A
+val T1: list(A)
+val H2: B
+val T2: list(B)
+val is_empty/1: fun((list(A)) -> boolean())
+val head/1: fun((list(A)) -> maybe:maybe(A))
+val H: A
+val tail/1: fun((list(A)) -> maybe:maybe(list(A)))
+val T: list(A)
+val take/2: fun((number(), list(A)) -> list(A))
+val N: number()
+val _L: list(A)
+val _N: number()
+val N: number()
+val H: A
+val T: list(A)
+val drop/2: fun((number(), list(A)) -> list(A))
+val N: number()
+val L: list(A)
+val _N: number()
+val N: number()
+val _H: A
+val T: list(A)
+val partition/2: fun((fun((A) -> boolean()), list(A)) -> {list(A), list(A)})
+val Pred: fun((A) -> boolean())
+val List: list(A)
+val Step: fun((A, {list(A), list(A)}) -> {list(A), list(A)})
+val X: A
+val Trues: list(A)
+val Falses: list(A)
+val unzip/1: fun((list({A, B})) -> {list(A), list(B)})
+val Pairs: list({A, B})
+val Step: fun(({C, D}, {list(C), list(D)}) -> {list(C), list(D)})
+val X: C
+val Y: D
+val Xs: list(C)
+val Ys: list(D)

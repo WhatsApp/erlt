@@ -12,13 +12,13 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--lang([erl2, ffi]).
 -module(string_ffi).
 
 -export_type([string_ffi/0, string_alias/0]).
 -export([length/1, length_ffi/1]).
 
 -spec length(string()) -> integer().
+[unchecked]
 length(S) ->
     erlang:length(S).
 
@@ -30,5 +30,6 @@ length_ffi(S) ->
     length_ffi_help(S).
 
 -spec length_ffi_help(string_ffi()) -> integer().
+[unchecked]
 length_ffi_help(S) ->
     erlang:length(S).

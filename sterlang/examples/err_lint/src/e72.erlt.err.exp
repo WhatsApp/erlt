@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------- examples/err/src/e72.erlt:17:20
+Duplicate enum constructor: e1
+ 17| -enum e(A) :: (e1, e1{A}).
+...|                    ~~~~~

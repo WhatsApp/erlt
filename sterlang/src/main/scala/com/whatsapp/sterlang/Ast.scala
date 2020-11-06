@@ -66,7 +66,7 @@ object Ast {
 
   sealed trait Val
   case class BooleanVal(value: Boolean) extends Val
-  case class IntVal(value: Int) extends Val
+  case class NumberVal(value: Int) extends Val
   case class CharVal(value: Char) extends Val
   case class StringVal(value: String) extends Val
 
@@ -112,9 +112,6 @@ object Ast {
   val binOps: Map[String, BinOp] =
     binOps1 ++ binOps2
 
-  sealed trait Lang
-  case object ST extends Lang
-  case object FFI extends Lang
   case class TypeId(name: Name, arity: Int)
   sealed trait Name {
     val stringId: String
@@ -144,24 +141,28 @@ object Ast {
     override val stringId: String = s"$module:$name/$arity"
   }
 
+  type ShapeExtType = Either[WildTypeVar, TypeVar]
+
   sealed trait Type { val r: Doc.Range }
   case class WildTypeVar()(val r: Doc.Range) extends Type
   case class TypeVar(name: String)(val r: Doc.Range) extends Type
   case class TupleType(params: List[Type])(val r: Doc.Range) extends Type
-  case class ShapeType(fields: List[Field[Type]])(val r: Doc.Range) extends Type
-  case class OpenShapeType(fields: List[Field[Type]], extType: WildTypeVar)(val r: Doc.Range) extends Type
+  case class ShapeType(fields: List[LblField[Type]])(val r: Doc.Range) extends Type
+  case class OpenShapeType(fields: List[LblField[Type]], extType: ShapeExtType)(val r: Doc.Range) extends Type
   case class FunType(argTypes: List[Type], resType: Type)(val r: Doc.Range) extends Type
   case class ListType(elemType: Type)(val r: Doc.Range) extends Type
   case class UserType(name: Name, params: List[Type])(val r: Doc.Range) extends Type
-  case class StructType(name: String)(val r: Doc.Range) extends Type
 
   case class Spec(name: VarName, funType: FunType)(val r: Doc.Range)
 
   case class TypeAlias(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
   case class Opaque(name: String, params: List[TypeVar], body: Type)(val r: Doc.Range)
+  case class UncheckedOpaque(name: String, params: List[TypeVar])(val r: Doc.Range)
   case class EnumDef(name: String, params: List[TypeVar], ctrs: List[EnumCtr])(val r: Doc.Range)
-  case class StructDef(name: String, fields: List[Field[Type]], kind: StructKind)(val r: Doc.Range)
-  case class EnumCtr(name: String, argTypes: List[Type])(val r: Doc.Range)
+  case class StructDef(name: String, params: List[TypeVar], fields: List[FieldDecl], kind: StructKind)(
+      val r: Doc.Range
+  )
+  case class EnumCtr(name: String, fields: List[FieldDecl])(val r: Doc.Range)
 
   sealed trait Exp { val r: Doc.Range }
   case class BlockExpr(body: Body)(val r: Doc.Range) extends Exp
@@ -174,13 +175,12 @@ object Ast {
   case class StringExp(s: String)(val r: Doc.Range) extends Exp
   case class VarExp(v: VarName)(val r: Doc.Range) extends Exp
 
-  case class ShapeCreateExp(fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class ShapeCreateExp(fields: List[LblField[Exp]])(val r: Doc.Range) extends Exp
   case class ShapeSelectExp(exp: Exp, label: String)(val r: Doc.Range) extends Exp
-  // TODO delta should be fields
-  case class ShapeUpdateExp(exp: Exp, delta: ShapeCreateExp)(val r: Doc.Range) extends Exp
+  case class ShapeUpdateExp(exp: Exp, fields: List[LblField[Exp]])(val r: Doc.Range) extends Exp
 
   case class TupleExp(elems: List[Exp])(val r: Doc.Range) extends Exp
-  case class EnumExp(enumName: Name, ctr: String, args: List[Exp])(val r: Doc.Range) extends Exp
+  case class EnumExp(enumName: Name, ctr: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
   case class NilExp()(val r: Doc.Range) extends Exp
   case class Bin(elems: List[BinElement])(val r: Doc.Range) extends Exp
   case class ConsExp(head: Exp, tail: Exp)(val r: Doc.Range) extends Exp
@@ -190,9 +190,9 @@ object Ast {
   case class FnExp(clauses: List[Clause])(val r: Doc.Range) extends Exp
   case class Comprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
-  case class StructCreate(name: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
-  case class StructUpdate(struct: Exp, structName: String, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
-  case class StructSelect(struct: Exp, structName: String, fieldName: String)(val r: Doc.Range) extends Exp
+  case class StructCreate(name: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructUpdate(struct: Exp, structName: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
+  case class StructSelect(struct: Exp, structName: Name, fieldName: String)(val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val r: Doc.Range) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
       val r: Doc.Range
@@ -203,8 +203,22 @@ object Ast {
   case class AfterBody(timeout: Exp, body: Body)
   case class ValDef(pat: Pat, exp: Exp)
   case class Fun(name: LocalFunName, clauses: List[Clause])(val r: Doc.Range)
+  case class UncheckedFun(name: LocalFunName)
 
-  case class Field[A](label: String, value: A)(val r: Doc.Range)
+  sealed trait Field[A] {
+    val value: A
+    val r: Doc.Range
+  }
+  case class LblField[A](label: String, value: A)(val r: Doc.Range) extends Field[A]
+  case class PosField[A](value: A)(val r: Doc.Range) extends Field[A]
+
+  sealed trait FieldDecl {
+    val tp: Type
+    val r: Doc.Range
+  }
+  case class LblFieldDecl(label: String, tp: Type, default: Option[Exp])(val r: Doc.Range) extends FieldDecl
+  case class PosFieldDecl(tp: Type)(val r: Doc.Range) extends FieldDecl
+
   case class Rule(pat: Pat, guards: List[Guard], exp: Body)
   case class Clause(pats: List[Pat], guards: List[Guard], exp: Body)
   case class IfClause(guards: List[Guard], exp: Body)
@@ -231,10 +245,11 @@ object Ast {
   sealed trait Pat { val r: Doc.Range }
   case class WildPat()(val r: Doc.Range) extends Pat
   case class VarPat(v: String)(val r: Doc.Range) extends Pat
+  case class PinnedVarPat(v: String)(val r: Doc.Range) extends Pat
   case class TuplePat(pats: List[Pat])(val r: Doc.Range) extends Pat
-  case class ShapePat(fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class ShapePat(fields: List[LblField[Pat]])(val r: Doc.Range) extends Pat
   case class AndPat(p1: Pat, p2: Pat)(val r: Doc.Range) extends Pat
-  case class EnumPat(enumName: Name, ctr: String, pats: List[Pat])(val r: Doc.Range) extends Pat
+  case class EnumPat(enumName: Name, ctr: String, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
   case class NilPat()(val r: Doc.Range) extends Pat
   case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat
@@ -242,23 +257,24 @@ object Ast {
   case class CharPat(char: Char)(val r: Doc.Range) extends Pat
   case class NumberPat(n: Int)(val r: Doc.Range) extends Pat
   case class StringPat(s: String)(val r: Doc.Range) extends Pat
-  case class StructPat(structName: String, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
+  case class StructPat(structName: Name, fields: List[Field[Pat]])(val r: Doc.Range) extends Pat
 
   case class BinElementPat(pat: Pat, size: Option[Exp], binElemType: Option[BinElemType])
 
   case class Program(
-      lang: Lang,
       module: String,
       enumDefs: List[EnumDef],
       structDefs: List[StructDef],
       typeAliases: List[TypeAlias],
       opaques: List[Opaque],
+      uncheckedOpaques: List[UncheckedOpaque],
       specs: List[Spec],
       exports: Set[(String, Int)],
       imports: Map[LocalFunName, RemoteFunName],
       exportTypes: Set[(String, Int)],
       importTypes: Map[LocalFunName, RemoteFunName],
       funs: List[Fun],
+      uncheckedFuns: List[UncheckedFun],
   ) {
     val typeMap: Map[LocalName, RemoteName] =
       importTypes.map { case (k, v) => LocalName(k.name) -> RemoteName(v.module, v.name) }
@@ -267,8 +283,8 @@ object Ast {
   // "High-level" program element
   sealed trait ProgramElem
   case class FunElem(fun: Fun) extends ProgramElem
+  case class UncheckedFunElem(fun: UncheckedFun) extends ProgramElem
   case class SpecElem(spec: Spec) extends ProgramElem
-  case class LangElem(lang: String) extends ProgramElem
   case class ModuleElem(module: String) extends ProgramElem
   case class ExportElem(ids: List[(String, Int)]) extends ProgramElem
   case class ImportElem(module: String, ids: List[LocalFunName]) extends ProgramElem
@@ -278,22 +294,18 @@ object Ast {
   case class TypeAliasElem(typeAlias: TypeAlias) extends ProgramElem
   case class StructElem(structDef: StructDef) extends ProgramElem
   case class OpaqueElem(opaque: Opaque) extends ProgramElem
+  case class UncheckedOpaqueElem(uncheckedOpaque: UncheckedOpaque) extends ProgramElem
   case class CompileElem(options: List[String]) extends ProgramElem
 
   case class RawProgram(elems: List[ProgramElem]) {
-    def program: Program = {
-      val langString = elems.find { _.isInstanceOf[LangElem] }.get.asInstanceOf[LangElem].lang
-      val lang: Lang = langString match {
-        case "st"  => ST
-        case "ffi" => FFI
-      }
+    def program: Program =
       Program(
-        lang,
         module = elems.find { _.isInstanceOf[ModuleElem] }.get.asInstanceOf[ModuleElem].module,
         enumDefs = elems.collect { case e: EnumElem => e.enumDef },
         structDefs = elems.collect { case e: StructElem => e.structDef },
         typeAliases = elems.collect { case e: TypeAliasElem => e.typeAlias },
         opaques = elems.collect { case e: OpaqueElem => e.opaque },
+        uncheckedOpaques = elems.collect { case e: UncheckedOpaqueElem => e.uncheckedOpaque },
         specs = elems.collect { case e: SpecElem => e.spec },
         exports = elems.collect { case e: ExportElem => e.ids }.flatten.toSet,
         imports = elems
@@ -310,7 +322,7 @@ object Ast {
           .flatten
           .toMap,
         funs = elems.collect { case e: FunElem => e.fun },
+        uncheckedFuns = elems.collect { case e: UncheckedFunElem => e.fun },
       )
-    }
   }
 }

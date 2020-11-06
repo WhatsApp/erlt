@@ -49,9 +49,10 @@ class AstChecks(val context: Context) {
   private def checkSpecs(program: Program): Unit =
     program.specs.foreach { spec =>
       expandType(program, Set.empty)(spec.funType)
+      checkShapeExtensions(spec.funType)
     }
 
-  def checkUniqueTypes(program: Program): Unit = {
+  private def checkUniqueTypes(program: Program): Unit = {
     var typeNames = Set.empty[String]
     for (ta <- program.typeAliases) {
       if (typeNames(ta.name)) throw new DuplicateType(ta.r, ta.name)
@@ -72,7 +73,7 @@ class AstChecks(val context: Context) {
     }
   }
 
-  def checkUniqueFuns(program: Program): Unit = {
+  private def checkUniqueFuns(program: Program): Unit = {
     var funNames = Set.empty[String]
     for (fun <- program.funs) {
       if (funNames(fun.name.stringId)) throw new DuplicateFun(fun.r, fun.name.stringId)
@@ -106,7 +107,7 @@ class AstChecks(val context: Context) {
   private def checkTypeAlias(program: Program, alias: TypeAlias): Unit = {
     val tp = UserType(LocalName(alias.name), alias.params)(Doc.ZRange)
     val bound = collectParams(alias.params)
-    val used = collectTypeVars(bound)(alias.body)
+    val used = collectRHSTypeVars(bound)(alias.body)
     checkUsage(alias.params, used)
     expandType(program, Set.empty)(tp)
   }
@@ -114,21 +115,34 @@ class AstChecks(val context: Context) {
   private def checkOpaque(program: Program, opaque: Opaque): Unit = {
     val tp = UserType(LocalName(opaque.name), opaque.params)(Doc.ZRange)
     val bound = collectParams(opaque.params)
-    val used = collectTypeVars(bound)(opaque.body)
+    val used = collectRHSTypeVars(bound)(opaque.body)
     checkUsage(opaque.params, used)
     expandType(program, Set.empty)(tp)
   }
 
   private def checkEnumDef(program: Program, enumDef: EnumDef): Unit = {
     checkUniqueCtrs(enumDef.ctrs)
+    enumDef.ctrs.foreach { ctr =>
+      var fieldNames = Set.empty[String]
+      for (f @ LblFieldDecl(label, _, _) <- ctr.fields) {
+        if (fieldNames(label)) {
+          throw new DuplicateFields(f.r, List(f.label))
+        }
+        fieldNames = fieldNames + f.label
+      }
+    }
     val bound = collectParams(enumDef.params)
     val used = enumDef.ctrs
       .map { con =>
-        con.argTypes.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        con.fields.map(f => collectRHSTypeVars(bound)(f.tp)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       }
       .foldLeft(Set.empty[TypeVar])(_ ++ _)
     checkUsage(enumDef.params, used)
-    enumDef.ctrs.foreach { con => con.argTypes.foreach(expandType(program, Set.empty)) }
+    enumDef.ctrs.foreach { ctr =>
+      ctr.fields.foreach { f =>
+        expandType(program, Set.empty)(f.tp)
+      }
+    }
   }
 
   private def checkUniqueCtrs(ctrs: List[EnumCtr]): Unit = {
@@ -142,21 +156,33 @@ class AstChecks(val context: Context) {
   }
 
   private def checkStructDef(program: Program, structDef: StructDef): Unit = {
+    if (structDef.params.nonEmpty) {
+      if (structDef.kind == ExnStruct) {
+        throw new PolymorphicException(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+      if (structDef.kind == MsgStruct) {
+        throw new PolymorphicMessage(Doc.merge(structDef.params.head.r, structDef.params.last.r))
+      }
+    }
     var fieldNames = Set.empty[String]
-    for (f <- structDef.fields) {
-      if (fieldNames(f.label)) {
+    for (f @ LblFieldDecl(label, _, _) <- structDef.fields) {
+      if (fieldNames(label)) {
         throw new DuplicateFields(f.r, List(f.label))
       }
       fieldNames = fieldNames + f.label
     }
+    val bound = collectParams(structDef.params)
     structDef.fields.foreach { f =>
-      expandType(program, Set.empty)(f.value)
-      collectTypeVars(Set.empty)(f.value)
+      expandType(program, Set.empty)(f.tp)
     }
+    val used = structDef.fields.map { f => collectRHSTypeVars(bound)(f.tp) }.foldLeft(Set.empty[TypeVar])(_ ++ _)
+    checkUsage(structDef.params, used)
   }
 
   private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
     tp match {
+      case UserType(name: LocalName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
+      // OK - fast check for global aliases like integer() -> number
       case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
         params.foreach(expandType(program, visited))
       case UserType(name: LocalName, params) =>
@@ -177,7 +203,21 @@ class AstChecks(val context: Context) {
                     expandType(program, visited + name)(opaque.body)
                     params.foreach(expandType(program, visited))
                   case None =>
-                    throw new UnknownType(tp.r, name.stringId, params.size)
+                    val strName = name.stringId
+                    program.structDefs.find(s => s.name == strName && s.params.size == params.size) match {
+                      case Some(eRec) =>
+                        params.foreach(expandType(program, visited))
+                        eRec.kind match {
+                          case ExnStruct =>
+                            throw new ExceptionType(tp.r, strName)
+                          case MsgStruct =>
+                            throw new MessageType(tp.r, strName)
+                          case StrStruct =>
+                          // OK
+                        }
+                      case None =>
+                        throw new UnknownType(tp.r, name.stringId, params.size)
+                    }
                 }
             }
         }
@@ -194,41 +234,41 @@ class AstChecks(val context: Context) {
                 throw new UnknownType(tp.r, name.stringId, params.size)
             }
         }
+
       case _: TypeVar =>
       // OK
+
       case WildTypeVar() =>
       // OK
+
       case TupleType(params) =>
         params.foreach(expandType(program, visited))
       case ShapeType(fields) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
-      case OpenShapeType(fields, rt) =>
+
+      case OpenShapeType(fields, _) =>
         val types = fields.map(_.value)
         types.foreach(expandType(program, visited))
-        expandType(program, visited)(rt)
+      // It makes no sense to expand an extension here -
+      // Since it is always either a TypeVar or a WildTypeVar
+
       case FunType(argTypes, resType) =>
         argTypes.foreach(expandType(program, visited))
         expandType(program, visited)(resType)
       case ListType(elemType) =>
         expandType(program, visited)(elemType)
-      case StructType(name) =>
-        program.structDefs.find(_.name == name) match {
-          case Some(eRec) =>
-            eRec.kind match {
-              case ExnStruct =>
-                throw new ExceptionType(tp.r, name)
-              case MsgStruct =>
-                throw new MessageType(tp.r, name)
-              case StrStruct =>
-              // OK
-            }
-          case None =>
-            throw new UnknownStruct(tp.r, name)
-        }
     }
 
-  private def collectTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
+  // It collects the type vars of RHS of a definition:
+  // - Type vars of a type alias
+  // - Type vars of an opaque
+  // - Type vars of an enum definitions (going down into constructors)
+  // - Type vars of a struct
+  // It collects and at the same time performs corresponding checks:
+  // - There are no `_` (Wild type vars)
+  // - There are no open shapes (open shapes are supported in specs only for now)
+  private def collectRHSTypeVars(bound: Set[TypeVar])(t: Type): Set[TypeVar] =
     t match {
       case t: TypeVar =>
         if (!bound(t)) {
@@ -236,22 +276,48 @@ class AstChecks(val context: Context) {
         }
         Set(t)
       case WildTypeVar() =>
+        // The wild type var is not allowed on the RHS
         throw new IllegalWildTypeVariable(t.r)
       case UserType(_, args) =>
-        args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        args.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case TupleType(args) =>
-        args.map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        args.map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case FunType(args, res) =>
-        (res :: args).map(collectTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+        (res :: args).map(collectRHSTypeVars(bound)).foldLeft(Set.empty[TypeVar])(_ ++ _)
       case ListType(elemType) =>
-        collectTypeVars(bound)(elemType)
-      case StructType(_) =>
-        Set.empty
+        collectRHSTypeVars(bound)(elemType)
       case ShapeType(fields) =>
-        fields.map(f => collectTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
-      // $COVERAGE-OFF$ TODO
-      case OpenShapeType(fields, _) =>
-        ???
-      // $COVERAGE-ON$
+        fields.map(f => collectRHSTypeVars(bound)(f.value)).foldLeft(Set.empty[TypeVar])(_ ++ _)
+      case OpenShapeType(_, Left(extType)) =>
+        throw new RHSOpenShape(extType.r)
+      case OpenShapeType(_, Right(extType)) =>
+        throw new RHSOpenShape(extType.r)
     }
+
+  // checks that
+  // - Each type var is either a standard type var or a shape extension type var
+  // - Shape extension type variables are used consistently
+  private def checkShapeExtensions(funType: FunType): Unit = {
+    val types = funType.argTypes ++ List(funType.resType)
+    val vars = types.flatMap(AstUtil.collectNamedTypeVars).toSet
+    val rowVars = types.flatMap(AstUtil.collectNamedRowTypeVars)
+
+    for ((rv, _) <- rowVars) {
+      if (vars(rv.name)) {
+        throw new TypeVarKindConflict(rv.r, rv.name)
+      }
+    }
+
+    var kinds = Map.empty[String, Set[String]]
+    for ((rv, thisKind) <- rowVars) {
+      kinds.get(rv.name) match {
+        case None =>
+          kinds = kinds + (rv.name -> thisKind)
+        case Some(prevKind) =>
+          if (prevKind != thisKind) {
+            throw new InconsistentShapeExtension(rv.r, rv.name, prevKind.toList.sorted, thisKind.toList.sorted)
+          }
+      }
+    }
+  }
 }

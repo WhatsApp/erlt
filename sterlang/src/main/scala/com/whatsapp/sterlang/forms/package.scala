@@ -1,6 +1,6 @@
 package com.whatsapp.sterlang
 
-import com.whatsapp.sterlang.etf._
+import com.whatsapp.sterlang.Etf._
 
 package object forms {
   def r(term: ETerm): Doc.Range = {
@@ -9,7 +9,8 @@ package object forms {
     val pos2 = Doc.Pos(line2.toInt, col2.toInt)
     assert(pos1 != Doc.Pos(0, 0))
     assert(pos2 != Doc.Pos(0, 0))
-    assert(pos1 != pos2)
+    // TODO: fix after re-integration
+    // assert(pos1 != pos2)
     Doc.Range(pos1, pos2)
   }
 }

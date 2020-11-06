@@ -21,6 +21,8 @@
     types = #{}
 }).
 
+-define(IS_STRUCT(S), (S =:= struct orelse S =:= exception orelse S =:= message)).
+
 module(Forms) ->
     Context = init(Forms),
     erlt_ast:prewalk(Forms, fun(Node, Ctx) -> rewrite(Node, Context, Ctx) end).
@@ -28,6 +30,8 @@ module(Forms) ->
 init(Forms) -> init(Forms, [], []).
 
 init([{function, _, Name, Arity, _} | Rest], Functions, Types) ->
+    init(Rest, [{{Name, Arity}, local} | Functions], Types);
+init([{unchecked_function, _, Name, Arity, _} | Rest], Functions, Types) ->
     init(Rest, [{{Name, Arity}, local} | Functions], Types);
 init([{attribute, _, import, {Mod, Imports}} | Rest], Functions0, Types) ->
     Functions = [{NA, {imported, Mod}} || NA <- Imports] ++ Functions0,
@@ -39,7 +43,9 @@ init([{attribute, _, type, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, opaque, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);
-init([{attribute, _, struct, {Name, _, _}} | Rest], Functions, Types) ->
+init([{attribute, _, unchecked_opaque, {Name, _, _}} | Rest], Functions, Types) ->
+    init(Rest, Functions, [{Name, local} | Types]);
+init([{attribute, _, Struct, {Name, _, _}} | Rest], Functions, Types) when ?IS_STRUCT(Struct) ->
     init(Rest, Functions, [{Name, local} | Types]);
 init([{attribute, _, enum, {Name, _, _}} | Rest], Functions, Types) ->
     init(Rest, Functions, [{Name, local} | Types]);

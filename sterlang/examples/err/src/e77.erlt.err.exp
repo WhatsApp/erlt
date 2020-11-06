@@ -1,0 +1,4 @@
+-- ERROR --------------------------------------- examples/err/src/e77.erlt:19:16
+Unknown type: super_module:super_type/0
+ 19| -spec foo() -> super_module:super_type().
+...|                ~~~~~~~~~~~~~~~~~~~~~~~~~

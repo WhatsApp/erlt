@@ -1,0 +1,4 @@
+-- ERROR -------------------------------- examples/err_syntax/src/e33.erlt:19:33
+Parse Error
+ 19| remote_fun3(Mod, Fun) -> fun Mod:Fun/0.
+...|                                 ^

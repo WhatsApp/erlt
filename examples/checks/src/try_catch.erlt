@@ -1,0 +1,28 @@
+
+-module(try_catch).
+
+-export([t1/2]).
+
+t1(F, Bound) ->
+    try
+        F()
+    catch
+        %% Stack tests
+        _, _, ^Bound -> error;
+        _, _, Bound -> error;
+        _, _, {other, expression} -> error;
+        _, _, Unbound when is_list(Unbound) -> error;
+        _, Repeat, Repeat -> error;
+        _, _, Unbound -> ok;
+        _, _, _ -> ok;
+        %% Kind tests
+        Bound, _ -> error;
+        {other, expression}, _ -> error;
+        other_atom, _ -> error;
+        _, _ -> ok;
+        Unbound, _ -> ok;
+        ^Bound, _ -> ok;
+        exit, _ -> ok;
+        error, _ -> ok;
+        throw, _ -> ok
+    end.

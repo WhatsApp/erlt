@@ -1,12 +1,12 @@
 # 5. Structs Rationale
 
-ErlT introduces three new data structures - enums, structs, and anonymous structs. This document describes structs and anonymous structs
+ErlT introduces three new data structures - enums, structs, and shapes. This document describes structs and shapes
 
 A *struct* is a nominal record and requires an explicit named definition. Struct can be seen as a replacement for Erlang records.
 
-An *anonymous struct* doesn’t require definition. The main use case it addresses is a generalization of a tuple, which allows names fields instead of only positional ones in a tuple. Intuitively, anonymous structs can be seen as Erlang map with atom keys with invariably more restricted semantics in ST model.
+A *shape* doesn’t require definition. The main use case it addresses is a generalization of a tuple, which allows names fields instead of only positional ones in a tuple. Intuitively, shapes can be seen as Erlang map with atom keys with invariably more restricted semantics in ST model.
 
-> **The below is **out of date**. In particular, the below doesn't always distinguish between structs and anonymous structs.
+> **The below is **out of date**. In particular, the below doesn't always distinguish between structs and shapes.
 
 **Similar constructs in other languages**
 
@@ -21,7 +21,7 @@ Some background
 
 ## Operations
 
-### Creating anonymous structs
+### Creating shapes
 
 Just use map literals:
 

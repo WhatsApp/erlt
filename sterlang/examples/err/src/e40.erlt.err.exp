@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e40.erlt:19:18
+Type Mismatch
+Found:    #( A )
+Required: boolean()
+ 19|     case true of #() -> 1 end.
+...|                  ~~~

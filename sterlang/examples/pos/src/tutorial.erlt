@@ -1,0 +1,256 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(tutorial).
+-export([inferred_funs/0]).
+
+minimal() ->
+    _X = 0,
+    _Y = 1,
+    {}.
+
+basic_values() ->
+    My_int = 0,
+    My_str = "hello",
+    _Empty_record = #(),
+    _Unit = {},
+    _Tuple1 = {1, 2},
+    _Tuple2 = {My_int, My_str},
+    _Int_list = [My_int, My_int],
+
+    _My_profile_rec = #(name = "Ilya", languages = ["Erlang", "Scala"]),
+    _Location_rec = #(city = "London", country = "UK"),
+
+    _Bool1 = true,
+    _Bool2 = false,
+
+    F_id = fun (X) -> X end,
+    sink:sink(F_id),
+    F_first = fun (X1, _Y1) -> X1 end,
+    sink:sink(F_first),
+    F_second = fun (_X2, Y2) -> Y2 end,
+    sink:sink(F_second),
+    F_const = fun () -> 1 end,
+    sink:sink(F_const),
+    {}.
+
+enums() ->
+    None = core:option.none,
+    SomeInt = core:option.some{1},
+    SomeStr = core:option.some{"str"},
+    _L1 = [None, SomeInt],
+    _L2 = [None, SomeStr],
+    % ill-typed
+    % L3 = [SomeInt, SomeStr],
+    {}.
+
+
+id(X) -> X.
+mkSome(X) -> core:option.some{X}.
+mkList(E1, E2) -> [E1, E2].
+
+funs() ->
+    _V1 = mkSome(1),
+    _V2 = mkSome(""),
+    {}.
+
+pieces() ->
+    My_rec = #(n = 1, st = "", z = []),
+    NVal = My_rec#(n),
+    #(n = _N1, st = _S1, z = _Z1) = My_rec,
+    #(n = N, st = _St, z = Z) = My_rec,
+    Rec1 = #(n = N, z = Z),
+    sink:sink(Rec1),
+    #(n = ^NVal) = My_rec,
+    % transforming record:
+    _My_rec1 = My_rec #(n = 2),
+    My_pair = {1, []},
+    {_Elem1, _Elem2} = My_pair,
+    {}.
+
+list1(L) ->
+    [] = L,
+    L.
+
+list2(L) ->
+    [] = L,
+    [].
+
+list3(L) ->
+    [H|T] = L,
+    {H, T}.
+
+list4(L) ->
+    [E1, E2, E3] = L,
+    {E1, E2, E3}.
+
+map(F, Xs) ->
+    case Xs of
+        [] -> [];
+        [X1 | Xs1] -> [F(X1) | map(F, Xs1)]
+    end.
+
+getIds(Recs) ->
+    map(fun (X) -> X#(id) end, Recs).
+
+%% named local funs
+global(X, V) -> if X -> V; true -> global(true, V) end.
+
+inside(Y) ->
+    T = fun Local(X, V) -> if X -> V; true -> Local(true, V) end end,
+    T(true, Y).
+
+inside1() ->
+    T = fun (X) -> X end,
+    T.
+
+inside2() ->
+    T = fun _Local (X) -> X end,
+    T.
+
+get_id(R) ->
+    R#(id).
+
+% So, what to do if we want to process "heterogeneous" records together?
+% Explicitly cast/restrict them!
+extract(#(id = Id)) -> #(id = Id).
+
+records_example() ->
+    % polymorphism - get_id is polymorphic
+    _Id1 = get_id(#(id = 1)),
+    _Id2 = get_id(#(id = "id", key = 3)),
+
+    Rec1 = #(id = 1),
+    Rec2 = #(id = 2, key = 3),
+
+    % However, this is not well-typed:
+    % Field mismatch: key
+    % val Rec_list = [rec1, rec2]
+
+    Rec_list = [extract(Rec1), extract(Rec2)],
+    sink:sink(Rec_list),
+    {}.
+
+% record is a special "kind" of types
+id_rec(R) ->
+    #() = R,
+    R.
+
+get_id1(Rec) ->
+    #(id = IdVal) = Rec,
+    IdVal.
+
+update_a_b(R) ->
+    R #(a = 1, b = 2).
+swap_a_b(R) ->
+    R #(a = R#(b), b = R#(a)).
+
+id01(A) -> A.
+id02((A)) -> A.
+id03(A) -> (A).
+
+% enums
+
+-enum my_option(A) :: (none, some{A}).
+-enum my_list(A) :: (nil, cons{A, my_list(A)}).
+
+isDefined1(Opt) ->
+    case Opt of
+        my_option.none -> false;
+        my_option.some{_} -> true
+    end.
+
+map1(F, Xs) ->
+    case Xs of
+        my_list.nil ->
+            my_list.nil;
+        my_list.cons{X1, Xs1} ->
+            my_list.cons{F(X1), map1(F, Xs1)}
+    end.
+
+to_bools(Xs) ->
+    map1(fun isDefined1/1, Xs).
+
+onlySome(Xs) ->
+    case Xs of
+        my_list.nil ->
+            my_list.nil;
+        my_list.cons{X1, Xs1} ->
+            case X1 of
+                my_option.none ->
+                    onlySome(Xs1);
+                my_option.some{A} ->
+                    my_list.cons{my_option.some{A}, onlySome(Xs1)}
+            end
+    end.
+
+dec_opt(Opt) ->
+    my_option.none = Opt,
+    1.
+
+dec_opt2(Opt) ->
+    my_option.some{V} = Opt,
+    [V].
+
+dec_opt3(Opt, V1, V2) ->
+    my_option.some{F} = Opt,
+    [F(V1) | [F(V2)]].
+
+dec_opt4(X, Y, Z) ->
+    Id = fun (X1) -> X1 end,
+    OptId = my_option.some{Id},
+    my_option.some{Id1} = OptId,
+    my_option.some{Id2} = OptId,
+    {Id1(X), Id1(Y), Id2(Z)}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun minimal/0,
+    fun basic_values/0,
+    fun enums/0,
+    fun id/1,
+    fun mkSome/1,
+    fun mkList/2,
+    fun funs/0,
+    fun pieces/0,
+    fun list1/1,
+    fun list2/1,
+    fun list3/1,
+    fun list4/1,
+    fun map/2,
+    fun getIds/1,
+    fun global/2,
+    fun inside/1,
+    fun inside1/0,
+    fun inside2/0,
+    fun get_id/1,
+    fun extract/1,
+    fun records_example/0,
+    fun id_rec/1,
+    fun get_id1/1,
+    fun update_a_b/1,
+    fun swap_a_b/1,
+    fun id01/1,
+    fun id02/1,
+    fun id03/1,
+    fun isDefined1/1,
+    fun map1/2,
+    fun to_bools/1,
+    fun onlySome/1,
+    fun dec_opt/1,
+    fun dec_opt2/1,
+    fun dec_opt3/3,
+    fun dec_opt4/3
+].

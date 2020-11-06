@@ -1,0 +1,41 @@
+val mk_rgb/0: fun(() -> rgb())
+val mk_triple/1: fun((A) -> triple(A, A, A))
+val A: A
+val mk_none/0: fun(() -> option(A))
+val mk_unit/0: fun(() -> unit0())
+val mk_box/1: fun((A) -> boxed(A))
+val A: A
+val mk_left/1: fun((A) -> either(A, B))
+val A: A
+val mk_right/1: fun((A) -> either(B, A))
+val B: A
+val zero/2: fun((unit0(), A) -> A)
+val Val: A
+val unbox/1: fun((boxed(A)) -> A)
+val Boxed: boxed(A)
+val Elem: A
+val un_either/1: fun((either(A, A)) -> A)
+val Either: either(A, A)
+val Elem: A
+val Elem: A
+val un_pair/1: fun((pair(A, B)) -> {A, B})
+val Pair: pair(A, B)
+val A: A
+val B: B
+val first/1: fun((pair(A, B)) -> A)
+val F: A
+val second/1: fun((pair(A, B)) -> B)
+val S: B
+val call_this_mod/1: fun((pair(A, B)) -> pair(A, B))
+val P: pair(A, B)
+val A: A
+val B: B
+val box_ast_pair/3: fun((number(), number(), list(B)) -> box1({ast(A), ast(B)}))
+val P: number()
+val N: number()
+val L: list(B)
+val un_box_ast_pair/1: fun((box1({ast(A), ast(B)})) -> #( l :: list(B), n :: number(), p :: number() ))
+val P: number()
+val N: number()
+val P: number()
+val L: list(B)

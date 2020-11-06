@@ -1,7 +1,0 @@
--spec mk_exn(option(exception())) -> exception().
--spec get_target(exception()) -> option(exception()).
--spec get_message(fun(() -> string())) -> string().
--spec get_other(fun((integer()) -> {string()}), integer()) -> string().
--spec get_other_with_guard(fun((integer()) -> {string()}), integer(), string()) -> string().
--spec get_message_with_guard(fun(() -> string())) -> string().
--spec get_or_default(fun(() -> A), A, A) -> boolean().

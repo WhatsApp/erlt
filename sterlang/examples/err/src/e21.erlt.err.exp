@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e21.erlt:21:12
+Type Mismatch
+Found:    boolean()
+Required: number()
+ 21|     double(R#(x)).
+...|            ~~~~~

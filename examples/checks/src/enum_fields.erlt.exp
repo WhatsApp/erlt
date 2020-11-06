@@ -1,0 +1,11 @@
+enum_fields.erlt:9:45: field a already defined in enum duplicate.variant
+enum_fields.erlt:13:9: no fields defined for enum enum.no_fields
+enum_fields.erlt:14:9: expected fields for enum enum.variant
+enum_fields.erlt:14:9: field b of enum enum.variant has no initializer or default value
+enum_fields.erlt:15:9: field b of enum enum.variant has no initializer or default value
+enum_fields.erlt:16:9: field b of enum enum.variant has no initializer or default value
+enum_fields.erlt:17:31: field does_not_exist undefined in enum enum.variant
+enum_fields.erlt:18:22: field does_not_exist undefined in enum enum.variant
+enum_fields.erlt:21:31: field a already defined in enum enum.variant
+enum_fields.erlt:22:25: field a already defined in enum enum.variant
+enum_fields.erlt:9:1: type duplicate() is unused

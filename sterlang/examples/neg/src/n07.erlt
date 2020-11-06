@@ -1,0 +1,14 @@
+-module(n07).
+-export([unBox/2]).
+
+-enum option(A) :: (none, some{A}).
+
+getOrElse(Opt, Alt) ->
+  case Opt of
+      option.some{X} -> X;
+      option.none -> Alt
+  end.
+
+%% the type for rec cannot be expressed without recursion
+unBox(Rec, _) ->
+  getOrElse(Rec#(next), Rec).

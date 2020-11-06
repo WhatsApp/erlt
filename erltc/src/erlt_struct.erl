@@ -28,6 +28,8 @@
     {call, Anno, {remote, Anno, {atom, Anno, Mod}, {atom, Anno, Fun}}, Args}
 ).
 
+-define(IS_STRUCT(S), (S =:= struct orelse S =:= exception orelse S =:= message)).
+
 module(Forms, DefDb) ->
     Context = init_context(Forms, DefDb),
     put(struct_gen_var, 0),
@@ -52,7 +54,7 @@ local_rewriter(Forms) ->
 init_context(Forms, DefDb) ->
     Res = [M || {attribute, _, module, M} <- Forms],
     [Module] = Res,
-    Structs = [Def || {attribute, _, struct, Def} <- Forms],
+    Structs = [Def || {attribute, _, Struct, Def} <- Forms, ?IS_STRUCT(Struct)],
     #context{
         module = Module,
         structs = init_structs(Structs, Module),
@@ -66,13 +68,17 @@ init_structs(Defs, Module) ->
 struct_info(Module, {type, _, struct, {atom, _, Tag}, Fields}) ->
     RuntimeTag = list_to_atom("$#" ++ atom_to_list(Module) ++ ":" ++ atom_to_list(Tag)),
     Anno = erl_anno:set_generated(true, erl_anno:new(0)),
-    FieldsMap = [
-        {Name, Default}
-        || {field_definition, _, {atom, _, Name}, Default, _Type} <- Fields
-    ],
-    {{atom, Anno, RuntimeTag}, FieldsMap}.
+    {{atom, Anno, RuntimeTag}, fields_map(Fields)}.
 
-rewrite({attribute, Line, struct, {TypeName, StructType, Args}}, Context, _Ctx) ->
+fields_map([{field_definition, _, {atom, _, Name}, Default, _Type} | Rest]) ->
+    [{Name, Default} | fields_map(Rest)];
+fields_map([{field_definition, _, positional, undefined, _Type} | Rest]) ->
+    [positional | fields_map(Rest)];
+fields_map([]) ->
+    [].
+
+rewrite({attribute, Line, Struct, Def}, Context, _Ctx) when ?IS_STRUCT(Struct) ->
+    {TypeName, StructType, Args} = Def,
     {type, TypeLine, struct, {atom, _, Tag}, Fields} = StructType,
     {RuntimeTag, _} = map_get(Tag, Context#context.structs),
     FieldTypes = [Type || {field_definition, _, _Name, _Default, Type} <- Fields],
@@ -100,6 +106,8 @@ rewrite({struct_field, Line, Expr, Name, Field}, Context, guard) ->
 rewrite({struct_index, Line, Name, {atom, _, Field}}, Context, _) ->
     {_RuntimeTag, Def} = get_definition(Name, Context),
     {{integer, Line, find_index(Field, Def, 2)}, Context};
+rewrite({struct_index, Line, _Name, {integer, _, Field}}, Context, _) ->
+    {{integer, Line, Field + 2}, Context};
 rewrite(Other, Context, _) ->
     {Other, Context}.
 
@@ -125,40 +133,50 @@ get_remote_definition(Module, Name, Context) ->
     struct_info(Module, Type).
 
 struct_init(Fields, Defs) ->
-    Fun = fun({Name, Default}) ->
-        case find_field(Name, Fields) of
-            {struct_field, _, _, Value} -> Value;
-            error when Default =/= undefined -> Default
-        end
+    Fun = fun
+        (positional, [{field, _, positional, Expr} | Rest]) ->
+            {Expr, Rest};
+        ({Name, Default}, LabelledFields) ->
+            case find_field(Name, LabelledFields) of
+                {field, _, _, Value} -> {Value, LabelledFields};
+                error when Default =/= undefined -> {Default, LabelledFields}
+            end
     end,
-    lists:map(Fun, Defs).
+    element(1, lists:mapfoldl(Fun, Fields, Defs)).
 
 struct_pattern(Fields, Defs) ->
-    Fun = fun({Name, _Default}) ->
-        case find_field(Name, Fields) of
-            {struct_field, _, _, Value} ->
-                Value;
-            error ->
-                Anno = erl_anno:set_generated(true, erl_anno:new(1)),
-                {var, Anno, '_'}
-        end
+    Fun = fun
+        (positional, [{field, _, positional, Expr} | Rest]) ->
+            {Expr, Rest};
+        ({Name, _Default}, LabelledFields) ->
+            case find_field(Name, LabelledFields) of
+                {field, _, _, Value} ->
+                    {Value, LabelledFields};
+                error ->
+                    Anno = erl_anno:set_generated(true, erl_anno:new(1)),
+                    {{var, Anno, '_'}, LabelledFields}
+            end
     end,
-    lists:map(Fun, Defs).
+    element(1, lists:mapfoldl(Fun, Fields, Defs)).
 
 update_pattern(Line, Fields, Defs) ->
-    Fun = fun({Name, _Default}) ->
-        case find_field(Name, Fields) of
-            {struct_field, _, _, _} ->
-                {{var, Line, '_'}, []};
-            error ->
-                Var = gen_var(Line, Name),
-                {Var, [{struct_field, Line, {atom, Line, Name}, Var}]}
-        end
+    Fun = fun
+        (positional, ExtraFields) ->
+            Var = gen_var(Line, positional),
+            {Var, [{field, Line, positional, Var} | ExtraFields]};
+        ({Name, _Default}, ExtraFields) ->
+            case find_field(Name, Fields) of
+                {field, _, _, _} ->
+                    {{var, Line, '_'}, ExtraFields};
+                error ->
+                    Var = gen_var(Line, Name),
+                    {Var, [{field, Line, {atom, Line, Name}, Var} | ExtraFields]}
+            end
     end,
-    {Pattern, ExtraFields} = lists:unzip(lists:map(Fun, Defs)),
-    {Pattern, lists:flatten(ExtraFields)}.
+    {Pattern, ExtraFields} = lists:mapfoldl(Fun, [], Defs),
+    {Pattern, lists:reverse(ExtraFields)}.
 
-find_field(Name, [{struct_field, _, {atom, _, Name}, _} = Field | _]) ->
+find_field(Name, [{field, _, {atom, _, Name}, _} = Field | _]) ->
     Field;
 find_field(Name, [_ | Rest]) ->
     find_field(Name, Rest);
@@ -170,18 +188,40 @@ find_index(Name, [{Name, _} | _Rest], Acc) ->
 find_index(Name, [_ | Rest], Acc) ->
     find_index(Name, Rest, Acc + 1).
 
-struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw} = Field) ->
+struct_field_expr(Line, Expr, RuntimeTag, Def, {atom, _, FieldRaw}) ->
     Var = gen_var(Line, FieldRaw),
     GenLine = erl_anno:set_generated(true, Line),
-    Pattern = struct_pattern([{struct_field, GenLine, Field, Var}], Def),
+    Pattern = field_pattern(Line, find_index(FieldRaw, Def, 0), Var, Def),
+    {'case', GenLine, Expr, [
+        {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
+        {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
+    ]};
+struct_field_expr(Line, Expr, RuntimeTag, Def, {integer, _, FieldRaw}) ->
+    Var = gen_var(Line, positional),
+    GenLine = erl_anno:set_generated(true, Line),
+    Pattern = field_pattern(Line, FieldRaw, Var, Def),
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Var]},
         {clause, GenLine, [{var, GenLine, '_'}], [], [badstruct(GenLine, RuntimeTag)]}
     ]}.
 
+field_pattern(Line, FieldId, Var, Defs) ->
+    Wildcard = {var, Line, '_'},
+    Fun = fun
+        (_, Num) when Num =:= FieldId ->
+            {Var, Num + 1};
+        (_, Num) ->
+            {Wildcard, Num + 1}
+    end,
+    element(1, lists:mapfoldl(Fun, 0, Defs)).
+
 struct_field_guard(Line, Expr, Def, {atom, _, FieldRaw}) ->
     GenLine = erl_anno:set_generated(true, Line),
     Index = {integer, GenLine, find_index(FieldRaw, Def, 2)},
+    ?CALL(GenLine, erlang, element, [Index, Expr]);
+struct_field_guard(Line, Expr, _Def, {integer, _, FieldRaw}) ->
+    GenLine = erl_anno:set_generated(true, Line),
+    Index = {integer, GenLine, FieldRaw + 2},
     ?CALL(GenLine, erlang, element, [Index, Expr]).
 
 struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->
@@ -197,7 +237,7 @@ struct_field_guard_check(Line, Expr, RuntimeTag, Def) ->
 struct_update(Line, Expr, RuntimeTag, Def, Fields) ->
     GenLine = erl_anno:set_generated(true, Line),
     {Pattern, ExtraFields} = update_pattern(GenLine, Fields, Def),
-    Constructor = struct_init(Fields ++ ExtraFields, Def),
+    Constructor = struct_init(ExtraFields ++ Fields, Def),
     Value = {tuple, Line, [RuntimeTag | Constructor]},
     {'case', GenLine, Expr, [
         {clause, GenLine, [{tuple, GenLine, [RuntimeTag | Pattern]}], [], [Value]},

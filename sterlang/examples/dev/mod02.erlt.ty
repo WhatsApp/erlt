@@ -1,7 +1,0 @@
--spec odd(integer()) -> boolean().
--spec id(A) -> A.
--spec id_caller(A) -> A.
--spec id_rec(A) -> A.
--spec even(integer()) -> boolean().
--spec mod01call(A) -> A.
--spec mk_unit() -> integer().

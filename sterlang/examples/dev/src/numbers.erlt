@@ -1,0 +1,15 @@
+-module(numbers).
+-export([foldl/3, length/1, add/2, add_number/2]).
+
+-spec foldl(fun((A, B) -> B), B, list(A)) -> B.
+foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);
+foldl(_F, Acc, []) -> Acc.
+
+-spec length(list(_)) -> integer().
+length(Xs) -> foldl(fun (_, I) -> I + 1 end, 0, Xs).
+
+-spec add(integer(), integer()) -> integer().
+add(X1, X2) -> X1 + X2.
+
+-spec add_number(number(), number()) -> number().
+add_number(X1, X2) -> add(X1, X2).

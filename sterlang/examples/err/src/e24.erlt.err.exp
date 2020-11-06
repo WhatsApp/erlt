@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e24.erlt:18:17
+Type Mismatch
+Found:    list({A, A})
+Required: list({A})
+ 18| foo(X) -> [{X}, {X, X}].
+...|                 ~~~~~~~

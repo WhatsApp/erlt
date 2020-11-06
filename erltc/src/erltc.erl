@@ -29,7 +29,9 @@
     % escript entry point
     main/1,
     % programmatic entrypoint. Distinct from compile:file because takes stringy args instead of structured
-    api/1
+    api/1,
+    % rebar3 plugin entrypoint
+    init/1
 ]).
 
 %Macro to avoid misspellings.
@@ -128,6 +130,10 @@ main(Args) ->
         _ -> my_halt(2)
     end.
 
+% rebar3 entry point
+init(RebarState) ->
+    rebar_prv_erlt:init(RebarState).
+
 handle_path_args([]) ->
     [];
 handle_path_args(["-pa", Path | T]) ->
@@ -177,11 +183,17 @@ compiler_runner(List) ->
         exit({compiler_result, compile1(List)})
     end.
 
-%% Parses the first part of the option list.
+%% Parses the first part of the option list
+%% and decides whether to go into "build" (multi-file) mode
 
-compile1(Args) ->
+compile1(Args0) ->
     {ok, Cwd} = file:get_cwd(),
-    compile1(Args, #options{outdir = Cwd, cwd = Cwd}).
+    {BuildArgs, Args} = lists:partition(fun(Arg) -> Arg =:= "--build" end, Args0),
+    ShouldBuildMultipleFiles = BuildArgs =/= [],
+    case ShouldBuildMultipleFiles of
+        true -> erlt_build:main(Args);
+        false -> compile1(Args, #options{outdir = Cwd, cwd = Cwd})
+    end.
 
 %% Parses all options.
 
@@ -261,6 +273,8 @@ parse_generic_option("W" ++ Warn, T, #options{specific = Spec} = Opts) ->
     end;
 parse_generic_option("B", T, #options{specific = Spec} = Opts) ->
     compile1(T, Opts#options{specific = ['B' | Spec]});
+parse_generic_option("A", T, #options{specific = Spec} = Opts) ->
+    compile1(T, Opts#options{specific = ['A' | Spec]});
 parse_generic_option("E", T, #options{specific = Spec} = Opts) ->
     compile1(T, Opts#options{specific = ['E' | Spec]});
 parse_generic_option("P", T, #options{specific = Spec} = Opts) ->

@@ -33,22 +33,25 @@ In the future, we plan to additionally support:
 we **do not** plan to support:
 - parse transforms that modify the dependencies of a module
 
-## Relationship between erltc, sterlang, analyzer, and the classic Erlang compiler
-
-- erltc figures out the dependency graph
-    - details are in flux. See ../erlbuild/README.md for a general idea of the build model 
+## Relationship between erltc, the rebar plugin, sterlang, and the classic Erlang compiler
 
 - erltc turns ErlT code (ST+DT+FFI) into classic Erlang:
   - in-memory, we create an annotated AST so we can map back to locations in the source code
-  - erltc_compile.erl is based on OTP Erlang's copile.erl. We made the following changes:
+  - erltc_compile.erl is based on OTP Erlang's compile.erl. We made the following changes:
       - add additional front end passes
       - delegate to the classic Erlang back end
   - we invoke the classic Erlang compiler to generate beam files from the AST that we generate
   - in our tests, we snapshot the AST in .P format, which does not contain these annotated source locations
 
+- The rebar plugin in ../erltc/rebar_prv_erlt.erl is our only public API for the compiler (see ../examples/README.md for docs). It is a thin wrapper around erlt_build.erl, which drives erltc.erl (our single-file compiler). erlbuild drives erltc in two phases:
+    - scan phase: erltc generates
+        - a .defs file for each .erlt file which contains the definitions from the erlt file (specs, types, enums, structs, etc.).
+        - a .D file for each .erlt file which records dependencies. The .D files are currently unused but may be used for incremental builds in the future, see https://github.com/WhatsApp/erlt/blob/80877ae15b4a9300c69ce34ffb2e844bc9acc74b/erlbuild/README.md.
+    - build phase: erltc builds based on the source .erlt files and the .defs files produced from the previous phase.
+
 - In the future, erltc will call into stErlang to do type-checking.
     - We have currently decoupled erltc and stErlang for better parallelization of developer effort. So the current state is:
-        - erltc currently does no-op type-checking
+        - erltc currently does no-op type-checking.
         - stErlang has its own lightweight parser and operates on an IR rather than surface syntax
     - erltc will communicate with stErlang. The code is in erltc_compile.erl in the `run_sterlang` function. erltc:
         - generates .etf files in a format that contains a normalized format representing:
@@ -57,9 +60,6 @@ we **do not** plan to support:
         - has code to shell out to stErlang, providing paths to:
             - the single file to type-check
             - the path to the FFI file for stErlang to use in type-checking
-
-stErlang calls into [analyzer](../analyzer/README.md) for some of its analyses using the [OTP Java Interface ](http://erlang.org/doc/apps/jinterface/java/com/ericsson/otp/erlang/package-summary.html).
-
 
 ## stErlang
 

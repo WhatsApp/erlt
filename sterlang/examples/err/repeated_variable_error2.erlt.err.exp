@@ -1,6 +1,0 @@
--- ERROR ----------------------- examples/err/repeated_variable_error2.erlt:19:1
-Spec mismatch for equals/2
-Specified:  `fun((integer(), A) -> boolean())`
-Elaborated: `fun((integer(), integer()) -> boolean())`
- 19| -spec equals(integer(), A) -> boolean().
-...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

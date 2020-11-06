@@ -1,0 +1,35 @@
+val split/3: fun((list(A), list(A), list(A)) -> {list(A), list(A)})
+val L: list(A)
+val Even: list(A)
+val Odd: list(A)
+val H: A
+val T: list(A)
+val Ht: A
+val Tt: list(A)
+val merge/3: fun((fun((A, A) -> boolean()), list(A), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L1: list(A)
+val L2: list(A)
+val H1: A
+val T1: list(A)
+val H2: A
+val T2: list(A)
+val sort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L: list(A)
+val T: list(A)
+val P1: list(A)
+val P2: list(A)
+val mergesort/2: fun((fun((A, A) -> boolean()), list(A)) -> list(A))
+val Lt: fun((A, A) -> boolean())
+val L: list(A)
+val loop/2: fun((list(A), number()) -> number())
+val L: list(A)
+val N: number()
+val T: list(A)
+val length/1: fun((list(A)) -> number())
+val L: list(A)
+val lt/2: fun((A, A) -> boolean())
+val S1: A
+val S2: A
+val main/0: fun(() -> list(A))

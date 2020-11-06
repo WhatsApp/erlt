@@ -1,0 +1,65 @@
+val map/2: fun((fun((A) -> B), list(A)) -> list(B))
+val F: fun((A) -> B)
+val L: list(A)
+val X: A
+val filter/2: fun((fun((A) -> boolean()), list(A)) -> list(A))
+val F: fun((A) -> boolean())
+val L: list(A)
+val X: A
+val strange_perm/3: fun((fun((A, B) -> boolean()), list(A), list(B)) -> list({A, B}))
+val F: fun((A, B) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val X: A
+val Y: B
+val sort/1: fun((list(A)) -> list(A))
+val Pivot: A
+val T: list(A)
+val X: A
+val Y: A
+val sort/2: fun((list(A), fun((A, A) -> boolean())) -> list(A))
+val Pivot: A
+val T: list(A)
+val C: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val _C: fun((A, A) -> boolean())
+val append/1: fun((list(list(A))) -> list(A))
+val L: list(list(A))
+val L1: list(A)
+val X: A
+val flat_map/2: fun((fun((A) -> list(B)), list(A)) -> list(B))
+val F: fun((A) -> list(B))
+val L: list(A)
+val X: A
+val Y: B
+val list_from_binary/1: fun((binary()) -> list(number()))
+val Binary: binary()
+val X: number()
+val binary_from_list1/1: fun((list(number())) -> binary())
+val List: list(number())
+val X: number()
+val binary_from_list2/1: fun((list(binary())) -> binary())
+val List: list(binary())
+val X: binary()
+val even_from_binary/1: fun((binary()) -> list(number()))
+val Binary: binary()
+val X: number()
+val rgb/1: fun((binary()) -> list({number(), number(), number()}))
+val Pixels: binary()
+val R: number()
+val G: number()
+val B: number()
+val pixels/1: fun((list({number(), number(), number()})) -> binary())
+val RGB: list({number(), number(), number()})
+val R: number()
+val G: number()
+val B: number()
+val slice/2: fun((binary(), number()) -> list(binary()))
+val Binary: binary()
+val SliceSize: number()
+val Slice: binary()
+val lengths/1: fun((list(list(A))) -> list(number()))
+val Ls: list(list(A))
+val t1/0: fun(() -> unchecked:t1(number(), boolean()))
+val xxx/0: fun(() -> list(unchecked:t2(unchecked:x1(), unchecked:x1())))

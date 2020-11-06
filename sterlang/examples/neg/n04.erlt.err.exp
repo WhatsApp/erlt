@@ -1,5 +1,0 @@
--- ERROR -------------------------------------------- examples/neg/n04.erlt:7:17
-Infinite type
-#( self :: A ) <> A
-  7|         true -> R
-...|                 ^

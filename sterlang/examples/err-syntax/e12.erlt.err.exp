@@ -1,4 +1,0 @@
--- ERROR ------------------------------------ examples/err-syntax/e12.erlt:18:18
-Parse Error
- 18| foo() -> "multi" "segment" "string".
-...|                  ^

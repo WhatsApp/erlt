@@ -1,4 +1,0 @@
--- ERROR -------------------------------------------- examples/err/e95.erlt:21:5
-Uninitialized field #my_record.id
- 21|     #my_record{}.
-...|     ~~~~~~~~~~~~

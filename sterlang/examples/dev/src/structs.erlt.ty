@@ -1,0 +1,24 @@
+-spec test(user()) -> user().
+-spec mk_user(string(), number()) -> user().
+-spec update_user(user(), string(), number()) -> user().
+-spec get_id(user()) -> number().
+-spec get_man_id(manager()) -> number().
+-spec check_user(user()) -> ok().
+-spec check_users(user(), user()) -> ok().
+-spec is_user(user()) -> boolean().
+-spec match_users(user(), user()) -> boolean().
+-spec foo(manager()) -> user().
+-spec mk_box_int() -> box(number()).
+-spec mk_box(A) -> box(A).
+-spec mk_box2(A) -> box2(A, A).
+-spec update_box(box(A), A) -> box(A).
+-spec update_box2(box2(A, A), A) -> box2(A, A).
+-spec update_box2(box2(A, B), B, A) -> box2(A, B).
+-spec select_box2(box2(number(), number())) -> number().
+-spec test_box2(box2(A, A)) -> boolean().
+-spec pat_box2(box2(A, A)) -> A.
+-spec mk_wrapped_int() -> wrapped_int().
+-spec mk_mixed1() -> mixed_struct1(number()).
+-spec mk_mixed2() -> mixed_struct2(list(number()), number()).
+-spec match_mixed1(mixed_struct1(number())) -> boolean().
+-spec match_mixed2(mixed_struct2(list(number()), number())) -> boolean().

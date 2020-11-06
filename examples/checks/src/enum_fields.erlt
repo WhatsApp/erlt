@@ -1,0 +1,22 @@
+-module(enum_fields).
+
+-export([local/0, duplicate/1]).
+
+-export_type([enum/0]).
+
+-enum enum :: (no_fields, variant{a = 5 :: integer(), b :: float()}).
+
+-enum duplicate :: (variant{a :: integer(), a :: integer()}).
+
+local() ->
+    {
+        enum.no_fields{},
+        enum.variant,
+        enum.variant{},
+        enum.variant{a = 10},
+        enum.variant{b = 1.0, does_not_exist = 10},
+        enum.variant{does_not_exist = _} = enum.variant{b = 1.0}
+    }.
+
+duplicate(enum.variant{a = 1, a = 2, b = 3}) ->
+    enum.variant{a = 1, a = 2, b = 3}.

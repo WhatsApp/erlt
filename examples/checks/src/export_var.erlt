@@ -1,4 +1,4 @@
--lang([erl2, st]).
+
 -module(export_var).
 
 -export([f/1]).
@@ -9,4 +9,6 @@ f(X) ->
         {ok, Y} -> ok;
         {b, Y} -> ok
     end,
-    {ok, Y}.
+    lists:append(Z=[1,2,3], [4,5]),
+    %% Y exported from case, Z exported from argument list
+    {ok, Y, Z}.

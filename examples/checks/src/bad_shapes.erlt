@@ -1,0 +1,17 @@
+
+
+-module(bad_shapes).
+
+-export([test/0, test/1]).
+
+-export_type([my_map/2]).
+
+-spec test() -> #(a::integer(), a::float()).
+
+-type my_map(A, B) :: #(id :: A, id :: B).
+
+test() ->
+    #(a=1,a=2).
+
+test(#(a=X, a=Y)) ->
+    ok.

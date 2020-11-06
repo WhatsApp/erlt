@@ -1,0 +1,5 @@
+-- ERROR ---------------------------------------- examples/neg/src/n04.erlt:8:17
+Infinite type
+#( self :: A ) <> A
+  8|         true -> R
+...|                 ^

@@ -1,0 +1,223 @@
+val id/1: fun((A) -> A)
+val X: A
+val arg13/3: fun((A, B, C) -> A)
+val X: A
+val _Y: B
+val _Z: C
+val arg23/3: fun((B, A, C) -> A)
+val _X: B
+val Y: A
+val _Z: C
+val arg33/3: fun((B, C, A) -> A)
+val _X: B
+val _Y: C
+val Z: A
+val mk_int/0: fun(() -> number())
+val mk_string/0: fun(() -> string())
+val mk_nil/0: fun(() -> list(A))
+val mk_cons/2: fun((A, list(A)) -> list(A))
+val H: A
+val T: list(A)
+val mk_tuple/3: fun((A, B, C) -> {A, B, C})
+val A: A
+val B: B
+val C: C
+val mk_tuple2/1: fun((A) -> {number(), number(), number(), A})
+val A: A
+val mk_map/2: fun((A, B) -> #( a :: A, b :: B ))
+val A: A
+val B: B
+val update_map1/2: fun((#( a :: A ), A) -> #( a :: A ))
+val M: #( a :: A )
+val A: A
+val update_map3/1: fun((#( a :: A, b :: A )) -> #( a :: A, b :: A ))
+val M: #( a :: A, b :: A )
+val A0: A
+val B0: A
+val access_map/1: fun((#( id :: A, location :: B, C )) -> {A, B})
+val M: #( id :: A, location :: B, C )
+val access_map2/1: fun((#( inner1 :: #( inner2 :: A ) )) -> A)
+val M: #( inner1 :: #( inner2 :: A ) )
+val mk_seq/0: fun(() -> {number(), number()})
+val X: number()
+val Y: number()
+val is_empty/1: fun((list(A)) -> boolean())
+val _H: A
+val _T: list(A)
+val is_empty2/1: fun((list(A)) -> boolean())
+val with_as/1: fun((number()) -> number())
+val X: number()
+val Y: number()
+val block/2: fun((A, list(A)) -> {list(A), list(A)})
+val X: A
+val Y: list(A)
+val Z: list(A)
+val is_empty_case/1: fun((list(A)) -> boolean())
+val L: list(A)
+val both_empty/2: fun((list(A), list(B)) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val call/2: fun((list(A), list(B)) -> boolean())
+val L1: list(A)
+val L2: list(B)
+val fun_to_var/0: fun(() -> fun((A, B) -> {A, B}))
+val F: fun((C, D) -> {C, D})
+val X: C
+val Y: D
+val local_fun_to_var/2: fun((A, B) -> fun((list(C), list(D)) -> boolean()))
+val _A: A
+val _B: B
+val F: fun((list(E), list(F)) -> boolean())
+val local_n_fun/0: fun(() -> fun((list(A)) -> list(B)))
+val F: fun((list(C)) -> list(D))
+val Local: fun((list(E)) -> list(F))
+val T: list(E)
+val mod01F/1: fun((A) -> A)
+val X: A
+val unary_plus/1: fun((number()) -> number())
+val X: number()
+val unary_minus/1: fun((number()) -> number())
+val X: number()
+val unary_not/1: fun((boolean()) -> boolean())
+val X: boolean()
+val unary_bnot/1: fun((number()) -> number())
+val X: number()
+val binary_star/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_div/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_rem/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_band/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_and/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val binary_plus/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_minus/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_bor/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_bxor/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_bsl/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_bsr/2: fun((number(), number()) -> number())
+val X: number()
+val Y: number()
+val binary_or/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val binary_xor/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val binary_orelse/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val binary_andalso/2: fun((boolean(), boolean()) -> boolean())
+val X: boolean()
+val Y: boolean()
+val list_plus/2: fun((list(A), list(A)) -> list(A))
+val X: list(A)
+val Y: list(A)
+val list_minus/2: fun((list(A), list(A)) -> list(A))
+val X: list(A)
+val Y: list(A)
+val comp1/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp2/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp3/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp4/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp5/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp6/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp7/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val comp8/2: fun((A, A) -> boolean())
+val X: A
+val Y: A
+val guard1/2: fun((number(), number()) -> boolean())
+val X: number()
+val Y: number()
+val X: number()
+val Y: number()
+val _X: number()
+val _Y: number()
+val guard2/3: fun((list(A), A, list(A)) -> list(A))
+val X: list(A)
+val Y: A
+val X1: A
+val Xs: list(A)
+val Xs: list(A)
+val X: list(A)
+val Z: list(A)
+val Z: list(A)
+val p_match_tuple0/1: fun(({}) -> {{}})
+val p_match_tuple1/1: fun(({A}) -> {})
+val _X: A
+val p_match_invoke/0: fun(() -> {})
+val any_id/1: fun((any()) -> any())
+val A: any()
+val atom_id/1: fun((atom()) -> atom())
+val A: atom()
+val binary_id/1: fun((binary()) -> binary())
+val A: binary()
+val bitstring_id/1: fun((bitstring()) -> bitstring())
+val A: bitstring()
+val byte_id/1: fun((byte()) -> byte())
+val A: byte()
+val float_id/1: fun((number()) -> number())
+val X: number()
+val identifier_id/1: fun((identifier()) -> identifier())
+val A: identifier()
+val iodata_id/1: fun((iodata()) -> iodata())
+val A: iodata()
+val iolist_id/1: fun((iolist()) -> iolist())
+val A: iolist()
+val map_id/1: fun((A) -> A)
+val M: A
+val none_id/1: fun((none()) -> none())
+val A: none()
+val noreturn_id/1: fun((none()) -> none())
+val A: none()
+val number_id/1: fun((none()) -> none())
+val A: none()
+val pid_id/1: fun((pid()) -> pid())
+val A: pid()
+val port_id/1: fun((port()) -> port())
+val A: port()
+val reference_id/1: fun((reference()) -> reference())
+val A: reference()
+val term_id/1: fun((term()) -> term())
+val A: term()
+val timeout_id/1: fun((timeout()) -> timeout())
+val A: timeout()
+val ints_id/1: fun(({number(), number(), number()}) -> {number(), number(), number()})
+val X: {number(), number(), number()}
+val mk_my_pair/2: fun((A, A) -> {A, A})
+val A: A
+val B: A
+val float_as_int/0: fun(() -> number())
+val float_pat/1: fun((number()) -> string())
+val char_pat/1: fun((char()) -> char())

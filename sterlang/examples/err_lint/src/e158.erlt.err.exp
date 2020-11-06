@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------- examples/err2/src/e158.erlt:19:6
+Duplicate fields: id
+ 19| test(my_enum.ctr{id = Id1, id = Id2}) ->
+...|      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

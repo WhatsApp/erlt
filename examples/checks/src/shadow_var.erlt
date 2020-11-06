@@ -1,10 +1,20 @@
--lang([erl2, st]).
+
 -module(shadow_var).
 
 %% Don't warn about normal shadowing in funs and comprehensions
 -compile(nowarn_shadow_vars).
 
 -export([f/2, g/2]).
+-export([test1/2, test2/2, test3/2]).
+
+-struct str :: (
+    id :: any()
+).
+
+-enum ab(A, B) :: (
+    a{a :: A},
+    b{b :: B}
+).
 
 %% Error: bound variables without caret implies shadowing -
 %% this is not allowed in normal patterns
@@ -21,3 +31,18 @@ g(X, Y) ->
     %% Fun heads may shadow variables
     F = fun(X, Y) -> X + Y end,
     lists:foldl(F, L, X).
+
+test1(X, Y) ->
+    case X of
+        {Y} -> true
+    end.
+
+test2(X, Y) ->
+    case X of
+        #str{id = Y} -> true
+    end.
+
+test3(X, Y) ->
+    case X of
+        ab.a{a = Y} -> true
+    end.

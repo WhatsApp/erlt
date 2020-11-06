@@ -33,6 +33,8 @@ object AstUtil {
         List.empty
       case VarPat(v) =>
         List(v)
+      case PinnedVarPat(v) =>
+        List(v)
       case TuplePat(pats) =>
         pats.flatMap(collectPatVars)
       case ShapePat(fields) =>
@@ -40,8 +42,9 @@ object AstUtil {
         allPats.flatMap(collectPatVars)
       case AndPat(p1, p2) =>
         collectPatVars(p1) ++ collectPatVars(p2)
-      case EnumPat(_, _, pats) =>
-        pats.flatMap(collectPatVars)
+      case EnumPat(_, _, fields) =>
+        val allPats = fields.map(_.value)
+        allPats.flatMap(collectPatVars)
       case NilPat() =>
         List.empty
       case ConsPat(hPat, tPat) =>
@@ -71,8 +74,28 @@ object AstUtil {
         params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
       case ListType(elemType) =>
         collectNamedTypeVars(elemType)
-      case StructType(_) =>
+    }
+
+  def collectNamedRowTypeVars(t: Type): List[(TypeVar, Set[String])] =
+    t match {
+      case TypeVar(_) | WildTypeVar() =>
         List.empty
+      case UserType(_, params) =>
+        params.flatMap(collectNamedRowTypeVars)
+      case TupleType(params) =>
+        params.flatMap(collectNamedRowTypeVars)
+      case FunType(params, res) =>
+        (params ++ List(res)).flatMap(collectNamedRowTypeVars)
+      case ListType(elemType) =>
+        collectNamedRowTypeVars(elemType)
+      case ShapeType(fields) =>
+        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+      case OpenShapeType(fields, Left(WildTypeVar())) =>
+        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+      case OpenShapeType(fields, Right(tv)) =>
+        val item = tv -> fields.map(_.label).toSet
+        val other = fields.map(_.value).flatMap(collectNamedRowTypeVars)
+        other ++ List(item)
     }
 
   @scala.annotation.tailrec
@@ -101,8 +124,8 @@ object AstUtil {
 
   private def freeVars(expr: Exp, m: String): Set[String] =
     expr match {
-      case ShapeUpdateExp(exp, delta) =>
-        freeVars(exp, m) ++ freeVars(delta, m)
+      case ShapeUpdateExp(exp, fields) =>
+        freeVars(exp, m) ++ fields.flatMap(f => freeVars(f.value, m))
       case BinOpExp(binOp, exp1, exp2) =>
         freeVars(exp1, m) ++ freeVars(exp2, m)
       case UOpExp(uOp, exp) =>
@@ -138,8 +161,8 @@ object AstUtil {
         freeVars(struct, m)
       case TupleExp(elems) =>
         elems.flatMap(freeVars(_, m)).toSet
-      case EnumExp(enumName, dataCon, args) =>
-        args.flatMap(freeVars(_, m)).toSet
+      case EnumExp(enumName, dataCon, fields) =>
+        fields.flatMap(f => freeVars(f.value, m)).toSet
       case NilExp() =>
         Set.empty
       case Bin(elems) =>
@@ -264,30 +287,18 @@ object AstUtil {
     if (funs.isEmpty) {
       return List()
     }
-
     val names = funs.map(_.name.stringId)
-
     val nameToIndex = names.zipWithIndex.toMap
-
-    val vertices = names.map(SCC.Vertex)
     val nameToUsedVars: Map[String, Set[String]] =
-      funs.map { f => (f.name.stringId, funFreeVars(f, module).filter(names.contains)) }.toMap
-
+      funs.map { f =>
+        (f.name.stringId, funFreeVars(f, module).filter(names.contains))
+      }.toMap
     val edges = funs.flatMap { fun =>
-      val funVertex = SCC.Vertex(fun.name.stringId)
-      nameToUsedVars(fun.name.stringId).toList.map(SCC.Vertex).map(SCC.Edge(funVertex, _))
+      nameToUsedVars(fun.name.stringId).toList.map(SCC.Edge(fun.name.stringId, _))
     }
-
-    val g = SCC.G(vertices, edges)
-    val components = SCC.components(g)
-    val compNames = components.map { c => c.map(_.label) }
-
-    // each comp is sorted inside
-    val compNames1 = compNames.map { c => c.sortBy(nameToIndex) }
-    // comps are sorted
-    val compNames2 = compNames1.sortBy { c => nameToIndex(c.head) }
-    // proper topo order
-    properSort(compNames2, nameToUsedVars)
+    val g = SCC.G(names, edges)
+    val compNames = SCC.components(g).map(_.sortBy(nameToIndex)).sortBy(c => nameToIndex(c.head))
+    properSort(compNames, nameToUsedVars)
   }
 
   private def properSort(sccs: List[List[String]], usage: Map[String, Set[String]]): List[List[String]] =
@@ -308,15 +319,38 @@ object AstUtil {
 
   def moduleApi(module: String, program: Program): ModuleApi = {
     val names =
-      (program.enumDefs.map(_.name) ++ program.typeAliases.map(_.name) ++ program.opaques.map(_.name)).toSet
+      List(
+        program.enumDefs.map(_.name),
+        program.structDefs.map(_.name),
+        program.typeAliases.map(_.name),
+        program.opaques.map(_.name),
+        program.uncheckedOpaques.map(_.name),
+      ).flatten.toSet
     val enumDefs1 = program.enumDefs.collect {
       case EnumDef(name, params, cons) if program.exportTypes((name, params.size)) =>
         val name1 = module + ":" + name
         val cons1 = cons.map {
-          case EnumCtr(cName, tps) =>
-            EnumCtr(cName, tps.map(globalizeType(module, names)))(Doc.ZRange)
+          case EnumCtr(cName, fields) =>
+            val fields1 = fields.map {
+              case LblFieldDecl(label, tp, default) =>
+                LblFieldDecl(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
+              case PosFieldDecl(tp) =>
+                PosFieldDecl(globalizeType(module, names)(tp))(Doc.ZRange)
+            }
+            EnumCtr(cName, fields1)(Doc.ZRange)
         }
         EnumDef(name1, params, cons1)(Doc.ZRange)
+    }
+    val structDefs1 = program.structDefs.collect {
+      case StructDef(name, params, fields, kind) if program.exportTypes((name, params.size)) =>
+        val name1 = module + ":" + name
+        val fields1 = fields.map {
+          case LblFieldDecl(label, tp, default) =>
+            LblFieldDecl(label, globalizeType(module, names)(tp), default)(Doc.ZRange)
+          case PosFieldDecl(tp) =>
+            PosFieldDecl(globalizeType(module, names)(tp))(Doc.ZRange)
+        }
+        StructDef(name1, params, fields1, kind)(Doc.ZRange)
     }
     val aliases1 = program.typeAliases.collect {
       case TypeAlias(name, params, tp) if program.exportTypes((name, params.size)) =>
@@ -331,11 +365,15 @@ object AstUtil {
           FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(ft.r)
         Spec(name1, funType1)(Doc.ZRange)
     }
-    val opaques = program.opaques.collect {
-      case Opaque(name, params, _) if program.exportTypes((name, params.size)) =>
+    val opaques1 = program.opaques.map {
+      case Opaque(name, params, _) =>
         TypeId(RemoteName(module, name), params.size)
     }
-    ModuleApi(enumDefs1, aliases1, specs1, opaques)
+    val opaques2 = program.uncheckedOpaques.collect {
+      case UncheckedOpaque(name, params) if program.exportTypes((name, params.size)) =>
+        TypeId(RemoteName(module, name), params.size)
+    }
+    ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques1 ++ opaques2)
   }
 
   private def globalizeType(module: String, names: Set[String])(tp: Type): Type =
@@ -347,10 +385,10 @@ object AstUtil {
       case TupleType(params) =>
         TupleType(params.map(globalizeType(module, names)))(tp.r)
       case ShapeType(fields) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        val fields1 = fields.map { f => LblField(f.label, globalizeType(module, names)(f.value))(f.r) }
         ShapeType(fields1)(tp.r)
       case OpenShapeType(fields, rt) =>
-        val fields1 = fields.map { f => Field(f.label, globalizeType(module, names)(f.value))(f.r) }
+        val fields1 = fields.map { f => LblField(f.label, globalizeType(module, names)(f.value))(f.r) }
         OpenShapeType(fields1, rt)(tp.r)
       case FunType(argTypes, resType) =>
         FunType(argTypes.map(globalizeType(module, names)), globalizeType(module, names)(resType))(tp.r)
@@ -358,21 +396,33 @@ object AstUtil {
         ListType(globalizeType(module, names)(elemType))(tp.r)
       case UserType(name, params) =>
         val name1 = name match {
-          case LocalName(name) =>
-            if (names(name))
-              RemoteName(module, name)
-            else
-              LocalName(name)
+          case LocalName(lName) =>
+            nativeAliases.find(ta => ta.name == lName && ta.params.size == params.size) match {
+              case Some(ta) =>
+                val UserType(canonicalName, _) = ta.body
+                canonicalName
+              case None =>
+                if (names(lName))
+                  RemoteName(module, lName)
+                else
+                  LocalName(lName)
+            }
           case _ => name
         }
         UserType(name1, params.map(globalizeType(module, names)))(tp.r)
-      case StructType(_) =>
-        tp
     }
 
   def normalizeTypes(program: Program): Program = {
-    def normEnumCtr(ctr: EnumCtr): EnumCtr =
-      ctr.copy(argTypes = ctr.argTypes.map(normalizeType(program)))(ctr.r)
+    def normEnumCtr(ctr: EnumCtr): EnumCtr = {
+      val nFields = ctr.fields.map {
+        case f @ LblFieldDecl(label, tp, default) =>
+          LblFieldDecl(label, normalizeType(program)(tp), default)(f.r)
+        case f @ PosFieldDecl(tp) =>
+          PosFieldDecl(normalizeType(program)(tp))(f.r)
+      }
+      ctr.copy(fields = nFields)(ctr.r)
+    }
+
     val enumDefs1 =
       program.enumDefs.map { ed => ed.copy(ctrs = ed.ctrs.map(normEnumCtr))(ed.r) }
     val typeAliases1 =
@@ -381,8 +431,13 @@ object AstUtil {
       program.opaques.map { o => o.copy(body = normalizeType(program)(o.body))(o.r) }
     val structDefs1 =
       program.structDefs.map { structDef =>
-        structDef
-          .copy(fields = structDef.fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(structDef.r)
+        val nFields = structDef.fields.map {
+          case f @ LblFieldDecl(label, tp, default) =>
+            LblFieldDecl(label, normalizeType(program)(tp), default)(f.r)
+          case f @ PosFieldDecl(tp) =>
+            PosFieldDecl(normalizeType(program)(tp))(f.r)
+        }
+        structDef.copy(fields = nFields)(structDef.r)
       }
     val specs1 =
       program.specs.map(s => s.copy(funType = normFunType(program, s.funType))(s.r))
@@ -397,13 +452,13 @@ object AstUtil {
 
   private def normalizeType(program: Program)(tp: Type): Type =
     tp match {
-      case WildTypeVar() | TypeVar(_) | StructType(_) => tp
+      case WildTypeVar() | TypeVar(_) => tp
       case TupleType(ts) =>
         TupleType(ts.map(normalizeType(program)))(tp.r)
       case ShapeType(fields) =>
-        ShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
+        ShapeType(fields.map(f => LblField(f.label, normalizeType(program)(f.value))(f.r)))(tp.r)
       case OpenShapeType(fields, rt) =>
-        OpenShapeType(fields.map(f => Field(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
+        OpenShapeType(fields.map(f => LblField(f.label, normalizeType(program)(f.value))(f.r)), rt)(tp.r)
       case FunType(args, res) =>
         FunType(args.map(normalizeType(program)), normalizeType(program)(res))(tp.r)
       case ListType(et) =>
@@ -455,7 +510,7 @@ object AstUtil {
   }
 
   private def getDepEnumDef(enumDef: EnumDef): Set[String] =
-    enumDef.ctrs.flatMap(_.argTypes).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
+    enumDef.ctrs.flatMap(_.fields.map(_.tp)).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
   private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
@@ -496,6 +551,8 @@ object AstUtil {
         Set.empty[String]
       case VarPat(v) =>
         Set.empty[String]
+      case PinnedVarPat(v) =>
+        Set.empty[String]
       case TuplePat(pats) =>
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
       case ShapePat(fields) =>
@@ -504,14 +561,14 @@ object AstUtil {
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
-      case EnumPat(enumName, _, pats) =>
+      case EnumPat(enumName, _, fields) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]
           case RemoteName(module, _) =>
             Set(module)
         }
-        pats.map(getDepPat).foldLeft(ctrDep)(_ ++ _)
+        fields.map(f => getDepPat(f.value)).foldLeft(ctrDep)(_ ++ _)
       case NilPat() =>
         Set.empty[String]
       case BinPat(elems) =>
@@ -524,8 +581,8 @@ object AstUtil {
 
   private def getDepExp(expr: Exp): Set[String] =
     expr match {
-      case ShapeUpdateExp(exp, delta) =>
-        getDepExp(exp) ++ getDepExp(delta)
+      case ShapeUpdateExp(exp, fields) =>
+        getDepExp(exp) ++ fields.flatMap(f => getDepExp(f.value))
       case BinOpExp(binOp, exp1, exp2) =>
         getDepExp(exp1) ++ getDepExp(exp2)
       case UOpExp(uOp, exp) =>
@@ -558,14 +615,14 @@ object AstUtil {
         getDepExp(struct)
       case TupleExp(elems) =>
         elems.flatMap(getDepExp).toSet
-      case EnumExp(enumName, ctr, args) =>
+      case EnumExp(enumName, ctr, fields) =>
         val ctrDep = enumName match {
           case LocalName(_) =>
             Set.empty[String]
           case RemoteName(module, _) =>
             Set(module)
         }
-        args.map(getDepExp).foldLeft(ctrDep)(_ ++ _)
+        fields.map(f => getDepExp(f.value)).foldLeft(ctrDep)(_ ++ _)
       case NilExp() =>
         Set.empty
       case Bin(elems) =>
@@ -657,14 +714,14 @@ object AstUtil {
 
   private def getDepType(tp: Type): Set[String] =
     tp match {
-      case WildTypeVar() | TypeVar(_) | StructType(_) =>
+      case WildTypeVar() | TypeVar(_) =>
         Set.empty[String]
       case TupleType(params) =>
         params.map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
       case ShapeType(fields) =>
         fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case OpenShapeType(fields, extType) =>
-        fields.map(f => getDepType(f.value)).foldLeft(getDepType(extType))(_ ++ _)
+        fields.map(f => getDepType(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case FunType(argTypes, resType) =>
         argTypes.map(getDepType).foldLeft(getDepType(resType))(_ ++ _)
       case ListType(elemType) =>
