@@ -131,6 +131,7 @@ There are more extensive examples in GenServer.hs.
 > import Control.Concurrent.MVar
 > import Control.Monad.Reader
 > import Control.Applicative
+> import Control.Monad.Fail
 
 > type Mailbox = MVar MailboxContents
 > data MailboxContents = Queue [Dynamic] | Blocked (MVar Dynamic)
@@ -138,7 +139,7 @@ There are more extensive examples in GenServer.hs.
 > newtype Pid a = Pid {unPid :: Mailbox}
 
 > newtype Process a = Process {unProcess :: ReaderT Mailbox IO a}
->   deriving (Monad, Applicative, Functor, MonadIO)
+>   deriving (Monad, Applicative, Functor, MonadFail, MonadIO)
 
 > runProcess (Process m) = do
 >   mailbox <- newMVar (Queue [])
