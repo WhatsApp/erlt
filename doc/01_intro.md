@@ -25,9 +25,9 @@ type-checking procedures.
 The type checker (code name stErlang) is implemented in Scala.
 
 Type-checking works this way:
-- when processing a file in `st` or `ffi` mode, `erlt` serialises the abstract
+- when processing a file in `st` or `ffi` mode, `erltc` serialises the abstract
 forms into [ETF](http://erlang.org/doc/apps/erts/erl_ext_dist.html)
-- then `erlt` invokes stErlang to type-check the serialised forms
+- then `erltc` invokes stErlang to type-check the serialised forms
 - stErlang deserialises the forms (via
 [Jinterface](http://erlang.org/doc/apps/jinterface/jinterface_users_guide.html))
 and performs type-checking.
@@ -44,7 +44,7 @@ backend, or everything together) - the next sections explain different
 - IJ scala plugin is well usable
 
 StErlang can type-check ErlT files (and directories!) on its own (without being
-a part of erltc toolchain).
+a part of `erltc` toolchain).
 
 ```
 sbt:sterlang> run examples/elm-core
@@ -66,9 +66,9 @@ Coverage report:
 sbt clean coverage test coverageReport
 ```
 
-### 2. `ErlT` frontend development
+### 2. `erltc` frontend development
 
-`ErlT` relies on stErlang for type-checking. It supports invoking stErlang in
+`erltc` relies on stErlang for type-checking. It supports invoking stErlang in
 [two ways](https://git.io/JJlhF):
 
 `java -jar sterlang.jar ...` - it uses the `sterlang.jar` you get by running
@@ -80,15 +80,15 @@ each time. We have a solution! - the native image of stErlang (through
 
 ```
 native-image --no-server --no-fallback -O4 \
-  -jar sterlang/target/scala-2.13/sterlang.jar erlt/bin/sterlang
+  -jar sterlang/target/scala-2.13/sterlang.jar erltc/bin/sterlang
 ```
 
 If building native image via Graal is too heavy for you locally - you can just
 grab the latest version (for mac or linux) we build via GH
 [actions](https://git.io/JJlji): take `sterlang-mac` or `sterlang-linux`
-artifact, rename it to `sterlang` and place into `erlt/bin` directory.
+artifact, rename it to `sterlang` and place into `erltc/bin` directory.
 
 (Caveat: on mac you have to de-quarantine it via
-`xattr -d com.apple.quarantine erlt/bin/sterlang`).
+`xattr -d com.apple.quarantine erltc/bin/sterlang`).
 
 The native image is really fast - type-checking takes ~20-40ms for a file.
