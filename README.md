@@ -1,54 +1,64 @@
-# erl2: Modern Erlang Project
+# ErlT: Erlang with Types
 
-This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
-- ./erltc: erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
-- ./sterlang: stErlang is standalone type-checker for ST
-- ./analyzer:  this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
+ErlT is an experimental extension of the Erlang programming language which aims
+to empower Erlang writers to work even more efficiently, especially in WhatsApp-scale
+code bases.
 
-> See ./doc/08_compiler_architecture.md for more information about how these parts work together
-> See the top-level READMEs for each of these sub-directories for more information about a particular tool
+## Quick Links
 
-## What is ErlT
+- **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
+- **[ErlT Reference](./docs/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
+- **[Examples](./examples/)** - A collection of small ErlT projects that demonstrate how the language can be used
 
-ErlT is an experimental extension of the Erlang programming language.
+## Introduction
 
-It has three dialects (or modes): DT (dynamically typed), ST (statically typed)
-and FFI (bridge between ST and DT parts).
+ErlT builds on Erlang to provide greater support for working with large Erlang
+codebases. It does this by introducing static-types in a way which opens the
+door to greater IDE integration, safer refactorings, and faster, more specific
+feedback from the compiler.
 
-**ErlT DT** is very close to classic Erlang
-There are only few differences:
+ErlT has three dialects (or modes):
+- DT (dynamically typed)
+- ST (statically typed)
+- FFI (a bridge between ST and DT parts)
 
-* ErlT DT is stricter about scoping of variables - it enforces lexical scoping.
+**ErlT DT** is very close to classic Erlang. There are only a few differences:
+
+- ErlT DT is stricter about scoping of variables - it enforces lexical scoping.
   (Right now it does it by forbidding ambiguity)
-* ErlT DT is explicit about already bound and free variables in patterns.
+- ErlT DT is explicit about already bound and free variables in patterns.
   (Right now it does it by forbidding ambiguity)
-* It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and shapes](./doc/05_structs.md).
-* The new [`import_type`](07_import_type.md) construct allows using types from
+- It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and shapes](./doc/05_structs.md).
+- The new [`import_type`](07_import_type.md) construct allows using types from
   remote modules via short names.
 
 **ErlT ST** is (syntactically) a subset of ErlT DT. It enforces a typing
 discipline. The type system is based on [the Hindley-Milner type
 system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system), extended to support erlT data types and pattern matching.
-**ErlT ST** supports only sequential part of the language. Some sequential
+Notably, ErlT ST is currently limited to only the sequential parts of Erlang, and some sequential
 constructs (like list comprehensions or exceptions) are not supported yet.
 
-**ErlT FFI** mode allows to pack DT code with ST API. See [modes](./doc/03_modes.md) for more information.
+**ErlT FFI** allows DT code to be exposed via an ST API. See [modes](./doc/03_modes.md) for more information.
 
-# Contributing
+## Repository Structure
 
-./contributing.md
+This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
+- `./erltc` - erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
+- `./sterlang` - stErlang is standalone type-checker for ST
+- `./analyzer` - this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
 
-## Examples
+> See ./doc/08_compiler_architecture.md for more information about how these parts work together
+> See the top-level READMEs for each of these sub-directories for more information about a particular tool
 
-See the [examples](examples/) folder.
+## Building & Testing ErlT
 
-## Requirements
+### Requirements
 
 - [erlang](https://www.erlang.org/) with OTP 23 or higher
 - [rebar3](https://www.rebar3.org/) version 3.14.1 or higher
 - [sbt](https://www.scala-sbt.org/)
 
-## Building
+### Building
 
 `erltc`:
 
@@ -62,9 +72,9 @@ rebar3 compile
 cd sterlang; sbt assembly
 ```
 
-## Testing
+### Testing
 
-### erltc tests
+#### erltc tests
 
 ``` sh
 make -C examples test # runs the tests in ./examples
@@ -80,7 +90,7 @@ The tests for erltc come in these two flavors:
     - See also [erltc_architecture](./doc/08_compiler_architecture.md).
 
 
-### stErlang tests
+#### stErlang tests
 
     cd sterlang; sbt test
 
@@ -88,11 +98,7 @@ The tests for erltc come in these two flavors:
 
 See [here](doc/01_intro.md#development).
 
-## Full documentation
-
-See the [doc](doc) folder.
-
-## Join the erl2 community
+# Join the ErlT community
 
 See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
 
