@@ -29,7 +29,7 @@ object DriverErltc extends Driver {
     process(args.toList)
 
   private def process(files: List[String]): Unit = {
-    val List(_, etfFile) = files
+    val List(etfFile) = files
     val start = System.currentTimeMillis()
     processFile(etfFile)
     val sterlangTime = System.currentTimeMillis() - start
