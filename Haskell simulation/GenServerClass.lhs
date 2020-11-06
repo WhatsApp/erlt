@@ -17,7 +17,7 @@ This code requires not only GADTs, but also the RankNTypes extension.
 > import Processes
 
 > class (Typeable call, Typeable cast) => Behaviour state call cast
->     | state -> call cast, call -> state, cast -> state where
+>     | state -> call cast where
 >   init :: state -> Process state
 >   handle_call :: Typeable a =>
 >                    call a -> state -> Process (CallResponse state a)
