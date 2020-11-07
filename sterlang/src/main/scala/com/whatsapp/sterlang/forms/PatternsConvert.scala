@@ -19,7 +19,7 @@ package com.whatsapp.sterlang.forms
 import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Patterns._
 
-object PatternsConvertErlt {
+object PatternsConvert {
   def convertPat(term: ETerm): Pattern =
     term match {
       case ETuple(List(EAtom("match"), anno, ePat1, ePat2)) =>
@@ -106,7 +106,7 @@ object PatternsConvertErlt {
             RemoteEnumPattern(r(anno), module, enum, ctr, fields.map(fieldPattern))
         }
       case _ =>
-        val literal = ExprsConvertErlt.literal(term)
+        val literal = ExprsConvert.literal(term)
         LiteralPattern(literal)
     }
 
@@ -115,13 +115,13 @@ object PatternsConvertErlt {
       case ETuple(List(EAtom("bin_element"), anno, ePat, eSize, eTypeSpecifiers)) =>
         val size = eSize match {
           case EAtom("default") => None
-          case other            => Some(ExprsConvertErlt.convertExp(other))
+          case other            => Some(ExprsConvert.convertExp(other))
         }
         BinElementPattern(
           r(anno),
           convertPat(ePat),
           size,
-          ExprsConvertErlt.convertTypeSpecifiers(eTypeSpecifiers),
+          ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers),
         )
     }
 

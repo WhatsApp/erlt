@@ -20,11 +20,11 @@ import com.whatsapp.sterlang.UnsupportedSyntaxError
 import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Exprs._
 
-object ExprsConvertErlt {
+object ExprsConvert {
   def convertClause(term: ETerm): Clause =
     term match {
       case ETuple(List(EAtom("clause"), anno, EList(ePats), EList(eGuards), EList(eExps))) =>
-        val pats = ePats.map(PatternsConvertErlt.convertPat)
+        val pats = ePats.map(PatternsConvert.convertPat)
         val guards = eGuards.map(convertGuard)
         val exps = eExps.map(convertExp)
         Clause(r(anno), pats, guards, exps)
@@ -41,7 +41,7 @@ object ExprsConvertErlt {
   def convertExp(term: ETerm): Expr =
     term match {
       case ETuple(List(EAtom("match"), anno, ePat1, eExp)) =>
-        Match(r(anno), PatternsConvertErlt.convertPat(ePat1), convertExp(eExp))
+        Match(r(anno), PatternsConvert.convertPat(ePat1), convertExp(eExp))
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         Variable(r(anno), name)
       case ETuple(List(EAtom("tuple"), anno, EList(eExps))) =>
@@ -105,7 +105,7 @@ object ExprsConvertErlt {
               eFieldName,
             )
           ) =>
-        val AtomLiteral(p, fieldName) = ExprsConvertErlt.literal(eFieldName)
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
       case ETuple(
             List(
@@ -123,14 +123,14 @@ object ExprsConvertErlt {
               eFieldName,
             )
           ) =>
-        val AtomLiteral(p, fieldName) = ExprsConvertErlt.literal(eFieldName)
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape_update"), anno, eExp, EList(eAssocs))) =>
         ShapeUpdate(r(anno), convertExp(eExp), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape_field"), anno, eExp, eFieldName)) =>
-        val AtomLiteral(p, fieldName) = ExprsConvertErlt.literal(eFieldName)
+        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
         ShapeSelect(r(anno), convertExp(eExp), fieldName)
       case ETuple(List(EAtom("call"), anno, eExp, EList(eArgs))) =>
         eExp match {
@@ -229,7 +229,7 @@ object ExprsConvertErlt {
 
   private def convertGuard(term: ETerm): Guard = {
     val EList(tests) = term
-    Guard(tests.map(ExprsConvertErlt.convertExp))
+    Guard(tests.map(ExprsConvert.convertExp))
   }
 
   def literal(term: ETerm): Literal =
@@ -256,7 +256,7 @@ object ExprsConvertErlt {
           case EAtom("default") => None
           case other            => Some(convertExp(other))
         }
-        BinElement(convertExp(eExp), size, ExprsConvertErlt.convertTypeSpecifiers(eTypeSpecifiers))
+        BinElement(convertExp(eExp), size, ExprsConvert.convertTypeSpecifiers(eTypeSpecifiers))
     }
 
   def convertTypeSpecifiers(term: ETerm): TypeSpecifiers =
@@ -289,9 +289,9 @@ object ExprsConvertErlt {
   private def convertQualifier(term: ETerm): Qualifier =
     term match {
       case ETuple(List(EAtom("generate"), _anno, ePat, eExp)) =>
-        LGenerate(PatternsConvertErlt.convertPat(ePat), convertExp(eExp))
+        LGenerate(PatternsConvert.convertPat(ePat), convertExp(eExp))
       case ETuple(List(EAtom("b_generate"), _anno, ePat, eExp)) =>
-        BGenerate(PatternsConvertErlt.convertPat(ePat), convertExp(eExp))
+        BGenerate(PatternsConvert.convertPat(ePat), convertExp(eExp))
       case _ =>
         Filter(convertExp(term))
     }

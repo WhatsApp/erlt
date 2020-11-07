@@ -20,7 +20,7 @@ import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Forms._
 
-object FormsConvertErlt {
+object FormsConvert {
   def fromEtf(term: ETerm): List[Form] = {
     val EList(eforms) = term
     eforms.map(convertForm)
@@ -101,7 +101,7 @@ object FormsConvertErlt {
         val typeList = eTypeList.map(TypesConvertErlt.convertFunSpecType)
         Spec(r(anno), funId, typeList)
       case ETuple(List(EAtom("function"), anno, EAtom(name), ELong(arity), EList(clauseSeq))) =>
-        val clauses = clauseSeq.map(ExprsConvertErlt.convertClause)
+        val clauses = clauseSeq.map(ExprsConvert.convertClause)
         Function(r(anno), name, arity.intValue, clauses)
       case ETuple(EAtom("unchecked_function") :: _anno :: EAtom(name) :: ELong(arity) :: _) =>
         UncheckedFunction(name, arity.intValue)
@@ -140,7 +140,7 @@ object FormsConvertErlt {
           case EAtom("undefined") =>
             None
           case expr =>
-            Some(ExprsConvertErlt.convertExp(expr))
+            Some(ExprsConvert.convertExp(expr))
         }
         LblFieldDecl(r(anno), convertAtomLit(fieldNameLit), defaultValue, TypesConvertErlt.convertType(eType))
     }
