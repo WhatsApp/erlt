@@ -8,7 +8,7 @@ import com.whatsapp.sterlang.test.it.Util
 
 import scala.collection.mutable
 
-object DriverDev extends Driver {
+object DriverDev extends DriverApi {
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))

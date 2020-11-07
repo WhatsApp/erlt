@@ -23,7 +23,7 @@ import com.whatsapp.sterlang.Etf._
 
 import scala.collection.mutable
 
-object DriverErltc extends Driver {
+object DriverErltc extends DriverApi {
 
   def main(args: Array[String]): Unit =
     args match {

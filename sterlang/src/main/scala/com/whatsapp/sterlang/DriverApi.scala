@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang
 
-trait Driver {
+trait DriverApi {
   def loadProgram(file: String): Ast.Program
   def loadContext(mainFile: String, program: Ast.Program, vars: Vars): Context
 }

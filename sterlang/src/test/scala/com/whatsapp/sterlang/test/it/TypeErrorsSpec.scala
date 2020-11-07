@@ -26,7 +26,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
   val dev = true
-  val driver: Driver =
+  val driver: DriverApi =
     if (dev) DriverDev else DriverErltc
 
   testDir("examples/neg/src")
