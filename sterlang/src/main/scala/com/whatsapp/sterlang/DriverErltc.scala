@@ -27,10 +27,8 @@ object DriverErltc extends DriverApi {
 
   def main(args: Array[String]): Unit =
     args match {
-      case Array("-d")      => SterlangD.serve(1)
-      case Array("-d", par) => SterlangD.serve(par.toIntOption.getOrElse(1))
-      case Array(file)      => process(file)
-      case _                => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
+      case Array(file) => process(file)
+      case _           => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
     }
 
   private def process(etfFile: String): Unit = {

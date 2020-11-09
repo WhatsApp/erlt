@@ -1,13 +1,20 @@
-package com.whatsapp.sterlang
+package com.whatsapp.sterlang.dev
 
 import java.util.concurrent.{Executor, Executors}
 
-import scala.annotation.tailrec
 import sys.process._
-import com.ericsson.otp.erlang.{OtpErlangPid, OtpMbox, OtpNode}
-import com.whatsapp.sterlang.Etf.{EAtom, ELong, EPid, ERef, EString, ETerm, ETuple}
+import com.ericsson.otp.erlang._
+import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.Etf._
 
 object SterlangD {
+  def main(args: Array[String]): Unit =
+    args match {
+      case Array()    => serve(1)
+      case Array(par) => serve(par.toIntOption.getOrElse(1))
+      case _          => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
+    }
+
   def serve(par: Int): Unit = {
     "epmd -daemon".!!
     val node = new OtpNode("sterlangd@localhost")
@@ -16,7 +23,7 @@ object SterlangD {
   }
 
   private[SterlangD] class Server(mbox: OtpMbox, executor: Executor) {
-    @tailrec
+    @scala.annotation.tailrec
     final def serve(): Unit = {
       val msg = Etf.fromJava(mbox.receive())
       msg match {
