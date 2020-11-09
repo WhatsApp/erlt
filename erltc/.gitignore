@@ -2,4 +2,6 @@
 *._.mli
 *.cmi
 *.cmo
-/src/erlt_build_template_mk.erl
+# generated from ./make_statics.escript
+/src/erlt_build_statics.erl
+

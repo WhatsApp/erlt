@@ -89,28 +89,32 @@ display_stats({'$#erltodo:state',
         io:read("type ok followed by a dot to continue. "),
     ok.
 
--spec display_todos([string()]) -> atom().
+with_indices(List) ->
+    Indices = lists:seq(len(List), 1, -1),
+    lists:zip(Indices, List).
+
+-spec len([_]) -> integer().
+
+len(L) -> erlang:length(L).
+
+-spec display_todos([string()]) -> string().
 
 display_todos([]) ->
     line(),
-    io:format("You have no todos~n"),
+    t_io:format("You have no todos~n"),
     line(),
-    ok;
+    "ok";
 display_todos(Todos) ->
     line(),
-    io:format("Your todos are:~n"),
-    [io:format("~p. ~p~n", [Index, Todo])
+    t_io:format("Your todos are:~n"),
+    [t_io:format("~p. ~p~n", {Index, Todo})
      || {Index, Todo} <- with_indices(Todos)],
     line(),
-    ok.
+    "ok".
 
-line() -> io:format("------~n").
+line() -> t_io:format("------~n").
 
-invalid_input() -> io:format("invalid input~n").
-
-with_indices(List) ->
-    Indices = lists:seq(erlang:length(List), 1, -1),
-    lists:zip(Indices, List).
+invalid_input() -> t_io:format("invalid input~n").
 
 -spec splice(number(), [A]) -> [A].
 

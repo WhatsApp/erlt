@@ -1,0 +1,10 @@
+build/*.erl
+build/*.D
+
+# built-in types - no beam needed
+build/lists.beam
+
+# no .etfs needed except for .defs.etf
+build/lists.etf
+build/t_io.etf
+

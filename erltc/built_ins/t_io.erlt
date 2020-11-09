@@ -1,0 +1,14 @@
+-module(t_io).
+
+-export([format/1, format/2]).
+
+
+-spec format(string()) -> string().
+[unchecked]
+format(Fmt) ->
+    io:format(Fmt).
+
+-spec format(string(), _) -> string().
+[unchecked]
+format(Fmt, Args) ->
+    io:format(Fmt, tuple_to_list(Args)).
