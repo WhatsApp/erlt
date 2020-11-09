@@ -17,28 +17,29 @@ codebases. It does this by introducing static-types in a way which opens the
 door to greater IDE integration, safer refactorings, and faster, more specific
 feedback from the compiler.
 
-ErlT has three dialects (or modes):
-- DT (dynamically typed)
-- ST (statically typed)
-- FFI (a bridge between ST and DT parts)
+By default, ErlT is checked (i.e. statically typed), but it also allows some
+functions or modules to be unchecked (i.e. dynamically typed), both to aid
+migration and to allow code to be written for which we don't yet have a good
+typing model, most notably around concurrency. ErlT also has an FFI, which
+provides a structured way to allow checked and unchecked ErlT to interract.
 
-**ErlT DT** is very close to classic Erlang. There are only a few differences:
+**Unchecked ErlT** is very close to classic Erlang. There are only a few differences:
 
-- ErlT DT is stricter about scoping of variables - it enforces lexical scoping.
+- Unchecked ErlT is stricter about scoping of variables - it enforces lexical scoping.
   (Right now it does it by forbidding ambiguity)
-- ErlT DT is explicit about already bound and free variables in patterns.
+- Unchecked ErlT is explicit about already bound and free variables in patterns.
   (Right now it does it by forbidding ambiguity)
 - It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and shapes](./doc/05_structs.md).
 - The new [`import_type`](07_import_type.md) construct allows using types from
   remote modules via short names.
 
-**ErlT ST** is (syntactically) a subset of ErlT DT. It enforces a typing
+**Checked ErlT** is (syntactically) a subset of unchecked ErlT. It enforces a typing
 discipline. The type system is based on [the Hindley-Milner type
-system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system), extended to support erlT data types and pattern matching.
-Notably, ErlT ST is currently limited to only the sequential parts of Erlang, and some sequential
+system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system), extended to support ErlT data types and pattern matching.
+Notably, checked ErlT is currently limited to only the sequential parts of Erlang, and some sequential
 constructs (like list comprehensions or exceptions) are not supported yet.
 
-**ErlT FFI** allows DT code to be exposed via an ST API. See [modes](./doc/03_modes.md) for more information.
+**ErlT FFI** allows unchecked code to be exposed via a checked API. See [modes](./doc/03_modes.md) for more information.
 
 ## Getting started using ErlT
 
@@ -50,8 +51,8 @@ constructs (like list comprehensions or exceptions) are not supported yet.
 ### Repository Structure
 
 This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
-- `./erltc` - erltc is the compiler for ErlT (ST and DT). erltc does not compile classic Erlang or do type-checking.
-- `./sterlang` - stErlang is standalone type-checker for ST
+- `./erltc` - erltc is the compiler for ErlT. erltc does not compile classic Erlang or do type-checking.
+- `./sterlang` - stErlang is standalone type-checker for the checked parts of ErlT
 - `./analyzer` - this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
 
 > See ./doc/08_compiler_architecture.md for more information about how these parts work together
@@ -173,4 +174,4 @@ to do it this way, as we will have a language server real soon now.
 
 ### VS Code
 
-Coming soon
+**Coming soon**
