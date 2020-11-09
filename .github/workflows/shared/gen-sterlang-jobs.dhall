@@ -87,7 +87,7 @@ let toNativeImageJob =
               [ setUpJava
               , usesWith
                   "Setup GraalVM Environment"
-                  "DeLaGuardo/setup-graalvm@2.0"
+                  "DeLaGuardo/setup-graalvm@master"
                   (toMap { graalvm-version = "20.1.0.java11" })
               , run "Install Native Image Plugin" "gu install native-image"
               , usesWith
