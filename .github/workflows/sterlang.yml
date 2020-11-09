@@ -33,7 +33,7 @@ jobs:
       - name: Setup GraalVM Environment
         uses: "DeLaGuardo/setup-graalvm@master"
         with:
-          graalvm-version: "20.1.0.java11"
+          graalvm-version: "20.2.0.java11"
       - name: Install Native Image Plugin
         run: gu install native-image
       - name: Get JAR Artifact
@@ -62,7 +62,7 @@ jobs:
       - name: Setup GraalVM Environment
         uses: "DeLaGuardo/setup-graalvm@master"
         with:
-          graalvm-version: "20.1.0.java11"
+          graalvm-version: "20.2.0.java11"
       - name: Install Native Image Plugin
         run: gu install native-image
       - name: Get JAR Artifact

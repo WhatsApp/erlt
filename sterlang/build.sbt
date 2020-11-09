@@ -25,6 +25,7 @@ lazy val projectSetting = Seq(
   description := "Statically Typed Erlang",
   scalacOptions ++= ciSensitiveScalacOptions,
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % "test",
+  libraryDependencies += "org.scalameta" %% "svm-subs" % "20.2.0",
   Test / testOptions += Tests.Argument("-oD"),
   test in assembly := {},
   fork in run := true,
