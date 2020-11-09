@@ -76,10 +76,6 @@ rewrite({'fun', Line, {function, Name, Arity}}, Context, _Ctx) ->
     end;
 rewrite({call, Line, Name, Args}, Context, _Ctx) ->
     {call, Line, full_function_name(Name, length(Args), Context), Args};
-rewrite({user_type, Line, exception, []}, _Context, _Ctx) ->
-    {type, Line, any, []};
-rewrite({user_type, Line, message, []}, _Context, _Ctx) ->
-    {type, Line, any, []};
 rewrite({user_type, Line, Name, Args}, Context, _Ctx) ->
     case full_type_name({atom, Line, Name}, Context) of
         {atom, _, Name} ->

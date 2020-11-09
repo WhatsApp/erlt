@@ -18,13 +18,17 @@
 -export([parse_transform/2]).
 
 parse_transform(Forms, _Options) ->
-    [rewrite_form(X) || X <- Forms].
+    erlt_ast:prewalk(Forms, fun rewrite_erlt/2).
 
-rewrite_form({attribute, Anno, unchecked_opaque, {N, Def, Args}}) ->
+rewrite_erlt({attribute, Anno, unchecked_opaque, {N, Def, Args}}, _) ->
     {attribute, Anno, type, {N, Def, rewrite_args(Args)}};
-rewrite_form({unchecked_function, Anno, N, A, Cs}) ->
+rewrite_erlt({unchecked_function, Anno, N, A, Cs}, _) ->
     {function, Anno, N, A, Cs};
-rewrite_form(X) ->
+rewrite_erlt({type, Anno, exception, []}, type) ->
+    {type, Anno, any, []};
+rewrite_erlt({type, Anno, message, []}, type) ->
+    {type, Anno, any, []};
+rewrite_erlt(X, _) ->
     X.
 
 rewrite_args([{var, Anno, Name} | Rest]) ->

@@ -1302,10 +1302,15 @@ build_type({atom, A, Name}, Types) ->
     {Tag, A, Name, Types}.
 
 type_tag(TypeName, NumberOfTypeVariables) ->
-    case erl_internal:is_type(TypeName, NumberOfTypeVariables) of
+    case is_erlt_type(TypeName, NumberOfTypeVariables) of
         true -> type;
         false -> user_type
     end.
+
+is_erlt_type(exception, 0) -> true;
+is_erlt_type(message, 0) -> true;
+is_erlt_type(TypeName, NumberOfTypeVariables) ->
+    erl_internal:is_type(TypeName, NumberOfTypeVariables).
 
 abstract2(Term, Anno) ->
     Line = erl_anno:line(Anno),
