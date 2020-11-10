@@ -16,15 +16,19 @@
 
 -spec mk_ping() -> any().
 
-mk_ping() -> {'$#msg:ping', erlang:self()}.
+mk_ping() -> {'$#msg:ping', self_t()}.
 
 -spec mk_reply(any()) -> any().
 
 mk_reply(Ping) ->
     {'$#msg:wrapped_message.wrapped_message', Ping},
     {'$#msg:pong',
-     erlang:self(),
+     self_t(),
      {'$#msg:wrapped_message.wrapped_message', Ping}}.
+
+-spec self_t() -> pid().
+
+self_t() -> erlang:self().
 
 
 

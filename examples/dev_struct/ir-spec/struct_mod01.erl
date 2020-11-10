@@ -39,14 +39,10 @@ bar() ->
 
 baz() ->
     {{'$#struct_mod01:baz',
-      {'$#struct_mod01:bar',
-       erlang:trunc(1.5),
-       {'$#struct_mod01:foo'}}},
+      {'$#struct_mod01:bar', 1.5, {'$#struct_mod01:foo'}}},
      {'$#struct_mod01:default_with_default',
       {'$#struct_mod01:baz',
-       {'$#struct_mod01:bar',
-        erlang:trunc(1.5),
-        {'$#struct_mod01:foo'}}}}}.
+       {'$#struct_mod01:bar', 1.5, {'$#struct_mod01:foo'}}}}}.
 
 pattern({'$#struct_mod01:foo'},
         {'$#struct_mod01:bar', _, B},
@@ -54,8 +50,9 @@ pattern({'$#struct_mod01:foo'},
     B.
 
 guard(Value)
-    when Value =:= {'$#struct_mod01:bar', 1, 2} ->
-    ok.
+    when Value =:=
+             {'$#struct_mod01:bar', 1, {'$#struct_mod01:foo'}} ->
+    "ok".
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod01:bar', 3)

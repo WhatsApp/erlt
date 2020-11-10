@@ -27,7 +27,8 @@ p() -> {'$#enum_mod01:possibly.none'}.
 
 q(X) -> {'$#enum_mod01:possibly.some', X}.
 
--spec r(possibly(T), T) -> [T].
+-spec r(possibly(possibly(A)),
+        possibly(A)) -> [possibly(A)].
 
 r(E, Y) ->
     case E of

@@ -32,6 +32,8 @@ loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
 
  %% get and adapt user input
 
+-spec prompt(list(string())) -> choice().
+[unchecked]
 prompt(Todos) ->
      io:format("What would you like to do?\n"
             "1. add todo~n"
@@ -50,29 +52,32 @@ prompt(Todos) ->
              prompt(Todos)
      end.
 
- prompt_add_todo() ->
-     case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
-         {ok, TodoText} when is_list(TodoText) ->
-                 choice.add{TodoText};
-         {ok, Res} ->
+[unchecked]
+prompt_add_todo() ->
+    case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
+        {ok, TodoText} when is_list(TodoText) ->
+            choice.add{TodoText};
+        {ok, Res} ->
             erlang:display(Res),
-             invalid_input(),
-             prompt_add_todo()
-     end.
+            invalid_input(),
+            prompt_add_todo()
+    end.
 
- prompt_delete_todo(Todos) ->
-     display_todos(Todos),
-     case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
-         {ok, Id} when is_integer(Id) ->
-             choice.delete{Id};
-         {ok, _} ->
-             invalid_input(),
-             prompt_delete_todo(Todos)
-     end.
+[unchecked]
+prompt_delete_todo(Todos) ->
+    display_todos(Todos),
+    case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
+        {ok, Id} when is_integer(Id) ->
+            choice.delete{Id};
+        {ok, _} ->
+            invalid_input(),
+            prompt_delete_todo(Todos)
+    end.
 
 
 %% display stuff
-
+-spec display_stats(state()) -> atom().
+[unchecked]
 display_stats(#state{todos = [], deleted_count=0}) ->
     io:format("You haven't started yet: try creating and deleting todos~n"),
     {ok, _} = io:read("type ok followed by a dot to continue. "),
@@ -84,6 +89,8 @@ display_stats(#state{todos = Todos, deleted_count = DeletedCount}) ->
     {ok, _} = io:read("type ok followed by a dot to continue. "),
     ok.
 
+-spec display_todos(list(string())) -> atom().
+[unchecked]
 display_todos([]) ->
     line(),
     io:format("You have no todos~n"),
@@ -98,19 +105,23 @@ display_todos(Todos) ->
     line(),
     ok.
 
+[unchecked]
 line() ->
     io:format("------~n").
 
+[unchecked]
  invalid_input() ->
      io:format("invalid input~n").
 
 %% utils
-
+[unchecked]
 with_indices(List) ->
     Indices = lists:seq(length(List), 1, -1),
     lists:zip(Indices, List).
 
- splice(Index, List) ->
-     {Left, [_|Right]} = lists:split(Index - 1, List),
-     Left ++ Right.
+-spec splice(number(), list(A)) -> list(A).
+[unchecked]
+splice(Index, List) ->
+    {Left, [_|Right]} = lists:split(Index - 1, List),
+    Left ++ Right.
 

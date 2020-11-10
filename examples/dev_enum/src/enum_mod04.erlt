@@ -35,4 +35,4 @@ pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= ?MODULE:foo.x, Value2 =:= ?MODULE:bar.x{a = 1, b = B} ->
-    ok.
+    "ok".

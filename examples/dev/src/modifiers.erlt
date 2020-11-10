@@ -11,14 +11,17 @@ ffi(X) ->
     term_to_binary(X).
 
 -spec empty() -> map(_Key, _Value).
+[unchecked]
 empty() ->
     maps:empty().
 
 -spec get(Key, map(Key, Value)) -> Value.
+[unchecked]
 get(Key, Map) ->
     maps:get(Key, Map).
 
 -spec put(Key, Value, map(Key, Value)) -> map(Key, Value).
+[unchecked]
 put(Key, Value, Map) ->
     maps:put(Key, Value, Map).
 
