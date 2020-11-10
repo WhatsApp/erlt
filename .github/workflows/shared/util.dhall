@@ -24,16 +24,19 @@ let usesWith =
         , `with` = Some `with`
         }
 
-let runEnv =
-      λ(name : Text) →
-      λ(run : Text) →
-      λ(env : List { mapKey : Text, mapValue : Text }) →
-        Actions.Step::{
-        , name = Some name
-        , run = Some run
-        , env = Some env
-        }
+let setUpJava =
+      usesWith
+        "Set up Java"
+        "actions/setup-java@v1"
+        (toMap { java-version = "11" })
+
+let coursierCache =
+      usesWith
+        "Coursier Cache"
+        "coursier/cache-action@v3"
+        (toMap { root = "sterlang" })
+
 
 let DEFAULT_RETENTION_DAYS = "8"
 
-in  { Actions, run, runEnv, checkout, usesWith, DEFAULT_RETENTION_DAYS }
+in  { Actions, run, checkout, coursierCache, setUpJava, usesWith, DEFAULT_RETENTION_DAYS }

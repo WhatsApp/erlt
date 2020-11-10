@@ -1,7 +1,9 @@
 DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
 
 build:
-	rebar3 compile
+	../sbtn/dl.sh
+	cd ../sterlang; ../sbtn/sbtn sterlangd
+	ERL_FLAGS="-args_file dev.vm.args" rebar3 compile
 
 clean:
 	rm -rf _build
@@ -51,6 +53,6 @@ test-interop: build
 	@stat _build/default/lib/calc/ebin/calc_lexer.beam &> /dev/null
 	@stat _build/default/lib/calc/ebin/calc_parser.beam &> /dev/null && echo ok
 
-test: test-ir test-beam test-interop test-others 
+test: test-ir test-beam test-interop test-others
 
 .PHONY: build clean ir test-ir update-ir-spec test-beam test-interop

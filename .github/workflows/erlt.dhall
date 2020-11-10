@@ -1,7 +1,15 @@
 -- see ./README.md for dhall setup
 let Util = ./shared/util.dhall
+
 let Actions = Util.Actions
+
+let checkout = Util.checkout
+
 let run = Util.run
+
+let setUpJava = Util.setUpJava
+
+let coursierCache = Util.coursierCache
 
 in  Actions.Workflow::{
     , name = "ErlT CI"
@@ -10,16 +18,17 @@ in  Actions.Workflow::{
         { build = Actions.Job::{
           , runs-on = Actions.RunsOn.Type.ubuntu-latest
           , steps =
-            [ Actions.Step::{
-              , name = Some "Checkout"
-              , uses = Some "actions/checkout@v2"
-              }
+            [ checkout
+            , setUpJava
+            , coursierCache
+            , run "download sbtn" "./sbtn/dl.sh"
             , run
                 "Erlang version"
                 "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
             , run
                 "check formatting"
                 "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && \$(exit 1))"
+            , run "warm up sterlang" "cd sterlang; ../sbtn/sbtn sterlangd"
             , run "test" "cd ./examples && make test"
             ]
           }
