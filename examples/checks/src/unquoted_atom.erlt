@@ -1,0 +1,7 @@
+-module(unquoted_atom).
+
+foo() ->
+    [
+        foo,
+        bar{}
+    ].
