@@ -604,7 +604,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   }
 
   private def elabStructSelect(exp: Ast.StructSelect, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
-    val Ast.StructSelect(struct, name, fieldName) = exp
+    val Ast.StructSelect(struct, name, index) = exp
     val nName = normalizeTypeName(name)
     val expander = dExpander(d)
 
@@ -624,22 +624,30 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       sub.view.mapValues(Left(_)).toMap
     val typeConParams = structDef.params.map(p => sub(p.name))
 
-    val lblFieldDecls = structDef.fields.collect { case lf: Ast.LblFieldDecl => lf }
-    val fieldDef =
-      lblFieldDecls.find(_.label == fieldName) match {
-        case Some(f) => f
-        case None    => throw new UnknownField(exp.r, fieldName)
-      }
+    val aType = index match {
+      case Ast.LblIndex(label) =>
+        structDef.fields
+          .collect { case lf: Ast.LblFieldDecl => lf }
+          .find(_.label == label)
+          .getOrElse(throw new UnknownField(exp.r, label))
+          .tp
+      case Ast.PosIndex(pos) =>
+        val posFields = structDef.fields.collect { case pf: Ast.PosFieldDecl => pf }
+        if (pos < posFields.length)
+          posFields(pos).tp
+        else throw new UnknownIndex(exp.r, pos)
+
+    }
 
     val structType = MT.NamedType(nName.stringId, typeConParams)
     val struct1 = elab(struct, structType, d, env)
 
-    val fieldType = expander.mkType(fieldDef.tp, eSub)
+    val fieldType = expander.mkType(aType, eSub)
     val eFieldType = expander.expandType(fieldType)
 
     unify(exp.r, ty, eFieldType)
 
-    AnnAst.StructSelect(struct1, nName.stringId, fieldName)(typ = ty, r = exp.r)
+    AnnAst.StructSelect(struct1, nName.stringId, index)(typ = ty, r = exp.r)
   }
 
   private def elabAppExp(exp: Ast.AppExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {

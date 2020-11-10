@@ -46,8 +46,8 @@ object Exprs {
   case class LocalStructUpdate(r: Doc.Range, exp: Expr, structName: String, fields: List[Field]) extends Expr
   case class RemoteStructUpdate(r: Doc.Range, exp: Expr, module: String, structName: String, fields: List[Field])
       extends Expr
-  case class LocalStructSelect(r: Doc.Range, struct: Expr, structName: String, fieldName: String) extends Expr
-  case class RemoteStructSelect(r: Doc.Range, struct: Expr, module: String, structName: String, fieldName: String)
+  case class LocalStructSelect(r: Doc.Range, struct: Expr, structName: String, index: Index) extends Expr
+  case class RemoteStructSelect(r: Doc.Range, struct: Expr, module: String, structName: String, index: Index)
       extends Expr
   case class ShapeSelect(r: Doc.Range, exp: Expr, fieldName: String) extends Expr
   case class ShapeCreate(r: Doc.Range, entries: List[ShapeField]) extends Expr
@@ -82,6 +82,10 @@ object Exprs {
   sealed trait Field
   case class LblField(r: Doc.Range, fieldName: String, value: Expr) extends Field
   case class PosField(r: Doc.Range, value: Expr) extends Field
+
+  sealed trait Index
+  case class LblIndex(lbl: String) extends Index
+  case class PosIndex(pos: Int) extends Index
 
   case class ShapeField(r: Doc.Range, k: Expr, v: Expr)
 

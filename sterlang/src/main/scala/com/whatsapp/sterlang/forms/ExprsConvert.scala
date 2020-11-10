@@ -102,11 +102,10 @@ object ExprsConvert {
               anno,
               eExp,
               ETuple(List(EAtom("atom"), _, EAtom(structName))),
-              eFieldName,
+              eIndex,
             )
           ) =>
-        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
-        LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
+        LocalStructSelect(r(anno), convertExp(eExp), structName, convertIndex(eIndex))
       case ETuple(
             List(
               EAtom("struct_field"),
@@ -120,11 +119,10 @@ object ExprsConvert {
                   ETuple(List(EAtom("atom"), _anno2, EAtom(structName))),
                 )
               ),
-              eFieldName,
+              eIndex,
             )
           ) =>
-        val AtomLiteral(p, fieldName) = ExprsConvert.literal(eFieldName)
-        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
+        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, convertIndex(eIndex))
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape_update"), anno, eExp, EList(eAssocs))) =>
@@ -231,6 +229,12 @@ object ExprsConvert {
     val EList(tests) = term
     Guard(tests.map(ExprsConvert.convertExp))
   }
+
+  private def convertIndex(eIndex: ETerm): Index =
+    literal(eIndex) match {
+      case AtomLiteral(_, lbl) => LblIndex(lbl)
+      case IntLiteral(_, pos)  => PosIndex(pos)
+    }
 
   def literal(term: ETerm): Literal =
     term match {

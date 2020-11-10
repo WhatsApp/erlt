@@ -192,7 +192,7 @@ object Ast {
   case class BComprehension(template: Exp, qualifiers: List[Qualifier])(val r: Doc.Range) extends Exp
   case class StructCreate(name: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
   case class StructUpdate(struct: Exp, structName: Name, fields: List[Field[Exp]])(val r: Doc.Range) extends Exp
-  case class StructSelect(struct: Exp, structName: Name, fieldName: String)(val r: Doc.Range) extends Exp
+  case class StructSelect(struct: Exp, structName: Name, index: Index)(val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchRules: List[Rule], after: Option[Body])(val r: Doc.Range) extends Exp
   case class TryOfCatchExp(tryBody: Body, tryRules: List[Rule], catchRules: List[Rule], after: Option[Body])(
       val r: Doc.Range
@@ -211,6 +211,11 @@ object Ast {
   }
   case class LblField[A](label: String, value: A)(val r: Doc.Range) extends Field[A]
   case class PosField[A](value: A)(val r: Doc.Range) extends Field[A]
+
+  // struct index
+  sealed trait Index
+  case class LblIndex(label: String) extends Index
+  case class PosIndex(pos: Int) extends Index
 
   sealed trait FieldDecl {
     val tp: Type
