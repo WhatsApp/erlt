@@ -121,8 +121,8 @@ object FormsConvert {
           ) =>
         val params = vars.map(TypesConvertErlt.convertVar)
         UncheckedTypeDecl(r(anno), typeName, params)
-      case ETuple(EAtom("attribute") :: anno :: EAtom("file") :: _) =>
-        WildAttribute(r(anno), "file")
+      case ETuple(EAtom("attribute") :: anno :: EAtom(attr_name) :: _) =>
+        WildAttribute(r(anno), attr_name)
     }
 
   private def convertIdWithArity(term: ETerm): IdWithArity =
