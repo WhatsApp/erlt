@@ -238,6 +238,8 @@ object ExprsConvert {
 
   def literal(term: ETerm): Literal =
     term match {
+      case ETuple(List(EAtom("atom_expr"), anno, EAtom(value))) =>
+        AtomLiteral(r(anno), value)
       case ETuple(List(EAtom("atom"), anno, EAtom(value))) =>
         AtomLiteral(r(anno), value)
       case ETuple(List(EAtom("char"), anno, ELong(value))) =>
