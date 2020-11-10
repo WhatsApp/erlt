@@ -238,6 +238,8 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     bvt = none :: 'none' | [any()],
     %Context of guard expression
     gexpr_context = guard :: gexpr_context(),
+    %Is the context type checked
+    type_checked = true :: boolean(),
     % Enum definitions
     enums = #{} :: #{atom() => #{atom() => term()}},
     % Global definition database
@@ -418,6 +420,8 @@ format_error(illegal_guard_expr) ->
 %% --- maps ---
 format_error(illegal_map_construction) ->
     "only association operators '=>' are allowed in map construction";
+format_error(map_syntax_disallowed) ->
+    "map syntax is only allowed in unchecked functions";
 %% --- enums ---
 format_error({redefine_enum, T, C}) ->
     io_lib:format("variant ~tw already defined in enum ~tw", [C, T]);
@@ -1036,8 +1040,11 @@ function_state({attribute, _L, dialyzer, _Val}, St) ->
     St;
 function_state({attribute, La, Attr, _Val}, St) ->
     add_error(La, {attribute, Attr}, St);
-function_state({F, L, N, A, Cs}, St) when ?IS_FUNCTION(F) ->
-    function(L, N, A, Cs, St);
+function_state({unchecked_function, L, N, A, Cs}, St) ->
+    St1 = function(L, N, A, Cs, St#lint{type_checked = false}),
+    St1#lint{type_checked = true};
+function_state({function, L, N, A, Cs}, St) ->
+    function(L, N, A, Cs, St#lint{type_checked = true});
 function_state({eof, L}, St) ->
     eof(L, St).
 
@@ -1966,8 +1973,8 @@ pattern({enum, Line, Name, Variant, Fields}, Vt, Old, St0) ->
         pattern_fields(Fields, Line, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
-pattern({map, _Line, Ps}, Vt, Old, St) ->
-    pattern_map(Ps, Vt, Old, St);
+pattern({map, Line, Ps}, Vt, Old, St) ->
+    pattern_map(Ps, Vt, Old, check_map_allowed(Line, St));
 pattern({shape, _Line, Pfs}, Vt, Old, St) ->
     check_shape_pattern_fields(Pfs, Vt, Old, St, []);
 pattern({struct, Line, Name, Fields}, Vt, Old, St0) ->
@@ -2436,10 +2443,10 @@ gexpr({enum, Line, Name, Variant, Fields}, Vt, St) ->
     check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
         init_fields_guard(Fields, Line, ResolvedName, Def, Vt, St1)
     end);
-gexpr({map, _Line, Es}, Vt, St) ->
-    map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
-gexpr({map, _Line, Src, Es}, Vt, St) ->
-    {Svt, St1} = gexpr(Src, Vt, St),
+gexpr({map, Line, Es}, Vt, St) ->
+    map_fields(Es, Vt, check_assoc_fields(Es, check_map_allowed(Line, St)), fun gexpr_list/3);
+gexpr({map, Line, Src, Es}, Vt, St) ->
+    {Svt, St1} = gexpr(Src, Vt, check_map_allowed(Line, St)),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun gexpr_list/3),
     {vtmerge(Svt, Fvt), St2};
 gexpr({shape, _Line, Fields}, Vt, St) ->
@@ -2692,10 +2699,10 @@ expr({enum, Line, Name, Variant, Fields}, Vt, St) ->
     check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
         init_fields(Fields, Line, ResolvedName, Def, Vt, St1)
     end);
-expr({map, _Line, Es}, Vt, St) ->
-    map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
-expr({map, _Line, Src, Es}, Vt, St) ->
-    {Svt, St1} = expr(Src, Vt, St),
+expr({map, Line, Es}, Vt, St) ->
+    map_fields(Es, Vt, check_assoc_fields(Es, check_map_allowed(Line, St)), fun expr_list/3);
+expr({map, Line, Src, Es}, Vt, St) ->
+    {Svt, St1} = expr(Src, Vt, check_map_allowed(Line, St)),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun expr_list/3),
     {vtupdate(Svt, Fvt), St2};
 expr({shape, _Line, Fields}, Vt, St) ->
@@ -4665,6 +4672,14 @@ test_overriden_by_local(Line, OldTest, Arity, St) ->
     case is_local_function(St#lint.locals, {ModernTest, Arity}) of
         true ->
             add_error(Line, {obsolete_guard_overridden, OldTest}, St);
+        false ->
+            St
+    end.
+
+check_map_allowed(Line, St) ->
+    case St#lint.type_checked of
+        true ->
+            add_error(Line, map_syntax_disallowed, St);
         false ->
             St
     end.

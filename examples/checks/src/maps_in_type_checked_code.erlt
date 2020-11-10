@@ -1,0 +1,24 @@
+-module(maps_in_type_checked_code).
+
+-export([unchecked_test/1, test/1]).
+
+-export_type([hi/0, my_map/0]).
+
+[unchecked, opaque]
+-type my_map() :: any().
+
+[unchecked]
+unchecked_test(#{x:=A}) when A > #{} ->
+    case #{x=>A} of
+        Z when Z > A#{y=>3} ->
+            Z#{y=>3}
+    end.
+
+-struct hi :: (hello_map = #{} :: my_map()).
+
+-spec test(my_map()) -> my_map().
+test(#{x:=A}) when A > #{} ->
+    case #{x=>A} of
+        Z when Z > A#{y=>3} ->
+            Z#{y=>3}
+    end.
