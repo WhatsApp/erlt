@@ -79,6 +79,8 @@ object DriverDev extends DriverApi {
 
   private def freshTypeVar(vars: Vars): Types.Type =
     Types.VarType(vars.tVar(Types.Open(0)))
+  private def freshRowTypeVar(vars: Vars, kind: Types.RtVarKind): Types.RowType =
+    Types.RowVarType(vars.rVar(Types.RowOpen(0, kind)))
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
@@ -116,9 +118,13 @@ object DriverDev extends DriverApi {
       val name = spec.name.stringId
       val funType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(funType)
-      val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
+      val rVars = AstUtil.collectNamedRowTypeVars(funType)
+      val sSub: Expander.Sub =
+        sVars.map { v => v -> Left(freshTypeVar(vars)) }.toMap
+      val rSub: Expander.Sub =
+        rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(vars, kind)) }.toMap
       val eSub: Expander.Sub =
-        sub.view.mapValues(Left(_)).toMap
+        sSub ++ rSub
       val specType = expander.mkType(funType, eSub)
       val expSpecType = expander.expandType(specType)
       val scheme = TU.generalize(0)(expSpecType)
