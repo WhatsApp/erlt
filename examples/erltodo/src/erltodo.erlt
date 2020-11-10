@@ -118,6 +118,7 @@ with_indices(List) ->
     Indices = lists:seq(length(List), 1, -1),
     lists:zip(Indices, List).
 
+-spec splice(number(), list(A)) -> list(A).
 [unchecked]
 splice(Index, List) ->
     {Left, [_|Right]} = lists:split(Index - 1, List),
