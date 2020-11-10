@@ -136,7 +136,7 @@ do_traverse(Node0, Acc, Pre, Post, Ctx) ->
             {Values1, Acc1} = do_traverse_list(Values0, Acc0, Pre, Post, Ctx),
             Post({tuple, Line, Values1}, Acc1, Ctx);
         {enum, Line, Name0, Constr0, Values0} ->
-            {Name1, Acc1} = do_traverse(Name0, Acc0, Pre, Post, Ctx),
+            {Name1, Acc1} = do_traverse_atom_or_node(Name0, Acc0, Pre, Post, Ctx),
             {Constr1, Acc2} = do_traverse(Constr0, Acc1, Pre, Post, Ctx),
             {Values1, Acc3} = do_traverse_atom_or_list(Values0, Acc2, Pre, Post, Ctx),
             Post({enum, Line, Name1, Constr1, Values1}, Acc3, Ctx);

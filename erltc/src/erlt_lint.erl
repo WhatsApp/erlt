@@ -433,6 +433,8 @@ format_error({undefined_enum_variant, N, V}) ->
     io_lib:format("enum ~ts has no variant ~tw", [format_name(N), V]);
 format_error(invalid_name) ->
     "only fully qualified remote 'module:name' or local 'name' references are supported";
+format_error(unqualified_enum) ->
+    "bare enums (or unquoted atoms) are not supported";
 %% --- structs ---
 format_error({undefined_struct, N}) ->
     io_lib:format("struct ~ts undefined", [format_name(N)]);
@@ -3010,6 +3012,8 @@ is_valid_call(Call) ->
         _ -> true
     end.
 
+check_enum(Line, undefined, _, St, _CheckFun) ->
+    {[], add_error(Line, unqualified_enum, St)};
 check_enum(Line, RawName, {atom, _, V}, St, CheckFun) ->
     case resolve_importable_name(RawName, St) of
         {local, N, St1} ->

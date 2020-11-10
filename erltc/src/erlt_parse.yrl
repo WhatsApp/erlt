@@ -448,6 +448,12 @@ tuple -> '{' exprs '}' : {tuple,?anno('$1','$3'),'$2'}.
 
 %% ideally this would use local_or_remote_name, but it causes conflicts with
 %% function call syntax
+enum_expr -> atom :
+    {enum, ?anno('$1'), undefined, '$1', none}.
+enum_expr -> atom '{' '}' :
+    {enum, ?anno('$1', '$3'), undefined, '$1', []}.
+enum_expr -> atom '{' fields '}' :
+    {enum, ?anno('$1', '$4'), undefined, '$1', '$3'}.
 enum_expr -> expr_remote '.' identifier :
     {enum, ?anno('$1', '$3'), '$1', '$3', none}.
 enum_expr -> expr_remote '.' identifier '{' '}' :
