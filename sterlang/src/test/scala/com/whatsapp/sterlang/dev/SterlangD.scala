@@ -1,5 +1,6 @@
 package com.whatsapp.sterlang.dev
 
+import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.{Executor, Executors}
 
 import sys.process._
@@ -37,10 +38,18 @@ object SterlangD {
 
     private def handleCheck(from: OtpErlangPid, ref: ERef, etfFile: String): Unit = {
       val start = System.currentTimeMillis()
-      val result = processFile(etfFile) match {
-        case Some(error) => convertError(error)
-        case None        => ETuple(List(EAtom("ok")))
-      }
+      val result =
+        try processFile(etfFile) match {
+          case Some(error) => convertError(error)
+          case None        => ETuple(List(EAtom("ok")))
+        } catch {
+          case x: Throwable =>
+            val msg =
+              s"""***** Sterlang internal error *****
+                 |${getStackTraceAsString(x)}
+                 |""".stripMargin
+            ETuple(List(EAtom("error"), EAtom("none"), EString(msg)))
+        }
       val sterlangTime = System.currentTimeMillis() - start
       val response = ETuple(List(ref, result, ELong(sterlangTime)))
       mbox.send(from, Etf.toJava(response))
@@ -81,4 +90,10 @@ object SterlangD {
         val msg = (List(title) ++ description.toList).mkString("\n")
         ETuple(List(EAtom("error"), convertRange(range), EString(msg)))
     }
+
+  private def getStackTraceAsString(t: Throwable) = {
+    val sw = new StringWriter
+    t.printStackTrace(new PrintWriter(sw))
+    sw.toString
+  }
 }
