@@ -18,7 +18,7 @@
 
 expr() ->
     {
-        #struct_mod11:bar{1, #struct_mod11:foo{}},
+        #struct_mod11:bar{1, #struct_mod11:mixed{1, a = 2}},
         #struct_mod11:mixed{1, a = 2}
     }.
 
@@ -26,8 +26,8 @@ expr() ->
 pattern(#struct_mod11:bar{B, _}, #struct_mod11:mixed{B, a = B}, B) ->
     B.
 
-guard(Value1, Value2, B) when Value1 =:= #struct_mod11:bar{1, B}, Value2 =:= #struct_mod11:mixed{1, a = B} ->
-    ok.
+guard(Value1, Value2, B) when Value1 =:= #struct_mod11:bar{1, B}, Value2 =:= #struct_mod11:mixed{1, a = 2} ->
+    "ok".
 
 field(Value) when Value#struct_mod11:bar._0 =:= 1 ->
     Value#struct_mod11:bar._1.
@@ -35,5 +35,6 @@ field(Value) when Value#struct_mod11:bar._0 =:= 1 ->
 update(Value) ->
     Value#struct_mod11:mixed{a = 2}.
 
+[unchecked]
 index(#struct_mod11:bar._0) when #struct_mod11:bar._0 =:= 2 ->
     #struct_mod11:bar._1.

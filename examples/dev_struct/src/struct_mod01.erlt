@@ -20,7 +20,7 @@
 
 -struct bar(A) :: (a :: A, b :: foo()).
 
--struct baz :: (bar = #bar{a = trunc(1.5), b = #foo{}} :: bar(integer())).
+-struct baz :: (bar = #bar{a = 1.5, b = #foo{}} :: bar(integer())).
 
 -struct unicodestruct :: (smilies = "😃😄😁😆😅" :: string()).
 
@@ -41,8 +41,8 @@ baz() ->
 
 pattern(#foo{}, #bar{b = B}, #in_pattern{}) -> B.
 
-guard(Value) when Value =:= #bar{a = 1, b = 2} ->
-    ok.
+guard(Value) when Value =:= #bar{a = 1, b = #foo{}} ->
+    "ok".
 
 field(Value) when Value#bar.a =:= 1 ->
     Value#bar.b.
@@ -50,5 +50,6 @@ field(Value) when Value#bar.a =:= 1 ->
 update(Value) ->
     Value#bar{a = 2}.
 
+[unchecked]
 index(#bar.a) when #bar.a =:= 2 ->
     #bar.b.

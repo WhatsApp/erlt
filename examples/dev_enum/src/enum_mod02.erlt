@@ -19,11 +19,8 @@
 
 -type possibly(T) :: enum_mod01:possibly(T).
 
-%% local type using remote constructors
-%% -type perhaps(T) :: enum_mod01:possibly.some{T} | enum_mod01:possibly.none{}.
-
-
 -spec p() -> possibly(any()).
+-exception lost_possibility() :: (possibly(string())).
 
 p() ->
     enum_mod01:possibly.none.
@@ -34,10 +31,10 @@ q(X) ->
     enum_mod01:possibly.some{value = X}.
 
 
-% -spec r(perhaps(T)) -> [T].
+-spec r(possibly(number())) -> [number()].
 %% remote constructors in patterns
 r(enum_mod01:possibly.some{value = X = 41}) ->
-    X+1;
+    [X+1];
 r(E) ->
     case E of
         enum_mod01:possibly.none ->
@@ -46,7 +43,7 @@ r(E) ->
             [X]
     end.
 
-% -spec s(perhaps(T)) -> [T].
+-spec s(possibly(string())) -> [string()].
 s(E) ->
     %% remote constructors in try-patterns
     try E of
@@ -55,6 +52,6 @@ s(E) ->
         enum_mod01:possibly.some{value = X} ->
             [X]
     catch
-        throw, enum_mod01:possibly.some{value = thing}, Trace ->
-            {caught, Trace}
+        #lost_possibility{enum_mod01:possibly.some{value = Loss}} ->
+            [Loss]
     end.

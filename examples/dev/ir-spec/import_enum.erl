@@ -8,7 +8,7 @@
 
 -import_type({mod03, [{pair, 2}]}).
 
--spec swap(mod03:pair(A, B)) -> mod03:pair(A, B).
+-spec swap(mod03:pair(A, B)) -> mod03:pair(B, A).
 
 swap({'$#mod03:pair.pair', A, B}) ->
     {'$#mod03:pair.pair', B, A}.

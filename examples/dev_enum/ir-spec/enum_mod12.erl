@@ -15,7 +15,7 @@ pattern({'$#enum_mod11:bar.x', 1, B},
 guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod11:bar.x', 1, B},
          Value2 =:= {'$#enum_mod11:baz.x', 1, B} ->
-    ok.
+    "ok".
 
 
 

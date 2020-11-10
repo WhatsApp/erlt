@@ -5,6 +5,5 @@
 
 -import_type(mod03, [pair/2]).
 
--spec swap(pair(A, B)) -> pair(A, B).
-
+-spec swap(pair(A, B)) -> pair(B, A).
 swap(pair.pair{fst = A, snd = B}) -> pair.pair{fst = B, snd = A}.

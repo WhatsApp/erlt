@@ -31,6 +31,8 @@ loop({'$#erltodo:state', Todos, DeletedCount} =
             loop(State)
     end.
 
+-spec prompt([string()]) -> choice().
+
 prompt(Todos) ->
     io:format("What would you like to do?\n1. add todo~n2. "
               "delete todo~n3. view stats~n~n"),
@@ -67,6 +69,8 @@ prompt_delete_todo(Todos) ->
             prompt_delete_todo(Todos)
     end.
 
+-spec display_stats(state()) -> atom().
+
 display_stats({'$#erltodo:state', [], 0}) ->
     io:format("You haven't started yet: try creating "
               "and deleting todos~n"),
@@ -84,6 +88,8 @@ display_stats({'$#erltodo:state',
     {ok, _} =
         io:read("type ok followed by a dot to continue. "),
     ok.
+
+-spec display_todos([string()]) -> atom().
 
 display_todos([]) ->
     line(),
@@ -105,6 +111,8 @@ invalid_input() -> io:format("invalid input~n").
 with_indices(List) ->
     Indices = lists:seq(erlang:length(List), 1, -1),
     lists:zip(Indices, List).
+
+-spec splice(number(), [A]) -> [A].
 
 splice(Index, List) ->
     {Left, [_ | Right]} = lists:split(Index - 1, List),

@@ -18,7 +18,7 @@
 
 -export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1, index/1]).
 
--struct bar(A) :: (A, foo()).
+-struct bar(A) :: (A, mixed()).
 
 -struct mixed() :: (integer(), a :: integer()).
 
@@ -32,15 +32,15 @@ foo() ->
     #foo{}.
 
 bar() ->
-    #bar{1, #foo{}}.
+    #bar{1, #mixed{1, a = 2}}.
 
 baz() ->
     #baz{bar()}.
 
 pattern(#foo{}, #bar{B, _}, #in_pattern{}) -> B.
 
-guard(Value) when Value =:= #bar{1, 2} ->
-    ok.
+guard(Value) when Value =:= #bar{1, #mixed{1, a = 2}} ->
+    "ok".
 
 field(Value) when Value#bar._0 =:= 1 ->
     {
@@ -51,5 +51,6 @@ field(Value) when Value#bar._0 =:= 1 ->
 update(Value) ->
     Value#mixed{a = 2}.
 
+[unchecked]
 index(#bar._0) when #bar._0 =:= 2 ->
     #bar._1.

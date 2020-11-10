@@ -13,7 +13,7 @@
          update/1,
          index/1]).
 
--type bar(A) :: {'$#struct_mod11:bar', A, foo()}.
+-type bar(A) :: {'$#struct_mod11:bar', A, mixed()}.
 
 -type mixed() :: {'$#struct_mod11:mixed',
                   integer(),
@@ -28,7 +28,9 @@
 foo() -> {'$#struct_mod11:foo'}.
 
 bar() ->
-    {'$#struct_mod11:bar', 1, {'$#struct_mod11:foo'}}.
+    {'$#struct_mod11:bar',
+     1,
+     {'$#struct_mod11:mixed', 1, 2}}.
 
 baz() -> {'$#struct_mod11:baz', bar()}.
 
@@ -38,8 +40,11 @@ pattern({'$#struct_mod11:foo'},
     B.
 
 guard(Value)
-    when Value =:= {'$#struct_mod11:bar', 1, 2} ->
-    ok.
+    when Value =:=
+             {'$#struct_mod11:bar',
+              1,
+              {'$#struct_mod11:mixed', 1, 2}} ->
+    "ok".
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod11:bar', 3)

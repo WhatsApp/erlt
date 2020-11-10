@@ -25,7 +25,7 @@ pattern({'$#enum_mod04:foo.x'},
 guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod04:foo.x'},
          Value2 =:= {'$#enum_mod04:bar.x', 1, B} ->
-    ok.
+    "ok".
 
 remote_with_defaults() ->
     {{'$#enum_mod03:default_with_default.x',
