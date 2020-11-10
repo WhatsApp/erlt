@@ -40,6 +40,13 @@ lazy val sterlang = (project in file("."))
 val parser = taskKey[Seq[File]]("Generate parser command line utility")
 parser / fileInputs += (Test / sourceDirectory).value.toGlob / "erlang" / "parser.yrl".r
 
+val bgStopAll = taskKey[Unit]("Stop all background jobs")
+bgStopAll := bgList.value.foreach(bgJobService.value.stop)
+
+commands += Command.command("sterlangd")(
+    Command.process("bgStopAll ; test:bgRunMain com.whatsapp.sterlang.dev.SterlangD ", _)
+)
+
 // TODO - restore after re-integration
 coverageMinimum := 98
 coverageFailOnMinimum := true

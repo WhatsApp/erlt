@@ -45,7 +45,7 @@ let test =
             "test erltc + stErlang in dev mode"
             ''
             cd sterlang
-            sbt --client 'test:bgRunMain com.whatsapp.sterlang.dev.SterlangD'
+            sbt --client sterlangd
             cd examples
             rebar3 compile
             ''
