@@ -10,7 +10,9 @@
          index/1]).
 
 expr() ->
-    {{'$#struct_mod11:bar', 1, {'$#struct_mod11:foo'}},
+    {{'$#struct_mod11:bar',
+      1,
+      {'$#struct_mod11:mixed', 1, 2}},
      {'$#struct_mod11:mixed', 1, 2}}.
 
 pattern({'$#struct_mod11:bar', B, _},
@@ -19,8 +21,8 @@ pattern({'$#struct_mod11:bar', B, _},
 
 guard(Value1, Value2, B)
     when Value1 =:= {'$#struct_mod11:bar', 1, B},
-         Value2 =:= {'$#struct_mod11:mixed', 1, B} ->
-    ok.
+         Value2 =:= {'$#struct_mod11:mixed', 1, 2} ->
+    "ok".
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod11:bar', 3)

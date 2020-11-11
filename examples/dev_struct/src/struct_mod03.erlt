@@ -26,7 +26,7 @@ pattern(#struct_mod02:foo{}, #struct_mod02:bar{a = 1, b = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= #struct_mod02:foo{}, Value2 =:= #struct_mod02:bar{a = 1, b = B} ->
-    ok.
+    "ok".
 
 field(Value) when Value#struct_mod02:bar.a =:= 1 ->
     Value#struct_mod02:bar.b.
@@ -34,5 +34,6 @@ field(Value) when Value#struct_mod02:bar.a =:= 1 ->
 update(Value) ->
     Value#struct_mod02:bar{a = 2}.
 
+[unchecked]
 index(#struct_mod02:bar.a) when #struct_mod02:bar.a =:= 2 ->
     #struct_mod02:bar.b.

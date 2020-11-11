@@ -40,8 +40,9 @@ pattern({'$#enum_mod03:foo.x'},
     B.
 
 guard(Value)
-    when Value =:= {'$#enum_mod03:bar.x', 1, 2} ->
-    ok.
+    when Value =:=
+             {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}} ->
+    "ok".
 
 
 

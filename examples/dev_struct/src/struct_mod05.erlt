@@ -32,7 +32,7 @@ pattern(#foo{}, #bar{a = 1, b = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= #foo{}, Value2 =:= #bar{a = 1, b = B} ->
-    ok.
+    "ok".
 
 field(Value) when Value#bar.a =:= 1 ->
     Value#bar.b.
@@ -40,6 +40,7 @@ field(Value) when Value#bar.a =:= 1 ->
 update(Value) ->
     Value#bar{a = 2}.
 
+[unchecked]
 index(#bar.a) when #bar.a =:= 2 ->
     #bar.b.
 

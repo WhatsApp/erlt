@@ -22,6 +22,8 @@
 
 -enum with_imported_default :: (x{foo = foo.x :: foo()}).
 
+-define(X, x).
+
 expr() ->
     {
         foo.x,
@@ -32,7 +34,7 @@ pattern(foo.x, bar.x{a = 1, b = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= foo.x, Value2 =:= bar.x{a = 1, b = B} ->
-    ok.
+    "ok".
 
 remote_with_defaults() ->
     {

@@ -3,6 +3,7 @@
 -export([test/0, test/1, test2/1, test_in_lc/1]).
 
 -spec test() -> integer().
+[unchecked]
 test() ->
     size({#(),
      test3(#(a=1, b=2)),
@@ -17,16 +18,16 @@ test() ->
     {x, {25,36}} = access_map(#(id=x, location={25,36})),
     ok = access_map2(#(inner1=#(inner2=ok)))}).
 
--spec test(#(a::integer(), b::#(c::integer(), _), _)) -> atom().
-test(A) when A =:= #(a=1,b=#(c=2)) -> closed_ok;
-test(#(a=1,b=#(c=2))) -> open_ok.
+-spec test(#(a::integer(), b::#(c::integer()))) -> string().
+test(A) when A =:= #(a=1,b=#(c=2)) -> "closed_ok";
+test(#(a=1,b=#(c=2))) -> "open_ok".
 
 -spec test2(#()) -> {}.
 test2(#()) -> {}.
 
 test3(A) when A#(b) =:= 2 -> {}.
 
-test4(A) when A =:= #(a=1)#(b=2) -> {}.
+test4(A) when A =:= #(a=1,b=1)#(b=2) -> {}.
 
 test5(#(a=1)) -> {}.
 

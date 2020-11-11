@@ -28,7 +28,7 @@ pattern({'$#struct_mod02:foo'},
 guard(Value1, Value2, B)
     when Value1 =:= {'$#struct_mod02:foo'},
          Value2 =:= {'$#struct_mod02:bar', 1, B} ->
-    ok.
+    "ok".
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod02:bar', 3)
@@ -52,9 +52,7 @@ index(2) when 2 =:= 2 -> 3.
 remote_with_defaults() ->
     {{'$#struct_mod01:default_with_default',
       {'$#struct_mod01:baz',
-       {'$#struct_mod01:bar',
-        erlang:trunc(1.5),
-        {'$#struct_mod01:foo'}}}},
+       {'$#struct_mod01:bar', 1.5, {'$#struct_mod01:foo'}}}},
      {'$#struct_mod05:with_imported_default',
       {'$#struct_mod02:foo'}}}.
 
