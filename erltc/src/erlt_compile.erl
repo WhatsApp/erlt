@@ -211,7 +211,8 @@ base_passes() ->
         ?pass(extract_options),
         ?pass(erlt_lint_types),
         ?pass(erlt_lint),
-        ?pass(erlt_track_vars)
+        ?pass(erlt_track_vars),
+        ?pass(ensure_build_dir)
     ].
 
 is_makedep2_mode(Options) ->
@@ -623,6 +624,15 @@ set_etf_file(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
             Base ++ ?EtfFileSuffix
         )
     }}.
+
+ensure_build_dir(Code, #compile{build_dir = BuildDir} = St) ->
+    case filelib:ensure_dir(filename:join(BuildDir, "dummy")) of
+        {error, Reason} ->
+            Err = {St#compile.ifile, [{none, ?MODULE, {write_error, Reason}}]},
+            {error, St#compile{errors = St#compile.errors ++ [Err]}};
+        ok ->
+            {ok, Code, St}
+    end.
 
 internal_comp(Passes, Code, File, Suffix, St) ->
     ?OTP_COMPILE:internal_comp(Passes, Code, File, Suffix, St).
