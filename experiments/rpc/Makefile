@@ -11,7 +11,7 @@ fmt:
 
 .PHONY: clean
 clean:
-	(cd ../erltc && rm -rf _build)
+	(cd ../../erltc && rm -rf _build)
 	(cd kitty && make clean)
 	(cd count && make clean)
 	(cd count_impl && make clean)
