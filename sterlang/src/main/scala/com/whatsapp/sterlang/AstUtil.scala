@@ -491,6 +491,9 @@ object AstUtil {
     program.enumDefs.foreach {
       result ++= getDepEnumDef(_)
     }
+    program.structDefs.foreach {
+      result ++= getDepStructDef(_)
+    }
     program.typeAliases.foreach {
       result ++= getDepTypeAlias(_)
     }
@@ -511,6 +514,9 @@ object AstUtil {
 
   private def getDepEnumDef(enumDef: EnumDef): Set[String] =
     enumDef.ctrs.flatMap(_.fields.map(_.tp)).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
+
+  private def getDepStructDef(strDef: StructDef): Set[String] =
+    strDef.fields.map(_.tp).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
   private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
