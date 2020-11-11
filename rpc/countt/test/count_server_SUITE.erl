@@ -70,7 +70,7 @@ all() ->
     [{group, count_group}].
 
 count_test(_Config) ->
-    {ok, _} = count_server:start(myname, 10),
+    count_server:start(myname, 10),
     ?assertEqual(true, count_server:equal(myname, 10)),
     count_server:inc(myname, 5),
     ?assertEqual(false, count_server:equal(myname, 10)),

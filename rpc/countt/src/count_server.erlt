@@ -6,28 +6,35 @@
 
 -export([start/2, stop/1, equal/2, closer/3, inc/2, dec/2]).
 
+-include("stdt.hrl").
+
 -type input() :: integer().
 -type state() :: integer().
 
--enum call_request() ::
-    equal{integer()}
-    | closer{integer(), integer()}.
+-enum call_request() :: (
+    equal{integer()},
+    closer{integer(), integer()}
+).
 
--enum call_response() ::
-    equal{boolean()}
-    | closer{integer()}.
+-enum call_response() :: (
+    equal{boolean()},
+    closer{integer()}
+).
 
--enum cast_request() ::
-    inc{integer()}
-    | dec{integer()}.
+-enum cast_request() :: (
+    inc{integer()},
+    dec{integer()}
+).
 
--spec start(gen_server:name(), input()) -> {ok, pid()}.
+-spec start(gen_server:name(), input()) -> ok_value(pid()).
 start(Name, InitArgs) ->
-    gen_server:start_link({local, Name}, ?MODULE, InitArgs, []).
+    {ok, Pid} = gen_server:start_link({local, Name}, ?MODULE, InitArgs, []),
+    ok_value.ok{Pid}.
 
--spec stop(gen_server:name()) -> ok.
+-spec stop(gen_server:name()) -> ok().
 stop(Name) ->
-    gen_server:stop(Name).
+    ok = gen_server:stop(Name),
+    ok.ok{}.
 
 -spec equal(gen_server:name(), integer()) -> boolean().
 equal(Name, Arg0) ->
@@ -39,19 +46,21 @@ closer(Name, Arg0, Arg1) ->
     call_response.closer{Ans} = gen_server:call(Name, call_request.closer{Arg0, Arg1}),
     Ans.
 
--spec inc(gen_server:name(), integer()) -> ok.
+-spec inc(gen_server:name(), integer()) -> ok().
 inc(Name, Arg0) ->
-    gen_server:cast(Name, cast_request.inc{Arg0}).
+    ok = gen_server:cast(Name, cast_request.inc{Arg0}),
+    ok.ok{}.
 
--spec dec(gen_server:name(), integer()) -> ok.
+-spec dec(gen_server:name(), integer()) -> ok().
 dec(Name, Arg0) ->
-    gen_server:cast(Name, cast_request.dec{Arg0}).
+    ok = gen_server:cast(Name, cast_request.dec{Arg0}),
+    ok.ok{}.
 
--spec init(input()) -> {ok, state()}.
+-spec init(input()) -> atom_ok_value(state()).
 init(Input) ->
     {ok, Input}.
 
--spec handle_call(call_request(), pid(), state()) -> {reply, call_response(), state()}.
+-spec handle_call(call_request(), pid(), state()) -> atom_reply(call_response(), state()).
 handle_call(Request, _From, State) ->
     case Request of
         call_request.equal{^State} ->
@@ -63,7 +72,7 @@ handle_call(Request, _From, State) ->
             {reply, call_response.closer{Result}, State}
     end.
 
--spec handle_cast(cast_request(), state()) -> {noreply, state()}.
+-spec handle_cast(cast_request(), state()) -> atom_noreply(state()).
 handle_cast(Request, State) ->
     case Request of
         cast_request.inc{I} -> {noreply, State + I};

@@ -35,7 +35,7 @@ start(Name) ->
 
 start(Name, InitArgs) ->
     %% Custom startup logic can be added here.
-    service_start({local, Name}, InitArgs).
+    service_start({registration.local{}, Name}, InitArgs).
 
 stop(Name) ->
     service_stop(Name),

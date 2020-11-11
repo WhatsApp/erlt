@@ -9,10 +9,13 @@
 -type input() :: integer().
 -type state() :: integer().
 
+-include("stdt.hrl").
+
 %% This is an enum that approximates the GADT below
--enum call_request() ::
-    equal{integer()}
-    | closer{integer(), integer()}.
+-enum call_request() :: (
+    equal{integer()},
+    closer{integer(), integer()}
+).
 
 %% This generalized enum, that properly types handle_call
 %% -genum call_request(Result) :: {
@@ -20,16 +23,16 @@
 %%     closer(integer(), integer()) -> call_request(integer())
 %% }.
 %% Waiting on https://github.com/WhatsApp/erlt/issues/269 to uncomment this.
+-enum cast_request() :: (
+    inc{integer()},
+    dec{integer()}
+).
 
--enum cast_request() ::
-    inc{integer()}
-    | dec{integer()}.
-
--spec start(gen_server:name(), input()) -> {ok, pid()}.
+-spec start(gen_server:name(), input()) -> okvalue(pid()).
 start(Name, InitArgs) ->
     gen_server:start_link({local, Name}, ?MODULE, InitArgs, []).
 
--spec stop(gen_server:name()) -> ok.
+-spec stop(gen_server:name()) -> ok().
 stop(Name) ->
     gen_server:stop(Name).
 
@@ -41,20 +44,20 @@ equal(Name, Arg0) ->
 closer(Name, Arg0, Arg1) ->
     gen_server:call(Name, call_request.closer{Arg0, Arg1}).
 
--spec inc(gen_server:name(), integer()) -> ok.
+-spec inc(gen_server:name(), integer()) -> ok().
 inc(Name, Arg0) ->
     gen_server:cast(Name, cast_request.inc{Arg0}).
 
--spec dec(gen_server:name(), integer()) -> ok.
+-spec dec(gen_server:name(), integer()) -> ok().
 dec(Name, Arg0) ->
     gen_server:cast(Name, cast_request.dec{Arg0}).
 
--spec init(input()) -> {ok, state()}.
+-spec init(input()) -> okvalue(state()).
 init(Input) ->
     {ok, Input}.
 
-% -spec handle_call(call_request(Result), pid(), state()) -> {reply, Result, state()}.
--spec handle_call(call_request(), pid(), state()) -> {reply, term(), state()}.
+% -spec handle_call(call_request(Result), pid(), state()) -> reply(Result, state()).
+-spec handle_call(call_request(), pid(), state()) -> reply(term(), state()).
 handle_call(Request, _From, State) ->
     case Request of
         call_request.equal{^State} ->
@@ -66,7 +69,7 @@ handle_call(Request, _From, State) ->
             {reply, Result, State}
     end.
 
--spec handle_cast(cast_request(), state()) -> {noreply, state()}.
+-spec handle_cast(cast_request(), state()) -> noreply(state()).
 handle_cast(Request, State) ->
     case Request of
         cast_request.inc{I} -> {noreply, State + I};

@@ -21,35 +21,39 @@ gen(Service) ->
     "\n"
     "-export_type([impl_module/2]).\n"
     "\n"
+    "-include(\"stdt.hrl\").\n"
+    "\n"
     "%% These are the callbacks for the count_server behaviour\n"
     "-struct impl_module(Input, State) :: (\n"
     "    init :: fun((Input) -> State),\n"
     "" ++ lists:join(",\n", lists:map(fun call_impl_str/1, Calls) ++ lists:map(fun cast_impl_str/1, Casts)) ++ "\n"
     ").\n"
     "\n"
-    "-spec start(gen_server:name(), Input, impl_module(Input, _)) -> {ok, pid()}.\n"
+    "-spec start(gen_server:name(), Input, impl_module(Input, _)) -> ok_value(pid()).\n"
     "start(Name, InitArgs, ImplModule) ->\n"
-    "    gen_server:start_link({local, Name}, ?MODULE, {ImplModule, InitArgs}, []).\n"
+    "    {ok, Pid} = gen_server:start_link({local, Name}, ?MODULE, {ImplModule, InitArgs}, []),\n"
+    "    ok_value.ok{Pid}.\n"
     "\n"
-    "-spec stop(gen_server:name()) -> ok.\n"
+    "-spec stop(gen_server:name()) -> ok().\n"
     "stop(Name) ->\n"
-    "    gen_server:stop(Name).\n"
+    "    ok = gen_server:stop(Name),\n"
+    "    ok.ok{}.\n"
     "\n"
     "" ++ lists:join("\n\n", lists:map(fun call_str/1, Calls)) ++ "\n"
     "\n"
     "" ++ lists:join("\n\n", lists:map(fun cast_str/1, Casts)) ++ "\n"
     "\n"
-    "-spec init({impl_module(Input, State), Input}) -> {ok, {impl_module(Input, State), State}}.\n"
+    "-spec init({impl_module(Input, State), Input}) -> atom_ok_value({impl_module(Input, State), State}).\n"
     "init({ImplModule, InitArgs}) ->\n"
     "    State = (ImplModule#impl_module.init)(InitArgs),\n"
     "    {ok, {ImplModule, State}}.\n"
     "\n"
-    "-spec handle_cast\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_cast_spec/1, Casts)) ++ ".\n"
+    "%% -spec handle_cast\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_cast_spec/1, Casts)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_cast_str/1, Casts)) ++ ".\n"
     "\n"
-    "-spec handle_call\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_call_spec/1, Calls)) ++ ".\n"
+    "%% -spec handle_call\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_call_spec/1, Calls)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_call_str/1, Calls)) ++ ".\n".
 
 %% erlfmt-ignore
@@ -73,9 +77,10 @@ call_str(#call{name = Name, params = Params, return = Return}) ->
 
 %% erlfmt-ignore
 cast_str(#cast{name = Name, params = Params}) ->
-    "-spec " ++ Name ++ "(gen_server:name(), " ++ lists:join(", ", Params) ++ ") -> ok.\n"
+    "-spec " ++ Name ++ "(gen_server:name(), " ++ lists:join(", ", Params) ++ ") -> ok().\n"
     "" ++ Name ++ "(Name, " ++ lists:join(", ", args(0, Params)) ++ ") ->\n"
-    "    gen_server:cast(Name, {" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}).".
+    "    ok = gen_server:cast(Name, {" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}),\n"
+    "    ok.ok{}.".
 
 %% erlfmt-ignore
 handle_cast_str(#cast{name = Name, params = Params}) ->

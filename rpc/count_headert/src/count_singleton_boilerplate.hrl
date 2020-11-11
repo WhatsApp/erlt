@@ -7,19 +7,28 @@
 
 -export([handle_call/3, handle_cast/2, init/1]).
 
+-include("stdt.hrl").
+
 -callback handle_init(input()) -> state().
 -callback handle_equal(integer(), state()) -> {boolean(), state()}.
 -callback handle_closer(integer(), integer(), state()) -> {integer(), state()}.
 -callback handle_inc(integer(), state()) -> state().
 -callback handle_dec(integer(), state()) -> state().
 
--spec service_start(atom, input()) -> {ok, pid()} | ignore | {error, term()}.
+-spec service_start(registration(), input()) -> ok_value(pid()).
 service_start(Registration, InitArgs) ->
-    gen_server:start_link({Registration, ?MODULE}, ?MODULE, InitArgs, []).
+    RAtom =
+        case Registration of
+            registration.local{} -> local;
+            registration.global{} -> global
+        end,
+    {ok, Pid} = gen_server:start_link({RAtom, ?MODULE}, ?MODULE, InitArgs, []),
+    ok_value.ok{Pid}.
 
--spec service_stop() -> ok.
+-spec service_stop() -> ok().
 service_stop() ->
-    gen_server:stop(?MODULE).
+    ok = gen_server:stop(?MODULE),
+    ok.ok{}.
 
 -spec equal(integer()) -> boolean().
 equal(Arg0) ->
@@ -29,30 +38,32 @@ equal(Arg0) ->
 closer(Arg0, Arg1) ->
     gen_server:call(?MODULE, {handle_closer, Arg0, Arg1}).
 
--spec inc(integer()) -> ok.
+-spec inc(integer()) -> ok().
 inc(Arg0) ->
-    gen_server:cast(?MODULE, {handle_inc, Arg0}).
+    ok = gen_server:cast(?MODULE, {handle_inc, Arg0}),
+    ok.ok{}.
 
--spec dec(integer()) -> ok.
+-spec dec(integer()) -> ok().
 dec(Arg0) ->
-    gen_server:cast(?MODULE, {handle_dec, Arg0}).
+    ok = gen_server:cast(?MODULE, {handle_dec, Arg0}),
+    ok.ok{}.
 
--spec init(input()) -> {ok, state()}.
+-spec init(input()) -> atom_ok_value(state()).
 init(InitState) ->
     State = handle_init(InitState),
     {ok, State}.
 
--spec handle_cast
-    ({handle_inc, integer()}, state()) -> {noreply, state()};
-    ({handle_dec, integer()}, state()) -> {noreply, state()}.
+%% -spec handle_cast
+%%     ({handle_inc, integer()}, state()) -> noreply(state());
+%%     ({handle_dec, integer()}, state()) -> noreply(state()).
 handle_cast({handle_inc, Arg0}, State) ->
     {noreply, (?MODULE:handle_inc)(Arg0, State)};
 handle_cast({handle_dec, Arg0}, State) ->
     {noreply, (?MODULE:handle_dec)(Arg0, State)}.
 
--spec handle_call
-    ({handle_equal, integer()}, pid(), state()) -> {reply, boolean(), state()};
-    ({handle_closer, integer(), integer()}, pid(), state()) -> {reply, integer(), state()}.
+%% -spec handle_call
+%%     ({handle_equal, integer()}, pid(), state()) -> reply(boolean(), state());
+%%     ({handle_closer, integer(), integer()}, pid(), state()) -> reply(integer(), state()).
 handle_call({handle_equal, Arg0}, _From, State) ->
     {Result, NewState} = (?MODULE:handle_equal)(Arg0, State),
     {reply, Result, NewState};

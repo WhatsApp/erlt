@@ -7,6 +7,8 @@
 
 -export([handle_call/3, handle_cast/2, init/1]).
 
+-include("stdt.hrl").
+
 -callback handle_init(input()) -> state().
 -callback handle_equal(integer(), state()) -> {boolean(), state()}.
 -callback handle_closer(integer(), integer(), state()) -> {integer(), state()}.
@@ -14,9 +16,10 @@
 -callback handle_dec(integer(), state()) -> state().
 
 %% This is an enum that approximates the GADT below
--enum call_request() ::
-    equal{integer()}
-    | closer{integer(), integer()}.
+-enum call_request() :: (
+    equal{integer()},
+    closer{integer(), integer()}
+).
 
 %% This generalized enum, that properly types handle_call
 %% -genum call_request(Result) :: {
@@ -25,17 +28,25 @@
 %% }.
 %% Waiting on https://github.com/WhatsApp/erlt/issues/269 to uncomment this.
 
--enum cast_request() ::
-    inc{integer()}
-    | dec{integer()}.
+-enum cast_request() :: (
+    inc{integer()},
+    dec{integer()}
+).
 
--spec service_start({atom, gen_server:name()}, input()) -> {ok, pid()} | ignore | {error, term()}.
+-spec service_start({registration(), gen_server:name()}, input()) -> ok_value(pid()).
 service_start(RegistrationScheme, InitArgs) ->
-    gen_server:start_link(RegistrationScheme, ?MODULE, InitArgs, []).
+    RScheme =
+        case RegistrationScheme of
+            {registration.local{}, Name} -> {local, Name};
+            {registration.global{}, Name} -> {global, Name}
+        end,
+    {ok, Pid} = gen_server:start_link(RScheme, ?MODULE, InitArgs, []),
+    ok_value.ok{Pid}.
 
--spec service_stop(gen_server:name()) -> ok.
+-spec service_stop(gen_server:name()) -> ok().
 service_stop(Name) ->
-    gen_server:stop(Name).
+    ok = gen_server:stop(Name),
+    ok.ok{}.
 
 -spec equal(gen_server:name(), integer()) -> boolean().
 equal(Name, Arg0) ->
@@ -45,28 +56,29 @@ equal(Name, Arg0) ->
 closer(Name, Arg0, Arg1) ->
     gen_server:call(Name, call_request.closer{Arg0, Arg1}).
 
--spec inc(gen_server:name(), integer()) -> ok.
+-spec inc(gen_server:name(), integer()) -> ok().
 inc(Name, Arg0) ->
-    gen_server:cast(Name, cast_request.inc{Arg0}).
+    ok = gen_server:cast(Name, cast_request.inc{Arg0}),
+    ok.ok{}.
 
--spec dec(gen_server:name(), integer()) -> ok.
+-spec dec(gen_server:name(), integer()) -> ok().
 dec(Name, Arg0) ->
-    gen_server:cast(Name, cast_request.dec{Arg0}).
+    ok = gen_server:cast(Name, cast_request.dec{Arg0}),
+    ok.ok{}.
 
--spec init(input()) -> {ok, state()}.
+-spec init(input()) -> atom_ok_value(state()).
 init(InitState) ->
     State = handle_init(InitState),
     {ok, State}.
 
--spec handle_cast(cast_request(), state()) -> {noreply, state()}.
+-spec handle_cast(cast_request(), state()) -> atom_noreply(state()).
 handle_cast(cast_request.inc{Arg0}, State) ->
     {noreply, (?MODULE:handle_inc)(Arg0, State)};
 handle_cast(cast_request.dec{Arg0}, State) ->
     {noreply, (?MODULE:handle_dec)(Arg0, State)}.
 
 %% This is what the spec would like with a GADT
-%% -spec handle_call(call_request(Result), pid(), state()) -> {reply, Result, state()}.
--spec handle_call(call_request(), pid(), state()) -> {reply, term(), state()}.
+%% -spec handle_call(call_request(Result), pid(), state()) -> atom_reply(Result, state()).
 handle_call(call_request.equal{Arg0}, _From, State) ->
     {Result, NewState} = (?MODULE:handle_equal)(Arg0, State),
     {reply, Result, NewState};

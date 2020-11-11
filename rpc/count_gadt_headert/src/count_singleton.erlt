@@ -32,7 +32,7 @@
 -type state() :: integer().
 
 start() ->
-    service_start(local, 0).
+    service_start(registration.local{}, 0).
 
 stop() ->
     service_stop(),

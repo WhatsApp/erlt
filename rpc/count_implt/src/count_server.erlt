@@ -8,6 +8,8 @@
 
 -export_type([impl_module/2]).
 
+-include("stdt.hrl").
+
 %% These are the callbacks for the count_server behaviour
 -struct impl_module(Input, State) :: (
     init :: fun((Input) -> State),
@@ -17,13 +19,15 @@
     dec :: fun((integer(), State) -> State)
 ).
 
--spec start(gen_server:name(), Input, impl_module(Input, _)) -> {ok, pid()}.
+-spec start(gen_server:name(), Input, impl_module(Input, _)) -> ok_value(pid()).
 start(Name, InitArgs, ImplModule) ->
-    gen_server:start_link({local, Name}, ?MODULE, {ImplModule, InitArgs}, []).
+    {ok, Pid} = gen_server:start_link({local, Name}, ?MODULE, {ImplModule, InitArgs}, []),
+    ok_value.ok{Pid}.
 
--spec stop(gen_server:name()) -> ok.
+-spec stop(gen_server:name()) -> ok().
 stop(Name) ->
-    gen_server:stop(Name).
+    ok = gen_server:stop(Name),
+    ok.ok{}.
 
 -spec equal(gen_server:name(), integer()) -> boolean().
 equal(Name, Arg0) ->
@@ -33,30 +37,32 @@ equal(Name, Arg0) ->
 closer(Name, Arg0, Arg1) ->
     gen_server:call(Name, {closer, Arg0, Arg1}).
 
--spec inc(gen_server:name(), integer()) -> ok.
+-spec inc(gen_server:name(), integer()) -> ok().
 inc(Name, Arg0) ->
-    gen_server:cast(Name, {inc, Arg0}).
+    ok = gen_server:cast(Name, {inc, Arg0}),
+    ok.ok{}.
 
--spec dec(gen_server:name(), integer()) -> ok.
+-spec dec(gen_server:name(), integer()) -> ok().
 dec(Name, Arg0) ->
-    gen_server:cast(Name, {dec, Arg0}).
+    ok = gen_server:cast(Name, {dec, Arg0}),
+    ok.ok{}.
 
--spec init({impl_module(Input, State), Input}) -> {ok, {impl_module(Input, State), State}}.
+-spec init({impl_module(Input, State), Input}) -> atom_ok_value({impl_module(Input, State), State}).
 init({ImplModule, InitArgs}) ->
     State = (ImplModule#impl_module.init)(InitArgs),
     {ok, {ImplModule, State}}.
 
--spec handle_cast
-    ({handle_inc, integer()}, {impl_module(Input, State), State}) -> {noreply, {impl_module(Input, State), State}};
-    ({handle_dec, integer()}, {impl_module(Input, State), State}) -> {noreply, {impl_module(Input, State), State}}.
+%% -spec handle_cast
+%%     ({handle_inc, integer()}, {impl_module(Input, State), State}) -> {noreply, {impl_module(Input, State), State}};
+%%     ({handle_dec, integer()}, {impl_module(Input, State), State}) -> {noreply, {impl_module(Input, State), State}}.
 handle_cast({inc, Arg0}, {ImplModule, State}) ->
     {noreply, {ImplModule, (ImplModule#impl_module.inc)(Arg0, State)}};
 handle_cast({dec, Arg0}, {ImplModule, State}) ->
     {noreply, {ImplModule, (ImplModule#impl_module.dec)(Arg0, State)}}.
 
--spec handle_call
-    ({handle_equal, integer()}, pid(), {impl_module(Input, State), State}) -> {reply, boolean(), {impl_module(Input, State), State}};
-    ({handle_closer, integer(), integer()}, pid(), {impl_module(Input, State), State}) -> {reply, integer(), {impl_module(Input, State), State}}.
+%% -spec handle_call
+%%     ({handle_equal, integer()}, pid(), {impl_module(Input, State), State}) -> {reply, boolean(), {impl_module(Input, State), State}};
+%%     ({handle_closer, integer(), integer()}, pid(), {impl_module(Input, State), State}) -> {reply, integer(), {impl_module(Input, State), State}}.
 handle_call({equal, Arg0}, _From, {ImplModule, State}) ->
     {Result, NewState} = (ImplModule#impl_module.equal)(Arg0, State),
     {reply, Result, {ImplModule, NewState}};

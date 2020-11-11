@@ -16,29 +16,38 @@ gen(Service = #service{singleton = false}) ->
     "\n"
     "-export([handle_call/3, handle_cast/2, init/1]).\n"
     "\n"
+    "-include(\"stdt.hrl\").\n"
+    "\n"
     "-callback handle_init(input()) -> state().\n"
     "" ++ lists:join("\n", lists:map(fun gen_callback/1, RPCs)) ++ "\n"
     "\n"
-    "-spec service_start({atom, gen_server:name()}, input()) -> {ok, pid()} | ignore | {error, term()}.\n"
+    "-spec service_start({registration(), gen_server:name()}, input()) -> ok_value(pid()).\n"
     "service_start(RegistrationScheme, InitArgs) ->\n"
-    "    gen_server:start_link(RegistrationScheme, ?MODULE, InitArgs, []).\n"
+    "    RScheme =\n"
+    "        case RegistrationScheme of\n"
+    "            {registration.local{}, Name} -> {local, Name};\n"
+    "            {registration.global{}, Name} -> {global, Name}\n"
+    "        end,\n"
+    "    {ok, Pid} = gen_server:start_link(RScheme, ?MODULE, InitArgs, []),\n"
+    "    ok_value.ok{Pid}.\n"
     "\n"
-    "-spec service_stop(gen_server:name()) -> ok.\n"
+    "-spec service_stop(gen_server:name()) -> ok().\n"
     "service_stop(Name) ->\n"
-    "    gen_server:stop(Name).\n"
+    "    ok = gen_server:stop(Name),\n"
+    "    ok.ok{}.\n"
     "\n"
     "" ++ lists:join("\n", lists:map(fun gen_call_with_name/1, RPCs)) ++ "\n"
-    "-spec init(input()) -> {ok, state()}.\n"
+    "-spec init(input()) -> atom_ok_value(state()).\n"
     "init(InitState) ->\n"
     "    State = handle_init(InitState),\n"
     "    {ok, State}.\n"
     "\n"
-    "-spec handle_cast\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_cast_spec/1, Service#service.casts)) ++ ".\n"
+    "%% -spec handle_cast\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_cast_spec/1, Service#service.casts)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_cast_str/1, Service#service.casts)) ++ ".\n"
     "\n"
-    "-spec handle_call\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_call_spec/1, Service#service.calls)) ++ ".\n"
+    "%% -spec handle_call\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_call_spec/1, Service#service.calls)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_call_str/1, Service#service.calls)) ++ ".\n"
     ;
 gen(Service = #service{singleton = true}) ->
@@ -52,29 +61,38 @@ gen(Service = #service{singleton = true}) ->
     "\n"
     "-export([handle_call/3, handle_cast/2, init/1]).\n"
     "\n"
+    "-include(\"stdt.hrl\").\n"
+    "\n"
     "-callback handle_init(input()) -> state().\n"
     "" ++ lists:join("\n", lists:map(fun gen_callback/1, RPCs)) ++ "\n"
     "\n"
-    "-spec service_start(atom, input()) -> {ok, pid()} | ignore | {error, term()}.\n"
+    "-spec service_start(registration(), input()) -> ok_value(pid()).\n"
     "service_start(Registration, InitArgs) ->\n"
-    "    gen_server:start_link({Registration, ?MODULE}, ?MODULE, InitArgs, []).\n"
+    "    RAtom =\n"
+    "        case Registration of\n"
+    "            registration.local{} -> local;\n"
+    "            registration.global{} -> global\n"
+    "        end,\n"
+    "    {ok, Pid} = gen_server:start_link({RAtom, ?MODULE}, ?MODULE, InitArgs, []),\n"
+    "    ok_value.ok{Pid}.\n"
     "\n"
-    "-spec service_stop() -> ok.\n"
+    "-spec service_stop() -> ok().\n"
     "service_stop() ->\n"
-    "    gen_server:stop(?MODULE).\n"
+    "    ok = gen_server:stop(?MODULE),\n"
+    "    ok.ok{}.\n"
     "\n"
     "" ++ lists:join("\n", lists:map(fun gen_call/1, RPCs)) ++ "\n"
-    "-spec init(input()) -> {ok, state()}.\n"
+    "-spec init(input()) -> atom_ok_value(state()).\n"
     "init(InitState) ->\n"
     "    State = handle_init(InitState),\n"
     "    {ok, State}.\n"
     "\n"
-    "-spec handle_cast\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_cast_spec/1, Service#service.casts)) ++ ".\n"
+    "%% -spec handle_cast\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_cast_spec/1, Service#service.casts)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_cast_str/1, Service#service.casts)) ++ ".\n"
     "\n"
-    "-spec handle_call\n"
-    "" ++ lists:join(";\n", lists:map(fun handle_call_spec/1, Service#service.calls)) ++ ".\n"
+    "%% -spec handle_call\n"
+    "%% " ++ lists:join(";\n%% ", lists:map(fun handle_call_spec/1, Service#service.calls)) ++ ".\n"
     "" ++ lists:join(";\n", lists:map(fun handle_call_str/1, Service#service.calls)) ++ ".\n"
     .
 
@@ -86,9 +104,10 @@ gen_callback(#call{name = Name, params = Params, return = Return}) ->
 
 %% erlfmt-ignore
 gen_call(#cast{name = Name, params = Params}) ->
-    "-spec " ++ Name ++ "(" ++ lists:join(", ", Params) ++ ") -> ok.\n"
+    "-spec " ++ Name ++ "(" ++ lists:join(", ", Params) ++ ") -> ok().\n"
     "" ++ Name ++ "(" ++ lists:join(", ", args(0, Params)) ++ ") ->\n"
-    "    gen_server:cast(?MODULE, {handle_" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}).\n"
+    "    ok = gen_server:cast(?MODULE, {handle_" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}),\n"
+    "    ok.ok{}.\n"
     ;
 gen_call(#call{name = Name, params = Params, return = Return}) ->
     "-spec " ++ Name ++ "(" ++ lists:join(", ", Params) ++ ") -> " ++ Return ++ ".\n"
@@ -97,9 +116,10 @@ gen_call(#call{name = Name, params = Params, return = Return}) ->
 
 %% erlfmt-ignore
 gen_call_with_name(#cast{name = Name, params = Params}) ->
-    "-spec " ++ Name ++ "(gen_server:name(), " ++ lists:join(", ", Params) ++ ") -> ok.\n"
+    "-spec " ++ Name ++ "(gen_server:name(), " ++ lists:join(", ", Params) ++ ") -> ok().\n"
     "" ++ Name ++ "(Name, " ++ lists:join(", ", args(0, Params)) ++ ") ->\n"
-    "    gen_server:cast(Name, {handle_" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}).\n"
+    "    ok = gen_server:cast(Name, {handle_" ++ Name ++ ", " ++ lists:join(", ", args(0, Params)) ++ "}),\n"
+    "    ok.ok{}.\n"
     ;
 gen_call_with_name(#call{name = Name, params = Params, return = Return}) ->
     "-spec " ++ Name ++ "(gen_server:name(), " ++ lists:join(", ", Params) ++ ") -> " ++ Return ++ ".\n"
@@ -108,11 +128,11 @@ gen_call_with_name(#call{name = Name, params = Params, return = Return}) ->
 
 %% erlfmt-ignore
 handle_cast_spec(#cast{name = Name, params = Params}) ->
-    "    ({handle_" ++ Name ++ ", " ++ lists:join(", ", Params) ++ "}, state()) -> {noreply, state()}".
+    "    ({handle_" ++ Name ++ ", " ++ lists:join(", ", Params) ++ "}, state()) -> noreply(state())".
 
 %% erlfmt-ignore
 handle_call_spec(#call{name = Name, params = Params, return = Return}) ->
-    "    ({handle_" ++ Name ++ ", " ++ lists:join(", ", Params) ++ "}, pid(), state()) -> {reply, " ++ Return ++ ", state()}".
+    "    ({handle_" ++ Name ++ ", " ++ lists:join(", ", Params) ++ "}, pid(), state()) -> reply(" ++ Return ++ ", state())".
 
 %% erlfmt-ignore
 handle_cast_str(#cast{name = Name, params = Params}) ->
