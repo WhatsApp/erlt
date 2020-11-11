@@ -784,7 +784,7 @@ erlt_to_erl1(Code, St) ->
     end.
 
 do_erlt_to_erl1(Code, St0) ->
-    Transforms = [erlt_shape, erlt_modifiers, erlt_pinning],
+    Transforms = [erlt_shape, erlt_modifiers, erlt_pinning, erlt_try],
     case ?OTP_COMPILE:foldl_transform(Transforms, Code, St0) of
         {ok, Erl1Forms, St0} ->
             write_erl1(Erl1Forms, St0),

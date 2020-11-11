@@ -538,14 +538,12 @@ try_clauses -> try_clause : ['$1'].
 try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
 
 try_clause -> pat_expr clause_guard clause_body :
-	A = ?anno('$1','$3'),
-	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
+	{clause, ?anno('$1', '$3'), ['$1'], '$2', '$3'}.
 try_clause -> pat_expr ',' pat_expr try_opt_stacktrace clause_guard clause_body :
-	A = ?anno('$1','$6'),
-	{clause,A,[{tuple,A,['$1','$3','$4']}],'$5','$6'}.
+	{clause, ?anno('$1', '$6'), ['$1', '$3'] ++ '$4', '$5', '$6'}.
 
-try_opt_stacktrace -> ',' pat_expr : '$2'.
-try_opt_stacktrace -> '$empty' : {var,0,'_'}.
+try_opt_stacktrace -> ',' pat_expr : ['$2'].
+try_opt_stacktrace -> '$empty' : [].
 
 argument_list -> '(' ')' : {[],?anno('$1','$2')}.
 argument_list -> '(' exprs ')' : {'$2',?anno('$1','$3')}.
