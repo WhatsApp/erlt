@@ -2705,35 +2705,53 @@ expr({string, _Line, _S}, _Vt, St) ->
     {[], St};
 expr({nil, _Line}, _Vt, St) ->
     {[], St};
-expr({cons, _Line, H, T}, Vt, St) ->
-    expr_list([H, T], Vt, St);
+expr({cons, Line, H, T}, Vt, St) ->
+    exp_expr_list({list, Line}, [H, T], Vt, St);
 expr({lc, _Line, E, Qs}, Vt, St) ->
     handle_comprehension(E, Qs, Vt, St);
 expr({bc, _Line, E, Qs}, Vt, St) ->
     handle_comprehension(E, Qs, Vt, St);
-expr({tuple, _Line, Es}, Vt, St) ->
-    expr_list(Es, Vt, St);
-expr({enum, Line, Name, Variant, Fields}, Vt, St) ->
-    check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
-        init_fields(Fields, Line, ResolvedName, Def, Vt, St1)
-    end);
+expr({tuple, Line, Es}, Vt, St) ->
+    exp_expr_list({tuple, Line}, Es, Vt, St);
+expr({enum, Line, Name, Variant, Fields}, Vt0, St0) ->
+    {Vt1, St1} = check_enum(Line, Name, Variant, St0, fun(ResolvedName, Def, St) ->
+        init_fields(Fields, Line, ResolvedName, Def, Vt0, St)
+    end),
+    {vtupdate(vtexport({enum, Line}, Vt1, Vt0), Vt1), St1};
 expr({map, Line, Es}, Vt, St) ->
-    map_fields(Es, Vt, check_assoc_fields(Es, check_map_allowed(Line, St)), fun expr_list/3);
+    map_fields(
+        Es,
+        Vt,
+        check_assoc_fields(Es, check_map_allowed(Line, St)),
+        fun(Es0, Vt0, St0) ->
+            exp_expr_list({map, Line}, Es0, Vt0, St0)
+        end
+    );
 expr({map, Line, Src, Es}, Vt, St) ->
-    {Svt, St1} = expr(Src, Vt, check_map_allowed(Line, St)),
-    {Fvt, St2} = map_fields(Es, Vt, St1, fun expr_list/3),
+    {Svt, St1} = exp_expr_list({map, Line}, [Src], Vt, check_map_allowed(Line, St)),
+    {Fvt, St2} = map_fields(
+        Es,
+        Vt,
+        St1,
+        fun(Es0, Vt0, St0) ->
+            exp_expr_list({map, Line}, Es0, Vt0, St0)
+        end
+    ),
     {vtupdate(Svt, Fvt), St2};
-expr({shape, _Line, Fields}, Vt, St) ->
-    check_shape_fields(Fields, Vt, St, fun expr/3);
-expr({shape_update, _Line, Expr, Fields}, Vt, St0) ->
+expr({shape, Line, Fields}, Vt, St) ->
+    {Vt1, St1} = check_shape_fields(Fields, Vt, St, fun expr/3),
+    {vtupdate(vtexport({shape, Line}, Vt1, Vt), Vt1), St1};
+expr({shape_update, Line, Expr, Fields}, Vt, St0) ->
     {Evt, St1} = expr(Expr, Vt, St0),
-    check_shape_fields(Fields, vtmerge(Vt, Evt), St1, fun expr/3);
-expr({shape_field, _Line, Expr, _Field}, Vt, St0) ->
-    expr(Expr, Vt, St0);
-expr({struct, Line, Name, Fields}, Vt, St) ->
-    check_struct(Line, Name, St, fun(ResolvedName, Defs, St1) ->
-        init_fields(Fields, Line, ResolvedName, Defs, Vt, St1)
-    end);
+    {Vt2, St2} = check_shape_fields(Fields, vtmerge(Vt, Evt), St1, fun expr/3),
+    {vtupdate(vtexport({shape, Line}, Vt2, Vt), Vt2), St2};
+expr({shape_field, Line, Expr, _Field}, Vt, St0) ->
+    exp_expr_list({shape, Line}, [Expr], Vt, St0);
+expr({struct, Line, Name, Fields}, Vt0, St0) ->
+    {Vt1, St1} = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+        init_fields(Fields, Line, ResolvedName, Defs, Vt0, St)
+    end),
+    {vtupdate(vtexport({struct, Line}, Vt1, Vt0), Vt1), St1};
 expr({struct, Line, Expr, Name, Fields}, Vt, St0) ->
     St1 = warn_invalid_struct(Line, Expr, St0),
     {Evt, St2} = expr(Expr, Vt, St1),
@@ -2741,7 +2759,8 @@ expr({struct, Line, Expr, Name, Fields}, Vt, St0) ->
         check_struct(Line, Name, St2, fun(ResolvedName, Defs, St) ->
             update_fields(Fields, Line, ResolvedName, Defs, Vt, St)
         end),
-    {vtmerge(Evt, Uvt), St3};
+    Vt1 = vtmerge(Evt, Uvt),
+    {vtupdate(vtexport({struct, Line}, Vt1, Vt), Vt1), St3};
 expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
     St1 = warn_invalid_struct(Line, Expr, St0),
     {Evt, St2} = expr(Expr, Vt, St1),
@@ -2749,16 +2768,20 @@ expr({struct_field, Line, Expr, Name, Field}, Vt, St0) ->
         check_struct(Line, Name, St2, fun(ResolvedName, Defs, St) ->
             field(Field, ResolvedName, Defs, St)
         end),
-    {vtmerge(Evt, Fvt), St3};
-expr({struct_index, Line, Name, Field}, _Vt, St0) ->
-    check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
+    Vt1 = vtmerge(Evt, Fvt),
+    {vtupdate(vtexport({struct, Line}, Vt1, Vt), Vt1), St3};
+expr({struct_index, Line, Name, Field}, Vt, St0) ->
+    {Vt1, St1} = check_struct(Line, Name, St0, fun(ResolvedName, Defs, St) ->
         field(Field, ResolvedName, Defs, St)
-    end);
-expr({bin, _Line, Fs}, Vt, St) ->
-    expr_bin(Fs, Vt, St, fun expr/3);
-expr({block, _Line, Es}, Vt, St) ->
+    end),
+    {vtupdate(vtexport({struct, Line}, Vt1, Vt), Vt1), St1};
+expr({bin, Line, Fs}, Vt, St) ->
+    {Vt1, St1} = expr_bin(Fs, Vt, St, fun expr/3),
+    {vtupdate(vtexport({binary, Line}, Vt1, Vt), Vt1), St1};
+expr({block, Line, Es}, Vt, St) ->
     %% Unfold block into a sequence.
-    exprs(Es, Vt, St);
+    {Vt1, St1} = exprs(Es, Vt, St),
+    {vtupdate(vtexport({block, Line}, Vt1, Vt), Vt1), St1};
 expr({'if', Line, Cs}, Vt, St) ->
     icrt_clauses(Cs, {'if', Line}, Vt, St);
 expr({'case', Line, E, Cs}, Vt, St0) ->
@@ -2810,7 +2833,7 @@ expr({call, Line, {remote, _Lr, {atom, _Lm, M}, {atom, Lf, F}}, As}, Vt, St0) ->
     St1 = keyword_warning(Lf, F, St0),
     St2 = check_remote_function(Line, M, F, As, St1),
     St3 = check_module_name(M, Line, St2),
-    expr_list(As, Vt, St3);
+    exp_expr_list({call, Line}, As, Vt, St3);
 expr({call, Line, {remote, _Lr, M, F}, As}, Vt, St0) ->
     St1 = keyword_warning(Line, M, St0),
     St2 = keyword_warning(Line, F, St1),
@@ -2821,10 +2844,10 @@ expr({call, Line, {remote, _Lr, M, F}, As}, Vt, St0) ->
             _ ->
                 St2
         end,
-    expr_list([M, F | As], Vt, St3);
+    exp_expr_list({call, Line}, [M, F | As], Vt, St3);
 expr({call, Line, {atom, La, F}, As}, Vt, St0) ->
     St1 = keyword_warning(La, F, St0),
-    {Asvt, St2} = expr_list(As, Vt, St1),
+    {Asvt, St2} = exp_expr_list({call, Line}, As, Vt, St1),
     A = length(As),
     IsLocal = is_local_function(St2#lint.locals, {F, A}),
     IsAutoBif = erl_internal:bif(F, A),
@@ -2885,7 +2908,7 @@ expr({call, Line, {atom, La, F}, As}, Vt, St0) ->
 expr({call, Line, F, As}, Vt, St0) ->
     St = warn_invalid_call(Line, F, St0),
     %They see the same variables
-    expr_list([F | As], Vt, St);
+    exp_expr_list({call, Line}, [F | As], Vt, St);
 expr({'try', Line, Es, Scs, Ccs, As}, Vt, St0) ->
     %% The only exports we allow are from the try expressions to the
     %% success clauses.
@@ -2920,22 +2943,29 @@ expr({match, _Line, P, E}, Vt, St0) ->
     {vtupdate(Pnew, vtmerge(Evt, Pvt)), St};
 %% No comparison or boolean operators yet.
 expr({op, Line, '^', A}, Vt, St) ->
-    {Vt1, St1} = expr(A, Vt, St),
+    {Vt1, St1} = exp_expr_list({'^', Line}, [A], Vt, St),
     {Vt1, add_error(Line, illegal_caret, St1)};
-expr({op, _Line, _Op, A}, Vt, St) ->
-    expr(A, Vt, St);
+expr({op, Line, Op, A}, Vt, St) ->
+    exp_expr_list({Op, Line}, [A], Vt, St);
 expr({op, Line, Op, L, R}, Vt, St0) when Op =:= 'orelse'; Op =:= 'andalso' ->
-    {Evt1, St1} = expr(L, Vt, St0),
+    {Evt1, St1} = exp_expr_list({Op, Line}, [L], Vt, St0),
     Vt1 = vtupdate(Evt1, Vt),
     {Evt2, St2} = expr(R, Vt1, St1),
     Evt3 = vtupdate(vtunsafe({Op, Line}, Evt2, Vt1), Evt2),
     {vtmerge(Evt1, Evt3), St2};
-expr({op, _Line, _Op, L, R}, Vt, St) ->
-    expr_list([L, R], Vt, St);
+expr({op, Line, Op, L, R}, Vt, St) ->
+    exp_expr_list({Op, Line}, [L, R], Vt, St);
 %They see the same variables
 %% The following are not allowed to occur anywhere!
 expr({remote, Line, _M, _F}, _Vt, St) ->
     {[], add_error(Line, illegal_expr, St)}.
+
+%% mark new vars in expr_list as exported
+
+exp_expr_list(Where, Es, Vt, St) ->
+    {Evt, St1} = expr_list(Es, Vt, St),
+    Evt1 = vtupdate(vtexport(Where, Evt, Vt), Evt),
+    {Evt1, St1}.
 
 %% expr_list(Expressions, Variables, State) ->
 %%      {UsedVarTable,State}
@@ -4483,6 +4513,13 @@ vtupdate(Uvt, Vt0) ->
 vtunsafe({Tag, FileLine}, Uvt, Vt) ->
     Line = erl_anno:location(FileLine),
     [{V, {{unsafe, {Tag, Line}}, U, Ls}} || {V, {_, U, Ls}} <- vtnew(Uvt, Vt)].
+
+%% vtexport(From, UpdVarTable, VarTable) -> ExpVarTable.
+%%  Return all new variables in UpdVarTable as exported.
+
+vtexport({Tag, FileLine}, Uvt, Vt) ->
+    Line = erl_anno:location(FileLine),
+    [{V, {{export, {Tag, Line}}, U, Ls}} || {V, {_, U, Ls}} <- vtnew(Uvt, Vt)].
 
 %% vtmerge(VarTable, VarTable) -> VarTable.
 %%  Merge two variables tables generating a new vartable. Give priority to
