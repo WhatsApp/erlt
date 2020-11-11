@@ -1,6 +1,6 @@
 # Generic Executor in Idris
 
-This is the simplest model of `gen_server` in [Idris](https://www.idris-lang.org/).
+This is the simplest model of `gen_server` in idris.
 
 How to run the end-to-end example:
 
