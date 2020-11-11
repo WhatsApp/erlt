@@ -29,7 +29,8 @@ in  Actions.Workflow::{
                 "check formatting"
                 "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && \$(exit 1))"
             , run "warm up sterlang" "cd sterlang; ../sbtn/sbtn sterlangd"
-            , run "test" "cd ./examples && make test"
+            , run "test examples" "cd ./examples && make test"
+            , run "test rpc experiments" "cd ./experiments/rpc && make generate && make test"
             ]
           }
         }
