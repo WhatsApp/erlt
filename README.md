@@ -20,26 +20,11 @@ feedback from the compiler.
 By default, ErlT is checked (i.e. statically typed), but it also allows some
 functions or modules to be unchecked (i.e. dynamically typed), both to aid
 migration and to allow code to be written for which we don't yet have a good
-typing model, most notably around concurrency. ErlT also has an FFI, which
-provides a structured way to allow checked and unchecked ErlT to interract.
+typing model, most notably around concurrency. ErlT requires adding specs
+to unchecked code in order for it to be accessible and typeable from checked code.
 
-**Unchecked ErlT** is very close to classic Erlang. There are only a few differences:
-
-- Unchecked ErlT is stricter about scoping of variables - it enforces lexical scoping.
-  (Right now it does it by forbidding ambiguity)
-- Unchecked ErlT is explicit about already bound and free variables in patterns.
-  (Right now it does it by forbidding ambiguity)
-- It replaces records with new constructs: [enums](./doc/04_enums.md), [structs and shapes](./doc/05_structs.md).
-- The new [`import_type`](07_import_type.md) construct allows using types from
-  remote modules via short names.
-
-**Checked ErlT** is (syntactically) a subset of unchecked ErlT. It enforces a typing
-discipline. The type system is based on [the Hindley-Milner type
-system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system), extended to support ErlT data types and pattern matching.
 Notably, checked ErlT is currently limited to only the sequential parts of Erlang, and some sequential
 constructs (like list comprehensions or exceptions) are not supported yet.
-
-**ErlT FFI** allows unchecked code to be exposed via a checked API. See [modes](./doc/03_modes.md) for more information.
 
 ## Getting started using ErlT
 
