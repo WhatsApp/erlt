@@ -3,5 +3,4 @@
 *.cmi
 *.cmo
 /src/erlt_build_template_mk.erl
-/.rebar3
 /ebin
