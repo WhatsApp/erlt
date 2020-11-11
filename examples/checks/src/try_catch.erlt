@@ -1,8 +1,11 @@
 
 -module(try_catch).
 
--export([t1/2]).
+-export([t1/2, t2/0]).
 
+-exception reason :: ().
+
+[unchecked]
 t1(F, Bound) ->
     try
         F()
@@ -25,4 +28,15 @@ t1(F, Bound) ->
         exit, _ -> ok;
         error, _ -> ok;
         throw, _ -> ok
+    end.
+
+t2() ->
+    try
+        "ok"
+    catch
+        #reason{} -> 'ok';
+        'throw', #reason{} -> 'error';
+        'error', #reason{}  -> 'error';
+        'exit', #reason{} -> 'error';
+        _, #reason{}, Stack -> 'error'
     end.

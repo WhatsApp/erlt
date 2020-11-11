@@ -111,10 +111,7 @@ object Convert {
   }
 
   private def convertCatchClause(catchClause: Exprs.Clause): Ast.Rule = {
-    val List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) = catchClause.pats
-    val Ast.WildPat() = convertPattern(stackTrace)
-    val Patterns.LiteralPattern(literal) = exnClass
-    val Exprs.AtomLiteral(_, "throw") = literal
+    val List(exn) = catchClause.pats
     val exnPat = convertPattern(exn)
     Ast.Rule(exnPat, catchClause.guards.map(convertGuard), convertBody(catchClause.body))
   }

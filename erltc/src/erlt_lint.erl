@@ -489,6 +489,8 @@ format_error(illegal_catch_kind) ->
     "only variables and atoms throw, exit, and error are allowed in kind position of catch clauses";
 format_error(illegal_catch_stack) ->
     "only unbound variables are allowed in stacktrace position of catch clauses";
+format_error(illegal_checked_catch) ->
+    "checked code does not support capturing class or stacktrace in catch clauses";
 %% --- binaries ---
 format_error({undefined_bittype, Type}) ->
     io_lib:format("bit type ~tw undefined", [Type]);
@@ -3981,8 +3983,8 @@ icrt_clauses(Cs, Vt, St) ->
 catch_clauses(Cs, Vt, St) ->
     mapfoldl(fun(C, St0) -> catch_clause(C, Vt, St0) end, St, Cs).
 
-catch_clause({clause, _Line, H, G, B}, Vt0, St0) ->
-    {TaintVt, St1} = catch_head(H, Vt0, St0),
+catch_clause({clause, Line, H, G, B}, Vt0, St0) ->
+    {TaintVt, St1} = catch_head(H, Line, Vt0, St0),
     icrt_clause(H, G, B, Vt0, TaintVt, St1).
 
 icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
@@ -3998,9 +4000,17 @@ icrt_clause(H, G, B, Vt0, TaintVt, St0) ->
     {Bvt, St4} = exprs(B, vtupdate(Vt3, Vt0), St3),
     {vtupdate(Bvt, Vt3), St4}.
 
-catch_head([{tuple, _, [Kind, _Reason, Stack]}], Vt0, St0) ->
+catch_head([_], _Line, _Vt0, #lint{type_checked = true} = St0) ->
+    {[], St0};
+catch_head(_, Line, _Vt0, #lint{type_checked = true} = St0) ->
+    {[], add_error(Line, illegal_checked_catch, St0)};
+catch_head([Kind, _Reason, Stack], _Line, Vt0, St0) ->
     St1 = validate_catch_kind(Kind, St0),
-    taint_stack_var(Stack, Vt0, St1).
+    taint_stack_var(Stack, Vt0, St1);
+catch_head([Kind, _Reason], _Line, _Vt0, St0) ->
+    {[], validate_catch_kind(Kind, St0)};
+catch_head([_], _Line, _Vt0, St0) ->
+    {[], St0}.
 
 validate_catch_kind({var, _, _}, St) -> St;
 validate_catch_kind({atom, _, exit}, St) -> St;
