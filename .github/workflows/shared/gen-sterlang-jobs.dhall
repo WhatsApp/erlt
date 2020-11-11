@@ -45,7 +45,7 @@ let test =
             "test erltc + stErlang in dev mode"
             ''
             cd sterlang
-            sbt --client 'bgRunMain com.whatsapp.sterlang.SterlangD'
+            sbt --client sterlangd
             cd examples
             rebar3 compile
             ''
@@ -87,7 +87,7 @@ let toNativeImageJob =
               [ setUpJava
               , usesWith
                   "Setup GraalVM Environment"
-                  "DeLaGuardo/setup-graalvm@2.0"
+                  "DeLaGuardo/setup-graalvm@master"
                   (toMap { graalvm-version = "20.1.0.java11" })
               , run "Install Native Image Plugin" "gu install native-image"
               , usesWith
@@ -97,7 +97,7 @@ let toNativeImageJob =
               , run "ls" "ls -lah"
               , run
                   "Build native image '${nativeName}'"
-                  "native-image --no-server --no-fallback -O4 -jar ${jarName} ${nativeName}"
+                  "native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar ${jarName} ${nativeName}"
               ]
             # toUploadSteps nativeName
         }

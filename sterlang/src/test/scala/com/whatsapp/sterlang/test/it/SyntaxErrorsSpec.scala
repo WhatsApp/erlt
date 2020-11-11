@@ -62,10 +62,10 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       fail(s"$erltPath should generate an UnsupportedSyntaxError or a ParseError")
     } catch {
       case error: UnsupportedSyntaxError =>
-        val errMsg = DriverDev.rangeErrorString(erltPath, fileContent(erltPath), error)
+        val errMsg = Util.rangeErrorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
       case error: ParseError =>
-        val errMsg = DriverDev.posErrorString(erltPath, fileContent(erltPath), error)
+        val errMsg = Util.posErrorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
     }
   }

@@ -26,7 +26,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
   val dev = true
-  val driver: Driver =
+  val driver: DriverApi =
     if (dev) DriverDev else DriverErltc
 
   testDir("examples/neg/src")
@@ -85,7 +85,7 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       fail(s"$mainFile should not type-check")
     } catch {
       case error: RangeError =>
-        val actualErr = driver.rangeErrorString(erltPath, fileContent(erltPath), error)
+        val actualErr = Util.rangeErrorString(erltPath, fileContent(erltPath), error)
         if (generateOut) {
           val expPath = Paths.get(erltPath + ".err.exp")
           Files.write(expPath, actualErr.getBytes)

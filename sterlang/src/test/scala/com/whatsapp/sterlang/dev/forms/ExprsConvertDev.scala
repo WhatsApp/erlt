@@ -107,7 +107,7 @@ object ExprsConvertDev {
             )
           ) =>
         val AtomLiteral(p, fieldName) = ExprsConvertDev.literal(eFieldName)
-        LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
+        LocalStructSelect(r(anno), convertExp(eExp), structName, LblIndex(fieldName))
       case ETuple(
             List(
               EAtom("struct_field"),
@@ -125,7 +125,7 @@ object ExprsConvertDev {
             )
           ) =>
         val AtomLiteral(p, fieldName) = ExprsConvertDev.literal(eFieldName)
-        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
+        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, LblIndex(fieldName))
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>

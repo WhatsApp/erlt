@@ -186,55 +186,36 @@ class AstChecks(val context: Context) {
       case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
         params.foreach(expandType(program, visited))
       case UserType(name: LocalName, params) =>
-        program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size) match {
-          case Some(_) =>
-            params.foreach(expandType(program, visited))
-          case None =>
-            if (visited(name)) {
-              throw Cycle(name.name)
-            }
-            program.typeAliases.find(a => a.name == name.name && a.params.size == params.size) match {
-              case Some(alias) =>
-                expandType(program, visited + name)(alias.body)
-                params.foreach(expandType(program, visited))
-              case None =>
-                program.opaques.find(a => a.name == name.name && a.params.size == params.size) match {
-                  case Some(opaque) =>
-                    expandType(program, visited + name)(opaque.body)
-                    params.foreach(expandType(program, visited))
-                  case None =>
-                    val strName = name.stringId
-                    program.structDefs.find(s => s.name == strName && s.params.size == params.size) match {
-                      case Some(eRec) =>
-                        params.foreach(expandType(program, visited))
-                        eRec.kind match {
-                          case ExnStruct =>
-                            throw new ExceptionType(tp.r, strName)
-                          case MsgStruct =>
-                            throw new MessageType(tp.r, strName)
-                          case StrStruct =>
-                          // OK
-                        }
-                      case None =>
-                        throw new UnknownType(tp.r, name.stringId, params.size)
-                    }
-                }
-            }
+        val enumOpt = program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
+        val structOpt = program.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
+        val opaqueOpt = program.opaques.find(o => o.name == name.name && o.params.size == params.size)
+        val aliasOpt = program.typeAliases.find(a => a.name == name.name && a.params.size == params.size)
+        if (enumOpt.isEmpty && structOpt.isEmpty && opaqueOpt.isEmpty && aliasOpt.isEmpty)
+          throw new UnknownType(tp.r, name.stringId, params.size)
+        if (visited(name))
+          throw Cycle(name.name)
+        structOpt.map(_.kind).getOrElse(StrStruct) match {
+          case ExnStruct => throw new ExceptionType(tp.r, name.stringId)
+          case MsgStruct => throw new MessageType(tp.r, name.stringId)
+          case StrStruct => // OK
         }
+        aliasOpt.foreach { a => expandType(program, visited + name)(a.body) }
+        opaqueOpt.foreach { a => expandType(program, visited + name)(a.body) }
+        params.foreach(expandType(program, visited))
       case UserType(name: RemoteName, params) =>
-        context.enumDefs.find(_.name == name.stringId) match {
-          case Some(_) =>
-            params.foreach(expandType(program, visited))
-          case None =>
-            context.aliases.find(a => a.name == name.stringId && a.params.size == params.size) match {
-              case Some(alias) =>
-                expandType(program, visited)(alias.body)
-                params.foreach(expandType(program, visited))
-              case None =>
-                throw new UnknownType(tp.r, name.stringId, params.size)
-            }
+        val enumOpt = context.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
+        val structOpt = context.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
+        val opaqueOpt = context.opaques.find(o => o.name == name && o.arity == params.size)
+        val aliasOpt = context.aliases.find(a => a.name == name.stringId && a.params.size == params.size)
+        if (enumOpt.isEmpty && structOpt.isEmpty && opaqueOpt.isEmpty && aliasOpt.isEmpty)
+          throw new UnknownType(tp.r, name.stringId, params.size)
+        structOpt.map(_.kind).getOrElse(StrStruct) match {
+          case ExnStruct => throw new ExceptionType(tp.r, name.stringId)
+          case MsgStruct => throw new MessageType(tp.r, name.stringId)
+          case StrStruct => // OK
         }
-
+        aliasOpt.foreach { a => expandType(program, visited)(a.body) }
+        params.foreach(expandType(program, visited))
       case _: TypeVar =>
       // OK
 

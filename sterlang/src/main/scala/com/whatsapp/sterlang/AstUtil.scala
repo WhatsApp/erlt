@@ -491,6 +491,9 @@ object AstUtil {
     program.enumDefs.foreach {
       result ++= getDepEnumDef(_)
     }
+    program.structDefs.foreach {
+      result ++= getDepStructDef(_)
+    }
     program.typeAliases.foreach {
       result ++= getDepTypeAlias(_)
     }
@@ -511,6 +514,9 @@ object AstUtil {
 
   private def getDepEnumDef(enumDef: EnumDef): Set[String] =
     enumDef.ctrs.flatMap(_.fields.map(_.tp)).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
+
+  private def getDepStructDef(strDef: StructDef): Set[String] =
+    strDef.fields.map(_.tp).map(getDepType).foldLeft(Set.empty[String])(_ ++ _)
 
   private def getDepTypeAlias(typeAlias: TypeAlias): Set[String] =
     getDepType(typeAlias.body)
@@ -557,8 +563,14 @@ object AstUtil {
         pats.map(getDepPat).foldLeft(Set.empty[String])(_ ++ _)
       case ShapePat(fields) =>
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
-      case StructPat(_, fields) =>
-        fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
+      case StructPat(strName, fields) =>
+        val strDep: Set[String] = strName match {
+          case LocalName(_) =>
+            Set.empty[String]
+          case RemoteName(module, _) =>
+            Set(module)
+        }
+        fields.map(f => getDepPat(f.value)).foldLeft(strDep)(_ ++ _)
       case AndPat(p1, p2) =>
         getDepPat(p1) ++ getDepPat(p2)
       case EnumPat(enumName, _, fields) =>
@@ -607,8 +619,14 @@ object AstUtil {
         Set(remote.module)
       case ShapeCreateExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
-      case StructCreate(_, fields) =>
-        fields.flatMap(f => getDepExp(f.value)).toSet
+      case StructCreate(strName, fields) =>
+        val strDep = strName match {
+          case LocalName(_) =>
+            Set.empty[String]
+          case RemoteName(module, _) =>
+            Set(module)
+        }
+        fields.map(f => getDepExp(f.value)).foldLeft(strDep)(_ ++ _)
       case StructUpdate(struct, _, fields) =>
         getDepExp(struct) ++ fields.flatMap(f => getDepExp(f.value))
       case StructSelect(struct, _, _) =>

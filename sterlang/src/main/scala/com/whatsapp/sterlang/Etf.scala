@@ -19,7 +19,7 @@ package com.whatsapp.sterlang
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.forms.FormsConvertErlt
+import com.whatsapp.sterlang.forms.FormsConvert
 
 object Etf {
 

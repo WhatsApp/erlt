@@ -589,6 +589,10 @@ build_type({atom, _, Name}, Types, A) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
 
+type_tag(message, NumberOfTypeVariables) ->
+    type;
+type_tag(exception, NumberOfTypeVariables) ->
+    type;
 type_tag(TypeName, NumberOfTypeVariables) ->
     case erl_internal:is_type(TypeName, NumberOfTypeVariables) of
         true -> type;

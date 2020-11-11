@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:alanz/erl-experiments.git
+	branch = erlt
+	commit = 4b8b96fe4c739207487826ec446a8d4260ddae23
+	parent = 85532e827d6ecdfc4bc7aef5cf47a694000602ff
+	method = merge
+	cmdver = 0.4.1

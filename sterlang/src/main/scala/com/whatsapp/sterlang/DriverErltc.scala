@@ -23,17 +23,18 @@ import com.whatsapp.sterlang.Etf._
 
 import scala.collection.mutable
 
-object DriverErltc extends Driver {
+object DriverErltc extends DriverApi {
 
   def main(args: Array[String]): Unit =
-    process(args.toList)
+    args match {
+      case Array(file) => process(file)
+      case _           => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
+    }
 
-  private def process(files: List[String]): Unit = {
-    val List(_, etfFile) = files
+  private def process(etfFile: String): Unit = {
     val start = System.currentTimeMillis()
-    processFile(etfFile)
     val sterlangTime = System.currentTimeMillis() - start
-    val result = processFile(etfFile) match {
+    val result = doProcessFile(etfFile) match {
       case Some(error) => convertError(error)
       case None        => ETuple(List(EAtom("ok")))
     }
@@ -41,7 +42,7 @@ object DriverErltc extends Driver {
     stdoutResponse(response)
   }
 
-  private def processFile(etfFile: String): Option[SterlangError] = {
+  private def doProcessFile(etfFile: String): Option[SterlangError] = {
     val mainFile = etfFile
     val rawProgram =
       try loadProgram(mainFile)
@@ -70,6 +71,8 @@ object DriverErltc extends Driver {
 
   private def freshTypeVar(vars: Vars): Types.Type =
     Types.VarType(vars.tVar(Types.Open(0)))
+  private def freshRowTypeVar(vars: Vars, kind: Types.RtVarKind): Types.RowType =
+    Types.RowVarType(vars.rVar(Types.RowOpen(0, kind)))
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
@@ -106,9 +109,13 @@ object DriverErltc extends Driver {
       val name = spec.name.stringId
       val funType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(funType)
-      val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
+      val rVars = AstUtil.collectNamedRowTypeVars(funType)
+      val sSub: Expander.Sub =
+        sVars.map { v => v -> Left(freshTypeVar(vars)) }.toMap
+      val rSub: Expander.Sub =
+        rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(vars, kind)) }.toMap
       val eSub: Expander.Sub =
-        sub.view.mapValues(Left(_)).toMap
+        sSub ++ rSub
       val specType = expander.mkType(funType, eSub)
       val expSpecType = expander.expandType(specType)
       val scheme = TU.generalize(0)(expSpecType)
@@ -119,21 +126,6 @@ object DriverErltc extends Driver {
 
   def loadProgram(file: String): Ast.Program =
     EtfErltc.programFromFile(file)
-
-  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
-    val RangeError(range, title, description) = error
-    val ranger = Doc.Ranger(inputContent, range.start, range.end)
-    val msgTitle = Doc.title(error.severity, inputPath, range.start)
-    val descText = description.map(_ ++ "\n").getOrElse("")
-    msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
-  }
-
-  def posErrorString(inputPath: String, inputContent: String, error: PosError): String = {
-    val PosError(pos, title) = error
-    val locator = Doc.Locator(inputContent, pos)
-    val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\n$title\n${locator.longString}\n"
-  }
 
   private def convertPos(pos: Doc.Pos): ETerm =
     ETuple(List(ELong(pos.line.toLong), ELong(pos.column.toLong)))
