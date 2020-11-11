@@ -5,12 +5,12 @@ This is the simplest model of `gen_server` in idris.
 How to run the end-to-end example:
 
 ```
-$ idris --build gen_exec.ipgk
+$ idris --build gen_exec.ipkg
 $ ./counter_test.exe
 True
 ```
 
-## [`GenExec`](GenExec.idr) 
+## [`GenExec`](GenExec.idr)
 
 `GenExec` is a simplification of `gen_server`.
 It provides a simple infrastructure for execution of stateful computations
@@ -117,7 +117,7 @@ mkServer initState =
     decImpl () = execCast exec Dec
     equalImpl i = execCall exec (Equal i)
     closerImpl x y = execCall exec (Closer x y)
-``` 
+```
 
 ## CounterTest
 
