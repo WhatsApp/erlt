@@ -1,14 +1,71 @@
+%% Checks attempts to use variables exported from subexpressions
 
 -module(export_var).
 
 -export([f/1]).
 
+-enum e(A) :: (c{v::A}).
+
+-struct s :: (f = 0 :: integer()).
+
 %% Error: use of exported variables is not allowed
 f(X) ->
     case X of
-        {'ok', Y} -> 'ok';
-        {'b', Y} -> 'ok'
+        {'ok', Case} -> 'ok';
+        {'error', Case} -> 'ok'
     end,
-    lists:append(Z=[1,2,3], [4,5]),
-    %% Y exported from case, Z exported from argument list
-    {'ok', Y, Z}.
+    if X > 0 -> If = 1;
+       true -> If = 0
+    end,
+    receive
+        {'a', Receive} -> ok;
+        {'b', Receive} -> ok
+    end,
+    begin
+        BlockVar = X+1
+    end,
+    g(LocalCallArg = X),
+    lists:append(RemoteCallArg = [1,2,3], [4,5]),
+    X:f(DynRemoteCallArg = 'foo'),
+    -(UnaryOpArg=42),
+    2*(RightBinaryOpArg = 42),
+    (LeftBinaryOpArg = 17)/2,
+    (AndAlsoLeftArg = true) andalso (X =:= 1),
+    _ = {'foo', TupleArg = X + 1, 'bar'},
+    _ = [ConsHeadArg = X + 1 | ConsTailArg = []],
+    Map = #{a => MapVal = 303},
+    _ = (MapUpdateArg=Map)#{a := MapUpdateVal=909},
+    _ = << 1:1, (BinaryVal=2):1, 3:1 >>,
+    _Enum = e.c{ v = (EnumVal = 42) },
+    Shape = #(a = (ShapeVal = 11)),
+    _ = (ShapeUpdateArg=Shape)#(a = (ShapeUpdateVal = 22)),
+    _ = (ShapeFieldArg=Shape)#(a),
+    Struct = #s{f = (StructVal = 1)},
+    _ = (StructUpdateArg=Struct)#s{f = (StructUpdateVal = 2)},
+    _ = (StructFieldArg=Struct)#s.f,
+    {ok,
+      Case,
+      If,
+      Receive,
+      BlockVar,
+      LocalCallArg,
+      RemoteCallArg,
+      DynRemoteCallArg,
+      UnaryOpArg,
+      RightBinaryOpArg, LeftBinaryOpArg,
+      AndAlsoLeftArg,
+      TupleArg,
+      ConsHeadArg, ConsTailArg,
+      MapVal,
+      MapUpdateVal, MapUpdateArg,
+      BinaryVal,
+      EnumVal,
+      ShapeVal,
+      ShapeUpdateVal, ShapeUpdateArg,
+      ShapeFieldArg,
+      StructVal,
+      StructUpdateVal, StructUpdateArg,
+      StructFieldArg
+    }.
+
+g(A) -> erlang:display(A).
