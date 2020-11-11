@@ -9,10 +9,11 @@ testCounterServer : Int -> Int -> Bool
 testCounterServer start guess =
   runPure (
     do server <- Counter.mkServer start
-       inc server ()
-       inc server ()
+       inc server 1
+       inc server 2
+       inc server 3
        eq <- (equal server guess)
        pure eq)
 
 main : IO ()
-main = printLn (testCounterServer 0 2)
+main = printLn (testCounterServer 0 6)

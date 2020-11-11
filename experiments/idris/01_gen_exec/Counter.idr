@@ -4,11 +4,11 @@ import Effects
 import Effect.State
 import GenExec
 
-data Cast = Inc | Dec
+data Cast = Inc Int | Dec Int
 
 handleCast : Cast -> Int -> Int
-handleCast Inc state = state + 1
-handleCast Dec state = state - 1
+handleCast (Inc delta) state = state + delta
+handleCast (Dec delta) state = state - delta
 
 data Call = Equal Int | Closer Int Int
 
@@ -31,8 +31,8 @@ counterHandlers = GenExec.MkHandlers handleCast handleCall
 public export
 record CounterServer where
   constructor MkCounterServer
-  inc : () -> Eff () [STATE Int]
-  dec : () -> Eff () [STATE Int]
+  inc : Int -> Eff () [STATE Int]
+  dec : Int -> Eff () [STATE Int]
   equal : Int -> Eff Bool [STATE Int]
   closer : Int -> Int -> Eff Int [STATE Int]
 
@@ -44,7 +44,7 @@ mkServer initState =
   where
     exec : GenExec.Executor _ _ _ CounterProtocol
     exec = GenExec.mkExecutor counterHandlers
-    incImpl () = execCast exec Inc
-    decImpl () = execCast exec Dec
+    incImpl delta = execCast exec (Inc delta)
+    decImpl delta = execCast exec (Dec delta)
     equalImpl i = execCall exec (Equal i)
     closerImpl x y = execCall exec (Closer x y)
