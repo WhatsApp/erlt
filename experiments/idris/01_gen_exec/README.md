@@ -17,7 +17,7 @@ It provides a simple infrastructure for execution of stateful computations
 via [STATE](http://docs.idris-lang.org/en/latest/effects/summary.html#state).
 
 
-In essense, given a `Handlers` record (= gen_server callbacks):
+In essence, given a `Handlers` record (= gen_server callbacks):
 
 ```idris
 record Handlers (stateT : Type)
