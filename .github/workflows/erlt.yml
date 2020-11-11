@@ -21,8 +21,10 @@ jobs:
         run: "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && $(exit 1))"
       - name: warm up sterlang
         run: "cd sterlang; ../sbtn/sbtn sterlangd"
-      - name: test
+      - name: test examples
         run: "cd ./examples && make test"
+      - name: test rpc experiments
+        run: "cd ./experiments/rpc && make generate && make test"
 name: ErlT CI
 on:
   push: {}
