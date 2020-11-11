@@ -1,0 +1,31 @@
+-module(catch_and_throw).
+
+-export([test/0]).
+
+-exception exn :: (value :: integer()).
+
+-spec test() -> [integer()].
+test() ->
+    [test_checked(X) || X <- [0,1,2,3]].
+
+test(X) ->
+    case X of
+        0 -> throw(#exn{value=X});
+        1 -> error(#exn{value=X});
+        2 -> exit(#exn{value=X});
+        _ -> X
+    end.
+
+test_checked(X) ->
+    try
+        test(X)
+    catch
+        throw, #exn{value=Y} -> Y;
+        error, #exn{value=Y}, Stck -> deal_with_stack_trace(Stck), Y;
+        exit, #exn{value=Y} -> Y
+    end.
+
+-spec deal_with_stack_trace([_X]) -> {}.
+[unchecked]
+deal_with_stack_trace(Stck) ->
+    io:format("~p~n", [Stck]).
