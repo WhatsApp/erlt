@@ -2,11 +2,6 @@
 
 -export([main/1]).
 
--enum call_request() :: (
-    equal{integer()},
-    closer{integer(), integer()}
-).
-
 -struct dup(A) :: (a :: fun((A) -> A), b :: A).
 
 id(A) -> A.
