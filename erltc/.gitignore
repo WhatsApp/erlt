@@ -2,6 +2,4 @@
 *._.mli
 *.cmi
 *.cmo
-# generated from ./make_statics.escript
-/src/erlt_build_statics.erl
 
