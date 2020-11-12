@@ -14,7 +14,7 @@ The current implementation is a hack for M0. We will do something more maintaina
 
 in this directory:
 - update the erlt files
+- update ./make_statics.escript main/1 to indicate, for each module, whether it contains types for an existing module (such as `lists`) or is a new module (such as `t_io`).
 - `make`
-- commit the changes, including those in ./build
 - you may need to update the `-x` (exclude) flags in our tests, currently in ../../examples/Makefile. For example, we ignore generated t_io.* files when diffing.
 
