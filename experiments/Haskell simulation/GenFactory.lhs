@@ -7,7 +7,7 @@ the next free worker.
 
 I'll comment only the new parts of the code below.
 
-> {-# LANGUAGE GADTs, MultiParamTypeClasses, FunctionalDependencies, ScopedTypeVariables #-}
+> {-# LANGUAGE GADTs, MultiParamTypeClasses, FunctionalDependencies #-}
 
 > module GenFactory(Behaviour(..), GenFactory, CallResponse(..), CastResponse(..),
 >                   start, call, cast) where
@@ -52,12 +52,11 @@ creating the factory state for the first time here, and GHC *needs* to
 know what type it is, so it knows which behaviour to pass to
 serverLoop (to satisfy the Behaviour constraint).
 
-> start :: forall call cast state.
->   Behaviour state call cast => state -> Int -> Process (GenFactory call cast)
+> start :: Behaviour state call cast => state -> Int -> Process (GenFactory call cast)
 > start s n = fmap GenFactory . spawn $ do
 >   me <- self
 >   ws <- sequence [startWorker me s | _ <- [1..n]]
->   serverLoop Factory{ workers=ws, pending=[] :: [Request call cast]}
+>   serverLoop Factory{ workers=ws, pending=[] }
 
 The main server loop. The receive here can receive two types of
 messages, which is why there are two clauses. The first type is a
@@ -87,8 +86,8 @@ are very similar to the old GenServer process... the only difference
 is that every time a worker finishes processing a request, it sends
 its pid back to the server so that it can be sent another.
 
-> startWorker :: (Behaviour state call cast, Typeable a) =>
->                  Pid (Pid a) -> state -> Process (Pid a)
+> startWorker :: Behaviour state call cast =>
+>                  Pid (Pid (Request call cast)) -> state -> Process (Pid (Request call cast))
 > startWorker parent s = spawn $ do
 >   s' <- init s
 >   workerLoop parent s'
