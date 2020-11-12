@@ -18,6 +18,13 @@
 %%
 %% %CopyrightEnd%
 
+-type err_warn_info() :: tuple().
+
+-type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
+
+%% needed for compile state record
+-type abstract_code() :: [erl_parse:abstract_form()].
+
 %% The compile state record.
 -record(compile, {
     %% our added fields

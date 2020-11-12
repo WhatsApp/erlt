@@ -22,31 +22,16 @@
 %% API Functions
 %%==============================================================================
 
-%% -spec source() -> binary().
-%% source() ->
-%%   <<"ErlT">>.
-
 -spec compile(uri()) -> [els_diagnostics:diagnostic()].
 compile(Uri) ->
-  %% Path = els_utils:to_list(els_uri:path(Uri)),
-  %% WS = [],
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
   Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s rebar3 compile",
                       [TempFile])),
   os:cmd(Cmd),
   {ok, FileName} = get_els_file(TempFile, Uri),
-  {ok, [{_TS, WS, ES}]} = file:consult(FileName),
-  Path = els_utils:to_list(els_uri:path(Uri)),
-
-  els_compiler_diagnostics:diagnostics(Path, WS, ?DIAGNOSTIC_WARNING) ++
-       els_compiler_diagnostics:diagnostics(Path, ES, ?DIAGNOSTIC_ERROR).
-
-  %% lager:info("compile:[~p]", {Uri, Cmd, Diags}),
-  %% Message = io_lib:format("Cmd, FileName, Diags: [~p]",
-  %%                         [{Cmd, FileName, Diags}]),
-  %% [diagnostic(#{ from => {1, 1}, to => {2, 1} }
-  %%            , blah, Message, ?DIAGNOSTIC_WARNING)].
+  {ok, [{_TS, Diags}]} = file:consult(FileName),
+  Diags.
 
 
 -spec get_els_file(file:filename(), uri())
@@ -65,18 +50,6 @@ get_els_file(TempFile, Uri) ->
 %%==============================================================================
 %% Private Functions
 %%==============================================================================
-
-%% -spec diagnostic(poi_range(), module(), string(), integer()) ->
-%%         els_diagnostics:diagnostic().
-%% diagnostic(Range, _Module, Desc, Severity) ->
-%%   %% Message0 = lists:flatten(Module:format_error(Desc)),
-%%   Message0 = Desc,
-%%   Message  = els_utils:to_binary(Message0),
-%%   #{ range    => els_protocol:range(Range)
-%%    , message  => Message
-%%    , severity => Severity
-%%    , source   => source()
-%%    }.
 
 -spec temporary_file() -> file:filename().
 temporary_file() ->

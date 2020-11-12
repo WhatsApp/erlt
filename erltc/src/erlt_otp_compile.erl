@@ -98,13 +98,9 @@
 
 %%----------------------------------------------------------------------
 
--type abstract_code() :: [erl_parse:abstract_form()].
-
 %% Internal representations used for 'from_asm' and 'from_beam' compilation can
 %% also be valid, but have no relevant types defined.
 -type forms() :: abstract_code() | cerl:c_module().
-
--type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
 
 -type err_info() ::
     {erl_anno:line() | 'none',
@@ -450,8 +446,6 @@ format_error_reason({Reason, Stack}) when is_list(Stack) ->
     ];
 format_error_reason(Reason) ->
     io_lib:format("~tp", [Reason]).
-
--type err_warn_info() :: tuple().
 
 %% The compile state record.
 -include("erlt_compile.hrl").

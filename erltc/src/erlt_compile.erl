@@ -54,13 +54,6 @@
 %Macro to avoid misspellings.
 -define(STDERR, standard_error).
 
--type err_warn_info() :: tuple().
-
--type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
-
-%% needed for compile state record
--type abstract_code() :: [erl_parse:abstract_form()].
-
 %% The compile state record, with our added fields
 -include("erlt_compile.hrl").
 
@@ -68,7 +61,6 @@
 
 -define(DefFileSuffix, ".defs").
 -define(EtfFileSuffix, ".etf").
--define(LsFileSuffix, ".els").
 
 %% NOTE: this is a wrapper around file/2 (both are exported)
 % called by erltc.erl
@@ -588,7 +580,7 @@ comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St)
         false ->
             Warn = ?OTP_COMPILE:messages_per_file(Warn0),
             ?OTP_COMPILE:report_warnings(St#compile{warnings = Warn}),
-            maybe_output_ls_diagnostics(Warn, [], St),
+            erlt_language_server:maybe_output_ls_diagnostics(Warn, [], St),
             Ret1 =
                 case
                     member(binary, Opts) andalso
@@ -612,42 +604,11 @@ comp_ret_err(#compile{warnings = Warn0, errors = Err0, options = Opts} = St) ->
     Err = ?OTP_COMPILE:messages_per_file(Err0),
     ?OTP_COMPILE:report_errors(St#compile{errors = Err}),
     ?OTP_COMPILE:report_warnings(St#compile{warnings = Warn}),
-    maybe_output_ls_diagnostics(Warn, Err, St),
+    erlt_language_server:maybe_output_ls_diagnostics(Warn, Err, St),
     case member(return_errors, Opts) of
         true -> {error, Err, Warn};
         false -> error
     end.
-
-maybe_output_ls_diagnostics(Warn, Err, St) ->
-    case os:getenv("ERLT_LANGUAGE_SERVER") of
-        false -> ok;
-        OutFile ->
-            output_ls_diagnostics(OutFile, Warn, Err, St)
-end.
-
-output_ls_diagnostics(OutFile, Warn, Err
-                     , #compile{build_dir = BuildDir, base = Base,
-                                ifile = SourceFile} = _St) ->
-    %% Output = term_to_binary(normalize_for_typecheck(Code)),
-
-    %% We include a timestamp, so that the language server can check
-    %% if the diagnostics are fresh or not. This will be used for
-    %% equality test only, to invalidate the cache.  Possibly ignore
-    %% older files in future?
-    TS = erlang:timestamp(),
-    Output = io_lib:format("~p.", [{TS, Warn, Err}]),
-    FileName = filename:join(
-            BuildDir,
-            Base ++ ?LsFileSuffix),
-    case FileName of
-      undefined -> error("undefined FileName");
-      _ ->
-            io:format("###LANGSERVER: ~0p~n", [{OutFile,filename:absname(SourceFile), FileName}]),
-            Mapping = io_lib:format("~0p.~n", [{filename:absname(SourceFile), {TS, FileName}}]),
-            file:write_file(OutFile, Mapping, [append]),
-            file:write_file(FileName, Output, [sync])
-    end,
-    ok.
 
 %% =====================================================================
 
