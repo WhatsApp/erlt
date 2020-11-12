@@ -1,0 +1,31 @@
+%% When changing run command below to update .defs required for this
+%%
+%%    _build/default/bin/erltc +defs -o examples/checks/deps/ examples/checks/src/remote_types.erlt
+%%
+
+-module(remote_types).
+
+-export_type([type/0, struct/0, enum/0, opaque/0, unchecked/0]).
+
+-type check_undefined_module() :: undefined_module:type().
+
+-type check_undefined_type() :: ?MODULE:undefined_type().
+
+-type check_wrong_arity() :: ?MODULE:type(integer()).
+
+-type check_private() :: ?MODULE:private().
+
+-type check_ok() :: {?MODULE:type(), ?MODULE:struct(), ?MODULE:enum(), ?MODULE:opaque(), ?MODULE:unchecked()}.
+
+-type type() :: integer().
+
+-struct struct() :: ().
+
+-enum enum() :: (x).
+
+-opaque opaque() :: integer().
+
+[unchecked, opaque]
+-type unchecked() :: term().
+
+-type private() :: integer().

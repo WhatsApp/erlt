@@ -571,6 +571,12 @@ format_error({duplicated_export_type, {T, A}}) ->
     io_lib:format("type ~tw/~w already exported", [T, A]);
 format_error({undefined_type, {TypeName, Arity}}) ->
     io_lib:format("type ~tw~s undefined", [TypeName, gen_type_paren(Arity)]);
+format_error({undefined_remote_type, M, N, A}) ->
+    io_lib:format("type ~tw:~tw~s undefined", [M, N, gen_type_paren(A)]);
+format_error({private_remote_type, M, N, A}) ->
+    io_lib:format("type ~tw:~tw~s is private", [M, N, gen_type_paren(A)]);
+format_error({remote_type_wrong_arity, M, N, Given, Exp}) ->
+    io_lib:format("type ~tw:~tw is defined with ~w parameters, ~w given", [M, N, Exp, Given]);
 format_error({unused_type, {TypeName, Arity}}) ->
     io_lib:format("type ~tw~s is unused", [TypeName, gen_type_paren(Arity)]);
 format_error({new_builtin_type, {TypeName, Arity}}) ->
@@ -3425,22 +3431,15 @@ do_check_type(Types, Vars, St) ->
 
 check_type({ann_type, _L, [_Var, Type]}, SeenVars, St) ->
     check_type(Type, SeenVars, St);
-check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]}, SeenVars, St00) ->
-    St0 = check_module_name(Mod, L, St00),
-    St = deprecated_type(L, Mod, Name, Args, St0),
-    CurrentMod = St#lint.module,
-    case Mod =:= CurrentMod of
-        true ->
-            check_type({user_type, L, Name, Args}, SeenVars, St);
-        false ->
-            lists:foldl(
-                fun(T, {AccSeenVars, AccSt}) ->
-                    check_type(T, AccSeenVars, AccSt)
-                end,
-                {SeenVars, St},
-                Args
-            )
-    end;
+check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]}, SeenVars, St0) ->
+    St1 = check_module_name(Mod, L, St0),
+    St2 = deprecated_type(L, Mod, Name, Args, St1),
+    St = check_remote_type(L, Mod, Name, length(Args), St2),
+    lists:foldl(
+        fun(T, {AccSeenVars, AccSt}) -> check_type(T, AccSeenVars, AccSt) end,
+        {SeenVars, St},
+        Args
+    );
 check_type({integer, _L, _}, SeenVars, St) ->
     {SeenVars, St};
 check_type({atom, _L, _}, SeenVars, St) ->
@@ -3542,32 +3541,40 @@ check_type({type, La, TypeName, Args}, SeenVars, St) ->
                 St
         end,
     check_type({type, nowarn(), product, Args}, SeenVars, St1);
-check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
+check_type({user_type, L, TypeName, Args}, SeenVars, St0) ->
     Arity = length(Args),
     TypePair = {TypeName, Arity},
-    St1 =
-        case imported_type(TypeName, St) of
+    St2 =
+        case imported_type(TypeName, St0) of
             {yes, M, Arity} ->
-                U0 = St#lint.usage,
+                U0 = St0#lint.usage,
                 Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-                St#lint{usage = U0#usage{imported_types = Imp}};
+                St1 = check_remote_type(L, M, TypeName, Arity, St0),
+                St1#lint{usage = U0#usage{imported_types = Imp}};
             _ ->
-                used_type(TypePair, L, St)
+                used_type(TypePair, L, St0)
         end,
     lists:foldl(
-        fun(T, {AccSeenVars, AccSt}) ->
-            check_type(T, AccSeenVars, AccSt)
-        end,
-        {SeenVars, St1},
+        fun(T, {AccSeenVars, AccSt}) -> check_type(T, AccSeenVars, AccSt) end,
+        {SeenVars, St2},
         Args
     );
 check_type([{typed_record_field, Field, _T} | _], SeenVars, St) ->
     {SeenVars, add_error(element(2, Field), old_abstract_code, St)};
 check_type(I, SeenVars, St) ->
-    io:format("~p~n", [I]),
     case erl_eval:partial_eval(I) of
         {integer, _ILn, _Integer} -> {SeenVars, St};
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
+    end.
+
+check_remote_type(_, _, _, _, #lint{defs_db = undefined} = St) ->
+    St;
+check_remote_type(Line, M, N, A, #lint{defs_db = Defs} = St) ->
+    case erlt_defs:find_type(M, N, Defs) of
+        {ok, A} -> St;
+        {ok, Expected} -> add_error(Line, {remote_type_wrong_arity, M, N, A, Expected}, St);
+        private -> add_error(Line, {private_remote_type, M, N, A}, St);
+        error -> add_error(Line, {undefined_remote_type, M, N, A}, St)
     end.
 
 check_shape_types(Fields, SeenVars, St) ->
