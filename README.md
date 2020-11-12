@@ -20,11 +20,15 @@ feedback from the compiler.
 By default, ErlT is checked (i.e. statically typed), but it also allows some
 functions or modules to be unchecked (i.e. dynamically typed), both to aid
 migration and to allow code to be written for which we don't yet have a good
-typing model, most notably around concurrency. ErlT requires adding specs
-to unchecked code in order for it to be accessible and typeable from checked code.
+typing model, most notably around concurrency - we provide only basic, low-level
+support for `receive`. ErlT requires adding specs to unchecked code in order for
+it to be accessible and typeable from checked code.
 
-Notably, checked ErlT is currently limited to only the sequential parts of Erlang, and some sequential
-constructs (like list comprehensions or exceptions) are not supported yet.
+Notably, checked ErlT is currently limited to only the sequential parts of Erlang,
+with some features banned, in particular:
+- Atoms
+- Erlang maps
+- Dynamic applications (`M:F(A)`)
 
 ## Getting started using ErlT
 

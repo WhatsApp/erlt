@@ -8,7 +8,7 @@ altered language forms that constitute ErlT.
 ## Checked ErlT
 
 By default, ErlT code is checked, which is to say it is _statically typed_ with
-a type system is based on
+a type system based on the
 [the Hindley-Milner type system](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system),
 extended to support ErlT data types and pattern matching. Most notably, the
 type system offers type inference, so in many cases the types don't need to be
