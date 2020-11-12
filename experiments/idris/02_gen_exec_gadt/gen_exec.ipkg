@@ -1,0 +1,7 @@
+package gen_exec
+
+modules = GenExec, Counter, CounterTest
+executable = counter_test.exe
+main = CounterTest
+
+pkgs = effects
