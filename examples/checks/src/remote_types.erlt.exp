@@ -1,0 +1,4 @@
+remote_types.erlt:10:35: type undefined_module:type() undefined
+remote_types.erlt:12:34: type remote_types:undefined_type() undefined
+remote_types.erlt:14:31: type remote_types:type is defined with 0 parameters, 1 given
+remote_types.erlt:16:27: type remote_types:private() is private
