@@ -45,4 +45,4 @@ closerImpl x y = execCall exec Int (Closer x y)
 
 `Bool` and `Int` are passed explicitly.
 
-Next episode (3) will try to "hide dependencies".
+[Next episode](../03_gen_exec_gadt) will try to "hide dependencies".
