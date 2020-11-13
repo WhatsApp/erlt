@@ -7,6 +7,7 @@ build:
 
 clean:
 	rm -rf _build
+	find . -name "*.els" -delete || true
 
 test-ir: $(DIRS:%=test-ir/%)
 

@@ -26,10 +26,9 @@
 compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
-  %% Cmd should come from config, see #375
-  Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s rebar3 compile",
-  %% Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s make test-others",
-                      [TempFile])),
+  CompileCmd = els_config:get(erlt_command),
+  Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
+                      [TempFile, CompileCmd])),
   os:cmd(Cmd),
   case get_els_file(TempFile, Uri) of
     {ok, FileName} ->
@@ -39,8 +38,10 @@ compile(Uri) ->
     {error, Reason} ->
       Range = #{ from => {1, 1}, to => {2, 1} },
       Desc = lists:flatten(
-        io_lib:format("els_erlt_diagnostics: could not read temp file [~p]",
-                           [Reason])),
+        io_lib:format(
+          "Have you set the correct 'erlt_command' in erlang_ls.config?~n"
+          "els_erlt_diagnostics: could not read temp file [~p]",
+          [Reason])),
       Diag =
         #{ range    => els_protocol:range(Range)
          , message  => els_utils:to_binary(Desc)
