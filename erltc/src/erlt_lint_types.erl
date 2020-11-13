@@ -93,7 +93,7 @@ check_exported_types(#state{exported_types = ExportedTypes} = St) ->
     maps:fold(fun check_exported_type/3, St, ExportedTypes).
 
 check_exported_type({Name, Arity}, {not_defined, Line}, St) ->
-    add_error(Line, {exported_type_not_defined, Name, Arity}, St);
+    add_error(Line, {undefined_type, {Name, Arity}}, St);
 check_exported_type(_, _, St) ->
     St.
 
