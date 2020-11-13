@@ -14,7 +14,9 @@ t1(F, Class) ->
         Reason -> Reason
     end.
 
-t2(F) ->
+-spec t2(_F) -> string().
+
+t2(_F) ->
     try "ok" catch {'$#try_catch:reason'} -> "ok" end.
 
 

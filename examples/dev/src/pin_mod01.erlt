@@ -60,10 +60,10 @@ j(Elem, List) ->
 [unchecked]
 j2(X) ->
     %% works
-    fun Test(^X) -> Test(X) end,
+    {fun Test(^X) -> Test(X) end,
     %% not working yet
-    %% fun Test(^Test) -> Test(Test) end
-    'ok'.
+    %% fun Test(^Test) -> Test(Test) end,
+    'ok'}.
 
 [unchecked]
 k(X, Y) ->
