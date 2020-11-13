@@ -100,9 +100,9 @@ output_ls_diagnostics(OutFile, Warn, Err
     TS = erlang:timestamp(),
     Diags = convert_to_diagnostics(Warn, Err, St),
     Output = io_lib:format("~p.", [{TS, Diags}]),
-    FileName = filename:join(
+    FileName = filename:absname(filename:join(
             BuildDir,
-            Base ++ ?LsFileSuffix),
+            Base ++ ?LsFileSuffix)),
     case FileName of
       undefined -> error("undefined FileName");
       _ ->
@@ -114,8 +114,8 @@ output_ls_diagnostics(OutFile, Warn, Err
     ok.
 
 convert_to_diagnostics(Warn, Err, St) ->
-    report_errors(Err, St) ++
-      report_warnings(Warn, St).
+    lists:flatten(report_errors(Err, St) ++
+                      report_warnings(Warn, St)).
 
 %% ---------------------------------------------------------------------
 
@@ -155,10 +155,10 @@ report_warnings(Ws0, #compile{options = Opts}) ->
             ),
             Ws = lists:sort(Ws1),
             %% lists:foreach(fun({_, Str}) -> io:put_chars(Str) end, Ws);
-            [ Diag || {_,Diag} <- Ws];
+            [ Diag || {_,Diag} <- Ws]
             %% Ws0;
-        false ->
-            []
+        %% false ->
+        %%     []
     end.
 
 %% ---------------------------------------------------------------------

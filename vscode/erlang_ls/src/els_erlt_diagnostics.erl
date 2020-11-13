@@ -26,7 +26,9 @@
 compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
+  %% Cmd should come from config, see #375
   Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s rebar3 compile",
+  %% Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s make test-others",
                       [TempFile])),
   os:cmd(Cmd),
   case get_els_file(TempFile, Uri) of
