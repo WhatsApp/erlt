@@ -1,9 +1,6 @@
-
 -module(redefine_enum).
 
 -enum foo() :: (a).
 
 %% Error: enum type names may not be reused, even for different arities
 -enum foo(T) :: (b{value :: T}).
-
--enum broken() :: (ctr, ctr).

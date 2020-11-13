@@ -1,2 +1,1 @@
-redefine_enum.erlt:7:1: type foo already defined
-redefine_enum.erlt:9:25: variant ctr already defined in enum broken
+redefine_enum.erlt:6:1: type foo already defined

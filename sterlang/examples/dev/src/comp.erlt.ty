@@ -14,4 +14,4 @@
 -spec slice(binary(), number()) -> list(binary()).
 -spec lengths(list(list(A))) -> list(number()).
 -spec t1() -> unchecked:t1(number(), boolean()).
--spec xxx() -> list(unchecked:t2(unchecked:x1(), unchecked:x1())).
+-spec xxx() -> list(unchecked:t2(unchecked:t1(boolean(), boolean()), unchecked:t1(boolean(), boolean()))).

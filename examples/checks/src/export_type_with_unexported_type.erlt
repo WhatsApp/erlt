@@ -1,0 +1,7 @@
+-module(export_type_with_unexported_type).
+
+-export_type([exported_type/1]).
+
+-type exported_type(A) :: {A, local_type()}.
+
+-type local_type() :: integer().
