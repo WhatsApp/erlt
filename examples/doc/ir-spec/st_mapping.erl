@@ -2,6 +2,52 @@
 
 -module(st_mapping).
 
+-export([option_to_list/1,
+         rec1/0,
+         rec2/0,
+         rec3/1,
+         rec4/1,
+         rec5/1,
+         rec6/1,
+         rec7/1,
+         update_x/2]).
+
+-export_type([float_alias/0,
+              some_fun/2,
+              list_alias/1,
+              tuple0_alias/0,
+              tuple1_alias/1,
+              tuple2_alias/2,
+              tuple3_alias/3,
+              atom_alias/0,
+              string_alias/0,
+              integer_alias/0,
+              char_alias/0,
+              boolean_alias/0,
+              pid_alias/0,
+              port_alias/0,
+              reference_alias/0,
+              neg_integer_alias/0,
+              non_neg_integer_alias/0,
+              pos_integer_alias/0,
+              any_alias/0,
+              none_alias/0,
+              term_alias/0,
+              binary_alias/0,
+              bitstring_alias/0,
+              byte_alias/0,
+              number_alias/0,
+              iodata_alias/0,
+              iolist_alias/0,
+              identifier_alias/0,
+              node_alias/0,
+              timeout_alias/0,
+              no_return_alias/0,
+              rec_with_int_id/0,
+              rec_with_generic_id/1,
+              date/0,
+              either/2]).
+
 -type float_alias() :: float().
 
 -type some_fun(A, B) :: fun((A) -> B).

@@ -14,3 +14,4 @@ erltc/src/erlt_parse.erl
 # in a way I can't reproduce but it doesn't seem to matter
 examples/rebar.lock
 
+*.lhs~

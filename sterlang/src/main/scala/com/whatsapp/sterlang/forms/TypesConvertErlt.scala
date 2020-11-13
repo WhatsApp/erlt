@@ -49,8 +49,8 @@ object TypesConvertErlt {
       case ETuple(List(EAtom("remote_type"), anno, EList(List(moduleLit, typeNameLit, EList(args))))) =>
         RemoteType(
           r(anno),
-          FormsConvertErlt.convertAtomLit(moduleLit),
-          FormsConvertErlt.convertAtomLit(typeNameLit),
+          FormsConvert.convertAtomLit(moduleLit),
+          FormsConvert.convertAtomLit(typeNameLit),
           args.map(convertType),
         )
       // af_tuple_type

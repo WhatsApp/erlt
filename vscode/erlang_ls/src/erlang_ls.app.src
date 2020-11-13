@@ -1,0 +1,37 @@
+{ application, erlang_ls
+, [ {description, "The Erlang Language Server"}
+  , {vsn, git}
+  , {registered, []}
+  , {mod, { els_app, []}}
+  , { applications
+    , [ kernel
+      , stdlib
+      , ranch
+      , jsx
+      , cowlib
+      , lager
+      , yamerl
+      , docsh
+      , elvis_core
+      , redbug
+      , ephemeral
+      , rebar3_format
+      , tdiff
+      , getopt
+      , uuid
+      ]
+    }
+  , { env
+    , [ {transport, els_tcp}
+      , {io_device, standard_io}
+      , {port, 10000}
+        %% Logging
+      , {logging_enabled, true}
+      ]
+    }
+  , {modules, []}
+  , {maintainers, []}
+  , {licenses, ["Apache 2.0"]}
+  , {links, []}
+ ]
+}.

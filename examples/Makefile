@@ -1,7 +1,9 @@
 DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
 
 build:
-	rebar3 compile
+	../sbtn/dl.sh
+	cd ../sterlang; ../sbtn/sbtn sterlangd
+	ERL_FLAGS="-args_file dev.vm.args" rebar3 compile
 
 clean:
 	rm -rf _build
@@ -19,7 +21,7 @@ ir: clean-ir build
 # but are there for humans to read. Not actually "ir"
 test-ir/%: ir
 	@# only include .erl files
-	diff -r -x sterlang -x '*.defs' -x '*.etf' -x '*.D' _build/default/lib/$*/build $*/ir-spec
+	diff -r -x sterlang -x '*.defs' -x '*.etf' -x '*.D' -x 't_io.*' _build/default/lib/$*/build $*/ir-spec
 
 # test `erlt --------> beam -> disassembly`
 # matches `erlt -> erl -> beam -> disassembly`
@@ -32,7 +34,7 @@ test-beam/%: ir
 	@# because they won't have corresponding .erls in the build directory. We'll need to do the same for beams generated from .erls in future
 	rm -f _build/default/lib/$*/test_output/from_beam/*_lexer.dis _build/default/lib/$*/test_output/from_beam/*_parser.dis
 	../test_util/disassemble.escript --erl _build/default/lib/$*/build _build/default/lib/$*/test_output/from_erl
-	diff -r _build/default/lib/$*/test_output/from_beam _build/default/lib/$*/test_output/from_erl
+	diff -r _build/default/lib/$*/test_output/from_beam _build/default/lib/$*/test_output/from_erl -x t_io.*
 
 update-ir-spec/%: ir
 	@rm -rf $*/ir-spec
@@ -51,6 +53,6 @@ test-interop: build
 	@stat _build/default/lib/calc/ebin/calc_lexer.beam &> /dev/null
 	@stat _build/default/lib/calc/ebin/calc_parser.beam &> /dev/null && echo ok
 
-test: test-ir test-beam test-interop test-others 
+test: test-ir test-beam test-interop test-others
 
 .PHONY: build clean ir test-ir update-ir-spec test-beam test-interop

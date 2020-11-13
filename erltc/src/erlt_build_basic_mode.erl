@@ -38,7 +38,17 @@ clean(#args{build_dir = BuildDir, output_dir = OutputDir}) ->
     rmrf(OutputDir).
 
 % calls erltc Phase on InputFiles in parallel
-do_phase(Phase, #args{input_files = InputFiles} = Args) ->
+do_phase(
+    Phase,
+    #args{input_files = InputFiles, build_dir = BuildDir, output_dir = OutputDir} = Args
+) ->
+    mkdirp(BuildDir),
+    mkdirp(OutputDir),
+    % used by our team when updating built-in-types, see ../built_ins/Makefile
+    case os:getenv("SKIP_BUILT_INS") of
+        "TRUE" -> ok;
+        _ -> write_built_ins(Phase, Args)
+    end,
     F = fun(InputFile) -> do_file(Phase, Args, InputFile) end,
     case p_map(F, InputFiles) of
         {results, Results} ->
@@ -68,8 +78,6 @@ do_file(
             undefined -> ".";
             Dir -> Dir
         end,
-    mkdirp(BuildDir),
-    mkdirp(OutputDir),
     PhaseArgs =
         case Phase of
             "scan" ->
@@ -89,6 +97,21 @@ do_file(
             OutputDir
         ] ++ PhaseArgs ++ ErlcArgv ++ [filename:join(SrcDir, InputFile)],
     erltc:api(Args).
+
+%% @doc write defs files and beams for built_in types and modules.
+%% see ../built_ins/README.md for more information
+write_built_ins("compile", #args{build_dir = BuildDir, output_dir = EbinDir}) ->
+    [
+        ok = file:write_file(filename:join(BuildDir, Basename), Contents)
+        || {Basename, Contents} <- erlt_build_statics:built_in_defs()
+    ],
+    [
+        ok = file:write_file(filename:join(EbinDir, Basename), Contents)
+        || {Basename, Contents} <- erlt_build_statics:built_in_ebins()
+    ],
+    ok;
+write_built_ins(_, #args{src_dir = _SrcDir}) ->
+    ok.
 
 %% UTILITIES
 

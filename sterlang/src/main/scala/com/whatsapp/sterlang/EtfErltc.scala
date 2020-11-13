@@ -19,19 +19,19 @@ package com.whatsapp.sterlang
 import java.nio.file.Paths
 
 import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
-import com.whatsapp.sterlang.forms.FormsConvertErlt
+import com.whatsapp.sterlang.forms.FormsConvert
 
 object EtfErltc extends EtfApi {
   def programFromFile(path: String): Ast.Program = {
     val etf = etfFromFileErlt(path)
-    val forms = FormsConvertErlt.fromEtf(etf)
+    val forms = FormsConvert.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     Ast.RawProgram(elems).program
   }
 
   def moduleApiFromFile(path: String): ModuleApi = {
     val etf = etfFromFileErlt(path)
-    val forms = FormsConvertErlt.fromEtf(etf)
+    val forms = FormsConvert.fromEtf(etf)
     val elems = forms.flatMap(Convert.convertForm)
     val program = Ast.RawProgram(elems).program
 

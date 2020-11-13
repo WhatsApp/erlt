@@ -24,12 +24,11 @@ test() ->
                  ok = access_map2(#{inner1 => #{inner2 => ok}})}).
 
 -spec test(#{a := integer(),
-             b := #{c := integer(), atom() => any()},
-             atom() => any()}) -> atom().
+             b := #{c := integer()}}) -> string().
 
 test(A) when A =:= #{a => 1, b => #{c => 2}} ->
-    closed_ok;
-test(#{a := 1, b := #{c := 2}}) -> open_ok.
+    "closed_ok";
+test(#{a := 1, b := #{c := 2}}) -> "open_ok".
 
 -spec test2(#{}) -> {}.
 
@@ -37,7 +36,7 @@ test2(#{}) -> {}.
 
 test3(A) when erlang:map_get(b, A) =:= 2 -> {}.
 
-test4(A) when A =:= (#{a => 1})#{b => 2} -> {}.
+test4(A) when A =:= (#{a => 1, b => 1})#{b => 2} -> {}.
 
 test5(#{a := 1}) -> {}.
 

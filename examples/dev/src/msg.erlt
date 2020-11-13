@@ -24,10 +24,14 @@
 -spec mk_ping() ->
     message().
 mk_ping() ->
-    #ping{from = self()}.
+    #ping{from = self_t()}.
 
 -spec mk_reply(message()) ->
     message().
 mk_reply(Ping) ->
     wrapped_message.wrapped_message{message = Ping},
-    #pong{from = self(), in_reply_to = wrapped_message.wrapped_message{message = Ping}}.
+    #pong{from = self_t(), in_reply_to = wrapped_message.wrapped_message{message = Ping}}.
+
+-spec self_t() -> pid().
+[unchecked]
+self_t() -> self().

@@ -32,4 +32,4 @@ pattern(bar.x{1, B}, baz.x{1, a = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= bar.x{1, B}, Value2 =:= baz.x{1, a = B} ->
-    ok.
+    "ok".

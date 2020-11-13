@@ -448,8 +448,7 @@ try_clauses -> try_clause : ['$1'].
 try_clauses -> try_clause ';' try_clauses : ['$1' | '$3'].
 
 try_clause -> pat_expr clause_guard clause_body :
-	A = anno('$1','$3'),
-	{clause,A,[{tuple,A,[{atom,A,throw},'$1',{var,A,'_'}]}],'$2','$3'}.
+	{clause,anno('$1', '$3'),['$1'],'$2','$3'}.
 
 var_list -> '(' ')'      : [].
 var_list -> '(' vars ')' : '$2'.
@@ -589,6 +588,10 @@ build_type({atom, _, Name}, Types, A) ->
     Tag = type_tag(Name, length(Types)),
     {Tag, A, Name, Types}.
 
+type_tag(message, NumberOfTypeVariables) ->
+    type;
+type_tag(exception, NumberOfTypeVariables) ->
+    type;
 type_tag(TypeName, NumberOfTypeVariables) ->
     case erl_internal:is_type(TypeName, NumberOfTypeVariables) of
         true -> type;
@@ -775,4 +778,3 @@ end_text_location([$\n|String], Line, _Column) ->
     end_text_location(String, Line+1, 1);
 end_text_location([_|String], Line, Column) ->
     end_text_location(String, Line, Column+1).
-

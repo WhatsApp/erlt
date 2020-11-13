@@ -4,10 +4,11 @@ import java.io.File
 import java.nio.file.{Files, Paths}
 
 import com.whatsapp.sterlang._
+import com.whatsapp.sterlang.test.it.Util
 
 import scala.collection.mutable
 
-object DriverDev extends Driver {
+object DriverDev extends DriverApi {
   def main(args: Array[String]): Unit = {
     val options = args.toList.filter(_.startsWith("-")).toSet
     val files = args.filter(a => !a.startsWith("-"))
@@ -78,6 +79,8 @@ object DriverDev extends Driver {
 
   private def freshTypeVar(vars: Vars): Types.Type =
     Types.VarType(vars.tVar(Types.Open(0)))
+  private def freshRowTypeVar(vars: Vars, kind: Types.RtVarKind): Types.RowType =
+    Types.RowVarType(vars.rVar(Types.RowOpen(0, kind)))
   private def freshRTypeVar(vars: Vars)(kind: Types.RtVarKind): Types.RowTypeVar =
     vars.rVar(Types.RowOpen(0, kind))
 
@@ -115,9 +118,13 @@ object DriverDev extends Driver {
       val name = spec.name.stringId
       val funType = spec.funType
       val sVars = AstUtil.collectNamedTypeVars(funType)
-      val sub = sVars.map { v => v -> freshTypeVar(vars) }.toMap
+      val rVars = AstUtil.collectNamedRowTypeVars(funType)
+      val sSub: Expander.Sub =
+        sVars.map { v => v -> Left(freshTypeVar(vars)) }.toMap
+      val rSub: Expander.Sub =
+        rVars.map { case (rv, kind) => rv.name -> Right(freshRowTypeVar(vars, kind)) }.toMap
       val eSub: Expander.Sub =
-        sub.view.mapValues(Left(_)).toMap
+        sSub ++ rSub
       val specType = expander.mkType(funType, eSub)
       val expSpecType = expander.expandType(specType)
       val scheme = TU.generalize(0)(expSpecType)
@@ -129,26 +136,10 @@ object DriverDev extends Driver {
   def loadProgram(file: String): Ast.Program =
     EtfDev.programFromFile(file)
 
-  // $COVERAGE-OFF$ interactive
   private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit =
-    Console.println(rangeErrorString(inputPath, inputContent, error))
+    Console.println(Util.rangeErrorString(inputPath, inputContent, error))
 
   private def displayPosError(inputPath: String, inputContent: String, error: PosError): Unit =
-    Console.println(posErrorString(inputPath, inputContent, error))
-  // $COVERAGE-ON$ interactive
+    Console.println(Util.posErrorString(inputPath, inputContent, error))
 
-  def rangeErrorString(inputPath: String, inputContent: String, error: RangeError): String = {
-    val RangeError(range, title, description) = error
-    val ranger = Doc.Ranger(inputContent, range.start, range.end)
-    val msgTitle = Doc.title(error.severity, inputPath, range.start)
-    val descText = description.map(_ ++ "\n").getOrElse("")
-    msgTitle ++ "\n" ++ title ++ "\n" ++ descText ++ ranger.decorated ++ "\n"
-  }
-
-  def posErrorString(inputPath: String, inputContent: String, error: PosError): String = {
-    val PosError(pos, title) = error
-    val locator = Doc.Locator(inputContent, pos)
-    val msgTitle = Doc.title(Error, inputPath, pos)
-    s"$msgTitle\n$title\n${locator.longString}\n"
-  }
 }

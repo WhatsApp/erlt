@@ -551,7 +551,7 @@ generate_makefile(Args) ->
         "\n"
     ],
 
-    write_file(Makefile, [InputParameters, erlt_build_template_mk:get_template()]),
+    write_file(Makefile, [InputParameters, erlt_build_statics:mk_template()]),
     Makefile.
 
 quote_shell_arg(("+" ++ _) = Arg) ->

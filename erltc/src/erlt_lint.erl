@@ -238,6 +238,8 @@ value_option(Flag, Default, On, OnVal, Off, OffVal, Opts) ->
     bvt = none :: 'none' | [any()],
     %Context of guard expression
     gexpr_context = guard :: gexpr_context(),
+    %Is the context type checked
+    type_checked = true :: boolean(),
     % Enum definitions
     enums = #{} :: #{atom() => #{atom() => term()}},
     % Global definition database
@@ -418,6 +420,8 @@ format_error(illegal_guard_expr) ->
 %% --- maps ---
 format_error(illegal_map_construction) ->
     "only association operators '=>' are allowed in map construction";
+format_error(map_syntax_disallowed) ->
+    "map syntax is only allowed in unchecked functions";
 %% --- enums ---
 format_error({redefine_enum, T, C}) ->
     io_lib:format("variant ~tw already defined in enum ~tw", [C, T]);
@@ -429,6 +433,8 @@ format_error({undefined_enum_variant, N, V}) ->
     io_lib:format("enum ~ts has no variant ~tw", [format_name(N), V]);
 format_error(invalid_name) ->
     "only fully qualified remote 'module:name' or local 'name' references are supported";
+format_error(unqualified_enum) ->
+    "bare enums (or unquoted atoms) are not supported";
 %% --- structs ---
 format_error({undefined_struct, N}) ->
     io_lib:format("struct ~ts undefined", [format_name(N)]);
@@ -485,6 +491,8 @@ format_error(illegal_catch_kind) ->
     "only variables and atoms throw, exit, and error are allowed in kind position of catch clauses";
 format_error(illegal_catch_stack) ->
     "only unbound variables are allowed in stacktrace position of catch clauses";
+format_error(illegal_checked_catch) ->
+    "checked code does not support capturing class or stacktrace in catch clauses";
 %% --- binaries ---
 format_error({undefined_bittype, Type}) ->
     io_lib:format("bit type ~tw undefined", [Type]);
@@ -563,6 +571,12 @@ format_error({duplicated_export_type, {T, A}}) ->
     io_lib:format("type ~tw/~w already exported", [T, A]);
 format_error({undefined_type, {TypeName, Arity}}) ->
     io_lib:format("type ~tw~s undefined", [TypeName, gen_type_paren(Arity)]);
+format_error({undefined_remote_type, M, N, A}) ->
+    io_lib:format("type ~tw:~tw~s undefined", [M, N, gen_type_paren(A)]);
+format_error({private_remote_type, M, N, A}) ->
+    io_lib:format("type ~tw:~tw~s is private", [M, N, gen_type_paren(A)]);
+format_error({remote_type_wrong_arity, M, N, Given, Exp}) ->
+    io_lib:format("type ~tw:~tw is defined with ~w parameters, ~w given", [M, N, Exp, Given]);
 format_error({unused_type, {TypeName, Arity}}) ->
     io_lib:format("type ~tw~s is unused", [TypeName, gen_type_paren(Arity)]);
 format_error({new_builtin_type, {TypeName, Arity}}) ->
@@ -1036,8 +1050,11 @@ function_state({attribute, _L, dialyzer, _Val}, St) ->
     St;
 function_state({attribute, La, Attr, _Val}, St) ->
     add_error(La, {attribute, Attr}, St);
-function_state({F, L, N, A, Cs}, St) when ?IS_FUNCTION(F) ->
-    function(L, N, A, Cs, St);
+function_state({unchecked_function, L, N, A, Cs}, St) ->
+    St1 = function(L, N, A, Cs, St#lint{type_checked = false}),
+    St1#lint{type_checked = true};
+function_state({function, L, N, A, Cs}, St) ->
+    function(L, N, A, Cs, St#lint{type_checked = true});
 function_state({eof, L}, St) ->
     eof(L, St).
 
@@ -1951,6 +1968,8 @@ pattern({float, _Line, _F}, _Vt, _Old, St) ->
     {[], [], St};
 pattern({atom, Line, A}, _Vt, _Old, St) ->
     {[], [], keyword_warning(Line, A, St)};
+pattern({atom_expr, _, _}, _Vt, _Old, St) ->
+    {[], [], St};
 pattern({string, _Line, _S}, _Vt, _Old, St) ->
     {[], [], St};
 pattern({nil, _Line}, _Vt, _Old, St) ->
@@ -1966,8 +1985,8 @@ pattern({enum, Line, Name, Variant, Fields}, Vt, Old, St0) ->
         pattern_fields(Fields, Line, ResolvedName, Defs, Vt, Old, St)
     end),
     expr_check_result_in_pattern(Result);
-pattern({map, _Line, Ps}, Vt, Old, St) ->
-    pattern_map(Ps, Vt, Old, St);
+pattern({map, Line, Ps}, Vt, Old, St) ->
+    pattern_map(Ps, Vt, Old, check_map_allowed(Line, St));
 pattern({shape, _Line, Pfs}, Vt, Old, St) ->
     check_shape_pattern_fields(Pfs, Vt, Old, St, []);
 pattern({struct, Line, Name, Fields}, Vt, Old, St0) ->
@@ -2424,6 +2443,8 @@ gexpr({float, _Line, _F}, _Vt, St) ->
     {[], St};
 gexpr({atom, Line, A}, _Vt, St) ->
     {[], keyword_warning(Line, A, St)};
+gexpr({atom_expr, _, _}, _Vt, St) ->
+    {[], St};
 gexpr({string, _Line, _S}, _Vt, St) ->
     {[], St};
 gexpr({nil, _Line}, _Vt, St) ->
@@ -2436,10 +2457,10 @@ gexpr({enum, Line, Name, Variant, Fields}, Vt, St) ->
     check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
         init_fields_guard(Fields, Line, ResolvedName, Def, Vt, St1)
     end);
-gexpr({map, _Line, Es}, Vt, St) ->
-    map_fields(Es, Vt, check_assoc_fields(Es, St), fun gexpr_list/3);
-gexpr({map, _Line, Src, Es}, Vt, St) ->
-    {Svt, St1} = gexpr(Src, Vt, St),
+gexpr({map, Line, Es}, Vt, St) ->
+    map_fields(Es, Vt, check_assoc_fields(Es, check_map_allowed(Line, St)), fun gexpr_list/3);
+gexpr({map, Line, Src, Es}, Vt, St) ->
+    {Svt, St1} = gexpr(Src, Vt, check_map_allowed(Line, St)),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun gexpr_list/3),
     {vtmerge(Svt, Fvt), St2};
 gexpr({shape, _Line, Fields}, Vt, St) ->
@@ -2579,6 +2600,8 @@ is_gexpr({float, _L, _F}, _St) ->
     true;
 is_gexpr({atom, _L, _A}, _St) ->
     true;
+is_gexpr({atom_expr, _, _}, _St) ->
+    true;
 is_gexpr({string, _L, _S}, _St) ->
     true;
 is_gexpr({nil, _L}, _St) ->
@@ -2676,6 +2699,8 @@ expr({float, _Line, _F}, _Vt, St) ->
     {[], St};
 expr({atom, Line, A}, _Vt, St) ->
     {[], keyword_warning(Line, A, St)};
+expr({atom_expr, _, _}, _Vt, St) ->
+    {[], St};
 expr({string, _Line, _S}, _Vt, St) ->
     {[], St};
 expr({nil, _Line}, _Vt, St) ->
@@ -2692,10 +2717,10 @@ expr({enum, Line, Name, Variant, Fields}, Vt, St) ->
     check_enum(Line, Name, Variant, St, fun(ResolvedName, Def, St1) ->
         init_fields(Fields, Line, ResolvedName, Def, Vt, St1)
     end);
-expr({map, _Line, Es}, Vt, St) ->
-    map_fields(Es, Vt, check_assoc_fields(Es, St), fun expr_list/3);
-expr({map, _Line, Src, Es}, Vt, St) ->
-    {Svt, St1} = expr(Src, Vt, St),
+expr({map, Line, Es}, Vt, St) ->
+    map_fields(Es, Vt, check_assoc_fields(Es, check_map_allowed(Line, St)), fun expr_list/3);
+expr({map, Line, Src, Es}, Vt, St) ->
+    {Svt, St1} = expr(Src, Vt, check_map_allowed(Line, St)),
     {Fvt, St2} = map_fields(Es, Vt, St1, fun expr_list/3),
     {vtupdate(Svt, Fvt), St2};
 expr({shape, _Line, Fields}, Vt, St) ->
@@ -2993,6 +3018,8 @@ is_valid_call(Call) ->
         _ -> true
     end.
 
+check_enum(Line, undefined, _, St, _CheckFun) ->
+    {[], add_error(Line, unqualified_enum, St)};
 check_enum(Line, RawName, {atom, _, V}, St, CheckFun) ->
     case resolve_importable_name(RawName, St) of
         {local, N, St1} ->
@@ -3404,22 +3431,15 @@ do_check_type(Types, Vars, St) ->
 
 check_type({ann_type, _L, [_Var, Type]}, SeenVars, St) ->
     check_type(Type, SeenVars, St);
-check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]}, SeenVars, St00) ->
-    St0 = check_module_name(Mod, L, St00),
-    St = deprecated_type(L, Mod, Name, Args, St0),
-    CurrentMod = St#lint.module,
-    case Mod =:= CurrentMod of
-        true ->
-            check_type({user_type, L, Name, Args}, SeenVars, St);
-        false ->
-            lists:foldl(
-                fun(T, {AccSeenVars, AccSt}) ->
-                    check_type(T, AccSeenVars, AccSt)
-                end,
-                {SeenVars, St},
-                Args
-            )
-    end;
+check_type({remote_type, L, [{atom, _, Mod}, {atom, _, Name}, Args]}, SeenVars, St0) ->
+    St1 = check_module_name(Mod, L, St0),
+    St2 = deprecated_type(L, Mod, Name, Args, St1),
+    St = check_remote_type(L, Mod, Name, length(Args), St2),
+    lists:foldl(
+        fun(T, {AccSeenVars, AccSt}) -> check_type(T, AccSeenVars, AccSt) end,
+        {SeenVars, St},
+        Args
+    );
 check_type({integer, _L, _}, SeenVars, St) ->
     {SeenVars, St};
 check_type({atom, _L, _}, SeenVars, St) ->
@@ -3521,32 +3541,40 @@ check_type({type, La, TypeName, Args}, SeenVars, St) ->
                 St
         end,
     check_type({type, nowarn(), product, Args}, SeenVars, St1);
-check_type({user_type, L, TypeName, Args}, SeenVars, St) ->
+check_type({user_type, L, TypeName, Args}, SeenVars, St0) ->
     Arity = length(Args),
     TypePair = {TypeName, Arity},
-    St1 =
-        case imported_type(TypeName, St) of
+    St2 =
+        case imported_type(TypeName, St0) of
             {yes, M, Arity} ->
-                U0 = St#lint.usage,
+                U0 = St0#lint.usage,
                 Imp = ordsets:add_element({TypePair, M}, U0#usage.imported_types),
-                St#lint{usage = U0#usage{imported_types = Imp}};
+                St1 = check_remote_type(L, M, TypeName, Arity, St0),
+                St1#lint{usage = U0#usage{imported_types = Imp}};
             _ ->
-                used_type(TypePair, L, St)
+                used_type(TypePair, L, St0)
         end,
     lists:foldl(
-        fun(T, {AccSeenVars, AccSt}) ->
-            check_type(T, AccSeenVars, AccSt)
-        end,
-        {SeenVars, St1},
+        fun(T, {AccSeenVars, AccSt}) -> check_type(T, AccSeenVars, AccSt) end,
+        {SeenVars, St2},
         Args
     );
 check_type([{typed_record_field, Field, _T} | _], SeenVars, St) ->
     {SeenVars, add_error(element(2, Field), old_abstract_code, St)};
 check_type(I, SeenVars, St) ->
-    io:format("~p~n", [I]),
     case erl_eval:partial_eval(I) of
         {integer, _ILn, _Integer} -> {SeenVars, St};
         _Other -> {SeenVars, add_error(element(2, I), {type_syntax, integer}, St)}
+    end.
+
+check_remote_type(_, _, _, _, #lint{defs_db = undefined} = St) ->
+    St;
+check_remote_type(Line, M, N, A, #lint{defs_db = Defs} = St) ->
+    case erlt_defs:find_type(M, N, Defs) of
+        {ok, A} -> St;
+        {ok, Expected} -> add_error(Line, {remote_type_wrong_arity, M, N, A, Expected}, St);
+        private -> add_error(Line, {private_remote_type, M, N, A}, St);
+        error -> add_error(Line, {undefined_remote_type, M, N, A}, St)
     end.
 
 check_shape_types(Fields, SeenVars, St) ->
@@ -3974,8 +4002,8 @@ icrt_clauses(Cs, Vt, St) ->
 catch_clauses(Cs, Vt, St) ->
     mapfoldl(fun(C, St0) -> catch_clause(C, Vt, St0) end, St, Cs).
 
-catch_clause({clause, _Line, H, G, B}, Vt0, St0) ->
-    {TaintVt, St1} = catch_head(H, Vt0, St0),
+catch_clause({clause, Line, H, G, B}, Vt0, St0) ->
+    {TaintVt, St1} = catch_head(H, Line, Vt0, St0),
     icrt_clause(H, G, B, Vt0, TaintVt, St1).
 
 icrt_clause({clause, _Line, H, G, B}, Vt0, St0) ->
@@ -3991,14 +4019,22 @@ icrt_clause(H, G, B, Vt0, TaintVt, St0) ->
     {Bvt, St4} = exprs(B, vtupdate(Vt3, Vt0), St3),
     {vtupdate(Bvt, Vt3), St4}.
 
-catch_head([{tuple, _, [Kind, _Reason, Stack]}], Vt0, St0) ->
+catch_head([_], _Line, _Vt0, #lint{type_checked = true} = St0) ->
+    {[], St0};
+catch_head(_, Line, _Vt0, #lint{type_checked = true} = St0) ->
+    {[], add_error(Line, illegal_checked_catch, St0)};
+catch_head([Kind, _Reason, Stack], _Line, Vt0, St0) ->
     St1 = validate_catch_kind(Kind, St0),
-    taint_stack_var(Stack, Vt0, St1).
+    taint_stack_var(Stack, Vt0, St1);
+catch_head([Kind, _Reason], _Line, _Vt0, St0) ->
+    {[], validate_catch_kind(Kind, St0)};
+catch_head([_], _Line, _Vt0, St0) ->
+    {[], St0}.
 
 validate_catch_kind({var, _, _}, St) -> St;
-validate_catch_kind({atom, _, exit}, St) -> St;
-validate_catch_kind({atom, _, error}, St) -> St;
-validate_catch_kind({atom, _, throw}, St) -> St;
+validate_catch_kind({atom_expr, _, exit}, St) -> St;
+validate_catch_kind({atom_expr, _, error}, St) -> St;
+validate_catch_kind({atom_expr, _, throw}, St) -> St;
 validate_catch_kind({op, _, '^', {var, _, _}}, St) -> St;
 validate_catch_kind(Other, St) -> add_error(element(2, Other), illegal_catch_kind, St).
 
@@ -4665,6 +4701,14 @@ test_overriden_by_local(Line, OldTest, Arity, St) ->
     case is_local_function(St#lint.locals, {ModernTest, Arity}) of
         true ->
             add_error(Line, {obsolete_guard_overridden, OldTest}, St);
+        false ->
+            St
+    end.
+
+check_map_allowed(Line, St) ->
+    case St#lint.type_checked of
+        true ->
+            add_error(Line, map_syntax_disallowed, St);
         false ->
             St
     end.

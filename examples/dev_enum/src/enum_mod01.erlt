@@ -36,12 +36,14 @@
 %% -export_type([ t/1 ]).
 
 -spec f() -> term(). %maybe(any()).
+[unchecked]
 f() ->
-    none.
+    'none'.
 
 -spec g() -> term(). %maybe(boolean()).
+[unchecked]
 g() ->
-    {some, true}.
+    {'some', true}.
 
 
 -spec p() -> possibly(any()).
@@ -52,7 +54,7 @@ p() ->
 q(X) ->
     possibly.some{value = X}.
 
--spec r(possibly(T), T) -> [T].
+-spec r(possibly(possibly(A)), possibly(A)) -> [possibly(A)].
 r(E, Y) ->
     case E of
         possibly.none ->

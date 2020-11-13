@@ -1,0 +1,26 @@
+-module(lists).
+-export([filter/2, seq/2, seq/3, zip/2]).
+
+-spec stub() -> _.
+[unchecked]
+stub() ->
+    erlang:error('stub').
+
+-spec filter(fun((T) -> boolean()), [T]) -> [T].
+filter(_Fun, _L) ->
+    stub().
+
+
+-spec seq(integer(), integer()) -> [integer()].
+seq(_, _) ->
+    stub().
+
+
+-spec seq(integer(), integer(), integer()) -> [integer()].
+seq(_, _, _) ->
+    stub().
+
+-spec zip([A], [B]) -> [{A, B}].
+zip(_, _) ->
+    stub().
+

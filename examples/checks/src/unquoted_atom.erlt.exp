@@ -1,0 +1,2 @@
+unquoted_atom.erlt:5:9: bare enums (or unquoted atoms) are not supported
+unquoted_atom.erlt:6:9: bare enums (or unquoted atoms) are not supported

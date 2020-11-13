@@ -6,9 +6,9 @@
 %% Error: use of exported variables is not allowed
 f(X) ->
     case X of
-        {ok, Y} -> ok;
-        {b, Y} -> ok
+        {'ok', Y} -> 'ok';
+        {'b', Y} -> 'ok'
     end,
     lists:append(Z=[1,2,3], [4,5]),
     %% Y exported from case, Z exported from argument list
-    {ok, Y, Z}.
+    {'ok', Y, Z}.

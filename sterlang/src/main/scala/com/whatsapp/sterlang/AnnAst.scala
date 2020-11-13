@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
 
 object AnnAst {
   import Types.Type
-  import Ast.{BinElemType, BinOp, UOp}
+  import Ast.{BinElemType, BinOp, UOp, Index}
 
   /** A node in the intermediate language abstract syntax tree.
     *
@@ -61,7 +61,7 @@ object AnnAst {
       val typ: Type,
       val r: Doc.Range,
   ) extends Exp
-  case class StructSelect(exp: Exp, struct: String, fieldName: String)(val typ: Type, val r: Doc.Range) extends Exp
+  case class StructSelect(exp: Exp, struct: String, index: Index)(val typ: Type, val r: Doc.Range) extends Exp
   case class TryCatchExp(tryBody: Body, catchBranches: List[Branch], after: Option[Body])(
       val typ: Type,
       val r: Doc.Range,

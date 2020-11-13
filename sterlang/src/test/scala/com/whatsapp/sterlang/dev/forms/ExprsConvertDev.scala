@@ -107,7 +107,7 @@ object ExprsConvertDev {
             )
           ) =>
         val AtomLiteral(p, fieldName) = ExprsConvertDev.literal(eFieldName)
-        LocalStructSelect(r(anno), convertExp(eExp), structName, fieldName)
+        LocalStructSelect(r(anno), convertExp(eExp), structName, LblIndex(fieldName))
       case ETuple(
             List(
               EAtom("struct_field"),
@@ -125,7 +125,7 @@ object ExprsConvertDev {
             )
           ) =>
         val AtomLiteral(p, fieldName) = ExprsConvertDev.literal(eFieldName)
-        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, fieldName)
+        RemoteStructSelect(r(anno), convertExp(eExp), module, structName, LblIndex(fieldName))
       case ETuple(List(EAtom("shape"), anno, EList(eAssocs))) =>
         ShapeCreate(r(anno), eAssocs.map(convertShapeField))
       case ETuple(List(EAtom("shape"), anno, eExp, EList(eAssocs))) =>
@@ -233,9 +233,10 @@ object ExprsConvertDev {
         IntLiteral(r(anno), value.intValue)
       case ETuple(List(EAtom("string"), anno, EString(value))) =>
         StringLiteral(r(anno), value)
-      case ETuple(List(EAtom("string"), anno, EList(List()))) =>
-        // empty strings are parsed this way for some reason
-        StringLiteral(r(anno), "")
+      case ETuple(List(EAtom("string"), anno, EList(_))) =>
+        // empty strings, unicode strings and "string 1" "string 2" are parsed this way,
+        // we just ignore this for now
+        StringLiteral(r(anno), "COMPLEX ERLANG STRING")
       case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
         FloatLiteral(r(anno), value)
     }

@@ -1,0 +1,15 @@
+-module(built_in).
+
+-export([use_format/0, use_lists/0]).
+
+-spec use_format() -> string().
+use_format() ->
+    % test that types for t_io built-in t_io module are available
+    t_io:format("hello t_io~n"),
+    t_io:format("~p~p~n", {1, 2}).
+
+-spec use_lists() -> [number()].
+use_lists() ->
+    % test that built-in types for lists:filter are available
+    lists:filter(fun (N) -> N rem 2 =:= 0 end, [1,2,3,4,5,6]).
+

@@ -73,6 +73,9 @@ rebar3 compile
 cd sterlang; sbt assembly
 ```
 
+built-in definitions and modules: see [./erltc/built_ins/README.md](./erltc/built_ins/README.md)
+
+
 ### Testing
 
 #### erltc tests

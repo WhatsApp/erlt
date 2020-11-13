@@ -111,10 +111,7 @@ object Convert {
   }
 
   private def convertCatchClause(catchClause: Exprs.Clause): Ast.Rule = {
-    val List(Patterns.TuplePattern(p, List(exnClass, exn, stackTrace))) = catchClause.pats
-    val Ast.WildPat() = convertPattern(stackTrace)
-    val Patterns.LiteralPattern(literal) = exnClass
-    val Exprs.AtomLiteral(_, "throw") = literal
+    val List(exn) = catchClause.pats
     val exnPat = convertPattern(exn)
     Ast.Rule(exnPat, catchClause.guards.map(convertGuard), convertBody(catchClause.body))
   }
@@ -291,10 +288,10 @@ object Convert {
         Ast.StructUpdate(convertExpr(struct), Ast.LocalName(structName), fields.map(convertFieldExp))(p)
       case Exprs.RemoteStructUpdate(p, struct, module, structName, fields) =>
         Ast.StructUpdate(convertExpr(struct), Ast.RemoteName(module, structName), fields.map(convertFieldExp))(p)
-      case Exprs.LocalStructSelect(p, struct, structName, fieldName) =>
-        Ast.StructSelect(convertExpr(struct), Ast.LocalName(structName), fieldName)(p)
-      case Exprs.RemoteStructSelect(p, struct, module, structName, fieldName) =>
-        Ast.StructSelect(convertExpr(struct), Ast.RemoteName(module, structName), fieldName)(p)
+      case Exprs.LocalStructSelect(p, struct, structName, index) =>
+        Ast.StructSelect(convertExpr(struct), Ast.LocalName(structName), convertIndex(index))(p)
+      case Exprs.RemoteStructSelect(p, struct, module, structName, index) =>
+        Ast.StructSelect(convertExpr(struct), Ast.RemoteName(module, structName), convertIndex(index))(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)
@@ -315,6 +312,12 @@ object Convert {
         // $COVERAGE-OFF$ unreachable
         throw new IllegalStateException(e.toString)
       // $COVERAGE-ON$
+    }
+
+  private def convertIndex(index: Exprs.Index): Ast.Index =
+    index match {
+      case Exprs.LblIndex(lbl) => Ast.LblIndex(lbl)
+      case Exprs.PosIndex(pos) => Ast.PosIndex(pos)
     }
 
   private def convertBinElem(binElem: Exprs.BinElement): Ast.BinElement = {

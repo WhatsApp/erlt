@@ -1,0 +1,6 @@
+maps_in_type_checked_code.erlt:17:28: map syntax is only allowed in unchecked functions
+maps_in_type_checked_code.erlt:20:6: map syntax is only allowed in unchecked functions
+maps_in_type_checked_code.erlt:20:26: map syntax is only allowed in unchecked functions
+maps_in_type_checked_code.erlt:21:10: map syntax is only allowed in unchecked functions
+maps_in_type_checked_code.erlt:22:20: map syntax is only allowed in unchecked functions
+maps_in_type_checked_code.erlt:23:13: map syntax is only allowed in unchecked functions

@@ -728,13 +728,13 @@ log_sterlang_result(#sterlang_result{mode = M, result = R, erltc_time = T1, st_t
 -spec run_sterlang(#compile{}) -> #sterlang_result{}.
 run_sterlang(St) ->
     Start = erlang:monotonic_time('millisecond'),
-    {IFile, EtfFile} = {filename:absname(St#compile.ifile), St#compile.etf_file},
+    EtfFile = St#compile.etf_file,
     {CmdMode, CheckCmd} =
         case {filelib:is_regular("sterlang"), filelib:is_regular("sterlang.jar")} of
             {true, _} ->
-                {native, lists:append(["./sterlang ", IFile, " ", EtfFile])};
+                {native, lists:append(["./sterlang ", EtfFile])};
             {_, true} ->
-                {jar, lists:append(["java -jar sterlang.jar ", IFile, " ", EtfFile])};
+                {jar, lists:append(["java -jar sterlang.jar ", EtfFile])};
             _ ->
                 {undefined, undefined}
         end,
@@ -784,7 +784,7 @@ erlt_to_erl1(Code, St) ->
     end.
 
 do_erlt_to_erl1(Code, St0) ->
-    Transforms = [erlt_shape, erlt_modifiers, erlt_pinning],
+    Transforms = [erlt_shape, erlt_modifiers, erlt_pinning, erlt_try, erlt_atom],
     case ?OTP_COMPILE:foldl_transform(Transforms, Code, St0) of
         {ok, Erl1Forms, St0} ->
             write_erl1(Erl1Forms, St0),
