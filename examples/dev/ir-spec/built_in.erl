@@ -13,8 +13,12 @@ use_format() ->
 -spec use_lists() -> [number()].
 
 use_lists() ->
-    lists:filter(fun (N) -> N rem 2 =:= 0 end,
-                 [1, 2, 3, 4, 5, 6]).
+    L = [1, 3, 2, 7, 5, 4, 0],
+    t_io:format("~p",
+                {[] ++ lists:sort(fun (A, B) -> A < B end, L)}),
+    t_io:format("~p",
+                {[] ++ lists:flatten([[1], [2], [3]], L)}),
+    [] ++ lists:filter(fun (N) -> N rem 2 =:= 0 end, L).
 
 
 
