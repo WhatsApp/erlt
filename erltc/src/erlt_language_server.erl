@@ -24,54 +24,61 @@
 -include("erlt_compile.hrl").
 
 -export([
-         maybe_output_ls_diagnostics/3
+    maybe_output_ls_diagnostics/3
 ]).
 
 %% ---------------------------------------------------------------------
 %% Copied directly from erlang_ls els_diagnostics, for now
 
--type uri()       :: binary().
--type line()     :: number().
--type column()   :: number().
--type position() :: #{ line      := line()
-                     , character := column()
-                     }.
+-type uri() :: binary().
+-type line() :: number().
+-type column() :: number().
+-type position() :: #{
+    line := line(),
+    character := column()
+}.
 
--type range() :: #{ start := position()
-                  , 'end' := position()
-                  }.
+-type range() :: #{
+    start := position(),
+    'end' := position()
+}.
 
--type location() :: #{ uri   := uri()
-                     , range := range()
-                     }.
+-type location() :: #{
+    uri := uri(),
+    range := range()
+}.
 
--type diagnostic() :: #{ range              := range()
-                       , severity           => severity()
-                       , code               => number() | binary()
-                       , source             => binary()
-                       , message            := binary()
-                       , relatedInformation => [related_info()]
-                       }.
+-type diagnostic() :: #{
+    range := range(),
+    severity => severity(),
+    code => number() | binary(),
+    source => binary(),
+    message := binary(),
+    relatedInformation => [related_info()]
+}.
 
 -type diagnostic_id() :: binary().
--type related_info() :: #{ location := location()
-                         , message  := binary()
-                         }.
+-type related_info() :: #{
+    location := location(),
+    message := binary()
+}.
 
--define(DIAGNOSTIC_ERROR   , 1).
--define(DIAGNOSTIC_WARNING , 2).
--define(DIAGNOSTIC_INFO    , 3).
--define(DIAGNOSTIC_HINT    , 4).
+-define(DIAGNOSTIC_ERROR, 1).
+-define(DIAGNOSTIC_WARNING, 2).
+-define(DIAGNOSTIC_INFO, 3).
+-define(DIAGNOSTIC_HINT, 4).
 
--type severity() :: ?DIAGNOSTIC_ERROR
-                  | ?DIAGNOSTIC_WARNING
-                  | ?DIAGNOSTIC_INFO
-                  | ?DIAGNOSTIC_HINT.
+-type severity() ::
+    ?DIAGNOSTIC_ERROR
+    | ?DIAGNOSTIC_WARNING
+    | ?DIAGNOSTIC_INFO
+    | ?DIAGNOSTIC_HINT.
 
--export_type([ diagnostic/0
-             , diagnostic_id/0
-             , severity/0
-             ]).
+-export_type([
+    diagnostic/0,
+    diagnostic_id/0,
+    severity/0
+]).
 
 %% ---------------------------------------------------------------------
 
@@ -79,18 +86,24 @@
 
 -spec source() -> binary().
 source() ->
-  <<"ErlT">>.
+    <<"ErlT">>.
 
 maybe_output_ls_diagnostics(Warn, Err, St) ->
     case os:getenv("ERLT_LANGUAGE_SERVER") of
         false -> ok;
-        OutFile ->
-            output_ls_diagnostics(OutFile, Warn, Err, St)
-end.
+        OutFile -> output_ls_diagnostics(OutFile, Warn, Err, St)
+    end.
 
-output_ls_diagnostics(OutFile, Warn, Err
-                     , #compile{build_dir = BuildDir, base = Base,
-                                ifile = SourceFile} = St) ->
+output_ls_diagnostics(
+    OutFile,
+    Warn,
+    Err,
+    #compile{
+        build_dir = BuildDir,
+        base = Base,
+        ifile = SourceFile
+    } = St
+) ->
     %% Output = term_to_binary(normalize_for_typecheck(Code)),
 
     %% We include a timestamp, so that the language server can check
@@ -100,13 +113,17 @@ output_ls_diagnostics(OutFile, Warn, Err
     TS = erlang:timestamp(),
     Diags = convert_to_diagnostics(Warn, Err, St),
     Output = io_lib:format("~p.", [{TS, Diags}]),
-    FileName = filename:absname(filename:join(
+    FileName = filename:absname(
+        filename:join(
             BuildDir,
-            Base ++ ?LsFileSuffix)),
+            Base ++ ?LsFileSuffix
+        )
+    ),
     case FileName of
-      undefined -> error("undefined FileName");
-      _ ->
-            io:format("###LANGSERVER: ~0p~n", [{OutFile,filename:absname(SourceFile), FileName}]),
+        undefined ->
+            error("undefined FileName");
+        _ ->
+            io:format("###LANGSERVER: ~0p~n", [{OutFile, filename:absname(SourceFile), FileName}]),
             Mapping = io_lib:format("~0p.~n", [{filename:absname(SourceFile), {TS, FileName}}]),
             file:write_file(OutFile, Mapping, [append]),
             file:write_file(FileName, Output, [sync])
@@ -114,8 +131,10 @@ output_ls_diagnostics(OutFile, Warn, Err
     ok.
 
 convert_to_diagnostics(Warn, Err, St) ->
-    lists:flatten(report_errors(Err, St) ++
-                      report_warnings(Warn, St)).
+    lists:flatten(
+        report_errors(Err, St) ++
+            report_warnings(Warn, St)
+    ).
 
 %% ---------------------------------------------------------------------
 
@@ -155,8 +174,8 @@ report_warnings(Ws0, #compile{options = Opts}) ->
             ),
             Ws = lists:sort(Ws1),
             %% lists:foreach(fun({_, Str}) -> io:put_chars(Str) end, Ws);
-            [ Diag || {_,Diag} <- Ws]
-            %% Ws0;
+            [Diag || {_, Diag} <- Ws]
+        %% Ws0;
         %% false ->
         %%     []
     end.
@@ -166,7 +185,8 @@ report_warnings(Ws0, #compile{options = Opts}) ->
 %% NOTE: based on erlt_messages:list_errors/3
 %% list_errors(File, ErrorDescriptors, Opts) -> [diagnostic()]
 list_errors(F, [{none, Mod, E} | Es], Opts) ->
-    Range = 1, %% Just put it at the top of the file, no other info
+    %% Just put it at the top of the file, no other info
+    Range = 1,
     Diag = diagnostic(Range, Mod, E, ?DIAGNOSTIC_ERROR),
     [Diag | list_errors(F, Es, Opts)];
 list_errors(F, [{{{_, _} = StartLoc, {_, _} = EndLoc}, Mod, E} | Es], Opts) ->
@@ -191,7 +211,9 @@ list_errors(_F, [], _Opts) ->
 %% NOTE: based on erlt_messages:format_message/4
 format_message(F, P, [{none, Mod, E} | Es], Opts) ->
     %% M = {none, io_lib:format("~ts: ~s~ts\n", [F, P, Mod:format_error(E)])},
-    Range = 1, %% Just put it at the top of the file, no other info
+
+    %% Just put it at the top of the file, no other info
+    Range = 1,
     Diag = diagnostic(Range, Mod, E, ?DIAGNOSTIC_WARNING),
     [Diag | format_message(F, P, Es, Opts)];
 format_message(F, P, [{Loc, Mod, E} | Es], Opts) ->
@@ -216,43 +238,45 @@ format_message(_, _, [], _Opts) ->
 %% -spec diagnostic(poi_range(), module(), string(), integer()) ->
 %%         els_diagnostics:diagnostic().
 diagnostic(Range, Module, Desc, Severity) ->
-  Message0 = lists:flatten(Module:format_error(Desc)),
-  Message  = to_binary(Message0),
-  #{ range    => lsp_range(range(Range))
-   , message  => Message
-   , severity => Severity
-   , source   => source()
-   }.
+    Message0 = lists:flatten(Module:format_error(Desc)),
+    Message = to_binary(Message0),
+    #{
+        range => lsp_range(range(Range)),
+        message => Message,
+        severity => Severity,
+        source => source()
+    }.
 
 %% -spec range(erl_anno:line() | none) -> poi_range().
 range(Line) when is_integer(Line) ->
-  #{from => {Line, 1}, to => {Line + 1, 1}};
-range({{LineF,ColF},{LineT,ColT}}) ->
-  #{from => {LineF, ColF}, to => {LineT, ColT}};
+    #{from => {Line, 1}, to => {Line + 1, 1}};
+range({{LineF, ColF}, {LineT, ColT}}) ->
+    #{from => {LineF, ColF}, to => {LineT, ColT}};
 range({Line, Col}) when is_integer(Line) andalso is_integer(Col) ->
-  #{from => {Line, Col}, to => {Line + 1, 1}};
-range([{location,{LineF,ColF}},{end_location,{LineT,ColT}}]) ->
-  #{from => {LineF, ColF}, to => {LineT, ColT}};
+    #{from => {Line, Col}, to => {Line + 1, 1}};
+range([{location, {LineF, ColF}}, {end_location, {LineT, ColT}}]) ->
+    #{from => {LineF, ColF}, to => {LineT, ColT}};
 range(none) ->
-  range(1).
+    range(1).
 
 %% -spec range(poi_range()) -> range().
-lsp_range(#{ from := {FromL, FromC}, to := {ToL, ToC} }) ->
-  #{ start => #{line => FromL - 1, character => FromC - 1}
-   , 'end' => #{line => ToL - 1,   character => ToC - 1}
-   }.
+lsp_range(#{from := {FromL, FromC}, to := {ToL, ToC}}) ->
+    #{
+        start => #{line => FromL - 1, character => FromC - 1},
+        'end' => #{line => ToL - 1, character => ToC - 1}
+    }.
 
 %% ---------------------------------------------------------------------
 %% Copied from els_utils
 
 -spec to_binary(unicode:chardata()) -> binary().
 to_binary(X) when is_binary(X) ->
-  X;
+    X;
 to_binary(X) when is_list(X) ->
-  case unicode:characters_to_binary(X) of
-    Result when is_binary(Result) -> Result;
-    _ -> iolist_to_binary(X)
-  end.
+    case unicode:characters_to_binary(X) of
+        Result when is_binary(Result) -> Result;
+        _ -> iolist_to_binary(X)
+    end.
 
 %% -spec to_list(unicode:chardata()) -> string().
 %% to_list(X) when is_list(X) ->
