@@ -1,5 +1,5 @@
 -module(lists).
--export([filter/2, seq/2, seq/3, zip/2]).
+-export([filter/2, seq/2, split/2, seq/3, zip/2]).
 
 -spec stub() -> _.
 [unchecked]
@@ -10,6 +10,9 @@ stub() ->
 filter(_Fun, _L) ->
     stub().
 
+-spec split(integer(), [T]) -> {[T], [T]}.
+split(_, _) ->
+    stub().
 
 -spec seq(integer(), integer()) -> [integer()].
 seq(_, _) ->

@@ -34,60 +34,88 @@ loop({'$#erltodo:state', Todos, DeletedCount} =
 -spec prompt([string()]) -> choice().
 
 prompt(Todos) ->
-    io:format("What would you like to do?\n1. add todo~n2. "
-              "delete todo~n3. view stats~n~n"),
-    case io:read("Enter a number followed by a dot: ") of
-        {ok, 1} -> prompt_add_todo();
-        {ok, 2} -> prompt_delete_todo(Todos);
-        {ok, 3} -> {'$#erltodo:choice.view_stats'};
-        {ok, _} ->
+    t_io:format("What would you like to do?~n1. add todo~n2. "
+                "delete todo~n3. view stats~n~n"),
+    case read_or_error("Enter a number followed by a dot: ")
+        of
+        1 -> prompt_add_todo();
+        2 -> prompt_delete_todo(Todos);
+        3 -> {'$#erltodo:choice.view_stats'};
+        _ ->
             invalid_input(),
             prompt(Todos)
     end.
 
+-spec prompt_add_todo() -> choice().
+
 prompt_add_todo() ->
-    case io:read("enter todo text in quotes followed by "
-                 "a dot. Example: \"buy eggs\".: ")
+    case
+        read_or_error("enter todo text in quotes followed by "
+                      "a dot. Example: \"buy eggs\".: ")
         of
-        {ok, TodoText} when erlang:is_list(TodoText) ->
+        TodoText when erlang:is_list(TodoText) ->
             {'$#erltodo:choice.add', TodoText};
-        {ok, Res} ->
+        Res ->
             erlang:display(Res),
             invalid_input(),
             prompt_add_todo()
     end.
 
+-spec prompt_delete_todo([string()]) -> choice().
+
 prompt_delete_todo(Todos) ->
     display_todos(Todos),
-    case io:read("enter the id of the todo you would like "
-                 "to delete followed by a dot. ")
+    case
+        read_or_error("enter the id of the todo you would like "
+                      "to delete followed by a dot. ")
         of
-        {ok, Id} when erlang:is_integer(Id) ->
+        Id when erlang:is_integer(Id) ->
             {'$#erltodo:choice.delete', Id};
-        {ok, _} ->
+        _ ->
             invalid_input(),
             prompt_delete_todo(Todos)
     end.
 
--spec display_stats(state()) -> atom().
+-spec display_stats(state()) -> string().
 
 display_stats({'$#erltodo:state', [], 0}) ->
-    io:format("You haven't started yet: try creating "
-              "and deleting todos~n"),
-    {ok, _} =
-        io:read("type ok followed by a dot to continue. "),
-    ok;
+    t_io:format("You haven't started yet: try creating "
+                "and deleting todos~n"),
+    prompt_for_ok(),
+    "ok";
 display_stats({'$#erltodo:state',
                Todos,
                DeletedCount}) ->
     line(),
-    io:format("You have ~p active todos and ~p deleted "
-              "todos",
-              [erlang:length(Todos), DeletedCount]),
+    t_io:format("You have ~p active todos and ~p deleted "
+                "todos",
+                {erlang:length(Todos), DeletedCount}),
     line(),
-    {ok, _} =
-        io:read("type ok followed by a dot to continue. "),
-    ok.
+    prompt_for_ok(),
+    "ok".
+
+-spec prompt_for_ok() -> atom().
+
+prompt_for_ok() ->
+    case
+        read_or_error("type ok followed by a dot to continue. ")
+        of
+        ok -> ok;
+        _ -> prompt_for_ok()
+    end.
+
+-spec read_or_error(string()) -> _.
+
+read_or_error(Prompt) ->
+    case io:read(Prompt) of
+        {ok, Res} -> Res;
+        eof ->
+            erlang:error("eof when reading from prompt ~p~n",
+                         [Prompt]);
+        {error, Reason} ->
+            erlang:error("error when reading from prompt ~p: ~p~n",
+                         [Prompt, Reason])
+    end.
 
 with_indices(List) ->
     Indices = lists:seq(len(List), 1, -1),
