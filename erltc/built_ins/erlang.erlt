@@ -1,0 +1,36 @@
+-module(erlang).
+
+-export([display/1, error/1, error/2, is_integer/1, is_list/1, length/1]).
+
+-spec stub() -> _.
+[unchecked]
+stub() ->
+    erlang:error('stub').
+
+% dangerous
+% TODO: update to return 'ok' when atom types allowed
+-spec display(_) -> atom().
+display(_) ->
+    stub().
+
+-spec error(string()) -> no_return().
+error(_) ->
+    stub().
+
+% dangerous
+-spec error(string(), [_]) -> no_return().
+error(_, _) ->
+    stub().
+
+-spec length([_]) -> integer().
+length(_) ->
+    stub().
+
+-spec is_integer(_) -> boolean().
+is_integer(_) ->
+    stub().
+
+-spec is_list(_) -> boolean().
+is_list(_) ->
+    stub().
+
