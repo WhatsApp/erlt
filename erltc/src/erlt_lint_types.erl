@@ -51,7 +51,10 @@ format_error({redefine_type, T}) ->
 format_error({undefined_type, {TypeName, Arity}}) ->
     io_lib:format("type ~tw~s undefined", [TypeName, gen_type_paren(Arity)]);
 format_error({import_type_wrong_arity, {N, A}}) ->
-    io_lib:format("imported type ~tw~s used with the wrong number of arguments", [N, gen_type_paren(A)]);
+    io_lib:format("imported type ~tw~s used with the wrong number of arguments", [
+        N,
+        gen_type_paren(A)
+    ]);
 format_error({reused_imported_typename, {N, _A}, _Kind}) ->
     io_lib:format("defined a new type with the same name ~tw as an imported type", [N]);
 format_error(underscore_in_type_arguments) ->
