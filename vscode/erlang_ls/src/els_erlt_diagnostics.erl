@@ -29,9 +29,24 @@ compile(Uri) ->
   Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s rebar3 compile",
                       [TempFile])),
   os:cmd(Cmd),
-  {ok, FileName} = get_els_file(TempFile, Uri),
-  {ok, [{_TS, Diags}]} = file:consult(FileName),
-  Diags.
+  case get_els_file(TempFile, Uri) of
+    {ok, FileName} ->
+      get_els_file(TempFile, Uri),
+      {ok, [{_TS, Diags}]} = file:consult(FileName),
+      Diags;
+    {error, Reason} ->
+      Range = #{ from => {1, 1}, to => {2, 1} },
+      Desc = lists:flatten(
+        io_lib:format("els_erlt_diagnostics: could not read temp file [~p]",
+                           [Reason])),
+      Diag =
+        #{ range    => els_protocol:range(Range)
+         , message  => els_utils:to_binary(Desc)
+         , severity => ?DIAGNOSTIC_ERROR
+         , source   => <<"ErlT">>
+         },
+      [Diag]
+  end.
 
 
 -spec get_els_file(file:filename(), uri())
