@@ -1,29 +1,493 @@
 -module(lists).
--export([filter/2, seq/2, split/2, seq/3, zip/2]).
+
+-compile({no_auto_import,[max/2]}).
+-compile({no_auto_import,[min/2]}).
+
+% ordering of exports and specs in this file
+% is the same as in otp erlang lists.erl
+-export([
+     append/2,
+     append/1,
+     subtract/2,
+     reverse/1,
+	 nth/2,
+     nthtail/2,
+     prefix/2,
+     suffix/2,
+     droplast/1,
+     last/1,
+	 seq/2,
+     seq/3,
+     sum/1,
+     duplicate/2,
+     min/1,
+     max/1,
+     sublist/2,
+     sublist/3,
+	 delete/2,
+	 unzip/1,
+     unzip3/1,
+     zip/2,
+     zip3/3,
+     zipwith/3,
+     zipwith3/4,
+	 sort/1,
+     merge/1,
+     merge/2,
+     rmerge/2,
+     merge3/3,
+     rmerge3/3,
+	 usort/1,
+     umerge/1,
+     umerge3/3,
+     umerge/2,
+     rumerge3/3,
+     rumerge/2,
+	 concat/1,
+     flatten/1,
+     flatten/2,
+     flatlength/1,
+	 % keydelete/3,
+     % keyreplace/4,
+     % keytake/3,
+     % keystore/4,
+	 % keysort/2,
+     keymerge/3,
+     rkeymerge/3,
+     rukeymerge/3,
+	 ukeysort/2,
+     ukeymerge/3
+     % keymap/3
+]).
+
+-export([
+     merge/3,
+     rmerge/3,
+     sort/2,
+     % umerge/3,
+     rumerge/3,
+     usort/2
+]).
+
+-export([
+     all/2,
+     any/2,
+     map/2,
+     flatmap/2,
+     foldl/3,
+     foldr/3,
+     filter/2,
+	 partition/2,
+     % zf/2,
+     % filtermap/2,
+	 mapfoldl/3,
+     mapfoldr/3,
+     % foreach/2,
+     takewhile/2,
+     dropwhile/2,
+     % search/2,
+     splitwith/2,
+     split/2,
+	 join/2
+]).
+
+%%% BIFs
+-export([
+     % keyfind/3,
+     % keymember/3,
+     % keysearch/3,
+     member/2,
+     reverse/2
+]).
 
 -spec stub() -> _.
 [unchecked]
 stub() ->
     erlang:error('stub').
 
--spec filter(fun((T) -> boolean()), [T]) -> [T].
-filter(_Fun, _L) ->
+
+%% key of comments used in this file:
+% - dangerous: type is not specific enough.
+% - superseded: there is or will be an "ErlT way" of accomplishing the same
+% goal in a more type-safe manner.
+%
+% - stricter: signature is more restrictive than
+%           what an accurate classic Erlang type would express
+
+% stricter: only works for 2-tuples - perhaps we want row polymorphism for tuples
+% or to make tuples a special case of shapes.
+% This type is also hard to express because the key is compared to the nth
+% element of the tuple: proper typing requires something like atom singleton types
+% and tuple lookup types.
+% -spec keyfind(_K, integer(), [_]) -> _.
+% keyfind(_, _, _) ->
+%     stub().
+
+% stricter: only works for 2-tuples
+% -spec keymember(_K, integer(), [_]) -> boolean().
+% keymember(_, _, _) ->
+%     stub().
+
+% dangerous
+% stricter: only works for 2-tuples
+% -spec keysearch(_K, integer(), [_]) -> _.
+% keysearch(_, _, _) ->
+%     stub().
+
+-spec member(T, [T]) -> boolean().
+member(_, _) ->
     stub().
 
--spec split(integer(), [T]) -> {[T], [T]}.
-split(_, _) ->
+-spec reverse([T], [T]) -> [T].
+reverse(_, _) ->
+    stub().
+
+-spec append([T], [T]) -> [T].
+append(_, _) ->
+    stub().
+
+-spec append([[T]]) -> [T].
+append(_) ->
+    stub().
+
+-spec subtract([T], [T]) -> [T].
+subtract(_, _) ->
+    stub().
+
+-spec reverse([T]) -> [T].
+reverse(_) ->
+    stub().
+
+-spec nth(integer(), [T]) -> T.
+nth(_, _) ->
+    stub().
+
+-spec nthtail(integer(), [T]) -> [T].
+nthtail(_, _) ->
+    stub().
+
+-spec prefix([T], [T]) -> boolean().
+prefix(_, _) ->
+    stub().
+
+-spec suffix([T], [T]) -> boolean().
+suffix(_, _) ->
+    stub().
+
+-spec droplast([T]) -> [T].
+droplast(_) ->
+    stub().
+
+-spec last([T]) -> T.
+last(_) ->
     stub().
 
 -spec seq(integer(), integer()) -> [integer()].
 seq(_, _) ->
     stub().
 
-
 -spec seq(integer(), integer(), integer()) -> [integer()].
 seq(_, _, _) ->
+    stub().
+
+-spec sum([number()]) -> integer().
+sum(_) ->
+    stub().
+
+-spec duplicate(integer(), T) -> [T].
+duplicate(_, _) ->
+    stub().
+
+-spec min([T]) -> T.
+min(_) ->
+    stub().
+
+-spec max([T]) -> T.
+max(_) ->
+    stub().
+
+-spec sublist([T], integer(), integer()) -> [T].
+sublist(_, _, _) ->
+    stub().
+
+-spec sublist([T], integer()) -> [T].
+sublist(_, _) ->
+    stub().
+
+-spec delete(T, [T]) -> [T].
+delete(_, _) ->
     stub().
 
 -spec zip([A], [B]) -> [{A, B}].
 zip(_, _) ->
     stub().
 
+-spec unzip([{A, B}]) -> {[A], [B]}.
+unzip(_) ->
+    stub().
+
+-spec zip3([A], [B], [C]) -> [{A, B, C}].
+zip3(_, _, _) ->
+    stub().
+
+-spec unzip3([{A, B, C}]) -> {[A], [B], [C]}.
+unzip3(_) ->
+    stub().
+
+-spec zipwith(fun((X, Y) -> T), [X], [Y]) -> [T].
+zipwith(_, _, _) ->
+    stub().
+
+-spec zipwith3(fun((X, Y, Z) -> T), [X], [Y], [Z]) -> [T].
+zipwith3(_, _, _, _) ->
+    stub().
+
+-spec sort([T]) -> [T].
+sort(_) ->
+    stub().
+
+-spec merge([[T]]) -> [T].
+merge(_) ->
+    stub().
+
+% stricter
+-spec merge3([T], [T], [T]) -> [T].
+merge3(_, _, _) ->
+    stub().
+
+% stricter
+-spec rmerge3([T], [T], [T]) -> [T].
+rmerge3(_, _, _) ->
+    stub().
+
+% stricter
+-spec merge([T], [T]) -> [T].
+merge(_, _) ->
+    stub().
+
+% stricter
+-spec rmerge([T], [T]) -> [T].
+rmerge(_, _) ->
+    stub().
+
+-spec concat([_T]) -> string().
+concat(_) ->
+    stub().
+
+% stricter: the implementation can handle arbitrary, heterogeneous depth
+-spec flatten([[T]]) -> [T].
+flatten(_) ->
+    stub().
+
+% stricter: the implementation can handle arbitrary, heterogeneous depth
+-spec flatten([[T]], [T]) -> [T].
+flatten(_, _) ->
+    stub().
+
+% stricter: the implementation can handle arbitrary, heterogeneous depth
+-spec flatlength([[_T]]) -> integer().
+flatlength(_) ->
+    stub().
+
+% dangerous
+% -spec keydelete(_, integer(), _) -> [_].
+% keydelete(_, _, _) ->
+%     stub().
+
+% dangerous
+% -spec keyreplace(_, integer(), [T], _) -> [T].
+% keyreplace(_, _, _, _) ->
+%     stub().
+
+% dangerous
+% -spec keytake(_, integer(), [_]) -> _.
+% keytake(_, _, _) ->
+%     stub().
+
+
+% dangerous
+% -spec keystore(_, integer(), [T], _) -> [T].
+% keystore(_, _, _, _) ->
+%     stub().
+
+% dangerous
+% -spec keysort(integer(), [T]) -> [T].
+% keysort(_, _) ->
+%     stub().
+
+% stricter
+-spec keymerge(integer(), [T], [T]) -> [T].
+keymerge(_, _, _) ->
+    stub().
+
+% stricter
+-spec rkeymerge(integer(), [T], [T]) -> [T].
+rkeymerge(_, _, _) ->
+    stub().
+
+% stricter
+-spec ukeysort(integer(), [T]) -> [T].
+ukeysort(_, _) ->
+    stub().
+
+% stricter
+-spec ukeymerge(integer(), [T], [T]) -> [T].
+ukeymerge(_, _, _) ->
+    stub().
+
+% stricter
+-spec rukeymerge(integer(), [T], [T]) -> [T].
+rukeymerge(_, _, _) ->
+    stub().
+
+% stricter
+% dangerous
+% -spec keymap(fun((_) -> _), integer(), [T]) -> [T].
+% keymap(_, _, _) ->
+%     stub().
+
+% stricter
+-spec sort(fun((T, T) -> boolean()), [T]) -> [T].
+sort(_, _) ->
+    stub().
+
+% stricter
+-spec merge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+merge(_, _, _) ->
+    stub().
+
+% stricter
+-spec rmerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+rmerge(_, _, _) ->
+    stub().
+
+% stricter
+-spec rumerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+rumerge(_, _, _) ->
+    stub().
+
+% stricter
+-spec usort(fun((T, T) -> boolean()), [T]) -> [T].
+usort(_, _) ->
+    stub().
+
+% stricter
+% dangerous
+% -spec umerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+% umerge(_, _, _) ->
+%     stub().
+
+% stricter
+-spec umerge(fun((T, T) -> boolean()), [T]) -> [T].
+umerge(_, _) ->
+    stub().
+
+% stricter
+-spec rumerge3(fun((T, T) -> boolean()), [T], [T]) -> [T].
+rumerge3(_, _, _) ->
+    stub().
+
+-spec usort([T]) -> [T].
+usort(_) ->
+    stub().
+      
+-spec umerge([[T]]) -> [T].
+umerge(_) ->
+    stub().
+
+% stricter
+-spec umerge3([T], [T], [T]) -> [T].
+umerge3(_, _, _) ->
+    stub().
+
+% stricter
+-spec rumerge([T], [T]) -> [T].
+rumerge(_, _) ->
+    stub().
+
+-spec all(fun((T) -> boolean()), [T]) -> boolean().
+all(_, _) ->
+    stub().
+
+-spec any(fun((T) -> boolean()), [T]) -> boolean().
+any(_, _) ->
+    stub().
+
+-spec map(fun((A) -> B), [A]) -> [B].
+map(_, _) ->
+    stub().
+
+-spec flatmap(fun((A) -> [B]), [A]) -> [B].
+flatmap(_, _) ->
+    stub().
+
+% stricter
+-spec foldl(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
+foldl(_, _, _) ->
+    stub().
+
+% stricter
+-spec foldr(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
+foldr(_, _, _) ->
+    stub().
+
+-spec filter(fun((T) -> boolean()), [T]) -> [T].
+filter(_Fun, _L) ->
+    stub().
+
+-spec partition(fun((T) -> boolean()), [T]) -> {[T], [T]}.
+partition(_, _) ->
+    stub().
+
+% dangerous
+% % stricter
+% -spec filtermap(fun((T) -> _), [T]) -> [T].
+% filtermap(_, _) ->
+    % stub().
+
+
+% dangerous
+% % stricter
+% -spec zf(fun((T) -> _), [T]) -> [T].
+% zf(_, _) ->
+    % stub().
+
+% dangerous
+% -spec foreach(fun((T) -> _), [T]) -> _.
+% foreach(_, _) ->
+%     stub().
+
+% stricter
+-spec mapfoldr(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
+mapfoldr(_, _, _) ->
+    stub().
+
+% stricter
+-spec mapfoldl(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
+mapfoldl(_, _, _) ->
+    stub().
+
+-spec takewhile(fun((T) -> boolean()), [T]) -> [T].
+takewhile(_, _) ->
+    stub().
+
+-spec dropwhile(fun((T) -> boolean()), [T]) -> [T].
+dropwhile(_, _) ->
+    stub().
+
+% dangerous
+% -spec search(fun((T) -> boolean()), [T]) -> _.
+% search(_, _) ->
+%     stub().
+
+-spec splitwith(fun((T) -> boolean()), [T]) -> {[T], [T]}.
+splitwith(_, _) ->
+    stub().
+
+-spec split(integer(), [T]) -> {[T], [T]}.
+split(_, _) ->
+    stub().
+
+-spec join(T, [T]) -> [T].
+join(_, _) ->
+    stub().
