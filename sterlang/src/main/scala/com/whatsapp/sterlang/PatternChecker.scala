@@ -424,6 +424,7 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, pr
     ctr match {
       case Literal(_: Ast.BooleanVal) =>
         Some(Set(true, false).map(b => Literal(Ast.BooleanVal(b))))
+      case Literal(_: Ast.AtomVal)   => None
       case Literal(_: Ast.NumberVal) => None
       case Literal(_: Ast.CharVal)   => None
       case Literal(_: Ast.StringVal) => None

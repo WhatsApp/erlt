@@ -194,6 +194,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabAppExp(appExp, ty, d, env)
       case shapeSelectExp: Ast.ShapeSelectExp =>
         elabShapeSelectExp(shapeSelectExp, ty, d, env)
+      case atomExp: Ast.AtomExp =>
+        elabAtomExp(atomExp, ty, d, env)
       case boolExp: Ast.BoolExp =>
         elabBoolExp(boolExp, ty, d, env)
       case numberExp: Ast.NumberExp =>
@@ -260,6 +262,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabAndPat(andPat, ts, d, env, penv, gen)
       case tuplePat: Ast.TuplePat =>
         elabTuplePat(tuplePat, ts, d, env, penv, gen)
+      case atomPat: Ast.AtomPat =>
+        elabAtomPat(atomPat, ts, d, env, penv, gen)
       case boolPat: Ast.BoolPat =>
         elabBoolPat(boolPat, ts, d, env, penv, gen)
       case charPat: Ast.CharPat =>
@@ -700,6 +704,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     AnnAst.ShapeSelectExp(shape1, label)(typ = ty, r = exp.r)
   }
 
+  private def elabAtomExp(exp: Ast.AtomExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.AtomExp(a) = exp
+
+    unify(exp.r, ty, MT.AtomType)
+    AnnAst.LiteralExp(Ast.AtomVal(a))(typ = ty, r = exp.r)
+  }
+
   private def elabBoolExp(exp: Ast.BoolExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.BoolExp(b) = exp
 
@@ -1083,6 +1094,20 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       p1
     }
     (AnnAst.TuplePat(pats1)(p.r), envAcc, penvAcc)
+  }
+
+  private def elabAtomPat(
+      p: Ast.AtomPat,
+      ts: ST.TypeScheme,
+      d: T.Depth,
+      env: Env,
+      penv: PEnv,
+      gen: Boolean,
+  ): (PreAnnPat, Env, PEnv) = {
+    val Ast.AtomPat(a) = p
+    val t = TU.instantiate(d, ts)
+    unify(p.r, t, MT.AtomType)
+    (AnnAst.LiteralPat(Ast.AtomVal(a))(p.r), env, penv)
   }
 
   private def elabBoolPat(

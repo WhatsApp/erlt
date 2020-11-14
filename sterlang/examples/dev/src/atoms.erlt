@@ -12,7 +12,12 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(e04).
+-module(atoms).
 
-test(atom) ->
+-export([test/1, mk_atom/0]).
+
+test('atom') ->
     1.
+
+mk_atom() ->
+    'atom'.

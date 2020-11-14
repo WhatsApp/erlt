@@ -71,6 +71,8 @@ object METypes {
     ConType(NamedTyCon("number"), List(), List())
   val CharType: ConType =
     ConType(NamedTyCon("char"), List(), List())
+  val AtomType: ConType =
+    ConType(NamedTyCon("atom"), List(), List())
   val BoolType: ConType =
     ConType(NamedTyCon("boolean"), List(), List())
   val StringType: ConType =

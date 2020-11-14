@@ -65,6 +65,7 @@ object Ast {
   case object MsgStruct extends StructKind
 
   sealed trait Val
+  case class AtomVal(value: String) extends Val
   case class BooleanVal(value: Boolean) extends Val
   case class NumberVal(value: Int) extends Val
   case class CharVal(value: Char) extends Val
@@ -169,6 +170,7 @@ object Ast {
   case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val r: Doc.Range) extends Exp
   case class UOpExp(uOp: UOp, exp: Exp)(val r: Doc.Range) extends Exp
   case class AppExp(head: Exp, args: List[Exp])(val r: Doc.Range) extends Exp
+  case class AtomExp(atom: String)(val r: Doc.Range) extends Exp
   case class BoolExp(bool: Boolean)(val r: Doc.Range) extends Exp
   case class NumberExp(n: Int)(val r: Doc.Range) extends Exp
   case class CharExp(c: Char)(val r: Doc.Range) extends Exp
@@ -258,6 +260,7 @@ object Ast {
   case class NilPat()(val r: Doc.Range) extends Pat
   case class BinPat(pats: List[BinElementPat])(val r: Doc.Range) extends Pat
   case class ConsPat(hPat: Pat, tPat: Pat)(val r: Doc.Range) extends Pat
+  case class AtomPat(atom: String)(val r: Doc.Range) extends Pat
   case class BoolPat(bool: Boolean)(val r: Doc.Range) extends Pat
   case class CharPat(char: Char)(val r: Doc.Range) extends Pat
   case class NumberPat(n: Int)(val r: Doc.Range) extends Pat
