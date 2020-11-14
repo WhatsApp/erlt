@@ -39,5 +39,6 @@ baz() ->
 
 pattern(foo.x, bar.x{b = B}, in_pattern.x) -> B.
 
+-spec guard(bar(number())) -> atom().
 guard(Value) when Value =:= bar.x{a = 1, b = foo.x} ->
-    "ok".
+    'ok'.
