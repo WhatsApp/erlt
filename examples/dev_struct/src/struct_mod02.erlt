@@ -32,7 +32,7 @@ pattern(#?MODULE:foo{}, #?MODULE:bar{a = 1, b = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= #?MODULE:foo{}, Value2 =:= #?MODULE:bar{a = 1, b = B} ->
-    "ok".
+    'ok'.
 
 field(Value) when Value#?MODULE:bar.a =:= 1 ->
     Value#?MODULE:bar.b.

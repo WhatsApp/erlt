@@ -125,20 +125,20 @@ with_indices(List) ->
 
 len(L) -> erlang:length(L).
 
--spec display_todos([string()]) -> string().
+-spec display_todos([string()]) -> atom().
 
 display_todos([]) ->
     line(),
     t_io:format("You have no todos~n"),
     line(),
-    "ok";
+    ok;
 display_todos(Todos) ->
     line(),
     t_io:format("Your todos are:~n"),
     [t_io:format("~p. ~p~n", {Index, Todo})
      || {Index, Todo} <- with_indices(Todos)],
     line(),
-    "ok".
+    ok.
 
 line() -> t_io:format("------~n").
 

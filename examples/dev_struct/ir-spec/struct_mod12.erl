@@ -22,7 +22,7 @@ pattern({'$#struct_mod11:bar', B, _},
 guard(Value1, Value2, B)
     when Value1 =:= {'$#struct_mod11:bar', 1, B},
          Value2 =:= {'$#struct_mod11:mixed', 1, 2} ->
-    "ok".
+    ok.
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod11:bar', 3)

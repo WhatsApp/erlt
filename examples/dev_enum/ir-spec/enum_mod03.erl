@@ -35,10 +35,12 @@ pattern({'$#enum_mod03:foo.x'},
         {'$#enum_mod03:in_pattern.x'}) ->
     B.
 
+-spec guard(bar(number())) -> atom().
+
 guard(Value)
     when Value =:=
              {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}} ->
-    "ok".
+    ok.
 
 
 
