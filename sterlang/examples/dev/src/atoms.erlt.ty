@@ -1,0 +1,2 @@
+-spec test(atom()) -> number().
+-spec mk_atom() -> atom().

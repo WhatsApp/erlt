@@ -150,9 +150,8 @@ object Convert {
             Ast.BoolPat(true)(p)
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolPat(false)(p)
-          case Exprs.AtomLiteral(p, _) =>
-            // atom literals are not supported on its own
-            throw new UnsupportedSyntaxError(p, "Atom literals")
+          case Exprs.AtomLiteral(p, atom) =>
+            Ast.AtomPat(atom)(p)
           case Exprs.CharLiteral(p, c) =>
             Ast.CharPat(c)(p)
           case Exprs.FloatLiteral(p, fl) =>
@@ -207,9 +206,8 @@ object Convert {
             Ast.BoolExp(true)(p)
           case Exprs.AtomLiteral(p, "false") =>
             Ast.BoolExp(false)(p)
-          case Exprs.AtomLiteral(p, _) =>
-            // Atom literals are not supported on their own
-            throw new UnsupportedSyntaxError(p, "Atom literal")
+          case Exprs.AtomLiteral(p, atom) =>
+            Ast.AtomExp(atom)(p)
           case Exprs.CharLiteral(p, ch) =>
             Ast.CharExp(ch)(p)
           case Exprs.FloatLiteral(p, fl) =>

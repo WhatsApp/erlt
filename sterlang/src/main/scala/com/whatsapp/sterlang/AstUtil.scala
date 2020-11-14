@@ -23,6 +23,8 @@ object AstUtil {
     pat match {
       case WildPat() =>
         List.empty
+      case AtomPat(_) =>
+        List.empty
       case BoolPat(_) =>
         List.empty
       case CharPat(_) =>
@@ -134,6 +136,8 @@ object AstUtil {
         freeVars(head, m) ++ args.flatMap(freeVars(_, m))
       case ShapeSelectExp(exp, label) =>
         freeVars(exp, m)
+      case AtomExp(_) =>
+        Set.empty
       case BoolExp(bool) =>
         Set.empty
       case NumberExp(n) =>
@@ -587,7 +591,7 @@ object AstUtil {
         elems.map(elem => getDepPat(elem.pat)).foldLeft(Set.empty[String])(_ ++ _)
       case ConsPat(hPat, tPat) =>
         getDepPat(hPat) ++ getDepPat(tPat)
-      case BoolPat(_) | NumberPat(_) | StringPat(_) | CharPat(_) =>
+      case AtomPat(_) | BoolPat(_) | NumberPat(_) | StringPat(_) | CharPat(_) =>
         Set.empty[String]
     }
 
@@ -603,6 +607,8 @@ object AstUtil {
         getDepExp(head) ++ args.flatMap(getDepExp)
       case ShapeSelectExp(exp, label) =>
         getDepExp(exp)
+      case AtomExp(_) =>
+        Set.empty
       case BoolExp(bool) =>
         Set.empty
       case NumberExp(n) =>

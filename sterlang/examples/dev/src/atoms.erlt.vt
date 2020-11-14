@@ -1,0 +1,2 @@
+val test/1: fun((atom()) -> number())
+val mk_atom/0: fun(() -> atom())
