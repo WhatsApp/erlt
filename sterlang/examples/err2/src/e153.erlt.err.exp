@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------- examples/err2/src/e153.erlt:20:16
+Inconsistent type params
+Specified:  `A, B`
+Elaborated: `box(number()), box(boolean())`
+ 20| -enum bad_enum(A, B) :: (ctr{box1 = #box{value = 1} :: A, box2 = #box{value = true} :: B}).
+...|                ~~~~

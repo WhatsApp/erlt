@@ -55,6 +55,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   def elaborate(): (List[AnnAst.Fun], Env) = {
     checkStructDefs()
+    checkEnumDefs()
     elaborateFuns()
   }
 
@@ -82,10 +83,35 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Ast.StrStruct =>
           val elabParams = Render(vars).typs(tParams)
           if (declParams != elabParams)
-            throw new InconsistentStructTypeParamsError(params.head.r ! params.last.r, declParams, elabParams)
+            throw new InconsistentTypeParamsError(params.head.r ! params.last.r, declParams, elabParams)
         case Ast.ExnStruct | Ast.MsgStruct =>
         // OK - no type parameters, no mismatch
       }
+    }
+  }
+
+  private def checkEnumDefs(): Unit = {
+    val d = 0
+    val expander = dExpander(d)
+
+    for (Ast.EnumDef(_, params, ctrs) <- program.enumDefs) {
+      val sub = params.map(tv => tv.name -> freshTypeVar(d)).toMap
+      val eSub: Expander.Sub = sub.view.mapValues(Left(_)).toMap
+      val tParams = params.map(p => sub(p.name))
+      val declParams = Render(vars).typs(tParams)
+
+      for (Ast.EnumCtr(_, fields) <- ctrs) {
+        val lblFields = fields.collect { case lf: Ast.LblFieldDecl => lf }
+        val fieldTypes = lblFields.map(f => f.label -> f.tp).toMap
+        for (lblFieldDecl <- lblFields; defaultVal <- lblFieldDecl.default) {
+          val fieldType = expander.mkType(fieldTypes(lblFieldDecl.label), eSub)
+          val eFieldType = expander.expandType(fieldType)
+          elab(defaultVal, eFieldType, d, context.env)
+        }
+      }
+      val elabParams = Render(vars).typs(tParams)
+      if (declParams != elabParams)
+        throw new InconsistentTypeParamsError(params.head.r ! params.last.r, declParams, elabParams)
     }
   }
 

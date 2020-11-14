@@ -12,27 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(enum_mod04).
+-module(e153).
+-export_type([bad_enum/2]).
 
--export_type([foo/0, bar/0, baz/0]).
+-struct box(A) :: (value :: A).
 
--export([expr/0, pattern/3, guard/3]).
-
--enum foo :: (x).
-
--enum bar :: (x{a :: integer(), b :: integer()}).
-
--enum baz :: (x{a = #(id = 1) :: #( id :: integer() )}).
-
-expr() ->
-    {
-        ?MODULE:foo.x,
-        ?MODULE:bar.x{a = 1, b = 2},
-        ?MODULE:baz.x{}
-    }.
-
-pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->
-    B.
-
-guard(Value1, Value2, B) when Value1 =:= ?MODULE:foo.x, Value2 =:= ?MODULE:bar.x{a = 1, b = B} ->
-    "ok".
+-enum bad_enum(A, B) :: (ctr{box1 = #box{value = 1} :: A, box2 = #box{value = true} :: B}).

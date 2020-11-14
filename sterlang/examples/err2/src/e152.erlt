@@ -12,27 +12,9 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(enum_mod04).
+-module(e152).
+-export_type([ok_list_box/1, bad_box/1]).
 
--export_type([foo/0, bar/0, baz/0]).
+-enum ok_list_box(A) :: (ctr{list = [] :: list(A)}).
 
--export([expr/0, pattern/3, guard/3]).
-
--enum foo :: (x).
-
--enum bar :: (x{a :: integer(), b :: integer()}).
-
--enum baz :: (x{a = #(id = 1) :: #( id :: integer() )}).
-
-expr() ->
-    {
-        ?MODULE:foo.x,
-        ?MODULE:bar.x{a = 1, b = 2},
-        ?MODULE:baz.x{}
-    }.
-
-pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->
-    B.
-
-guard(Value1, Value2, B) when Value1 =:= ?MODULE:foo.x, Value2 =:= ?MODULE:bar.x{a = 1, b = B} ->
-    "ok".
+-enum bad_box(A) :: (ctr{value = bad_box.ctr{value = ""} :: bad_box(A)}).

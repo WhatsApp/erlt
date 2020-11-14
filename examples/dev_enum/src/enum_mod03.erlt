@@ -20,7 +20,7 @@
 
 -enum bar(A) :: (x{a :: A, b :: foo()}).
 
--enum baz :: (x{bar = bar.x{a = trunc(1.5), b = foo.x} :: bar(integer())}).
+-enum baz :: (x{bar = bar.x{a = 1, b = foo.x} :: bar(integer())}).
 
 -enum in_pattern :: (x).
 

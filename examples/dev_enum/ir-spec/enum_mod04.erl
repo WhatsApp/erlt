@@ -12,7 +12,8 @@
                 integer(),
                 integer()}.
 
--type baz() :: {'$#enum_mod04:baz.x', any()}.
+-type baz() :: {'$#enum_mod04:baz.x',
+                #{id := integer()}}.
 
 expr() ->
     {{'$#enum_mod04:foo.x'},
