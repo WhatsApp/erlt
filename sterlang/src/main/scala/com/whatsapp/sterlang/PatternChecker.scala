@@ -88,15 +88,6 @@ object PatternChecker {
         processTail(tail)
         result.toString()
 
-      // $COVERAGE-OFF$ unreachable
-      case CtrApp(EmptyList, _) | CtrApp(Cons, _) =>
-        throw new IllegalArgumentException()
-      case CtrApp(Literal(_), _) =>
-        throw new IllegalArgumentException()
-      case CtrApp(OpenStruct(_, _), _) =>
-        throw new IllegalArgumentException()
-      // $COVERAGE-ON$
-
       case CtrApp(Shape(fieldNames), args) =>
         // Remove fields mapped to wildcards to reduce clutter
         val fields = fieldNames.zip(args).filter(_._2 != Wildcard)
@@ -114,6 +105,12 @@ object PatternChecker {
 
       case CtrApp(AbstractCtr(_), _) =>
         "_"
+
+      // $COVERAGE-OFF$ unreachable
+      case CtrApp(EmptyList, _) | CtrApp(Cons, _) => throw new IllegalStateException()
+      case CtrApp(Literal(_), _)                  => throw new IllegalStateException()
+      case CtrApp(OpenStruct(_, _), _)            => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
   }
 }
@@ -143,6 +140,9 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, pr
           // For example, `{5, Y} = Z` is OK, whereas `{5, Y} = {X, "string"}` isn't.
           case (Wildcard, simple) => simple
           case (simple, Wildcard) => simple
+          // $COVERAGE-OFF$ unreachable
+          case (CtrApp(_, _), CtrApp(_, _)) => throw new IllegalStateException()
+          // $COVERAGE-ON$ unreachable
         }
       case AnnAst.LiteralPat(value) =>
         CtrApp(Literal(value), Nil)
@@ -446,7 +446,7 @@ class PatternChecker(private val tu: TypesUtil, private val context: Context, pr
         }
         Some(ctrs.toSet)
       // $COVERAGE-OFF$ unreachable
-      case AbstractCtr(_) => throw new IllegalArgumentException()
+      case AbstractCtr(_) => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
 
