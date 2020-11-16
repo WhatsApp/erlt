@@ -167,3 +167,4 @@ to do it this way, as we will have a language server real soon now.
 ### VS Code
 
 **Coming soon**
+
