@@ -327,6 +327,12 @@ format_error({unused_import_type, {{F, A}, M}}) ->
     io_lib:format("imported type ~w:~tw/~w is unused", [M, F, A]);
 format_error({undefined_function, {F, A}}) ->
     io_lib:format("function ~tw/~w undefined", [F, A]);
+format_error({undefined_function, {M, F, A}}) ->
+    io_lib:format("function ~tw:~tw/~w undefined", [M, F, A]);
+format_error({private_function, {M, F, A}}) ->
+    io_lib:format("function ~tw:~tw/~w is not exported", [M, F, A]);
+format_error({unchecked_function, {M, F, A}}) ->
+    io_lib:format("function ~tw:~tw/~w is unchecked (called from checked code)", [M, F, A]);
 format_error({redefine_function, {F, A}}) ->
     io_lib:format("function ~tw/~w already defined", [F, A]);
 format_error({define_import, {F, A}}) ->
@@ -4575,7 +4581,20 @@ check_remote_function(Line, M, F, As, St0) ->
     St1 = deprecated_function(Line, M, F, As, St0),
     St2 = check_qlc_hrl(Line, M, F, As, St1),
     St3 = check_load_nif(Line, M, F, As, St2),
-    format_function(Line, M, F, As, St3).
+    St4 = verify_checked_call(Line, M, F, length(As), St3),
+    format_function(Line, M, F, As, St4).
+
+verify_checked_call(_Line, _Mod, _Fun, _Arity, #lint{type_checked = false} = St) ->
+    St;
+verify_checked_call(_Line, _Mod, _Fun, _Arity, #lint{defs_db = undefined} = St) ->
+    St;
+verify_checked_call(Line, Mod, Fun, Arity, #lint{defs_db = Defs} = St) ->
+    case erlt_defs:find_function(Mod, Fun, Arity, Defs) of
+        checked -> St;
+        unchecked -> add_error(Line, {unchecked_function, {Mod, Fun, Arity}}, St);
+        private -> add_error(Line, {private_function, {Mod, Fun, Arity}}, St);
+        error -> add_error(Line, {undefined_function, {Mod, Fun, Arity}}, St)
+    end.
 
 %% check_load_nif(Line, ModName, FuncName, [Arg], State) -> State
 %%  Add warning if erlang:load_nif/2 is called when any kind of inlining has
