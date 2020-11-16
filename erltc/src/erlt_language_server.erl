@@ -278,13 +278,4 @@ to_binary(X) when is_list(X) ->
         _ -> iolist_to_binary(X)
     end.
 
-%% -spec to_list(unicode:chardata()) -> string().
-%% to_list(X) when is_list(X) ->
-%%   X;
-%% to_list(X) when is_binary(X) ->
-%%   case unicode:characters_to_list(X) of
-%%     Result when is_list(Result) -> Result;
-%%     _ -> binary_to_list(X)
-%%   end.
-
 %% ---------------------------------------------------------------------
