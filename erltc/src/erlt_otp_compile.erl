@@ -37,12 +37,16 @@
     internal_comp/5,
     foldl_transform/3,
     listing/4,
+    messages_per_file/1,
     parse_module/2,
     remove_file/2,
+    report_errors/1,
+    report_warnings/1,
     save_binary/2,
     select_passes/2,
     shorten_filename/1,
-    transforms/1
+    transforms/1,
+    werror/1
 ]).
 
 %% High-level interface.
@@ -94,13 +98,9 @@
 
 %%----------------------------------------------------------------------
 
--type abstract_code() :: [erl_parse:abstract_form()].
-
 %% Internal representations used for 'from_asm' and 'from_beam' compilation can
 %% also be valid, but have no relevant types defined.
 -type forms() :: abstract_code() | cerl:c_module().
-
--type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
 
 -type err_info() ::
     {erl_anno:line() | 'none',
@@ -447,8 +447,6 @@ format_error_reason({Reason, Stack}) when is_list(Stack) ->
 format_error_reason(Reason) ->
     io_lib:format("~tp", [Reason]).
 
--type err_warn_info() :: tuple().
-
 %% The compile state record.
 -include("erlt_compile.hrl").
 
@@ -499,8 +497,8 @@ internal_comp(Passes, Code0, File, Suffix, St0) ->
                 Run0
         end,
     case fold_comp(Passes, Run, Code0, St1) of
-        {ok, Code, St2} -> comp_ret_ok(Code, St2);
-        {error, St2} -> comp_ret_err(St2)
+        {ok, Code, St2} -> ?COMPILE_MODULE:comp_ret_ok(Code, St2);
+        {error, St2} -> ?COMPILE_MODULE:comp_ret_err(St2)
     end.
 
 fold_comp([{delay, Ps0} | Passes], Run, Code, #compile{options = Opts} = St) ->
@@ -614,7 +612,7 @@ comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St)
                 false ->
                     ok
             end,
-            comp_ret_err(St);
+            ?COMPILE_MODULE:comp_ret_err(St);
         false ->
             Warn = messages_per_file(Warn0),
             report_warnings(St#compile{warnings = Warn}),

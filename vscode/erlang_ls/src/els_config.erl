@@ -48,7 +48,8 @@
                | plt_path
                | root_uri
                | search_paths
-               | code_reload.
+               | code_reload
+               | erlt_command.
 
 -type path()  :: file:filename().
 -type state() :: #{ apps_dirs        => [path()]
@@ -66,6 +67,7 @@
                   , root_uri         => uri()
                   , search_paths     => [path()]
                   , code_reload      => map() | 'disabled'
+                  , erlt_command     => string()
                   }.
 
 %%==============================================================================
@@ -99,6 +101,7 @@ do_initialize(RootUri, Capabilities, {ConfigPath, Config}) ->
   CodeReload = maps:get("code_reload", Config, disabled),
   Runtime = maps:get("runtime", Config, #{}),
   CtRunTest = maps:get("ct-run-test", Config, #{}),
+  ErlTCommand = maps:get("erlt_command", Config, "rebar3 compile"),
 
   %% Passed by the LSP client
   ok = set(root_uri       , RootUri),
@@ -115,6 +118,8 @@ do_initialize(RootUri, Capabilities, {ConfigPath, Config}) ->
                               , Runtime)),
   ok = set('ct-run-test', maps:merge( els_config_ct_run_test:default_config()
                                     , CtRunTest)),
+  ok = set(erlt_command   , ErlTCommand),
+
   %% Calculated from the above
   ok = set(apps_paths     , project_paths(RootPath, AppsDirs, false)),
   ok = set(deps_paths     , project_paths(RootPath, DepsDirs, false)),
