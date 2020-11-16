@@ -13,7 +13,8 @@ checked_test() ->
     ?MODULE:checked(), %% ok
     ?MODULE:unchecked_spec(), %% ok
     ?MODULE:unchecked(), %% error
-    ?MODULE:private(). %% error
+    ?MODULE:private(), %% error
+    ?MODULE:undefined(). %% error
 
 [unchecked]
 unchecked_test() ->
@@ -21,7 +22,8 @@ unchecked_test() ->
     ?MODULE:checked(),
     ?MODULE:unchecked_spec(),
     ?MODULE:unchecked(),
-    ?MODULE:private().
+    ?MODULE:private(),
+    ?MODULE:undefined().
 
 -spec checked() -> integer().
 checked() -> 0.

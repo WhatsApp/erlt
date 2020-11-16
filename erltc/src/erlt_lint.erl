@@ -327,8 +327,8 @@ format_error({unused_import_type, {{F, A}, M}}) ->
     io_lib:format("imported type ~w:~tw/~w is unused", [M, F, A]);
 format_error({undefined_function, {F, A}}) ->
     io_lib:format("function ~tw/~w undefined", [F, A]);
-format_error({undefined_function, {M, F, A}}) ->
-    io_lib:format("function ~tw:~tw/~w undefined", [M, F, A]);
+format_error({undefined_checked, {M, F, A}}) ->
+    io_lib:format("checked spec for function ~tw:~tw/~w undefined", [M, F, A]);
 format_error({private_function, {M, F, A}}) ->
     io_lib:format("function ~tw:~tw/~w is not exported", [M, F, A]);
 format_error({unchecked_function, {M, F, A}}) ->
@@ -4593,7 +4593,7 @@ verify_checked_call(Line, Mod, Fun, Arity, #lint{defs_db = Defs} = St) ->
         checked -> St;
         unchecked -> add_error(Line, {unchecked_function, {Mod, Fun, Arity}}, St);
         private -> add_error(Line, {private_function, {Mod, Fun, Arity}}, St);
-        error -> add_error(Line, {undefined_function, {Mod, Fun, Arity}}, St)
+        error -> add_error(Line, {undefined_checked, {Mod, Fun, Arity}}, St)
     end.
 
 %% check_load_nif(Line, ModName, FuncName, [Arg], State) -> State
