@@ -53,6 +53,9 @@ test-interop: build
 	@stat _build/default/lib/calc/ebin/calc_lexer.beam &> /dev/null
 	@stat _build/default/lib/calc/ebin/calc_parser.beam &> /dev/null && echo ok
 
-test: test-ir test-beam test-interop test-others
+test-built-ins:
+	$(MAKE) -C ../erltc/built_ins test
+
+test: test-ir test-beam test-interop test-others test-built-ins
 
 .PHONY: build clean ir test-ir update-ir-spec test-beam test-interop
