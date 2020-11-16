@@ -107,8 +107,8 @@ read_or_error(Prompt) ->
 
 %% utils
 with_indices(List) ->
-    Indices = lists:seq(len(List), 1, -1),
-    lists:zip(Indices, List).
+    Indices = t_lists:seq(len(List), 1, -1),
+    t_lists:zip(Indices, List).
 
 -spec len([_]) -> integer().
 len(L) ->
@@ -137,5 +137,5 @@ line() ->
 
 -spec splice(number(), list(A)) -> list(A).
 splice(Index, List) ->
-    {Left, [_|Right]} = lists:split(Index - 1, List),
+    {Left, [_|Right]} = t_lists:split(Index - 1, List),
     Left ++ Right.

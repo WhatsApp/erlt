@@ -3,8 +3,8 @@
 ## What built-ins are
 
 We have two types of built-ins:
-- types for existing modules, such as `lists`
-- new built-in modules, such as t_io.
+- new built-in modules, such as `t_io` and `t_lists`, that wrap existing modules to make them more ErlT-friendly
+- types for the `erlang` module, which we don't wrap
 
 We include these with each build.
 
@@ -14,7 +14,6 @@ The current implementation is a hack for M0. We will do something more maintaina
 
 in this directory:
 - update the erlt files
-- update ./make_statics.escript main/1 to indicate, for each module, whether it contains types for an existing module (such as `lists`) or is a new module (such as `t_io`).
+- update ./make_statics.escript main/1 to add your module to the list of modules.
 - `make`
-- you may need to update the `-x` (exclude) flags in our tests, currently in ../../examples/Makefile. For example, we ignore generated t_io.* files when diffing.
 
