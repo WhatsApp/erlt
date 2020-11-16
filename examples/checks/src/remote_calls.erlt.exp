@@ -1,0 +1,2 @@
+remote_calls.erlt:15:6: function remote_calls:unchecked/0 is unchecked (called from checked code)
+remote_calls.erlt:16:6: function remote_calls:private/0 is not exported
