@@ -16,8 +16,8 @@
 -mode(compile).
 
 main(_Args) ->
-    BuiltInTypes = ["lists", "io", "erlang"],
-    BuiltInModules = ["t_io"],
+    BuiltInTypes = ["erlang"],
+    BuiltInModules = ["t_io", "t_lists"],
     Funs = [get_make_template() | get_built_ins(BuiltInTypes, BuiltInModules)],
     write_module("erlt_build_statics", Funs).
 

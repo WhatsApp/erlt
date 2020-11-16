@@ -1,4 +1,4 @@
--module(lists).
+-module(t_lists).
 
 -compile({no_auto_import,[max/2]}).
 -compile({no_auto_import,[min/2]}).
@@ -100,12 +100,6 @@
      reverse/2
 ]).
 
--spec stub() -> _.
-[unchecked]
-stub() ->
-    erlang:error('stub').
-
-
 %% key of comments used in this file:
 % - dangerous: type is not specific enough.
 % - superseded: there is or will be an "ErlT way" of accomplishing the same
@@ -135,159 +129,159 @@ stub() ->
 %     stub().
 
 -spec member(T, [T]) -> boolean().
-member(_, _) ->
-    stub().
+member(A, B) ->
+    lists:member(A, B).
 
 -spec reverse([T], [T]) -> [T].
-reverse(_, _) ->
-    stub().
+reverse(A, B) ->
+    lists:reverse(A, B).
 
 -spec append([T], [T]) -> [T].
-append(_, _) ->
-    stub().
+append(A, B) ->
+    lists:append(A, B).
 
 -spec append([[T]]) -> [T].
-append(_) ->
-    stub().
+append(A) ->
+    lists:append(A).
 
 -spec subtract([T], [T]) -> [T].
-subtract(_, _) ->
-    stub().
+subtract(A, B) ->
+    lists:subtract(A, B).
 
 -spec reverse([T]) -> [T].
-reverse(_) ->
-    stub().
+reverse(A) ->
+    lists:reverse(A).
 
 -spec nth(integer(), [T]) -> T.
-nth(_, _) ->
-    stub().
+nth(A, B) ->
+    lists:nth(A, B).
 
 -spec nthtail(integer(), [T]) -> [T].
-nthtail(_, _) ->
-    stub().
+nthtail(A, B) ->
+    lists:nthtail(A, B).
 
 -spec prefix([T], [T]) -> boolean().
-prefix(_, _) ->
-    stub().
+prefix(A, B) ->
+    lists:prefix(A, B).
 
 -spec suffix([T], [T]) -> boolean().
-suffix(_, _) ->
-    stub().
+suffix(A, B) ->
+    lists:suffix(A, B).
 
 -spec droplast([T]) -> [T].
-droplast(_) ->
-    stub().
+droplast(A) ->
+    lists:droplast(A).
 
 -spec last([T]) -> T.
-last(_) ->
-    stub().
+last(A) ->
+    lists:last(A).
 
 -spec seq(integer(), integer()) -> [integer()].
-seq(_, _) ->
-    stub().
+seq(A, B) ->
+    lists:seq(A, B).
 
 -spec seq(integer(), integer(), integer()) -> [integer()].
-seq(_, _, _) ->
-    stub().
+seq(A, B, C) ->
+    lists:seq(A, B, C).
 
 -spec sum([number()]) -> integer().
-sum(_) ->
-    stub().
+sum(A) ->
+    lists:sum(A).
 
 -spec duplicate(integer(), T) -> [T].
-duplicate(_, _) ->
-    stub().
+duplicate(A, B) ->
+    lists:duplicate(A, B).
 
 -spec min([T]) -> T.
-min(_) ->
-    stub().
+min(A) ->
+    lists:min(A).
 
 -spec max([T]) -> T.
-max(_) ->
-    stub().
+max(A) ->
+    lists:max(A).
 
 -spec sublist([T], integer(), integer()) -> [T].
-sublist(_, _, _) ->
-    stub().
+sublist(A, B, C) ->
+    lists:sublist(A, B, C).
 
 -spec sublist([T], integer()) -> [T].
-sublist(_, _) ->
-    stub().
+sublist(A, B) ->
+    lists:sublist(A, B).
 
 -spec delete(T, [T]) -> [T].
-delete(_, _) ->
-    stub().
+delete(A, B) ->
+    lists:delete(A, B).
 
 -spec zip([A], [B]) -> [{A, B}].
-zip(_, _) ->
-    stub().
+zip(A, B) ->
+    lists:zip(A, B).
 
 -spec unzip([{A, B}]) -> {[A], [B]}.
-unzip(_) ->
-    stub().
+unzip(A) ->
+    lists:unzip(A).
 
 -spec zip3([A], [B], [C]) -> [{A, B, C}].
-zip3(_, _, _) ->
-    stub().
+zip3(A, B, C) ->
+    lists:zip3(A, B, C).
 
 -spec unzip3([{A, B, C}]) -> {[A], [B], [C]}.
-unzip3(_) ->
-    stub().
+unzip3(A) ->
+    lists:unzip3(A).
 
 -spec zipwith(fun((X, Y) -> T), [X], [Y]) -> [T].
-zipwith(_, _, _) ->
-    stub().
+zipwith(A, B, C) ->
+    lists:zipwith(A, B, C).
 
 -spec zipwith3(fun((X, Y, Z) -> T), [X], [Y], [Z]) -> [T].
-zipwith3(_, _, _, _) ->
-    stub().
+zipwith3(A, B, C, D) ->
+    lists:zipwith3(A, B, C, D).
 
 -spec sort([T]) -> [T].
-sort(_) ->
-    stub().
+sort(A) ->
+    lists:sort(A).
 
 -spec merge([[T]]) -> [T].
-merge(_) ->
-    stub().
+merge(A) ->
+    lists:merge(A).
 
 % stricter
 -spec merge3([T], [T], [T]) -> [T].
-merge3(_, _, _) ->
-    stub().
+merge3(A, B, C) ->
+    lists:merge3(A, B, C).
 
 % stricter
 -spec rmerge3([T], [T], [T]) -> [T].
-rmerge3(_, _, _) ->
-    stub().
+rmerge3(A, B, C) ->
+    lists:rmerge3(A, B, C).
 
 % stricter
 -spec merge([T], [T]) -> [T].
-merge(_, _) ->
-    stub().
+merge(A, B) ->
+    lists:merge(A, B).
 
 % stricter
 -spec rmerge([T], [T]) -> [T].
-rmerge(_, _) ->
-    stub().
+rmerge(A, B) ->
+    lists:rmerge(A, B).
 
 -spec concat([_T]) -> string().
-concat(_) ->
-    stub().
+concat(A) ->
+    lists:concat(A).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatten([[T]]) -> [T].
-flatten(_) ->
-    stub().
+flatten(A) ->
+    lists:flatten(A).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatten([[T]], [T]) -> [T].
-flatten(_, _) ->
-    stub().
+flatten(A, B) ->
+    lists:flatten(A, B).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatlength([[_T]]) -> integer().
-flatlength(_) ->
-    stub().
+flatlength(A) ->
+    lists:flatlength(A).
 
 % dangerous
 % -spec keydelete(_, integer(), _) -> [_].
@@ -317,28 +311,28 @@ flatlength(_) ->
 
 % stricter
 -spec keymerge(integer(), [T], [T]) -> [T].
-keymerge(_, _, _) ->
-    stub().
+keymerge(A, B, C) ->
+    lists:keymerge(A, B, C).
 
 % stricter
 -spec rkeymerge(integer(), [T], [T]) -> [T].
-rkeymerge(_, _, _) ->
-    stub().
+rkeymerge(A, B, C) ->
+    lists:rkeymerge(A, B, C).
 
 % stricter
 -spec ukeysort(integer(), [T]) -> [T].
-ukeysort(_, _) ->
-    stub().
+ukeysort(A, B) ->
+    lists:ukeysort(A, B).
 
 % stricter
 -spec ukeymerge(integer(), [T], [T]) -> [T].
-ukeymerge(_, _, _) ->
-    stub().
+ukeymerge(A, B, C) ->
+    lists:ukeymerge(A, B, C).
 
 % stricter
 -spec rukeymerge(integer(), [T], [T]) -> [T].
-rukeymerge(_, _, _) ->
-    stub().
+rukeymerge(A, B, C) ->
+    lists:rukeymerge(A, B, C).
 
 % stricter
 % dangerous
@@ -348,28 +342,28 @@ rukeymerge(_, _, _) ->
 
 % stricter
 -spec sort(fun((T, T) -> boolean()), [T]) -> [T].
-sort(_, _) ->
-    stub().
+sort(A, B) ->
+    lists:sort(A, B).
 
 % stricter
 -spec merge(fun((T, T) -> boolean()), [T], [T]) -> [T].
-merge(_, _, _) ->
-    stub().
+merge(A, B, C) ->
+    lists:merge(A, B, C).
 
 % stricter
 -spec rmerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
-rmerge(_, _, _) ->
-    stub().
+rmerge(A, B, C) ->
+    lists:rmerge(A, B, C).
 
 % stricter
 -spec rumerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
-rumerge(_, _, _) ->
-    stub().
+rumerge(A, B, C) ->
+    lists:rumerge(A, B, C).
 
 % stricter
 -spec usort(fun((T, T) -> boolean()), [T]) -> [T].
-usort(_, _) ->
-    stub().
+usort(A, B) ->
+    lists:usort(A, B).
 
 % stricter
 % dangerous
@@ -379,65 +373,65 @@ usort(_, _) ->
 
 % stricter
 -spec umerge(fun((T, T) -> boolean()), [T]) -> [T].
-umerge(_, _) ->
-    stub().
+umerge(A, B) ->
+    lists:umerge(A, B).
 
 % stricter
 -spec rumerge3(fun((T, T) -> boolean()), [T], [T]) -> [T].
-rumerge3(_, _, _) ->
-    stub().
+rumerge3(A, B, C) ->
+    lists:rumerge3(A, B, C).
 
 -spec usort([T]) -> [T].
-usort(_) ->
-    stub().
+usort(A) ->
+    lists:usort(A).
       
 -spec umerge([[T]]) -> [T].
-umerge(_) ->
-    stub().
+umerge(A) ->
+    lists:umerge(A).
 
 % stricter
 -spec umerge3([T], [T], [T]) -> [T].
-umerge3(_, _, _) ->
-    stub().
+umerge3(A, B, C) ->
+    lists:umerge3(A, B, C).
 
 % stricter
 -spec rumerge([T], [T]) -> [T].
-rumerge(_, _) ->
-    stub().
+rumerge(A, B) ->
+    lists:rumerge(A, B).
 
 -spec all(fun((T) -> boolean()), [T]) -> boolean().
-all(_, _) ->
-    stub().
+all(A, B) ->
+    lists:all(A, B).
 
 -spec any(fun((T) -> boolean()), [T]) -> boolean().
-any(_, _) ->
-    stub().
+any(A, B) ->
+    lists:any(A, B).
 
 -spec map(fun((A) -> B), [A]) -> [B].
-map(_, _) ->
-    stub().
+map(A, B) ->
+    lists:map(A, B).
 
 -spec flatmap(fun((A) -> [B]), [A]) -> [B].
-flatmap(_, _) ->
-    stub().
+flatmap(A, B) ->
+    lists:flatmap(A, B).
 
 % stricter
 -spec foldl(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
-foldl(_, _, _) ->
-    stub().
+foldl(A, B, C) ->
+    lists:foldl(A, B, C).
 
 % stricter
 -spec foldr(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
-foldr(_, _, _) ->
-    stub().
+foldr(A, B, C) ->
+    lists:foldr(A, B, C).
 
 -spec filter(fun((T) -> boolean()), [T]) -> [T].
-filter(_Fun, _L) ->
-    stub().
+filter(A, B) ->
+    lists:filter(A, B).
 
 -spec partition(fun((T) -> boolean()), [T]) -> {[T], [T]}.
-partition(_, _) ->
-    stub().
+partition(A, B) ->
+    lists:partition(A, B).
 
 % dangerous
 % % stricter
@@ -459,21 +453,21 @@ partition(_, _) ->
 
 % stricter
 -spec mapfoldr(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
-mapfoldr(_, _, _) ->
-    stub().
+mapfoldr(A, B, C) ->
+    lists:mapfoldr(A, B, C).
 
 % stricter
 -spec mapfoldl(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
-mapfoldl(_, _, _) ->
-    stub().
+mapfoldl(A, B, C) ->
+    lists:mapfoldl(A, B, C).
 
 -spec takewhile(fun((T) -> boolean()), [T]) -> [T].
-takewhile(_, _) ->
-    stub().
+takewhile(A, B) ->
+    lists:takewhile(A, B).
 
 -spec dropwhile(fun((T) -> boolean()), [T]) -> [T].
-dropwhile(_, _) ->
-    stub().
+dropwhile(A, B) ->
+    lists:dropwhile(A, B).
 
 % dangerous
 % -spec search(fun((T) -> boolean()), [T]) -> _.
@@ -481,13 +475,13 @@ dropwhile(_, _) ->
 %     stub().
 
 -spec splitwith(fun((T) -> boolean()), [T]) -> {[T], [T]}.
-splitwith(_, _) ->
-    stub().
+splitwith(A, B) ->
+    lists:splitwith(A, B).
 
 -spec split(integer(), [T]) -> {[T], [T]}.
-split(_, _) ->
-    stub().
+split(A, B) ->
+    lists:split(A, B).
 
 -spec join(T, [T]) -> [T].
-join(_, _) ->
-    stub().
+join(A, B) ->
+    lists:join(A, B).
