@@ -334,7 +334,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val resType = freshTypeVar(d)
 
     val branches = for (Ast.Rule(pat, guards, body) <- eRules) yield {
-      val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = true)
+      val (pat1, env1, _) = elpat(pat, t, d, env, Set.empty, gen = false)
       val guards1 = elabGuards(guards, d, env1)
       val body1 = elabBody(body, resType, d + 1, env1)
       AnnAst.Branch(pat1, guards1, body1)
@@ -355,7 +355,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Ast.Rule(pat, guards, body) :: rest =>
           pat match {
             case Ast.WildPat() | Ast.StructPat(_, _) =>
-              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = false)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
@@ -386,7 +386,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Ast.Rule(pat, guards, body) :: rest =>
           pat match {
             case Ast.WildPat() | Ast.StructPat(_, _) =>
-              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = true)
+              val (pat1, env1, _) = elpat(pat, MT.ExceptionType, d, env, Set.empty, gen = false)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
@@ -399,7 +399,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val tryBody1 = elabBody(tryBody, tryBodyType, d, env)
 
     val tryBranches = for (Ast.Rule(pat, guards, body) <- tryRules) yield {
-      val (pat1, env1, _) = elpat(pat, tryBodyType, d, env, Set.empty, gen = true)
+      val (pat1, env1, _) = elpat(pat, tryBodyType, d, env, Set.empty, gen = false)
       val guards1 = elabGuards(guards, d, env1)
       val body1 = elabBody(body, resType, d + 1, env1)
       AnnAst.Branch(pat1, guards1, body1)
@@ -422,7 +422,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         case Ast.Rule(pat, guards, body) :: rest =>
           pat match {
             case Ast.WildPat() | Ast.StructPat(_, _) =>
-              val (pat1, env1, _) = elpat(pat, MT.MessageType, d, env, Set.empty, gen = true)
+              val (pat1, env1, _) = elpat(pat, MT.MessageType, d, env, Set.empty, gen = false)
               val guards1 = elabGuards(guards, d, env1)
               val body1 = elabBody(body, resType, d + 1, env1)
               val branch1 = AnnAst.Branch(pat1, guards1, body1)
@@ -472,13 +472,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Ast.Generator(pat, gExp) =>
         val elemType = freshTypeVar(depth)
         val gExp1 = elab(gExp, MT.ListType(elemType), depth, envAcc)
-        val (pat1, env1, _) = elpat(pat, elemType, d, envAcc, Set.empty, gen = true)
+        val (pat1, env1, _) = elpat(pat, elemType, d, envAcc, Set.empty, gen = false)
         envAcc = env1
         depth += 1
         AnnAst.Generator(pat1, gExp1)
       case Ast.BGenerator(pat, gExp) =>
         val gExp1 = elab(gExp, MT.BinaryType, depth, envAcc)
-        val (pat1, env1, _) = elpat(pat, MT.BinaryType, d, envAcc, Set.empty, gen = true)
+        val (pat1, env1, _) = elpat(pat, MT.BinaryType, d, envAcc, Set.empty, gen = false)
         envAcc = env1
         depth += 1
         AnnAst.BGenerator(pat1, gExp1)
@@ -504,13 +504,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case Ast.Generator(pat, gExp) =>
         val elemType = freshTypeVar(depth)
         val gExp1 = elab(gExp, MT.ListType(elemType), depth, envAcc)
-        val (pat1, env1, _) = elpat(pat, elemType, d, envAcc, Set.empty, gen = true)
+        val (pat1, env1, _) = elpat(pat, elemType, d, envAcc, Set.empty, gen = false)
         envAcc = env1
         depth += 1
         AnnAst.Generator(pat1, gExp1)
       case Ast.BGenerator(pat, gExp) =>
         val gExp1 = elab(gExp, MT.BinaryType, depth, envAcc)
-        val (pat1, env1, _) = elpat(pat, MT.BinaryType, d, envAcc, Set.empty, gen = true)
+        val (pat1, env1, _) = elpat(pat, MT.BinaryType, d, envAcc, Set.empty, gen = false)
         envAcc = env1
         depth += 1
         AnnAst.BGenerator(pat1, gExp1)

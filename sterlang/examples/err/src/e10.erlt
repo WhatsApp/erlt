@@ -12,16 +12,20 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(core).
+-module(e10).
 
--export_type([option/1]).
--export([getOrElse/2]).
+-spec get_any() -> _.
+[unchecked]
+get_any() ->
+    any().
 
--enum option(A) :: (none, some{A}).
-
--spec getOrElse(option(A), A) -> A.
-getOrElse(Opt, Alt) ->
-    case Opt of
-        option.some{X} -> X;
-        option.none -> Alt
+% This is an error in Haskell, but not in OCaml
+% In OCaml the following is well-typed (with warning)
+% let rec f = function () -> f ()
+% let t1 = function () -> match (f()) with 1 -> true | "" -> false
+-spec use_any() -> boolean().
+use_any() ->
+    case get_any() of
+        1 -> true;
+        "" -> false
     end.

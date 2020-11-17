@@ -1,0 +1,6 @@
+val test_poly_nil/0: fun(() -> {list(number()), list(string())})
+val Nil: list(A)
+val Numbers: list(number())
+val Strings: list(string())
+val use_any/0: fun(() -> {boolean(), boolean()})
+val X: A

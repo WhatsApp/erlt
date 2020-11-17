@@ -12,16 +12,16 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(core).
+-module(e41).
 
--export_type([option/1]).
--export([getOrElse/2]).
-
--enum option(A) :: (none, some{A}).
-
--spec getOrElse(option(A), A) -> A.
-getOrElse(Opt, Alt) ->
-    case Opt of
-        option.some{X} -> X;
-        option.none -> Alt
-    end.
+% the same error is in Haskell
+% myAny () = undefined
+% testBool True = True
+% testString "" = True
+% testAny () = case myAny() of f -> (testBool f, testString f)
+% But not in OCaml:
+% let rec f = function () -> f ()
+% let t1 = function () -> match (f()) with g -> (g=0, g="")
+any() -> any().
+test_any() ->
+    case {any()} of {F} -> {F == true, F == ""} end.

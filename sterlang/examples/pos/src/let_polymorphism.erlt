@@ -12,16 +12,26 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(core).
+-module(let_polymorphism).
+-export([test_poly_nil/0, get_any/0, use_any/0]).
 
--export_type([option/1]).
--export([getOrElse/2]).
+-spec test_poly_nil() -> {list(number()), list(string())}.
+test_poly_nil() ->
+    Nil = [],
+    Numbers = [1 | Nil],
+    Strings =  ["string" | Nil],
+    {Numbers, Strings}.
 
--enum option(A) :: (none, some{A}).
+-spec get_any() -> _.
+[unchecked]
+get_any() ->
+    remote:any().
 
--spec getOrElse(option(A), A) -> A.
-getOrElse(Opt, Alt) ->
-    case Opt of
-        option.some{X} -> X;
-        option.none -> Alt
-    end.
+% this is questionable
+% but Haskell works the same way:
+% myAny () = undefined
+% test () = let a = myAny () in (a == 1, a == "2")
+-spec use_any() -> {boolean(), boolean()}.
+use_any() ->
+    X = get_any(),
+    {X == 1, X == "2"}.

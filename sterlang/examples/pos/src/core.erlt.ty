@@ -1,3 +1,1 @@
 -spec getOrElse(option(A), A) -> A.
--spec any() -> A.
--spec test_any() -> {boolean(), A}.
