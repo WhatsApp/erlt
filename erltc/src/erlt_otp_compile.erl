@@ -716,6 +716,8 @@ passes_1([Opt | Opts]) ->
 passes_1([]) ->
     {".erl", [?pass(parse_module) | standard_passes()]}.
 
+pass(from_pp) ->
+    {".P", [?pass(parse_module) | abstr_passes(non_verified_abstr)]};
 pass(from_core) ->
     {".core", [?pass(parse_core) | core_passes(non_verified_core)]};
 pass(from_asm) ->
@@ -729,6 +731,8 @@ pass(_) ->
 %% that retrieves the module name. The module name is needed for
 %% proper diagnostics and for compilation to native code.
 
+fix_first_pass([{parse_module, _} | Passes]) ->
+    [?pass(get_module_name_from_abstr) | Passes];
 fix_first_pass([{parse_core, _} | Passes]) ->
     [?pass(get_module_name_from_core) | Passes];
 fix_first_pass([{beam_consult_asm, _} | Passes]) ->
@@ -903,26 +907,35 @@ standard_passes() ->
         {iff, 'dpp', {listing, "pp"}},
         ?pass(lint_module),
 
-        %% Add all -compile() directives to #compile.options
-        ?pass(compile_directives),
-
         {iff, 'P', {src_listing, "P"}},
         {iff, 'to_pp', {done, "P"}},
 
-        {iff, 'dabstr', {listing, "abstr"}},
-        {delay, [{iff, debug_info, ?pass(save_abstract_code)}]},
-
-        ?pass(expand_records),
-        {iff, 'dexp', {listing, "expand"}},
-        {iff, 'E', {src_listing, "E"}},
-        {iff, 'to_exp', {done, "E"}},
-
-        %% Conversion to Core Erlang.
-        ?pass(core),
-        {iff, 'dcore', {listing, "core"}},
-        {iff, 'to_core0', {done, "core"}}
-        | core_passes(verified_core)
+        {iff, 'dabstr', {listing, "abstr"}}
+        | abstr_passes(verified_abstr)
     ].
+
+abstr_passes(AbstrStatus) ->
+    case AbstrStatus of
+        non_verified_abstr -> [{unless, no_lint, ?pass(lint_module)}];
+        verified_abstr -> []
+    end ++
+        [
+            %% Add all -compile() directives to #compile.options
+            ?pass(compile_directives),
+
+            {delay, [{iff, debug_info, ?pass(save_abstract_code)}]},
+
+            ?pass(expand_records),
+            {iff, 'dexp', {listing, "expand"}},
+            {iff, 'E', {src_listing, "E"}},
+            {iff, 'to_exp', {done, "E"}},
+
+            %% Conversion to Core Erlang.
+            ?pass(core),
+            {iff, 'dcore', {listing, "core"}},
+            {iff, 'to_core0', {done, "core"}}
+            | core_passes(verified_core)
+        ].
 
 core_passes(CoreStatus) ->
     %% Optimization and transforms of Core Erlang code.
@@ -1223,6 +1236,15 @@ find_invalid_unicode([H | T], File0) ->
     end;
 find_invalid_unicode([], _) ->
     none.
+
+get_module_name_from_abstr(Forms, St) ->
+    try get_module(Forms) of
+        Mod -> {ok, Forms, St#compile{module = Mod}}
+    catch
+        _:_ ->
+            %% Missing module declaration. Let it crash in a later pass.
+            {ok, Forms, St}
+    end.
 
 parse_core(_Code, St) ->
     case file:read_file(St#compile.ifile) of
@@ -1831,6 +1853,10 @@ keep_compile_option({cwd, _}, Deterministic) ->
 keep_compile_option(from_asm, _Deterministic) ->
     false;
 keep_compile_option(from_core, _Deterministic) ->
+    false;
+keep_compile_option(from_beam, _Deterministic) ->
+    false;
+keep_compile_option(from_pp, _Deterministic) ->
     false;
 %% Parse transform and macros have already been applied.
 keep_compile_option({parse_transform, _}, _Deterministic) ->
