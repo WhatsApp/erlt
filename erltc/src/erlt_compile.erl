@@ -757,10 +757,15 @@ erlt_typecheck(Code, St) ->
     %% Provide an example of what a hover entry should look like to be
     %% exposed to erlang_ls.  In future this could potentially be
     %% 'MarkupContent' as defined in the LSP spec
-    Hovers = [#{ range =>#{ from => {1, 1}, to => {2, 1}}
-               , kind => hover
-               , id => undefined
-               , data => <<"hover text woohoo5">>}], %% in POI format
+    Hovers = [
+        #{
+            range => #{from => {1, 1}, to => {2, 1}},
+            kind => hover,
+            id => undefined,
+            %% in POI format
+            data => <<"hover text woohoo5">>
+        }
+    ],
 
     case Res of
         {ok} ->

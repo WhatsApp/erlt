@@ -55,6 +55,7 @@
     encoding = none :: none | epp:source_encoding(),
     errors = [] :: [err_warn_info()],
     warnings = [] :: [err_warn_info()],
-    hover = [] :: [term()], %% TODO: use a proper type
+    %% TODO: use a proper type
+    hover = [] :: [term()],
     extra_chunks = [] :: [{binary(), binary()}]
 }).
