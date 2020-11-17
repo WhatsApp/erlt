@@ -132,6 +132,8 @@ new(Uri, Text) ->
   case Extension of
     <<".erl">> ->
       new(Uri, Text, Id, module);
+    <<".erlt">> ->
+      new_erlt(Uri, Text, Id, module);
     <<".hrl">> ->
       new(Uri, Text, Id, header);
     _  ->
@@ -141,6 +143,19 @@ new(Uri, Text) ->
 -spec new(uri(), binary(), atom(), kind()) -> item().
 new(Uri, Text, Id, Kind) ->
   {ok, POIs} = els_parser:parse(Text),
+  MD5        = erlang:md5(Text),
+  #{ uri  => Uri
+   , id   => Id
+   , kind => Kind
+   , text => Text
+   , md5  => MD5
+   , pois => POIs
+   }.
+
+-spec new_erlt(uri(), binary(), atom(), kind()) -> item().
+new_erlt(Uri, Text, Id, Kind) ->
+  %% {ok, POIs} = els_parser:parse(Text),
+  POIs = [], %% For now
   MD5        = erlang:md5(Text),
   #{ uri  => Uri
    , id   => Id

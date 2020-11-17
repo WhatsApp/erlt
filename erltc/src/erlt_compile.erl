@@ -753,9 +753,18 @@ get_erlt_deps(Forms, St0) ->
 erlt_typecheck(Code, St) ->
     R = #sterlang_result{result = Res} = run_sterlang(St),
     member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
+
+    %% Provide an example of what a hover entry should look like to be
+    %% exposed to erlang_ls.  In future this could potentially be
+    %% 'MarkupContent' as defined in the LSP spec
+    Hovers = [#{ range =>#{ from => {1, 1}, to => {2, 1}}
+               , kind => hover
+               , id => undefined
+               , data => <<"hover text woohoo5">>}], %% in POI format
+
     case Res of
         {ok} ->
-            {ok, Code, St};
+            {ok, Code, St#compile{hover = Hovers}};
         {error, Range, ErrMessage} ->
             Location =
                 case Range of
@@ -764,7 +773,7 @@ erlt_typecheck(Code, St) ->
                 end,
             Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
             Errors = St#compile.errors ++ [Error],
-            {error, St#compile{errors = Errors}}
+            {error, St#compile{errors = Errors, hover = Hovers}}
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
