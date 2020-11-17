@@ -530,7 +530,7 @@ compile_erl1_forms(Forms, St0) ->
         {ok, ModuleName, BinaryOrCode, Ws} ->
             Ws0 = St0#compile.warnings,
             {ok, BinaryOrCode, St0#compile{module = ModuleName, warnings = Ws0 ++ Ws}};
-        {error, Ws, Es} ->
+        {error, Es, Ws} ->
             Ws0 = St0#compile.warnings,
             Es0 = St0#compile.errors,
             {error, St0#compile{errors = Es0 ++ Es, warnings = Ws0 ++ Ws}};
