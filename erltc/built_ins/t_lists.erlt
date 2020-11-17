@@ -129,157 +129,194 @@
 %     stub().
 
 -spec member(T, [T]) -> boolean().
+[unchecked]
 member(A, B) ->
     lists:member(A, B).
 
 -spec reverse([T], [T]) -> [T].
+[unchecked]
 reverse(A, B) ->
     lists:reverse(A, B).
 
 -spec append([T], [T]) -> [T].
+[unchecked]
 append(A, B) ->
     lists:append(A, B).
 
 -spec append([[T]]) -> [T].
+[unchecked]
 append(A) ->
     lists:append(A).
 
 -spec subtract([T], [T]) -> [T].
+[unchecked]
 subtract(A, B) ->
     lists:subtract(A, B).
 
 -spec reverse([T]) -> [T].
+[unchecked]
 reverse(A) ->
     lists:reverse(A).
 
 -spec nth(integer(), [T]) -> T.
+[unchecked]
 nth(A, B) ->
     lists:nth(A, B).
 
 -spec nthtail(integer(), [T]) -> [T].
+[unchecked]
 nthtail(A, B) ->
     lists:nthtail(A, B).
 
 -spec prefix([T], [T]) -> boolean().
+[unchecked]
 prefix(A, B) ->
     lists:prefix(A, B).
 
 -spec suffix([T], [T]) -> boolean().
+[unchecked]
 suffix(A, B) ->
     lists:suffix(A, B).
 
 -spec droplast([T]) -> [T].
+[unchecked]
 droplast(A) ->
     lists:droplast(A).
 
 -spec last([T]) -> T.
+[unchecked]
 last(A) ->
     lists:last(A).
 
 -spec seq(integer(), integer()) -> [integer()].
+[unchecked]
 seq(A, B) ->
     lists:seq(A, B).
 
 -spec seq(integer(), integer(), integer()) -> [integer()].
+[unchecked]
 seq(A, B, C) ->
     lists:seq(A, B, C).
 
--spec sum([number()]) -> integer().
+-spec sum([number()]) -> number().
+[unchecked]
 sum(A) ->
     lists:sum(A).
 
 -spec duplicate(integer(), T) -> [T].
+[unchecked]
 duplicate(A, B) ->
     lists:duplicate(A, B).
 
 -spec min([T]) -> T.
+[unchecked]
 min(A) ->
     lists:min(A).
 
 -spec max([T]) -> T.
+[unchecked]
 max(A) ->
     lists:max(A).
 
 -spec sublist([T], integer(), integer()) -> [T].
+[unchecked]
 sublist(A, B, C) ->
     lists:sublist(A, B, C).
 
 -spec sublist([T], integer()) -> [T].
+[unchecked]
 sublist(A, B) ->
     lists:sublist(A, B).
 
 -spec delete(T, [T]) -> [T].
+[unchecked]
 delete(A, B) ->
     lists:delete(A, B).
 
 -spec zip([A], [B]) -> [{A, B}].
+[unchecked]
 zip(A, B) ->
     lists:zip(A, B).
 
 -spec unzip([{A, B}]) -> {[A], [B]}.
+[unchecked]
 unzip(A) ->
     lists:unzip(A).
 
 -spec zip3([A], [B], [C]) -> [{A, B, C}].
+[unchecked]
 zip3(A, B, C) ->
     lists:zip3(A, B, C).
 
 -spec unzip3([{A, B, C}]) -> {[A], [B], [C]}.
+[unchecked]
 unzip3(A) ->
     lists:unzip3(A).
 
 -spec zipwith(fun((X, Y) -> T), [X], [Y]) -> [T].
+[unchecked]
 zipwith(A, B, C) ->
     lists:zipwith(A, B, C).
 
 -spec zipwith3(fun((X, Y, Z) -> T), [X], [Y], [Z]) -> [T].
+[unchecked]
 zipwith3(A, B, C, D) ->
     lists:zipwith3(A, B, C, D).
 
 -spec sort([T]) -> [T].
+[unchecked]
 sort(A) ->
     lists:sort(A).
 
 -spec merge([[T]]) -> [T].
+[unchecked]
 merge(A) ->
     lists:merge(A).
 
 % stricter
 -spec merge3([T], [T], [T]) -> [T].
+[unchecked]
 merge3(A, B, C) ->
     lists:merge3(A, B, C).
 
 % stricter
 -spec rmerge3([T], [T], [T]) -> [T].
+[unchecked]
 rmerge3(A, B, C) ->
     lists:rmerge3(A, B, C).
 
 % stricter
 -spec merge([T], [T]) -> [T].
+[unchecked]
 merge(A, B) ->
     lists:merge(A, B).
 
 % stricter
 -spec rmerge([T], [T]) -> [T].
+[unchecked]
 rmerge(A, B) ->
     lists:rmerge(A, B).
 
 -spec concat([_T]) -> string().
+[unchecked]
 concat(A) ->
     lists:concat(A).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatten([[T]]) -> [T].
+[unchecked]
 flatten(A) ->
     lists:flatten(A).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatten([[T]], [T]) -> [T].
+[unchecked]
 flatten(A, B) ->
     lists:flatten(A, B).
 
 % stricter: the implementation can handle arbitrary, heterogeneous depth
 -spec flatlength([[_T]]) -> integer().
+[unchecked]
 flatlength(A) ->
     lists:flatlength(A).
 
@@ -311,26 +348,31 @@ flatlength(A) ->
 
 % stricter
 -spec keymerge(integer(), [T], [T]) -> [T].
+[unchecked]
 keymerge(A, B, C) ->
     lists:keymerge(A, B, C).
 
 % stricter
 -spec rkeymerge(integer(), [T], [T]) -> [T].
+[unchecked]
 rkeymerge(A, B, C) ->
     lists:rkeymerge(A, B, C).
 
 % stricter
 -spec ukeysort(integer(), [T]) -> [T].
+[unchecked]
 ukeysort(A, B) ->
     lists:ukeysort(A, B).
 
 % stricter
 -spec ukeymerge(integer(), [T], [T]) -> [T].
+[unchecked]
 ukeymerge(A, B, C) ->
     lists:ukeymerge(A, B, C).
 
 % stricter
 -spec rukeymerge(integer(), [T], [T]) -> [T].
+[unchecked]
 rukeymerge(A, B, C) ->
     lists:rukeymerge(A, B, C).
 
@@ -342,26 +384,31 @@ rukeymerge(A, B, C) ->
 
 % stricter
 -spec sort(fun((T, T) -> boolean()), [T]) -> [T].
+[unchecked]
 sort(A, B) ->
     lists:sort(A, B).
 
 % stricter
 -spec merge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+[unchecked]
 merge(A, B, C) ->
     lists:merge(A, B, C).
 
 % stricter
 -spec rmerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+[unchecked]
 rmerge(A, B, C) ->
     lists:rmerge(A, B, C).
 
 % stricter
 -spec rumerge(fun((T, T) -> boolean()), [T], [T]) -> [T].
+[unchecked]
 rumerge(A, B, C) ->
     lists:rumerge(A, B, C).
 
 % stricter
 -spec usort(fun((T, T) -> boolean()), [T]) -> [T].
+[unchecked]
 usort(A, B) ->
     lists:usort(A, B).
 
@@ -373,63 +420,77 @@ usort(A, B) ->
 
 % stricter
 -spec umerge(fun((T, T) -> boolean()), [T]) -> [T].
+[unchecked]
 umerge(A, B) ->
     lists:umerge(A, B).
 
 % stricter
 -spec rumerge3(fun((T, T) -> boolean()), [T], [T]) -> [T].
+[unchecked]
 rumerge3(A, B, C) ->
     lists:rumerge3(A, B, C).
 
 -spec usort([T]) -> [T].
+[unchecked]
 usort(A) ->
     lists:usort(A).
       
 -spec umerge([[T]]) -> [T].
+[unchecked]
 umerge(A) ->
     lists:umerge(A).
 
 % stricter
 -spec umerge3([T], [T], [T]) -> [T].
+[unchecked]
 umerge3(A, B, C) ->
     lists:umerge3(A, B, C).
 
 % stricter
 -spec rumerge([T], [T]) -> [T].
+[unchecked]
 rumerge(A, B) ->
     lists:rumerge(A, B).
 
 -spec all(fun((T) -> boolean()), [T]) -> boolean().
+[unchecked]
 all(A, B) ->
     lists:all(A, B).
 
 -spec any(fun((T) -> boolean()), [T]) -> boolean().
+[unchecked]
 any(A, B) ->
     lists:any(A, B).
 
 -spec map(fun((A) -> B), [A]) -> [B].
+[unchecked]
 map(A, B) ->
     lists:map(A, B).
 
 -spec flatmap(fun((A) -> [B]), [A]) -> [B].
+[unchecked]
 flatmap(A, B) ->
     lists:flatmap(A, B).
 
 % stricter
 -spec foldl(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
+[unchecked]
 foldl(A, B, C) ->
     lists:foldl(A, B, C).
 
 % stricter
 -spec foldr(fun((T, Acc) -> Acc), Acc, [T]) -> Acc.
+[unchecked]
 foldr(A, B, C) ->
     lists:foldr(A, B, C).
 
 -spec filter(fun((T) -> boolean()), [T]) -> [T].
+[unchecked]
 filter(A, B) ->
     lists:filter(A, B).
 
 -spec partition(fun((T) -> boolean()), [T]) -> {[T], [T]}.
+[unchecked]
 partition(A, B) ->
     lists:partition(A, B).
 
@@ -453,19 +514,23 @@ partition(A, B) ->
 
 % stricter
 -spec mapfoldr(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
+[unchecked]
 mapfoldr(A, B, C) ->
     lists:mapfoldr(A, B, C).
 
 % stricter
 -spec mapfoldl(fun((A, Acc) -> {B, Acc}), Acc, [A]) -> {[B], Acc}.
+[unchecked]
 mapfoldl(A, B, C) ->
     lists:mapfoldl(A, B, C).
 
 -spec takewhile(fun((T) -> boolean()), [T]) -> [T].
+[unchecked]
 takewhile(A, B) ->
     lists:takewhile(A, B).
 
 -spec dropwhile(fun((T) -> boolean()), [T]) -> [T].
+[unchecked]
 dropwhile(A, B) ->
     lists:dropwhile(A, B).
 
@@ -475,13 +540,16 @@ dropwhile(A, B) ->
 %     stub().
 
 -spec splitwith(fun((T) -> boolean()), [T]) -> {[T], [T]}.
+[unchecked]
 splitwith(A, B) ->
     lists:splitwith(A, B).
 
 -spec split(integer(), [T]) -> {[T], [T]}.
+[unchecked]
 split(A, B) ->
     lists:split(A, B).
 
 -spec join(T, [T]) -> [T].
+[unchecked]
 join(A, B) ->
     lists:join(A, B).
