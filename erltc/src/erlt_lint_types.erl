@@ -2,11 +2,29 @@
 
 -export([module/2, format_error/1]).
 
+%-include("erlt_ast.hrl").
+
+-define(IS_TYPE(Kind),
+    Kind =:= type; Kind =:= enum; Kind =:= struct; Kind =:= opaque; Kind =:= unchecked_opaque
+).
+
+-record(type_info, {
+    name :: atom(),
+    kind :: opaque | unchecked_opaque | enum | struct | type | {imported, Module :: atom()},
+    used = false :: boolean(),
+    arity :: non_neg_integer(),
+    line :: erl_anno:anno()
+}).
+
 -record(state, {
     defined = #{} :: #{atom() => {unused, {var, erl_anno:anno(), atom()} | used}},
+    exported_types = #{} :: #{{atom(), integer()} => ({not_defined, erl_anno:anno()} | defined)},
+    local_types = #{} :: #{atom() => #type_info{}},
     new_vars = [] :: [atom()],
+    errors_on = true :: boolean(),
     allow_new_vars = false :: boolean(),
     file :: string(),
+    check_is_exported = false :: boolean(),
     errors = [] :: [{File :: string(), ErrorString :: string()}]
 }).
 
@@ -22,6 +40,23 @@ format_error({using_undefined_var, Name}) ->
     io_lib:format("The type variable ~tw is undefined", [Name]);
 format_error({multiple_specs, Kind}) ->
     io_lib:format("When defining a -~w using multiple specs separated by ';' is not allowed", [Kind]);
+format_error({unexported_type_in_exported_type, Type}) ->
+    io_lib:format("The definition of an exported type contains the local type ~w", [Type]);
+format_error({redefine_import_type, {T, M}}) ->
+    io_lib:format("type ~tw already imported from ~w", [T, M]);
+format_error({import_type_duplicate, T}) ->
+    io_lib:format("type ~tw imported twice", [T]);
+format_error({redefine_type, T}) ->
+    io_lib:format("type ~tw already defined", [T]);
+format_error({undefined_type, {TypeName, Arity}}) ->
+    io_lib:format("type ~tw~s undefined", [TypeName, gen_type_paren(Arity)]);
+format_error({import_type_wrong_arity, {N, A}}) ->
+    io_lib:format("imported type ~tw~s used with the wrong number of arguments", [
+        N,
+        gen_type_paren(A)
+    ]);
+format_error({reused_imported_typename, {N, _A}, _Kind}) ->
+    io_lib:format("defined a new type with the same name ~tw as an imported type", [N]);
 format_error(underscore_in_type_arguments) ->
     "_ is not a valid name for a type argument";
 format_error(arith_ops) ->
@@ -37,29 +72,111 @@ format_error(when_guarded_fun) ->
 format_error(any_argument_fun) ->
     "Funs with an undetermined number of arguments are not allowed by the type system".
 
+gen_type_paren(Arity) when is_integer(Arity), Arity >= 0 ->
+    gen_type_paren_1(Arity, ")").
+
+gen_type_paren_1(0, Acc) -> "(" ++ Acc;
+gen_type_paren_1(1, Acc) -> "(_" ++ Acc;
+gen_type_paren_1(N, Acc) -> gen_type_paren_1(N - 1, ",_" ++ Acc).
+
 module(Ast, FileName) ->
-    case erlt_ast:postwalk(Ast, #state{file = FileName}, fun wrap_lint/3) of
-        {_, #state{errors = []}} ->
+    St = gather_state(Ast, #state{file = FileName}),
+    {_, St1} = erlt_ast:postwalk(Ast, St, fun wrap_lint/3),
+    case global_analysis(St1) of
+        #state{errors = []} ->
             {ok, []};
-        {_, #state{errors = Errors}} ->
+        #state{errors = Errors} ->
             {error, pack_errors(Errors), []}
     end.
+
+global_analysis(St) ->
+    check_exported_types(St).
+
+check_exported_types(#state{exported_types = ExportedTypes} = St) ->
+    maps:fold(fun check_exported_type/3, St, ExportedTypes).
+
+check_exported_type({Name, Arity}, {not_defined, Line}, St) ->
+    add_error(Line, {undefined_type, {Name, Arity}}, St);
+check_exported_type(_, _, St) ->
+    St.
+
+gather_state(Ast, St) ->
+    ExportedTypes = [
+        {Type, {not_defined, Line}}
+        || {attribute, Line, export_type, List} <- Ast, Type <- List
+    ],
+    St1 = find_duplicate_exports(ExportedTypes, St),
+    collect_locally_available_types(Ast, St1).
+
+collect_locally_available_types([{attribute, Line, Kind, {Name, _Def, Args}} | Rest], St) when
+    ?IS_TYPE(Kind)
+->
+    collect_locally_available_types(Rest, handle_type_name_def(Name, Line, Kind, length(Args), St));
+collect_locally_available_types([{attribute, Line, import_type, {Module, List}} | Rest], St) ->
+    collect_locally_available_types(
+        Rest,
+        lists:foldl(
+            fun({Name, Arity}, St0) ->
+                handle_type_name_def(Name, Line, {imported, Module}, Arity, St0)
+            end,
+            St,
+            List
+        )
+    );
+collect_locally_available_types([_ | Rest], St) ->
+    collect_locally_available_types(Rest, St);
+collect_locally_available_types([], St) ->
+    St.
+
+handle_type_name_def(Name, Line, Kind, Arity, St) ->
+    LocalTypes = St#state.local_types,
+    TypeInfo = #type_info{name = Name, kind = Kind, arity = Arity, line = Line},
+    case maps:get(Name, LocalTypes, undefined) of
+        undefined ->
+            St#state{local_types = maps:put(Name, TypeInfo, LocalTypes)};
+        #type_info{kind = OldKind} ->
+            add_error(Line, redefinition_error(Name, Kind, OldKind), St)
+    end.
+
+redefinition_error(Name, {imported, _Module}, {imported, _M}) ->
+    {import_type_duplicate, Name};
+redefinition_error(Name, _, {imported, M}) ->
+    {redefine_import_type, {Name, M}};
+redefinition_error(Name, _, _) ->
+    {redefine_type, Name}.
+
+find_duplicate_exports(Types, St) ->
+    find_duplicate_exports(Types, #{}, St).
+
+find_duplicate_exports([{Type, {not_defined, Line}} | Rest], Map, St) ->
+    case Map of
+        #{Type := _} ->
+            find_duplicate_exports(
+                Rest,
+                Map,
+                add_error(Line, {type_exported_multiple_times, Type}, St)
+            );
+        _ ->
+            find_duplicate_exports(Rest, maps:put(Type, {not_defined, Line}, Map), St)
+    end;
+find_duplicate_exports([], Map, St) ->
+    St#state{exported_types = Map}.
 
 wrap_lint(I, St, Ctx) ->
     {I, lint(I, St, Ctx)}.
 
 lint({attribute, _, file, {File, _Line}}, St, _) ->
     St#state{file = File};
-lint({attribute, _, Type, {_Name, Def, Args}}, St, form) when
-    Type =:= type; Type =:= enum; Type =:= struct; Type =:= opaque
-->
-    St1 = process_args(Args, St),
-    ArgNames = maps:keys(St1#state.defined),
-    St2 = process_def(Def, St1),
-    check_args_used(ArgNames, St2);
-lint({attribute, _, unchecked_opaque, {_Name, _Def, Args}}, St, form) ->
+lint({attribute, _Line, unchecked_opaque, {Name, _Def, Args}}, St, form) ->
     St1 = process_args(Args, St#state{allow_new_vars = true}),
-    St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
+    St2 = defined_type({Name, length(Args)}, unchecked_opaque, St1),
+    St2#state{defined = #{}, new_vars = [], allow_new_vars = false};
+lint({attribute, _Line, Kind, {Name, Def, Args}}, St, form) when ?IS_TYPE(Kind) ->
+    St1 = defined_type({Name, length(Args)}, Kind, St),
+    St2 = process_args(Args, St1),
+    ArgNames = maps:keys(St2#state.defined),
+    St3 = process_def(Def, St2),
+    post_process_types(ArgNames, St3);
 lint({attribute, _, Kind, {_MFA, [TypeSig]}}, St, form) when Kind =:= spec; Kind =:= callback ->
     St1 = process_def(TypeSig, St),
     St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
@@ -67,6 +184,18 @@ lint({attribute, Line, Kind, {_MFA, _}}, St, form) when Kind =:= spec; Kind =:= 
     add_error(Line, {multiple_specs, Kind}, St);
 lint(_I, St, _Ctx) ->
     St.
+
+defined_type(Type, Kind, St) ->
+    case is_exported(Type, St) of
+        true ->
+            define_exported_type(Type, St#state{check_is_exported = not is_opaque(Kind)});
+        false ->
+            St
+    end.
+
+is_opaque(opaque) -> true;
+is_opaque(unchecked_opaque) -> true;
+is_opaque(_) -> false.
 
 process_args([{var, Line, '_'} | Rest], St) ->
     process_args(Rest, add_error(Line, underscore_in_type_arguments, St));
@@ -150,12 +279,14 @@ process_def(Type, St) ->
         {type, Line, 'fun', []} ->
             add_error(Line, untyped_fun_type, St);
         {type, Line, 'fun', [{type, _, any}, ResultType]} ->
-            process_def(ResultType, add_error(Line, any_argument_fun, St));
+            {Old, St1} = turn_off_errors(add_error(Line, any_argument_fun, St)),
+            reset_errors(process_def(ResultType, St1), Old);
         {type, _Line, 'fun', [_Args, _ResultType]} = Fun ->
             handle_fun(Fun, [], St);
         %% Process subtypes of union and map in order to avoid lots of unused args and type warnings.
         {type, Line, Unsupported, Args} when Unsupported =:= map; Unsupported =:= union ->
-            add_error(Line, {unsupported_type, Unsupported}, process_list(Args, St));
+            {Old, St1} = turn_off_errors(add_error(Line, {unsupported_type, Unsupported}, St)),
+            reset_errors(process_list(Args, St1), Old);
         {type, Line, Name, Args} ->
             case is_unsupported(Name) of
                 true ->
@@ -170,9 +301,45 @@ process_def(Type, St) ->
             process_def(RealType, St);
         {remote_type, _Line, [{atom, _, _Mod0}, {atom, _, _Name}, Args]} ->
             process_list(Args, St);
-        {user_type, _Line, _Name, Args} ->
-            process_list(Args, St)
+        {user_type, Line, Name, Args} ->
+            TA = {Name, length(Args)},
+            St1 =
+                case is_imported(TA, St) of
+                    true ->
+                        use_imported_type(TA, Line, St);
+                    false ->
+                        case St#state.check_is_exported andalso (not is_exported(TA, St)) of
+                            true ->
+                                add_error(Line, {unexported_type_in_exported_type, Name}, St);
+                            false ->
+                                St
+                        end
+                end,
+            process_list(Args, St1)
     end.
+
+is_exported(Type, St) ->
+    maps:is_key(Type, St#state.exported_types).
+
+is_imported({TypeName, _Arity}, St) ->
+    case St#state.local_types of
+        #{TypeName := #type_info{kind = {imported, _M}}} -> true;
+        _ -> false
+    end.
+
+use_imported_type({TypeName, Arity}, Line, St) ->
+    LocalTypes = St#state.local_types,
+    case maps:get(TypeName, LocalTypes) of
+        #type_info{used = false, arity = Arity} = TI ->
+            St#state{local_types = maps:put(TypeName, TI#type_info{used = true}, LocalTypes)};
+        #type_info{arity = OtherArity} when Arity =/= OtherArity ->
+            add_error(Line, {import_type_wrong_arity, {TypeName, OtherArity}}, St);
+        #type_info{} ->
+            St
+    end.
+
+define_exported_type(Type, St) ->
+    St#state{exported_types = maps:update(Type, defined, St#state.exported_types)}.
 
 handle_fun({type, _Line, 'fun', [Args, ResultType]}, Guards, St) ->
     Val = St#state.allow_new_vars,
@@ -186,25 +353,35 @@ mark_variable_used(Name, St) -> St#state{defined = maps:put(Name, used, St#state
 
 is_unsupported(constraint) -> true;
 is_unsupported(record) -> true;
-is_unsupported(map) -> true;
 is_unsupported(range) -> true;
 is_unsupported(binary) -> true;
 is_unsupported(_) -> false.
 
-check_args_used([Arg | Rest], St) ->
+post_process_types([Arg | Rest], St) ->
     Defined = St#state.defined,
     case Defined of
         #{Arg := used} ->
-            check_args_used(Rest, St);
+            post_process_types(Rest, St);
         #{Arg := {unused, {var, Line, Arg}}} ->
-            check_args_used(Rest, add_error(Line, {unused_arg, Arg}, St))
+            post_process_types(Rest, add_error(Line, {unused_arg, Arg}, St))
     end;
-check_args_used([], St) ->
-    St#state{allow_new_vars = false, new_vars = [], defined = #{}}.
+post_process_types([], St) ->
+    St#state{allow_new_vars = false, new_vars = [], defined = #{}, check_is_exported = false}.
 
 add_error(Anno, E, St) ->
-    {File, Location} = loc(Anno, St),
-    St#state{errors = [{File, {Location, erlt_lint_types, E}} | St#state.errors]}.
+    case St#state.errors_on of
+        true ->
+            {File, Location} = loc(Anno, St),
+            St#state{errors = [{File, {Location, erlt_lint_types, E}} | St#state.errors]};
+        false ->
+            St
+    end.
+
+turn_off_errors(St) ->
+    {St#state.errors_on, St#state{errors_on = false}}.
+
+reset_errors(St, Val) ->
+    St#state{errors_on = Val}.
 
 %% copied from erlt_lint.erl
 pack_errors(Es) ->

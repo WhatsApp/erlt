@@ -5,7 +5,8 @@
 -export_type([foo/0,
               bar/1,
               default_with_default/0,
-              unicodestruct/0]).
+              unicodestruct/0,
+              opaque_baz/0]).
 
 -export([foo/0,
          bar/0,
@@ -18,6 +19,8 @@
 
 -type bar(A) :: {'$#struct_mod01:bar', A, foo()}.
 
+-opaque opaque_baz() :: baz().
+
 -type baz() :: {'$#struct_mod01:baz', bar(integer())}.
 
 -type
@@ -28,7 +31,7 @@
 
 -type
      default_with_default() :: {'$#struct_mod01:default_with_default',
-                                baz()}.
+                                opaque_baz()}.
 
 -type foo() :: {'$#struct_mod01:foo'}.
 

@@ -14,17 +14,19 @@
 
 -module(enum_mod03).
 
--export_type([foo/0, bar/1, default_with_default/0]).
+-export_type([foo/0, bar/1, default_with_default/0, opaque_baz/0]).
 
 -export([foo/0, bar/0, baz/0, pattern/3, guard/1]).
 
 -enum bar(A) :: (x{a :: A, b :: foo()}).
 
+-opaque opaque_baz :: baz().
+
 -enum baz :: (x{bar = bar.x{a = 1, b = foo.x} :: bar(integer())}).
 
 -enum in_pattern :: (x).
 
--enum default_with_default :: (x{x = baz.x{} :: baz()}).
+-enum default_with_default :: (x{x = baz.x{} :: opaque_baz()}).
 
 -enum foo :: (x).
 

@@ -17,7 +17,7 @@
 -export([inferred_funs/0]).
 -export([test2/0, test/0]).
 -export([length/1, test1/0, xx/0, xx2/0]).
--export_type([t1/2, t2/2, x2/0]).
+-export_type([t1/2, t2/2, x2/0, x1/0]).
 
 [opaque, unchecked]
 -type t1(K, V) :: term().

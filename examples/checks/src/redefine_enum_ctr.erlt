@@ -1,0 +1,5 @@
+-module(redefine_enum).
+
+-export_type([broken/0]).
+
+-enum broken() :: (ctr, ctr).
