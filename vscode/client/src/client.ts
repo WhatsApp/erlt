@@ -37,10 +37,12 @@ export async function activate(context: ExtensionContext) {
         serverArgs.push("--log-dir", logPath);
     }
 
+    let erlangLsEnv = { ...process.env, "ERL_ARGS": "-sname erlang_ls@localhost"};
     let serverOptions: ServerOptions = {
         command: 'escript',
         args: serverArgs,
-        transport: TransportKind.stdio
+        transport: TransportKind.stdio,
+        options : {env: erlangLsEnv}
     };
 
     client = new LanguageClient(

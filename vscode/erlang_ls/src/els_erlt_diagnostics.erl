@@ -27,9 +27,18 @@ compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
   CompileCmd = els_config:get(erlt_command),
-  Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
-                      [TempFile, CompileCmd])),
-  os:cmd(Cmd),
+  case CompileCmd of
+    "node" ->
+      erpc:call('erltc@localhost', os, set_env_var, ["ERLT_LANGUAGE_SERVER", TempFile]),
+      try
+        erpc:call('erltc@localhost', rebar3, run, [["compile"]])
+      catch
+        _:_:_ -> ok
+      end;
+    _ ->
+      Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s", [TempFile, CompileCmd])),
+      os:cmd(Cmd)
+  end,
   case get_els_file(TempFile, Uri) of
     {ok, FileName} ->
       get_els_file(TempFile, Uri),
