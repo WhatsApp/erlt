@@ -14,7 +14,7 @@
 
 -module(msg).
 
--export([mk_reply/1, mk_ping/0]).
+-export([mk_reply_1/1, mk_reply_2/1, mk_ping/0]).
 
 -message ping :: (from :: pid()).
 -message pong :: (from :: pid(), in_reply_to :: wrapped_message()).
@@ -26,11 +26,16 @@
 mk_ping() ->
     #ping{from = self_t()}.
 
--spec mk_reply(message()) ->
+-spec mk_reply_1(message()) ->
     message().
-mk_reply(Ping) ->
-    wrapped_message.wrapped_message{message = Ping},
+mk_reply_1(Ping) ->
     #pong{from = self_t(), in_reply_to = wrapped_message.wrapped_message{message = Ping}}.
+
+-spec mk_reply_2(message()) ->
+    message().
+mk_reply_2(Ping) ->
+    A = wrapped_message.wrapped_message{message = Ping},
+    #pong{from = self_t(), in_reply_to = A}.
 
 -spec self_t() -> pid().
 [unchecked]

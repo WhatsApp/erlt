@@ -22,17 +22,18 @@ pattern({'$#enum_mod04:foo.x'},
         {'$#enum_mod04:bar.x', 1, B}, B) ->
     B.
 
+-spec guard(enum_mod04:foo(), enum_mod04:bar(),
+            number()) -> atom().
+
 guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod04:foo.x'},
          Value2 =:= {'$#enum_mod04:bar.x', 1, B} ->
-    "ok".
+    ok.
 
 remote_with_defaults() ->
     {{'$#enum_mod03:default_with_default.x',
       {'$#enum_mod03:baz.x',
-       {'$#enum_mod03:bar.x',
-        erlang:trunc(1.5),
-        {'$#enum_mod03:foo.x'}}}},
+       {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}}}},
      {'$#enum_mod07:with_imported_default.x',
       {'$#enum_mod04:foo.x'}}}.
 

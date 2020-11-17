@@ -15,7 +15,8 @@ t1(F, Class) ->
         'throw', Reason -> Reason
     end.
 
-t2(F) ->
+-spec t2(_F) -> string().
+t2(_F) ->
     try
         "ok"
     catch

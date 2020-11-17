@@ -27,7 +27,7 @@ pattern(#struct_mod11:bar{B, _}, #struct_mod11:mixed{B, a = B}, B) ->
     B.
 
 guard(Value1, Value2, B) when Value1 =:= #struct_mod11:bar{1, B}, Value2 =:= #struct_mod11:mixed{1, a = 2} ->
-    "ok".
+    'ok'.
 
 field(Value) when Value#struct_mod11:bar._0 =:= 1 ->
     Value#struct_mod11:bar._1.

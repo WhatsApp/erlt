@@ -1,0 +1,7 @@
+package countdown
+
+modules = GenServer, Counter, CounterTest
+executable = gen_server.exe
+main = CounterTest
+
+pkgs = contrib

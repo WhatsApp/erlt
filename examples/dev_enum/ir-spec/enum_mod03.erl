@@ -30,24 +30,22 @@ bar() ->
 
 baz() ->
     {{'$#enum_mod03:baz.x',
-      {'$#enum_mod03:bar.x',
-       erlang:trunc(1.5),
-       {'$#enum_mod03:foo.x'}}},
+      {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}}},
      {'$#enum_mod03:default_with_default.x',
       {'$#enum_mod03:baz.x',
-       {'$#enum_mod03:bar.x',
-        erlang:trunc(1.5),
-        {'$#enum_mod03:foo.x'}}}}}.
+       {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}}}}}.
 
 pattern({'$#enum_mod03:foo.x'},
         {'$#enum_mod03:bar.x', _, B},
         {'$#enum_mod03:in_pattern.x'}) ->
     B.
 
+-spec guard(bar(number())) -> atom().
+
 guard(Value)
     when Value =:=
              {'$#enum_mod03:bar.x', 1, {'$#enum_mod03:foo.x'}} ->
-    "ok".
+    ok.
 
 
 

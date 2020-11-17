@@ -33,60 +33,77 @@ loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
  %% get and adapt user input
 
 -spec prompt(list(string())) -> choice().
-[unchecked]
 prompt(Todos) ->
-     io:format("What would you like to do?\n"
+     t_io:format("What would you like to do?~n"
             "1. add todo~n"
             "2. delete todo~n"
             "3. view stats~n~n"
     ),
-     case io:read("Enter a number followed by a dot: ") of
-         {'ok', 1} ->
+     case read_or_error("Enter a number followed by a dot: ") of
+         1 ->
              prompt_add_todo();
-         {'ok', 2} ->
+         2 ->
              prompt_delete_todo(Todos);
-         {'ok', 3} ->
+         3 ->
              choice.view_stats;
-         {'ok', _} ->
+         _ ->
              invalid_input(),
              prompt(Todos)
      end.
 
-[unchecked]
+-spec prompt_add_todo() -> choice().
 prompt_add_todo() ->
-    case io:read("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
-        {'ok', TodoText} when is_list(TodoText) ->
+    case read_or_error("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
+        TodoText when erlang:is_list(TodoText) ->
             choice.add{TodoText};
-         {'ok', Res} ->
+         Res ->
             erlang:display(Res),
             invalid_input(),
             prompt_add_todo()
     end.
 
-[unchecked]
+-spec prompt_delete_todo([string()]) -> choice().
 prompt_delete_todo(Todos) ->
     display_todos(Todos),
-    case io:read("enter the id of the todo you would like to delete followed by a dot. ") of
-        {'ok', Id} when is_integer(Id) ->
+    case read_or_error("enter the id of the todo you would like to delete followed by a dot. ") of
+        Id when erlang:is_integer(Id) ->
             choice.delete{Id};
-        {'ok', _} ->
+        _ ->
             invalid_input(),
             prompt_delete_todo(Todos)
     end.
 
 %% display stuff
--spec display_stats(state()) -> atom().
-[unchecked]
+-spec display_stats(state()) -> string().
 display_stats(#state{todos = [], deleted_count=0}) ->
-    io:format("You haven't started yet: try creating and deleting todos~n"),
-    {'ok', _} = io:read("type ok followed by a dot to continue. "),
-    'ok';
+    t_io:format("You haven't started yet: try creating and deleting todos~n"),
+    prompt_for_ok(),
+    % todo: change to atom when/if that is permitted
+    "ok";
 display_stats(#state{todos = Todos, deleted_count = DeletedCount}) ->
     line(),
-    io:format("You have ~p active todos and ~p deleted todos", [length(Todos), DeletedCount]),
+    t_io:format("You have ~p active todos and ~p deleted todos", {erlang:length(Todos), DeletedCount}),
     line(),
-    {'ok', _} = io:read("type ok followed by a dot to continue. "),
-    'ok'.
+    prompt_for_ok(),
+    "ok".
+
+-spec prompt_for_ok() -> atom().
+[unchecked] % because of atom literals
+prompt_for_ok() ->
+    case read_or_error("type ok followed by a dot to continue. ") of
+        'ok' -> 'ok';
+        _ -> prompt_for_ok()
+    end.
+
+-spec read_or_error(string()) -> _.
+[unchecked]
+read_or_error(Prompt) ->
+    case io:read(Prompt) of
+        {'ok', Res} -> Res;
+        'eof' -> erlang:error("eof when reading from prompt ~p~n", [Prompt]);
+        {'error', Reason} ->
+            erlang:error("error when reading from prompt ~p: ~p~n", [Prompt, Reason])
+    end.
 
 %% utils
 with_indices(List) ->
@@ -94,16 +111,15 @@ with_indices(List) ->
     lists:zip(Indices, List).
 
 -spec len([_]) -> integer().
-[unchecked]
 len(L) ->
-    length(L).
+    erlang:length(L).
 
--spec display_todos(list(string())) -> string().
+-spec display_todos(list(string())) -> atom().
 display_todos([]) ->
     line(),
     t_io:format("You have no todos~n"),
     line(),
-    "ok";
+    'ok';
 display_todos(Todos) ->
     line(),
     t_io:format("Your todos are:~n"),
@@ -111,7 +127,7 @@ display_todos(Todos) ->
         t_io:format("~p. ~p~n", {Index, Todo})
     || { Index, Todo } <- with_indices(Todos)],
     line(),
-    "ok".
+    'ok'.
 
 line() ->
     t_io:format("------~n").
@@ -119,9 +135,7 @@ line() ->
  invalid_input() ->
      t_io:format("invalid input~n").
 
-
 -spec splice(number(), list(A)) -> list(A).
-[unchecked]
 splice(Index, List) ->
     {Left, [_|Right]} = lists:split(Index - 1, List),
     Left ++ Right.

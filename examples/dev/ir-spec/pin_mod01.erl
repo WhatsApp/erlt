@@ -66,12 +66,12 @@ j(Elem, List) ->
                  List).
 
 j2(X) ->
-    begin
-        __pin_o7 = X,
-        fun Test(__pin_i7) when __pin_i7 =:= __pin_o7 -> Test(X)
-        end
-    end,
-    ok.
+    {begin
+         __pin_o7 = X,
+         fun Test(__pin_i7) when __pin_i7 =:= __pin_o7 -> Test(X)
+         end
+     end,
+     ok}.
 
 k(X, Y) ->
     case X of

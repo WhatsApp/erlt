@@ -30,7 +30,7 @@ g(X, Y) ->
     L = [X || {'foo', X} <- Y],
     %% Fun heads may shadow variables
     F = fun(X, Y) -> X + Y end,
-    lists:foldl(F, L, X).
+    foldl(F, L, X).
 
 test1(X, Y) ->
     case X of
@@ -46,3 +46,6 @@ test3(X, Y) ->
     case X of
         ab.a{a = Y} -> true
     end.
+
+%% stub
+foldl(_, Acc, _) -> Acc.

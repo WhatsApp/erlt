@@ -33,8 +33,9 @@ expr() ->
 pattern(foo.x, bar.x{a = 1, b = B}, B) ->
     B.
 
+-spec guard(enum_mod04:foo(), enum_mod04:bar(), number()) -> atom().
 guard(Value1, Value2, B) when Value1 =:= foo.x, Value2 =:= bar.x{a = 1, b = B} ->
-    "ok".
+    'ok'.
 
 remote_with_defaults() ->
     {

@@ -35,6 +35,9 @@
 
 -export([format_error/1]).
 
+%% Needed for ping-pong with erlt_otp_compile for error reporting
+-export([comp_ret_ok/2, comp_ret_err/1]).
+
 -import(lists, [
     member/2,
     reverse/1,
@@ -50,13 +53,6 @@
 
 %Macro to avoid misspellings.
 -define(STDERR, standard_error).
-
--type err_warn_info() :: tuple().
-
--type option() :: atom() | {atom(), term()} | {'d', atom(), term()}.
-
-%% needed for compile state record
--type abstract_code() :: [erl_parse:abstract_form()].
 
 %% The compile state record, with our added fields
 -include("erlt_compile.hrl").
@@ -564,6 +560,57 @@ format_error(X) ->
     % TODO: copy formatters for locally-generated errors from copy-pasted code
     % here to avoid problems with error format compatibility in the future
     ?OTP_COMPILE:format_error(X).
+
+%% =====================================================================
+%% Copied from erlt_otp_compile to be able to route the warnings to a
+%% file for the language server
+comp_ret_ok(Code, #compile{warnings = Warn0, module = Mod, options = Opts} = St) ->
+    case ?OTP_COMPILE:werror(St) of
+        true ->
+            case member(report_warnings, Opts) of
+                true ->
+                    io:format(
+                        "~p: warnings being treated as errors\n",
+                        [?MODULE]
+                    );
+                false ->
+                    ok
+            end,
+            ?MODULE:comp_ret_err(St);
+        false ->
+            Warn = ?OTP_COMPILE:messages_per_file(Warn0),
+            ?OTP_COMPILE:report_warnings(St#compile{warnings = Warn}),
+            erlt_language_server:maybe_output_ls_diagnostics(Warn, [], St),
+            Ret1 =
+                case
+                    member(binary, Opts) andalso
+                        not member(no_code_generation, Opts)
+                of
+                    true -> [Code];
+                    false -> []
+                end,
+            Ret2 =
+                case member(return_warnings, Opts) of
+                    true -> Ret1 ++ [Warn];
+                    false -> Ret1
+                end,
+            list_to_tuple([ok, Mod | Ret2])
+    end.
+
+%% Copied from erlt_otp_compile to be able to route the warnings to a
+%% file for the language server
+comp_ret_err(#compile{warnings = Warn0, errors = Err0, options = Opts} = St) ->
+    Warn = ?OTP_COMPILE:messages_per_file(Warn0),
+    Err = ?OTP_COMPILE:messages_per_file(Err0),
+    ?OTP_COMPILE:report_errors(St#compile{errors = Err}),
+    ?OTP_COMPILE:report_warnings(St#compile{warnings = Warn}),
+    erlt_language_server:maybe_output_ls_diagnostics(Warn, Err, St),
+    case member(return_errors, Opts) of
+        true -> {error, Err, Warn};
+        false -> error
+    end.
+
+%% =====================================================================
 
 set_defs_file(Code, #compile{build_dir = BuildDir, base = Base} = St) ->
     {ok, Code, St#compile{

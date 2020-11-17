@@ -77,7 +77,7 @@ object PatternsConvert {
               eFields,
             )
           ) =>
-        eFields match {
+        (eFields: @unchecked) match {
           case EAtom("none") =>
             LocalEnumPattern(r(anno), enum, ctr, List.empty)
           case EList(fields) =>
@@ -99,7 +99,7 @@ object PatternsConvert {
               eFields,
             )
           ) =>
-        eFields match {
+        (eFields: @unchecked) match {
           case EAtom("none") =>
             RemoteEnumPattern(r(anno), module, enum, ctr, List.empty)
           case EList(fields) =>

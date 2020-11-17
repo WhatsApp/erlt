@@ -147,7 +147,7 @@ object FormsConvert {
 
   private def enumVariantDecl(term: ETerm): EnumVariantDecl = {
     val ETuple(List(EAtom("variant"), anno, name, eFields)) = term
-    eFields match {
+    (eFields: @unchecked) match {
       case EAtom("none") => EnumVariantDecl(r(anno), convertAtomLit(name), List.empty)
       case EList(fields) => EnumVariantDecl(r(anno), convertAtomLit(name), fields.map(fieldDecl))
     }

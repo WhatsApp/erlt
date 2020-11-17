@@ -9,6 +9,8 @@ let checkout = Util.checkout
 
 let run = Util.run
 
+let usesWith = Util.usesWith
+
 let env = Some (toMap { GITHUB_TOKEN = "\${{ secrets.GITHUB_TOKEN }}" })
 
 let release_url_step_id = "get_release_url"
@@ -74,6 +76,30 @@ let uploadErltcBinary =
               # uploadToRelease binaryName
           }
 
+let uploadVSCodeExtension =
+      let binaryName = "erlt-ls.vsix"
+
+      in  Actions.Job::{
+          , runs-on = Actions.RunsOn.Type.ubuntu-latest
+          , steps =
+                [ usesWith
+                    "Use Node.js"
+                    "actions/setup-node@v1"
+                    (toMap { node-version = "12.13.0" })
+                , checkout
+                , run
+                    "build vsix"
+                    (     "node --version"
+                      ++  " && cd vscode"
+                      ++  " && npm install"
+                      ++  " && npm run compile"
+                      ++  " && npx vsce package -o ${binaryName}"
+                      ++  " && mv ${binaryName} .."
+                    )
+                ]
+              # uploadToRelease binaryName
+          }
+
 in    Actions.Workflow::{
       , name = "Upload release binary"
       , on = Actions.On::{=}
@@ -81,6 +107,7 @@ in    Actions.Workflow::{
           { sterlangMacUpload
           , sterlangLinuxUpload
           , uploadErltcBinary
+          , uploadVSCodeExtension
             -- the sterlang mac and linux binary jobs require the jar to be built first
           , buildJar = Sterlang.buildJar
           }

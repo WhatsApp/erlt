@@ -1,0 +1,6 @@
+-- ERROR ------------------------------------- examples/err2/src/e152.erlt:20:54
+Type Mismatch
+Found:    string()
+Required: bad_box(A)
+ 20| -enum bad_box(A) :: (ctr{value = bad_box.ctr{value = ""} :: bad_box(A)}).
+...|                                                      ^^

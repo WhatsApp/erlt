@@ -1,0 +1,38 @@
+%% When changing run command below to update .defs required for this
+%%
+%%    _build/default/bin/erltc +defs -o examples/checks/deps/ examples/checks/src/remote_calls.erlt
+%%
+
+-module(remote_calls).
+
+-export([checked/0, unchecked_spec/0, unchecked/0]).
+
+-export([checked_test/0, unchecked_test/0]).
+
+checked_test() ->
+    ?MODULE:checked(), %% ok
+    ?MODULE:unchecked_spec(), %% ok
+    ?MODULE:unchecked(), %% error
+    ?MODULE:private(), %% error
+    ?MODULE:undefined(). %% error
+
+[unchecked]
+unchecked_test() ->
+    %% unchecked code does no checks
+    ?MODULE:checked(),
+    ?MODULE:unchecked_spec(),
+    ?MODULE:unchecked(),
+    ?MODULE:private(),
+    ?MODULE:undefined().
+
+-spec checked() -> integer().
+checked() -> 0.
+
+-spec unchecked_spec() -> integer().
+[unchecked]
+unchecked_spec() -> 0.
+
+[unchecked]
+unchecked() -> 0.
+
+private() -> 0.

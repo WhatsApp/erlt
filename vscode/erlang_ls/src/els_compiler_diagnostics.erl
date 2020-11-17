@@ -17,7 +17,9 @@
 -export([ format_error/1 ]).
 
 %% Used in els_erlt_diagnostics
--export([ diagnostic/4 ]).
+-export([ diagnostic/4,
+          diagnostics/3
+        ]).
 
 %%==============================================================================
 %% Includes
@@ -195,6 +197,10 @@ format_error(Str) ->
 -spec range(erl_anno:line() | none) -> poi_range().
 range(Line) when is_integer(Line) ->
   #{from => {Line, 1}, to => {Line + 1, 1}};
+range({Line, Col}) ->
+  #{from => {Line, Col}, to => {Line + 1, 1}};
+range([{location,{LineF,ColF}},{end_location,{LineT,ColT}}]) ->
+  #{from => {LineF, ColF}, to => {LineT, ColT}};
 range(none) ->
   range(1).
 

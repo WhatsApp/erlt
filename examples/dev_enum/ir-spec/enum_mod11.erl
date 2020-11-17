@@ -22,10 +22,12 @@ pattern({'$#enum_mod11:bar.x', 1, B},
         {'$#enum_mod11:baz.x', 1, B}, B) ->
     B.
 
+-spec guard(bar(), baz(), number()) -> atom().
+
 guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod11:bar.x', 1, B},
          Value2 =:= {'$#enum_mod11:baz.x', 1, B} ->
-    "ok".
+    ok.
 
 
 

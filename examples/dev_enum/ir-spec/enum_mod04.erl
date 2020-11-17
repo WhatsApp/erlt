@@ -12,7 +12,8 @@
                 integer(),
                 integer()}.
 
--type baz() :: {'$#enum_mod04:baz.x', any()}.
+-type baz() :: {'$#enum_mod04:baz.x',
+                #{id := integer()}}.
 
 expr() ->
     {{'$#enum_mod04:foo.x'},
@@ -23,10 +24,12 @@ pattern({'$#enum_mod04:foo.x'},
         {'$#enum_mod04:bar.x', 1, B}, B) ->
     B.
 
+-spec guard(foo(), bar(), number()) -> atom().
+
 guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod04:foo.x'},
          Value2 =:= {'$#enum_mod04:bar.x', 1, B} ->
-    "ok".
+    ok.
 
 
 

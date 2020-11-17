@@ -7,13 +7,19 @@ but is copied here as an interim measure since erlt is not public yet.
 The client should do very little, bar set the context and launch the
 language server, so should not have merging issues eventually.
 
-It will provide
+It:
 
-- syntax highlighting (.erl, .hrl, .erlt)
-- launch a language server
+- provides syntax highlighting (.erl, .hrl, .erlt)
+- launches a language server to provide diagnostics, including type errors
 
 Since it is early stages, it is not in the VS Code marketplace yet, and must
-be installed manually. See [DEVELOPERS-README](DEVELOPERS-README.md) for
+be installed manually:
+- Download the latest vsix file from https://github.com/whatsapp/erlt/releases
+- Then install the resulting vsix file into VS Code using the
+`Install from VSIX...` option from the `...` dropdown in the `Extensions` side bar.
+**Note**: For now, the 'examples' directory must be your VSCode workspace root.
+
+ See [DEVELOPERS-README](DEVELOPERS-README.md) for
 instructions.
 
 # erlang-ls/vscode

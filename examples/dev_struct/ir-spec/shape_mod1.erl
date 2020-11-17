@@ -24,11 +24,11 @@ test() ->
                  ok = access_map2(#{inner1 => #{inner2 => ok}})}).
 
 -spec test(#{a := integer(),
-             b := #{c := integer()}}) -> string().
+             b := #{c := integer()}}) -> atom().
 
 test(A) when A =:= #{a => 1, b => #{c => 2}} ->
-    "closed_ok";
-test(#{a := 1, b := #{c := 2}}) -> "open_ok".
+    closed_ok;
+test(#{a := 1, b := #{c := 2}}) -> open_ok.
 
 -spec test2(#{}) -> {}.
 

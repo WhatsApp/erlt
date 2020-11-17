@@ -146,7 +146,7 @@ object ExprsConvert {
               eFields,
             )
           ) =>
-        eFields match {
+        (eFields: @unchecked) match {
           case EAtom("none") =>
             LocalEnum(r(anno), enum, ctr, List.empty)
           case EList(fields) =>
@@ -168,7 +168,7 @@ object ExprsConvert {
               eFields,
             )
           ) =>
-        eFields match {
+        (eFields: @unchecked) match {
           case EAtom("none") =>
             RemoteEnum(r(anno), module, enum, ctr, List.empty)
           case EList(fields) =>
@@ -231,7 +231,7 @@ object ExprsConvert {
   }
 
   private def convertIndex(eIndex: ETerm): Index =
-    literal(eIndex) match {
+    (literal(eIndex): @unchecked) match {
       case AtomLiteral(_, lbl) => LblIndex(lbl)
       case IntLiteral(_, pos)  => PosIndex(pos)
     }

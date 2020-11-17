@@ -53,10 +53,10 @@ class UnknownEnumCon(range: Doc.Range, val enumConName: String)
     extends RangeError(range, s"Unknown enum constructor: $enumConName", None)
 class SpecError(range: Doc.Range, val fName: String, val specType: String, val elabType: String)
     extends RangeError(range, s"Spec mismatch for $fName", Some(s"Specified:  `$specType`\nElaborated: `$elabType`"))
-class InconsistentStructTypeParamsError(range: Doc.Range, val specParams: String, val elabParams: String)
+class InconsistentTypeParamsError(range: Doc.Range, val specParams: String, val elabParams: String)
     extends RangeError(
       range,
-      s"Inconsistent struct type params",
+      s"Inconsistent type params",
       Some(s"Specified:  `$specParams`\nElaborated: `$elabParams`"),
     )
 class DuplicateFields(range: Doc.Range, names: List[String])
