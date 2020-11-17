@@ -511,6 +511,8 @@ compile_erl1_forms(Forms, St0) ->
         St0#compile.options --
             [nowarn_unused_vars, nowarn_unused_type, report_warnings, report_errors],
     Ret = ?OTP_COMPILE:noenv_forms(Forms, [
+        from_pp,
+        no_lint,
         return_errors,
         return_warnings,
         nowarn_unused_type,
