@@ -23,8 +23,11 @@ in  Actions.Workflow::{
             , coursierCache
             , run "download sbtn" "./sbtn/dl.sh"
             , run
-                "Erlang version"
+                "Erlang OTP release"
                 "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+            , run
+                "Erlang version"
+                "erl -version"
             , run
                 "check formatting"
                 "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && \$(exit 1))"

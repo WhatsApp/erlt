@@ -15,8 +15,10 @@ jobs:
           root: sterlang
       - name: download sbtn
         run: "./sbtn/dl.sh"
-      - name: Erlang version
+      - name: Erlang OTP release
         run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
+      - name: Erlang version
+        run: erl -version
       - name: check formatting
         run: "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && $(exit 1))"
       - name: warm up sterlang
