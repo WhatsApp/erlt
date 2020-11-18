@@ -1,0 +1,4 @@
+-module(implementation).
+
+-spec id() -> number().
+id() -> 1.

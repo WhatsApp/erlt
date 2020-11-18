@@ -1,0 +1,10 @@
+-module(interface).
+
+-export_type([id_gen/0, number_alias/0]).
+
+-type id_gen() :: #(
+    id :: fun(() -> number())
+).
+
+
+-type number_alias() :: number().

@@ -1,0 +1,11 @@
+-module(usage).
+
+-spec cheat() -> number().
+cheat() ->
+    X = cast('anything', 'interface', 'id_gen'),
+    X.
+
+-spec cast(_, _, _) -> _.
+[unchecked]
+cast(_, _, _) ->
+    error("I should not be invoked at runtime!").
