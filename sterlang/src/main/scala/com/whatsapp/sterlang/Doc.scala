@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang
 
 object Doc {
-  case class HoverTypeInfo(range: Range, typeRepr: String)
+  case class LspTypeInfo(range: Range, typeRepr: String, kind: String)
   case class ElaboratedTypeInfo(varName: String, range: Range, typeRepr: String)
 
   case class Pos(line: Int, column: Int) {
