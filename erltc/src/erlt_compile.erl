@@ -730,8 +730,8 @@ erlt_typecheck(Code, St) ->
 
     case Res of
         {ok, Hovers} ->
-            Lenses = [ Hover#{ kind := lens } || Hover <- Hovers ],
-            {ok, Code, St#compile{hovers = Hovers, lenses = Lenses }};
+            Lenses = [Hover#{kind := lens} || Hover <- Hovers],
+            {ok, Code, St#compile{hovers = Hovers, lenses = Lenses}};
         {error, Range, ErrMessage} ->
             Location =
                 case Range of
