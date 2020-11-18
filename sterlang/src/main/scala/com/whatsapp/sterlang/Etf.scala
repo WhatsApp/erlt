@@ -19,7 +19,7 @@ package com.whatsapp.sterlang
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.sterlang.Doc.HoverSpec
+import com.whatsapp.sterlang.Doc.HoverTypeInfo
 import com.whatsapp.sterlang.forms.FormsConvert
 
 object Etf {
@@ -90,20 +90,20 @@ object Etf {
         new OtpErlangBinary(str.getBytes())
     }
 
-  def hoverSpecToMap(hoverSpec: HoverSpec): EMap = {
+  def hoverTypeInfoToEMap(info: HoverTypeInfo): EMap = {
     EMap(
       List(EAtom("range"), EAtom("kind"), EAtom("id"), EAtom("data")),
       List(
         EMap(
           List(EAtom("from"), EAtom("to")),
           List(
-            ETuple(List(ELong(hoverSpec.range.start.line), ELong(hoverSpec.range.start.column))),
-            ETuple(List(ELong(hoverSpec.range.end.line), ELong(hoverSpec.range.end.column))),
+            ETuple(List(ELong(info.range.start.line), ELong(info.range.start.column))),
+            ETuple(List(ELong(info.range.end.line), ELong(info.range.end.column))),
           ),
         ),
         EAtom("hover"),
         EAtom("undefined"),
-        EBinary(hoverSpec.spec),
+        EBinary(info.typeRepr),
       ),
     )
   }
