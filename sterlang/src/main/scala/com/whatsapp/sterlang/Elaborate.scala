@@ -787,6 +787,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       case None => throw new UnknownInterface(exp.r, interfaceTypeIdString)
     }
 
+    val fields = typeAlias.body match {
+      case Ast.ShapeType(fs) => fs
+      case _ => throw new BadInterface(exp.r, interfaceTypeIdString)
+    }
+
     AnnAst.SmartCastExp(module, m1, shapeType)(typ = ty, r = exp.r)
   }
 
