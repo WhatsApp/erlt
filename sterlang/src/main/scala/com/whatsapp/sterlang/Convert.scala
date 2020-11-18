@@ -238,6 +238,13 @@ object Convert {
         Ast.CaseExp(convertExpr(expr), clauses.map(convertCaseClause))(p)
       case Exprs.If(p, ifClauses) =>
         Ast.IfExp(ifClauses.map(convertIfClause))(p)
+      case Exprs.LocalCall(p, Exprs.AtomLiteral(p2, "cast"), args) =>
+        val List(
+          Exprs.AtomLiteral(_, moduleName),
+          Exprs.AtomLiteral(_, m1),
+          Exprs.AtomLiteral(_, shapeType),
+        ) = args
+        Ast.SmartCastExp(moduleName, m1, shapeType)(p)
       case Exprs.LocalCall(p1, Exprs.AtomLiteral(p2, f), args) =>
         Ast.AppExp(Ast.VarExp(new Ast.LocalFunName(f, args.length))(p2), args.map(convertExpr))(p1)
       case Exprs.LocalCall(p, head, args) =>
