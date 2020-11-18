@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang
 
 import com.whatsapp.sterlang.Ast.Program
-import com.whatsapp.sterlang.Doc.HoverTypeInfo
+import com.whatsapp.sterlang.Doc.LspTypeInfo
 
 import scala.collection.immutable.{TreeMap, TreeSet}
 import scala.collection.mutable.ListBuffer
@@ -63,7 +63,7 @@ case class Render(private val vars: Vars) {
     }
   }
 
-  def hoverSpecs(program: Program, funs: List[AnnAst.Fun], env: Env): List[HoverTypeInfo] =
+  def hoverSpecs(program: Program, funs: List[AnnAst.Fun], env: Env): List[LspTypeInfo] =
     funs.flatMap { f =>
       if (!program.specs.exists(_.name.stringId == f.name)) {
         resetContext()
@@ -77,7 +77,7 @@ case class Render(private val vars: Vars) {
         val pp = "-spec " + normV + inner + "."
         val start = f.r.start
         val end = f.r.start.copy(column = f.r.start.column + normV.length)
-        Some(HoverTypeInfo(Doc.Range(start, end), pp))
+        Some(LspTypeInfo(Doc.Range(start, end), pp, kind = "lens"))
       } else {
         None
       }

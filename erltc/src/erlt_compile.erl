@@ -729,8 +729,9 @@ erlt_typecheck(Code, St) ->
     member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
 
     case Res of
-        {ok, Hovers} ->
-            Lenses = [Hover#{kind := lens} || Hover <- Hovers],
+        {ok, Infos} ->
+            Lenses = [I || (I = #{kind := lens}) <- Infos],
+            Hovers = [I || (I = #{kind := hover}) <- Infos],
             {ok, Code, St#compile{hovers = Hovers, lenses = Lenses}};
         {error, Range, ErrMessage} ->
             Location =

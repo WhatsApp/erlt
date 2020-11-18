@@ -57,7 +57,7 @@ object SterlangD {
       mbox.send(from, Etf.toJava(response))
     }
 
-    private def processFile(etfFile: String): Either[SterlangError, List[Doc.HoverTypeInfo]] = {
+    private def processFile(etfFile: String): Either[SterlangError, List[Doc.LspTypeInfo]] = {
       val rawProgram =
         try DriverErltc.loadProgram(etfFile)
         catch {
@@ -75,7 +75,7 @@ object SterlangD {
         val hoverSpecs = render.hoverSpecs(program, annDefs, env)
         val elabTypes = render.varTypes(annDefs)
         val elabVarHovers = elabTypes.map {
-          case Doc.ElaboratedTypeInfo(_, range, typeRepr) => Doc.HoverTypeInfo(range, typeRepr)
+          case Doc.ElaboratedTypeInfo(_, range, typeRepr) => Doc.LspTypeInfo(range, typeRepr, kind = "hover")
         }
         Right(hoverSpecs ++ elabVarHovers)
       } catch {
