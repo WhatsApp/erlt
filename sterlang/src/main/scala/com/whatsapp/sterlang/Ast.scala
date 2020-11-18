@@ -166,6 +166,8 @@ object Ast {
   case class EnumCtr(name: String, fields: List[FieldDecl])(val r: Doc.Range)
 
   sealed trait Exp { val r: Doc.Range }
+
+  case class SmartCastExp(module: String, defModule: String, intType: String)(val r: Doc.Range) extends Exp
   case class BlockExpr(body: Body)(val r: Doc.Range) extends Exp
   case class BinOpExp(binOp: BinOp, exp1: Exp, exp2: Exp)(val r: Doc.Range) extends Exp
   case class UOpExp(uOp: UOp, exp: Exp)(val r: Doc.Range) extends Exp
