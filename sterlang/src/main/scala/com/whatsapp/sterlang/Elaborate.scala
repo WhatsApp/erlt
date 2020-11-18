@@ -780,6 +780,13 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabSmartCastExp(exp: Ast.SmartCastExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.SmartCastExp(module, m1, shapeType) = exp
+
+    val interfaceTypeIdString = s"$m1:$shapeType"
+    val typeAlias = context.aliases.find(ta => ta.name == interfaceTypeIdString) match {
+      case Some(value) => value
+      case None => throw new UnknownInterface(exp.r, interfaceTypeIdString)
+    }
+
     AnnAst.SmartCastExp(module, m1, shapeType)(typ = ty, r = exp.r)
   }
 
