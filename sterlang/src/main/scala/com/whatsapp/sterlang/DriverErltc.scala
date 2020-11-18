@@ -35,18 +35,18 @@ object DriverErltc extends DriverApi {
     val start = System.currentTimeMillis()
     val sterlangTime = System.currentTimeMillis() - start
     val result = doProcessFile(etfFile) match {
-      case Some(error) => convertError(error)
-      case None        => ETuple(List(EAtom("ok")))
+      case Left(error)       => convertError(error)
+      case Right(hoverSpecs) => ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverSpecToMap))))
     }
     val response = ETuple(List(result, ELong(sterlangTime)))
     stdoutResponse(response)
   }
 
-  private def doProcessFile(etfFile: String): Option[SterlangError] = {
+  private def doProcessFile(etfFile: String): Either[SterlangError, List[Doc.HoverSpec]] = {
     val mainFile = etfFile
     val rawProgram =
       try loadProgram(mainFile)
-      catch { case error: SterlangError => return Some(error) }
+      catch { case error: SterlangError => return Left(error) }
     val vars = new Vars()
     val program = AstUtil.normalizeTypes(rawProgram)
     val depContext = loadContext(mainFile, program, vars)
@@ -56,7 +56,7 @@ object DriverErltc extends DriverApi {
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       val elaborate = new Elaborate(vars, context, program)
-      elaborate.elaborate()
+      val (annDefs, env) = elaborate.elaborate()
 
       // TODO - https://github.com/WhatsApp/erlt/issues/336
       // if (options.contains("--check-patterns")) {
@@ -64,9 +64,10 @@ object DriverErltc extends DriverApi {
       //  warnings.foreach(displayRangeError(erltFile, text, _))
       //}
       // checking them in the very end - since it is possible to present inferred types here
-      astChecks.checkPublicSpecs(program)
-      None
-    } catch { case error: SterlangError => Some(error) }
+      // astChecks.checkPublicSpecs(program)
+      val hoverSpecs = new Render(vars).hoverSpecs(program, annDefs, env)
+      Right(hoverSpecs)
+    } catch { case error: SterlangError => Left(error) }
   }
 
   private def freshTypeVar(vars: Vars): Types.Type =

@@ -16,8 +16,11 @@
 
 package com.whatsapp.sterlang
 
+import com.whatsapp.sterlang.Ast.Program
+import com.whatsapp.sterlang.Doc.HoverSpec
+
+import scala.collection.immutable.{TreeMap, TreeSet}
 import scala.collection.mutable.ListBuffer
-import scala.collection.immutable.{IntMap, TreeMap, TreeSet}
 
 object Render {
   private sealed trait Mode
@@ -59,6 +62,26 @@ case class Render(private val vars: Vars) {
       pp
     }
   }
+
+  def hoverSpecs(program: Program, funs: List[AnnAst.Fun], env: Env): List[HoverSpec] =
+    funs.flatMap { f =>
+      if (!program.specs.exists(_.name.stringId == f.name)) {
+        resetContext()
+        val ts = env(f.name)
+        // fun((ArgType1, ArgType2, ...) -> ResType)
+        val raw = typeScheme(ts, SpecsMode)
+        // "fun "
+        val inner = raw.substring(4, raw.length - 1)
+        val slashIndex = f.name.lastIndexOf('/')
+        val normV = f.name.substring(0, slashIndex)
+        val pp = "-spec " + normV + inner + "."
+        val start = f.r.start
+        val end = f.r.start.copy(column = f.r.start.column + normV.length)
+        Some(HoverSpec(Doc.Range(start, end), pp))
+      } else {
+        None
+      }
+    }
 
   def typ(tp: Types.Type): String = {
     resetContext()

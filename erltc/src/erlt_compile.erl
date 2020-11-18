@@ -718,7 +718,7 @@ get_erlt_deps(Forms, St0) ->
     | undefined.
 
 -record(sterlang_result, {
-    result :: {ok} | {error, range(), string()},
+    result :: {ok, Hovers :: [term()]} | {error, range(), string()},
     mode :: native | jar | daemon | skipped,
     erltc_time :: non_neg_integer(),
     st_time :: non_neg_integer()
@@ -728,21 +728,8 @@ erlt_typecheck(Code, St) ->
     R = #sterlang_result{result = Res} = run_sterlang(St),
     member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
 
-    %% Provide an example of what a hover entry should look like to be
-    %% exposed to erlang_ls.  In future this could potentially be
-    %% 'MarkupContent' as defined in the LSP spec
-    Hovers = [
-        #{
-            range => #{from => {1, 1}, to => {2, 1}},
-            kind => hover,
-            id => undefined,
-            %% in POI format
-            data => <<"hover text woohoo5">>
-        }
-    ],
-
     case Res of
-        {ok} ->
+        {ok, Hovers} ->
             {ok, Code, St#compile{hover = Hovers}};
         {error, Range, ErrMessage} ->
             Location =
@@ -752,7 +739,7 @@ erlt_typecheck(Code, St) ->
                 end,
             Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
             Errors = St#compile.errors ++ [Error],
-            {error, St#compile{errors = Errors, hover = Hovers}}
+            {error, St#compile{errors = Errors, hover = []}}
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
@@ -776,7 +763,7 @@ run_sterlang(St) ->
     {Mode, Result, SterlangTime} =
         case {CmdMode, is_alive()} of
             {undefined, false} ->
-                {skipped, {ok}, undefined};
+                {skipped, {ok, []}, undefined};
             {undefined, true} ->
                 Ref = erlang:monitor(process, {api, sterlangd@localhost}),
                 {api, sterlangd@localhost} ! {check, self(), Ref, EtfFile},

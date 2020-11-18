@@ -19,12 +19,14 @@ package com.whatsapp.sterlang
 import java.nio.file.{Files, Path, Paths}
 
 import com.ericsson.otp.erlang._
+import com.whatsapp.sterlang.Doc.HoverSpec
 import com.whatsapp.sterlang.forms.FormsConvert
 
 object Etf {
 
   sealed trait ETerm
   case class EAtom(atom: String) extends ETerm
+  case class EBinary(str: String) extends ETerm
   case class EDouble(d: Double) extends ETerm
   case class EList(elems: List[ETerm]) extends ETerm
   case class ELong(value: BigInt) extends ETerm
@@ -32,6 +34,7 @@ object Etf {
   case class ETuple(elems: List[ETerm]) extends ETerm
   case class EPid(pid: OtpErlangPid) extends ETerm
   case class ERef(ref: OtpErlangRef) extends ETerm
+  case class EMap(keys: List[ETerm], values: List[ETerm]) extends ETerm
 
   def readEtf(etfPath: Path): ETerm = {
     val etfBytes = Files.readAllBytes(etfPath)
@@ -81,5 +84,28 @@ object Etf {
         pid
       case ERef(ref) =>
         ref
+      case EMap(keys, values) =>
+        new OtpErlangMap(keys.map(toJava).toArray, values.map(toJava).toArray)
+      case EBinary(str) =>
+        new OtpErlangBitstr(str.getBytes())
     }
+
+  def hoverSpecToMap(hoverSpec: HoverSpec): EMap = {
+    EMap(
+      List(EAtom("range"), EAtom("kind"), EAtom("id"), EAtom("data")),
+      List(
+        EMap(
+          List(EAtom("from"), EAtom("to")),
+          List(
+            ETuple(List(ELong(hoverSpec.range.start.line), ELong(hoverSpec.range.start.column))),
+            ETuple(List(ELong(hoverSpec.range.end.line), ELong(hoverSpec.range.end.column))),
+          ),
+        ),
+        EAtom("hover"),
+        EAtom("undefined"),
+        EBinary(hoverSpec.spec),
+      ),
+    )
+  }
+
 }
