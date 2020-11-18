@@ -208,6 +208,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         elabVarExp(varExp, ty, d, env)
       case shapeCreateExp: Ast.ShapeCreateExp =>
         elabShapeCreateExp(shapeCreateExp, ty, d, env)
+      case smartCastExp: Ast.SmartCastExp =>
+        elabSmartCastExp(smartCastExp, ty, d, env)
       case tupleExp: Ast.TupleExp =>
         elabTupleExp(tupleExp, ty, d, env)
       case fnExp: Ast.FnExp =>
@@ -774,6 +776,11 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
     unify(exp.r, ty, shapeType)
     AnnAst.ShapeCreateExp(fields1)(typ = ty, r = exp.r)
+  }
+
+  private def elabSmartCastExp(exp: Ast.SmartCastExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
+    val Ast.SmartCastExp(module, m1, shapeType) = exp
+    AnnAst.SmartCastExp(module, m1, shapeType)(typ = ty, r = exp.r)
   }
 
   private def elabTupleExp(exp: Ast.TupleExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
