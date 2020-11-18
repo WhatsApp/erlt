@@ -103,10 +103,14 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 
-    val lines =
-      if (verbose) Render(vars).varTypes(annDefs) else Render(vars).specs(annDefs, env)
     val output =
-      lines.mkString("", "\n", "\n")
+      if (verbose) {
+        val infos = Render(vars).varTypes(annDefs, includeTopLevelFuns = true)
+        val infoStrings = infos.map { info => "val " + info.varName + ": " + info.typeRepr }
+        infoStrings.mkString("", "\n", "\n")
+      } else {
+        Render(vars).specs(annDefs, env).mkString("", "\n", "\n")
+      }
 
     {
       val w2 = new BufferedWriter(new FileWriter(erltPath + "." + tmpExt))

@@ -17,7 +17,8 @@
 package com.whatsapp.sterlang
 
 object Doc {
-  case class HoverSpec(range: Range, spec: String)
+  case class HoverTypeInfo(range: Range, typeRepr: String)
+  case class ElaboratedTypeInfo(varName: String, range: Range, typeRepr: String)
 
   case class Pos(line: Int, column: Int) {
     def <(that: Pos): Boolean = this.line < that.line || this.line == that.line && this.column < that.column

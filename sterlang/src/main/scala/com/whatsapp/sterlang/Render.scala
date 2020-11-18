@@ -17,7 +17,7 @@
 package com.whatsapp.sterlang
 
 import com.whatsapp.sterlang.Ast.Program
-import com.whatsapp.sterlang.Doc.HoverSpec
+import com.whatsapp.sterlang.Doc.HoverTypeInfo
 
 import scala.collection.immutable.{TreeMap, TreeSet}
 import scala.collection.mutable.ListBuffer
@@ -63,7 +63,7 @@ case class Render(private val vars: Vars) {
     }
   }
 
-  def hoverSpecs(program: Program, funs: List[AnnAst.Fun], env: Env): List[HoverSpec] =
+  def hoverSpecs(program: Program, funs: List[AnnAst.Fun], env: Env): List[HoverTypeInfo] =
     funs.flatMap { f =>
       if (!program.specs.exists(_.name.stringId == f.name)) {
         resetContext()
@@ -77,7 +77,7 @@ case class Render(private val vars: Vars) {
         val pp = "-spec " + normV + inner + "."
         val start = f.r.start
         val end = f.r.start.copy(column = f.r.start.column + normV.length)
-        Some(HoverSpec(Doc.Range(start, end), pp))
+        Some(HoverTypeInfo(Doc.Range(start, end), pp))
       } else {
         None
       }
@@ -103,17 +103,25 @@ case class Render(private val vars: Vars) {
     typeScheme(s, SpecsMode)
   }
 
-  // Renders all the variables. A variable per line
-  def varTypes(funs: List[AnnAst.Fun]): List[String] = {
-    val buf = new ListBuffer[String]
+  def varTypes(funs: List[AnnAst.Fun], includeTopLevelFuns: Boolean = false): List[Doc.ElaboratedTypeInfo] = {
+    val buf = new ListBuffer[Doc.ElaboratedTypeInfo]
     funs.foreach { fun =>
       resetContext()
       val AnnAst.Fun(name, clauses, fType) = fun
-      val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(fType))
-      val typeSchemeString = typeScheme(fakeTypeScheme, TypesMode)
-      val pp = "val " + name + ": " + typeSchemeString
 
-      buf.append(pp)
+      if (includeTopLevelFuns) {
+        val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(fType))
+        val typeSchemeString = typeScheme(fakeTypeScheme, TypesMode)
+
+        val slashIndex = name.lastIndexOf('/')
+        val normV = name.substring(0, slashIndex)
+        val start = fun.r.start
+        val end = fun.r.start.copy(column = fun.r.start.column + normV.length)
+        val range = Doc.Range(start, end)
+
+        val funInfo = Doc.ElaboratedTypeInfo(name, range, typeSchemeString)
+        buf.append(funInfo)
+      }
 
       clauses.foreach { clause =>
         clause.pats.foreach(renderPat(buf))
@@ -122,10 +130,9 @@ case class Render(private val vars: Vars) {
     }
 
     buf.toList
-
   }
 
-  private def renderPat(buf: ListBuffer[String])(pat: AnnAst.Pat): Unit =
+  private def renderPat(buf: ListBuffer[Doc.ElaboratedTypeInfo])(pat: AnnAst.Pat): Unit =
     pat match {
       case AnnAst.WildPat() =>
       // nothing
@@ -134,8 +141,8 @@ case class Render(private val vars: Vars) {
       case AnnAst.VarPat(v) =>
         val fakeTypeScheme = STypes.TypeScheme(List.empty, List.empty, STypes.PlainType(pat.typ))
         val typeSchemeString = typeScheme(fakeTypeScheme, TypesMode)
-        val pp = "val " + v + ": " + typeSchemeString
-        buf.append(pp)
+        val info = Doc.ElaboratedTypeInfo(varName = v, range = pat.r, typeRepr = typeSchemeString)
+        buf.append(info)
       case AnnAst.AndPat(p1, p2) =>
         renderPat(buf)(p1)
         renderPat(buf)(p2)
@@ -165,23 +172,23 @@ case class Render(private val vars: Vars) {
         fields.foreach { f => renderPat(buf)(f.value) }
     }
 
-  private def renderBody(buf: ListBuffer[String])(body: AnnAst.Body): Unit = {
+  private def renderBody(buf: ListBuffer[Doc.ElaboratedTypeInfo])(body: AnnAst.Body): Unit = {
     renderValDefs(buf)(body.prelude)
     renderValDef(buf)(body.main)
   }
 
-  private def renderValDefs(buf: ListBuffer[String])(defs: List[AnnAst.ValDef]): Unit = {
+  private def renderValDefs(buf: ListBuffer[Doc.ElaboratedTypeInfo])(defs: List[AnnAst.ValDef]): Unit = {
     defs.foreach(renderValDef(buf))
   }
 
-  private def renderValDef(buf: ListBuffer[String])(d: AnnAst.ValDef): Unit =
+  private def renderValDef(buf: ListBuffer[Doc.ElaboratedTypeInfo])(d: AnnAst.ValDef): Unit =
     d match {
       case AnnAst.ValDef(pat, exp, _, _, _) =>
         renderPat(buf)(pat)
         renderExp(buf)(exp)
     }
 
-  private def renderExp(buf: ListBuffer[String])(exp: AnnAst.Exp): Unit = {
+  private def renderExp(buf: ListBuffer[Doc.ElaboratedTypeInfo])(exp: AnnAst.Exp): Unit = {
     exp match {
       case AnnAst.VarExp(_) =>
       // Nothing

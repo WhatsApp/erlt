@@ -43,7 +43,7 @@ object SterlangD {
           case Left(error) =>
             convertError(error)
           case Right(hoverSpecs) =>
-            ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverSpecToMap))))
+            ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverTypeInfoToEMap))))
         } catch {
           case x: Throwable =>
             val msg =
@@ -57,7 +57,7 @@ object SterlangD {
       mbox.send(from, Etf.toJava(response))
     }
 
-    private def processFile(etfFile: String): Either[SterlangError, List[Doc.HoverSpec]] = {
+    private def processFile(etfFile: String): Either[SterlangError, List[Doc.HoverTypeInfo]] = {
       val rawProgram =
         try DriverErltc.loadProgram(etfFile)
         catch {
@@ -71,8 +71,13 @@ object SterlangD {
         astChecks.check(program)
         val elaborate = new Elaborate(vars, context, program)
         val (annDefs, env) = elaborate.elaborate()
-        val hoverSpecs = new Render(vars).hoverSpecs(program, annDefs, env)
-        Right(hoverSpecs)
+        val render = new Render(vars)
+        val hoverSpecs = render.hoverSpecs(program, annDefs, env)
+        val elabTypes = render.varTypes(annDefs)
+        val elabVarHovers = elabTypes.map {
+          case Doc.ElaboratedTypeInfo(_, range, typeRepr) => Doc.HoverTypeInfo(range, typeRepr)
+        }
+        Right(hoverSpecs ++ elabVarHovers)
       } catch {
         case error: SterlangError => Left(error)
       }

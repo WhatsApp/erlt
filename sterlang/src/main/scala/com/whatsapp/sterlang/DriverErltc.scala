@@ -36,13 +36,13 @@ object DriverErltc extends DriverApi {
     val sterlangTime = System.currentTimeMillis() - start
     val result = doProcessFile(etfFile) match {
       case Left(error)       => convertError(error)
-      case Right(hoverSpecs) => ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverSpecToMap))))
+      case Right(hoverSpecs) => ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverTypeInfoToEMap))))
     }
     val response = ETuple(List(result, ELong(sterlangTime)))
     stdoutResponse(response)
   }
 
-  private def doProcessFile(etfFile: String): Either[SterlangError, List[Doc.HoverSpec]] = {
+  private def doProcessFile(etfFile: String): Either[SterlangError, List[Doc.HoverTypeInfo]] = {
     val mainFile = etfFile
     val rawProgram =
       try loadProgram(mainFile)
@@ -65,8 +65,13 @@ object DriverErltc extends DriverApi {
       //}
       // checking them in the very end - since it is possible to present inferred types here
       // astChecks.checkPublicSpecs(program)
-      val hoverSpecs = new Render(vars).hoverSpecs(program, annDefs, env)
-      Right(hoverSpecs)
+      val render = new Render(vars)
+      val hoverSpecs = render.hoverSpecs(program, annDefs, env)
+      val elabTypes = render.varTypes(annDefs)
+      val elabVarHovers = elabTypes.map {
+        case Doc.ElaboratedTypeInfo(_, range, typeRepr) => Doc.HoverTypeInfo(range, typeRepr)
+      }
+      Right(hoverSpecs ++ elabVarHovers)
     } catch { case error: SterlangError => Left(error) }
   }
 
