@@ -66,6 +66,8 @@ documentation(M, #{kind := application, id := {F, A}}) ->
   get_docs(M, F, A);
 documentation(M, #{kind := export_entry, id := {F, A}}) ->
   get_docs(M, F, A);
+documentation(_M, #{kind := hover, data := Content}) ->
+  Content;
 documentation(_M, _POI) ->
   <<>>.
 

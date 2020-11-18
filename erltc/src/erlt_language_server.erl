@@ -112,7 +112,8 @@ output_ls_diagnostics(
     %% older files in future?
     TS = erlang:timestamp(),
     Diags = convert_to_diagnostics(Warn, Err, St),
-    Output = io_lib:format("~p.", [{TS, Diags}]),
+    Hovers = St#compile.hover,
+    Output = io_lib:format("~p.", [{TS, Diags, Hovers}]),
     FileName = filename:absname(
         filename:join(
             BuildDir,

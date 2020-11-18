@@ -33,7 +33,8 @@ compile(Uri) ->
   case get_els_file(TempFile, Uri) of
     {ok, FileName} ->
       get_els_file(TempFile, Uri),
-      {ok, [{_TS, Diags}]} = file:consult(FileName),
+      {ok, [{_TS, Diags, Hovers}]} = file:consult(FileName),
+      store_hovers(Uri, Hovers),
       Diags;
     {error, Reason} ->
       Range = #{ from => {1, 1}, to => {2, 1} },
@@ -51,6 +52,9 @@ compile(Uri) ->
       [Diag]
   end.
 
+%%==============================================================================
+%% Private Functions
+%%==============================================================================
 
 -spec get_els_file(file:filename(), uri())
                   -> {ok, els_uri:path()} | {error, term()} .
@@ -65,12 +69,18 @@ get_els_file(TempFile, Uri) ->
       end
   end.
 
-%%==============================================================================
-%% Private Functions
-%%==============================================================================
-
 -spec temporary_file() -> file:filename().
 temporary_file() ->
   CacheDir = filename:basedir(user_cache, "erlang_ls"),
   [Unique] = io_lib:format("~p", [erlang:phash2(erlang:timestamp())]),
   filename:join([CacheDir, "diagnostics", Unique ++ ".diags"]).
+
+-spec store_hovers(uri(), [poi()]) -> ok.
+store_hovers(Uri, Hovers) ->
+  {ok, Document} = els_utils:lookup_document(Uri),
+  %% TODO: probably need an intelligent merge of pois here
+  F = fun() ->
+          els_dt_document:insert(Document#{pois => Hovers})
+      end,
+  els_db:transaction(F),
+  ok.
