@@ -718,7 +718,7 @@ get_erlt_deps(Forms, St0) ->
     | undefined.
 
 -record(sterlang_result, {
-    result :: {ok} | {error, range(), string()},
+    result :: {ok, Hovers :: [term()]} | {error, range(), string()},
     mode :: native | jar | daemon | skipped,
     erltc_time :: non_neg_integer(),
     st_time :: non_neg_integer()
