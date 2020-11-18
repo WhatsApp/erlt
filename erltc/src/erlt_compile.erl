@@ -730,7 +730,8 @@ erlt_typecheck(Code, St) ->
 
     case Res of
         {ok, Hovers} ->
-            {ok, Code, St#compile{hover = Hovers}};
+            Lenses = [ Hover#{ kind := lens } || Hover <- Hovers ],
+            {ok, Code, St#compile{hovers = Hovers, lenses = Lenses }};
         {error, Range, ErrMessage} ->
             Location =
                 case Range of
@@ -739,7 +740,7 @@ erlt_typecheck(Code, St) ->
                 end,
             Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
             Errors = St#compile.errors ++ [Error],
-            {error, St#compile{errors = Errors, hover = []}}
+            {error, St#compile{errors = Errors, hovers = [], lenses = []}}
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.

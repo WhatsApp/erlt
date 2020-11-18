@@ -578,6 +578,7 @@
                    | import_entry
                    | include
                    | include_lib
+                   | lens
                    | macro
                    | module
                    | record

@@ -33,8 +33,8 @@ compile(Uri) ->
   case get_els_file(TempFile, Uri) of
     {ok, FileName} ->
       get_els_file(TempFile, Uri),
-      {ok, [{_TS, Diags, Hovers}]} = file:consult(FileName),
-      store_hovers(Uri, Hovers),
+      {ok, [{_TS, Diags, Hovers, Lenses}]} = file:consult(FileName),
+      store_pois(Uri, Hovers++Lenses),
       Diags;
     {error, Reason} ->
       Range = #{ from => {1, 1}, to => {2, 1} },
@@ -75,8 +75,8 @@ temporary_file() ->
   [Unique] = io_lib:format("~p", [erlang:phash2(erlang:timestamp())]),
   filename:join([CacheDir, "diagnostics", Unique ++ ".diags"]).
 
--spec store_hovers(uri(), [poi()]) -> ok.
-store_hovers(Uri, Hovers) ->
+-spec store_pois(uri(), [poi()]) -> ok.
+store_pois(Uri, Hovers) ->
   {ok, Document} = els_utils:lookup_document(Uri),
   %% TODO: probably need an intelligent merge of pois here
   F = fun() ->

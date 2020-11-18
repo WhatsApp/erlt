@@ -38,7 +38,7 @@ precondition(_Document) ->
 
 -spec pois(els_dt_document:item()) -> [poi()].
 pois(Document) ->
-  POIs = els_dt_document:pois(Document, [hover]),
+  POIs = els_dt_document:pois(Document, [lens]),
   POIs.
 
 -spec title(poi()) -> binary().
