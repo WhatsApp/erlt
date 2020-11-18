@@ -87,7 +87,7 @@ object Etf {
       case EMap(keys, values) =>
         new OtpErlangMap(keys.map(toJava).toArray, values.map(toJava).toArray)
       case EBinary(str) =>
-        new OtpErlangBitstr(str.getBytes())
+        new OtpErlangBinary(str.getBytes())
     }
 
   def hoverSpecToMap(hoverSpec: HoverSpec): EMap = {
