@@ -193,6 +193,8 @@ case class Render(private val vars: Vars) {
       case AnnAst.VarExp(_) =>
       // Nothing
 
+      case AnnAst.SmartCastExp(_, _, _) =>
+      // Nothing
       case AnnAst.LiteralExp(_) =>
       // Nothing
       case AnnAst.TupleExp(elems) =>

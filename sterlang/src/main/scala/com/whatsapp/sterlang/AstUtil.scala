@@ -132,6 +132,8 @@ object AstUtil {
         freeVars(exp1, m) ++ freeVars(exp2, m)
       case UOpExp(uOp, exp) =>
         freeVars(exp, m)
+      case SmartCastExp(_, _, _) =>
+        Set.empty
       case AppExp(head, args) =>
         freeVars(head, m) ++ args.flatMap(freeVars(_, m))
       case ShapeSelectExp(exp, label) =>
@@ -623,6 +625,8 @@ object AstUtil {
         Set.empty
       case VarExp(remote: RemoteFunName) =>
         Set(remote.module)
+      case SmartCastExp(module, defModule, _) =>
+        Set(module, defModule)
       case ShapeCreateExp(fields) =>
         fields.flatMap(f => getDepExp(f.value)).toSet
       case StructCreate(strName, fields) =>
