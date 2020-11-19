@@ -3,3 +3,5 @@
 .idea/
 .metals/
 target/
+.dotty*
+.vscode/
