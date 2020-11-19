@@ -17,8 +17,10 @@
 }).
 
 -record(state, {
+    module :: atom(),
     defined = #{} :: #{atom() => {unused, {var, erl_anno:anno(), atom()} | used}},
     exported_types = #{} :: #{{atom(), integer()} => ({not_defined, erl_anno:anno()} | defined)},
+    exported_functions = #{} :: #{{atom(), integer()} => {no_spec_or_def, Line} | ok | {no_spec, Line}},
     local_types = #{} :: #{atom() => #type_info{}},
     new_vars = [] :: [atom()],
     errors_on = true :: boolean(),
@@ -40,6 +42,10 @@ format_error({using_undefined_var, Name}) ->
     io_lib:format("The type variable ~tw is undefined", [Name]);
 format_error({multiple_specs, Kind}) ->
     io_lib:format("When defining a -~w using multiple specs separated by ';' is not allowed", [Kind]);
+format_error({duplicate_exports, Kind, {N,A}}) ->
+    io_lib:format("~w ~tw~s exported multiple times.", [Kind, N, gen_type_paren(A)]);
+format_error({exported_function_no_spec, {N,A}}) ->
+    io_lib:format("The exported function ~tw~s has no spec.", [N, gen_type_paren(A)]);
 format_error({unexported_type_in_exported_type, Type}) ->
     io_lib:format("The definition of an exported type contains the local type ~w", [Type]);
 format_error({redefine_import_type, {T, M}}) ->
@@ -90,7 +96,8 @@ module(Ast, FileName) ->
     end.
 
 global_analysis(St) ->
-    check_exported_types(St).
+    check_exported_types(St),
+    check_exported_functions(St).
 
 check_exported_types(#state{exported_types = ExportedTypes} = St) ->
     maps:fold(fun check_exported_type/3, St, ExportedTypes).
@@ -100,13 +107,29 @@ check_exported_type({Name, Arity}, {not_defined, Line}, St) ->
 check_exported_type(_, _, St) ->
     St.
 
+check_exported_functions(#state{exported_functions = ExportedFunctions} = St) ->
+    maps:fold(fun check_exported_function/3, St, ExportedFunctions).
+
+check_exported_function({Name, Arity}, {no_spec, Line}, St) ->
+    add_error(Line, {exported_function_no_spec, {Name, Arity}}, St);
+check_exported_function(_, _, St) ->
+    St.
+
+
 gather_state(Ast, St) ->
+    [Module] = [M || {attribute, _, module, M} <- Ast],
     ExportedTypes = [
         {Type, {not_defined, Line}}
         || {attribute, Line, export_type, List} <- Ast, Type <- List
     ],
-    St1 = find_duplicate_exports(ExportedTypes, St),
-    collect_locally_available_types(Ast, St1).
+    ExportedFunctions = [
+        {Fun, {no_spec_or_def, Line}}
+        || {attribute, Line, export, List} <- Ast, Fun <- List
+    ],
+    {TypeMap, St1} = find_duplicate_exports(ExportedTypes, type, St),
+    {FunctionMap, St2} = find_duplicate_exports(ExportedFunctions, function, St1),
+    collect_locally_available_types(Ast,
+        St2#state{module = Module, exported_types=TypeMap, exported_functions=FunctionMap}).
 
 collect_locally_available_types([{attribute, Line, Kind, {Name, _Def, Args}} | Rest], St) when
     ?IS_TYPE(Kind)
@@ -145,22 +168,23 @@ redefinition_error(Name, _, {imported, M}) ->
 redefinition_error(Name, _, _) ->
     {redefine_type, Name}.
 
-find_duplicate_exports(Types, St) ->
-    find_duplicate_exports(Types, #{}, St).
+find_duplicate_exports(Exports, Kind, St) ->
+    find_duplicate_exports(Exports, #{}, Kind, St).
 
-find_duplicate_exports([{Type, {not_defined, Line}} | Rest], Map, St) ->
+find_duplicate_exports([{Export, {Val, Line}} | Rest], Map, Kind, St) ->
     case Map of
-        #{Type := _} ->
+        #{Export := _} ->
             find_duplicate_exports(
                 Rest,
                 Map,
-                add_error(Line, {type_exported_multiple_times, Type}, St)
+                Kind,
+                add_error(Line, {duplicate_exports, Kind, Export}, St)
             );
         _ ->
-            find_duplicate_exports(Rest, maps:put(Type, {not_defined, Line}, Map), St)
+            find_duplicate_exports(Rest, maps:put(Export, {Val, Line}, Map), Kind, St)
     end;
-find_duplicate_exports([], Map, St) ->
-    St#state{exported_types = Map}.
+find_duplicate_exports([], Map, _Kind, St) ->
+    {Map, St}.
 
 wrap_lint(I, St, Ctx) ->
     {I, lint(I, St, Ctx)}.
@@ -177,13 +201,55 @@ lint({attribute, _Line, Kind, {Name, Def, Args}}, St, form) when ?IS_TYPE(Kind) 
     ArgNames = maps:keys(St2#state.defined),
     St3 = process_def(Def, St2),
     post_process_types(ArgNames, St3);
-lint({attribute, _, Kind, {_MFA, [TypeSig]}}, St, form) when Kind =:= spec; Kind =:= callback ->
+lint({attribute, _, callback, {_MFA, [TypeSig]}}, St, form) ->
     St1 = process_def(TypeSig, St),
     St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
+lint({attribute, _, spec, {MFA, [TypeSig]}}, St, form) ->
+    St1 = process_def(TypeSig, St),
+    St2 =
+        case local_function(MFA, St) of
+            {ok, Local} ->
+                mark_exported_function_as_ok(Local, St1);
+            remote ->
+                St1
+        end,
+    St2#state{defined = #{}, new_vars = [], allow_new_vars = false};
 lint({attribute, Line, Kind, {_MFA, _}}, St, form) when Kind =:= spec; Kind =:= callback ->
     add_error(Line, {multiple_specs, Kind}, St);
-lint(_I, St, _Ctx) ->
+lint({unchecked_function, _Line, Name, Arity, _}, St, _Ctx) ->
+    mark_exported_function_as_ok({Name, Arity}, St);
+lint({function, Line, Name, Arity, _}, St, _Ctx) ->
+    mark_exported_function_as_defined({Name, Arity}, Line, St);
+lint(_, St, _Ctx) ->
     St.
+
+local_function({F, A}, _) ->
+    {ok, {F, A}};
+local_function({M, F, A}, St) ->
+    case St#state.module of
+        M ->
+            {ok, {F, A}};
+        _ ->
+            remote
+    end.
+
+mark_exported_function_as_ok(Fun, St) ->
+    case maps:is_key(Fun, St#state.exported_functions) of
+        true ->
+            St#state{exported_functions=maps:put(Fun, ok, St#state.exported_functions)};
+        false ->
+            St
+    end.
+
+mark_exported_function_as_defined(Fun, Line, St) ->
+    case maps:get(Fun, St#state.exported_functions, not_exported) of
+        ok ->
+            St;
+        {no_spec_or_def, _} ->
+            St#state{exported_functions=maps:put(Fun, {no_spec, Line}, St#state.exported_functions)};
+        not_exported ->
+            St
+    end.
 
 defined_type(Type, Kind, St) ->
     case is_exported(Type, St) of

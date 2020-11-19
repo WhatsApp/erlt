@@ -1,0 +1,10 @@
+-module(double_exports).
+
+-export([f/0, f/0]).
+
+-export_type([t/1, t/1]).
+
+-type t(T) :: T.
+
+-spec f() -> t(atom()).
+f() -> 'ok'.

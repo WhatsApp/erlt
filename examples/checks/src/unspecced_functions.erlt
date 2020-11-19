@@ -1,0 +1,29 @@
+-module(unspecced_functions).
+
+-export([unspecced/0, specced/0, unchecked_unspecced/0, unchecked_specced/0]).
+
+%% This is not ok all exported functions that are not unchecked must have a spec.
+unspecced() -> local_unspecced().
+
+-spec specced() -> {}.
+specced() -> local_specced().
+
+%% The other seven combinations are ok.
+[unchecked]
+unchecked_unspecced() -> local_unchecked_unspecced().
+
+-spec unchecked_specced() -> {}.
+[unchecked]
+uncheked_specced() -> local_unchecked_specced().
+
+local_unspecced() -> {}.
+
+-spec local_specced() -> {}.
+local_specced() -> {}.
+
+[unchecked]
+local_unchecked_unspecced() -> {}.
+
+-spec local_unchecked_specced() -> {}.
+[unchecked]
+local_uncheked_specced() -> {}.
