@@ -6,4 +6,4 @@
 -spec test5(#( a :: boolean() )) -> {}.
 -spec test6(#( a :: boolean() )) -> {}.
 -spec test7(#( a :: boolean(), b :: boolean() )) -> {}.
--spec test8(#( a :: boolean(), b :: boolean(), A )) -> {}.
+-spec test8(#( a :: boolean(), b :: boolean() )) -> {}.

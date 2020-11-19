@@ -41,6 +41,7 @@ test6(#r2{a = true}) -> {};
 test6(#r2{b = true}) -> {};
 test6(#r2{a = false, b = false}) -> {}.
 
+-spec test7(r2()) -> {}.
 test7(#r2{a = true}) -> {};
 test7(#r2{b = true}) -> {};
 test7(#r2{a = false, b = false}) -> {}.

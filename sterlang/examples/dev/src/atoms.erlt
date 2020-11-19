@@ -16,8 +16,10 @@
 
 -export([test/1, mk_atom/0]).
 
+-spec test(atom()) -> integer().
 test('atom') ->
     1.
 
+-spec mk_atom() -> atom().
 mk_atom() ->
     'atom'.
