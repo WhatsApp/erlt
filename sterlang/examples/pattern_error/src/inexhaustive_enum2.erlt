@@ -21,3 +21,6 @@
 test1(bool_box1.box{false}) -> {}.
 
 test2(bool_box2.box{_, false}) -> {}.
+
+-spec test1(bool_box1()) -> {}.
+-spec test2(bool_box2()) -> {}.

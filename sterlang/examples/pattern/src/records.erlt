@@ -44,6 +44,7 @@ test7(#(a = true)) -> {};
 test7(#(b = true)) -> {};
 test7(#(a = false, b = false)) -> {}.
 
+-spec test8(#(a :: boolean(), b :: boolean())) -> {}.
 test8(#(a = true)) -> {};
 test8(#(b = true)) -> {};
 test8(#(a = false, b = false)) -> {}.

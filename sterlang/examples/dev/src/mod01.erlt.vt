@@ -195,8 +195,6 @@ val iodata_id/1: fun((iodata()) -> iodata())
 val A: iodata()
 val iolist_id/1: fun((iolist()) -> iolist())
 val A: iolist()
-val map_id/1: fun((A) -> A)
-val M: A
 val none_id/1: fun((none()) -> none())
 val A: none()
 val noreturn_id/1: fun((none()) -> none())

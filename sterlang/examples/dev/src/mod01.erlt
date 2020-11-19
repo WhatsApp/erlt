@@ -32,7 +32,9 @@
     guard1/2, guard2/3,
     p_match_tuple0/1, p_match_tuple1/1, p_match_invoke/0,
     any_id/1, atom_id/1, binary_id/1, bitstring_id/1, byte_id/1, float_id/1, identifier_id/1,
-    iodata_id/1, iolist_id/1, map_id/1, none_id/1, noreturn_id/1,
+    iodata_id/1, iolist_id/1,
+    %map_id/1,
+    none_id/1, noreturn_id/1,
     number_id/1, pid_id/1, port_id/1, reference_id/1, term_id/1, timeout_id/1, ints_id/1,
     mk_my_pair/2
 ]).
@@ -369,7 +371,8 @@ iodata_id(A) -> A.
 -spec iolist_id(iolist()) -> iolist().
 iolist_id(A) -> A.
 
-map_id(M) -> M.
+%-spec map_id(map()) -> map().
+%map_id(M) -> M.
 
 -spec none_id(none()) -> none().
 none_id(A) -> A.
