@@ -1,0 +1,7 @@
+-module(export_enum_with_unexported_type).
+
+-export_type([exported_enum/1]).
+
+-enum exported_enum(A) :: (variant{A, local_type()}).
+
+-type local_type() :: integer().

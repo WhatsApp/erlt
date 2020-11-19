@@ -1,0 +1,7 @@
+-module(export_struct_with_unexported_type).
+
+-export_type([exported_struct/1]).
+
+-struct exported_struct(A) :: (a::A, b::local_type()).
+
+-type local_type() :: integer().

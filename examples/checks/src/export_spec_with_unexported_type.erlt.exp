@@ -1,0 +1,1 @@
+export_spec_with_unexported_type.erlt:5:18: The spec of an exported function: exported_f(_) contains the local type local_type

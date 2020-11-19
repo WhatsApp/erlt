@@ -1,0 +1,8 @@
+-module(export_spec_with_unexported_type).
+
+-export([exported_f/1]).
+
+-spec exported_f(local_type()) -> {}.
+exported_f(_A) -> {}.
+
+-type local_type() :: integer().
