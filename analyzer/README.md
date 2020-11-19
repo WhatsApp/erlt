@@ -10,6 +10,17 @@ project.
    `erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .`
 3. Run an analysis from sbt (`runMain {analysisClass}`)
 
+## How to configure:
+
+This analyzer assumes that you build your project with rebar3.
+Settings are handled by [`CodeDirs.scala`](src/main/scala/com/whatsapp/analyzer/CodeDirs.scala) 
+
+1. Put the full absolute path to the root of the rebar project into `root` file
+2. Build your project with `rebar3 compile` (don't miss the step!)
+3. run `rebar3 path` - and copy the output AS IS into `paths`
+4. Put a list of SPACE SEPARATED lib names you would like to exclude from analysis
+   into `third_party`.
+
 ## Implemented analyses
 
 - `com.whatsapp.analyzer.Behaviours` - stats about implemented behaviours
