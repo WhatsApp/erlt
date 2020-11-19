@@ -19,8 +19,13 @@ project.
    (`M:F(Arg, ...)`, etc)
 - `com.whatsapp.analyzer.ErrorHandling` - stats about `catch`-expressions,
    `try`-expressions, etc
+- `com.whatsapp.analyzer.GenServerCalls` - report numbers about whether
+   the "protocol part" of `gen_server:call(?MODULE, {protocol_part, ...})` 
+   is known at compile time or not -  `gen_server:call(?MODULE, {Request, ...})`
 - `com.whatsapp.analyzer.HighLevelStats` - number of projects, modules,
    generated files, etc
+- `com.whatsapp.analyzer.IntersectionTypes` - find specs with 
+   "intersection/dependent" types
 - `com.whatsapp.analyzer.ModCycles` - reports cycles between modules 
    (it takes into account only functions for now)
 - `com.whatsapp.analyzer.OtpFunsUsage` - stats about which functions from
