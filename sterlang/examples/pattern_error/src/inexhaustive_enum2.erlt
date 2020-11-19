@@ -14,7 +14,7 @@
 
 -module(inexhaustive_enum2).
 -export([test1/1, test2/1]).
-
+-export_type([bool_box1/0, bool_box2/0]).
 -enum bool_box1() :: (box{boolean()}).
 -enum bool_box2() :: (box{boolean(), boolean()}).
 

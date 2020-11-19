@@ -12,7 +12,7 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(inexhaustive_enum2).
+-module(inexhaustive_enum3).
 
 -enum bool_box() :: (box{b1 :: boolean(), b2 :: boolean()}).
 

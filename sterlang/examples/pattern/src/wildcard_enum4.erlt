@@ -14,6 +14,7 @@
 
 -module(wildcard_enum4).
 -export([test1/2]).
+-export_type([ab/0]).
 
 -enum ab() :: (a, b).
 

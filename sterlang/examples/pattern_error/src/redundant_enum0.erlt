@@ -14,7 +14,7 @@
 
 -module(redundant_enum0).
 -export([test1/1]).
-
+-export_type([ab/0]).
 -enum ab() :: (a, b).
 
 -spec test1(ab()) -> {}.
