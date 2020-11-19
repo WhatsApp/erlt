@@ -20,7 +20,9 @@
     module :: atom(),
     defined = #{} :: #{atom() => {unused, {var, erl_anno:anno(), atom()} | used}},
     exported_types = #{} :: #{{atom(), integer()} => ({not_defined, erl_anno:anno()} | defined)},
-    exported_functions = #{} :: #{{atom(), integer()} => {no_spec_or_def, Line} | ok | {no_spec, Line}},
+    exported_functions = #{} :: #{
+        {atom(), integer()} => {no_spec_or_def, Line} | ok | {no_spec, Line}
+    },
     local_types = #{} :: #{atom() => #type_info{}},
     new_vars = [] :: [atom()],
     errors_on = true :: boolean(),
@@ -42,9 +44,9 @@ format_error({using_undefined_var, Name}) ->
     io_lib:format("The type variable ~tw is undefined", [Name]);
 format_error({multiple_specs, Kind}) ->
     io_lib:format("When defining a -~w using multiple specs separated by ';' is not allowed", [Kind]);
-format_error({duplicate_exports, Kind, {N,A}}) ->
+format_error({duplicate_exports, Kind, {N, A}}) ->
     io_lib:format("~w ~tw~s exported multiple times.", [Kind, N, gen_type_paren(A)]);
-format_error({exported_function_no_spec, {N,A}}) ->
+format_error({exported_function_no_spec, {N, A}}) ->
     io_lib:format("The exported function ~tw~s has no spec.", [N, gen_type_paren(A)]);
 format_error({unexported_type_in_exported_type, Type}) ->
     io_lib:format("The definition of an exported type contains the local type ~w", [Type]);
@@ -115,7 +117,6 @@ check_exported_function({Name, Arity}, {no_spec, Line}, St) ->
 check_exported_function(_, _, St) ->
     St.
 
-
 gather_state(Ast, St) ->
     [Module] = [M || {attribute, _, module, M} <- Ast],
     ExportedTypes = [
@@ -128,8 +129,10 @@ gather_state(Ast, St) ->
     ],
     {TypeMap, St1} = find_duplicate_exports(ExportedTypes, type, St),
     {FunctionMap, St2} = find_duplicate_exports(ExportedFunctions, function, St1),
-    collect_locally_available_types(Ast,
-        St2#state{module = Module, exported_types=TypeMap, exported_functions=FunctionMap}).
+    collect_locally_available_types(
+        Ast,
+        St2#state{module = Module, exported_types = TypeMap, exported_functions = FunctionMap}
+    ).
 
 collect_locally_available_types([{attribute, Line, Kind, {Name, _Def, Args}} | Rest], St) when
     ?IS_TYPE(Kind)
@@ -236,7 +239,7 @@ local_function({M, F, A}, St) ->
 mark_exported_function_as_ok(Fun, St) ->
     case maps:is_key(Fun, St#state.exported_functions) of
         true ->
-            St#state{exported_functions=maps:put(Fun, ok, St#state.exported_functions)};
+            St#state{exported_functions = maps:put(Fun, ok, St#state.exported_functions)};
         false ->
             St
     end.
@@ -246,7 +249,9 @@ mark_exported_function_as_defined(Fun, Line, St) ->
         ok ->
             St;
         {no_spec_or_def, _} ->
-            St#state{exported_functions=maps:put(Fun, {no_spec, Line}, St#state.exported_functions)};
+            St#state{
+                exported_functions = maps:put(Fun, {no_spec, Line}, St#state.exported_functions)
+            };
         not_exported ->
             St
     end.
