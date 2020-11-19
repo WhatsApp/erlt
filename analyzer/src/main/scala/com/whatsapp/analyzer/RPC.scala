@@ -61,6 +61,22 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
+  def getMultiSpecs(beamFilePath: String): Option[List[(String, Int)]] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "multi_specs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case EList(elems, _) =>
+        val funs = elems.collect { case ETuple(List(EAtom(fun), ELong(arity))) => (fun, arity.toInt) }
+        Some(funs)
+      case _ =>
+        println("not loaded")
+        None
+    }
+  }
+
   def getBehaviours(beamFilePath: String): Option[List[String]] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "behaviours", new OtpErlangList(new OtpErlangString(beamFilePath)))

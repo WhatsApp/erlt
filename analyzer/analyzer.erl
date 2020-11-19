@@ -30,7 +30,8 @@
     compound_patterns/1,
     tries/1,
     used_funs/1,
-    used_primitives/2
+    used_primitives/2,
+    multi_specs/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -141,6 +142,16 @@ exports_aux(Forms) ->
     Exports = collect(Forms, fun pred/1, fun export/1),
     Exports1 = lists:append(Exports),
     lists:usort(Exports1).
+
+-spec multi_specs(file:filename()) -> list({atom, arity()}).
+multi_specs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    multi_specs_aux(Forms).
+
+-spec multi_specs_aux(list(erl_parse:abstract_form())) -> list({atom, arity()}).
+multi_specs_aux(Forms) ->
+    MultiSpecs = [Id || {attribute,_ANNO,spec,{Id, Types}} <- Forms, length(Types) > 1],
+    lists:usort(MultiSpecs).
 
 -spec behaviours(file:filename()) -> list(module()).
 behaviours(BeamFile) ->
