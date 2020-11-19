@@ -128,11 +128,19 @@
 option_to_list({'$#st_mapping:option.none'}) -> [];
 option_to_list({'$#st_mapping:option.some', A}) -> [A].
 
+-spec rec1() -> #{}.
+
 rec1() -> #{}.
+
+-spec rec2() -> date().
 
 rec2() -> #{year => 2020, month => "April", day => 17}.
 
+-spec rec3(#{id := A, atom() => any()}) -> A.
+
 rec3(Rec) -> erlang:map_get(id, Rec).
+
+-spec rec4(date()) -> date().
 
 rec4(Rec) -> Rec#{year => 2046}.
 
@@ -148,6 +156,10 @@ rec6(Rec) -> Rec#{year => 2046}.
 -spec rec7(#{id := A, atom() => any()}) -> A.
 
 rec7(Rec) -> erlang:map_get(id, Rec).
+
+-spec update_x(#{x := A, atom() => any()}, A) -> #{x :=
+                                                       A,
+                                                   atom() => any()}.
 
 update_x(R, X) -> R#{x => X}.
 

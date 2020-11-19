@@ -28,26 +28,33 @@
 
 -struct foo :: ().
 
+-spec foo() -> foo().
 foo() ->
     #foo{}.
 
+-spec bar() -> bar(integer()).
 bar() ->
     #bar{1, #mixed{1, a = 2}}.
 
+-spec baz() -> baz().
 baz() ->
     #baz{bar()}.
 
+-spec pattern(foo(), bar(B), in_pattern()) -> B.
 pattern(#foo{}, #bar{B, _}, #in_pattern{}) -> B.
 
+-spec guard(bar(integer())) -> string().
 guard(Value) when Value =:= #bar{1, #mixed{1, a = 2}} ->
     "ok".
 
+-spec field(bar(integer())) -> {mixed(), integer()}.
 field(Value) when Value#bar._0 =:= 1 ->
     {
         Value#bar._1,
         Value#bar._1#mixed.a
     }.
 
+-spec update(mixed()) -> mixed().
 update(Value) ->
     Value#mixed{a = 2}.
 

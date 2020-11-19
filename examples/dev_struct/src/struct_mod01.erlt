@@ -32,23 +32,30 @@
 
 -struct foo :: ().
 
+-spec foo() -> foo().
 foo() ->
     #foo{}.
 
+-spec bar() -> bar(integer()).
 bar() ->
     #bar{a = 1, b = #foo{}}.
 
+-spec baz() -> {opaque_baz(), default_with_default()}.
 baz() ->
     {#baz{}, #default_with_default{}}.
 
+-spec pattern(foo(), bar(_A), in_pattern()) -> foo().
 pattern(#foo{}, #bar{b = B}, #in_pattern{}) -> B.
 
+-spec guard(bar(integer())) -> string().
 guard(Value) when Value =:= #bar{a = 1, b = #foo{}} ->
     "ok".
 
+-spec field(bar(integer())) -> foo().
 field(Value) when Value#bar.a =:= 1 ->
     Value#bar.b.
 
+-spec update(bar(integer())) -> bar(integer()).
 update(Value) ->
     Value#bar{a = 2}.
 

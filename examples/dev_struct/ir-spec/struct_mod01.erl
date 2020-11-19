@@ -35,10 +35,16 @@
 
 -type foo() :: {'$#struct_mod01:foo'}.
 
+-spec foo() -> foo().
+
 foo() -> {'$#struct_mod01:foo'}.
+
+-spec bar() -> bar(integer()).
 
 bar() ->
     {'$#struct_mod01:bar', 1, {'$#struct_mod01:foo'}}.
+
+-spec baz() -> {opaque_baz(), default_with_default()}.
 
 baz() ->
     {{'$#struct_mod01:baz',
@@ -47,15 +53,21 @@ baz() ->
       {'$#struct_mod01:baz',
        {'$#struct_mod01:bar', 1.5, {'$#struct_mod01:foo'}}}}}.
 
+-spec pattern(foo(), bar(_A), in_pattern()) -> foo().
+
 pattern({'$#struct_mod01:foo'},
         {'$#struct_mod01:bar', _, B},
         {'$#struct_mod01:in_pattern'}) ->
     B.
 
+-spec guard(bar(integer())) -> string().
+
 guard(Value)
     when Value =:=
              {'$#struct_mod01:bar', 1, {'$#struct_mod01:foo'}} ->
     "ok".
+
+-spec field(bar(integer())) -> foo().
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod01:bar', 3)
@@ -66,6 +78,8 @@ field(Value)
             StructGenVar@0@b;
         _ -> erlang:error({badstruct, '$#struct_mod01:bar'})
     end.
+
+-spec update(bar(integer())) -> bar(integer()).
 
 update(Value) ->
     case Value of

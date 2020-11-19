@@ -18,17 +18,28 @@
      with_imported_default() :: {'$#struct_mod05:with_imported_default',
                                  struct_mod02:foo()}.
 
+-spec expr() -> {struct_mod02:foo(),
+                 struct_mod02:bar()}.
+
 expr() ->
     {{'$#struct_mod02:foo'}, {'$#struct_mod02:bar', 1, 2}}.
+
+-spec pattern(struct_mod02:foo(), struct_mod02:bar(),
+              integer()) -> integer().
 
 pattern({'$#struct_mod02:foo'},
         {'$#struct_mod02:bar', 1, B}, B) ->
     B.
 
+-spec guard(struct_mod02:foo(), struct_mod02:bar(),
+            integer()) -> atom().
+
 guard(Value1, Value2, B)
     when Value1 =:= {'$#struct_mod02:foo'},
          Value2 =:= {'$#struct_mod02:bar', 1, B} ->
     ok.
+
+-spec field(struct_mod02:bar()) -> integer().
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod02:bar', 3)
@@ -40,6 +51,8 @@ field(Value)
         _ -> erlang:error({badstruct, '$#struct_mod02:bar'})
     end.
 
+-spec update(struct_mod02:bar()) -> struct_mod02:bar().
+
 update(Value) ->
     case Value of
         {'$#struct_mod02:bar', _, StructGenVar@1@b} ->
@@ -48,6 +61,10 @@ update(Value) ->
     end.
 
 index(2) when 2 =:= 2 -> 3.
+
+-spec
+     remote_with_defaults() -> {struct_mod01:default_with_default(),
+                                with_imported_default()}.
 
 remote_with_defaults() ->
     {{'$#struct_mod01:default_with_default',

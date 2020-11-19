@@ -8,3 +8,5 @@
 %% Error: referring to an unknown constructor in an existing enum
 f(foo.baz) ->
     true.
+
+-spec f(_A) -> boolean().

@@ -10,9 +10,13 @@
                    integer(),
                    float()}.
 
+-spec local() -> {struct(), struct()}.
+
 local() ->
     {{'$#struct_mod04:struct', 5, 1.0},
      {'$#struct_mod04:struct', 10, 1.0}}.
+
+-spec remote() -> {struct(), struct()}.
 
 remote() ->
     {{'$#struct_mod04:struct', 5, 1.0},

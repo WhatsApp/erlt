@@ -40,6 +40,8 @@ test4(A) when A =:= (#{a => 1, b => 1})#{b => 2} -> {}.
 
 test5(#{a := 1}) -> {}.
 
+-spec test_in_lc([#{id := A, atom() => any()}]) -> [A].
+
 test_in_lc(List) -> [Id || #{id := Id} <- List].
 
 -spec mk_map(A, B) -> #{a := A, b := B}.

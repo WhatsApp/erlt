@@ -17,3 +17,7 @@ h(X) ->
         {'foo', ^Q} -> 'ok';
         _ -> 'error'
     end.
+
+-spec f(A) -> A.
+-spec g(A) -> A.
+-spec h(A) -> A.

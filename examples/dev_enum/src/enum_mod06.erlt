@@ -20,8 +20,10 @@
 
 -enum enum :: (x{a = 5 :: integer(), b :: float()}).
 
+-spec local() -> {enum(), enum()}.
 local() ->
     {enum.x{b = 1.0}, enum.x{a = 10, b = 1.0}}.
 
+-spec remote() -> {enum(), enum()}.
 remote() ->
     {?MODULE:enum.x{b = 1.0}, ?MODULE:enum.x{a = 10, b = 1.0}}.

@@ -17,17 +17,25 @@
                 integer(),
                 integer()}.
 
+-spec expr() -> {foo(), bar()}.
+
 expr() ->
     {{'$#struct_mod02:foo'}, {'$#struct_mod02:bar', 1, 2}}.
+
+-spec pattern(foo(), bar(), integer()) -> integer().
 
 pattern({'$#struct_mod02:foo'},
         {'$#struct_mod02:bar', 1, B}, B) ->
     B.
 
+-spec guard(foo(), bar(), integer()) -> atom().
+
 guard(Value1, Value2, B)
     when Value1 =:= {'$#struct_mod02:foo'},
          Value2 =:= {'$#struct_mod02:bar', 1, B} ->
     ok.
+
+-spec field(bar()) -> integer().
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod02:bar', 3)
@@ -38,6 +46,8 @@ field(Value)
             StructGenVar@0@b;
         _ -> erlang:error({badstruct, '$#struct_mod02:bar'})
     end.
+
+-spec update(bar()) -> bar().
 
 update(Value) ->
     case Value of

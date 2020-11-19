@@ -24,6 +24,7 @@
 
 -enum baz :: (x{a = #(id = 1) :: #( id :: integer() )}).
 
+-spec expr() -> {foo(), bar(), baz()}.
 expr() ->
     {
         ?MODULE:foo.x,
@@ -31,6 +32,7 @@ expr() ->
         ?MODULE:baz.x{}
     }.
 
+-spec pattern(foo(), bar(), integer()) -> integer().
 pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->
     B.
 

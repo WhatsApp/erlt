@@ -14,6 +14,8 @@
 
 p() -> {'$#enum_mod01:possibly.none'}.
 
+-spec q(T) -> possibly(T).
+
 q(X) -> {'$#enum_mod01:possibly.some', X}.
 
 -spec r(possibly(number())) -> [number()].

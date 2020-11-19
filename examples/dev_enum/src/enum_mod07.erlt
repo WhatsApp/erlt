@@ -24,12 +24,14 @@
 
 -define(X, x).
 
+-spec expr() -> {foo(), bar()}.
 expr() ->
     {
         foo.x,
         bar.x{a = 1, b = 2}
     }.
 
+-spec pattern(foo(), bar(), number()) -> number().
 pattern(foo.x, bar.x{a = 1, b = B}, B) ->
     B.
 
@@ -37,6 +39,7 @@ pattern(foo.x, bar.x{a = 1, b = B}, B) ->
 guard(Value1, Value2, B) when Value1 =:= foo.x, Value2 =:= bar.x{a = 1, b = B} ->
     'ok'.
 
+-spec remote_with_defaults() -> {enum_mod03:default_with_default(), with_imported_default()}.
 remote_with_defaults() ->
     {
         enum_mod03:default_with_default.x{},

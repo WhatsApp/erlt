@@ -20,8 +20,10 @@
 
 -struct struct :: (a = 5 :: integer(), b :: float()).
 
+-spec local() -> {struct(), struct()}.
 local() ->
     {#struct{b = 1.0}, #struct{a = 10, b = 1.0}}.
 
+-spec remote() -> {struct(), struct()}.
 remote() ->
     {#?MODULE:struct{b = 1.0}, #?MODULE:struct{a = 10, b = 1.0}}.

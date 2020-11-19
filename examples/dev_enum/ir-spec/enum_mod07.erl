@@ -15,8 +15,13 @@
      with_imported_default() :: {'$#enum_mod07:with_imported_default.x',
                                  enum_mod04:foo()}.
 
+-spec expr() -> {enum_mod04:foo(), enum_mod04:bar()}.
+
 expr() ->
     {{'$#enum_mod04:foo.x'}, {'$#enum_mod04:bar.x', 1, 2}}.
+
+-spec pattern(enum_mod04:foo(), enum_mod04:bar(),
+              number()) -> number().
 
 pattern({'$#enum_mod04:foo.x'},
         {'$#enum_mod04:bar.x', 1, B}, B) ->
@@ -29,6 +34,10 @@ guard(Value1, Value2, B)
     when Value1 =:= {'$#enum_mod04:foo.x'},
          Value2 =:= {'$#enum_mod04:bar.x', 1, B} ->
     ok.
+
+-spec
+     remote_with_defaults() -> {enum_mod03:default_with_default(),
+                                with_imported_default()}.
 
 remote_with_defaults() ->
     {{'$#enum_mod03:default_with_default.x',

@@ -22,6 +22,10 @@ another(#struct{does_not_exist = Name}) -> Name.
 duplicate(#struct{a = 1, a = 2, b = 3}) ->
     #struct{a = 1, a = 2, b = 3}.
 
+-spec local() -> {struct(), struct(), struct(), struct()}.
+-spec another(struct()) -> string().
+-spec duplicate(struct()) -> struct().
+
 %% we won't ever get remote definitons, since local check will fail above
 %% and scan never produces output
 % remote() ->
