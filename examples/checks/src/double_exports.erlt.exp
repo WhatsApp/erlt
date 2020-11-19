@@ -1,0 +1,2 @@
+double_exports.erlt:3:1: function f() exported multiple times.
+double_exports.erlt:5:1: type t(_) exported multiple times.
