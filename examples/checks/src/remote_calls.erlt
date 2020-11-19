@@ -36,3 +36,5 @@ unchecked_spec() -> 0.
 unchecked() -> 0.
 
 private() -> 0.
+
+-spec checked_test() -> atom().

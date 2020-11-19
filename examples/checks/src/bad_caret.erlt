@@ -21,3 +21,7 @@ h(X) ->
         {'foo', ^_} -> 'ok';
         _ -> X + ^42
     end.
+
+-spec f(A) -> A.
+-spec g(A) -> A.
+-spec h(A) -> A.

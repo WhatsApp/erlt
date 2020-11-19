@@ -8,3 +8,6 @@ local() ->
 
 remote() ->
     #some_module:does_not_exist{}.
+
+-spec local() -> any().
+-spec remote() -> any().

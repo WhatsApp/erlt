@@ -32,7 +32,7 @@ t1(F, Bound) ->
 
 t2() ->
     try
-        "ok"
+        'ok'
     catch
         #reason{} -> 'ok';
         'throw', #reason{} -> 'error';
@@ -40,3 +40,5 @@ t2() ->
         'exit', #reason{} -> 'error';
         _, #reason{}, Stack -> 'error'
     end.
+
+-spec t2() -> atom().

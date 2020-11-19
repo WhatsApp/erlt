@@ -22,21 +22,26 @@
 
 -struct bar :: (a :: integer(), b :: integer()).
 
+-spec expr() -> {foo(), bar()}.
 expr() ->
     {
         #?MODULE:foo{},
         #?MODULE:bar{a = 1, b = 2}
     }.
 
+-spec pattern(foo(), bar(), integer()) -> integer().
 pattern(#?MODULE:foo{}, #?MODULE:bar{a = 1, b = B}, B) ->
     B.
 
+-spec guard(foo(), bar(), integer()) -> atom().
 guard(Value1, Value2, B) when Value1 =:= #?MODULE:foo{}, Value2 =:= #?MODULE:bar{a = 1, b = B} ->
     'ok'.
 
+-spec field(bar()) -> integer().
 field(Value) when Value#?MODULE:bar.a =:= 1 ->
     Value#?MODULE:bar.b.
 
+-spec update(bar()) -> bar().
 update(Value) ->
     Value#?MODULE:bar{a = 2}.
 

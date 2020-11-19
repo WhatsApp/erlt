@@ -15,10 +15,14 @@
 -type baz() :: {'$#enum_mod04:baz.x',
                 #{id := integer()}}.
 
+-spec expr() -> {foo(), bar(), baz()}.
+
 expr() ->
     {{'$#enum_mod04:foo.x'},
      {'$#enum_mod04:bar.x', 1, 2},
      {'$#enum_mod04:baz.x', #{id => 1}}}.
+
+-spec pattern(foo(), bar(), integer()) -> integer().
 
 pattern({'$#enum_mod04:foo.x'},
         {'$#enum_mod04:bar.x', 1, B}, B) ->

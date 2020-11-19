@@ -6,3 +6,5 @@
 %% Error: referring to an unknown enum type in the current module
 f(bar.baz) ->
     true.
+
+-spec f(_A) -> boolean().

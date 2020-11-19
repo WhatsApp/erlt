@@ -25,19 +25,29 @@
 
 -type foo() :: {'$#struct_mod11:foo'}.
 
+-spec foo() -> foo().
+
 foo() -> {'$#struct_mod11:foo'}.
+
+-spec bar() -> bar(integer()).
 
 bar() ->
     {'$#struct_mod11:bar',
      1,
      {'$#struct_mod11:mixed', 1, 2}}.
 
+-spec baz() -> baz().
+
 baz() -> {'$#struct_mod11:baz', bar()}.
+
+-spec pattern(foo(), bar(B), in_pattern()) -> B.
 
 pattern({'$#struct_mod11:foo'},
         {'$#struct_mod11:bar', B, _},
         {'$#struct_mod11:in_pattern'}) ->
     B.
+
+-spec guard(bar(integer())) -> string().
 
 guard(Value)
     when Value =:=
@@ -45,6 +55,8 @@ guard(Value)
               1,
               {'$#struct_mod11:mixed', 1, 2}} ->
     "ok".
+
+-spec field(bar(integer())) -> {mixed(), integer()}.
 
 field(Value)
     when erlang:is_record(Value, '$#struct_mod11:bar', 3)
@@ -65,6 +77,8 @@ field(Value)
              StructGenVar@1@a;
          _ -> erlang:error({badstruct, '$#struct_mod11:mixed'})
      end}.
+
+-spec update(mixed()) -> mixed().
 
 update(Value) ->
     case Value of

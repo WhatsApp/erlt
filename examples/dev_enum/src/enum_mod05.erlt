@@ -16,6 +16,7 @@
 
 -export([expr/0, pattern/3, guard/3]).
 
+-spec expr() -> {enum_mod04:foo(), enum_mod04:bar(), enum_mod04:baz()}.
 expr() ->
     {
         enum_mod04:foo.x,
@@ -23,6 +24,7 @@ expr() ->
         enum_mod04:baz.x{}
     }.
 
+-spec pattern(enum_mod04:foo(), enum_mod04:bar(), number()) -> number().
 pattern(enum_mod04:foo.x, enum_mod04:bar.x{a = 1, b = B}, B) ->
     B.
 

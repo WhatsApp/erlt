@@ -22,12 +22,14 @@
 
 -enum baz :: (x{integer(), a :: integer()}).
 
+-spec expr() -> {bar(), baz()}.
 expr() ->
     {
         bar.x{1, 2},
         baz.x{1, a = 2}
     }.
 
+-spec pattern(bar(), baz(), number()) -> number().
 pattern(bar.x{1, B}, baz.x{1, a = B}, B) ->
     B.
 

@@ -14,9 +14,13 @@
                 integer(),
                 integer()}.
 
+-spec expr() -> {bar(), baz()}.
+
 expr() ->
     {{'$#enum_mod11:bar.x', 1, 2},
      {'$#enum_mod11:baz.x', 1, 2}}.
+
+-spec pattern(bar(), baz(), number()) -> number().
 
 pattern({'$#enum_mod11:bar.x', 1, B},
         {'$#enum_mod11:baz.x', 1, B}, B) ->

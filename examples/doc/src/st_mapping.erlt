@@ -79,15 +79,19 @@ option_to_list(option.some{value = A}) -> [A].
 
 %% Records
 
+-spec rec1() -> #().
 rec1() ->
     #().
 
+-spec rec2() -> date().
 rec2() ->
     #(year = 2020, month = "April", day = 17).
 
+-spec rec3(#(id::A, _B)) -> A.
 rec3(Rec) ->
     Rec#(id).
 
+-spec rec4(date()) -> date().
 rec4(Rec) ->
     Rec#(year = 2046).
 
@@ -107,5 +111,6 @@ rec7(Rec) ->
 %%rec8(Rec) ->
 %%    Rec#(year = 2046).
 
+-spec update_x(#(x::A, B), A) -> #(x::A, B).
 update_x(R, X) ->
     R#( x = X ).

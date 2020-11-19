@@ -22,21 +22,26 @@
 
 -struct with_imported_default :: (foo = #foo{} :: foo()).
 
+-spec expr() -> {foo(), bar()}.
 expr() ->
     {
         #foo{},
         #bar{a = 1, b = 2}
     }.
 
+-spec pattern(foo(), bar(), integer()) -> integer().
 pattern(#foo{}, #bar{a = 1, b = B}, B) ->
     B.
 
+-spec guard(foo(), bar(), integer()) -> atom().
 guard(Value1, Value2, B) when Value1 =:= #foo{}, Value2 =:= #bar{a = 1, b = B} ->
     'ok'.
 
+-spec field(bar()) -> integer().
 field(Value) when Value#bar.a =:= 1 ->
     Value#bar.b.
 
+-spec update(bar()) -> bar().
 update(Value) ->
     Value#bar{a = 2}.
 
@@ -44,6 +49,7 @@ update(Value) ->
 index(#bar.a) when #bar.a =:= 2 ->
     #bar.b.
 
+-spec remote_with_defaults() -> {struct_mod01:default_with_default(), with_imported_default()}.
 remote_with_defaults() ->
     {
         #struct_mod01:default_with_default{},

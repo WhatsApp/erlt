@@ -10,9 +10,13 @@
                  integer(),
                  float()}.
 
+-spec local() -> {enum(), enum()}.
+
 local() ->
     {{'$#enum_mod06:enum.x', 5, 1.0},
      {'$#enum_mod06:enum.x', 10, 1.0}}.
+
+-spec remote() -> {enum(), enum()}.
 
 remote() ->
     {{'$#enum_mod06:enum.x', 5, 1.0},

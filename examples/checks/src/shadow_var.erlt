@@ -49,3 +49,9 @@ test3(X, Y) ->
 
 %% stub
 foldl(_, Acc, _) -> Acc.
+
+-spec f(_X, _Y) -> boolean().
+-spec g(_X, [{A,B}]) -> [B].
+-spec test1(_X, _Y) -> boolean().
+-spec test2(_X, _Y) -> boolean().
+-spec test3(_X, _Y) -> boolean().

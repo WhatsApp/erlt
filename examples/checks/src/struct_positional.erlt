@@ -16,3 +16,5 @@ local() ->
         #struct2{1.0, a = 1, b = 10},
         #struct2{1.0, a = 1, 10}
     }.
+
+-spec local() -> {struct(), struct(), struct(), struct(), struct2(), struct2()}.

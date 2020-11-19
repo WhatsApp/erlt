@@ -16,21 +16,26 @@
 
 -export([expr/0, pattern/3, guard/3, field/1, update/1, index/1]).
 
+-spec expr() -> {struct_mod02:foo(), struct_mod02:bar()}.
 expr() ->
     {
         #struct_mod02:foo{},
         #struct_mod02:bar{a = 1, b = 2}
     }.
 
+-spec pattern(struct_mod02:foo(), struct_mod02:bar(), integer()) -> integer().
 pattern(#struct_mod02:foo{}, #struct_mod02:bar{a = 1, b = B}, B) ->
     B.
 
+-spec guard(struct_mod02:foo(), struct_mod02:bar(), integer()) -> atom().
 guard(Value1, Value2, B) when Value1 =:= #struct_mod02:foo{}, Value2 =:= #struct_mod02:bar{a = 1, b = B} ->
     'ok'.
 
+-spec field(struct_mod02:bar()) -> integer().
 field(Value) when Value#struct_mod02:bar.a =:= 1 ->
     Value#struct_mod02:bar.b.
 
+-spec update(struct_mod02:bar()) -> struct_mod02:bar().
 update(Value) ->
     Value#struct_mod02:bar{a = 2}.
 

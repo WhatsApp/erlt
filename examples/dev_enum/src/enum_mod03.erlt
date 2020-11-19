@@ -30,15 +30,18 @@
 
 -enum foo :: (x).
 
+[unchecked]
 foo() ->
     foo.x.
-
+[unchecked]
 bar() ->
     bar.x{a = 1, b = foo.x}.
 
+[unchecked]
 baz() ->
     {baz.x{}, default_with_default.x{}}.
 
+[unchecked]
 pattern(foo.x, bar.x{b = B}, in_pattern.x) -> B.
 
 -spec guard(bar(number())) -> atom().
