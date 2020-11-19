@@ -31,7 +31,8 @@
     tries/1,
     used_funs/1,
     used_primitives/2,
-    multi_specs/1
+    multi_specs/1,
+    gen_server_calls/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -130,6 +131,16 @@ dynamic_calls(BeamFile) ->
     DCalls1 = lists:append(DCalls),
     DCalls12 = lists:map(fun dynamic_call_to_str/1, DCalls1),
     DCalls12.
+
+-spec gen_server_calls(file:filename()) -> {integer(),integer(),integer()}.
+gen_server_calls(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Calls = collect(Forms, fun pred/1, fun gen_server_call/1),
+    WithAtoms = [Call || Call = {_, _, {atom, _, _Atom}} <- Calls],
+    WithTags = [Call || Call = {_, _, {tuple, _, [{atom, _, _Tag} | _]}} <- Calls],
+    Tagged = WithTags ++ WithAtoms,
+    Others = Calls -- Tagged,
+    {length(Calls), length(Tagged), length(Others)}.
 
 %% Returns a list of functions exported from a given module.
 -spec exports(file:filename()) -> list({atom, arity()}).
@@ -388,6 +399,11 @@ dynamic_call_to_str({M, F, A}) ->
     atom_to_list(M) ++ ":" ++ atom_to_list(F) ++ "/" ++ integer_to_list(A);
 dynamic_call_to_str({F, A}) ->
     atom_to_list(F) ++ "/" ++ integer_to_list(A).
+
+gen_server_call({call, Line, {remote, _Line, {atom, _, gen_server}, {atom, _, call}}, [Module,Data|_]}) ->
+    {Line, Module, Data};
+gen_server_call(_) ->
+    false.
 
 remote_fun({attribute, _, import, {Mod, Funs}}) ->
     [{Mod, F, A} || {F, A} <- Funs];
