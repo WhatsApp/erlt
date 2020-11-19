@@ -28,6 +28,9 @@
 %% exporting an enum type
 -export_type([ possibly/1 ]).
 
+-export_type([ opaque_pair/2 ]).
+-opaque opaque_pair(T1, T2) :: pair(T1, T2).
+
 %% a non-exported enum type
 -enum pair(T1, T2) :: (p{fst :: T1, snd :: T2}).
 
@@ -68,6 +71,6 @@ r(E, Y) ->
     end.
 
 
--spec s(T1, T2) -> pair(T1, T2).
+-spec s(T1, T2) -> opaque_pair(T1, T2).
 s(H, T) ->
     pair.p{fst = H, snd = T}.

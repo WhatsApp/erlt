@@ -1,5 +1,5 @@
 -module(struct_positional).
-
+-export_type([struct/0, struct2/0]).
 -export([local/0]).
 
 -struct invalid :: (a :: integer(), float()).

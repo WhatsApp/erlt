@@ -2,7 +2,11 @@
 
 -module(struct_mod11).
 
--export_type([foo/0, bar/1, mixed/0]).
+-export_type([foo/0,
+              bar/1,
+              mixed/0,
+              baz/0,
+              in_pattern/0]).
 
 -export([foo/0,
          bar/0,

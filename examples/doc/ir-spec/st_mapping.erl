@@ -46,7 +46,8 @@
               rec_with_int_id/0,
               rec_with_generic_id/1,
               date/0,
-              either/2]).
+              either/2,
+              option/1]).
 
 -type float_alias() :: float().
 

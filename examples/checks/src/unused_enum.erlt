@@ -14,6 +14,6 @@
 
 -enum used_exported :: (x).
 
--spec test(used_pattern(), used_guard()) -> used_expr().
+[unchecked]
 test(used_pattern.x, X) when X =:= used_guard.x ->
     used_expr.x.

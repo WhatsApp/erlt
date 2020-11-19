@@ -22,7 +22,7 @@
     non_neg_integer_alias/0, pos_integer_alias/0, any_alias/0, none_alias/0, term_alias/0,
     binary_alias/0, bitstring_alias/0, byte_alias/0, number_alias/0, iodata_alias/0, iolist_alias/0,
     identifier_alias/0, node_alias/0, timeout_alias/0, no_return_alias/0, rec_with_int_id/0,
-    rec_with_generic_id/1, date/0, either/2]).
+    rec_with_generic_id/1, date/0, either/2, option/1]).
 
 %% 1:1 mapping of basic types:
 -type float_alias() :: float().
