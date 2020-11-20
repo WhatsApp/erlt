@@ -34,8 +34,9 @@ compile(Uri) ->
         erpc:call('erltc@localhost', os, set_env_var,
                   ["ERLT_LANGUAGE_SERVER", TempFile]),
         erpc:call('erltc@localhost', rebar3, run, [["compile"]]),
-        get_els_file(TempFile, Uri)
+        {get_els_file(TempFile, Uri), []}
       catch
+        throw:rebar_abort:_ -> {get_els_file(TempFile, Uri), []};
         C:E:_ -> {{rpcerror, {C, E}}, []}
       end;
     _ ->
