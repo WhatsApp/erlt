@@ -49,9 +49,18 @@ format_error({duplicate_exports, Kind, {N, A}}) ->
 format_error({exported_function_no_spec, {N, A}}) ->
     io_lib:format("The exported checked function ~tw~s has no spec.", [N, gen_type_paren(A)]);
 format_error({local_type_in_exported_context, {spec, {N, A}}, Type}) ->
-    io_lib:format("The spec of an exported function: ~tw~s contains the local type ~w", [N, gen_type_paren(A), Type]);
+    io_lib:format("The spec of an exported function: ~tw~s contains the local type ~w", [
+        N,
+        gen_type_paren(A),
+        Type
+    ]);
 format_error({local_type_in_exported_context, {Ctx, {N, A}}, Type}) ->
-    io_lib:format("The definition of an exported ~w: ~tw~s contains the local type ~w", [Ctx, N, gen_type_paren(A), Type]);
+    io_lib:format("The definition of an exported ~w: ~tw~s contains the local type ~w", [
+        Ctx,
+        N,
+        gen_type_paren(A),
+        Type
+    ]);
 format_error({redefine_import_type, {T, M}}) ->
     io_lib:format("type ~tw already imported from ~w", [T, M]);
 format_error({import_type_duplicate, T}) ->
@@ -213,8 +222,10 @@ lint({attribute, _, spec, {MFA, [TypeSig]}}, St, form) ->
     St1 =
         case local_exported_function(MFA, St) of
             {ok, Name} ->
-                process_def(TypeSig,
-                            mark_exported_function_as_ok(Name, St#state{exported_context = {spec, Name}}));
+                process_def(
+                    TypeSig,
+                    mark_exported_function_as_ok(Name, St#state{exported_context = {spec, Name}})
+                );
             error ->
                 process_def(TypeSig, St)
         end,
@@ -238,7 +249,7 @@ local_exported_function({M, F, A}, St) ->
             error
     end.
 
-exported_function(Fn, #state{exported_functions=Exp}) ->
+exported_function(Fn, #state{exported_functions = Exp}) ->
     case maps:is_key(Fn, Exp) of
         true ->
             {ok, Fn};
