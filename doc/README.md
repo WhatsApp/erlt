@@ -1,6 +1,6 @@
 # ErlT Reference
 
-This `docs/` directory contains detailed descriptions of the various new and
+This `doc/` directory contains detailed descriptions of the various new and
 altered language forms that constitute ErlT.
 
 **More coming soon**
