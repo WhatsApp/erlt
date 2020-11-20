@@ -1,1 +1,1 @@
-unspecced_functions.erlt:6:1: The exported function unspecced() has no spec.
+unspecced_functions.erlt:6:1: The exported checked function unspecced() has no spec.

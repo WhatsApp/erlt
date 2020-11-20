@@ -47,7 +47,7 @@ format_error({multiple_specs, Kind}) ->
 format_error({duplicate_exports, Kind, {N, A}}) ->
     io_lib:format("~w ~tw~s exported multiple times.", [Kind, N, gen_type_paren(A)]);
 format_error({exported_function_no_spec, {N, A}}) ->
-    io_lib:format("The exported function ~tw~s has no spec.", [N, gen_type_paren(A)]);
+    io_lib:format("The exported checked function ~tw~s has no spec.", [N, gen_type_paren(A)]);
 format_error({unexported_type_in_exported_type, Type}) ->
     io_lib:format("The definition of an exported type contains the local type ~w", [Type]);
 format_error({redefine_import_type, {T, M}}) ->
