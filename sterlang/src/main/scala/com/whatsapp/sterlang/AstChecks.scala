@@ -29,8 +29,10 @@ class AstChecks(val context: Context) {
       program.structDefs.foreach { checkStructDef(program, _) }
     } catch {
       case Cycle(name) =>
-        val typeAlias = program.typeAliases.find(_.name == name).get
-        throw new CyclicTypeAlias(typeAlias.r, name)
+        val typeOptR = program.typeAliases.find(_.name == name).map(_.r)
+        val opaqueOptR = program.opaques.find(_.name == name).map(_.r)
+        val r = typeOptR.getOrElse(opaqueOptR.get)
+        throw new CyclicType(r, name)
     }
     checkSpecs(program)
   }
