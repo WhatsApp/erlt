@@ -7,7 +7,7 @@ code bases.
 ## Quick Links
 
 - **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
-- **[ErlT Reference](./docs/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
+- **[ErlT Reference](./doc/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
 - **[Examples](./examples/README.md)** - A collection of small ErlT projects that demonstrate how the language can be used
 
 ## Introduction
