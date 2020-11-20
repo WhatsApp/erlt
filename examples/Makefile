@@ -1,9 +1,11 @@
 DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
 
-build:
+build: run-sterlangd
+	ERL_FLAGS="-args_file dev.vm.args" rebar3 compile
+
+run-sterlangd:
 	../sbtn/dl.sh
 	cd ../sterlang; ../sbtn/sbtn sterlangd
-	ERL_FLAGS="-args_file dev.vm.args" rebar3 compile
 
 clean:
 	rm -rf _build
@@ -57,4 +59,4 @@ test-interop: build
 
 test: test-ir test-beam test-interop test-others
 
-.PHONY: build clean ir test-ir update-ir-spec test-beam test-interop
+.PHONY: build run-sterlangd clean ir test-ir update-ir-spec test-beam test-interop

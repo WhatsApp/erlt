@@ -27,30 +27,75 @@ compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
   CompileCmd = els_config:get(erlt_command),
-  Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
-                      [TempFile, CompileCmd])),
-  os:cmd(Cmd),
-  case get_els_file(TempFile, Uri) of
-    {ok, FileName} ->
+  R = case CompileCmd of
+    "node" ->
+      lager:info("ErlT: compiling via rpc to 'rebar3 shell' node"),
+      try
+        erpc:call('erltc@localhost', os, set_env_var,
+                  ["ERLT_LANGUAGE_SERVER", TempFile]),
+        erpc:call('erltc@localhost', rebar3, run, [["compile"]]),
+        get_els_file(TempFile, Uri)
+      catch
+        C:E:_ -> {{rpcerror, {C, E}}, []}
+      end;
+    _ ->
+      {Cmd, Diags0} =
+            case net_adm:ping('sterlangd@localhost') of
+              pong ->
+                lager:info("ErlT: compiling using sterlangd via command [~s]",
+                           [CompileCmd]),
+                {lists:flatten(io_lib:format(
+                                "ERL_FLAGS='-args_file dev.vm.args' "
+                                "ERLT_LANGUAGE_SERVER=~s ~s",
+                                [TempFile, CompileCmd]))
+                 , []};
+              _ ->
+                lager:info("ErlT: compiling  WITHOUT sterlngd via command [~s]",
+                           [CompileCmd]),
+                Desc0 = lists:flatten(io_lib:format(
+                          "ErlT: compiling  WITHOUT sterlngd via command [~s]",
+                                        [CompileCmd])),
+                {lists:flatten(io_lib:format(
+                                "ERLT_LANGUAGE_SERVER=~s ~s",
+                                [TempFile, CompileCmd]))
+                , make_error_diag(Desc0)}
+            end,
+      os:cmd(Cmd),
+      {get_els_file(TempFile, Uri), Diags0}
+  end,
+  case R of
+    {{ok, FileName}, Ds} ->
       get_els_file(TempFile, Uri),
       {ok, [{_TS, Diags, Hovers, Lenses}]} = file:consult(FileName),
-      store_pois(Uri, Hovers++Lenses),
-      Diags;
-    {error, Reason} ->
-      Range = #{ from => {1, 1}, to => {2, 1} },
+      store_pois(Uri, Hovers ++ Lenses),
+      Diags ++ Ds;
+    {{rpcerror, Reason}, Ds} ->
+      Desc = lists:flatten(
+        io_lib:format(
+          "Have you launched the rebar shell?~n"
+          "els_erlt_diagnostics: could not contact rebar node [~p]",
+          [Reason])),
+      make_error_diag(Desc) ++ Ds;
+    {{error, Reason}, Ds} ->
       Desc = lists:flatten(
         io_lib:format(
           "Have you set the correct 'erlt_command' in erlang_ls.config?~n"
+          "Current value from config is [~s]~n"
           "els_erlt_diagnostics: could not read temp file [~p]",
-          [Reason])),
-      Diag =
-        #{ range    => els_protocol:range(Range)
-         , message  => els_utils:to_binary(Desc)
-         , severity => ?DIAGNOSTIC_ERROR
-         , source   => <<"ErlT">>
-         },
-      [Diag]
+          [CompileCmd, Reason])),
+      make_error_diag(Desc) ++ Ds
   end.
+
+-spec make_error_diag(string()) -> [els_diagnostics:diagnostic()].
+make_error_diag(Desc) ->
+  Range = #{ from => {1, 1}, to => {2, 1} },
+  Diag =
+    #{ range    => els_protocol:range(Range)
+     , message  => els_utils:to_binary(Desc)
+     , severity => ?DIAGNOSTIC_ERROR
+     , source   => <<"ErlT">>
+     },
+  [Diag].
 
 %%==============================================================================
 %% Private Functions
