@@ -1,0 +1,23 @@
+==================
+Module attribute
+==================
+
+-module(test).
+
+---
+
+(source_file
+  (module_attribute (atom))
+)
+
+==================
+Arbitrary attribute
+==================
+
+-foobar(test).
+
+---
+
+(source_file
+  (attribute (atom) (atom))
+)

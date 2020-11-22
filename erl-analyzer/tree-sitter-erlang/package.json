@@ -10,7 +10,9 @@
   "description": "Tree Sitter grammar for Erlang",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tree-sitter test",
+    "generate": "tree-sitter generate",
+    "parse": "tree-sitter parse"
   },
   "author": "Michał Muskała",
   "license": "Apache-2.0"
