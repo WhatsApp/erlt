@@ -10,6 +10,14 @@
         {
           "type": "atom",
           "named": true
+        },
+        {
+          "type": "var",
+          "named": true
+        },
+        {
+          "type": "wildcard",
+          "named": true
         }
       ]
     }
@@ -69,7 +77,19 @@
     "named": true
   },
   {
+    "type": "comment",
+    "named": true
+  },
+  {
     "type": "module",
     "named": false
+  },
+  {
+    "type": "var",
+    "named": true
+  },
+  {
+    "type": "wildcard",
+    "named": true
   }
 ]

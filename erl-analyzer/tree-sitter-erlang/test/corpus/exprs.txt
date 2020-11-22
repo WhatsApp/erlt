@@ -1,0 +1,51 @@
+==================
+Atom
+==================
+
+-x(
+    a
+).
+
+-x(
+    a@09_Z
+).
+
+---
+
+(source_file
+  (attribute (atom) (atom))
+  (attribute (atom) (atom))
+)
+
+==================
+Var
+==================
+
+-x(
+    Z
+).
+
+-x(
+    _@
+).
+
+---
+
+(source_file
+  (attribute (atom) (var))
+  (attribute (atom) (var))
+)
+
+==================
+Wildcard
+==================
+
+-x(
+    _
+).
+
+---
+
+(source_file
+  (attribute (atom) (wildcard))
+)
