@@ -1,5 +1,10 @@
 [
   {
+    "type": "atom",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "attribute",
     "named": true,
     "fields": {},
@@ -57,6 +62,10 @@
     }
   },
   {
+    "type": "'",
+    "named": false
+  },
+  {
     "type": "(",
     "named": false
   },
@@ -71,14 +80,6 @@
   {
     "type": ".",
     "named": false
-  },
-  {
-    "type": "atom",
-    "named": true
-  },
-  {
-    "type": "comment",
-    "named": true
   },
   {
     "type": "module",

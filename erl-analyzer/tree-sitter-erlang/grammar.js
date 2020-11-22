@@ -1,11 +1,11 @@
 module.exports = grammar({
     name: 'erlang',
 
-    word: $ => $.atom,
+    word: $ => $._raw_atom,
 
     extras: $ => [
         /[\x00-\x20\x80-\xA0]/,
-        $.comment
+        $._comment
     ],
 
     rules: {
@@ -31,8 +31,12 @@ module.exports = grammar({
 
         var: $ => /[_A-Z\xC0-\xD6\xD8-\xDE][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
 
-        atom: $ => /[a-z\xDF-\xF6\xF8-\xFF][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
+        atom: $ => choice($._raw_atom, $._quoted_atom),
 
-        comment: $ => /%.*/,
+        _raw_atom: $ => /[a-z\xDF-\xF6\xF8-\xFF][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
+
+        _quoted_atom: $ => seq("'", /[^'\\]*/, "'"),
+
+        _comment: $ => /%[^\n]*/,
     }
 });
