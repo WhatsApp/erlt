@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "nan": "^2.14.2"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.17.3"
+  },
+  "name": "tree-sitter-erlang",
+  "version": "0.1.0",
+  "description": "Tree Sitter grammar for Erlang",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michał Muskała",
+  "license": "Apache-2.0"
+}
