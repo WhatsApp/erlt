@@ -1,5 +1,6 @@
 {
   "name": "erlang",
+  "word": "atom",
   "rules": {
     "source_file": {
       "type": "REPEAT",
@@ -85,18 +86,42 @@
         {
           "type": "SYMBOL",
           "name": "atom"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "var"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "wildcard"
         }
       ]
     },
+    "wildcard": {
+      "type": "STRING",
+      "value": "_"
+    },
+    "var": {
+      "type": "PATTERN",
+      "value": "[_A-Z\\xC0-\\xD6\\xD8-\\xDE][_@a-zA-Z0-9\\xC0-\\xD6\\xD8-\\xDE\\xDF-\\xF6\\xF8-\\xFF]*"
+    },
     "atom": {
       "type": "PATTERN",
-      "value": "[a-z][a-zA-Z0-9_]*"
+      "value": "[a-z\\xDF-\\xF6\\xF8-\\xFF][_@a-zA-Z0-9\\xC0-\\xD6\\xD8-\\xDE\\xDF-\\xF6\\xF8-\\xFF]*"
+    },
+    "comment": {
+      "type": "PATTERN",
+      "value": "%.*"
     }
   },
   "extras": [
     {
       "type": "PATTERN",
-      "value": "\\s"
+      "value": "[\\x00-\\x20\\x80-\\xA0]"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "comment"
     }
   ],
   "conflicts": [],
