@@ -1,6 +1,6 @@
 {
   "name": "erlang",
-  "word": "atom",
+  "word": "_raw_atom",
   "rules": {
     "source_file": {
       "type": "REPEAT",
@@ -106,12 +106,42 @@
       "value": "[_A-Z\\xC0-\\xD6\\xD8-\\xDE][_@a-zA-Z0-9\\xC0-\\xD6\\xD8-\\xDE\\xDF-\\xF6\\xF8-\\xFF]*"
     },
     "atom": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_raw_atom"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_quoted_atom"
+        }
+      ]
+    },
+    "_raw_atom": {
       "type": "PATTERN",
       "value": "[a-z\\xDF-\\xF6\\xF8-\\xFF][_@a-zA-Z0-9\\xC0-\\xD6\\xD8-\\xDE\\xDF-\\xF6\\xF8-\\xFF]*"
     },
-    "comment": {
+    "_quoted_atom": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "'"
+        },
+        {
+          "type": "PATTERN",
+          "value": "[^'\\\\]*"
+        },
+        {
+          "type": "STRING",
+          "value": "'"
+        }
+      ]
+    },
+    "_comment": {
       "type": "PATTERN",
-      "value": "%.*"
+      "value": "%[^\\n]*"
     }
   },
   "extras": [
@@ -121,7 +151,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "comment"
+      "name": "_comment"
     }
   ],
   "conflicts": [],

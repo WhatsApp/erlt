@@ -21,3 +21,14 @@ Arbitrary attribute
 (source_file
   (attribute (atom) (atom))
 )
+
+==================
+Comment
+==================
+
+%
+% foobar
+
+---
+
+(source_file)
