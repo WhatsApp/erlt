@@ -79,3 +79,17 @@ Quoted atom
 (source_file
   (attribute (atom) (atom))
 )
+
+==================
+Char
+==================
+
+-x(
+    $\s
+).
+
+---
+
+(source_file
+  (attribute (atom) (char))
+)

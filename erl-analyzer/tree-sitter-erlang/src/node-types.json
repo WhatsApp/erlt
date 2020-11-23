@@ -12,6 +12,10 @@
           "named": true
         },
         {
+          "type": "char",
+          "named": true
+        },
+        {
           "type": "string",
           "named": true
         },
@@ -44,6 +48,10 @@
           "named": true
         },
         {
+          "type": "char",
+          "named": true
+        },
+        {
           "type": "string",
           "named": true
         },
@@ -71,6 +79,10 @@
           "named": true
         },
         {
+          "type": "char",
+          "named": true
+        },
+        {
           "type": "string",
           "named": true
         },
@@ -84,6 +96,11 @@
         }
       ]
     }
+  },
+  {
+    "type": "char",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "function",
@@ -168,6 +185,10 @@
   },
   {
     "type": "\"",
+    "named": false
+  },
+  {
+    "type": "$",
     "named": false
   },
   {
