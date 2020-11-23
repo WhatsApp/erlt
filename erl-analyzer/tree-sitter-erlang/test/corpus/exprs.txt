@@ -49,3 +49,33 @@ Wildcard
 (source_file
   (attribute (atom) (wildcard))
 )
+
+==================
+String
+==================
+
+-x(
+    "abc\0\00\000\xAA\x{DEADBEEF}\n\r\t\v\b\f\e\s\d\
+    "
+).
+
+---
+
+(source_file
+  (attribute (atom) (string))
+)
+
+==================
+Quoted atom
+==================
+
+-x(
+    'abc\0\00\000\xAA\x{DEADBEEF}\n\r\t\v\b\f\e\s\d\
+    '
+).
+
+---
+
+(source_file
+  (attribute (atom) (atom))
+)

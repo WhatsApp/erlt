@@ -34,6 +34,7 @@ module.exports = grammar({
             $.atom,
             $.var,
             $.wildcard,
+            $.string,
         ),
 
         wildcard: $ => '_',
@@ -42,9 +43,13 @@ module.exports = grammar({
 
         atom: $ => choice($._raw_atom, $._quoted_atom),
 
+        string: $ => seq('"', repeat(choice(/[^"\\]+/, $._escape)), '"'),
+
         _raw_atom: $ => /[a-z\xDF-\xF6\xF8-\xFF][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
 
-        _quoted_atom: $ => seq("'", /[^'\\]*/, "'"),
+        _quoted_atom: $ => seq("'", repeat(choice(/[^'\\]+/, $._escape)), "'"),
+
+        _escape: $ => token(seq('\\', choice(/[0-7]{1,3}/, /x[0-9a-fA-F]{2}/, /x{[0-9a-fA-F]+}/, '\n', /[nrtvbfesd]/))),
 
         _comment: $ => /%[^\n]*/,
     }
