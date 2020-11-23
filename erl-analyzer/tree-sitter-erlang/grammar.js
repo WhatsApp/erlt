@@ -37,6 +37,7 @@ module.exports = grammar({
             $.string,
             $.char,
             $.integer,
+            $.float,
         ),
 
         wildcard: $ => '_',
@@ -47,6 +48,8 @@ module.exports = grammar({
             /\d{1,2}#[0-9a-zA-Z](_?[0-9a-zA-Z])*/,
             /\d(_?\d)*/,
         ),
+
+        float: $ => /\d(_?\d)*\.\d(_?\d)*([eE][+-]?\d(_?\d)*)?/,
 
         string: $ => seq('"', repeat(choice(/[^"\\]+/, $._escape)), '"'),
 
