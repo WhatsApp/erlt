@@ -12,6 +12,10 @@
           "named": true
         },
         {
+          "type": "string",
+          "named": true
+        },
+        {
           "type": "var",
           "named": true
         },
@@ -40,6 +44,10 @@
           "named": true
         },
         {
+          "type": "string",
+          "named": true
+        },
+        {
           "type": "var",
           "named": true
         },
@@ -60,6 +68,10 @@
       "types": [
         {
           "type": "atom",
+          "named": true
+        },
+        {
+          "type": "string",
           "named": true
         },
         {
@@ -148,6 +160,15 @@
         }
       ]
     }
+  },
+  {
+    "type": "string",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "\"",
+    "named": false
   },
   {
     "type": "'",
