@@ -93,3 +93,27 @@ Char
 (source_file
   (attribute (atom) (char))
 )
+
+==================
+Integer
+==================
+
+-x(
+    10
+).
+
+-x(
+    2#01010101
+).
+
+-x(
+    35#09AZaz
+).
+
+---
+
+(source_file
+  (attribute (atom) (integer))
+  (attribute (atom) (integer))
+  (attribute (atom) (integer))
+)

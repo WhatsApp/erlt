@@ -36,17 +36,23 @@ module.exports = grammar({
             $.wildcard,
             $.string,
             $.char,
+            $.integer,
         ),
 
         wildcard: $ => '_',
 
         var: $ => /[_A-Z\xC0-\xD6\xD8-\xDE][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
 
-        atom: $ => choice($._raw_atom, $._quoted_atom),
+        integer: $ => choice(
+            /\d{1,2}#[0-9a-zA-Z](_?[0-9a-zA-Z])*/,
+            /\d(_?\d)*/,
+        ),
 
         string: $ => seq('"', repeat(choice(/[^"\\]+/, $._escape)), '"'),
 
         char: $ => seq('$', choice(/[^\\]/, $._escape)),
+
+        atom: $ => choice($._raw_atom, $._quoted_atom),
 
         _raw_atom: $ => /[a-z\xDF-\xF6\xF8-\xFF][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
 
