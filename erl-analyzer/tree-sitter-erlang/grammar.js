@@ -14,12 +14,21 @@ module.exports = grammar({
         _form: $ => choice(
             $.module_attribute,
             $.attribute,
-            // $.function
+            $.function
         ),
 
         module_attribute: $ => seq('-', 'module', '(', $.atom, ')', '.'),
 
         attribute: $ => seq('-', $.atom, '(', $._expr, ')', '.'),
+
+        function: $ => seq(sepBy1($.function_clause, ';'), '.'),
+
+        function_clause: $ => seq($.atom, $.arg_list, '->', $.block),
+
+        // TODO: separate expr and patterns
+        arg_list: $ => seq('(', sepBy($._expr, ','), ')'),
+
+        block: $ => sepBy1($._expr, ','),
 
         _expr: $ => choice(
             $.atom,
@@ -40,3 +49,11 @@ module.exports = grammar({
         _comment: $ => /%[^\n]*/,
     }
 });
+
+function sepBy1(rule, sep) {
+    return seq(rule, repeat(seq(sep, rule)));
+}
+
+function sepBy(rule, sep) {
+    return optional(sepBy1(rule, sep));
+}

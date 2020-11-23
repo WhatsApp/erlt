@@ -32,3 +32,22 @@ Comment
 ---
 
 (source_file)
+
+==================
+Function
+==================
+
+f() -> a;
+f() -> b.
+
+g(_) -> c, d.
+
+---
+
+(source_file
+  (function
+    (function_clause (atom) (arg_list) (block (atom)))
+    (function_clause (atom) (arg_list) (block (atom))))
+  (function
+    (function_clause (atom) (arg_list (wildcard)) (block (atom) (atom))))
+)
