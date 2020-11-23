@@ -236,6 +236,10 @@
         {
           "type": "SYMBOL",
           "name": "integer"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "float"
         }
       ]
     },
@@ -259,6 +263,10 @@
           "value": "\\d(_?\\d)*"
         }
       ]
+    },
+    "float": {
+      "type": "PATTERN",
+      "value": "\\d(_?\\d)*\\.\\d(_?\\d)*([eE][+-]?\\d(_?\\d)*)?"
     },
     "string": {
       "type": "SEQ",

@@ -117,3 +117,27 @@ Integer
   (attribute (atom) (integer))
   (attribute (atom) (integer))
 )
+
+==================
+Float
+==================
+
+-x(
+    10.0
+).
+
+-x(
+    1_0.1_0e1_0
+).
+
+-x(
+    9.9E+9
+).
+
+---
+
+(source_file
+  (attribute (atom) (float))
+  (attribute (atom) (float))
+  (attribute (atom) (float))
+)
