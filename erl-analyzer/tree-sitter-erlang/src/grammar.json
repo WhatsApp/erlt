@@ -228,6 +228,10 @@
         {
           "type": "SYMBOL",
           "name": "string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "char"
         }
       ]
     },
@@ -278,6 +282,28 @@
         {
           "type": "STRING",
           "value": "\""
+        }
+      ]
+    },
+    "char": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "$"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "PATTERN",
+              "value": "[^\\\\]"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_escape"
+            }
+          ]
         }
       ]
     },
