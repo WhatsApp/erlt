@@ -3,17 +3,17 @@
 *A minimalistic analyzer to get some numbers about properties of your Erlang 
 project.*
 
-This is a Scala tool that it utilises the OTP `jinterface`
-to communicated with running Erlang code via `RPC.scala`. Erlang is used
-to load the project's AST, and some analysis can be done there
-when that is more convenient.
-
-Since this analyzer reads `.beam` files, you'll need to have built your project
-before running the tool.
+This is a Scala tool that utilises the OTP `jinterface`
+to communicate with a running Erlang node via `RPC.scala`. The Erlang node is used
+to load the project's AST, and some analysis can be written in Erlang and done
+on that node when it is more convenient.
 
 ## How to configure and run
 
 This analyzer assumes that you build your project with rebar3.
+
+Since this analyzer reads `.beam` files, you'll need to have built your project
+before running the tool.
 
 Settings are controlled by three text files: `root`, `paths`, `third_party`
 (see [`CodeDirs.scala`](src/main/scala/com/whatsapp/analyzer/CodeDirs.scala)).
@@ -27,7 +27,7 @@ Instructions for creating these files are below, in the [configure](###configure
 ### Configure
 
 1. Build your project with `rebar3 compile` (don't miss the step!)
-2. Make sure your config files are correct: 
+2. Make sure your config files are correct:
    - Put the full absolute path to the root of the rebar project into the `root` file, e.g.:
 
        ```bash
