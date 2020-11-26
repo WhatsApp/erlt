@@ -3,23 +3,41 @@
 A minimalistic analyzer to get some numbers about properties of your Erlang 
 project.
 
-## How to run
+This is a Scala tool that it utilises the OTP `jinterface`
+to communicated with running Erlang code via `RPC.scala`. Erlang is used
+to load the project's AST, and some analysis can be done there
+when that is more convenient.
 
-1. Configure files accordingly: `paths`, `root`, `third_party`
-2. Setup analyzer Erlang backend: 
-   `erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .`
-3. Run an analysis from sbt (`runMain {analysisClass}`)
+Since this analyzer reads `.beam` files, you'll need to have built your project
+before running the tool.
 
-## How to configure:
+## How to configure and run
 
 This analyzer assumes that you build your project with rebar3.
-Settings are handled by [`CodeDirs.scala`](src/main/scala/com/whatsapp/analyzer/CodeDirs.scala) 
 
-1. Put the full absolute path to the root of the rebar project into `root` file
-2. Build your project with `rebar3 compile` (don't miss the step!)
-3. run `rebar3 path` - and copy the output AS IS into `paths`
-4. Put a list of SPACE SEPARATED lib names you would like to exclude from analysis
-   into `third_party`.
+Settings are controlled by three text files: `root`, `paths`, `third_party`
+(see [`CodeDirs.scala`](src/main/scala/com/whatsapp/analyzer/CodeDirs.scala)).
+Instructions for creating these files are below, in the [configure](###configure) section.
+
+ - `root` holds the path to the root of the Erlang project to analyse
+ - `paths` holds paths to the various build output directories of the project
+ - `third_party` holds a list of libraries to ignore (they're "third party" in
+ the sense that they're irrelevant to this analysis)
+
+### Configure
+
+1. Build your project with `rebar3 compile` (don't miss the step!)
+2. Make sure your config files are correct: 
+   1. Put the full absolute path to the root of the rebar project into the `root` file
+   2. Run `rebar3 path` - and copy the output AS IS into the `paths` file
+   3. Put a list of SPACE SEPARATED lib names you would like to exclude from analysis into the `third_party` file
+
+### Run
+
+1. Start the analyzer Erlang backend (by building and initializing a named Erlang node with the current working directory on its path): 
+   `erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .`
+2. Execute a Scala analysis entrypoint:
+   `sbt "runMain {analysisClass}"`, e.g. `sbt "runMain com.whatsapp.analyzer.Behaviours"`
 
 ## Implemented analyses
 
