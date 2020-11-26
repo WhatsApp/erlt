@@ -4,6 +4,8 @@
 
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
 
+-export_type([map/2]).
+
 -type map(_Key, _Value) :: term().
 
 -spec ffi(integer()) -> binary().

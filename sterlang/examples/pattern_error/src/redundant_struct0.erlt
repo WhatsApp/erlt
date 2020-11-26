@@ -14,7 +14,7 @@
 
 -module(redundant_struct0).
 -export([test1/1]).
-
+-export_type([r/0]).
 -struct r() :: (a :: boolean()).
 
 -spec test1(r()) -> {}.

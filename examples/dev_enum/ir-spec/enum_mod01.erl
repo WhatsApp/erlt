@@ -9,6 +9,10 @@
 
 -export_type([possibly/1]).
 
+-export_type([opaque_pair/2]).
+
+-opaque opaque_pair(T1, T2) :: pair(T1, T2).
+
 -type pair(T1, T2) :: {'$#enum_mod01:pair.p', T1, T2}.
 
 -spec f() -> term().
@@ -40,7 +44,7 @@ r(E, Y) ->
         {'$#enum_mod01:possibly.some', X} -> [X]
     end.
 
--spec s(T1, T2) -> pair(T1, T2).
+-spec s(T1, T2) -> opaque_pair(T1, T2).
 
 s(H, T) -> {'$#enum_mod01:pair.p', H, T}.
 

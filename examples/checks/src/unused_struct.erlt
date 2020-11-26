@@ -17,6 +17,6 @@
 
 -struct used_exported :: ().
 
--spec test(used_pattern(), used_guard()) -> {integer(), used_expr()}.
+[unchecked]
 test(#used_pattern{}, X) when X =:= #used_guard{} ->
     {X#used_field.a, #used_expr{}}.

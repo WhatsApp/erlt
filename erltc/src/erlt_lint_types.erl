@@ -28,7 +28,7 @@
     errors_on = true :: boolean(),
     allow_new_vars = false :: boolean(),
     file :: string(),
-    check_is_exported = false :: boolean(),
+    exported_context = none :: none | {spec | enum | struct | type, {atom(), integer()}},
     errors = [] :: [{File :: string(), ErrorString :: string()}]
 }).
 
@@ -48,8 +48,19 @@ format_error({duplicate_exports, Kind, {N, A}}) ->
     io_lib:format("~w ~tw~s exported multiple times.", [Kind, N, gen_type_paren(A)]);
 format_error({exported_function_no_spec, {N, A}}) ->
     io_lib:format("The exported checked function ~tw~s has no spec.", [N, gen_type_paren(A)]);
-format_error({unexported_type_in_exported_type, Type}) ->
-    io_lib:format("The definition of an exported type contains the local type ~w", [Type]);
+format_error({local_type_in_exported_context, {spec, {N, A}}, Type}) ->
+    io_lib:format("The spec of an exported function: ~tw~s contains the local type ~w", [
+        N,
+        gen_type_paren(A),
+        Type
+    ]);
+format_error({local_type_in_exported_context, {Ctx, {N, A}}, Type}) ->
+    io_lib:format("The definition of an exported ~w: ~tw~s contains the local type ~w", [
+        Ctx,
+        N,
+        gen_type_paren(A),
+        Type
+    ]);
 format_error({redefine_import_type, {T, M}}) ->
     io_lib:format("type ~tw already imported from ~w", [T, M]);
 format_error({import_type_duplicate, T}) ->
@@ -208,15 +219,17 @@ lint({attribute, _, callback, {_MFA, [TypeSig]}}, St, form) ->
     St1 = process_def(TypeSig, St),
     St1#state{defined = #{}, new_vars = [], allow_new_vars = false};
 lint({attribute, _, spec, {MFA, [TypeSig]}}, St, form) ->
-    St1 = process_def(TypeSig, St),
-    St2 =
-        case local_function(MFA, St) of
-            {ok, Local} ->
-                mark_exported_function_as_ok(Local, St1);
-            remote ->
-                St1
+    St1 =
+        case local_exported_function(MFA, St) of
+            {ok, Name} ->
+                process_def(
+                    TypeSig,
+                    mark_exported_function_as_ok(Name, St#state{exported_context = {spec, Name}})
+                );
+            error ->
+                process_def(TypeSig, St)
         end,
-    St2#state{defined = #{}, new_vars = [], allow_new_vars = false};
+    St1#state{defined = #{}, new_vars = [], allow_new_vars = false, exported_context = none};
 lint({attribute, Line, Kind, {_MFA, _}}, St, form) when Kind =:= spec; Kind =:= callback ->
     add_error(Line, {multiple_specs, Kind}, St);
 lint({unchecked_function, _Line, Name, Arity, _}, St, _Ctx) ->
@@ -226,14 +239,22 @@ lint({function, Line, Name, Arity, _}, St, _Ctx) ->
 lint(_, St, _Ctx) ->
     St.
 
-local_function({F, A}, _) ->
-    {ok, {F, A}};
-local_function({M, F, A}, St) ->
+local_exported_function({F, A}, St) ->
+    exported_function({F, A}, St);
+local_exported_function({M, F, A}, St) ->
     case St#state.module of
         M ->
-            {ok, {F, A}};
+            exported_function({F, A}, St);
         _ ->
-            remote
+            error
+    end.
+
+exported_function(Fn, #state{exported_functions = Exp}) ->
+    case maps:is_key(Fn, Exp) of
+        true ->
+            {ok, Fn};
+        false ->
+            error
     end.
 
 mark_exported_function_as_ok(Fun, St) ->
@@ -259,9 +280,15 @@ mark_exported_function_as_defined(Fun, Line, St) ->
 defined_type(Type, Kind, St) ->
     case is_exported(Type, St) of
         true ->
-            define_exported_type(Type, St#state{check_is_exported = not is_opaque(Kind)});
+            define_exported_type(Type, St#state{exported_context = exported_context(Kind, Type)});
         false ->
             St
+    end.
+
+exported_context(Kind, Type) ->
+    case is_opaque(Kind) of
+        true -> none;
+        false -> {Kind, Type}
     end.
 
 is_opaque(opaque) -> true;
@@ -375,18 +402,38 @@ process_def(Type, St) ->
         {user_type, Line, Name, Args} ->
             TA = {Name, length(Args)},
             St1 =
-                case is_imported(TA, St) of
-                    true ->
+                case classify_user_type(TA, St) of
+                    imported ->
                         use_imported_type(TA, Line, St);
-                    false ->
-                        case St#state.check_is_exported andalso (not is_exported(TA, St)) of
-                            true ->
-                                add_error(Line, {unexported_type_in_exported_type, Name}, St);
-                            false ->
-                                St
-                        end
+                    local when St#state.exported_context =/= none ->
+                        add_error(
+                            Line,
+                            {local_type_in_exported_context, St#state.exported_context, Name},
+                            St
+                        );
+                    undefined ->
+                        add_error(Line, {undefined_type, TA}, St);
+                    _ ->
+                        St
                 end,
             process_list(Args, St1)
+    end.
+
+classify_user_type(TA, St) ->
+    Defined = is_defined(TA, St),
+    Exported = is_exported(TA, St),
+    Imported = is_imported(TA, St),
+    if
+        Imported -> imported;
+        not Defined -> undefined;
+        Exported -> exported;
+        true -> local
+    end.
+
+is_defined({Type, Arity}, #state{local_types = Local}) ->
+    case Local of
+        #{Type := #type_info{arity = Arity}} -> true;
+        _ -> false
     end.
 
 is_exported(Type, St) ->
@@ -437,7 +484,7 @@ post_process_types([Arg | Rest], St) ->
             post_process_types(Rest, add_error(Line, {unused_arg, Arg}, St))
     end;
 post_process_types([], St) ->
-    St#state{allow_new_vars = false, new_vars = [], defined = #{}, check_is_exported = false}.
+    St#state{allow_new_vars = false, new_vars = [], defined = #{}, exported_context = none}.
 
 add_error(Anno, E, St) ->
     case St#state.errors_on of

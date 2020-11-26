@@ -15,6 +15,7 @@
 -module(rem_aliases).
 -export([inferred_funs/0]).
 -export([mk_pair1/2]).
+-export_type([this_pair/1]).
 
 -type this_pair(A) :: aliases:pair(A).
 

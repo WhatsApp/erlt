@@ -2,6 +2,8 @@
 
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
 
+-export_type([map/2]).
+
 [opaque, unchecked]
 -type map(Key, Value) :: term().
 
@@ -28,4 +30,3 @@ put(Key, Value, Map) ->
 [unchecked]
 dt(X) ->
     [X, {X}, [X], term_to_binary(X)].
-

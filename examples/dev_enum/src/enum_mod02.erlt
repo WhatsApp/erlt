@@ -17,6 +17,8 @@
 
 -export([p/0, q/1, r/1, s/1]).
 
+-export_type([possibly/1]).
+
 -type possibly(T) :: enum_mod01:possibly(T).
 
 -spec p() -> possibly(any()).

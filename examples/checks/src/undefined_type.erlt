@@ -1,0 +1,5 @@
+-module(undefined_type).
+-export([mk_str/0]).
+
+-spec mk_str() -> t1().
+mk_str() -> 1.

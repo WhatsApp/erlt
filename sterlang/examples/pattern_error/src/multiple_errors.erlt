@@ -14,7 +14,7 @@
 
 -module(multiple_errors).
 -export([test1/1, test2/1, test3/1]).
-
+-export_type([ab/0]).
 -enum ab() :: (a, b).
 
 -spec test1(ab()) -> {}.

@@ -6,7 +6,8 @@
               bar/1,
               default_with_default/0,
               unicodestruct/0,
-              opaque_baz/0]).
+              opaque_baz/0,
+              in_pattern/0]).
 
 -export([foo/0,
          bar/0,

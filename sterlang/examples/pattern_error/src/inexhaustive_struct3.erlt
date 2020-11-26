@@ -14,7 +14,7 @@
 
 -module(inexhaustive_struct3).
 -export([test1/1]).
-
+-export_type([r/0]).
 -struct r() :: (boolean(), a :: boolean(), b :: boolean()).
 
 -spec test1(r()) -> {}.

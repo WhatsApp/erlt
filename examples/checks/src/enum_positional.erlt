@@ -2,7 +2,7 @@
 
 -export([local/0]).
 
--export_type([enum/0]).
+-export_type([enum/0, enum2/0]).
 
 -enum invalid :: (variant{a :: integer(), float()}).
 
