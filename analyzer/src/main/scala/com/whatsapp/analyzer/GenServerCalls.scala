@@ -18,7 +18,7 @@ object GenServerCalls {
       totalCount = totalCount + total
       taggedCount = taggedCount + tagged
       othersCount = othersCount + others
-      if (others > 0 ) {
+      if (others > 0) {
         exceptions = Calls(module, total, tagged, others) :: exceptions
       }
     }
@@ -33,8 +33,8 @@ object GenServerCalls {
   }
 
   private def loadData(rpc: RPC): List[AppInfo] = {
-    val infos =CodeDirs.projectEbinDirs.map(indexProjectDir(_, rpc))
-    infos.filterNot {info => CodeDirs.thirdParty.contains(info.app)}
+    val infos = CodeDirs.projectEbinDirs.map(indexProjectDir(_, rpc))
+    infos.filterNot { info => CodeDirs.thirdParty.contains(info.app) }
   }
 
   private def indexProjectDir(dir: String, rpc: RPC): AppInfo = {
