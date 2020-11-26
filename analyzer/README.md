@@ -1,7 +1,7 @@
 # Analyzer
 
-A minimalistic analyzer to get some numbers about properties of your Erlang 
-project.
+*A minimalistic analyzer to get some numbers about properties of your Erlang 
+project.*
 
 This is a Scala tool that it utilises the OTP `jinterface`
 to communicated with running Erlang code via `RPC.scala`. Erlang is used
@@ -28,16 +28,41 @@ Instructions for creating these files are below, in the [configure](###configure
 
 1. Build your project with `rebar3 compile` (don't miss the step!)
 2. Make sure your config files are correct: 
-   1. Put the full absolute path to the root of the rebar project into the `root` file
-   2. Run `rebar3 path` - and copy the output AS IS into the `paths` file
-   3. Put a list of SPACE SEPARATED lib names you would like to exclude from analysis into the `third_party` file
+   1. Put the full absolute path to the root of the rebar project into the `root` file, e.g.:
+
+       ```bash
+       echo "/my/project/dir/here/" > root
+       ```
+
+   2. Run `rebar3 path` - and copy the output AS IS into the `paths` file, e.g.:
+
+       ```bash
+       # Compute paths directly from the root file
+       root_dir=$(<root)
+       pushd "${root_dir}"
+       paths_contents=$(rebar3 path)
+       popd
+       echo "${paths_contents}" > paths
+       ```
+
+   3. Put a list of SPACE SEPARATED lib names you would like to exclude from analysis into the `third_party` file, e.g.:
+
+       ```bash
+       # Leave empty for now
+       touch -a third_party
+       ```
 
 ### Run
 
-1. Start the analyzer Erlang backend (by building and initializing a named Erlang node with the current working directory on its path): 
-   `erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .`
+1. Start the analyzer Erlang backend (by building and initializing a named Erlang node with the current working directory on its path):
+
+   ```erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .```
+
 2. Execute a Scala analysis entrypoint:
-   `sbt "runMain {analysisClass}"`, e.g. `sbt "runMain com.whatsapp.analyzer.Behaviours"`
+
+   ```sbt "runMain {analysisClass}"```
+   
+   e.g. `sbt "runMain com.whatsapp.analyzer.Behaviours"`
 
 ## Implemented analyses
 
