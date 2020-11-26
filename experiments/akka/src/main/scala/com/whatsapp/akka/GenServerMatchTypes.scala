@@ -29,13 +29,14 @@ object GenServerMatchTypes {
     type CastProtocol[C] = Gen.NoReply[State]
 
     def serve(s: State): Behavior[Gen.Req[Call, Cast]] = Behaviors.receive { (context, msg) =>
-      msg match
+      msg match {
         case req: Gen.CastReq[_, Cast] =>
           serve(handleCast(req.cast, s).state)
         case req: Gen.CallReq[Call, _, CallReplyProtocol[Call]] =>
           val reply = handleCall(req.call, s)
           req.from ! reply.reply
           serve(reply.state)
+      }
     }
   }
 

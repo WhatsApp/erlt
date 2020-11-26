@@ -4,14 +4,28 @@ This example demonstrates what generic server-style code looks like in Akka.
 
 The reason for looking to Akka is that is a mature ecosystem for typed Erlangish concurrency.
 
-Currently this README only discusses only one of the many ideas from the code in this directory: **match types for expressing protocols**.
+Currently this README only discusses only some of the many ideas from the code in this directory–please see comments in the code for more details about what these demonstrate:
+- `GenServerMatchTypes.scala` shows how to use match types to map request types to response types. More on this below.
+- `BasicBlocks.scala` shows how things comparable to `gen_server:call` and `gen_server_cast` are typed in Akka.
 
+## IDE
 
-## Set up
+- sbt
+- VSCode
+- Then follow [these instructions], under "Usage". TLDR: `sbt launchIDE` should work if `code` is on your PATH.
 
-TODO TODO TODO
+## Run the Examples
 
-## Match Types
+```sh
+> sbt # to enter the sbt shell
+> run # then select which example to run
+```
+
+You can choose between the examples:
+
+[!sbt dialog for choosing an example](https://user-images.githubusercontent.com/273180/99680533-0e09de00-2a75-11eb-873c-54d5b9eb1d4e.png)
+
+## On Match Types
 
 > Prefer reading the code to this README
 
@@ -66,6 +80,8 @@ This is what Scala match types really look like:
 The docs for match types are in https://dotty.epfl.ch/docs/reference/new-types/match-types.html
 
 - match types separate the data from how the data is used: the calculation of which reply type to use for a given call type is in the hands of the *user* of the enum rather than the definer of the enum. That's why they require more typing (on the keyboard) than GADTs for small examples.
+
+> Note: It may be useful to compare match types in `./GenServerMatchTypes.scala` against the GADTs in `../experiments/Haskell\ simulation`.
 
 - match types allow matching against constructors of multiple enums in a single pattern expression. We may or may not want this capability for ErlT.
 
