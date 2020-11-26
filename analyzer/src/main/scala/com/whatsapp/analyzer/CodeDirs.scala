@@ -32,7 +32,14 @@ object CodeDirs {
   }
 
   lazy val thirdParty: List[String] = {
-    val rawPaths = Using.resource(Source.fromFile("third_party")) { _.getLines().toList.head }
+    val lines = Using.resource(Source.fromFile("third_party")) { _.getLines().toList }
+    val rawPaths =
+      lines match {
+      case Nil => ""
+      case onlyLine :: Nil => onlyLine
+      case onlyLine :: "" :: Nil => onlyLine
+      case _ => throw new Exception("Unsupported format for 'third_party' file")
+      }
     rawPaths.split(" ").toList.distinct.sorted
   }
 
