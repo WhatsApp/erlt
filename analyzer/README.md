@@ -54,6 +54,8 @@ Instructions for creating these files are below, in the [configure](###configure
 
 ### Run
 
+Make sure you've configured `root`, `paths` and `third_party` before continuing.
+
 1. Start the analyzer Erlang backend (by building and initializing a named Erlang node with the current working directory on its path):
 
    ```erlc +debug_info analyzer.erl; erl -sname analyzer@localhost -pa .```
