@@ -2,7 +2,7 @@
 
 This example demonstrates what generic server-style code looks like in Akka.
 
-The reason for looking to Akka is that is a mature ecosystem for typed Erlangish concurrency.
+The reason for looking to Akka is that is a mature ecosystem for typed Erlangish concurrency. We don't necessarily aim to answer here how the Akka approach might map to Erlang, but rather we want to demonstrate how things operate in idiomatic Akka.
 
 Currently this README only discusses only some of the many ideas from the code in this directory–please see comments in the code for more details about what these demonstrate:
 - `GenServerMatchTypes.scala` shows how to use match types to map request types to response types. More on this below.
