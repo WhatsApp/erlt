@@ -402,20 +402,38 @@ process_def(Type, St) ->
         {user_type, Line, Name, Args} ->
             TA = {Name, length(Args)},
             St1 =
-                case is_imported(TA, St) of
-                    true ->
+                case classify_user_type(TA, St) of
+                    imported ->
                         use_imported_type(TA, Line, St);
-                    false ->
-                        case {St#state.exported_context, (not is_exported(TA, St))} of
-                            {none, _} ->
-                                St;
-                            {_, false} ->
-                                St;
-                            {Ctx, true} ->
-                                add_error(Line, {local_type_in_exported_context, Ctx, Name}, St)
-                        end
+                    local when St#state.exported_context =/= none ->
+                        add_error(
+                            Line,
+                            {local_type_in_exported_context, St#state.exported_context, Name},
+                            St
+                        );
+                    undefined ->
+                        add_error(Line, {undefined_type, TA}, St);
+                    _ ->
+                        St
                 end,
             process_list(Args, St1)
+    end.
+
+classify_user_type(TA, St) ->
+    Defined = is_defined(TA, St),
+    Exported = is_exported(TA, St),
+    Imported = is_imported(TA, St),
+    if
+        Imported -> imported;
+        not Defined -> undefined;
+        Exported -> exported;
+        true -> local
+    end.
+
+is_defined({Type, Arity}, #state{local_types = Local}) ->
+    case Local of
+        #{Type := #type_info{arity = Arity}} -> true;
+        _ -> false
     end.
 
 is_exported(Type, St) ->
