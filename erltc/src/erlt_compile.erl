@@ -796,7 +796,7 @@ run_sterlang(St) ->
                 erlang:demonitor(Ref, [flush]),
                 Res1;
             _ ->
-                case eunit_lib:command(CheckCmd) of
+                case erlt_util:command(CheckCmd) of
                     {0, StdOutOutput} ->
                         {Res, StTime} = binary_to_term(list_to_binary(StdOutOutput)),
                         {CmdMode, Res, StTime};
