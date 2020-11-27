@@ -67,9 +67,12 @@
     outfile = "" :: file:filename(),
     % Name of output file (internal
     % use in erl_compile.erl).
-    cwd :: file:filename()
+    cwd :: file:filename(),
     % Current working directory
     % for erlc.
+    skip_type_checking = false
+    % Temporary hack, not public api.
+    % --skip-type-checking used in Sterlang tests that compare its internal parser to the erltc parser.
 }).
 
 %% Converts generic compiler options to specific options.
@@ -98,10 +101,12 @@ make_erl_options(Opts) ->
         verbose = Verbose,
         specific = Specific,
         output_type = OutputType,
-        cwd = Cwd
+        cwd = Cwd,
+        skip_type_checking = SkipTypeChecking
     } = Opts,
     Options =
-        [verbose || Verbose] ++
+        [skip_type_checking || SkipTypeChecking] ++
+            [verbose || Verbose] ++
             [report_warnings || Warning =/= 0] ++
             map(
                 fun
@@ -119,7 +124,12 @@ make_erl_options(Opts) ->
                 native -> [native]
             end,
     Options ++
-        [report_errors, {cwd, Cwd}, {outdir, Outdir} | [{i, Dir} || Dir <- Includes]] ++
+        [
+            report_errors,
+            {cwd, Cwd},
+            {outdir, Outdir}
+            | [{i, Dir} || Dir <- Includes]
+        ] ++
         Specific.
 
 % Escript entry point
@@ -302,6 +312,8 @@ parse_generic_option("-build-dir", T0, #options{specific = Spec} = Opts) ->
     {BuildDir, T} = get_option("-build-dir", "", T0),
     BuildDirOpt = {build_dir, BuildDir},
     compile1(T, Opts#options{specific = [BuildDirOpt | Spec]});
+parse_generic_option("-skip-type-checking", T, Opts) ->
+    compile1(T, Opts#options{skip_type_checking = true});
 parse_generic_option(Option, _T, _Opts) ->
     io:format(?STDERR, "Unknown option: -~ts\n", [Option]),
     usage().
