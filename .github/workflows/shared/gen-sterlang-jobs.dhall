@@ -21,13 +21,11 @@ let test =
         [ checkout
         , setUpJava
         , coursierCache
-        , run "download sbtn" "./sbtn/dl.sh"
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
         , run "assemble erltc" "rebar3 escriptize"
-        , run "compile stErlang" "cd sterlang; ../sbtn/sbtn compile"
-        , run "test stErlang" "cd sterlang; ../sbtn/sbtn test"
+        , run "test stErlang" "cd sterlang && ../scripts/sbtn test"
         , run "test erltc + stErlang in dev mode" "make -C sterlang/examples"
         ]
       }
@@ -60,7 +58,8 @@ let toNativeImageJob =
         , needs = Some [ "buildJar" ]
         , runs-on = runsOn
         , steps =
-              [ setUpJava
+              [ checkout
+              , setUpJava
               , usesWith
                   "Setup GraalVM Environment"
                   "DeLaGuardo/setup-graalvm@master"
@@ -74,8 +73,13 @@ let toNativeImageJob =
               , run
                   "Build native image '${nativeName}'"
                   "native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar ${jarName} ${nativeName}"
+              , run "if erlang-less, assume we're on mac and brew install" "which erl || brew install erlang"
               ]
-            # toUploadSteps nativeName
+            # (toUploadSteps nativeName)
+            # [run
+                  "test erltc with native image"
+                  "mkdir -p erltc/priv && cp ${nativeName} erltc/priv/sterlang && make -C examples test-native"
+            ]
         }
 
 in  { buildJar, test, toNativeImageJob }
