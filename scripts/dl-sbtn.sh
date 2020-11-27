@@ -4,7 +4,9 @@ MAC_URL=https://ci.appveyor.com/api/buildjobs/of0lq2bfsexh68xl/artifacts/client%
 LINUX_URL=https://ci.appveyor.com/api/buildjobs/geyi0cyk85u9rnhg/artifacts/client%2Ftarget%2Fbin%2Fsbtn
 SCRIPT=`realpath -s $0`
 SCRIPT_PATH=`dirname $SCRIPT`
-SBTN_PATH="$SCRIPT_PATH/sbtn"
+SBTN_PATH="$SCRIPT_PATH/bin/sbtn"
+
+mkdir -p $(dirname $SBTN_PATH)
 
 if test -f $SBTN_PATH; then
     exit 0
@@ -19,3 +21,4 @@ elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
 fi
 
 chmod +x $SBTN_PATH
+
