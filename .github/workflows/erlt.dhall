@@ -21,15 +21,13 @@ in  Actions.Workflow::{
             [ checkout
             , setUpJava
             , coursierCache
-            , run "download sbtn" "./sbtn/dl.sh"
             , run
                 "Erlang version"
                 "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
             , run
                 "check formatting"
                 "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && \$(exit 1))"
-            , run "warm up sterlang" "cd sterlang; ../sbtn/sbtn sterlangd"
-            , run "test" "cd ./examples && make test"
+            , run "test" "cd ./examples && make test-jar"
             ]
           }
         }
