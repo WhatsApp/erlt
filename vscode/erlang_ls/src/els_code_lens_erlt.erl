@@ -33,11 +33,14 @@ is_default() ->
   true.
 
 -spec precondition(els_dt_document:item()) -> boolean().
-precondition(_Document) ->
+precondition(#{ uri := Uri }) ->
+  els_data_sync_server:is_lens_info_ready(Uri),
   true.
 
 -spec pois(els_dt_document:item()) -> [poi()].
-pois(Document) ->
+pois(#{ uri := Uri }) ->
+  %% May have waited for results, get a fresh instance of the document
+  {ok, Document} = els_utils:lookup_document(Uri),
   POIs = els_dt_document:pois(Document, [lens]),
   POIs.
 
