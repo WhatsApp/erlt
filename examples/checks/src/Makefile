@@ -6,6 +6,6 @@ test: erltc
 	./_test_checks.escript $(ERLS)
 
 erltc:
-	cd ../../.. && rebar3 compile
+	cd ../../.. && pwd &&  ./scripts/rebar3 compile
 
 .PHONY: test
