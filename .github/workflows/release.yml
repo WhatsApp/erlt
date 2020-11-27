@@ -26,6 +26,8 @@ jobs:
       - buildJar
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: "actions/checkout@v2"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -44,6 +46,8 @@ jobs:
         run: ls -lah
       - name: "Build native image 'sterlang-linux'"
         run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-linux
+      - name: "if erlang-less, assume we're on mac and brew install"
+        run: "which erl || brew install erlang"
       - name: stat sterlang-linux
         run: stat sterlang-linux
       - env:
@@ -60,11 +64,15 @@ jobs:
           asset_name: sterlang-linux
           asset_path: sterlang-linux
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
+      - name: test erltc with native image
+        run: "mkdir -p erltc/priv && cp sterlang-linux erltc/priv/sterlang && make -C examples test-native"
   sterlangMacUpload:
     needs:
       - buildJar
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: "actions/checkout@v2"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -83,6 +91,8 @@ jobs:
         run: ls -lah
       - name: "Build native image 'sterlang-mac'"
         run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-mac
+      - name: "if erlang-less, assume we're on mac and brew install"
+        run: "which erl || brew install erlang"
       - name: stat sterlang-mac
         run: stat sterlang-mac
       - env:
@@ -99,6 +109,8 @@ jobs:
           asset_name: sterlang-mac
           asset_path: sterlang-mac
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
+      - name: test erltc with native image
+        run: "mkdir -p erltc/priv && cp sterlang-mac erltc/priv/sterlang && make -C examples test-native"
   uploadErltcBinary:
     runs-on: ubuntu-latest
     steps:

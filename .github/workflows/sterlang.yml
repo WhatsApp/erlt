@@ -26,6 +26,8 @@ jobs:
       - buildJar
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: "actions/checkout@v2"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -44,17 +46,23 @@ jobs:
         run: ls -lah
       - name: "Build native image 'sterlang-linux-draft'"
         run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-linux-draft
+      - name: "if erlang-less, assume we're on mac and brew install"
+        run: "which erl || brew install erlang"
       - name: upload artifacts
         uses: "actions/upload-artifact@v2"
         with:
           name: sterlang-linux-draft
           path: sterlang-linux-draft
           retention-days: '8'
+      - name: test erltc with native image
+        run: "mkdir -p erltc/priv && cp sterlang-linux-draft erltc/priv/sterlang && make -C examples test-native"
   macBinary:
     needs:
       - buildJar
     runs-on: macos-latest
     steps:
+      - name: Checkout
+        uses: "actions/checkout@v2"
       - name: Set up Java
         uses: "actions/setup-java@v1"
         with:
@@ -73,12 +81,16 @@ jobs:
         run: ls -lah
       - name: "Build native image 'sterlang-mac-draft'"
         run: native-image -R:MaxHeapSize=16m --no-server --no-fallback -jar sterlang.jar sterlang-mac-draft
+      - name: "if erlang-less, assume we're on mac and brew install"
+        run: "which erl || brew install erlang"
       - name: upload artifacts
         uses: "actions/upload-artifact@v2"
         with:
           name: sterlang-mac-draft
           path: sterlang-mac-draft
           retention-days: '8'
+      - name: test erltc with native image
+        run: "mkdir -p erltc/priv && cp sterlang-mac-draft erltc/priv/sterlang && make -C examples test-native"
   test:
     runs-on: ubuntu-latest
     steps:
@@ -92,16 +104,12 @@ jobs:
         uses: "coursier/cache-action@v3"
         with:
           root: sterlang
-      - name: download sbtn
-        run: "./sbtn/dl.sh"
       - name: Erlang version
         run: "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
       - name: assemble erltc
         run: rebar3 escriptize
-      - name: compile stErlang
-        run: "cd sterlang; ../sbtn/sbtn compile"
       - name: test stErlang
-        run: "cd sterlang; ../sbtn/sbtn test"
+        run: "cd sterlang && ../scripts/sbtn test"
       - name: "test erltc + stErlang in dev mode"
         run: make -C sterlang/examples
 name: Sterlang CI

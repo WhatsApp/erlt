@@ -7,7 +7,7 @@ build-dev: build-sterlang-jar
 	@# the dependency above on build-sterlang-jar isn't strictly necessary (since we use the daemon),
 	@# but is helpful if you later want to use the rebar shell or run erltc directly
 
-	@# we start the daemon and then pass Erlang vm args so it can connect to sterlang
+	../scripts/dl-sbtn.sh
 	cd ../sterlang && ../scripts/sbtn sterlangd
 	ERL_FLAGS="-args_file dev.vm.args" ../scripts/rebar3 compile
 
