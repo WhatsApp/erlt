@@ -3,7 +3,9 @@
 -include("erlt_build_types.hrl").
 
 % timeout for scanning or building a file
--define(TIMEOUT_FOR_FILE, 3000).
+% Note that this is high because when our team is developing erlt itself we sometimes
+% run with sterlang.jar, which is slow to start up. Consider removing the timeouts entirely.
+-define(TIMEOUT_FOR_FILE, 15000).
 
 -export([invoke/1]).
 
