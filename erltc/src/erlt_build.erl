@@ -258,6 +258,8 @@ parse_args(["--makefile" | _] = Argv, Args) ->
         makefile = Makefile
     },
     parse_args(T, NewArgs);
+parse_args(["--skip-type-checking" | _], _) ->
+    erlt_build_util:throw_error("--skip-type-checking is not allowed with --build");
 parse_args(["--erlc" | _] = Argv, Args) ->
     {Erlc, T} = get_long_option(Argv),
     NewArgs = Args#args{

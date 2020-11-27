@@ -25,6 +25,8 @@
 %% our tweaked copy of the standard compile.erl module
 -define(OTP_COMPILE, erlt_otp_compile).
 
+-define(NODE_NAME_FOR_ERLT_DEVELOPMENT, erltc_dev@localhost).
+
 %% High-level interface.
 %%
 %% TODO: implement forms() and potentialy other APIs supported by the standard compile.erl
@@ -41,7 +43,7 @@
 -import(lists, [
     member/2,
     reverse/1,
-    reverse/2,
+    reversl/2,
     keyfind/3,
     last/1,
     map/2,
@@ -150,7 +152,7 @@ do_file(File, Options0) ->
                     base_passes() ++
                     [
                         ?pass(output_etf),
-                        ?pass(erlt_typecheck),
+                        ?pass(erlt_maybe_typecheck),
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
                         ?pass(compile_erl1_forms),
@@ -178,7 +180,7 @@ do_file(File, Options0) ->
                             end},
                             done
                         ]},
-                        {unless, 'P', {unless, 'E', ?pass(erlt_typecheck)}},
+                        {unless, 'P', {unless, 'E', ?pass(erlt_maybe_typecheck)}},
                         ?pass(erlt_import),
                         ?pass(erlt_to_erl1),
                         {iff, 'A', {src_listing, "A"}},
@@ -734,6 +736,12 @@ get_erlt_deps(Forms, St0) ->
     st_time :: non_neg_integer()
 }).
 
+erlt_maybe_typecheck(Code, St) ->
+    case member(skip_type_checking, St#compile.options) of
+        false -> erlt_typecheck(Code, St);
+        true -> {ok, Code, St}
+    end.
+
 erlt_typecheck(Code, St) ->
     R = #sterlang_result{result = Res} = run_sterlang(St),
     member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
@@ -759,54 +767,74 @@ log_sterlang_result(#sterlang_result{mode = M, result = R, erltc_time = T1, st_t
     io:format("===> erltc+sterlang: ~tp~n", [{St#compile.ifile, M, element(1, R), T1, T2}]),
     true.
 
+%% @doc correct the priv dir: escript looks for it in a determinstic but incorrect place
+priv_dir() ->
+    Raw = code:priv_dir(erltc),
+    re:replace(Raw, "bin/erltc/erltc/priv", "lib/erltc/priv", [{return, list}]).
+
 -spec run_sterlang(#compile{}) -> #sterlang_result{}.
 run_sterlang(St) ->
     Start = erlang:monotonic_time('millisecond'),
     EtfFile = St#compile.etf_file,
-    {CmdMode, CheckCmd} =
-        case {filelib:is_regular("sterlang"), filelib:is_regular("sterlang.jar")} of
-            {true, _} ->
-                {native, lists:append(["./sterlang ", EtfFile])};
-            {_, true} ->
-                {jar, lists:append(["java -jar sterlang.jar ", EtfFile])};
+    SterlangPath = filename:join(
+        priv_dir(),
+        "sterlang"
+    ),
+    SterlangJarPath = SterlangPath ++ ".jar",
+    {Mode, {Result, SterlangTime}} =
+        case {node(), filelib:is_regular(SterlangJarPath), filelib:is_regular(SterlangPath)} of
+            {?NODE_NAME_FOR_ERLT_DEVELOPMENT, _, _} ->
+                % this magic node() name indicates daemon-based development,
+                % a mode that exists just for erlt team to iterate quickly
+                {daemon, call_sterlang_daemon(EtfFile)};
+            {_, true, _} ->
+                % we sometimes use the jar for faster local development of sterlang
+                CheckCmd = io_lib:format("java -jar ~s ~s", [SterlangJarPath, EtfFile]),
+                {jar, spawn_sterlang(CheckCmd)};
+            {_, _, true} ->
+                % real users should only ever hit this code path
+                CheckCmd = io_lib:format("~s ~s", [SterlangPath, EtfFile]),
+                {native, spawn_sterlang(CheckCmd)};
             _ ->
-                {undefined, undefined}
-        end,
-    {Mode, Result, SterlangTime} =
-        case {CmdMode, is_alive()} of
-            {undefined, false} ->
-                {skipped, {ok, []}, undefined};
-            {undefined, true} ->
-                Ref = erlang:monitor(process, {api, sterlangd@localhost}),
-                {api, sterlangd@localhost} ! {check, self(), Ref, EtfFile},
-                Res1 =
-                    receive
-                        {'DOWN', Ref, _, _, noconnection} ->
-                            {daemon, {error, undefined, "No connection to sterlangd@localhost"},
-                                undefined};
-                        {'DOWN', Ref, _, _, Reason} ->
-                            Error = io_lib:format(
-                                "Connection to sterlangd@localhost failed. Reason: ~p",
-                                [Reason]
-                            ),
-                            {daemon, {error, undefined, Error}, undefined};
-                        {Ref, Res, StTime} ->
-                            {daemon, Res, StTime}
-                    end,
-                erlang:demonitor(Ref, [flush]),
-                Res1;
-            _ ->
-                case erlt_util:command(CheckCmd) of
-                    {0, StdOutOutput} ->
-                        {Res, StTime} = binary_to_term(list_to_binary(StdOutOutput)),
-                        {CmdMode, Res, StTime};
-                    {_, Output} ->
-                        {CmdMode, {error, undefined, Output}, undefined}
-                end
+                Msg = lists:flatten(
+                    io_lib:format(
+                        "Bad install of erltc: could not find the type checker. Expected it to be at ~s",
+                        [SterlangPath]
+                    )
+                ),
+                erlang:error({no_type_checker, Msg})
         end,
     End = erlang:monotonic_time('millisecond'),
     Time = End - Start,
     #sterlang_result{mode = Mode, result = Result, erltc_time = Time, st_time = SterlangTime}.
+
+call_sterlang_daemon(EtfFile) ->
+    Ref = erlang:monitor(process, {api, sterlangd@localhost}),
+    {api, sterlangd@localhost} ! {check, self(), Ref, EtfFile},
+    Res1 =
+        receive
+            {'DOWN', Ref, _, _, noconnection} ->
+                {{error, undefined, "No connection to sterlangd@localhost"}, undefined};
+            {'DOWN', Ref, _, _, Reason} ->
+                Error = io_lib:format(
+                    "Connection to sterlangd@localhost failed. Reason: ~p",
+                    [Reason]
+                ),
+                {daemon, {error, undefined, Error}, undefined};
+            {Ref, Res, StTime} ->
+                {Res, StTime}
+        end,
+    erlang:demonitor(Ref, [flush]),
+    Res1.
+
+spawn_sterlang(CheckCmd) ->
+    case erlt_util:command(CheckCmd) of
+        {0, StdOutOutput} ->
+            {Res, StTime} = binary_to_term(list_to_binary(StdOutOutput)),
+            {Res, StTime};
+        {_, Output} ->
+            {{error, undefined, Output}, undefined}
+    end.
 
 erlt_to_erl1(Code, St) ->
     case erlt_struct:module(Code, St#compile.global_defs) of
