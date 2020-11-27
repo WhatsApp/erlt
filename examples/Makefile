@@ -1,9 +1,36 @@
 DIRS := calc dev dev_enum dev_struct doc elm_core erltodo typed_libs
 
-build:
-	../sbtn/dl.sh
-	cd ../sterlang; ../sbtn/sbtn sterlangd
-	ERL_FLAGS="-args_file dev.vm.args" rebar3 compile
+build: $(if $(ERLTCI),build-ci,build-dev) 
+	echo "env var ERLTCI is set to $(ERLTCI)"
+
+build-dev: build-sterlang-jar
+	@# the dependency above on build-sterlang-jar isn't strictly necessary (since we use the daemon),
+	@# but is helpful if you later want to use the rebar shell or run erltc directly
+
+	@# we start the daemon and then pass Erlang vm args so it can connect to sterlang
+	cd ../sterlang && ../scripts/sbtn sterlangd
+	ERL_FLAGS="-args_file dev.vm.args" ../scripts/rebar3 compile
+
+build-ci:
+	../scripts/rebar3 compile
+
+ # we depend on `clean` because that will force rebar to copy over the priv dir containing
+ # sterlang.jar
+build-sterlang-jar: clean
+	make -C ../sterlang
+
+# test using sterlang jar file. This is a good balance for erltc CI on each push
+# because it is closer what the users will use than sterlangd (daemon) and not as slow to build as a native binary
+test-jar: build-sterlang-jar
+	@# call self with ERLTCI env var set to true: in the `build` step we use this env var
+	ERLTCI=true make -C . test
+
+# test using a native sterlang binary. This is ideal for our release ci, where correctness is more important than speed
+test-native: clean
+	@test -f ../erltc/priv/sterlang || (echo "sterlang native binary is required, see <repo>/examples/README.md" && $$(exit 2))
+	rm -f ../erltc/priv/sterlang.jar
+	@# call self with ERLTCI env var set to true: in the `build` step we use this env var
+	ERLTCI=true make -C . test
 
 clean:
 	rm -rf _build
@@ -57,4 +84,5 @@ test-interop: build
 
 test: test-ir test-beam test-interop test-others
 
-.PHONY: build clean ir test-ir update-ir-spec test-beam test-interop
+.PHONY: build build-ci build-dev build-sterlang-jar clean ir update-ir-spec \
+		test-native test-jar test-beam test-interop test-ir 

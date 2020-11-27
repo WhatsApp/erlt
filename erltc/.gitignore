@@ -1,5 +1,2 @@
-*._.ml
-*._.mli
-*.cmi
-*.cmo
+priv/
 
