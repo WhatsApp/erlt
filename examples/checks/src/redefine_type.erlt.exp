@@ -1,1 +1,4 @@
 redefine_type.erlt:7:1: type foo already defined
+%    7| -opaque foo(T) :: {T}.
+%     | ^^^^^^^^^^^^^^^^^^^^^
+

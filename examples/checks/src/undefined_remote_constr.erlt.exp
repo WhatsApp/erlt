@@ -1,1 +1,4 @@
-undefined_remote_constr.erlt:7:3: enum define_enum:foo has no variant baz
+undefined_remote_constr.erlt:8:1: syntax error before: -
+%    8| -enum foo() :: (bar).
+%     | ^
+

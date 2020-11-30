@@ -1,4 +1,24 @@
-remote_types.erlt:10:35: type undefined_module:type() undefined
-remote_types.erlt:12:34: type remote_types:undefined_type() undefined
-remote_types.erlt:14:31: type remote_types:type is defined with 0 parameters, 1 given
-remote_types.erlt:16:27: type remote_types:private() is private
+remote_types.erlt:10:1: type check_undefined_module() is unused
+%   10| -type check_undefined_module() :: undefined_module:type().
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+remote_types.erlt:12:1: type check_undefined_type() is unused
+%   12| -type check_undefined_type() :: ?MODULE:undefined_type().
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+remote_types.erlt:14:1: type check_wrong_arity() is unused
+%   14| -type check_wrong_arity() :: ?MODULE:type(integer()).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+remote_types.erlt:16:1: type check_private() is unused
+%   16| -type check_private() :: ?MODULE:private().
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+remote_types.erlt:18:1: type check_ok() is unused
+%   18| -type check_ok() :: {?MODULE:type(), ?MODULE:struct(), ?MODULE:enum(), ?MODULE:opaque(), ?MODULE:unchecked()}.
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+remote_types.erlt:31:1: type private() is unused
+%   31| -type private() :: integer().
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

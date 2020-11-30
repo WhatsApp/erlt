@@ -1,5 +1,24 @@
 shadow_var.erlt:22:12: variable 'Y' is already bound - must write '^Y' to use value in pattern
+%   22|     {'ok', Y} = X,
+%     |            ^
+
 shadow_var.erlt:24:16: variable 'Y' is already bound - must write '^Y' to use value in pattern
+%   24|         {'ok', Y} -> true;
+%     |                ^
+
 shadow_var.erlt:37:10: variable 'Y' is already bound - must write '^Y' to use value in pattern
+%   37|         {Y} -> true
+%     |          ^
+
 shadow_var.erlt:42:19: variable 'Y' is already bound - must write '^Y' to use value in pattern
+%   42|         #str{id = Y} -> true
+%     |                   ^
+
 shadow_var.erlt:47:18: variable 'Y' is already bound - must write '^Y' to use value in pattern
+%   47|         ab.a{a = Y} -> true
+%     |                  ^
+
+shadow_var.erlt:54:15: type variable 'A' is only used once (is unbound)
+%   54| -spec g(_X, [{A,B}]) -> [B].
+%     |               ^
+

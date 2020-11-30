@@ -1,2 +1,4 @@
-erlt_compile: warnings being treated as errors
 unused_enum.erlt:7:1: type unused() is unused
+%    7| -enum unused :: (x).
+%     | ^^^^^^^^^^^^^^^^^^^
+

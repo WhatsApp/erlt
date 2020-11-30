@@ -1,1 +1,4 @@
 export_type_with_unexported_type.erlt:5:31: The definition of an exported type: exported_type(_) contains the local type local_type
+%    5| -type exported_type(A) :: {A, local_type()}.
+%     |                               ^^^^^^^^^^^^
+

@@ -1,1 +1,4 @@
 unspecced_functions.erlt:6:1: The exported checked function unspecced() has no spec.
+%    6| unspecced() -> local_unspecced().
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

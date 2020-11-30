@@ -1,1 +1,4 @@
 redefine_struct.erlt:6:1: type foo already defined
+%    6| -struct foo :: (a :: integer()).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

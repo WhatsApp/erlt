@@ -1,7 +1,32 @@
 enum_positional.erlt:7:43: positional field defined after labelled fields
+%    7| -enum invalid :: (variant{a :: integer(), float()}).
+%     |                                           ^^^^^^^
+
 enum_positional.erlt:15:9: 0 positional fields provided when 1 expected in enum enum.variant
+%   15|         enum.variant{a = 10, 1.0},
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 enum_positional.erlt:15:30: positional field defined after labelled fields
+%   15|         enum.variant{a = 10, 1.0},
+%     |                              ^^^
+
 enum_positional.erlt:16:9: 0 positional fields provided when 1 expected in enum enum.variant
+%   16|         enum.variant{a = 10},
+%     |         ^^^^^^^^^^^^^^^^^^^^
+
 enum_positional.erlt:17:27: 2 positional fields provided when 1 expected in enum enum.variant
+%   17|         enum.variant{1.0, 1.0, a = 10},
+%     |                           ^^^
+
 enum_positional.erlt:19:9: field b of enum enum2.variant has no initializer or default value
+%   19|         enum2.variant{1.0, a = 1, 10}
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 enum_positional.erlt:19:35: positional field defined after labelled fields
+%   19|         enum2.variant{1.0, a = 1, 10}
+%     |                                   ^^
+
+enum_positional.erlt:7:1: type invalid() is unused
+%    7| -enum invalid :: (variant{a :: integer(), float()}).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

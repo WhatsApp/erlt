@@ -1,2 +1,8 @@
 redefine_imported_enum.erlt:5:1: type bar already defined
+%    5| -import_type(no_need_to_exist, [bar/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 redefine_imported_enum.erlt:8:1: type foo already imported from no_need_to_exist
+%    8| -enum foo :: (a).
+%     | ^^^^^^^^^^^^^^^^
+

@@ -1,2 +1,4 @@
 undefined_struct.erlt:7:5: struct does_not_exist undefined
-undefined_struct.erlt:10:5: struct some_module:does_not_exist undefined
+%    7|     #does_not_exist{}.
+%     |     ^^^^^^^^^^^^^^^^^
+

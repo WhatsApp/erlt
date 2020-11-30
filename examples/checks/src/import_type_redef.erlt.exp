@@ -1,4 +1,16 @@
 import_type_redef.erlt:6:1: type f imported twice
+%    6| -import_type(bar, [f/2]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^
+
 import_type_redef.erlt:8:1: type a imported twice
+%    8| -import_type(baz, [a/0, a/1]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 import_type_redef.erlt:12:1: type f already imported from foo
+%   12| -type f() :: integer().
+%     | ^^^^^^^^^^^^^^^^^^^^^^
+
 import_type_redef.erlt:14:20: imported type f(_,_) used with the wrong number of arguments
+%   14| -spec f() -> foo:f(f(), atom()).
+%     |                    ^^^
+

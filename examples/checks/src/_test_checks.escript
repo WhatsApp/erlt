@@ -17,27 +17,14 @@
 -mode(compile).
 
 main(Files) ->
-    Run = fun(ErltFile) ->
-        ExpOutputFile = ErltFile ++ ".exp",
-        case file:read_file(ExpOutputFile) of
-            {error, Reason} ->
-                {error, "expectation file ~ts not found: ~ts~n", [ExpOutputFile, file:format_error(Reason)]};
-            {ok, ExpOutput} ->
-                Command = "erltc +brief +warnings_as_errors --build-dir ../deps " ++ ErltFile,
-                case eunit_lib:command(Command) of
-                    {0, _} ->
-                        {error, "`~ts` has not failed~n", [Command]};
-                    {_, ActualOutput} ->
-                        case string:find(ActualOutput, ExpOutput, leading) of
-                            nomatch ->
-                                {error,
-                                    "`~ts`~nExpected to see an output with:~n~n~s~nGot:~n~n~s~n",
-                                    [Command, ExpOutput, ActualOutput]};
-                            _ ->
-                                io:format("OK (~s)~n", [ErltFile]),
-                                ok
-                        end
-                end
+    Run =
+    fun(ErltFile) ->
+        Builddir = tmpdirname(ErltFile),
+        ok = file:make_dir(Builddir),
+        try
+            compile_file(ErltFile, Builddir)
+        after
+            file:del_dir_r(Builddir)
         end
     end,
 
@@ -46,6 +33,34 @@ main(Files) ->
             ok;
         Errors ->
             lists:foreach(fun({error, Fmt, Args}) -> io:format(Fmt, Args) end, Errors)
+    end.
+
+tmpdirname(ErltFile) ->
+    "_build_"++ErltFile++integer_to_list(erlang:system_time()).
+
+compile_file(ErltFile, Builddir) ->
+    ExpOutputFile = ErltFile ++ ".exp",
+    Command = "erltc compile +warnings_as_errors --build-dir " ++ Builddir ++ " -o " ++ Builddir ++ " --build " ++ ErltFile,
+    case eunit_lib:command(Command) of
+        {0, Output} ->
+            {error, "compilation succeeded unexpectedly, output: ~s", [Output]};
+        {_, ActualOutput} ->
+            case file:read_file(ExpOutputFile) of
+                {error, Reason} ->
+                    file:write_file(ExpOutputFile++".new", ActualOutput),
+                    {error, "expectation file ~ts not found: ~ts~n", [ExpOutputFile, file:format_error(Reason)]};
+                {ok, ExpOutput} ->
+                    case string:equal(string:trim(ActualOutput), string:trim(ExpOutput)) of
+                        false ->
+                            file:write_file(ExpOutputFile++".new", ActualOutput),
+                            {error,
+                                "`~ts`~nExpected to see an output with:~n~n~s~nGot:~n~n~s~n",
+                                [Command, ExpOutput, ActualOutput]};
+                        true ->
+                            io:format("OK (~s)~n", [ErltFile]),
+                            ok
+                    end
+            end
     end.
 
 parallel(Fun, List) ->

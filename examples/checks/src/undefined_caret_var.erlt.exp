@@ -1,3 +1,12 @@
 undefined_caret_var.erlt:7:4: variable 'X' is unbound
+%    7| f(^X) ->
+%     |    ^
+
 undefined_caret_var.erlt:12:14: variable 'Q' is unbound
+%   12|     {'foo', ^Q} = X.
+%     |              ^
+
 undefined_caret_var.erlt:17:18: variable 'Q' is unbound
+%   17|         {'foo', ^Q} -> 'ok';
+%     |                  ^
+
