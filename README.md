@@ -6,9 +6,10 @@ code bases.
 
 ## Quick Links
 
+ - **[Play](./play/README.md)** - The best way to get started is to read this README, then `rebar3 new erlt <app-name>` in the `play` directory.
 - **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
 - **[ErlT Reference](./doc/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
- - **[Play](./play/README.md)** - A collection of small ErlT projects that demonstrate how the language can be used
+ -  A collection of small ErlT projects that demonstrate how the language can be used
 - **[Tests](./tests/README.md)**
 
 ## Introduction
@@ -33,86 +34,7 @@ with some features banned, in particular:
 
 ## Getting started using ErlT
 
-**More coming soon**
-
-
-## Working on the ErlT project itself
-
-### Repository Structure
-
-This repository is for prototyping and collaborating around the ErlT language. It consists of these sub-projects:
-- `./erltc` - erltc is the compiler for ErlT. erltc does not compile classic Erlang or do type-checking.
-- `./sterlang` - stErlang is standalone type-checker for the checked parts of ErlT
-- `./analyzer` - this tool gets information about properties of an Erlang project. For available analyses and how to run them, see [./analyzer/README.md](./analyzer/README.md).
-
-> See ./doc/08_compiler_architecture.md for more information about how these parts work together
-> See the top-level READMEs for each of these sub-directories for more information about a particular tool
-
-### Prerequisites
-
-- [erlang](https://www.erlang.org/) with OTP 23 or higher
-- [rebar3](https://www.rebar3.org/) version 3.14.1 or higher
-- [sbt](https://www.scala-sbt.org/)
-
-Use your platform's standard mechanism for obtaining these tools, e.g. on MacOS:
-
-```
-brew install erlang rebar3 sbt
-```
-
-### Building
-
-`erltc`:
-
-```
-rebar3 compile
-```
-
-`stErlang`:
-
-```
-cd sterlang; sbt assembly
-```
-
-built-in definitions and modules: see [./erltc/built_ins/README.md](./erltc/built_ins/README.md)
-
-
-### Testing
-
-#### erltc tests
-
-``` sh
-make -C tests test # runs the tests in ./tests
-
-make -C tests/<example-dir> # build the example in <example-dir>
-make -C tests/elm-core # build the example based on the Elm standard library
-```
-
-The tests for erltc come in these two flavors:
-- the tests under `./tests/check` verify compiler errors against .exp files. Run these with `make -C tests/check/src`
-- the other tests in `./tests` verify the compiler against .P files, which are represent the Erlang AST.
-    - See [./tests/README.md]( ./tests/README.md )for more information about running and updating these tests
-    - See also [erltc_architecture](./doc/08_compiler_architecture.md).
-
-
-#### stErlang tests
-
-```
-cd sterlang/
-sbt test
-```
-
-## Development
-
-See [here](doc/01_intro.md#development).
-
-# Join the ErlT community
-
-See the [CONTRIBUTING](CONTRIBUTING.md) file for how to help out.
-
-## License
-
-erl2 is Apache licensed, as found in the LICENSE file.
+See [./play/README.md](./play/README.md)
 
 ## IDE Support
 
@@ -168,3 +90,7 @@ to do it this way, as we will have a language server real soon now.
 ### VS Code
 
 **Coming soon**
+
+## Working on the ErlT project itself
+
+See [./CONTRIBUTING.md](./CONTRIBUTING.md)
