@@ -81,7 +81,15 @@ test-interop: build
 	@stat _build/default/lib/calc/ebin/calc_lexer.beam &> /dev/null
 	@stat _build/default/lib/calc/ebin/calc_parser.beam &> /dev/null && echo ok
 
+test-templates: build-sterlang-jar
+	# test that our template generation works
+	rm -rf ../play/test_app
+	cd ../play && ../scripts/rebar3 new erlt test_app
+	cd ../play/test_app && ../../scripts/rebar3 compile
+	cd ../play/test_app && ../../scripts/rebar3 escriptize
+	../play/test_app/_build/default/bin/test_app | grep 'hello test_app' > /dev/null
+
 test: test-ir test-beam test-interop test-others
 
 .PHONY: build build-ci build-dev build-sterlang-jar clean ir update-ir-spec \
-		test-native test-jar test-beam test-interop test-ir 
+		test-native test-jar test-beam test-interop test-ir test-templates

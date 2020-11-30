@@ -1,0 +1,6 @@
+-module({{name}}).
+-export([main/1]).
+
+-spec main(_) -> atom().
+main(_Args) ->
+    t_io:format("hello {{name}}~n").
