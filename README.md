@@ -8,7 +8,8 @@ code bases.
 
 - **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
 - **[ErlT Reference](./doc/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
-- **[Examples](./examples/README.md)** - A collection of small ErlT projects that demonstrate how the language can be used
+ - **[Play](./play/README.md)** - A collection of small ErlT projects that demonstrate how the language can be used
+- **[Tests](./tests/README.md)**
 
 ## Introduction
 
@@ -81,16 +82,16 @@ built-in definitions and modules: see [./erltc/built_ins/README.md](./erltc/buil
 #### erltc tests
 
 ``` sh
-make -C examples test # runs the tests in ./examples
+make -C tests test # runs the tests in ./tests
 
-make -C examples/<example-dir> # build the example in <example-dir>
-make -C examples/elm-core # build the example based on the Elm standard library
+make -C tests/<example-dir> # build the example in <example-dir>
+make -C tests/elm-core # build the example based on the Elm standard library
 ```
 
 The tests for erltc come in these two flavors:
-- the tests under `./examples/check` verify compiler errors against .exp files. Run these with `make -C examples/check/src`
-- the other tests in `./examples` verify the compiler against .P files, which are represent the Erlang AST.
-    - See [./examples/README.md]( ./examples/README.md )for more information about running and updating these tests
+- the tests under `./tests/check` verify compiler errors against .exp files. Run these with `make -C tests/check/src`
+- the other tests in `./tests` verify the compiler against .P files, which are represent the Erlang AST.
+    - See [./tests/README.md]( ./tests/README.md )for more information about running and updating these tests
     - See also [erltc_architecture](./doc/08_compiler_architecture.md).
 
 
