@@ -1,0 +1,8 @@
+{description, "ErlT App"}.
+{variables, [
+    {name, "my_app", "Name of your app"}
+]}.
+{template, "rebar.template.config", "{{name}}/rebar.config"}.
+{template, "app.template.src", "{{name}}/src/{{name}}.app.src"}.
+{template, "main.template.erlt", "{{name}}/src/{{name}}.erlt"}.
+{template, "README.template.md", "{{name}}/src/README.md"}.
