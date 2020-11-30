@@ -1,6 +1,10 @@
 -module(erlang).
 
--export([display/1, error/1, error/2, is_integer/1, is_list/1, length/1]).
+-export([display/1, error/1, error/2, is_integer/1, is_list/1, length/1, max/2]).
+
+-export_type([option/1]).
+
+-enum option(V) :: (none, value{V}).
 
 -spec stub() -> _.
 [unchecked]
@@ -34,3 +38,6 @@ is_integer(_) ->
 is_list(_) ->
     stub().
 
+-spec max(A, A) -> A.
+max(_, _) ->
+    stub().

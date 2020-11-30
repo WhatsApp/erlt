@@ -721,7 +721,7 @@ get_compile_deps(Forms, St) ->
 get_erlt_deps(Forms, St0) ->
     RawDeps = erlt_deps:dt_deps(Forms),
     F = St0#compile.ifile,
-    [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps].
+    [resolve_defs_file({F, L}, M, St0) || {L, M} <- RawDeps, M =/= erlang].
 
 -type range() ::
     {{Line1 :: integer(), Column1 :: integer()}, {Line2 :: integer(), Column2 :: integer()}}

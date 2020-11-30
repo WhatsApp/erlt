@@ -1,4 +1,4 @@
-DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
+DIRS := calc dev dev_enum dev_struct doc elm_core erltodo typed_libs
 
 build:
 	../sbtn/dl.sh
