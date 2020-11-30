@@ -125,9 +125,13 @@ make_erl_options(Opts) ->
 % Escript entry point
 main(Args) ->
     case api(Args) of
-        ok -> my_halt(0);
-        error -> my_halt(1);
-        _ -> my_halt(2)
+        ok ->
+            my_halt(0);
+        error ->
+            my_halt(1);
+        {error, Msg} ->
+            io:format(standard_error, "Error: ~p~n", [Msg]),
+            my_halt(2)
     end.
 
 % rebar3 entry point
