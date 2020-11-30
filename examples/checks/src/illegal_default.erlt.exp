@@ -1,6 +1,37 @@
 illegal_default.erlt:4:9: call to local/imported function local/0 is illegal in guard
+%    4|     a = local() :: integer(),
+%     |         ^^^^^^^
+
 illegal_default.erlt:5:10: illegal default expression
+%    5|     b = {node(), self()} :: any(),
+%     |          ^^^^^^
+
 illegal_default.erlt:5:18: illegal default expression
+%    5|     b = {node(), self()} :: any(),
+%     |                  ^^^^^^
+
 illegal_default.erlt:6:10: illegal default expression
+%    6|     c = {erlang:node(), erlang:self()} :: any(),
+%     |          ^^^^^^^^^^^^^
+
 illegal_default.erlt:6:25: illegal default expression
+%    6|     c = {erlang:node(), erlang:self()} :: any(),
+%     |                         ^^^^^^^^^^^^^
+
 illegal_default.erlt:8:9: illegal default expression
+%    8|     e = io:put_chars("What?!") :: any()
+%     |         ^^^^^^^^^^^^^^^^^^^^^^
+
+illegal_default.erlt:3:1: type foo() is unused
+%    2| 
+%    3| -struct foo :: (
+%     | ^^^^^^^^^^^^^^^^
+%    4|     a = local() :: integer(),
+%     | ...
+%    9| ).
+%   10| 
+
+illegal_default.erlt:11:1: function local/0 is unused
+%   11| local() -> 1.
+%     | ^^^^^^^^^^^^
+

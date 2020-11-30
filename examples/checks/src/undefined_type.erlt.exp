@@ -1,1 +1,4 @@
 undefined_type.erlt:4:19: type t1() undefined
+%    4| -spec mk_str() -> t1().
+%     |                   ^^^^
+

@@ -1,1 +1,4 @@
 export_enum_with_unexported_type.erlt:5:39: The definition of an exported enum: exported_enum(_) contains the local type local_type
+%    5| -enum exported_enum(A) :: (variant{A, local_type()}).
+%     |                                       ^^^^^^^^^^^^
+

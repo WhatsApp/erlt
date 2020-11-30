@@ -1,1 +1,4 @@
-undefined_remote_enum.erlt:7:3: enum foo:bar undefined
+undefined_remote_enum.erlt:7:4: enum undefined_remote_enum:bar undefined
+%    7| f(?MODULE:bar.baz) ->
+%     |    ^^^^^^^^^^^^^^
+

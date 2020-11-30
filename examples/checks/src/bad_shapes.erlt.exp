@@ -1,4 +1,16 @@
 bad_shapes.erlt:9:33: field a already defined for this shape type
+%    9| -spec test() -> #(a::integer(), a::float()).
+%     |                                 ^^^^^^^^^^
+
 bad_shapes.erlt:11:34: field id already defined for this shape type
+%   11| -type my_map(A, B) :: #(id :: A, id :: B).
+%     |                                  ^^^^^^^
+
 bad_shapes.erlt:14:11: field a used more than once in the same shape
+%   14|     #(a=1,a=2).
+%     |           ^^^
+
 bad_shapes.erlt:16:13: field a used more than once in the same shape
+%   16| test(#(a=X, a=Y)) ->
+%     |             ^^^
+

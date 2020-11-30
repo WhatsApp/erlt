@@ -1,12 +1,48 @@
 type_vars.erlt:4:13: type variable 'A' appears multiple times in type arguments
+%    4| -type x1(A, A) :: A.
+%     |             ^
+
 type_vars.erlt:5:10: _ is not a valid name for a type argument
+%    5| -type x2(_) :: integer().
+%     |          ^
+
 type_vars.erlt:6:15: The '_' type is not supported by the type system
+%    6| -type x3() :: _.
+%     |               ^
+
 type_vars.erlt:8:15: type variable 'A' appears multiple times in type arguments
+%    8| -struct y1(A, A) :: (a :: A).
+%     |               ^
+
 type_vars.erlt:9:12: _ is not a valid name for a type argument
+%    9| -struct y2(_) :: (a :: integer()).
+%     |            ^
+
 type_vars.erlt:10:21: The '_' type is not supported by the type system
+%   10| -struct y3 :: (a :: _).
+%     |                     ^
+
 type_vars.erlt:12:15: type variable 'A' appears multiple times in type arguments
+%   12| -opaque z1(A, A) :: A.
+%     |               ^
+
 type_vars.erlt:13:12: _ is not a valid name for a type argument
+%   13| -opaque z2(_) :: integer().
+%     |            ^
+
 type_vars.erlt:14:17: The '_' type is not supported by the type system
+%   14| -opaque z3() :: _.
+%     |                 ^
+
 type_vars.erlt:16:13: type variable 'A' appears multiple times in type arguments
+%   16| -enum e1(A, A) :: (e{value :: A}).
+%     |             ^
+
 type_vars.erlt:17:10: _ is not a valid name for a type argument
+%   17| -enum e2(_) :: (e{value :: integer()}).
+%     |          ^
+
 type_vars.erlt:18:27: The '_' type is not supported by the type system
+%   18| -enum e3() :: (e{value :: _}).
+%     |                           ^
+

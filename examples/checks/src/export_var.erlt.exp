@@ -1,27 +1,108 @@
 export_var.erlt:68:7: variable 'Case' exported from 'case' (line 14, column 5)
+%   68|       Case,
+%     |       ^^^^
+
 export_var.erlt:69:7: variable 'If' exported from 'if' (line 18, column 5)
+%   69|       If,
+%     |       ^^
+
 export_var.erlt:70:7: variable 'Receive' exported from 'receive' (line 22, column 5)
+%   70|       Receive,
+%     |       ^^^^^^^
+
 export_var.erlt:72:7: variable 'BlockVar' exported from block (line 45, column 5)
+%   72|       BlockVar,
+%     |       ^^^^^^^^
+
 export_var.erlt:73:7: variable 'LocalCallArg' exported from call (line 48, column 5)
+%   73|       LocalCallArg,
+%     |       ^^^^^^^^^^^^
+
 export_var.erlt:74:7: variable 'RemoteCallArg' exported from call (line 49, column 5)
+%   74|       RemoteCallArg,
+%     |       ^^^^^^^^^^^^^
+
 export_var.erlt:75:7: variable 'DynRemoteCallArg' exported from call (line 50, column 5)
+%   75|       DynRemoteCallArg,
+%     |       ^^^^^^^^^^^^^^^^
+
 export_var.erlt:76:7: variable 'UnaryOpArg' exported from '-' (line 51, column 5)
+%   76|       UnaryOpArg,
+%     |       ^^^^^^^^^^
+
 export_var.erlt:77:7: variable 'RightBinaryOpArg' exported from '*' (line 52, column 5)
+%   77|       RightBinaryOpArg, LeftBinaryOpArg,
+%     |       ^^^^^^^^^^^^^^^^
+
 export_var.erlt:77:25: variable 'LeftBinaryOpArg' exported from '/' (line 53, column 5)
+%   77|       RightBinaryOpArg, LeftBinaryOpArg,
+%     |                         ^^^^^^^^^^^^^^^
+
 export_var.erlt:78:7: variable 'AndAlsoLeftArg' exported from 'andalso' (line 54, column 5)
+%   78|       AndAlsoLeftArg,
+%     |       ^^^^^^^^^^^^^^
+
 export_var.erlt:79:7: variable 'TupleArg' exported from tuple (line 55, column 9)
+%   79|       TupleArg,
+%     |       ^^^^^^^^
+
 export_var.erlt:80:7: variable 'ConsHeadArg' exported from list (line 56, column 9)
+%   80|       ConsHeadArg, ConsTailArg,
+%     |       ^^^^^^^^^^^
+
 export_var.erlt:80:20: variable 'ConsTailArg' exported from list (line 56, column 9)
+%   80|       ConsHeadArg, ConsTailArg,
+%     |                    ^^^^^^^^^^^
+
 export_var.erlt:81:7: variable 'MapVal' exported from map (line 57, column 11)
+%   81|       MapVal,
+%     |       ^^^^^^
+
 export_var.erlt:82:7: variable 'MapUpdateVal' exported from map (line 58, column 9)
+%   82|       MapUpdateVal, MapUpdateArg,
+%     |       ^^^^^^^^^^^^
+
 export_var.erlt:82:21: variable 'MapUpdateArg' exported from map (line 58, column 9)
+%   82|       MapUpdateVal, MapUpdateArg,
+%     |                     ^^^^^^^^^^^^
+
 export_var.erlt:83:7: variable 'BinaryVal' exported from binary (line 59, column 9)
+%   83|       BinaryVal,
+%     |       ^^^^^^^^^
+
 export_var.erlt:84:7: variable 'EnumVal' exported from enum (line 60, column 13)
+%   84|       EnumVal,
+%     |       ^^^^^^^
+
 export_var.erlt:85:7: variable 'ShapeVal' exported from shape (line 61, column 13)
+%   85|       ShapeVal,
+%     |       ^^^^^^^^
+
 export_var.erlt:86:7: variable 'ShapeUpdateVal' exported from shape (line 62, column 9)
+%   86|       ShapeUpdateVal, ShapeUpdateArg,
+%     |       ^^^^^^^^^^^^^^
+
 export_var.erlt:86:23: variable 'ShapeUpdateArg' exported from shape (line 62, column 9)
+%   86|       ShapeUpdateVal, ShapeUpdateArg,
+%     |                       ^^^^^^^^^^^^^^
+
 export_var.erlt:87:7: variable 'ShapeFieldArg' exported from shape (line 63, column 9)
+%   87|       ShapeFieldArg,
+%     |       ^^^^^^^^^^^^^
+
 export_var.erlt:88:7: variable 'StructVal' exported from struct (line 64, column 14)
+%   88|       StructVal,
+%     |       ^^^^^^^^^
+
 export_var.erlt:89:7: variable 'StructUpdateVal' exported from struct (line 65, column 9)
+%   89|       StructUpdateVal, StructUpdateArg,
+%     |       ^^^^^^^^^^^^^^^
+
 export_var.erlt:89:24: variable 'StructUpdateArg' exported from struct (line 65, column 9)
+%   89|       StructUpdateVal, StructUpdateArg,
+%     |                        ^^^^^^^^^^^^^^^
+
 export_var.erlt:90:7: variable 'StructFieldArg' exported from struct (line 66, column 9)
+%   90|       StructFieldArg
+%     |       ^^^^^^^^^^^^^^
+

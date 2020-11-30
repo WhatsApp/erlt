@@ -1,3 +1,5 @@
-erlt_compile: warnings being treated as errors
 import_type_builtin.erlt:5:1: import directive overrides auto-imported builtin type integer/0
  - use "-compile({no_auto_import,[integer/0]})." to resolve name clash
+%    5| -import_type(foo, [integer/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

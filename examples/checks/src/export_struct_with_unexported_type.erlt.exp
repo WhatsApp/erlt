@@ -1,1 +1,4 @@
 export_struct_with_unexported_type.erlt:5:41: The definition of an exported struct: exported_struct(_) contains the local type local_type
+%    5| -struct exported_struct(A) :: (a::A, b::local_type()).
+%     |                                         ^^^^^^^^^^^^
+

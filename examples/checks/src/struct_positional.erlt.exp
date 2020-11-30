@@ -1,7 +1,32 @@
 struct_positional.erlt:5:37: positional field defined after labelled fields
+%    5| -struct invalid :: (a :: integer(), float()).
+%     |                                     ^^^^^^^
+
 struct_positional.erlt:13:9: 0 positional fields provided when 1 expected in struct struct
+%   13|         #struct{a = 10, 1.0},
+%     |         ^^^^^^^^^^^^^^^^^^^^
+
 struct_positional.erlt:13:25: positional field defined after labelled fields
+%   13|         #struct{a = 10, 1.0},
+%     |                         ^^^
+
 struct_positional.erlt:14:9: 0 positional fields provided when 1 expected in struct struct
+%   14|         #struct{a = 10},
+%     |         ^^^^^^^^^^^^^^^
+
 struct_positional.erlt:15:22: 2 positional fields provided when 1 expected in struct struct
+%   15|         #struct{1.0, 1.0, a = 10},
+%     |                      ^^^
+
 struct_positional.erlt:17:9: field b of struct struct2 has no initializer or default value
+%   17|         #struct2{1.0, a = 1, 10}
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^
+
 struct_positional.erlt:17:30: positional field defined after labelled fields
+%   17|         #struct2{1.0, a = 1, 10}
+%     |                              ^^
+
+struct_positional.erlt:5:1: type invalid() is unused
+%    5| -struct invalid :: (a :: integer(), float()).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

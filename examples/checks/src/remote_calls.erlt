@@ -33,7 +33,7 @@ checked() -> 0.
 unchecked_spec() -> 0.
 
 [unchecked]
-unchecked() -> 0.
+unchecked() -> private().
 
 private() -> 0.
 

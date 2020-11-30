@@ -3,8 +3,12 @@
 
 -export([f/1]).
 
+-export_type([foo/0])
+
+-enum foo() :: (bar).
+
 %% Error: referring to an unknown constructor in an existing enum
-f(define_enum:foo.baz) ->
+f(?MODULE:foo.baz) ->
     true.
 
 -spec f(_A) -> boolean().

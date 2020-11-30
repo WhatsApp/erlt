@@ -1,9 +1,36 @@
 bad_modifiers.erlt:5:1: syntax error before: [
+%    5| [opaque]
+%     | ^
+
 bad_modifiers.erlt:9:10: opaque used twice in a modifier list
+%    9| [opaque, opaque]
+%     |          ^
+
 bad_modifiers.erlt:12:21: special is an illegal modifier
+%   12| [opaque, unchecked, special]
+%     |                     ^
+
 bad_modifiers.erlt:16:1: Only opaque types can be unchecked
+%   16| -type z() :: integer().
+%     | ^
+
 bad_modifiers.erlt:18:12: syntax error before: ]
+%   18| [unchecked,]
+%     |            ^
+
 bad_modifiers.erlt:21:2: syntax error before: ]
+%   21| []
+%     |  ^
+
 bad_modifiers.erlt:24:2: fantastic is an illegal modifier
+%   24| [fantastic]
+%     |  ^
+
 bad_modifiers.erlt:29:13: unchecked used twice in a modifier list
+%   29| [unchecked, unchecked]
+%     |             ^
+
 bad_modifiers.erlt:34:2: opaque is not a legal modifier for a function.
+%   34| [opaque]
+%     |  ^
+

@@ -1,2 +1,8 @@
 double_exports.erlt:3:1: function f() exported multiple times.
+%    3| -export([f/0, f/0]).
+%     | ^^^^^^^^^^^^^^^^^^
+
 double_exports.erlt:5:1: type t(_) exported multiple times.
+%    5| -export_type([t/1, t/1]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^
+
