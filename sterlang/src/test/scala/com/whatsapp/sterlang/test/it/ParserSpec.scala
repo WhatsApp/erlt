@@ -28,7 +28,7 @@ class ParserSpec extends org.scalatest.funspec.AnyFunSpec {
       val moduleArgs = moduleNames.map(_ ++ ".erlt").mkString(" ")
 
       s"./parser -idir $iDirPath -odir $sterlangOutDir".!!
-      s"./erltc --build compile --src-dir $iDirPath --build-dir $erltcBuildDir -o $erltcEBinDir $moduleArgs".!!
+      s"./erltc --build compile --src-dir $iDirPath --build-dir $erltcBuildDir -o $erltcEBinDir --skip-type-checking $moduleArgs".!!
 
       moduleNames.foreach { m =>
         val erltPath = s"$iDirPath/$m.erlt"
