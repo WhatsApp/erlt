@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package erlang.forms
+package com.whatsapp.analyzer.test
 
 import com.whatsapp.analyzer.RPC
 import erlang.Data.EList
+import erlang.forms.AbstractFormConvert
 
 object LoadForms {
   def main(args: Array[String]): Unit = {
