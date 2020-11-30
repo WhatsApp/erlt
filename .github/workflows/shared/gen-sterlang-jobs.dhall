@@ -21,13 +21,11 @@ let test =
         [ checkout
         , setUpJava
         , coursierCache
-        , run "download sbtn" "./scripts/dl-sbtn.sh"
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
         , run "assemble erltc" "rebar3 escriptize"
-        , run "compile stErlang" "cd sterlang; ../scripts/sbtn compile"
-        , run "test stErlang" "cd sterlang; ../scripts/sbtn test"
+        , run "test stErlang" "cd sterlang && ../scripts/sbtn test"
         , run "test erltc + stErlang in dev mode" "make -C sterlang/examples"
         ]
       }
