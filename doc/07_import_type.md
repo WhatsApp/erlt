@@ -7,7 +7,7 @@ constructors can be used as the enum was defined in the current module.
 
 ## Example
 
-From `examples/elm-core/src`.
+From `tests/elm-core/src`.
 
 ### Without `import_type`
 

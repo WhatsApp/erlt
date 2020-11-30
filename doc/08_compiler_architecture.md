@@ -43,7 +43,7 @@ we **do not** plan to support:
   - we invoke the classic Erlang compiler to generate beam files from the AST that we generate
   - in our tests, we snapshot the AST in .P format, which does not contain these annotated source locations
 
-- The rebar plugin in ../erltc/rebar_prv_erlt.erl is our only public API for the compiler (see ../examples/README.md for docs). It is a thin wrapper around erlt_build.erl, which drives erltc.erl (our single-file compiler). erlbuild drives erltc in two phases:
+- The rebar plugin in ../erltc/rebar_prv_erlt.erl is our only public API for the compiler (see ../play/README.md for docs). It is a thin wrapper around erlt_build.erl, which drives erltc.erl (our single-file compiler). erlbuild drives erltc in two phases:
     - scan phase: erltc generates
         - a .defs file for each .erlt file which contains the definitions from the erlt file (specs, types, enums, structs, etc.).
         - a .D file for each .erlt file which records dependencies. The .D files are currently unused but may be used for incremental builds in the future, see https://github.com/WhatsApp/erlt/blob/80877ae15b4a9300c69ce34ffb2e844bc9acc74b/erlbuild/README.md.

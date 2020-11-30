@@ -12,7 +12,8 @@ erltc/src/erlt_parse.erl
 
 # this file may exist for some team members sometimes
 # in a way I can't reproduce but it doesn't seem to matter
-examples/rebar.lock
+tests/rebar.lock
+play/rebar.lock
 
 *.lhs~
 
