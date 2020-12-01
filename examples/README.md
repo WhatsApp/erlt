@@ -39,9 +39,9 @@ You can update these tests with `make update-ir-spec`
 
 ## Run 'checks' tests
 
-run these tests with `make -C checks/src`
+run these compiler error snapshot tests with `make -C checks/src`
 
-[checks/src](checks/src) - some examples of new checks in `-lang([erl2, st])` and `-lang([erl2, dt])`.
+[checks/src](checks/src)
 
 ## To see beam disassembly
 

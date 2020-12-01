@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-DIR="$(dirname "${BASH_SOURCE[0]}")"
+DIR=$(dirname "${BASH_SOURCE[0]}")
+VERSION=$(cat $DIR/rebar-version)
 
 $DIR/dl-rebar3.sh
-$DIR/bin/rebar3 "$@"
+$DIR/bin/$VERSION/rebar3 "$@"
 
