@@ -78,7 +78,7 @@ let toNativeImageJob =
             # (toUploadSteps nativeName)
             # [run
                   "test erltc with native image"
-                  "mkdir -p erltc/priv && cp ${nativeName} erltc/priv/sterlang && make -C examples test-native"
+                  "mkdir -p erltc/priv && cp ${nativeName} erltc/priv/sterlang && make -C tests test-native"
             ]
         }
 

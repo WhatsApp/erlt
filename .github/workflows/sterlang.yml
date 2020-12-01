@@ -55,7 +55,7 @@ jobs:
           path: sterlang-linux-draft
           retention-days: '8'
       - name: test erltc with native image
-        run: "mkdir -p erltc/priv && cp sterlang-linux-draft erltc/priv/sterlang && make -C examples test-native"
+        run: "mkdir -p erltc/priv && cp sterlang-linux-draft erltc/priv/sterlang && make -C tests test-native"
   macBinary:
     needs:
       - buildJar
@@ -90,7 +90,7 @@ jobs:
           path: sterlang-mac-draft
           retention-days: '8'
       - name: test erltc with native image
-        run: "mkdir -p erltc/priv && cp sterlang-mac-draft erltc/priv/sterlang && make -C examples test-native"
+        run: "mkdir -p erltc/priv && cp sterlang-mac-draft erltc/priv/sterlang && make -C tests test-native"
   test:
     runs-on: ubuntu-latest
     steps:
