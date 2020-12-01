@@ -2,7 +2,7 @@
 
 -export([use_format/0, use_lists/0]).
 
--spec use_format() -> string().
+-spec use_format() -> atom().
 use_format() ->
     % test that types for t_io built-in t_io module are available
     t_io:format("hello t_io~n"),
