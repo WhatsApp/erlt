@@ -65,7 +65,7 @@ jobs:
           asset_path: sterlang-linux
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
       - name: test erltc with native image
-        run: "mkdir -p erltc/priv && cp sterlang-linux erltc/priv/sterlang && make -C examples test-native"
+        run: "mkdir -p erltc/priv && cp sterlang-linux erltc/priv/sterlang && make -C tests test-native"
   sterlangMacUpload:
     needs:
       - buildJar
@@ -110,7 +110,7 @@ jobs:
           asset_path: sterlang-mac
           upload_url: "${{ steps.get_release_url.outputs.upload_url }}"
       - name: test erltc with native image
-        run: "mkdir -p erltc/priv && cp sterlang-mac erltc/priv/sterlang && make -C examples test-native"
+        run: "mkdir -p erltc/priv && cp sterlang-mac erltc/priv/sterlang && make -C tests test-native"
   uploadErltcBinary:
     runs-on: ubuntu-latest
     steps:

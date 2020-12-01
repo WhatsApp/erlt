@@ -27,7 +27,7 @@ in  Actions.Workflow::{
             , run
                 "check formatting"
                 "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && \$(exit 1))"
-            , run "test" "cd ./examples && make test-jar"
+            , run "test" "cd ./tests && make test-jar"
             ]
           }
         }

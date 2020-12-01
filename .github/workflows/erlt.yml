@@ -18,7 +18,7 @@ jobs:
       - name: check formatting
         run: "rebar3 fmt --check || (echo \"please run 'rebar3 fmt --write'\" && $(exit 1))"
       - name: test
-        run: "cd ./examples && make test-jar"
+        run: "cd ./tests && make test-jar"
 name: ErlT CI
 on:
   push: {}
