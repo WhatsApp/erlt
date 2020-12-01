@@ -60,6 +60,10 @@ init([]) ->
                   , start => {els_distribution_sup, start_link, []}
                   , type  => supervisor
                   }
+               , #{ id       => els_data_sync_server
+                  , start    => {els_data_sync_server, start_link, []}
+                  , shutdown => brutal_kill
+                  }
                , #{ id       => els_server
                   , start    => {els_server, start_link, [Transport]}
                   }
