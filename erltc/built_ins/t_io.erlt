@@ -3,12 +3,12 @@
 -export([format/1, format/2]).
 
 
--spec format(string()) -> string().
+-spec format(string()) -> atom().
 [unchecked]
 format(Fmt) ->
     io:format(Fmt).
 
--spec format(string(), _) -> string().
+-spec format(string(), _) -> atom().
 [unchecked]
 format(Fmt, Args) ->
     io:format(Fmt, tuple_to_list(Args)).
