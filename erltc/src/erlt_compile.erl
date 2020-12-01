@@ -42,8 +42,6 @@
 
 -import(lists, [
     member/2,
-    reverse/1,
-    reversl/2,
     keyfind/3,
     last/1,
     map/2,
@@ -743,23 +741,26 @@ erlt_maybe_typecheck(Code, St) ->
     end.
 
 erlt_typecheck(Code, St) ->
-    R = #sterlang_result{result = Res} = run_sterlang(St),
-    member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
-
-    case Res of
-        {ok, Infos} ->
-            Lenses = [I || (I = #{kind := lens}) <- Infos],
-            Hovers = [I || (I = #{kind := hover}) <- Infos],
-            {ok, Code, St#compile{hovers = Hovers, lenses = Lenses}};
-        {error, Range, ErrMessage} ->
-            Location =
-                case Range of
-                    {Loc1, Loc2} -> [{location, Loc1}, {end_location, Loc2}];
-                    _ -> none
-                end,
-            Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
-            Errors = St#compile.errors ++ [Error],
-            {error, St#compile{errors = Errors, hovers = [], lenses = []}}
+    case run_sterlang(St) of
+        error ->
+            error;
+        #sterlang_result{result = Res} = R ->
+            member(verbose, St#compile.options) andalso log_sterlang_result(R, St),
+            case Res of
+                {ok, Infos} ->
+                    Lenses = [I || (I = #{kind := lens}) <- Infos],
+                    Hovers = [I || (I = #{kind := hover}) <- Infos],
+                    {ok, Code, St#compile{hovers = Hovers, lenses = Lenses}};
+                {error, Range, ErrMessage} ->
+                    Location =
+                        case Range of
+                            {Loc1, Loc2} -> [{location, Loc1}, {end_location, Loc2}];
+                            _ -> none
+                        end,
+                    Error = {St#compile.ifile, [{Location, ?MODULE, {sterlang, ErrMessage}}]},
+                    Errors = St#compile.errors ++ [Error],
+                    {error, St#compile{errors = Errors, hovers = [], lenses = []}}
+            end
     end.
 
 -spec log_sterlang_result(#sterlang_result{}, #compile{}) -> true.
@@ -781,7 +782,7 @@ run_sterlang(St) ->
         "sterlang"
     ),
     SterlangJarPath = SterlangPath ++ ".jar",
-    {Mode, {Result, SterlangTime}} =
+    Res =
         case {node(), filelib:is_regular(SterlangJarPath), filelib:is_regular(SterlangPath)} of
             {?NODE_NAME_FOR_ERLT_DEVELOPMENT, _, _} ->
                 % this magic node() name indicates daemon-based development,
@@ -797,14 +798,26 @@ run_sterlang(St) ->
                 {native, spawn_sterlang(CheckCmd)};
             _ ->
                 Msg =
-                    "Could not find the type checker."
-                    " Please download the `sterlang` for your platform from https://github.com/whatsapp/erlt/releases,"
-                    " put it in <erlt repo root>/erltc/priv and rename it to `sterlang`. Then clean and rebuild.",
-                erlang:error(Msg)
+                    "~nCould not find the type checker."
+                    "~nPlease download the `sterlang` for your platform from https://github.com/whatsapp/erlt/releases,"
+                    "~nrename to `sterlang`, and put it in<erlt repo root>/erltc/priv."
+                    "~nThen clean and rebuild.~n~n",
+                io:format(standard_error, Msg, []),
+                error
         end,
-    End = erlang:monotonic_time('millisecond'),
-    Time = End - Start,
-    #sterlang_result{mode = Mode, result = Result, erltc_time = Time, st_time = SterlangTime}.
+    case Res of
+        error ->
+            error;
+        {Mode, {Result, SterlangTime}} ->
+            End = erlang:monotonic_time('millisecond'),
+            Time = End - Start,
+            #sterlang_result{
+                mode = Mode,
+                result = Result,
+                erltc_time = Time,
+                st_time = SterlangTime
+            }
+    end.
 
 call_sterlang_daemon(EtfFile) ->
     Ref = erlang:monitor(process, {api, sterlangd@localhost}),

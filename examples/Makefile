@@ -1,7 +1,6 @@
 DIRS := calc dev dev_enum dev_struct doc elm_core erltodo
 
 build: $(if $(ERLTCI),build-ci,build-dev) 
-	echo "env var ERLTCI is set to $(ERLTCI)"
 
 build-dev: build-sterlang-jar
 	@# the dependency above on build-sterlang-jar isn't strictly necessary (since we use the daemon),
