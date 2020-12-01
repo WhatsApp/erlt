@@ -1,0 +1,44 @@
+-module(day1).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer(). 
+puzzle1(FileName) ->
+    [X|Rest] = get_input(FileName), 
+    find_pair(X, Rest, Rest).
+
+-spec puzzle2(string()) -> integer(). 
+puzzle2(FileName) ->
+    [X|Rest] = get_input(FileName),
+    find_triple(X, Rest, Rest).
+
+find_pair(X, [Y|_Rest], _All) when X + Y == 2020 ->
+    X*Y;
+find_pair(X, [_|Rest], All) ->
+    find_pair(X, Rest, All);
+find_pair(_X, [], [NewX|Rest]) ->
+    find_pair(NewX, Rest, Rest);
+find_pair(_, [], []) ->
+    -1.
+
+find_triple(X, [Y|Rest], All) when X + Y =< 2020 ->
+    case find_pair(X+Y, Rest, []) of
+        -1 ->
+            find_triple(X, Rest, All);
+        Val -> 
+            X * Y * (Val div (X+Y))
+    end;
+find_triple(X, [_Y|Rest], All) ->
+    find_triple(X, Rest, All);
+find_triple(_X, [], [NewX|Rest]) ->
+    find_triple(NewX, Rest, Rest);
+find_triple(_, [], []) ->
+    -1.
+    
+
+-spec get_input(string()) -> [integer()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    [list_to_integer(IntString) || IntString <- string:split(binary_to_list(Bin), "\n", 'all'), IntString =/= ""].
+

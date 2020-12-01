@@ -1,0 +1,24 @@
+-module(day1).
+
+-export([puzzle1/1]).
+
+-spec puzzle1(string()) -> integer(). 
+puzzle1(FileName) ->
+    [X|Rest] = get_input(FileName),
+    find_pair(X, Rest, Rest).
+
+find_pair(X, [Y|Rest], All) when X + Y == 2000 ->
+    X*Y;
+find_pair(X, [_|Rest], All) ->
+    find_pair(X, Rest, All);
+find_pair(_X, [], [NewX|Rest]) ->
+    find_pair(NewX, Rest, Rest);
+find_pair(_, [], []) ->
+    -1.
+
+-spec get_input(string()) -> [integer()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    [list_to_integer(IntString) || IntString <- string:split(binary_to_list(Bin), "~n")].
+
