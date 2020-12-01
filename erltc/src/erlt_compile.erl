@@ -788,14 +788,14 @@ run_sterlang(St) ->
                 % this magic node() name indicates daemon-based development,
                 % a mode that exists just for erlt team to iterate quickly
                 {daemon, call_sterlang_daemon(EtfFile)};
-            {_, true, _} ->
-                % we sometimes use the jar for faster local development of sterlang
-                CheckCmd = io_lib:format("java -jar ~s ~s", [SterlangJarPath, EtfFile]),
-                {jar, spawn_sterlang(CheckCmd)};
             {_, _, true} ->
                 % real users should only ever hit this code path
                 CheckCmd = io_lib:format("~s ~s", [SterlangPath, EtfFile]),
                 {native, spawn_sterlang(CheckCmd)};
+            {_, true, _} ->
+                % we sometimes use the jar for faster local development of sterlang
+                CheckCmd = io_lib:format("java -jar ~s ~s", [SterlangJarPath, EtfFile]),
+                {jar, spawn_sterlang(CheckCmd)};
             _ ->
                 Msg =
                     "~nCould not find the type checker."
