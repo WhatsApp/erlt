@@ -33,11 +33,11 @@ object DriverErltc extends DriverApi {
 
   private def process(etfFile: String): Unit = {
     val start = System.currentTimeMillis()
-    val sterlangTime = System.currentTimeMillis() - start
     val result = doProcessFile(etfFile) match {
       case Left(error)       => convertError(error)
       case Right(hoverSpecs) => ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverTypeInfoToEMap))))
     }
+    val sterlangTime = System.currentTimeMillis() - start
     val response = ETuple(List(result, ELong(sterlangTime)))
     stdoutResponse(response)
   }
