@@ -4,7 +4,7 @@
 
 -export([use_format/0, use_lists/0]).
 
--spec use_format() -> string().
+-spec use_format() -> atom().
 
 use_format() ->
     t_io:format("hello t_io~n"),

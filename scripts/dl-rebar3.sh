@@ -26,14 +26,10 @@ download_rebar3() {
 
 main() {
     mkdir -p $BIN_DIR
-    echo test
     if [ ! -f $BIN ] || [ ! -x $BIN ]; then
         rm -rf $BIN
         echo "no cached rebar3 found"
         download_rebar3
-    else
-        echo here
-
     fi
 }
 
