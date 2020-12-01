@@ -3,6 +3,5 @@
 DIR=$(dirname "${BASH_SOURCE[0]}")
 VERSION=$(cat $DIR/rebar-version)
 
-$DIR/dl-rebar3.sh
+$DIR/dl-rebar3.sh &&
 $DIR/bin/$VERSION/rebar3 "$@"
-
