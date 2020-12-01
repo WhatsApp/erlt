@@ -796,14 +796,10 @@ run_sterlang(St) ->
                 CheckCmd = io_lib:format("~s ~s", [SterlangPath, EtfFile]),
                 {native, spawn_sterlang(CheckCmd)};
             _ ->
-                Msg = lists:flatten(
-                    io_lib:format(
-                        "Could not find the type checker at ~s."
-                        " Please download the `sterlang` for your platform from https://github.com/whatsapp/erlt/releases, "
-                        " put it in <erlt repo root>/erltc/priv and rename it to `sterlang`. Then clean and rebuild.",
-                        [SterlangPath]
-                    )
-                ),
+                Msg =
+                    "Could not find the type checker."
+                    " Please download the `sterlang` for your platform from https://github.com/whatsapp/erlt/releases,"
+                    " put it in <erlt repo root>/erltc/priv and rename it to `sterlang`. Then clean and rebuild.",
                 erlang:error(Msg)
         end,
     End = erlang:monotonic_time('millisecond'),
