@@ -798,11 +798,13 @@ run_sterlang(St) ->
             _ ->
                 Msg = lists:flatten(
                     io_lib:format(
-                        "Bad install of erltc: could not find the type checker. Expected it to be at ~s",
+                        "Could not find the type checker at ~s."
+                        " Please download the `sterlang` for your platform from https://github.com/whatsapp/erlt/releases, "
+                        " put it in <erlt repo root>/erltc/priv and rename it to `sterlang`. Then clean and rebuild.",
                         [SterlangPath]
                     )
                 ),
-                erlang:error({no_type_checker, Msg})
+                erlang:error(Msg)
         end,
     End = erlang:monotonic_time('millisecond'),
     Time = End - Start,
