@@ -10,7 +10,7 @@
 %%==============================================================================
 -export([ start_link/0
         , file_changed/1
-        , is_lens_info_ready/1
+        , wait_for_lens_info/1
         , new_diagnostics/1
         ]).
 
@@ -48,9 +48,9 @@ file_changed(Uri) ->
 
 %% @doc Request the lens info. If a change is pending, wait for the diagnostics
 %% to be provided before responding.
--spec is_lens_info_ready(uri()) -> ok.
-is_lens_info_ready(Uri) ->
-  gen_server:call(?SERVER, {is_lens_info_ready, Uri}, ?TIMEOUT).
+-spec wait_for_lens_info(uri()) -> ok.
+wait_for_lens_info(Uri) ->
+  gen_server:call(?SERVER, {wait_for_lens_info, Uri}, ?TIMEOUT).
 
 %% @doc Provide latest diagnostics for the given file, triggering the release of
 %% any waiting 'get_lens_info' calls. Called from diagnostics provider
@@ -81,7 +81,7 @@ handle_call({file_changed, Uri}, _From, State) ->
   end,
   State1 = maps:put(Uri, {changed, undefined}, State),
   {reply, ok, State1};
-handle_call({is_lens_info_ready, Uri}, From, State) ->
+handle_call({wait_for_lens_info, Uri}, From, State) ->
   case maps:get(Uri, State, notpresent) of
     notpresent ->
       %% We have no record of this URI, do not block.

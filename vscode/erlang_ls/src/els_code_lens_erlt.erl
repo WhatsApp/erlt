@@ -34,7 +34,7 @@ is_default() ->
 
 -spec precondition(els_dt_document:item()) -> boolean().
 precondition(#{ uri := Uri }) ->
-  els_data_sync_server:is_lens_info_ready(Uri),
+  els_data_sync_server:wait_for_lens_info(Uri),
   true.
 
 -spec pois(els_dt_document:item()) -> [poi()].
