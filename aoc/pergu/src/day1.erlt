@@ -2,43 +2,43 @@
 
 -export([puzzle1/1, puzzle2/1]).
 
--spec puzzle1(string()) -> integer(). 
+-spec puzzle1(string()) -> integer().
 puzzle1(FileName) ->
-    [X|Rest] = get_input(FileName), 
-    find_pair(X, Rest, Rest).
+    solve(FileName, 2020, 2).
 
--spec puzzle2(string()) -> integer(). 
+-spec puzzle2(string()) -> integer().
 puzzle2(FileName) ->
-    [X|Rest] = get_input(FileName),
-    find_triple(X, Rest, Rest).
+    solve(FileName, 2020, 3).
 
-find_pair(X, [Y|_Rest], _All) when X + Y == 2020 ->
-    X*Y;
-find_pair(X, [_|Rest], All) ->
-    find_pair(X, Rest, All);
-find_pair(_X, [], [NewX|Rest]) ->
-    find_pair(NewX, Rest, Rest);
-find_pair(_, [], []) ->
-    -1.
+solve(FileName, Sum, N) ->
+    verify_and_calculate_result(findN(get_input(FileName), Sum, N), Sum).
 
-find_triple(X, [Y|Rest], All) when X + Y =< 2020 ->
-    case find_pair(X+Y, Rest, []) of
-        -1 ->
-            find_triple(X, Rest, All);
-        Val -> 
-            X * Y * (Val div (X+Y))
+findN([X|_Rest], X, 1) -> [X];
+findN([_|Rest], X, 1) -> findN(Rest, X, 1);
+findN([X|Rest], Val, N) when X =< Val ->
+    case findN(Rest, Val-X, N-1) of
+        [] ->
+            findN(Rest, Val, N);
+        Result ->
+            [X|Result]
     end;
-find_triple(X, [_Y|Rest], All) ->
-    find_triple(X, Rest, All);
-find_triple(_X, [], [NewX|Rest]) ->
-    find_triple(NewX, Rest, Rest);
-find_triple(_, [], []) ->
-    -1.
-    
+findN([_|Rest], Val, N) ->
+    findN(Rest, Val, N);
+findN([], _Val, _N) ->
+    [].
+
+-spec verify_and_calculate_result([integer()], integer()) -> integer().
+[unchecked]
+verify_and_calculate_result([], Val) ->
+    erlang:error({'no_solution', Val});
+verify_and_calculate_result(List, Val) ->
+    ^Val = lists:sum(List),
+    lists:foldl(fun(X,Y) -> X*Y end, 1, List).
+
+
 
 -spec get_input(string()) -> [integer()].
 [unchecked]
 get_input(FileName) ->
     {'ok', Bin} = file:read_file(FileName),
     [list_to_integer(IntString) || IntString <- string:split(binary_to_list(Bin), "\n", 'all'), IntString =/= ""].
-
