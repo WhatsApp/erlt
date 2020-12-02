@@ -10,9 +10,11 @@ puzzle1(FileName) ->
 puzzle2(FileName) ->
     solve(FileName, 2020, 3).
 
+-spec solve(string(), number(), number()) -> number().
 solve(FileName, Sum, N) ->
     verify_and_calculate_result(findN(get_input(FileName), Sum, N), Sum).
 
+-spec findN(list(number()), number(), number()) -> list(number()).
 findN([X|_Rest], X, 1) -> [X];
 findN([_|Rest], X, 1) -> findN(Rest, X, 1);
 findN([X|Rest], Val, N) when X =< Val ->
