@@ -2,10 +2,6 @@
 
 -export([display/1, error/1, error/2, is_integer/1, is_list/1, length/1, max/2]).
 
--export_type([option/1]).
-
--enum option(V) :: (none, value{V}).
-
 -spec stub() -> _.
 [unchecked]
 stub() ->
@@ -22,7 +18,7 @@ error(_) ->
     stub().
 
 % dangerous
--spec error(string(), [_]) -> no_return().
+-spec error(_A, [_]) -> no_return().
 error(_, _) ->
     stub().
 

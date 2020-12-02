@@ -160,7 +160,7 @@
 
 -export_type([tree/2, iter/2]).
 
--import_type(erlang, [option/1]).
+-import_type(types, [option/1]).
 
 -opaque tree(Key, Value) :: {non_neg_integer(), node(Key, Value)}.
 -opaque iter(Key, Value) :: [node(Key, Value)].
@@ -205,7 +205,7 @@ lookup_1(Key, node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
 lookup_1(Key, node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
     lookup_1(Key, Bigger);
 lookup_1(_, node.branch{_, Value, _, _}) ->
-    option.value{Value};
+    option.some{Value};
 lookup_1(_, node.nil) ->
     option.none.
 
@@ -410,7 +410,7 @@ merge(Smaller, Larger) ->
 
 take_any(Key, Tree) ->
     case is_defined(Key, Tree) of
-        true -> option.value{take(Key, Tree)};
+        true -> option.some{take(Key, Tree)};
         false -> option.none
     end.
 
@@ -556,7 +556,7 @@ iterator_from(_, node.nil, As) ->
 -spec next(iter(Key, Value)) -> option({Key, Value, iter(Key, Value)}).
 
 next([node.branch{X, V, _, T} | As]) ->
-    option.value{{X, V, iterator(T, As)}};
+    option.some{{X, V, iterator(T, As)}};
 next([]) ->
     option.none.
 

@@ -31,7 +31,7 @@
 
 -export_type([tree/2, iter/2]).
 
--import_type({erlang, [{option, 1}]}).
+-import_type({types, [{option, 1}]}).
 
 -opaque tree(Key, Value) :: {non_neg_integer(),
                              node(Key, Value)}.
@@ -59,7 +59,7 @@ is_empty(_) -> false.
 size({Size, _}) when Size >= 0 -> Size.
 
 -spec lookup(Key,
-             tree(Key, Value)) -> erlang:option(Value).
+             tree(Key, Value)) -> types:option(Value).
 
 lookup(Key, {_, T}) -> lookup_1(Key, T).
 
@@ -73,9 +73,9 @@ lookup_1(Key,
     lookup_1(Key, Bigger);
 lookup_1(_,
          {'$#typed_gb_trees:node.branch', _, Value, _, _}) ->
-    {'$#erlang:option.value', Value};
+    {'$#types:option.some', Value};
 lookup_1(_, {'$#typed_gb_trees:node.nil'}) ->
-    {'$#erlang:option.none'}.
+    {'$#types:option.none'}.
 
 -spec is_defined(Key, tree(Key, _Value)) -> boolean().
 
@@ -368,13 +368,13 @@ merge(Smaller, Larger) ->
      Larger1}.
 
 -spec take_any(Key,
-               tree(Key, Value)) -> erlang:option({Value,
-                                                   tree(Key, Value)}).
+               tree(Key, Value)) -> types:option({Value,
+                                                  tree(Key, Value)}).
 
 take_any(Key, Tree) ->
     case is_defined(Key, Tree) of
-        true -> {'$#erlang:option.value', take(Key, Tree)};
-        false -> {'$#erlang:option.none'}
+        true -> {'$#types:option.some', take(Key, Tree)};
+        false -> {'$#types:option.none'}
     end.
 
 -spec take(Key, tree(Key, Value)) -> {Value,
@@ -597,14 +597,14 @@ iterator_from(S,
 iterator_from(_, {'$#typed_gb_trees:node.nil'}, As) ->
     As.
 
--spec next(iter(Key, Value)) -> erlang:option({Key,
-                                               Value,
-                                               iter(Key, Value)}).
+-spec next(iter(Key, Value)) -> types:option({Key,
+                                              Value,
+                                              iter(Key, Value)}).
 
 next([{'$#typed_gb_trees:node.branch', X, V, _, T}
       | As]) ->
-    {'$#erlang:option.value', {X, V, iterator(T, As)}};
-next([]) -> {'$#erlang:option.none'}.
+    {'$#types:option.some', {X, V, iterator(T, As)}};
+next([]) -> {'$#types:option.none'}.
 
 -spec map(fun((Key, Value) -> NewValue),
           tree(Key, Value)) -> tree(Key, NewValue).
