@@ -6,11 +6,45 @@
 -include("erlt_build_types.hrl").
 
 -define(SRC_DIR, "src").
+-define(MIN_REBAR_VERSION, [3, 14, 2]).
+
+semver_gt_or_eq([], []) ->
+    true;
+semver_gt_or_eq([H1 | T1], [H2 | T2]) ->
+    case H1 of
+        H2 ->
+            semver_gt_or_eq(T1, T2);
+        _ when H1 < H2 ->
+            false;
+        _ ->
+            true
+    end.
+
+version_check() ->
+    {ok, VsnStr} = application:get_key(rebar, vsn),
+    Vsn = [list_to_integer(N) || N <- string:split(VsnStr, ".", all)],
+    3 = length(Vsn),
+    case semver_gt_or_eq(Vsn, ?MIN_REBAR_VERSION) of
+        true ->
+            ok;
+        false ->
+            Msg = io_lib:format(
+                "The erlt plugin requires rebar ~p.~p.~p. Instead found version ~s",
+                ?MIN_REBAR_VERSION ++ [VsnStr]
+            ),
+            {error, Msg}
+    end.
 
 -spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
 init(State0) ->
-    {ok, State1} = rebar_prv_erlt_compile:init(State0),
-    rebar_prv_erlt_clean:init(State1).
+    case version_check() of
+        {error, Msg} ->
+            rebar_log:log(error, Msg, []),
+            erlang:halt(5);
+        ok ->
+            {ok, State1} = rebar_prv_erlt_compile:init(State0),
+            rebar_prv_erlt_clean:init(State1)
+    end.
 
 % aborts when there is an error
 -spec run(F, string(), rebar_state:t()) -> {ok, rebar_state:t()} when
