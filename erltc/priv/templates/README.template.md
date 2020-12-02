@@ -26,5 +26,5 @@ rebar3 shell
 Otherwise:
 
 ```sh
-../../scripts/rebar3 compile
+../../scripts/rebar3 shell
 ```
