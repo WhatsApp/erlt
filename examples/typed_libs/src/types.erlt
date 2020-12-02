@@ -1,0 +1,4 @@
+-module(types).
+-export_type([option/1]).
+
+-enum option(V) :: (none, some{V}).
