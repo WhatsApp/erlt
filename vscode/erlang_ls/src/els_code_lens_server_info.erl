@@ -25,7 +25,7 @@ command_args(_Document, _POI) ->
 
 -spec is_default() -> boolean().
 is_default() ->
-  false.
+  true.
 
 -spec precondition(els_dt_document:item()) -> boolean().
 precondition(_Document) ->
@@ -39,4 +39,4 @@ pois(_Document) ->
 -spec title(poi()) -> binary().
 title(_POI) ->
   Root = filename:basename(els_uri:path(els_config:get(root_uri))),
-  <<"Erlang LS (in ", Root/binary, ") info">>.
+  <<"ErlT LS (in ", Root/binary, ") info">>.
