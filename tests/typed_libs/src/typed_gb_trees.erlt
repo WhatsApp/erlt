@@ -162,21 +162,21 @@
 
 -import_type(types, [option/1]).
 
--opaque tree(Key, Value) :: {non_neg_integer(), node(Key, Value)}.
--opaque iter(Key, Value) :: [node(Key, Value)].
+-opaque tree(Key, Value) :: {non_neg_integer(), gb_tree_node(Key, Value)}.
+-opaque iter(Key, Value) :: [gb_tree_node(Key, Value)].
 
--enum node(K, V) :: (nil, branch{K, V, node(K, V), node(K, V)}).
+-enum gb_tree_node(K, V) :: (nil, branch{K, V, gb_tree_node(K, V), gb_tree_node(K, V)}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec empty() -> tree(_K, _V).
 
 empty() ->
-    {0, node.nil}.
+    {0, gb_tree_node.nil}.
 
 -spec is_empty(tree(_K, _V)) -> boolean().
 
-is_empty({0, node.nil}) ->
+is_empty({0, gb_tree_node.nil}) ->
     true;
 is_empty(_) ->
     false.
@@ -200,13 +200,13 @@ lookup(Key, {_, T}) ->
 %% equality, and also allows us to skip the test completely in the
 %% remaining case.
 
-lookup_1(Key, node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
+lookup_1(Key, gb_tree_node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
     lookup_1(Key, Smaller);
-lookup_1(Key, node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
+lookup_1(Key, gb_tree_node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
     lookup_1(Key, Bigger);
-lookup_1(_, node.branch{_, Value, _, _}) ->
+lookup_1(_, gb_tree_node.branch{_, Value, _, _}) ->
     option.some{Value};
-lookup_1(_, node.nil) ->
+lookup_1(_, gb_tree_node.nil) ->
     option.none.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -218,13 +218,13 @@ lookup_1(_, node.nil) ->
 is_defined(Key, {_, T}) ->
     is_defined_1(Key, T).
 
-is_defined_1(Key, node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
+is_defined_1(Key, gb_tree_node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
     is_defined_1(Key, Smaller);
-is_defined_1(Key, node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
+is_defined_1(Key, gb_tree_node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
     is_defined_1(Key, Bigger);
-is_defined_1(_, node.branch{_, _, _, _}) ->
+is_defined_1(_, gb_tree_node.branch{_, _, _, _}) ->
     true;
-is_defined_1(_, node.nil) ->
+is_defined_1(_, gb_tree_node.nil) ->
     false.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -236,11 +236,11 @@ is_defined_1(_, node.nil) ->
 get(Key, {_, T}) ->
     get_1(Key, T).
 
-get_1(Key, node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
+get_1(Key, gb_tree_node.branch{Key1, _, Smaller, _}) when Key < Key1 ->
     get_1(Key, Smaller);
-get_1(Key, node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
+get_1(Key, gb_tree_node.branch{Key1, _, _, Bigger}) when Key > Key1 ->
     get_1(Key, Bigger);
-get_1(_, node.branch{_, Value, _, _}) ->
+get_1(_, gb_tree_node.branch{_, Value, _, _}) ->
     Value.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -253,16 +253,19 @@ update(Key, Val, {S, T}) ->
 
 %% See `lookup' for notes on the term comparison order.
 
-update_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}) when Key < Key1 ->
-    node.branch{Key1, V, update_1(Key, Value, Smaller), Bigger};
-update_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}) when Key > Key1 ->
-    node.branch{Key1, V, Smaller, update_1(Key, Value, Bigger)};
-update_1(Key, Value, node.branch{_, _, Smaller, Bigger}) ->
-    node.branch{Key, Value, Smaller, Bigger}.
+update_1(Key, Value, gb_tree_node.branch{Key1, V, Smaller, Bigger}) when Key < Key1 ->
+    gb_tree_node.branch{Key1, V, update_1(Key, Value, Smaller), Bigger};
+update_1(Key, Value, gb_tree_node.branch{Key1, V, Smaller, Bigger}) when Key > Key1 ->
+    gb_tree_node.branch{Key1, V, Smaller, update_1(Key, Value, Bigger)};
+update_1(Key, Value, gb_tree_node.branch{_, _, Smaller, Bigger}) ->
+    gb_tree_node.branch{Key, Value, Smaller, Bigger}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--enum insert_return :: (plain{node()}, rebalance{node(), integer(), integer()}).
+-enum insert_return(Key, Value) :: (
+    plain{gb_tree_node(Key, Value)},
+    rebalance{gb_tree_node(Key, Value), integer(), integer()}
+).
 
 -spec insert(Key, Value, tree(Key, Value)) -> tree(Key, Value).
 
@@ -271,10 +274,10 @@ insert(Key, Val, {S, T}) ->
     insert_return.plain{Result} = insert_1(Key, Val, T, ?pow(S1, ?p)),
     {S1, Result}.
 
-insert_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}, S) when Key < Key1 ->
+insert_1(Key, Value, gb_tree_node.branch{Key1, V, Smaller, Bigger}, S) when Key < Key1 ->
     case insert_1(Key, Value, Smaller, ?div2(S)) of
 	insert_return.rebalance{T1, H1, S1} ->
-	    T = node.branch{Key1, V, T1, Bigger},
+	    T = gb_tree_node.branch{Key1, V, T1, Bigger},
 	    {H2, S2} = count(Bigger),
 	    H = ?mul2(erlang:max(H1, H2)),
 	    SS = S1 + S2 + 1,
@@ -286,12 +289,12 @@ insert_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}, S) when Key < Key1 -
 		    insert_return.rebalance{T, H, SS}
 	    end;
 	insert_return.plain{T1} ->
-	    insert_return.plain{node.branch{Key1, V, T1, Bigger}}
+	    insert_return.plain{gb_tree_node.branch{Key1, V, T1, Bigger}}
     end;
-insert_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}, S) when Key > Key1 ->
+insert_1(Key, Value, gb_tree_node.branch{Key1, V, Smaller, Bigger}, S) when Key > Key1 ->
     case insert_1(Key, Value, Bigger, ?div2(S)) of
 	insert_return.rebalance{T1, H1, S1} ->
-	    T = node.branch{Key1, V, Smaller, T1},
+	    T = gb_tree_node.branch{Key1, V, Smaller, T1},
 	    {H2, S2} = count(Smaller),
 	    H = ?mul2(erlang:max(H1, H2)),
 	    SS = S1 + S2 + 1,
@@ -303,12 +306,12 @@ insert_1(Key, Value, node.branch{Key1, V, Smaller, Bigger}, S) when Key > Key1 -
 		    insert_return.rebalance{T, H, SS}
 	    end;
 	insert_return.plain{T1} ->
-	    insert_return.plain{node.branch{Key1, V, Smaller, T1}}
+	    insert_return.plain{gb_tree_node.branch{Key1, V, Smaller, T1}}
     end;
-insert_1(Key, Value, node.nil, S) when S =:= 0 ->
-    insert_return.rebalance{node.branch{Key, Value, node.nil, node.nil}, 1, 1};
-insert_1(Key, Value, node.nil, _S) ->
-    insert_return.plain{node.branch{Key, Value, node.nil, node.nil}}.
+insert_1(Key, Value, gb_tree_node.nil, S) when S =:= 0 ->
+    insert_return.rebalance{gb_tree_node.branch{Key, Value, gb_tree_node.nil, gb_tree_node.nil}, 1, 1};
+insert_1(Key, Value, gb_tree_node.nil, _S) ->
+    insert_return.plain{gb_tree_node.branch{Key, Value, gb_tree_node.nil, gb_tree_node.nil}}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -324,13 +327,13 @@ enter(Key, Val, T) ->
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-count(node.branch{_, _, node.nil, node.nil}) ->
+count(gb_tree_node.branch{_, _, gb_tree_node.nil, gb_tree_node.nil}) ->
     {1, 1};
-count(node.branch{_, _, Sm, Bi}) ->
+count(gb_tree_node.branch{_, _, Sm, Bi}) ->
     {H1, S1} = count(Sm),
     {H2, S2} = count(Bi),
     {?mul2(erlang:max(H1, H2)), S1 + S2 + 1};
-count(node.nil) ->
+count(gb_tree_node.nil) ->
     {1, 0}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -353,12 +356,12 @@ balance_list_1(L, S) when S > 1 ->
     S1 = Sm - S2,
     {T1, [{K, V} | L1]} = balance_list_1(L, S1),
     {T2, L2} = balance_list_1(L1, S2),
-    T = node.branch{K, V, T1, T2},
+    T = gb_tree_node.branch{K, V, T1, T2},
     {T, L2};
 balance_list_1([{Key, Val} | L], 1) ->
-    {node.branch{Key, Val, node.nil, node.nil}, L};
+    {gb_tree_node.branch{Key, Val, gb_tree_node.nil, gb_tree_node.nil}, L};
 balance_list_1(L, 0) ->
-    {node.nil, L}.
+    {gb_tree_node.nil, L}.
 
 -spec from_orddict([{Key, Value}]) -> tree(Key, Value).
 
@@ -387,22 +390,22 @@ delete(Key, {S, T}) when S >= 0 ->
 
 %% See `lookup' for notes on the term comparison order.
 
-delete_1(Key, node.branch{Key1, Value, Smaller, Larger}) when Key < Key1 ->
+delete_1(Key, gb_tree_node.branch{Key1, Value, Smaller, Larger}) when Key < Key1 ->
     Smaller1 = delete_1(Key, Smaller),
-    node.branch{Key1, Value, Smaller1, Larger};
-delete_1(Key, node.branch{Key1, Value, Smaller, Bigger}) when Key > Key1 ->
+    gb_tree_node.branch{Key1, Value, Smaller1, Larger};
+delete_1(Key, gb_tree_node.branch{Key1, Value, Smaller, Bigger}) when Key > Key1 ->
     Bigger1 = delete_1(Key, Bigger),
-    node.branch{Key1, Value, Smaller, Bigger1};
-delete_1(_, node.branch{_, _, Smaller, Larger}) ->
+    gb_tree_node.branch{Key1, Value, Smaller, Bigger1};
+delete_1(_, gb_tree_node.branch{_, _, Smaller, Larger}) ->
     merge(Smaller, Larger).
 
-merge(Smaller, node.nil) ->
+merge(Smaller, gb_tree_node.nil) ->
     Smaller;
-merge(node.nil, Larger) ->
+merge(gb_tree_node.nil, Larger) ->
     Larger;
 merge(Smaller, Larger) ->
     {Key, Value, Larger1} = take_smallest1(Larger),
-    node.branch{Key, Value, Smaller, Larger1}.
+    gb_tree_node.branch{Key, Value, Smaller, Larger1}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -422,13 +425,13 @@ take(Key, {S, T}) when S >= 0 ->
     {Value, Res} = take_1(Key, T),
     {Value, {S - 1, Res}}.
 
-take_1(Key, node.branch{Key1, Value, Smaller, Larger}) when Key < Key1 ->
+take_1(Key, gb_tree_node.branch{Key1, Value, Smaller, Larger}) when Key < Key1 ->
     {Value2, Smaller1} = take_1(Key, Smaller),
-    {Value2, node.branch{Key1, Value, Smaller1, Larger}};
-take_1(Key, node.branch{Key1, Value, Smaller, Bigger}) when Key > Key1 ->
+    {Value2, gb_tree_node.branch{Key1, Value, Smaller1, Larger}};
+take_1(Key, gb_tree_node.branch{Key1, Value, Smaller, Bigger}) when Key > Key1 ->
     {Value2, Bigger1} = take_1(Key, Bigger),
-    {Value2, node.branch{Key1, Value, Smaller, Bigger1}};
-take_1(_, node.branch{_Key, Value, Smaller, Larger}) ->
+    {Value2, gb_tree_node.branch{Key1, Value, Smaller, Bigger1}};
+take_1(_, gb_tree_node.branch{_Key, Value, Smaller, Larger}) ->
     {Value, merge(Smaller, Larger)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -439,20 +442,20 @@ take_smallest({Size, Tree}) when Size >= 0 ->
     {Key, Value, Larger} = take_smallest1(Tree),
     {Key, Value, {Size - 1, Larger}}.
 
-take_smallest1(node.branch{Key, Value, node.nil, Larger}) ->
+take_smallest1(gb_tree_node.branch{Key, Value, gb_tree_node.nil, Larger}) ->
     {Key, Value, Larger};
-take_smallest1(node.branch{Key, Value, Smaller, Larger}) ->
+take_smallest1(gb_tree_node.branch{Key, Value, Smaller, Larger}) ->
     {Key1, Value1, Smaller1} = take_smallest1(Smaller),
-    {Key1, Value1, node.branch{Key, Value, Smaller1, Larger}}.
+    {Key1, Value1, gb_tree_node.branch{Key, Value, Smaller1, Larger}}.
 
 -spec smallest(tree(Key, Value)) -> {Key, Value}.
 
 smallest({_, Tree}) ->
     smallest_1(Tree).
 
-smallest_1(node.branch{Key, Value, node.nil, _Larger}) ->
+smallest_1(gb_tree_node.branch{Key, Value, gb_tree_node.nil, _Larger}) ->
     {Key, Value};
-smallest_1(node.branch{_Key, _Value, Smaller, _Larger}) ->
+smallest_1(gb_tree_node.branch{_Key, _Value, Smaller, _Larger}) ->
     smallest_1(Smaller).
 
 -spec take_largest(tree(Key, Value)) -> {Key, Value, tree(Key, Value)}.
@@ -461,20 +464,20 @@ take_largest({Size, Tree}) when Size >= 0 ->
     {Key, Value, Smaller} = take_largest1(Tree),
     {Key, Value, {Size - 1, Smaller}}.
 
-take_largest1(node.branch{Key, Value, Smaller, node.nil}) ->
+take_largest1(gb_tree_node.branch{Key, Value, Smaller, gb_tree_node.nil}) ->
     {Key, Value, Smaller};
-take_largest1(node.branch{Key, Value, Smaller, Larger}) ->
+take_largest1(gb_tree_node.branch{Key, Value, Smaller, Larger}) ->
     {Key1, Value1, Larger1} = take_largest1(Larger),
-    {Key1, Value1, node.branch{Key, Value, Smaller, Larger1}}.
+    {Key1, Value1, gb_tree_node.branch{Key, Value, Smaller, Larger1}}.
 
 -spec largest(tree(Key, Value)) -> {Key, Value}.
 
 largest({_, Tree}) ->
     largest_1(Tree).
 
-largest_1(node.branch{Key, Value, _Smaller, node.nil}) ->
+largest_1(gb_tree_node.branch{Key, Value, _Smaller, gb_tree_node.nil}) ->
     {Key, Value};
-largest_1(node.branch{_Key, _Value, _Smaller, Larger}) ->
+largest_1(gb_tree_node.branch{_Key, _Value, _Smaller, Larger}) ->
     largest_1(Larger).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -486,9 +489,9 @@ to_list({_, T}) ->
 
 to_list_1(T) -> to_list(T, []).
 
-to_list(node.branch{Key, Value, Small, Big}, L) ->
+to_list(gb_tree_node.branch{Key, Value, Small, Big}, L) ->
     to_list(Small, [{Key, Value} | to_list(Big, L)]);
-to_list(node.nil, L) -> L.
+to_list(gb_tree_node.nil, L) -> L.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -497,9 +500,9 @@ to_list(node.nil, L) -> L.
 keys({_, T}) ->
     keys(T, []).
 
-keys(node.branch{Key, _Value, Small, Big}, L) ->
+keys(gb_tree_node.branch{Key, _Value, Small, Big}, L) ->
     keys(Small, [Key | keys(Big, L)]);
-keys(node.nil, L) -> L.
+keys(gb_tree_node.nil, L) -> L.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -508,9 +511,9 @@ keys(node.nil, L) -> L.
 values({_, T}) ->
     values(T, []).
 
-values(node.branch{_Key, Value, Small, Big}, L) ->
+values(gb_tree_node.branch{_Key, Value, Small, Big}, L) ->
     values(Small, [Value | values(Big, L)]);
-values(node.nil, L) -> L.
+values(gb_tree_node.nil, L) -> L.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -525,11 +528,11 @@ iterator_1(T) ->
 %% The iterator structure is really just a list corresponding to
 %% the call stack of an in-order traversal. This is quite fast.
 
-iterator(node.branch{_, _, node.nil, _} = T, As) ->
+iterator(gb_tree_node.branch{_, _, gb_tree_node.nil, _} = T, As) ->
     [T | As];
-iterator(node.branch{_, _, L, _} = T, As) ->
+iterator(gb_tree_node.branch{_, _, L, _} = T, As) ->
     iterator(L, [T | As]);
-iterator(node.nil, As) ->
+iterator(gb_tree_node.nil, As) ->
     As.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -542,20 +545,20 @@ iterator_from(S, {_, T}) ->
 iterator_1_from(S, T) ->
     iterator_from(S, T, []).
 
-iterator_from(S, node.branch{K, _, _, T}, As) when K < S ->
+iterator_from(S, gb_tree_node.branch{K, _, _, T}, As) when K < S ->
     iterator_from(S, T, As);
-iterator_from(_, node.branch{_, _, node.nil, _} = T, As) ->
+iterator_from(_, gb_tree_node.branch{_, _, gb_tree_node.nil, _} = T, As) ->
     [T | As];
-iterator_from(S, node.branch{_, _, L, _} = T, As) ->
+iterator_from(S, gb_tree_node.branch{_, _, L, _} = T, As) ->
     iterator_from(S, L, [T | As]);
-iterator_from(_, node.nil, As) ->
+iterator_from(_, gb_tree_node.nil, As) ->
     As.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -spec next(iter(Key, Value)) -> option({Key, Value, iter(Key, Value)}).
 
-next([node.branch{X, V, _, T} | As]) ->
+next([gb_tree_node.branch{X, V, _, T} | As]) ->
     option.some{{X, V, iterator(T, As)}};
 next([]) ->
     option.none.
@@ -567,6 +570,6 @@ next([]) ->
 map(F, {Size, Tree}) ->
     {Size, map_1(F, Tree)}.
 
-map_1(_, node.nil) -> node.nil;
-map_1(F, node.branch{K, V, Smaller, Larger}) ->
-    node.branch{K, F(K, V), map_1(F, Smaller), map_1(F, Larger)}.
+map_1(_, gb_tree_node.nil) -> gb_tree_node.nil;
+map_1(F, gb_tree_node.branch{K, V, Smaller, Larger}) ->
+    gb_tree_node.branch{K, F(K, V), map_1(F, Smaller), map_1(F, Larger)}.
