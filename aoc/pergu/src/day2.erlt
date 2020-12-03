@@ -1,0 +1,52 @@
+-module(day2).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-type row :: #(range :: {Min::integer(), Max::integer()}, char :: [integer()], password :: [integer()]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    count_correct(get_input(FileName), fun in_range/1).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    count_correct(get_input(FileName), fun exactly_one/1).
+
+
+-spec count_correct(list(A), fun((A) -> number())) -> number().
+count_correct([Row | Rest], Fun) ->
+    Fun(Row) + count_correct(Rest, Fun);
+count_correct([], _Fun) ->
+    0.
+
+in_range(#(range={Min, Max}, char = [Char], password=Password)) ->
+    case erlang:length([1 || ^Char <- Password]) of
+        X when X >= Min, X =< Max -> 1;
+        _ -> 0
+    end.
+
+exactly_one(#(range={First, Second}, char = [Char], password=Password)) ->
+    case (nth(First, Password) == Char) xor (nth(Second, Password) == Char) of
+        true -> 1;
+        false -> 0
+    end.
+
+-spec get_input(string()) -> [row()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File).
+
+-spec nth(integer(), [A]) -> A.
+[unchecked]
+nth(N, List) ->
+    lists:nth(N, List).
+
+[unchecked]
+read_input(File) ->
+    case io:fread(File, "", "~d-~d ~c: ~s") of
+        {'ok', [N1, N2, Char, Password]} ->
+            [#(range={N1,N2}, char=Char, password=Password) | read_input(File)];
+        _ ->
+            []
+    end.

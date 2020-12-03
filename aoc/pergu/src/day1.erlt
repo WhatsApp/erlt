@@ -1,0 +1,46 @@
+-module(day1).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    solve(FileName, 2020, 2).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    solve(FileName, 2020, 3).
+
+-spec solve(string(), number(), number()) -> number().
+solve(FileName, Sum, N) ->
+    verify_and_calculate_result(findN(get_input(FileName), Sum, N), Sum).
+
+-spec findN(list(number()), number(), number()) -> list(number()).
+findN([X|_Rest], X, 1) -> [X];
+findN([_|Rest], X, 1) -> findN(Rest, X, 1);
+findN([X|Rest], Val, N) when X =< Val ->
+    case findN(Rest, Val-X, N-1) of
+        [] ->
+            findN(Rest, Val, N);
+        Result ->
+            [X|Result]
+    end;
+findN([_|Rest], Val, N) ->
+    findN(Rest, Val, N);
+findN([], _Val, _N) ->
+    [].
+
+-spec verify_and_calculate_result([integer()], integer()) -> integer().
+[unchecked]
+verify_and_calculate_result([], Val) ->
+    erlang:error({'no_solution', Val});
+verify_and_calculate_result(List, Val) ->
+    ^Val = lists:sum(List),
+    lists:foldl(fun(X,Y) -> X*Y end, 1, List).
+
+
+
+-spec get_input(string()) -> [integer()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    [list_to_integer(IntString) || IntString <- string:split(binary_to_list(Bin), "\n", 'all'), IntString =/= ""].
