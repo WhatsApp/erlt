@@ -5,3 +5,8 @@
 
 %% Error: type names may not be reused, even for different arities
 -opaque foo(T) :: {T}.
+
+%% Error predefined types must not be reused even with different arities
+-type node(A,B) :: {A,B}.
+
+-enum list(A,B) :: (first{A}, second{B}, nil).

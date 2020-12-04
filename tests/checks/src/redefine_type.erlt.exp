@@ -2,3 +2,11 @@ redefine_type.erlt:7:1: type foo already defined
 %    7| -opaque foo(T) :: {T}.
 %     | ^^^^^^^^^^^^^^^^^^^^^
 
+redefine_type.erlt:10:1: defined a new type with the same name: node as a pre-defined type
+%   10| -type node(A,B) :: {A,B}.
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+redefine_type.erlt:12:1: defined a new enum with the same name: list as a pre-defined type
+%   12| -enum list(A,B) :: (first{A}, second{B}, nil).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

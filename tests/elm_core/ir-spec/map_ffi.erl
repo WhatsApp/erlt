@@ -2,7 +2,7 @@
 
 -module(map_ffi).
 
--export_type([map/2]).
+-export_type([map_/2]).
 
 -export([empty/0,
          get/2,
@@ -18,13 +18,13 @@
 
 -import_type({maybe, [{maybe, 1}]}).
 
--type map(_K, _V) :: term().
+-type map_(_K, _V) :: term().
 
--spec empty() -> map(_K, _V).
+-spec empty() -> map_(_K, _V).
 
 empty() -> maps:new().
 
--spec get(K, map(K, V)) -> maybe:maybe(V).
+-spec get(K, map_(K, V)) -> maybe:maybe(V).
 
 get(Key, Map) ->
     case maps:find(Key, Map) of
@@ -32,48 +32,48 @@ get(Key, Map) ->
         error -> {'$#maybe:maybe.nothing'}
     end.
 
--spec size(map(_K, _V)) -> integer().
+-spec size(map_(_K, _V)) -> integer().
 
 size(Map) -> maps:size(Map).
 
--spec insert(K, V, map(K, V)) -> map(K, V).
+-spec insert(K, V, map_(K, V)) -> map_(K, V).
 
 insert(Key, Value, Map) -> maps:put(Key, Value, Map).
 
--spec remove(K, map(K, V)) -> map(K, V).
+-spec remove(K, map_(K, V)) -> map_(K, V).
 
 remove(Key, Map) -> maps:remove(Key, Map).
 
--spec fold(fun((K, V, R) -> R), R, map(K, V)) -> R.
+-spec fold(fun((K, V, R) -> R), R, map_(K, V)) -> R.
 
 fold(F, Acc, Map) -> maps:fold(F, Acc, Map).
 
--spec union(map(K, V), map(K, V)) -> map(K, V).
+-spec union(map_(K, V), map_(K, V)) -> map_(K, V).
 
 union(Map1, Map2) -> maps:merge(Map1, Map2).
 
 -spec filter(fun((K, V) -> boolean()),
-             map(K, V)) -> map(K, V).
+             map_(K, V)) -> map_(K, V).
 
 filter(F, Map) -> maps:filter(F, Map).
 
--spec map(fun((K, A) -> B), map(K, A)) -> map(K, B).
+-spec map(fun((K, A) -> B), map_(K, A)) -> map_(K, B).
 
-map(F, Map) -> maps:map(F, Map).
+map(F, Map) -> maps:map_(F, Map).
 
--spec keys(map(K, _V)) -> [K].
+-spec keys(map_(K, _V)) -> [K].
 
 keys(Map) -> maps:keys(Map).
 
--spec values(map(_K, V)) -> [V].
+-spec values(map_(_K, V)) -> [V].
 
 values(Map) -> maps:values(Map).
 
--spec to_list(map(K, V)) -> [{K, V}].
+-spec to_list(map_(K, V)) -> [{K, V}].
 
 to_list(Map) -> maps:to_list(Map).
 
--spec from_list([{K, V}]) -> map(K, V).
+-spec from_list([{K, V}]) -> map_(K, V).
 
 from_list(List) -> maps:from_list(List).
 

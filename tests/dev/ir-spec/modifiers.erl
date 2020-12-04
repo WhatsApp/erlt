@@ -4,24 +4,24 @@
 
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
 
--export_type([map/2]).
+-export_type([map_/2]).
 
--type map(_Key, _Value) :: term().
+-type map_(_Key, _Value) :: term().
 
 -spec ffi(integer()) -> binary().
 
 ffi(X) -> erlang:term_to_binary(X).
 
--spec empty() -> map(_Key, _Value).
+-spec empty() -> map_(_Key, _Value).
 
 empty() -> maps:empty().
 
--spec get(Key, map(Key, Value)) -> Value.
+-spec get(Key, map_(Key, Value)) -> Value.
 
 get(Key, Map) -> maps:get(Key, Map).
 
--spec put(Key, Value, map(Key, Value)) -> map(Key,
-                                              Value).
+-spec put(Key, Value, map_(Key, Value)) -> map_(Key,
+                                                Value).
 
 put(Key, Value, Map) -> maps:put(Key, Value, Map).
 

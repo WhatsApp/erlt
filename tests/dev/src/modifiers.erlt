@@ -2,27 +2,27 @@
 
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
 
--export_type([map/2]).
+-export_type([map_/2]).
 
 [opaque, unchecked]
--type map(Key, Value) :: term().
+-type map_(Key, Value) :: term().
 
 -spec ffi(integer()) -> binary().
 [unchecked]
 ffi(X) ->
     term_to_binary(X).
 
--spec empty() -> map(_Key, _Value).
+-spec empty() -> map_(_Key, _Value).
 [unchecked]
 empty() ->
     maps:empty().
 
--spec get(Key, map(Key, Value)) -> Value.
+-spec get(Key, map_(Key, Value)) -> Value.
 [unchecked]
 get(Key, Map) ->
     maps:get(Key, Map).
 
--spec put(Key, Value, map(Key, Value)) -> map(Key, Value).
+-spec put(Key, Value, map_(Key, Value)) -> map_(Key, Value).
 [unchecked]
 put(Key, Value, Map) ->
     maps:put(Key, Value, Map).

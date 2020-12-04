@@ -1,5 +1,4 @@
-import_type_builtin.erlt:5:1: import directive overrides auto-imported builtin type integer/0
- - use "-compile({no_auto_import,[integer/0]})." to resolve name clash
+import_type_builtin.erlt:5:1: imported a type from foo with the same name: integer as a pre-defined type
 %    5| -import_type(foo, [integer/0]).
 %     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
