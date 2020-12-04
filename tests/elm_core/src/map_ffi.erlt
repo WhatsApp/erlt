@@ -14,7 +14,7 @@
 
 -module(map_ffi).
 
--export_type([map/2]).
+-export_type([map_/2]).
 
 -export([empty/0, get/2, size/1, insert/3, remove/2, fold/3, union/2, filter/2, map/2]).
 -export([keys/1, values/1, to_list/1, from_list/1]).
@@ -22,14 +22,14 @@
 -import_type(maybe, [maybe/1]).
 
 [unchecked, opaque]
--type map(K, V) :: term().
+-type map_(K, V) :: term().
 
--spec empty() -> map(_K, _V).
+-spec empty() -> map_(_K, _V).
 [unchecked]
 empty() ->
     maps:new().
 
--spec get(K, map(K, V)) -> maybe(V).
+-spec get(K, map_(K, V)) -> maybe(V).
 [unchecked]
 get(Key, Map) ->
     case maps:find(Key, Map) of
@@ -37,57 +37,57 @@ get(Key, Map) ->
         'error' -> maybe.nothing
     end.
 
--spec size(map(_K,_V)) -> integer().
+-spec size(map_(_K,_V)) -> integer().
 [unchecked]
 size(Map) ->
     maps:size(Map).
 
--spec insert(K, V, map(K, V)) -> map(K, V).
+-spec insert(K, V, map_(K, V)) -> map_(K, V).
 [unchecked]
 insert(Key, Value, Map) ->
     maps:put(Key, Value, Map).
 
--spec remove(K, map(K, V)) -> map(K, V).
+-spec remove(K, map_(K, V)) -> map_(K, V).
 [unchecked]
 remove(Key, Map) ->
     maps:remove(Key, Map).
 
--spec fold(fun((K, V, R) -> R), R, map(K, V)) -> R.
+-spec fold(fun((K, V, R) -> R), R, map_(K, V)) -> R.
 [unchecked]
 fold(F, Acc, Map) ->
     maps:fold(F, Acc, Map).
 
--spec union(map(K, V), map(K, V)) -> map(K, V).
+-spec union(map_(K, V), map_(K, V)) -> map_(K, V).
 [unchecked]
 union(Map1, Map2) ->
     maps:merge(Map1, Map2).
 
--spec filter(fun((K, V) -> boolean()), map(K, V)) -> map(K, V).
+-spec filter(fun((K, V) -> boolean()), map_(K, V)) -> map_(K, V).
 [unchecked]
 filter(F, Map) ->
     maps:filter(F, Map).
 
--spec map(fun((K, A) -> B), map(K, A)) -> map(K, B).
+-spec map(fun((K, A) -> B), map_(K, A)) -> map_(K, B).
 [unchecked]
 map(F, Map) ->
-    maps:map(F, Map).
+    maps:map_(F, Map).
 
--spec keys(map(K, _V)) -> list(K).
+-spec keys(map_(K, _V)) -> list(K).
 [unchecked]
 keys(Map) ->
     maps:keys(Map).
 
--spec values(map(_K, V)) -> list(V).
+-spec values(map_(_K, V)) -> list(V).
 [unchecked]
 values(Map) ->
     maps:values(Map).
 
--spec to_list(map(K, V)) -> list({K, V}).
+-spec to_list(map_(K, V)) -> list({K, V}).
 [unchecked]
 to_list(Map) ->
     maps:to_list(Map).
 
--spec from_list(list({K, V})) -> map(K, V).
+-spec from_list(list({K, V})) -> map_(K, V).
 [unchecked]
 from_list(List) ->
     maps:from_list(List).

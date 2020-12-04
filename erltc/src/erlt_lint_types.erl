@@ -74,8 +74,12 @@ format_error({import_type_wrong_arity, {N, A}}) ->
         N,
         gen_type_paren(A)
     ]);
-format_error({reused_imported_typename, {N, _A}, _Kind}) ->
-    io_lib:format("defined a new type with the same name ~tw as an imported type", [N]);
+format_error({reused_imported_typename, {N, _A}, Kind}) ->
+    io_lib:format("defined a new ~w with the same name: ~tw as an imported type", [Kind, N]);
+format_error({predefined_type_name, {N, _A}, {imported, M}}) ->
+    io_lib:format("imported a type from ~w with the same name: ~tw as a pre-defined type", [M, N]);
+format_error({predefined_type_name, {N, _A}, Kind}) ->
+    io_lib:format("defined a new ~w with the same name: ~tw as a pre-defined type", [Kind, N]);
 format_error(underscore_in_type_arguments) ->
     "_ is not a valid name for a type argument";
 format_error(arith_ops) ->
@@ -168,12 +172,21 @@ collect_locally_available_types([], St) ->
 handle_type_name_def(Name, Line, Kind, Arity, St) ->
     LocalTypes = St#state.local_types,
     TypeInfo = #type_info{name = Name, kind = Kind, arity = Arity, line = Line},
-    case maps:get(Name, LocalTypes, undefined) of
-        undefined ->
-            St#state{local_types = maps:put(Name, TypeInfo, LocalTypes)};
-        #type_info{kind = OldKind} ->
-            add_error(Line, redefinition_error(Name, Kind, OldKind), St)
+    case is_predefined_type_name(Name) of
+        true ->
+            add_error(Line, {predefined_type_name, {Name, Arity}, Kind}, St);
+        false ->
+            case maps:get(Name, LocalTypes, undefined) of
+                undefined ->
+                    St#state{local_types = maps:put(Name, TypeInfo, LocalTypes)};
+                #type_info{kind = OldKind} ->
+                    add_error(Line, redefinition_error(Name, Kind, OldKind), St)
+            end
     end.
+
+is_predefined_type_name(Name) ->
+    %% There are no predefined types with more than two args.
+    lists:any(fun(N) -> erl_internal:is_type(Name, N) end, [0, 1, 2]).
 
 redefinition_error(Name, {imported, _Module}, {imported, _M}) ->
     {import_type_duplicate, Name};
