@@ -1,0 +1,95 @@
+-module(day4).
+
+-export([puzzle1/1
+    ,puzzle2/1
+    ]).
+
+-spec puzzle1(string()) -> integer().
+[unchecked]
+puzzle1(FileName) ->
+    Input = get_input(FileName),
+    t_lists:sum([1 || Passport <- filter_valid_keys(Input), length(Passport) == 7]).
+
+-spec puzzle2(string()) -> integer().
+[unchecked]
+puzzle2(FileName) ->
+    Input = get_input(FileName),
+    t_lists:sum([1 || Passport <- filter_valid_values(filter_valid_keys(Input)), length(Passport) == 7]).
+
+[unchecked]
+filter_valid_values(Input) ->
+    [[Entry || Entry <- Passport, valid(Entry)] || Passport <- Input].
+
+[unchecked]
+filter_valid_keys(Input) ->
+    [[{X, Y} || {X, Y} <- Passport, is_element(X, mandatory())] || Passport <- Input].
+
+[unchecked]
+mandatory() ->
+    from_list(["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"]).
+
+-spec get_input(string()) -> [[{string(), string()}]].
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    Passports = string:split(binary_to_list(Bin), "\n\n", 'all'),
+    io:format("~p~n", [length(Passports)]),
+    [split_passport(Passport) || Passport <- Passports].
+
+[unchecked]
+split_passport(Passport) ->
+    [list_to_tuple(string:split(Token, ":")) || Token <- string:tokens(Passport, " \n")].
+
+[unchecked]
+-opaque set(A) :: term().
+
+-spec from_list([A]) -> set(A).
+[unchecked]
+from_list(List) -> gb_sets:from_list(List).
+
+-spec is_element(A, set(A)) -> boolean().
+[unchecked]
+is_element(Value, Set) -> 
+    gb_sets:is_element(Value, Set).
+
+-spec valid({string(), string()}) -> boolean().
+[unchecked]
+valid({"byr", String}) ->
+    validate_number(String, 1920, 2002);
+valid({"iyr", String}) ->
+    validate_number(String, 2010, 2020);
+valid({"eyr", String}) ->
+    validate_number(String, 2020, 2030);
+valid({"hgt", String}) ->
+    case t_lists:reverse(String) of
+        "mc" ++ Rest ->
+            validate_number(t_lists:reverse(Rest), 150, 193);
+        "ni" ++ Rest ->
+            validate_number(t_lists:reverse(Rest), 59, 76);
+        _ ->
+            false
+    end;
+valid({"hcl", "#" ++ Rest}) when length(Rest) == 6 -> 
+    t_lists:all(fun(X) -> in_range(X, [{$0, $9}, {$a, $f}]) end, Rest);
+valid({"ecl", "amb"}) -> true;
+valid({"ecl", "blu"}) -> true;
+valid({"ecl", "brn"}) -> true;
+valid({"ecl", "gry"}) -> true;
+valid({"ecl", "grn"}) -> true;
+valid({"ecl", "hzl"}) -> true;
+valid({"ecl", "oth"}) -> true;
+valid({"pid", String}) when length(String) == 9 -> 
+    t_lists:all(fun(X) -> in_range(X, [{$0, $9}]) end, String);
+valid(_) -> false.
+
+in_range(Value, Ranges) ->
+    t_lists:any(fun({Min, Max}) -> (Value >= Min) and (Value =< Max) end, Ranges).
+
+[unchecked]
+validate_number(String, Min, Max) ->
+    try 
+        Val = list_to_integer(String),
+        Val >= Min andalso Val =< Max
+    catch
+        _ -> false
+    end.
