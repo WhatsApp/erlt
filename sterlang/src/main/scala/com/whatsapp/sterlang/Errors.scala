@@ -121,8 +121,6 @@ class DuplicateEnumCon(range: Doc.Range, name: String)
 class DuplicateType(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate type: $name", None)
 class DuplicateStruct(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate struct: #$name{}", None)
 class DuplicateFun(range: Doc.Range, name: String) extends RangeError(range, s"Duplicate fun: $name", None)
-class UnSpecedExportedFun(range: Doc.Range, name: String)
-    extends RangeError(range, s"Fun: $name is exported, but lacks a spec", None)
 
 class ParseError(pos: Doc.Pos) extends PosError(pos, "Parse Error")
 class UnsupportedSyntaxError(range: Doc.Range, reason: String)

@@ -79,9 +79,6 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val astChecks = new AstChecks(context)
       astChecks.check(program)
       new Elaborate(vars, context, program).elaborate()
-      if (module.contains("_unspeced")) {
-        astChecks.checkPublicSpecs(program)
-      }
       fail(s"$mainFile should not type-check")
     } catch {
       case error: RangeError =>

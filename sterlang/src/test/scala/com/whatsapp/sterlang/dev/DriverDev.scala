@@ -65,9 +65,6 @@ object DriverDev extends DriverApi {
         warnings.foreach(displayRangeError(erltFile, text, _))
         // $COVERAGE-ON$
       }
-
-      // checking them in the very end - since it is possible to present inferred types here
-      astChecks.checkPublicSpecs(program)
     } catch {
       // $COVERAGE-OFF$ interactive
       case error: RangeError =>
