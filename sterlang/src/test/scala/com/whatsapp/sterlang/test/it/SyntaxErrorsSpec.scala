@@ -16,50 +16,71 @@
 
 package com.whatsapp.sterlang.test.it
 
-import java.io.File
-import java.nio.file.{Files, Paths}
-
+import java.nio.file.{Files, Path, Paths}
 import com.whatsapp.sterlang._
 import com.whatsapp.sterlang.dev.DriverDev
+
+import scala.util.Using
 
 class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
-  testDir("examples/err_syntax/src")
-  testDir("examples/sterlang_lint/src")
+  testDir(srcDir = "examples/err_syntax/src", erltc = false)
+  testDir(srcDir = "examples/sterlang_lint/src", erltc = true)
 
-  def testDir(iDirPath: String): Unit = {
+  def testDir(srcDir: String, erltc: Boolean): Unit = {
     import sys.process._
-    describe(iDirPath) {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
+    describe(srcDir) {
 
-      val file = new File(iDirPath)
-      val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
+      val buildDirDev = Files.createTempDirectory("sterlang")
+      val buildDirErltc = Files.createTempDirectory("erlc")
+      s"./parser -idir $srcDir -odir $buildDirDev".!!
 
-      val erlCompatModules = moduleNames.filterNot(_.endsWith("_erlt"))
+      val modules =
+        Paths
+          .get(srcDir)
+          .toFile
+          .listFiles()
+          .filter(f => f.isFile && f.getPath.endsWith(".erlt"))
+          .map(_.getName)
+          .map(_.dropRight(5))
+          .sorted
+      val moduleArgs =
+        modules.map(_ ++ ".erlt").mkString(" ")
+
+      val erlCompatModules = modules.filterNot(_.endsWith("_erlt"))
       val erlcTmpDir = Files.createTempDirectory("erlc-in")
       erlCompatModules.foreach { m =>
-        Files.copy(Paths.get(s"$iDirPath/$m.erlt"), erlcTmpDir.resolve(s"$m.erl"))
+        Files.copy(Paths.get(s"$srcDir/$m.erlt"), erlcTmpDir.resolve(s"$m.erl"))
       }
       val erlcInputs = erlCompatModules.map(m => s"$erlcTmpDir/$m.erl").mkString(" ")
-      val cmd = s"erlc -o $erlcTmpDir $erlcInputs"
       s"erlc -o $erlcTmpDir $erlcInputs".!!
 
-      moduleNames.foreach { p =>
-        val erltPath = s"$iDirPath/$p.erlt"
-        val etfPath = s"$oDirPath/$p.etf"
-        it(erltPath) {
-          processIllSyntax(erltPath, etfPath)
-        }
+      run(DriverDev, modules, srcDir, buildDirDev)
+
+      if (erltc) {
+        val erltcCmd =
+          s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc --skip-type-checking $moduleArgs"
+        val erltcLog = Files.createTempFile("erltc", null).toFile
+        val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
+        if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
+        else it(s"$srcDir - erltc") { fail(s"$erltcCmd failed, log: $erltcLog") }
       }
     }
   }
 
-  def processIllSyntax(erltPath: String, etfPath: String): Unit = {
+  private def run(driver: DriverApi, modules: Array[String], srcDir: String, buildDir: Path): Unit =
+    modules.foreach { p =>
+      val erltPath = s"$srcDir/$p.erlt"
+      val etfPath = s"$buildDir/$p.etf"
+      it(s"$erltPath - ${driver.getClass.getName}") {
+        processIllSyntax(driver, erltPath, etfPath)
+      }
+    }
+
+  def processIllSyntax(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
     try {
-      DriverDev.loadProgram(etfPath)
+      driver.loadProgram(etfPath)
       fail(s"$erltPath should generate an UnsupportedSyntaxError or a ParseError")
     } catch {
       case error: UnsupportedSyntaxError =>
