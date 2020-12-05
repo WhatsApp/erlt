@@ -1,0 +1,5 @@
+-- ERROR ------------------------------ examples/sterlang_lint/src/e01.erlt:17:6
+Unsupported Syntax
+Illegal pattern
+ 17| test(40 / 2) ->
+...|      ~~~~~~

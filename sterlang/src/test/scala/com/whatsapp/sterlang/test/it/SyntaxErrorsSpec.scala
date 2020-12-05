@@ -26,6 +26,7 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
   testDir("examples/err_syntax/src")
+  testDir("examples/sterlang_lint/src")
 
   def testDir(iDirPath: String): Unit = {
     import sys.process._

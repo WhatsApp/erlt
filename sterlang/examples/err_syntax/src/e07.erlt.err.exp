@@ -1,5 +1,0 @@
--- ERROR --------------------------------- examples/err_syntax/src/e07.erlt:17:6
-Unsupported Syntax
-Illegal pattern
- 17| test(40 / 2) ->
-...|      ~~~~~~
