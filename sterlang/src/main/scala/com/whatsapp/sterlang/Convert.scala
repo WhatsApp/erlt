@@ -183,11 +183,14 @@ object Convert {
         // Classic erlang allows this:
         // test(1 + 3) -> 4. But it has very little sense for ST
         // we do not support things like (4 + 5) in patterns
-        throw new UnsupportedSyntaxError(p, "Calculation in patterns")
+        throw new UnsupportedSyntaxError(p, "Illegal pattern")
       case Patterns.UnOpPattern(p, op, pat1) =>
-        // - This should be fixed in parser in the first place.
         // NB: -1 is UnOp('-', 1) - possibly we should fix it in the parser
-        throw new UnsupportedSyntaxError(p, "Calculation in patterns")
+        (op, convertPattern(pat1)) match {
+          case ("+", Ast.NumberPat(i)) => Ast.NumberPat(+i)(p)
+          case ("-", Ast.NumberPat(i)) => Ast.NumberPat(-i)(p)
+          case _                       => throw new UnsupportedSyntaxError(p, "Illegal pattern")
+        }
       case Patterns.LocalStructPattern(p, structName, fields) =>
         Ast.StructPat(Ast.LocalName(structName), fields.map(convertFieldPat))(p)
       case Patterns.RemoteStructPattern(p, module, structName, fields) =>

@@ -2,3 +2,4 @@
 -spec length(list(A)) -> number().
 -spec add(number(), number()) -> number().
 -spec add_number(number(), number()) -> number().
+-spec one_on_one(number(), number()) -> number().

@@ -13,3 +13,8 @@ add(X1, X2) -> X1 + X2.
 
 -spec add_number(number(), number()) -> number().
 add_number(X1, X2) -> add(X1, X2).
+
+-spec one_on_one(number(), number()) -> number().
+one_on_one(-1, -1) -> -1_0;
+one_on_one(+1, +1) -> +1_0;
+one_on_one(_, _) -> +0_0.
