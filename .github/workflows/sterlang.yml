@@ -109,9 +109,11 @@ jobs:
       - name: assemble erltc
         run: rebar3 escriptize
       - name: test stErlang
-        run: "cd sterlang && ../scripts/sbtn test"
+        run: "cd sterlang && ../scripts/sbtn 'coverage;test'"
       - name: "test erltc + stErlang in dev mode"
         run: make -C sterlang/examples
+      - name: coverageReport
+        run: "cd sterlang && ../scripts/sbtn 'coverageReport'"
 name: Sterlang CI
 on:
   push:

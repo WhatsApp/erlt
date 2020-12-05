@@ -47,7 +47,6 @@ commands += Command.command("sterlangd")(
     Command.process("bgStopAll ; test:bgRunMain com.whatsapp.sterlang.dev.SterlangD ", _)
 )
 
-// TODO - restore after re-integration
 coverageMinimum := 98
 coverageFailOnMinimum := true
 
