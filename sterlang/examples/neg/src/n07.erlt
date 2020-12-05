@@ -1,5 +1,5 @@
 -module(n07).
--export([unBox/2]).
+-export([inferred_funs/0]).
 
 -enum option(A) :: (none, some{A}).
 
@@ -12,3 +12,9 @@ getOrElse(Opt, Alt) ->
 %% the type for rec cannot be expressed without recursion
 unBox(Rec, _) ->
   getOrElse(Rec#(next), Rec).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun unBox/2
+].

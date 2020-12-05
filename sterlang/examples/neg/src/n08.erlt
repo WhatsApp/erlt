@@ -1,5 +1,5 @@
 -module(n08).
--export([unBox/2, name/1]).
+-export([inferred_funs/0]).
 
 -enum option(A) :: (none, some{A}).
 %% simulating it via Variant
@@ -25,3 +25,10 @@ next(RecRec) ->
 %% this also goes to recursive types
 unBox(Rec, _) ->
   getOrElse(next(Rec), Rec).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun name/1,
+    fun unBox/2
+].

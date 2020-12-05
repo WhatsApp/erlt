@@ -1,4 +1,5 @@
 -module(aliases).
+-export_type([pair/2]).
 -export([mk_pair/1]).
 
 -type pair(A, B) :: {A, B}.

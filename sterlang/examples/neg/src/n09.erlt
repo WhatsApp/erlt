@@ -1,7 +1,13 @@
 -module(n09).
--export([test/0]).
+-export([inferred_funs/0]).
 
 test() ->
     Rec1 = #(n = 1),
     _ = Rec1 #(n = "String"),
     1.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun test/0
+].

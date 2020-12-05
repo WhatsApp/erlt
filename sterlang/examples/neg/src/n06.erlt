@@ -1,6 +1,12 @@
 -module(n06).
--export([foo/2]).
+-export([inferred_funs/0]).
 
 foo(B, R) ->
     % circularity
     if B -> R#(x); true -> R end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun foo/2
+].

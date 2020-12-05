@@ -1,5 +1,5 @@
 -module(n04).
--export([foo/2]).
+-export([inferred_funs/0]).
 
 %% even simpler example of row circularity
 foo(B, R) ->
@@ -7,3 +7,9 @@ foo(B, R) ->
         B -> #( self = R );
         true -> R
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun foo/2
+].
