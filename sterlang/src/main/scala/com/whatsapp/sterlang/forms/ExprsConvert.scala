@@ -16,7 +16,6 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.UnsupportedSyntaxError
 import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Exprs._
 
@@ -219,8 +218,6 @@ object ExprsConvert {
 
       case ETuple(List(EAtom("named_fun"), anno, EAtom(fName), EList(eClauses))) =>
         NamedFun(r(anno), fName, eClauses.map(convertClause))
-      case ETuple(List(EAtom("pinned_var"), anno, _)) =>
-        throw new UnsupportedSyntaxError(r(anno), "Pinned var outside pattern")
       case _ =>
         literal(term)
     }
