@@ -16,7 +16,6 @@
 
 package com.whatsapp.sterlang.forms
 
-import com.whatsapp.sterlang.Doc
 import com.whatsapp.sterlang.Etf._
 import com.whatsapp.sterlang.forms.Forms._
 
@@ -107,10 +106,6 @@ object FormsConvert {
         UncheckedFunction(name, arity.intValue)
       case ETuple(List(EAtom("eof"), _anno)) =>
         EOF
-      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ETuple(List(ELong(line), ELong(column))), _)) :: _))) =>
-        Error(Doc.Pos(line.toInt, column.toInt))
-      case ETuple(List(EAtom("error"), ETuple(ETuple(List(ELong(line), ELong(column))) :: _))) =>
-        Error(Doc.Pos(line.toInt, column.toInt))
       case ETuple(
             List(
               EAtom("attribute"),
