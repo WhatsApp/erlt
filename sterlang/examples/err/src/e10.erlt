@@ -17,7 +17,7 @@
 -spec get_any() -> _.
 [unchecked]
 get_any() ->
-    any().
+    error("any").
 
 % This is an error in Haskell, but not in OCaml
 % In OCaml the following is well-typed (with warning)

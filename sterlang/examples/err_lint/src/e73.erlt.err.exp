@@ -1,4 +1,4 @@
--- ERROR ---------------------------------------- examples/err/src/e73.erlt:18:1
+-- ERROR ----------------------------------- examples/err_lint/src/e73.erlt:18:1
 Duplicate type: unit1
  18| -type unit1(A) :: {A}.
 ...| ~~~~~~~~~~~~~~~~~~~~~

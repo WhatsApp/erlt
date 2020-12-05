@@ -1,4 +1,4 @@
--- ERROR ---------------------------------------- examples/err/src/e59.erlt:17:8
+-- ERROR ----------------------------------- examples/err_lint/src/e59.erlt:17:8
 Duplicate fields: x
  17| f() -> #(x = 1) #(x = 1, x = 2).
 ...|        ~~~~~~~~~~~~~~~~~~~~~~~~

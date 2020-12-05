@@ -1,4 +1,4 @@
--- ERROR ---------------------------------------- examples/err/src/e74.erlt:18:1
+-- ERROR ----------------------------------- examples/err_lint/src/e74.erlt:18:1
 Duplicate type: unit1
  18| -enum unit1(A) :: (ctr{A}).
 ...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

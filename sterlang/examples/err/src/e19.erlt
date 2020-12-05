@@ -13,8 +13,12 @@
 %% limitations under the License.
 
 -module(e19).
--export([foo/1]).
+-export([inferred_funs/0]).
 
 some_int() -> 1.
 foo(X) ->
     X orelse some_int().
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

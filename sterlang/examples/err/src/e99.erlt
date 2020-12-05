@@ -13,9 +13,13 @@
 %% limitations under the License.
 
 -module(e99).
--export([mk/1]).
+-export([inferred_funs/0]).
 
 -struct foo() :: ().
 
 mk(true) -> #foo{};
 mk(false) -> false.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun mk/1].

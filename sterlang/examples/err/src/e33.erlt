@@ -13,6 +13,10 @@
 %% limitations under the License.
 
 -module(e33).
--export([foo/0]).
+-export([inferred_funs/0]).
 
 foo() -> [fun () -> 1 end, fun () -> "1" end].
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/0].

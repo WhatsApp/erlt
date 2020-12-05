@@ -13,6 +13,10 @@
 %% limitations under the License.
 
 -module(e29).
--export([foo/1]).
+-export([inferred_funs/0]).
 
 foo(C) -> case C of true -> [0]; false -> [""] end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

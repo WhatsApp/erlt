@@ -13,9 +13,13 @@
 %% limitations under the License.
 
 -module(e44).
--export([foo/1]).
+-export([inferred_funs/0]).
 
 -enum box(A) :: (box{A}).
 -enum e1() :: (e1).
 -enum e2() :: (e2).
 foo(E) -> case E of box.box{e1.e1} -> 1; box.box{e2.e2} -> 2 end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

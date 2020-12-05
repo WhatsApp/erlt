@@ -1,4 +1,4 @@
--- ERROR -------------------------------------- examples/err2/src/e152.erlt:19:9
+-- ERROR ---------------------------------- examples/err_lint/src/e152.erlt:19:9
 Already bound variable: Y
  19|         Y -> true
 ...|         ^

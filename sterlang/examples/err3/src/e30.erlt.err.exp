@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err3/src/e30.erlt:18:46
+Type Mismatch
+Found:    list(string())
+Required: list(number())
+ 18| foo(C) -> case C of true -> [0|[]]; false -> [""|[]] end.
+...|                                              ~~~~~~

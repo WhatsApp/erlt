@@ -13,8 +13,12 @@
 %% limitations under the License.
 
 -module(e26).
--export([foo/1]).
+-export([inferred_funs/0]).
 
 -enum e1(A) :: (e1{A}).
 -enum e2(A) :: (e2{A}).
 foo(C) -> case C of true -> e1.e1{1}; false -> e2.e2{""} end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

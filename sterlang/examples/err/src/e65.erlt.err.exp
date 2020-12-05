@@ -1,4 +1,0 @@
--- ERROR --------------------------------------- examples/err/src/e65.erlt:19:25
-Unknown type: remote:some_type/0
- 19| -enum my_enum() :: (ctr{remote:some_type()}).
-...|                         ~~~~~~~~~~~~~~~~~~

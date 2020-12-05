@@ -13,6 +13,7 @@
 %% limitations under the License.
 
 -module(e105).
+-export_type([box2/1]).
 
 -struct box(A) :: (value :: box2(A)).
 -opaque box2(A) :: box(box2(A)).

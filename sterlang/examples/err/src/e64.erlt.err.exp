@@ -1,4 +1,0 @@
--- ERROR --------------------------------------- examples/err/src/e64.erlt:19:20
-Unknown type: remote:some_type/0
- 19| -type my_type() :: remote:some_type().
-...|                    ~~~~~~~~~~~~~~~~~~

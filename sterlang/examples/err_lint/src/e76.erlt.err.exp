@@ -1,4 +1,4 @@
--- ERROR --------------------------------------- examples/err/src/e76.erlt:17:16
+-- ERROR ---------------------------------- examples/err_lint/src/e76.erlt:17:16
 Unknown type: super_type/0
  17| -spec foo() -> super_type().
 ...|                ~~~~~~~~~~~~

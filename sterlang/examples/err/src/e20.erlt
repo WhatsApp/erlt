@@ -13,8 +13,12 @@
 %% limitations under the License.
 
 -module(e20).
--export([foo/2]).
+-export([inferred_funs/0]).
 
 double(X) -> X + X.
 foo(X, Y) ->
     double(X orelse Y).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/2].

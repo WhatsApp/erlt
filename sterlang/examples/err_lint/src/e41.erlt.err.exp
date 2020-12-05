@@ -1,4 +1,4 @@
--- ERROR --------------------------------------- examples/err/src/e41.erlt:17:16
+-- ERROR ---------------------------------- examples/err_lint/src/e41.erlt:17:16
 Useless type variable: Useless
  17| -struct box(A, Useless) :: (value :: A).
 ...|                ~~~~~~~

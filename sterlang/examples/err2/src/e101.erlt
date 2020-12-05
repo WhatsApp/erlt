@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 -module(e101).
--export([test/0]).
+-export([inferred_funs/0]).
 
 -struct foo() :: (id :: integer()).
 -struct bar() :: (id :: integer()).
@@ -21,3 +21,7 @@
 test() ->
     Foo = #foo{id = 1},
     Foo#bar{id = 2}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun test/0].

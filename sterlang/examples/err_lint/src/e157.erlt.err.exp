@@ -1,4 +1,4 @@
--- ERROR -------------------------------------- examples/err2/src/e157.erlt:20:5
+-- ERROR ---------------------------------- examples/err_lint/src/e157.erlt:20:5
 Duplicate fields: id
  20|     my_enum.ctr{id = 1, id = 2}.
 ...|     ~~~~~~~~~~~~~~~~~~~~~~~~~~~

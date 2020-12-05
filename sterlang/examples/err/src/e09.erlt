@@ -13,9 +13,13 @@
 %% limitations under the License.
 
 -module(e09).
--export([foo/0]).
+-export([inferred_funs/0]).
 
 foo() ->
     X = #(x = ""),
     Y = #(y = 1),
     X == Y.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/0].

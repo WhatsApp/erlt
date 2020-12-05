@@ -1,6 +1,0 @@
--- ERROR --------------------------------------- examples/err/src/e11.erlt:19:16
-Type Mismatch
-Found:    number()
-Required: boolean()
- 19|     X andalso (if false -> 1; true -> 2 end).
-...|                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -13,10 +13,14 @@
 %% limitations under the License.
 
 -module(e116).
--export([get_message/0]).
+-export([inferred_funs/0]).
 
 get_message() ->
     receive
         % not an exception
         {IllegalPattern} -> IllegalPattern
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun get_message/0].

@@ -1,5 +1,0 @@
--- ERROR ---------------------------------------- examples/neg/src/n02.erlt:5:11
-Infinite type
-A <> fun((A) -> B)
-  5| f(_) -> f(fun f/1).
-...|           ~~~~~~~

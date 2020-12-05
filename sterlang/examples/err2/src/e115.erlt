@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 -module(e115).
--export([get_message/1]).
+-export([inferred_funs/0]).
 
 get_message(M) ->
     try
@@ -22,3 +22,7 @@ get_message(M) ->
         % not an exception
         {IllegalPattern} -> IllegalPattern
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun get_message/1].

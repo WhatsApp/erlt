@@ -13,7 +13,11 @@
 %% limitations under the License.
 
 -module(e82).
--export([binary_test/0]).
+-export([inferred_funs/0]).
 
 binary_test() ->
     << <<Bin>> || Bin <- [<<3,7,5,4,7>>] >>.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun binary_test/0].

@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 -module(e112).
--export([loop_step/2]).
+-export([inferred_funs/0]).
 
 -message ping() :: (from :: pid()).
 -message pong() :: (in_answer_to :: message()).
@@ -29,3 +29,7 @@ loop_step(TimeOut, Default) ->
     after
         TimeOut -> Default
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun loop_step/2].

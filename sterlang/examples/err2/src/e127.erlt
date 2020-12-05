@@ -13,8 +13,12 @@
 %% limitations under the License.
 
 -module(e127).
--export([foo/1]).
+-export([inferred_funs/0]).
 
 foo(Shape) ->
     Shape1 = Shape#(id1 = 1),
     #(id = 2) == Shape1.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun foo/1].

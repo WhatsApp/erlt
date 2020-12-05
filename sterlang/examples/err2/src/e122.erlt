@@ -14,6 +14,7 @@
 
 -module(e122).
 -export([test_f/1]).
+-export_type([f/2]).
 
 -type f(A, B) :: fun((A) -> B).
 

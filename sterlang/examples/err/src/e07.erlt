@@ -13,7 +13,11 @@
 %% limitations under the License.
 
 -module(e07).
--export([f/1]).
+-export([inferred_funs/0]).
 
 %% circularity
 f(_) -> f(fun f/1).
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun f/1].

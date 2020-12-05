@@ -13,7 +13,7 @@
 %% limitations under the License.
 
 -module(e98).
--export([mk_record/1]).
+-export([inferred_funs/0]).
 
 -struct foo() :: ().
 -struct bar() :: ().
@@ -23,3 +23,7 @@ mk_record(Cond) ->
         Cond -> #foo{};
         true -> #bar{}
     end.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun mk_record/1].

@@ -13,7 +13,11 @@
 %% limitations under the License.
 
 -module(e84).
--export([wrong_binary/2]).
+-export([inferred_funs/0]).
 
 wrong_binary(Y, Z) ->
     <<Y:(Y + Z)/binary>>.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun wrong_binary/2].

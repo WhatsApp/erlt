@@ -21,6 +21,7 @@
 
 -struct mixed(A) :: (A, second :: A).
 
+-spec getOrElse(option(A), A) -> A.
 getOrElse(Opt, Alt) ->
   case Opt of
       option.some{X} -> X;

@@ -13,6 +13,10 @@
 %% limitations under the License.
 
 -module(e49).
--export([f04/2]).
+-export([inferred_funs/0]).
 
 f04(X = #(x = Y), Y = #(x = X)) -> X.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun f04/2].

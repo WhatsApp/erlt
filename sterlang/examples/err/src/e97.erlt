@@ -13,9 +13,13 @@
 %% limitations under the License.
 
 -module(e97).
--export([bad_field/0]).
+-export([inferred_funs/0]).
 
 -struct my_record() :: (id :: integer(), hash :: integer()).
 
 bad_field() ->
     #my_record{hash = 1, id = "test"}.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [fun bad_field/0].

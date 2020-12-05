@@ -26,11 +26,13 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/neg/src")
-  testDir("examples/err/src")
-  testDir("examples/err2/src")
+  testDir("examples/neg/src", erltc = true)
+  testDir("examples/err/src", erltc = true)
+  testDir("examples/err2/src", erltc = true)
+  testDir("examples/err3/src", erltc = false)
+  testDir("examples/err_lint/src", erltc = false)
 
-  def testDir(srcDir: String): Unit = {
+  def testDir(srcDir: String, erltc: Boolean): Unit = {
     import sys.process._
     describe(srcDir) {
       val buildDirDev =
@@ -57,12 +59,14 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       if (parserYrlSuccess) run(DriverDev, modules, srcDir, buildDirDev)
       else it(s"$srcDir - parser.yrl") { fail(s"$parserYrlCmd failed, log: $parserYrlLog") }
 
-      val erltcCmd =
-        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc --skip-type-checking $moduleArgs"
-      val erltcLog = Files.createTempFile("erltc", null).toFile
-      val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
-      if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
-      else it(s"$srcDir - erltc") { alert(s"$erltcCmd failed, log: $erltcLog") }
+      if (erltc) {
+        val erltcCmd =
+          s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc --skip-type-checking $moduleArgs"
+        val erltcLog = Files.createTempFile("erltc", null).toFile
+        val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
+        if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
+        else it(s"$srcDir - erltc") { fail(s"$erltcCmd failed, log: $erltcLog") }
+      }
     }
   }
 

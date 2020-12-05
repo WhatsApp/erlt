@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err3/src/e15.erlt:19:10
+Type Mismatch
+Found:    boolean()
+Required: number()
+ 19|     1 + (X < Y).
+...|          ~~~~~
