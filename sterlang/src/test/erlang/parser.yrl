@@ -360,7 +360,11 @@ struct_expr -> '#' struct_name struct_tuple :
 struct_expr -> expr_max '#' struct_name '.' atom :
 	{struct_field, anno('$2', '$5'), '$1', '$3', '$5'}.
 struct_expr -> struct_expr '#' struct_name '.' atom :
-	{struct_field, anno('$2', '$5'), '$1', '$3','$5'}.
+	{struct_field, anno('$2', '$5'), '$1', '$3', '$5'}.
+struct_expr -> expr_max '#' struct_name '.' var :
+	{struct_field, anno('$2', '$5'), '$1', '$3', field_index('$5')}.
+struct_expr -> struct_expr '#' struct_name '.' var :
+	{struct_field, anno('$2', '$5'), '$1', '$3', field_index('$5')}.
 struct_expr -> expr_max '#' struct_name struct_tuple :
 	{struct, anno('$2','$4'), '$1', '$3', element(1, '$4')}.
 struct_expr -> struct_expr '#' struct_name struct_tuple :
@@ -589,6 +593,16 @@ type_tag(TypeName, NumberOfTypeVariables) ->
     case erl_internal:is_type(TypeName, NumberOfTypeVariables) of
         true -> type;
         false -> user_type
+    end.
+
+field_index({var, Anno, Name}) ->
+    case atom_to_list(Name) of
+        "_" ++ Num ->
+            try {integer, Anno, list_to_integer(Num)}
+            catch error:badarg -> ret_err(Anno, "bad field index")
+            end;
+        _ ->
+            ret_err(Anno, "bad field index")
     end.
 
 build_attribute({atom, _, module}, {atom, _, Module}, Aa) ->

@@ -22,3 +22,4 @@
 -spec mk_mixed2() -> mixed_struct2(list(number()), number()).
 -spec match_mixed1(mixed_struct1(number())) -> boolean().
 -spec match_mixed2(mixed_struct2(list(number()), number())) -> boolean().
+-spec struct_indices() -> {number(), string()}.
