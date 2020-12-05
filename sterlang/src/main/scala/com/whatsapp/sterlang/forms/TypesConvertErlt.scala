@@ -38,9 +38,6 @@ object TypesConvertErlt {
             )
           ) =>
         FunType(r(anno), args.map(convertType), convertType(resultType))
-      // af_map_type
-      case ETuple(List(EAtom("type"), anno, EAtom("map"), EAtom("any"))) =>
-        AnyMap(r(anno))
       case ETuple(List(EAtom("type"), anno, EAtom("closed_shape"), EList(assocTypes))) =>
         Shape(r(anno), assocTypes.map(convertShapeField))
       case ETuple(List(EAtom("type"), anno, EAtom("open_shape"), EList(assocTypes), restType)) =>
@@ -53,11 +50,8 @@ object TypesConvertErlt {
           FormsConvert.convertAtomLit(typeNameLit),
           args.map(convertType),
         )
-      // af_tuple_type
-      case ETuple(List(EAtom("type"), anno, EAtom("tuple"), EAtom("any"))) =>
-        TupleTypeAny(r(anno))
       case ETuple(List(EAtom("type"), anno, EAtom("tuple"), EList(types))) =>
-        TupleTypeTyped(r(anno), types.map(convertType))
+        TupleType(r(anno), types.map(convertType))
       // af_type_variable
       case ETuple(List(EAtom("var"), anno, EAtom(name))) =>
         TypeVariable(r(anno), name)

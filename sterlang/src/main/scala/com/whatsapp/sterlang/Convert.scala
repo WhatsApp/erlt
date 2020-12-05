@@ -385,7 +385,7 @@ object Convert {
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
       case Types.RemoteType(p, module, typeName, params) =>
         Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(p)
-      case Types.TupleTypeTyped(p, elems) =>
+      case Types.TupleType(p, elems) =>
         Ast.TupleType(elems.map(convertType))(p)
       case Types.TypeVariable(p, "_") =>
         Ast.WildTypeVar()(p)
@@ -393,12 +393,6 @@ object Convert {
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
         Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
-      case Types.TupleTypeAny(p) =>
-        // banned
-        throw new UnsupportedSyntaxError(p, "Bad tuple type")
-      case Types.AnyMap(p) =>
-        // banned
-        throw new UnsupportedSyntaxError(p, "Bad map type")
     }
 
   private def convertEnumCtr(variant: Forms.EnumVariantDecl): Ast.EnumCtr = {

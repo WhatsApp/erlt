@@ -135,7 +135,7 @@ top_type -> type                          : '$1'.
 
 type -> '(' top_type ')'                      : '$2'.
 type -> var                                   : '$1'.
-type -> atom '(' ')'                          : build_gen_type('$1', anno('$1', '$3')).
+type -> atom '(' ')'                          : build_type('$1', [], anno('$1', '$3')).
 type -> atom '(' top_types ')'                : build_type('$1', '$3', anno('$1', '$4')).
 type -> atom ':' atom '(' ')'                 : {remote_type, anno('$1','$5'), ['$1', '$3', []]}.
 type -> atom ':' atom '(' top_types ')'       : {remote_type, anno('$1','$6'), ['$1', '$3', '$5']}.
@@ -566,13 +566,6 @@ type_spec({type_spec, _TA, {atom, _, Fun}, TypeSpecs}, Aa) ->
 find_arity_from_specs([Spec | _]) ->
     {type, _, 'fun', [{type, _, product, Args}, _]} = Spec,
     length(Args).
-
-build_gen_type({atom, _, tuple}, Aa) ->
-    {type, Aa, tuple, any};
-build_gen_type({atom, _, map}, Aa) ->
-    {type, Aa, map, any};
-build_gen_type(Name, Aa) ->
-    build_type(Name, [], Aa).
 
 build_shape_internals_type(This, {Fields, Rest}) ->
     {[This | Fields], Rest};

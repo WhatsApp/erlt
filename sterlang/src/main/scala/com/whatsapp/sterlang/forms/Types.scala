@@ -26,7 +26,6 @@ object Types {
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class BitstringType(r: Doc.Range) extends Type
   case class FunType(r: Doc.Range, args: List[Type], resType: Type) extends Type
-  case class AnyMap(r: Doc.Range) extends Type
 
   case class Shape(r: Doc.Range, assocs: List[ShapeField]) extends Type
   case class OpenShape(r: Doc.Range, assocs: List[ShapeField], restType: TypeVariable) extends Type
@@ -35,9 +34,7 @@ object Types {
   case class PredefinedType(r: Doc.Range, name: String, params: List[Type]) extends Type
   case class RemoteType(r: Doc.Range, module: String, name: String, params: List[Type]) extends Type
 
-  sealed trait TupleType extends Type
-  case class TupleTypeAny(r: Doc.Range) extends TupleType
-  case class TupleTypeTyped(r: Doc.Range, params: List[Type]) extends TupleType
+  case class TupleType(r: Doc.Range, params: List[Type]) extends Type
 
   case class TypeVariable(r: Doc.Range, v: String) extends Type
   case class UserType(r: Doc.Range, name: String, params: List[Type]) extends Type
