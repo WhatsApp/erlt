@@ -104,7 +104,7 @@ object DriverDev extends DriverApi {
         loaded += module
         moduleDeps.filterNot(loaded).foreach(queue.enqueue)
       } else {
-        Console.println(s"Warning: cannot load module $module")
+        Console.err.println(s"Warning: cannot load module $module")
       }
     }
 
@@ -136,10 +136,11 @@ object DriverDev extends DriverApi {
   def loadProgram(file: String): Ast.Program =
     EtfDev.programFromFile(file)
 
-  private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit =
-    Console.println(Util.rangeErrorString(inputPath, inputContent, error))
+  private def displayRangeError(inputPath: String, inputContent: String, error: RangeError): Unit = {
+    Console.err.println(Util.rangeErrorString(inputPath, inputContent, error))
+  }
 
   private def displayPosError(inputPath: String, inputContent: String, error: PosError): Unit =
-    Console.println(Util.posErrorString(inputPath, inputContent, error))
+    Console.err.println(Util.posErrorString(inputPath, inputContent, error))
 
 }
