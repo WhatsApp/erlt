@@ -40,12 +40,12 @@ object DriverDev extends DriverApi {
       } catch {
         case error: PosError =>
           displayPosError(erltFile, text, error)
-          sys.exit(2)
+          return
         case error: RangeError =>
           displayRangeError(erltFile, text, error)
           Console.err.println("DEBUG INFO:")
           error.printStackTrace(Console.err)
-          sys.exit(2)
+          return
       }
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
@@ -69,7 +69,6 @@ object DriverDev extends DriverApi {
       // $COVERAGE-OFF$ interactive
       case error: RangeError =>
         displayRangeError(erltFile, text, error)
-        sys.exit(2)
       // $COVERAGE-ON$
     }
   }
