@@ -111,6 +111,11 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
         assert(expectedErr === actualErr)
         Files.delete(tmpPath)
     }
+
+    if (driver == DriverErltc) {
+      val response = DriverErltc.process(mainFile)
+      Etf.toJava(response)
+    }
   }
 
   private def fileContent(path: String): String = {

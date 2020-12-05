@@ -25,21 +25,14 @@ import scala.collection.mutable
 
 object DriverErltc extends DriverApi {
 
-  def main(args: Array[String]): Unit =
-    args match {
-      case Array(file) => process(file)
-      case _           => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
-    }
-
-  private def process(etfFile: String): Unit = {
+  def process(etfFile: String): ETerm = {
     val start = System.currentTimeMillis()
     val result = doProcessFile(etfFile) match {
       case Left(error)       => convertError(error)
       case Right(hoverSpecs) => ETuple(List(EAtom("ok"), EList(hoverSpecs.map(Etf.hoverTypeInfoToEMap))))
     }
     val sterlangTime = System.currentTimeMillis() - start
-    val response = ETuple(List(result, ELong(sterlangTime)))
-    stdoutResponse(response)
+    ETuple(List(result, ELong(sterlangTime)))
   }
 
   private def doProcessFile(etfFile: String): Either[SterlangError, List[Doc.LspTypeInfo]] = {
@@ -148,6 +141,13 @@ object DriverErltc extends DriverApi {
         ETuple(List(EAtom("error"), convertRange(range), EString(msg)))
     }
 
+  // $COVERAGE-OFF$ interactive
+  def main(args: Array[String]): Unit =
+    args match {
+      case Array(file) => stdoutResponse(process(file))
+      case _           => Console.out.println("StErlang. More info: https://github.com/WhatsApp/erlt")
+    }
+
   private def stdoutResponse(response: ETerm): Unit = {
     val bytes = {
       val outs = new OtpOutputStream()
@@ -159,4 +159,5 @@ object DriverErltc extends DriverApi {
     System.out.write(bytes)
     System.out.flush()
   }
+  // $COVERAGE-ON$ interactive
 }

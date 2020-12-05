@@ -17,44 +17,81 @@
 package com.whatsapp.sterlang.test.it
 
 import java.io.{BufferedWriter, File, FileWriter}
-import java.nio.file.Files
-
+import java.nio.file.{Files, Path, Paths}
 import com.whatsapp.sterlang._
 import com.whatsapp.sterlang.dev.DriverDev
+
+import scala.util.Using
 
 class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
 
-  testDir("examples/pos/src")
-  testDir("examples/elm_core/src")
-  testDir("examples/dev/src")
-  testDir("examples/pattern/src")
-  testDir("examples/sterlang-dev/src")
+  testDir("examples/pos/src", erltc = true)
+  testDir("examples/elm_core/src", erltc = true)
+  testDir("examples/dev/src", erltc = true)
+  testDir("examples/pattern/src", erltc = true)
+  testDir("examples/sterlang-dev/src", erltc = false)
 
-  def testDir(iDirPath: String): Unit = {
+  def testDir(srcDir: String, erltc: Boolean): Unit = {
     import sys.process._
-    describe(iDirPath) {
-      val oDirPath = Files.createTempDirectory("sterlang")
-      s"./parser -idir $iDirPath -odir $oDirPath".!!
+    describe(srcDir) {
+      val buildDirDev =
+        Files.createTempDirectory("sterlang-test")
+      val buildDirErltc =
+        Files.createTempDirectory("sterlang-test")
 
-      val file = new File(iDirPath)
-      val moduleNames =
-        file.listFiles().filter(f => f.isFile && f.getPath.endsWith(".erlt")).map(_.getName).map(_.dropRight(5)).sorted
+      val modules =
+        Paths
+          .get(srcDir)
+          .toFile
+          .listFiles()
+          .filter(f => f.isFile && f.getPath.endsWith(".erlt"))
+          .map(_.getName)
+          .map(_.dropRight(5))
+          .sorted
+      val moduleArgs =
+        modules.map(_ ++ ".erlt").mkString(" ")
 
-      moduleNames.foreach { p =>
-        val erltPath = s"$iDirPath/$p.erlt"
-        val etfPath = s"$oDirPath/$p.etf"
-        it(erltPath) {
-          testFile(erltPath, etfPath)
-          testFileVerbose(erltPath, etfPath)
+      val parserYrlCmd = s"./parser -idir $srcDir -odir $buildDirDev"
+
+      val parserYrlLog = Files.createTempFile("parser.yrl", null).toFile
+      val parserYrlSuccess = Using.resource(ProcessLogger(parserYrlLog)) { log => parserYrlCmd.!(log) == 0 }
+
+      if (parserYrlSuccess) run(DriverDev, modules, srcDir, buildDirDev)
+      else it(s"$srcDir - parser.yrl") { fail(s"$parserYrlCmd failed, log: $parserYrlLog") }
+
+      if (erltc) {
+        val erltcCmd =
+          s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc --skip-type-checking $moduleArgs"
+        val erltcLog = Files.createTempFile("erltc", null).toFile
+        val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
+        if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
+        else it(s"$srcDir - erltc") {
+          fail(s"$erltcCmd failed, log: $erltcLog")
         }
       }
     }
   }
 
-  def testFile(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, verbose = false, "_ty", "ty")
+  private def run(driver: DriverApi, modules: Array[String], srcDir: String, buildDir: Path): Unit =
+    modules.foreach { module =>
+      val erltPath = s"$srcDir/$module.erlt"
+      if (erltPath.endsWith("core.erlt")) ignore(s"$erltPath ${driver.getClass}") {}
+      else {
+        val erltPath = s"$srcDir/$module.erlt"
+        val mainFile = s"$buildDir/$module.etf"
+        if (Files.exists(Paths.get(mainFile)))
+          it(s"$erltPath ${driver.getClass.getSimpleName}") {
+            testFile(driver, erltPath, mainFile)
+          }
+        else ignore(s"$erltPath ${driver.getClass}") {}
+      }
+    }
+
+
+  def testFile(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
+    processFile(driver, erltPath, etfPath, verbose = false, "_ty", "ty")
 
     val myOutput = fileContent(erltPath + "._ty")
     val expectedOut = fileContent(erltPath + ".ty")
@@ -63,8 +100,8 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new File(erltPath + "._ty").delete()
   }
 
-  def testFileVerbose(erltPath: String, etfPath: String): Unit = {
-    processFile(erltPath, etfPath, verbose = true, "_vt", "vt")
+  def testFileVerbose(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
+    processFile(driver, erltPath, etfPath, verbose = true, "_vt", "vt")
 
     val myOutput = fileContent(erltPath + "._vt")
     val expectedOut = fileContent(erltPath + ".vt")
@@ -80,11 +117,11 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     content
   }
 
-  def processFile(erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
-    val rawProgram = DriverDev.loadProgram(etfPath)
+  def processFile(driver: DriverApi, erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
+    val rawProgram = driver.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
-    val context = DriverDev.loadContext(etfPath, program, vars).extend(program)
+    val context = driver.loadContext(etfPath, program, vars).extend(program)
     new AstChecks(context).check(program)
     val (annDefs, env) = new Elaborate(vars, context, program).elaborate()
 
@@ -114,6 +151,11 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     if (new File(erltPath).getParent == "examples/pattern/src") {
       val patternWarnings = new PatternChecker(new TypesUtil(vars), context, program).warnings(annDefs)
       assert(patternWarnings.isEmpty)
+    }
+
+    if (!verbose && driver == DriverErltc) {
+      val response = DriverErltc.process(etfPath)
+      Etf.toJava(response)
     }
   }
 }
