@@ -58,30 +58,26 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       else it(s"$srcDir - parser.yrl") { fail(s"$parserYrlCmd failed, log: $parserYrlLog") }
 
       val erltcCmd =
-        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc $moduleArgs"
-      val erltcLog = Files.createTempFile("parser.yrl", null).toFile
+        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc --skip-type-checking $moduleArgs"
+      val erltcLog = Files.createTempFile("erltc", null).toFile
       val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
       if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
       else it(s"$srcDir - erltc") { alert(s"$erltcCmd failed, log: $erltcLog") }
-
     }
   }
 
   private def run(driver: DriverApi, modules: Array[String], srcDir: String, buildDir: Path): Unit =
     modules.foreach { module =>
       val erltPath = s"$srcDir/$module.erlt"
-      if (erltPath.endsWith("core.erlt")) {
-        ignore(s"$erltPath ${driver.getClass}") {}
-      } else {
+      if (erltPath.endsWith("core.erlt")) ignore(s"$erltPath ${driver.getClass}") {}
+      else {
         val erltPath = s"$srcDir/$module.erlt"
         val mainFile = s"$buildDir/$module.etf"
-        if (Files.exists(Paths.get(mainFile))) {
-          it(s"$erltPath ${driver.getClass}") {
+        if (Files.exists(Paths.get(mainFile)))
+          it(s"$erltPath ${driver.getClass.getSimpleName}") {
             processIllTyped(driver, module, srcDir, buildDir)
           }
-        } else {
-          ignore(s"$erltPath ${driver.getClass}") {}
-        }
+        else ignore(s"$erltPath ${driver.getClass}") {}
       }
     }
 
