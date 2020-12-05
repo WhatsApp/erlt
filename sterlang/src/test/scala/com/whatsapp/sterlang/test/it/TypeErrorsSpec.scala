@@ -16,8 +16,8 @@
 
 package com.whatsapp.sterlang.test.it
 
-import java.io.File
 import java.nio.file.{Files, Path, Paths}
+import scala.util.Using
 
 import com.whatsapp.sterlang._
 import com.whatsapp.sterlang.dev.DriverDev
@@ -25,9 +25,6 @@ import com.whatsapp.sterlang.dev.DriverDev
 class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
 
   val generateOut = false
-  val dev = true
-  val driver: DriverApi =
-    if (dev) DriverDev else DriverErltc
 
   testDir("examples/neg/src")
   testDir("examples/err/src")
@@ -36,10 +33,14 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
   def testDir(srcDir: String): Unit = {
     import sys.process._
     describe(srcDir) {
-      val buildDir =
+      val buildDirDev =
+        Files.createTempDirectory("sterlang-test")
+      val buildDirErltc =
         Files.createTempDirectory("sterlang-test")
       val modules =
-        new File(srcDir)
+        Paths
+          .get(srcDir)
+          .toFile
           .listFiles()
           .filter(f => f.isFile && f.getPath.endsWith(".erlt"))
           .map(_.getName)
@@ -48,27 +49,43 @@ class TypeErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
       val moduleArgs =
         modules.map(_ ++ ".erlt").mkString(" ")
 
-      if (dev) {
-        s"./parser -idir $srcDir -odir $buildDir".!!
-      } else {
-        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDir -o $buildDir $moduleArgs".!!
-      }
+      val parserYrlCmd = s"./parser -idir $srcDir -odir $buildDirDev"
 
-      modules.foreach { module =>
-        val erltPath = s"$srcDir/$module.erlt"
+      val parserYrlLog = Files.createTempFile("parser.yrl", null).toFile
+      val parserYrlSuccess = Using.resource(ProcessLogger(parserYrlLog)) { log => parserYrlCmd.!(log) == 0 }
 
-        if (erltPath.endsWith("core.erlt")) {
-          ignore(erltPath) {}
-        } else {
-          it(erltPath) {
-            processIllTyped(module, srcDir, buildDir)
-          }
-        }
-      }
+      if (parserYrlSuccess) run(DriverDev, modules, srcDir, buildDirDev)
+      else it(s"$srcDir - parser.yrl") { fail(s"$parserYrlCmd failed, log: $parserYrlLog") }
+
+      val erltcCmd =
+        s"./erltc --build compile --src-dir $srcDir --build-dir $buildDirErltc -o $buildDirErltc $moduleArgs"
+      val erltcLog = Files.createTempFile("parser.yrl", null).toFile
+      val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
+      if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
+      else it(s"$srcDir - erltc") { alert(s"$erltcCmd failed, log: $erltcLog") }
+
     }
   }
 
-  private def processIllTyped(module: String, sourceDir: String, buildDir: Path): Unit = {
+  private def run(driver: DriverApi, modules: Array[String], srcDir: String, buildDir: Path): Unit =
+    modules.foreach { module =>
+      val erltPath = s"$srcDir/$module.erlt"
+      if (erltPath.endsWith("core.erlt")) {
+        ignore(s"$erltPath ${driver.getClass}") {}
+      } else {
+        val erltPath = s"$srcDir/$module.erlt"
+        val mainFile = s"$buildDir/$module.etf"
+        if (Files.exists(Paths.get(mainFile))) {
+          it(s"$erltPath ${driver.getClass}") {
+            processIllTyped(driver, module, srcDir, buildDir)
+          }
+        } else {
+          ignore(s"$erltPath ${driver.getClass}") {}
+        }
+      }
+    }
+
+  private def processIllTyped(driver: DriverApi, module: String, sourceDir: String, buildDir: Path): Unit = {
     val erltPath = s"$sourceDir/$module.erlt"
     val mainFile = s"$buildDir/$module.etf"
     val rawProgram = driver.loadProgram(mainFile)
