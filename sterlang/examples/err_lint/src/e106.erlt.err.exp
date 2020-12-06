@@ -1,0 +1,4 @@
+-- ERROR --------------------------------- examples/err_lint/src/e106.erlt:20:21
+Unknown index 2
+ 20|     {Foo#foo._0, Foo#foo._2}.
+...|                     ~~~~~~~
