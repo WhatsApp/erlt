@@ -90,6 +90,11 @@ class SyntaxErrorsSpec extends org.scalatest.funspec.AnyFunSpec {
         val errMsg = Util.posErrorString(erltPath, fileContent(erltPath), error)
         checkMsg(erltPath, errMsg)
     }
+
+    if (driver == DriverErltc) {
+      val response = DriverErltc.process(etfPath)
+      Etf.toJava(response)
+    }
   }
 
   private def checkMsg(erltPath: String, actualErrMsg: String): Unit = {

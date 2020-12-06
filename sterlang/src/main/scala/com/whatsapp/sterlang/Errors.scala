@@ -16,7 +16,7 @@
 
 package com.whatsapp.sterlang
 
-sealed trait SterlangError
+trait SterlangError
 case class PosError(pos: Doc.Pos, title: String)
     extends Exception(s"$title at ${pos.line}:${pos.column}")
     with SterlangError

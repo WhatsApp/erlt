@@ -88,14 +88,12 @@ object DriverErltc extends DriverApi {
     while (queue.nonEmpty) {
       val module = queue.dequeue()
       val file = dir.resolve(module + ext).toFile
-      if (file.exists()) {
-        val rawProgram = loadProgram(file.getPath)
-        val program = AstUtil.normalizeTypes(rawProgram)
-        api = AstUtil.moduleApi(module, program) :: api
-        val moduleDeps = AstUtil.getDeps(program)
-        loaded += module
-        moduleDeps.filterNot(loaded).foreach(queue.enqueue)
-      }
+      val rawProgram = loadProgram(file.getPath)
+      val program = AstUtil.normalizeTypes(rawProgram)
+      api = AstUtil.moduleApi(module, program) :: api
+      val moduleDeps = AstUtil.getDeps(program)
+      loaded += module
+      moduleDeps.filterNot(loaded).foreach(queue.enqueue)
     }
 
     val enumDefs = api.flatMap(_.enumDefs)
