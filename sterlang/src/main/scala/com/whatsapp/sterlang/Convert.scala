@@ -155,7 +155,7 @@ object Convert {
           case Exprs.CharLiteral(p, c) =>
             Ast.CharPat(c)(p)
           case Exprs.FloatLiteral(p, fl) =>
-            Ast.NumberPat(fl.intValue())(p)
+            Ast.NumberPat(fl.toInt)(p)
           case Exprs.IntLiteral(p, i) =>
             Ast.NumberPat(i)(p)
           case Exprs.StringLiteral(p, str) =>
@@ -214,7 +214,7 @@ object Convert {
           case Exprs.CharLiteral(p, ch) =>
             Ast.CharExp(ch)(p)
           case Exprs.FloatLiteral(p, fl) =>
-            Ast.NumberExp(fl.intValue())(p)
+            Ast.NumberExp(fl.toInt)(p)
           case Exprs.IntLiteral(p, i) =>
             Ast.NumberExp(i)(p)
           case Exprs.StringLiteral(p, str) =>

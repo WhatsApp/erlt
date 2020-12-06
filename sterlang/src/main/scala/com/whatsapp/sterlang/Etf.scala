@@ -27,7 +27,6 @@ object Etf {
   sealed trait ETerm
   case class EAtom(atom: String) extends ETerm
   case class EBinary(str: String) extends ETerm
-  case class EDouble(d: Double) extends ETerm
   case class EList(elems: List[ETerm]) extends ETerm
   case class ELong(value: BigInt) extends ETerm
   case class EString(str: String) extends ETerm
@@ -57,7 +56,7 @@ object Etf {
       case otpLong: OtpErlangLong =>
         ELong(otpLong.bigIntegerValue())
       case otpDouble: OtpErlangDouble =>
-        EDouble(otpDouble.doubleValue())
+        ELong(otpDouble.doubleValue().toLong)
       case otpString: OtpErlangString =>
         EString(otpString.stringValue())
       case otpPid: OtpErlangPid =>
@@ -70,8 +69,6 @@ object Etf {
     eTerm match {
       case EAtom(atom) =>
         new OtpErlangAtom(atom)
-      case EDouble(d) =>
-        new OtpErlangDouble(d)
       case EList(elems) =>
         new OtpErlangList(elems.map(toJava).toArray)
       case ELong(value) =>

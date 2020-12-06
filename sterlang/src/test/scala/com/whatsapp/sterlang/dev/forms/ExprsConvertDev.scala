@@ -241,7 +241,7 @@ object ExprsConvertDev {
         // empty strings, unicode strings and "string 1" "string 2" are parsed this way,
         // we just ignore this for now
         StringLiteral(r(anno), "COMPLEX ERLANG STRING")
-      case ETuple(List(EAtom("float"), anno, EDouble(value))) =>
+      case ETuple(List(EAtom("float"), anno, ELong(value))) =>
         FloatLiteral(r(anno), value)
     }
 

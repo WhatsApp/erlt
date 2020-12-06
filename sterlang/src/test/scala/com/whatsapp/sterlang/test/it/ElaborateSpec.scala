@@ -67,9 +67,10 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
         val erltcLog = Files.createTempFile("erltc", null).toFile
         val erltcSuccess = Using.resource(ProcessLogger(erltcLog)) { log => erltcCmd.!(log) == 0 }
         if (erltcSuccess) run(DriverErltc, modules, srcDir, buildDirErltc)
-        else it(s"$srcDir - erltc") {
-          fail(s"$erltcCmd failed, log: $erltcLog")
-        }
+        else
+          it(s"$srcDir - erltc") {
+            fail(s"$erltcCmd failed, log: $erltcLog")
+          }
       }
     }
   }
@@ -89,7 +90,6 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
         else ignore(s"$erltPath ${driver.getClass}") {}
       }
     }
-
 
   private def testFile(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
     processFile(driver, erltPath, etfPath, verbose = false, "_ty", "ty")
@@ -118,7 +118,14 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     content
   }
 
-  private def processFile(driver: DriverApi, erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
+  private def processFile(
+      driver: DriverApi,
+      erltPath: String,
+      etfPath: String,
+      verbose: Boolean,
+      tmpExt: String,
+      outExt: String,
+  ): Unit = {
     val rawProgram = driver.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()

@@ -29,7 +29,7 @@ object Exprs {
   sealed trait Literal extends Expr { val r: Doc.Range }
   case class AtomLiteral(r: Doc.Range, atom: String) extends Literal
   case class CharLiteral(r: Doc.Range, ch: Char) extends Literal
-  case class FloatLiteral(r: Doc.Range, fl: Double) extends Literal
+  case class FloatLiteral(r: Doc.Range, fl: BigInt) extends Literal
   case class IntLiteral(r: Doc.Range, i: Int) extends Literal
   case class StringLiteral(r: Doc.Range, str: String) extends Literal
 
