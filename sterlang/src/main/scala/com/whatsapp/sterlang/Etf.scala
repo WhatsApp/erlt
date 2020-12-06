@@ -59,10 +59,12 @@ object Etf {
         ELong(otpDouble.doubleValue().toLong)
       case otpString: OtpErlangString =>
         EString(otpString.stringValue())
+      // $COVERAGE-OFF$ interactive - sterlangD
       case otpPid: OtpErlangPid =>
         EPid(otpPid)
       case otpRef: OtpErlangRef =>
         ERef(otpRef)
+      // $COVERAGE-ON$ interactive - sterlangD
     }
 
   def toJava(eTerm: ETerm): OtpErlangObject =
@@ -77,14 +79,16 @@ object Etf {
         new OtpErlangString(str)
       case ETuple(elems) =>
         new OtpErlangTuple(elems.map(toJava).toArray)
-      case EPid(pid) =>
-        pid
-      case ERef(ref) =>
-        ref
       case EMap(keys, values) =>
         new OtpErlangMap(keys.map(toJava).toArray, values.map(toJava).toArray)
       case EBinary(str) =>
         new OtpErlangBinary(str.getBytes())
+      // $COVERAGE-OFF$ interactive - sterlangD
+      case EPid(pid) =>
+        pid
+      case ERef(ref) =>
+        ref
+      // $COVERAGE-ON$ interactive - sterlangD
     }
 
   def hoverTypeInfoToEMap(info: LspTypeInfo): EMap = {
