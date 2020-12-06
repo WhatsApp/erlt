@@ -84,13 +84,14 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
         if (Files.exists(Paths.get(mainFile)))
           it(s"$erltPath ${driver.getClass.getSimpleName}") {
             testFile(driver, erltPath, mainFile)
+            testFileVerbose(driver, erltPath, mainFile)
           }
         else ignore(s"$erltPath ${driver.getClass}") {}
       }
     }
 
 
-  def testFile(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
+  private def testFile(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
     processFile(driver, erltPath, etfPath, verbose = false, "_ty", "ty")
 
     val myOutput = fileContent(erltPath + "._ty")
@@ -100,7 +101,7 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new File(erltPath + "._ty").delete()
   }
 
-  def testFileVerbose(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
+  private def testFileVerbose(driver: DriverApi, erltPath: String, etfPath: String): Unit = {
     processFile(driver, erltPath, etfPath, verbose = true, "_vt", "vt")
 
     val myOutput = fileContent(erltPath + "._vt")
@@ -110,14 +111,14 @@ class ElaborateSpec extends org.scalatest.funspec.AnyFunSpec {
     new File(erltPath + "._vt").delete()
   }
 
-  def fileContent(path: String): String = {
+  private def fileContent(path: String): String = {
     val source = scala.io.Source.fromFile(path)
     val content = source.mkString
     source.close()
     content
   }
 
-  def processFile(driver: DriverApi, erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
+  private def processFile(driver: DriverApi, erltPath: String, etfPath: String, verbose: Boolean, tmpExt: String, outExt: String): Unit = {
     val rawProgram = driver.loadProgram(etfPath)
     val program = AstUtil.normalizeTypes(rawProgram)
     val vars = new Vars()
