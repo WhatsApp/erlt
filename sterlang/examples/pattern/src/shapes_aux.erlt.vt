@@ -1,0 +1,2 @@
+val id_shape/1: fun((#( A )) -> #( A ))
+val S: #( A )

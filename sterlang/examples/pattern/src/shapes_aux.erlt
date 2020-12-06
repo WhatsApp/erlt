@@ -1,0 +1,5 @@
+-module(shapes_aux).
+-export([id_shape/1]).
+
+-spec id_shape(#(A)) -> #(A).
+id_shape(S) -> S.

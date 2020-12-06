@@ -39,12 +39,21 @@ test5(#()) -> {}.
 -spec test6(#(a :: boolean())) -> {}.
 test6(#()) -> {}.
 
--spec test7(#(a :: boolean(), b :: boolean())) -> {}.
+-spec test7(#(a :: boolean(), b :: boolean(), _)) -> {}.
 test7(#(a = true)) -> {};
 test7(#(b = true)) -> {};
 test7(#(a = false, b = false)) -> {}.
 
--spec test8(#(a :: boolean(), b :: boolean())) -> {}.
+-spec test8(#(a :: boolean(), b :: boolean(), _)) -> {}.
 test8(#(a = true)) -> {};
 test8(#(b = true)) -> {};
 test8(#(a = false, b = false)) -> {}.
+
+-spec test9(#(a :: boolean(), Ext), #(a :: boolean(), Ext)) -> {}.
+test9(#(a = true), _) -> {};
+test9(_, #(a = true)) -> {};
+test9(#(a = false), #(a = false)) -> {}.
+
+-spec test10(#(b :: boolean(), Ext)) -> #(b :: boolean(), Ext).
+test10(Shape = #(b = true)) -> shapes_aux:id_shape(Shape);
+test10(Shape = #(b = false)) -> shapes_aux:id_shape(Shape).
