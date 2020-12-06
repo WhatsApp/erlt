@@ -90,6 +90,7 @@ OTP libs are used in the project.
    concurrency primitives: `send`, `spawn`, etc
 - `com.whatsapp.analyzer.Primitives dynamic` - stats about using
    dynamic "primitives": `apply/2`, `apply/3`
+- `com.whatsapp.analyzer.RangeTypes` - stats about `X..Y` types   
 - `com.whatsapp.analyzer.Receives` - stats about using `receive`s
 - `com.whatsapp.analyzer.RedefinedRecordTypes` - see below
 
@@ -120,3 +121,12 @@ This simple analysis shows that such a feature is not used, - also comments
 around `thriftrpc_client_channel:channel` show that this feature is
 - Confusing
 - Not supported properly by dialyzer, - which forces people to introduce even more hacks.
+
+### Range types
+
+Analysis of WA code base shows:
+- There are ~30 places with range types
+- All of them are used for documentation purposes - there are no operations (addition/subtraction/etc): 
+  basically, to check that a given constant falls into a specified range.
+
+Easy to type.

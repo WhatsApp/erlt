@@ -33,7 +33,8 @@
     used_primitives/2,
     multi_specs/1,
     gen_server_calls/1,
-    redefined_record_types/1
+    redefined_record_types/1,
+    range_types/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -462,6 +463,13 @@ record_type({type, Line, record, [{atom,_,RecName} | Fields]}) when length(Field
 record_type(_) ->
     false.
 
+-spec range_types(BeamFile :: file:filename()) -> list({Line :: integer()}).
+range_types(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun range_type/1).
+
+range_type({type, Line, range, [_Low, _High]}) -> {Line};
+range_type(_) -> false.
 
 pred(_) ->
     true.
