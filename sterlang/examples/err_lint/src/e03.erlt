@@ -12,29 +12,8 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--module(builtins).
--export([test1/1, test2/1, test3/1, test4/1, test5/1, test6/1]).
+-module(e03).
+-export_type([bad_arg/0]).
 
--spec test1(boolean()) -> {}.
-test1(true) -> {};
-test1(false) -> {}.
-
--spec test2(integer()) -> {}.
-test2(0) -> {};
-test2(1) -> {};
-test2(_) -> {}.
-
--spec test3(string()) -> {}.
-test3("1") -> {};
-test3("2") -> {};
-test3(_) -> {}.
-
--spec test4({}) -> {}.
-test4({}) -> {}.
-
--spec test5({}) -> {}.
-test5(_) -> {}.
-
--spec test6(atom()) -> {}.
-test6('ok') -> {};
-test6(_) -> {}.
+-exception bad_arg() :: ().
+-type t_bad_arg() :: bad_arg().

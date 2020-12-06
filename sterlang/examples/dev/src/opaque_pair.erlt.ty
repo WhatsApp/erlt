@@ -1,0 +1,2 @@
+-spec mk(A, B) -> {A, B}.
+-spec swap({A, B}) -> {B, A}.

@@ -3,3 +3,4 @@
 -spec test3(string()) -> {}.
 -spec test4({}) -> {}.
 -spec test5({}) -> {}.
+-spec test6(atom()) -> {}.

@@ -1,0 +1,6 @@
+-module(opaque_pair_usage).
+-export([test/0]).
+
+-spec test() -> opaque_pair:pair(atom(), string()).
+test() ->
+    opaque_pair:swap(opaque_pair:mk("", 'ok')).

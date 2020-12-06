@@ -1,0 +1,6 @@
+val mk/2: fun((A, B) -> {A, B})
+val A: A
+val B: B
+val swap/1: fun(({A, B}) -> {B, A})
+val A: A
+val B: B

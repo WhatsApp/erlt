@@ -174,14 +174,15 @@ class AstChecks(val context: Context) {
     tp match {
       case UserType(name: LocalName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
       // OK - fast check for global aliases like integer() -> number
-      case UserType(name, params) if context.opaques(TypeId(name, params.size)) =>
-        params.foreach(expandType(program, visited))
+      case UserType(name, params) if nativeOpaques(TypeId(name, params.size)) =>
+      // OK - nativeOpaques are all nullary
       case UserType(name: LocalName, params) =>
         val enumOpt = program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
         val structOpt = program.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
         val opaqueOpt = program.opaques.find(o => o.name == name.name && o.params.size == params.size)
+        val uncheckedOpaqueOpt = program.uncheckedOpaques.find(o => o.name == name.name && o.params.size == params.size)
         val aliasOpt = program.typeAliases.find(a => a.name == name.name && a.params.size == params.size)
-        if (enumOpt.isEmpty && structOpt.isEmpty && opaqueOpt.isEmpty && aliasOpt.isEmpty)
+        if (enumOpt.isEmpty && structOpt.isEmpty && opaqueOpt.isEmpty && aliasOpt.isEmpty && uncheckedOpaqueOpt.isEmpty)
           throw new UnknownType(tp.r, name.stringId, params.size)
         if (visited(name))
           throw Cycle(name.name)

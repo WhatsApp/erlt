@@ -1,0 +1,11 @@
+-module(opaque_pair).
+-export_type([pair/2]).
+-export([mk/2, swap/1]).
+
+-opaque pair(A, B) :: {A, B}.
+
+-spec mk(A, B) -> pair(A, B).
+mk(A, B) -> {A, B}.
+
+-spec swap(pair(A, B)) -> pair(B, A).
+swap({A, B}) -> {B, A}.

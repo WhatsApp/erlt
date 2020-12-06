@@ -66,7 +66,6 @@ package object sterlang {
       Ast.TypeId(Ast.LocalName("identifier"), 0),
       Ast.TypeId(Ast.LocalName("iodata"), 0),
       Ast.TypeId(Ast.LocalName("iolist"), 0),
-      Ast.TypeId(Ast.LocalName("map"), 2),
       Ast.TypeId(Ast.LocalName("message"), 0),
       Ast.TypeId(Ast.LocalName("none"), 0),
       Ast.TypeId(Ast.LocalName("number"), 0),
@@ -77,7 +76,6 @@ package object sterlang {
       Ast.TypeId(Ast.LocalName("timeout"), 0),
       Ast.TypeId(Ast.LocalName("char"), 0),
       Ast.TypeId(Ast.LocalName("boolean"), 0),
-      Ast.TypeId(Ast.LocalName("list"), 1),
       Ast.TypeId(Ast.LocalName("string"), 0),
     )
 
