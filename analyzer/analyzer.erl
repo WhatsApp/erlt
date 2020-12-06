@@ -32,7 +32,8 @@
     used_funs/1,
     used_primitives/2,
     multi_specs/1,
-    gen_server_calls/1
+    gen_server_calls/1,
+    redefined_record_types/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -450,6 +451,17 @@ try_info_verbose(_) ->
 
 clause_head({clause, _Line, Pat, Guard, _Body}) ->
     {Pat, Guard}.
+
+-spec redefined_record_types(BeamFile :: file:filename()) -> list({Line :: integer(), RecordName :: atom()}).
+redefined_record_types(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun record_type/1).
+
+record_type({type, Line, record, [{atom,_,RecName} | Fields]}) when length(Fields) > 0 ->
+    {Line, RecName};
+record_type(_) ->
+    false.
+
 
 pred(_) ->
     true.

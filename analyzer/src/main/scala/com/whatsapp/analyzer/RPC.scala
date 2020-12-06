@@ -310,6 +310,14 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
+  def getRedefinedRecordTypes(beamFilePath: String): List[(Int, String)] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "redefined_record_types", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line), EAtom(name))) => (line.toInt, name) }
+  }
+
   def close(): Unit = {
     connection.close()
   }

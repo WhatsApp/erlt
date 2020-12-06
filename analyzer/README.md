@@ -91,3 +91,32 @@ OTP libs are used in the project.
 - `com.whatsapp.analyzer.Primitives dynamic` - stats about using
    dynamic "primitives": `apply/2`, `apply/3`
 - `com.whatsapp.analyzer.Receives` - stats about using `receive`s
+- `com.whatsapp.analyzer.RedefinedRecordTypes` - see below
+
+## Data interpretation
+
+### Redefined record types
+
+*What?*
+
+```erlang
+-record(rec, {id1 :: integer(), id2 :: integer()}).
+-type atom_rec() :: #rec{id1 :: atom(), id2 :: atom()}.
+```
+
+Erlang doesn't allow to have records with type parameters. However, it allows to override the type of a field.
+
+`RedefinedRecordTypes` analysis lists places in a project where such types appear.
+
+It turns out that in WA code base there are just 3 (three) such places:
+
+```
+thriftrpc_client_channel.erl:20 (channel record)
+wa_queue.erl:37 (wa_queue record)
+wa_voip_ip_cache.erl:129 (addr2 record)
+``` 
+
+This simple analysis shows that such a feature is not used, - also comments 
+around `thriftrpc_client_channel:channel` show that this feature is
+- Confusing
+- Not supported properly by dialyzer, - which forces people to introduce even more hacks.
