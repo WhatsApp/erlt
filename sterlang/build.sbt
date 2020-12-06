@@ -47,7 +47,7 @@ commands += Command.command("sterlangd")(
     Command.process("bgStopAll ; test:bgRunMain com.whatsapp.sterlang.dev.SterlangD ", _)
 )
 
-coverageMinimum := 98
+coverageMinimum := 100
 coverageFailOnMinimum := true
 
 parser := {
