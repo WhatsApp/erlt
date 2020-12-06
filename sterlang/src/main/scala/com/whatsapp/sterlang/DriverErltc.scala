@@ -134,8 +134,6 @@ object DriverErltc extends DriverApi {
 
   private def convertError(error: SterlangError): ETerm =
     error match {
-      case PosError(pos, title) =>
-        ETuple(List(EAtom("error"), convertPos(pos), EString(title)))
       case RangeError(range, title, description) =>
         val msg = (List(title) ++ description.toList).mkString("\n")
         ETuple(List(EAtom("error"), convertRange(range), EString(msg)))
