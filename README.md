@@ -6,7 +6,7 @@ code bases.
 
 ## Quick Links
 
- - **[Play](./play/README.md)** - The best way to get started is to read this README, then `rebar3 new erlt <app-name>` in the `play` directory.
+ - **[Play](./play/README.md)** - The best way to get started is to read this README, then `../scripts/rebar3 new erlt <app-name>` in the `play` directory. Alternatively, with rebar3 version 3.14.2 or newer, `rebar3 new erlt <app-name>`.
 - **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
 - **[ErlT Reference](./doc/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
  -  A collection of small ErlT projects that demonstrate how the language can be used
