@@ -1,4 +1,8 @@
-# {{app}}, written in ErlT
+# {{name}}, written in ErlT
+
+## IDE Support
+
+See README.md at the root of this repo. Remember to have the 'play' directory be your workspace root.
 
 ## compile
 

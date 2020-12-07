@@ -92,3 +92,48 @@ artifact, rename it to `sterlang` and place into `erltc/bin` directory.
 `xattr -d com.apple.quarantine erltc/bin/sterlang`).
 
 The native image is really fast - type-checking takes ~20-40ms for a file.
+
+## compiler architecture
+
+Some key characteristics of the design of ErlT that influence architecture are:
+- Interop between language variants (classic Erlang, DT, and ST) 
+- ErlT is compiled to classic Erlang. In particular, every ErlT construct has a relatively straightforward representation as a classic Erlang data structure
+- Types are erased
+- Types do not influence codegen (except that type-incorrect ST modules are rejected by the compiler)
+
+## Dependency structure of an ErlT project
+
+For **M0 (milestone 0)**, we will support:
+
+compiling a single directory of ErlT files that use a standard library
+
+In the future, we plan to additionally support:
+
+- multiple directories, apps, and libraries
+- interop between classic Erlang modules, ST, and DT
+- modules of any langauge variant that depend on parse transforms and/or behaviors
+- parse transforms and behaviors written in any language variant (ST, DT, or classic Erlang)
+- yecc and leex files
+- .hrlt files (header files for erlt)
+- parse transforms that depend on other parse transforms ([maybe](https://github.com/WhatsApp/erlt/pull/167/files#r488671728))
+
+we **do not** plan to support:
+- parse transforms that modify the dependencies of a module
+
+## Relationship between erltc, the rebar plugin, sterlang, and the classic Erlang compiler
+
+- erltc turns ErlT code (ST+DT+FFI) into classic Erlang:
+  - in-memory, we create an annotated AST so we can map back to locations in the source code
+  - erltc_compile.erl is based on OTP Erlang's compile.erl. We made the following changes:
+      - add additional front end passes
+      - delegate to the classic Erlang back end
+  - we invoke the classic Erlang compiler to generate beam files from the AST that we generate
+  - in our tests, we snapshot the AST in .P format, which does not contain these annotated source locations
+
+- The rebar plugin in ../erltc/rebar_prv_erlt.erl is our only public API for the compiler (see ../play/README.md for docs). It is a thin wrapper around erlt_build.erl, which drives erltc.erl (our single-file compiler). erlbuild drives erltc in two phases:
+    - scan phase: erltc generates
+        - a .defs file for each .erlt file which contains the definitions from the erlt file (specs, types, enums, structs, etc.).
+        - a .D file for each .erlt file which records dependencies. The .D files are currently unused but may be used for incremental builds in the future, see https://github.com/WhatsApp/erlt/blob/80877ae15b4a9300c69ce34ffb2e844bc9acc74b/erlbuild/README.md.
+    - build phase: erltc builds based on the source .erlt files and the .defs files produced from the previous phase.
+
+- erltc calls stErlang to do type-checking.

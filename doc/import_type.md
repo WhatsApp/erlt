@@ -5,6 +5,8 @@ which allows using types from remote modules via short names (as if they were
 defined in the current module). If the imported type is an enum, the enum
 constructors can be used as the enum was defined in the current module.
 
+> Note: some of the syntax below may be out of date
+
 ## Example
 
 From `tests/elm-core/src`.

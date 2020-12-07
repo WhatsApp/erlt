@@ -6,10 +6,8 @@ code bases.
 
 ## Quick Links
 
- - **[Play](./play/README.md)** - The best way to get started is to read this README, then `../scripts/rebar3 new erlt <app-name>` in the `play` directory. Alternatively, with rebar3 version 3.14.2 or newer, `rebar3 new erlt <app-name>`.
-- **[ErlT Overview](./LANGUAGE_OVERVIEW.md)** - A quick tour of the new language features
-- **[ErlT Reference](./doc/README.md)** - A detailed breakdown of the differences between Erlang and ErlT
- -  A collection of small ErlT projects that demonstrate how the language can be used
+ - **[Play](./play/README.md)** - The best way to get started is to read this README, peruse [the docs](./doc/README.md), then `../scripts/rebar3 new erlt <app-name>` in the `play` directory. Alternatively, with rebar3 version 3.14.2 or newer, `rebar3 new erlt <app-name>`.
+- **[ErlT Docs](./doc/README.md)**
 - **[Tests](./tests/README.md)**
 
 ## Introduction
@@ -36,7 +34,16 @@ with some features banned, in particular:
 
 See [./play/README.md](./play/README.md)
 
+> and keep [the docs](./doc/README.md) handy
+
 ## IDE Support
+
+### VS Code
+
+- Download the latest erlt-ls.vsix from https://github.com/whatsapp/erlt/releases
+- Then install the vsix in VS Code using the `Install from VSIX...` option from the `...` dropdown
+in the `Extensions` side bar.
+- Open the 'play' directory of this repo in VSCode: 'play' must be your workspace root. (this is a temporary limitation).
 
 ### Emacs
 
@@ -86,10 +93,6 @@ pointless at the moment, I just blacklist the project or choose `n`.
 
 But given `erlt-mode` is a derivative of `erlang-mode`, it is simpler
 to do it this way, as we will have a language server real soon now.
-
-### VS Code
-
-**Coming soon**
 
 ## Working on the ErlT project itself
 
