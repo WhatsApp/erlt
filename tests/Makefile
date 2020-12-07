@@ -89,7 +89,11 @@ test-templates: build-sterlang-jar
 	cd ../play/test_app && ../../scripts/rebar3 escriptize
 	../play/test_app/_build/default/bin/test_app | grep 'hello test_app' > /dev/null
 
-test: test-ir test-beam test-interop test-others
+test-play:
+	rm -rf ../play/_build
+	find ../play -mindepth 1 -maxdepth 1 -type d -exec cd {} \; -exec bash -c 'cd $$1 && pwd && rebar3 compile ' _ {} \;
+
+test: test-ir test-beam test-interop test-play test-others
 
 .PHONY: build build-ci build-dev build-sterlang-jar clean ir update-ir-spec \
-		test-native test-jar test-beam test-interop test-ir test-templates
+		test-native test-jar test-beam test-interop test-ir test-templates test-play
