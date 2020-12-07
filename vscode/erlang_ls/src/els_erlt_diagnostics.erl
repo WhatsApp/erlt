@@ -28,6 +28,7 @@ compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
   CompileCmd = els_config:get(erlt_command),
+  CompileCmd = els_config:get(erlt_command),
   Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
                       [TempFile, CompileCmd])),
   os:cmd(Cmd),
@@ -39,13 +40,18 @@ compile(Uri) ->
         store_pois(Uri, Hovers ++ Lenses),
         Diags;
       {error, Reason} ->
+        ConfigPath = case els_config:get(config_path) of
+                       undefined -> <<"undefined">>;
+                       Path -> list_to_binary(Path)
+                     end,
         Range = #{ from => {1, 1}, to => {2, 1} },
         Desc
           = lists:flatten(
               io_lib:format(
                 "Have you set the correct 'erlt_command' in erlang_ls.config?~n"
+                "(reading config from ~s, using command [~s]~n"
                 "els_erlt_diagnostics: could not read temp file [~p]",
-                [Reason])),
+                [ConfigPath, CompileCmd, Reason])),
         Diag =
           #{ range    => els_protocol:range(Range)
            , message  => els_utils:to_binary(Desc)

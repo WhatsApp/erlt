@@ -70,7 +70,7 @@ execute_command(<<"server-info">>, _Arguments) ->
                    , ", OTP root(config):"
                     , OtpPathConfig/binary>>
                end,
-  Message = <<"Erlang LS (in ", Root/binary, "), version: "
+  Message = <<"ErlT LS (in ", Root/binary, "), version: "
              , BinVersion/binary
              , ", config from "
              , ConfigPath/binary
