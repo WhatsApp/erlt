@@ -1,0 +1,91 @@
+-module(day7).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+[unchecked]
+puzzle1(FileName) ->
+    ListOfPairs = get_input(FileName),
+    {_To, From} = create_maps(ListOfPairs),
+    gb_sets:size(expand([{"shiny", "gold"}], From, gb_sets:empty())).
+
+-spec puzzle2(string()) -> integer().
+[unchecked]
+puzzle2(FileName) ->
+    ListOfPairs = get_input(FileName),
+    {To, _From} = create_maps(ListOfPairs),
+    bags({"shiny", "gold"}, To).
+
+[unchecked]
+expand([First|Rest], From, Visited) ->
+    NewSet = gb_sets:from_list(maps:get(First, From, [])),
+    ReallyNew = gb_sets:difference(NewSet, Visited),
+    expand(gb_sets:to_list(ReallyNew) ++ Rest, From, gb_sets:union(ReallyNew, Visited));
+expand([], _From, Set) ->
+    Set.
+
+[unchecked]
+bags(Color, To) ->
+    List  = maps:get(Color, To),
+    lists:sum([N * bags(NextColor, To) + N || {NextColor, N} <- List]).
+
+[unchecked]
+create_maps(Pairs) ->
+    create_maps(Pairs, #{}, #{}).
+
+[unchecked]
+create_maps([{Val, List} | Rest], To, From) ->
+    create_maps(
+        Rest,
+        maps:put(Val, List, To),
+        lists:foldl(
+            fun({Color, _N}, Map) ->
+                maps:update_with(Color, fun(OldVal) -> [Val|OldVal] end, [Val], Map)
+            end,
+            From,
+            List)
+    );
+create_maps([], To, From) ->
+    {To, From}.
+
+
+-type color() :: {string(), string()}.
+
+-spec get_input(string()) -> [{color(), [{color(), integer()}]}].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File).
+
+[unchecked]
+read_input(File) ->
+    case io:get_line(File, "") of
+        'eof' -> [];
+        [] -> read_input(File);
+        Line -> [parse_line(Line) | read_input(File)]
+    end.
+
+[unchecked]
+parse_line(Line) ->
+    io:format("Line: ~s", [Line]),
+    case io_lib:fread("~s ~s ~*s contain", Line) of
+        {'ok', [A,B], Rest} ->
+            case io_lib:fread(Rest, " no other bags.") of
+                {'ok', [], []} ->
+                    {{A,B}, []};
+                _ ->
+                    {{A,B}, read_entries(Rest)}
+            end;
+        _ ->
+            []
+    end.
+
+[unchecked]
+read_entries(String) ->
+    io:format("String~s~n", [String]),
+    case io_lib:fread("~d ~s ~s ~*s", String) of
+        {'ok', [N, A, B], Rest} ->
+            [{{A,B}, N} | read_entries(Rest)];
+        _ ->
+            []
+    end.
