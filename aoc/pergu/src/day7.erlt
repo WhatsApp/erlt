@@ -67,7 +67,7 @@ read_input(File) ->
 
 [unchecked]
 parse_line(Line) ->
-    io:format("Line: ~s", [Line]),
+    %%io:format("Line: ~s", [Line]),
     case io_lib:fread("~s ~s ~*s contain", Line) of
         {'ok', [A,B], Rest} ->
             case io_lib:fread(Rest, " no other bags.") of
@@ -82,7 +82,7 @@ parse_line(Line) ->
 
 [unchecked]
 read_entries(String) ->
-    io:format("String~s~n", [String]),
+    %%io:format("String~s~n", [String]),
     case io_lib:fread("~d ~s ~s ~*s", String) of
         {'ok', [N, A, B], Rest} ->
             [{{A,B}, N} | read_entries(Rest)];

@@ -33,7 +33,7 @@ mandatory() ->
 get_input(FileName) ->
     {'ok', Bin} = file:read_file(FileName),
     Passports = string:split(binary_to_list(Bin), "\n\n", 'all'),
-    io:format("~p~n", [length(Passports)]),
+    %%io:format("~p~n", [length(Passports)]),
     [split_passport(Passport) || Passport <- Passports].
 
 [unchecked]
@@ -49,7 +49,7 @@ from_list(List) -> gb_sets:from_list(List).
 
 -spec is_element(A, set(A)) -> boolean().
 [unchecked]
-is_element(Value, Set) -> 
+is_element(Value, Set) ->
     gb_sets:is_element(Value, Set).
 
 -spec valid({string(), string()}) -> boolean().
@@ -69,7 +69,7 @@ valid({"hgt", String}) ->
         _ ->
             false
     end;
-valid({"hcl", "#" ++ Rest}) when length(Rest) == 6 -> 
+valid({"hcl", "#" ++ Rest}) when length(Rest) == 6 ->
     t_lists:all(fun(X) -> in_range(X, [{$0, $9}, {$a, $f}]) end, Rest);
 valid({"ecl", "amb"}) -> true;
 valid({"ecl", "blu"}) -> true;
@@ -78,7 +78,7 @@ valid({"ecl", "gry"}) -> true;
 valid({"ecl", "grn"}) -> true;
 valid({"ecl", "hzl"}) -> true;
 valid({"ecl", "oth"}) -> true;
-valid({"pid", String}) when length(String) == 9 -> 
+valid({"pid", String}) when length(String) == 9 ->
     t_lists:all(fun(X) -> in_range(X, [{$0, $9}]) end, String);
 valid(_) -> false.
 
@@ -87,7 +87,7 @@ in_range(Value, Ranges) ->
 
 [unchecked]
 validate_number(String, Min, Max) ->
-    try 
+    try
         Val = list_to_integer(String),
         Val >= Min andalso Val =< Max
     catch

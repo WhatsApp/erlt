@@ -47,7 +47,7 @@ run(PC, Acc, Visited, Instrs) ->
         [] -> result.loop{Acc};
         [NewVisited] ->
             Instr = lookup(PC, Instrs),
-            t_io:format("~p~n", {Instr}),
+            %% t_io:format("~p~n", {Instr}),
             case Instr of
                 instr.eof -> result.done{Acc};
                 instr.jmp{Jmp} -> run(PC+Jmp, Acc, NewVisited, Instrs);

@@ -6,7 +6,7 @@
 [unchecked]
 puzzle1(FileName) ->
     ListOfListOfStrings = get_input(FileName),
-    io:format("~p~n", [ListOfListOfStrings]),
+    %%io:format("~p~n", [ListOfListOfStrings]),
     lists:sum(
         [gb_sets:size(lists:foldl(fun(L, Acc) -> gb_sets:union(gb_sets:from_list(L), Acc) end, gb_sets:empty(), List))
     || List <- ListOfListOfStrings]).
