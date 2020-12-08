@@ -1,0 +1,33 @@
+-module(day5).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Bin = get_input(FileName),
+    t_lists:max([A*8+B || <<A:7,B:3>> <= Bin]).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    Bin = get_input(FileName),
+    find_step(t_lists:sort([A*8+B || <<A:7,B:3>> <= Bin])).
+
+find_step([First|List]) ->
+    find_step(List, First+1).
+
+find_step([X|Rest], X) ->
+    find_step(Rest, X+1);
+find_step(_, X) ->
+    X.
+
+-spec get_input(string()) -> binary().
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    << <<(val(Char)):1>> || <<Char:8>> <= Bin, val(Char) >= 0 >>.
+
+val($B) -> 1;
+val($F) -> 0;
+val($R) -> 1;
+val($L) -> 0;
+val(_) -> -1.

@@ -1,0 +1,100 @@
+-module(day8).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-enum instr :: (jmp{integer()}, nop{integer()}, acc{integer()}, eof).
+
+-enum result :: (loop{integer()}, done{integer()}).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Instrs = get_input(FileName),
+    result.loop{Acc} = run(1, 0, empty_visited(), Instrs),
+    Acc.
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    Instrs = get_input(FileName),
+    Iter = create_test_iterator(Instrs),
+    test_all(Iter).
+
+test_all(Iter) ->
+    iter.next{Instrs, Next} = Iter(),
+    case run(1, 0, empty_visited(), Instrs) of
+        result.loop{_} ->
+            test_all(Next);
+        result.done{Acc} ->
+            Acc
+    end.
+
+-enum iter :: (next{instrs(instr()), fun(() -> iter())}, done).
+
+create_test_iterator(Instrs) ->
+    G = fun F(N) -> make_next(N, Instrs, F) end,
+    fun() -> G(1) end.
+
+make_next(N,Instrs,F) ->
+    Next = fun() -> F(N+1) end,
+    case lookup(N, Instrs) of
+        instr.eof -> iter.done;
+        instr.jmp{Jmp} -> iter.next{add_instr(N, instr.nop{Jmp}, Instrs), Next};
+        instr.nop{Nop} -> iter.next{add_instr(N, instr.jmp{Nop}, Instrs), Next};
+        instr.acc{_ExtraAcc} -> iter.next{Instrs, Next}
+    end.
+
+run(PC, Acc, Visited, Instrs) ->
+    case add_visited(PC, Visited) of
+        [] -> result.loop{Acc};
+        [NewVisited] ->
+            Instr = lookup(PC, Instrs),
+            t_io:format("~p~n", {Instr}),
+            case Instr of
+                instr.eof -> result.done{Acc};
+                instr.jmp{Jmp} -> run(PC+Jmp, Acc, NewVisited, Instrs);
+                instr.nop{_Nop} -> run(PC+1, Acc, NewVisited, Instrs);
+                instr.acc{ExtraAcc} -> run(PC+1, Acc+ExtraAcc, NewVisited, Instrs)
+            end
+    end.
+
+[unchecked]
+-opaque visited_set() :: term().
+
+[unchecked]
+-opaque instrs(A) :: term().
+
+-spec empty_visited() -> visited_set().
+[unchecked]
+empty_visited() -> gb_sets:empty().
+
+-spec add_visited(integer(), visited_set()) -> [visited_set()].
+[unchecked]
+add_visited(PC, Visited) ->
+    case gb_sets:is_element(PC, Visited) of
+        true -> [];
+        false -> [gb_sets:add_element(PC, Visited)]
+    end.
+
+-spec get_input(string()) -> instrs(instr()).
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File, #{}, 1).
+
+[unchecked]
+read_input(File, Instrs, LineNo) ->
+    case io:fread(File, "", "~s ~d") of
+        {'ok', [Op, Arg]} -> read_input(File, add_instr(LineNo, to_instr(Op, Arg), Instrs), LineNo+1);
+        _ -> add_instr(LineNo, instr.eof, Instrs)
+    end.
+
+-spec add_instr(integer(), instr(), instrs(instr())) -> instrs(instr()).
+[unchecked]
+add_instr(LineNo, Instr, Instrs) -> Instrs#{LineNo => Instr}.
+
+-spec lookup(integer(), instrs(A)) -> A.
+[unchecked]
+lookup(PC, Instrs) -> maps:get(PC, Instrs).
+
+to_instr("nop", Arg) -> instr.nop{Arg};
+to_instr("jmp", Arg) -> instr.jmp{Arg};
+to_instr("acc", Arg) -> instr.acc{Arg}.
