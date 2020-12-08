@@ -283,7 +283,7 @@ post({Generate, _L, _Pattern, _Expr}, St, expr) when
     %% that afterwards we need to flatten the list of generators-and-tests
     %% in the post-handling for the comprehension as a whole
     Tests = mk_tests(Pins),
-    {[{generate, _L, _Pattern, _Expr} | Tests], St1};
+    {[{Generate, _L, _Pattern, _Expr} | Tests], St1};
 post(Other, St, _) ->
     {Other, St}.
 
