@@ -2,7 +2,7 @@
 
 -module(bins1).
 
--export([test_bins/0]).
+-export([test_bins/0, bc/0]).
 
 -spec test_bins() -> atom().
 
@@ -27,6 +27,9 @@ match_bins([Next | Rest]) ->
     end,
     match_bins(Rest);
 match_bins([]) -> ok.
+
+bc() ->
+    << <<A:4>>  || <<A:8>> <= <<1, 2, 3, 4, 5, 6>> >>.
 
 
 
