@@ -17,7 +17,6 @@ be installed manually:
 - Download the latest vsix file from https://github.com/whatsapp/erlt/releases
 - Then install the resulting vsix file into VS Code using the
 `Install from VSIX...` option from the `...` dropdown in the `Extensions` side bar.
-**Note**: For now, the 'examples' directory must be your VSCode workspace root.
 
  See [DEVELOPERS-README](DEVELOPERS-README.md) for
 instructions.

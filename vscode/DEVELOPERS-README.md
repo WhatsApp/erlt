@@ -26,7 +26,7 @@ Then install the resulting `erlt-ls-0.0.14.vsix` (version number may change)
 into VS Code using the `Install from VSIX...` option from the `...` dropdown
 in the `Extensions` side bar.
 
-Note: you need to have the `examples` directory as your workspace root
+Note: when working on tests you need to have the `tests` directory as your workspace root
 to be able to get diagnostics.
 
 ## (Sub)-Repository organisation
