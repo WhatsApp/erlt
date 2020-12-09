@@ -43,7 +43,6 @@ See [./play/README.md](./play/README.md)
 - Download the latest erlt-ls.vsix from https://github.com/whatsapp/erlt/releases
 - Then install the vsix in VS Code using the `Install from VSIX...` option from the `...` dropdown
 in the `Extensions` side bar.
-- Open the 'play' directory of this repo in VSCode: 'play' must be your workspace root. (this is a temporary limitation).
 
 ### Emacs
 
