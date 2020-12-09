@@ -101,7 +101,7 @@ do_initialize(RootUri, Capabilities, {ConfigPath, Config}) ->
   CodeReload = maps:get("code_reload", Config, disabled),
   Runtime = maps:get("runtime", Config, #{}),
   CtRunTest = maps:get("ct-run-test", Config, #{}),
-  ErlTCommand = maps:get("erlt_command", Config, "rebar3 compile"),
+  ErlTCommand = maps:get("erlt_command", Config, undefined),
 
   %% Passed by the LSP client
   ok = set(root_uri       , RootUri),

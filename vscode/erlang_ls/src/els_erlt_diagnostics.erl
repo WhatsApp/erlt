@@ -28,9 +28,18 @@ compile(Uri) ->
   TempFile = temporary_file(),
   filelib:ensure_dir(TempFile),
   CompileCmd = els_config:get(erlt_command),
-  CompileCmd = els_config:get(erlt_command),
-  Cmd = lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
-                      [TempFile, CompileCmd])),
+  Cmd = case CompileCmd of
+    % HACK ALERT! inferring project root from file location - this is not the Lang Server Way
+    undefined -> 
+        UriFileName = els_utils:to_list(els_uri:path(Uri)),
+        AppDir = filename:join(filename:dirname(UriFileName), ".."),
+        % TODO: when we can expect that users are on rebar 3.14.2 or newer, just use "rebar3 compile" instead of this path
+        lists:flatten(io_lib:format("cd ~s && ERLT_LANGUAGE_SERVER=~s ../../scripts/rebar3 compile",
+                      [AppDir, TempFile]));
+    _ ->
+      lists:flatten(io_lib:format("ERLT_LANGUAGE_SERVER=~s ~s",
+                          [TempFile, CompileCmd]))
+  end,
   os:cmd(Cmd),
   R =
     case get_els_file(TempFile, Uri) of
@@ -49,9 +58,9 @@ compile(Uri) ->
           = lists:flatten(
               io_lib:format(
                 "Have you set the correct 'erlt_command' in erlang_ls.config?~n"
-                "(reading config from ~s, using command [~s]~n"
+                "(reading config from ~s, erlt_command is ~s, using command [~s]~n"
                 "els_erlt_diagnostics: could not read temp file [~p]",
-                [ConfigPath, CompileCmd, Reason])),
+                [ConfigPath, CompileCmd, Cmd, Reason])),
         Diag =
           #{ range    => els_protocol:range(Range)
            , message  => els_utils:to_binary(Desc)
