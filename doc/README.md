@@ -31,12 +31,14 @@ For non-exported functions, types are inferred, so specs are optional. You get t
 The forms allowed in ErlT specs are a subset of what is allowed in classic Erlang, with a few additions for [shapes](./shapes.md), [structs, and enums](./structs_and_enums.md).
 
 Allowed in ErlT specs:
-- string()
-- atom()
-- list()
-- number()
-- integer() and float(): these are currently aliases for number(), but can become more strict in future
+- `string()`
+- `atom()`
+- `list()`
+- `number()`
+- `integer()` and `float()`: these are currently aliases for number(), but can become more strict in future
 - [shapes](./shapes.md), [structs, and enums](./structs_and_enums.md)
+- tuples like `{integer(), string()}`
+- `binary()`
 - ...
 
 Not allowed in ErlT specs:
@@ -44,6 +46,8 @@ Not allowed in ErlT specs:
 - intersections
 - guards
 - ranges
+- singleton types, such as `1`, `ok`
+- types containing singleton types, such as `{error, string()}`
 
 ## Unchecked ErlT
 

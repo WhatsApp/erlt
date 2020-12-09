@@ -84,8 +84,7 @@ Where module fields and name are all atoms, Pattern can be any Erlang pattern. I
 
 ## Anon structs
 
-[Minimal ErlT Shapes spec](https://fb.quip.com/8hzlAnda5Mjd)
-
+[Minimal ErlT Shapes spec](./shapes.md)
 
 # Representation
 
