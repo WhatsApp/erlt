@@ -6,4 +6,3 @@
 {template, "app.template.src", "{{name}}/src/{{name}}.app.src"}.
 {template, "main.template.erlt", "{{name}}/src/{{name}}.erlt"}.
 {template, "README.template.md", "{{name}}/src/README.md"}.
-{template, "erlang_ls.template.config", "{{name}}/erlang_ls.config"}.

@@ -2,7 +2,7 @@
 
 ## IDE Support
 
-See README.md at the root of this repo. Remember to have this directory be your workspace root.
+See README.md at the root of this repo, we recommend using the IDE support.
 
 ## compile
 
