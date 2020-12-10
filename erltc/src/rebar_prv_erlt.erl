@@ -8,23 +8,11 @@
 -define(SRC_DIR, "src").
 -define(MIN_REBAR_VERSION, [3, 14, 2]).
 
-semver_gt_or_eq([], []) ->
-    true;
-semver_gt_or_eq([H1 | T1], [H2 | T2]) ->
-    case H1 of
-        H2 ->
-            semver_gt_or_eq(T1, T2);
-        _ when H1 < H2 ->
-            false;
-        _ ->
-            true
-    end.
-
 version_check() ->
     {ok, VsnStr} = application:get_key(rebar, vsn),
     Vsn = [list_to_integer(N) || N <- string:split(VsnStr, ".", all)],
     3 = length(Vsn),
-    case semver_gt_or_eq(Vsn, ?MIN_REBAR_VERSION) of
+    case Vsn >= ?MIN_REBAR_VERSION of
         true ->
             ok;
         false ->

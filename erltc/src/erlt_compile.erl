@@ -794,9 +794,7 @@ run_sterlang(St) ->
                 {jar, spawn_sterlang(CheckCmd)};
             {_, _, true} ->
                 % real users should only ever hit this code path
-
-                % Octal 777 - read/write/execute
-                file:change_mode(SterlangPath, 511),
+                file:change_mode(SterlangPath, 8#777),
                 CheckCmd = io_lib:format("~s ~s", [SterlangPath, EtfFile]),
                 {native, spawn_sterlang(CheckCmd)};
             _ ->
