@@ -371,11 +371,11 @@ object AstUtil {
     }
     val opaques1 = program.opaques.map {
       case Opaque(name, params, _) =>
-        TypeId(RemoteName(module, name), params.size)
+        TypeId(RemoteName(module, name))
     }
     val opaques2 = program.uncheckedOpaques.collect {
       case UncheckedOpaque(name, params) if program.exportTypes((name, params.size)) =>
-        TypeId(RemoteName(module, name), params.size)
+        TypeId(RemoteName(module, name))
     }
     ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques1 ++ opaques2)
   }

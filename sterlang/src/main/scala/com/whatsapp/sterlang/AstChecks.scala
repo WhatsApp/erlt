@@ -174,7 +174,7 @@ class AstChecks(val context: Context) {
     tp match {
       case UserType(name: LocalName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
       // OK - fast check for global aliases like integer() -> number
-      case UserType(name, params) if nativeOpaques(TypeId(name, params.size)) =>
+      case UserType(name, params) if nativeOpaques(TypeId(name)) =>
       // OK - nativeOpaques are all nullary
       case UserType(name: LocalName, params) =>
         val enumOpt = program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
@@ -197,7 +197,7 @@ class AstChecks(val context: Context) {
       case UserType(name: RemoteName, params) =>
         val enumOpt = context.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
         val structOpt = context.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
-        val opaqueOpt = context.opaques.find(o => o.name == name && o.arity == params.size)
+        val opaqueOpt = context.opaques.find(o => o.name == name)
         val aliasOpt = context.aliases.find(a => a.name == name.stringId && a.params.size == params.size)
         if (enumOpt.isEmpty && structOpt.isEmpty && opaqueOpt.isEmpty && aliasOpt.isEmpty)
           throw new UnknownType(tp.r, name.stringId, params.size)

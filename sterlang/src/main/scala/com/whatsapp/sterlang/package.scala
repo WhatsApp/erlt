@@ -31,8 +31,8 @@ package object sterlang {
         Ast.TypeAlias(opaque.name, opaque.params, opaque.body)(opaque.r)
       }
       val localOpaques = program.uncheckedOpaques.map {
-        case Ast.UncheckedOpaque(name, params) =>
-          Ast.TypeId(Ast.LocalName(name), params.size)
+        case Ast.UncheckedOpaque(name, _) =>
+          Ast.TypeId(Ast.LocalName(name))
       }
       Context(
         enumDefs ++ program.enumDefs,
@@ -57,26 +57,26 @@ package object sterlang {
 
   val nativeOpaques: Set[Ast.TypeId] =
     Set(
-      Ast.TypeId(Ast.LocalName("any"), 0),
-      Ast.TypeId(Ast.LocalName("atom"), 0),
-      Ast.TypeId(Ast.LocalName("binary"), 0),
-      Ast.TypeId(Ast.LocalName("bitstring"), 0),
-      Ast.TypeId(Ast.LocalName("byte"), 0),
-      Ast.TypeId(Ast.LocalName("exception"), 0),
-      Ast.TypeId(Ast.LocalName("identifier"), 0),
-      Ast.TypeId(Ast.LocalName("iodata"), 0),
-      Ast.TypeId(Ast.LocalName("iolist"), 0),
-      Ast.TypeId(Ast.LocalName("message"), 0),
-      Ast.TypeId(Ast.LocalName("none"), 0),
-      Ast.TypeId(Ast.LocalName("number"), 0),
-      Ast.TypeId(Ast.LocalName("pid"), 0),
-      Ast.TypeId(Ast.LocalName("port"), 0),
-      Ast.TypeId(Ast.LocalName("reference"), 0),
-      Ast.TypeId(Ast.LocalName("term"), 0),
-      Ast.TypeId(Ast.LocalName("timeout"), 0),
-      Ast.TypeId(Ast.LocalName("char"), 0),
-      Ast.TypeId(Ast.LocalName("boolean"), 0),
-      Ast.TypeId(Ast.LocalName("string"), 0),
+      Ast.TypeId(Ast.LocalName("any")),
+      Ast.TypeId(Ast.LocalName("atom")),
+      Ast.TypeId(Ast.LocalName("binary")),
+      Ast.TypeId(Ast.LocalName("bitstring")),
+      Ast.TypeId(Ast.LocalName("byte")),
+      Ast.TypeId(Ast.LocalName("exception")),
+      Ast.TypeId(Ast.LocalName("identifier")),
+      Ast.TypeId(Ast.LocalName("iodata")),
+      Ast.TypeId(Ast.LocalName("iolist")),
+      Ast.TypeId(Ast.LocalName("message")),
+      Ast.TypeId(Ast.LocalName("none")),
+      Ast.TypeId(Ast.LocalName("number")),
+      Ast.TypeId(Ast.LocalName("pid")),
+      Ast.TypeId(Ast.LocalName("port")),
+      Ast.TypeId(Ast.LocalName("reference")),
+      Ast.TypeId(Ast.LocalName("term")),
+      Ast.TypeId(Ast.LocalName("timeout")),
+      Ast.TypeId(Ast.LocalName("char")),
+      Ast.TypeId(Ast.LocalName("boolean")),
+      Ast.TypeId(Ast.LocalName("string")),
     )
 
   val nativeAliases: List[Ast.TypeAlias] =

@@ -113,7 +113,7 @@ object Ast {
   val binOps: Map[String, BinOp] =
     binOps1 ++ binOps2
 
-  case class TypeId(name: Name, arity: Int)
+  case class TypeId(name: Name)
   sealed trait Name {
     val stringId: String
   }
