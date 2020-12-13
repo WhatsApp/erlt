@@ -21,7 +21,7 @@ import java.nio.file.Paths
 import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
 import com.whatsapp.sterlang.forms.FormsConvert
 
-object EtfErltc extends EtfApi {
+object EtfErltc {
   def programFromFile(path: String): Ast.Program = {
     val etf = etfFromFileErlt(path)
     val forms = FormsConvert.fromEtf(etf)

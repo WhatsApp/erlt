@@ -5,9 +5,9 @@ import java.nio.file.{Files, Paths}
 import sys.process._
 import com.whatsapp.sterlang.dev.forms.FormsConvertDev
 import com.whatsapp.sterlang.Etf.{ETerm, readEtf}
-import com.whatsapp.sterlang.{Ast, Convert, EtfApi, ModuleApi}
+import com.whatsapp.sterlang.{Ast, Convert, ModuleApi}
 
-object EtfDev extends EtfApi {
+object EtfDev {
   def programFromFile(path: String): Ast.Program = {
     val etf = etfFromFileDev(path)
     val forms = FormsConvertDev.fromEtf(etf)
