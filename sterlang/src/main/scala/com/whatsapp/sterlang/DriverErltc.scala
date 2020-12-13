@@ -105,8 +105,8 @@ object DriverErltc extends DriverApi {
     val env = specs.map { spec =>
       val name = spec.name.stringId
       val funType = spec.funType
-      val sVars = AstUtil.collectNamedTypeVars(funType)
-      val rVars = AstUtil.collectNamedRowTypeVars(funType)
+      val sVars = AstUtil.collectTypeVars(funType)
+      val rVars = AstUtil.collectRowTypeVars(funType)
       val sSub: Expander.Sub =
         sVars.map { v => v -> Left(freshTypeVar(vars)) }.toMap
       val rSub: Expander.Sub =

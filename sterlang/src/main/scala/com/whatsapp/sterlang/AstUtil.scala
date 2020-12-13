@@ -21,18 +21,6 @@ object AstUtil {
 
   private def collectPatVars(pat: Pat): List[String] =
     pat match {
-      case WildPat() =>
-        List.empty
-      case AtomPat(_) =>
-        List.empty
-      case BoolPat(_) =>
-        List.empty
-      case CharPat(_) =>
-        List.empty
-      case NumberPat(_) =>
-        List.empty
-      case StringPat(_) =>
-        List.empty
       case VarPat(v) =>
         List(v)
       case PinnedVarPat(v) =>
@@ -47,8 +35,6 @@ object AstUtil {
       case EnumPat(_, _, fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
-      case NilPat() =>
-        List.empty
       case ConsPat(hPat, tPat) =>
         collectPatVars(hPat) ++ collectPatVars(tPat)
       case BinPat(elems) =>
@@ -56,47 +42,49 @@ object AstUtil {
       case StructPat(_, fields) =>
         val allPats = fields.map(_.value)
         allPats.flatMap(collectPatVars)
+      case WildPat() | AtomPat(_) | BoolPat(_) | CharPat(_) | NumberPat(_) | StringPat(_) | NilPat() =>
+        List.empty
     }
 
-  def collectNamedTypeVars(t: Type): List[String] =
+  def collectTypeVars(t: Type): List[String] =
     t match {
       case TypeVar(n) =>
         List(n)
       case WildTypeVar() =>
         List.empty
       case UserType(_, params) =>
-        params.flatMap(collectNamedTypeVars)
+        params.flatMap(collectTypeVars)
       case TupleType(params) =>
-        params.flatMap(collectNamedTypeVars)
+        params.flatMap(collectTypeVars)
       case ShapeType(fields) =>
-        fields.map(_.value).flatMap(collectNamedTypeVars)
+        fields.map(_.value).flatMap(collectTypeVars)
       case OpenShapeType(fields, _) =>
-        fields.map(_.value).flatMap(collectNamedTypeVars)
+        fields.map(_.value).flatMap(collectTypeVars)
       case FunType(params, res) =>
-        params.flatMap(collectNamedTypeVars) ++ collectNamedTypeVars(res)
+        params.flatMap(collectTypeVars) ++ collectTypeVars(res)
       case ListType(elemType) =>
-        collectNamedTypeVars(elemType)
+        collectTypeVars(elemType)
     }
 
-  def collectNamedRowTypeVars(t: Type): List[(TypeVar, Set[String])] =
+  def collectRowTypeVars(t: Type): List[(TypeVar, Set[String])] =
     t match {
       case TypeVar(_) | WildTypeVar() =>
         List.empty
       case UserType(_, params) =>
-        params.flatMap(collectNamedRowTypeVars)
+        params.flatMap(collectRowTypeVars)
       case TupleType(params) =>
-        params.flatMap(collectNamedRowTypeVars)
+        params.flatMap(collectRowTypeVars)
       case FunType(params, res) =>
-        (params ++ List(res)).flatMap(collectNamedRowTypeVars)
+        (params ++ List(res)).flatMap(collectRowTypeVars)
       case ListType(elemType) =>
-        collectNamedRowTypeVars(elemType)
+        collectRowTypeVars(elemType)
       case ShapeType(fields) =>
-        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+        fields.map(_.value).flatMap(collectRowTypeVars)
       case OpenShapeType(fields, Left(WildTypeVar())) =>
-        fields.map(_.value).flatMap(collectNamedRowTypeVars)
+        fields.map(_.value).flatMap(collectRowTypeVars)
       case OpenShapeType(fields, Right(tv)) =>
         val item = tv -> fields.map(_.label).toSet
-        val other = fields.map(_.value).flatMap(collectNamedRowTypeVars)
+        val other = fields.map(_.value).flatMap(collectRowTypeVars)
         other ++ List(item)
     }
 

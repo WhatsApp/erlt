@@ -951,8 +951,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
     val sFunType = program.specs.find(_.name.stringId == fun.name) match {
       case Some(spec) =>
         val specFType = spec.funType
-        val sVars = AstUtil.collectNamedTypeVars(specFType)
-        val rVars = AstUtil.collectNamedRowTypeVars(specFType)
+        val sVars = AstUtil.collectTypeVars(specFType)
+        val rVars = AstUtil.collectRowTypeVars(specFType)
         val sSub: Expander.SSub =
           sVars.map { v => v -> Left(freshSType()) }.toMap
         val rSub: Expander.SSub =
@@ -1429,8 +1429,8 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   private def getSpecScheme(spec: Ast.Spec, d: Int): ST.TypeScheme = {
     val expander = dExpander(d)
     val specFType = spec.funType
-    val sVars = AstUtil.collectNamedTypeVars(specFType)
-    val rVars = AstUtil.collectNamedRowTypeVars(specFType)
+    val sVars = AstUtil.collectTypeVars(specFType)
+    val rVars = AstUtil.collectRowTypeVars(specFType)
 
     val sSub: Expander.Sub =
       sVars.map { v => v -> Left(freshTypeVar(d)) }.toMap

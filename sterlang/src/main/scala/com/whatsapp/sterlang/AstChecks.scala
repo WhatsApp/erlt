@@ -272,8 +272,8 @@ class AstChecks(val context: Context) {
   // - Shape extension type variables are used consistently
   private def checkShapeExtensions(funType: FunType): Unit = {
     val types = funType.argTypes ++ List(funType.resType)
-    val vars = types.flatMap(AstUtil.collectNamedTypeVars).toSet
-    val rowVars = types.flatMap(AstUtil.collectNamedRowTypeVars)
+    val vars = types.flatMap(AstUtil.collectTypeVars).toSet
+    val rowVars = types.flatMap(AstUtil.collectRowTypeVars)
 
     for ((rv, _) <- rowVars) {
       if (vars(rv.name)) {
