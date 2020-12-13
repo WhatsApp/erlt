@@ -109,7 +109,7 @@ object DriverDev extends DriverApi {
     val specs = api.flatMap(_.specs)
     val aliases = nativeAliases ++ api.flatMap(_.aliases)
     val expander = new Expander(aliases, () => freshTypeVar(vars), freshRTypeVar(vars))
-    val opaques = nativeOpaques ++ api.flatMap(_.opaques)
+    val opaques = nativeOpaques ++ api.flatMap(_.opaques.map(_.name))
     val env = specs.map { spec =>
       val name = spec.name.stringId
       val funType = spec.funType
