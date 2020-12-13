@@ -371,11 +371,11 @@ object AstUtil {
     }
     val opaques1 = program.opaques.map {
       case Opaque(name, params, _) =>
-        TypeId(RemoteName(module, name))
+        TypeId(QName(module, name))
     }
     val opaques2 = program.uncheckedOpaques.collect {
       case UncheckedOpaque(name, params) if program.exportTypes((name, params.size)) =>
-        TypeId(RemoteName(module, name))
+        TypeId(QName(module, name))
     }
     ModuleApi(enumDefs1, structDefs1, aliases1, specs1, opaques1 ++ opaques2)
   }
@@ -400,16 +400,16 @@ object AstUtil {
         ListType(globalizeType(module, names)(elemType))(tp.r)
       case UserType(name, params) =>
         val name1 = name match {
-          case LocalName(lName) =>
+          case UName(lName) =>
             nativeAliases.find(ta => ta.name == lName && ta.params.size == params.size) match {
               case Some(ta) =>
                 val UserType(canonicalName, _) = ta.body
                 canonicalName
               case None =>
                 if (names(lName))
-                  RemoteName(module, lName)
+                  QName(module, lName)
                 else
-                  LocalName(lName)
+                  UName(lName)
             }
           case _ => name
         }
@@ -470,16 +470,16 @@ object AstUtil {
       case UserType(tName, ts) =>
         val arity = ts.size
         val name1 = tName match {
-          case LocalName(n) =>
+          case UName(n) =>
             val t = new LocalFunName(n, arity)
             program.importTypes.get(t) match {
               case Some(rem) =>
-                RemoteName(rem.module, rem.name)
+                QName(rem.module, rem.name)
               case None =>
                 tName
             }
-          case RemoteName(module, name) =>
-            if (module == program.module) LocalName(name)
+          case QName(module, name) =>
+            if (module == program.module) UName(name)
             else tName
         }
         UserType(name1, ts.map(normalizeType(program)))(tp.r)
@@ -569,9 +569,9 @@ object AstUtil {
         fields.map(f => getDepPat(f.value)).foldLeft(Set.empty[String])(_ ++ _)
       case StructPat(strName, fields) =>
         val strDep: Set[String] = strName match {
-          case LocalName(_) =>
+          case UName(_) =>
             Set.empty[String]
-          case RemoteName(module, _) =>
+          case QName(module, _) =>
             Set(module)
         }
         fields.map(f => getDepPat(f.value)).foldLeft(strDep)(_ ++ _)
@@ -579,9 +579,9 @@ object AstUtil {
         getDepPat(p1) ++ getDepPat(p2)
       case EnumPat(enumName, _, fields) =>
         val ctrDep = enumName match {
-          case LocalName(_) =>
+          case UName(_) =>
             Set.empty[String]
-          case RemoteName(module, _) =>
+          case QName(module, _) =>
             Set(module)
         }
         fields.map(f => getDepPat(f.value)).foldLeft(ctrDep)(_ ++ _)
@@ -627,9 +627,9 @@ object AstUtil {
         fields.flatMap(f => getDepExp(f.value)).toSet
       case StructCreate(strName, fields) =>
         val strDep = strName match {
-          case LocalName(_) =>
+          case UName(_) =>
             Set.empty[String]
-          case RemoteName(module, _) =>
+          case QName(module, _) =>
             Set(module)
         }
         fields.map(f => getDepExp(f.value)).foldLeft(strDep)(_ ++ _)
@@ -641,9 +641,9 @@ object AstUtil {
         elems.flatMap(getDepExp).toSet
       case EnumExp(enumName, ctr, fields) =>
         val ctrDep = enumName match {
-          case LocalName(_) =>
+          case UName(_) =>
             Set.empty[String]
-          case RemoteName(module, _) =>
+          case QName(module, _) =>
             Set(module)
         }
         fields.map(f => getDepExp(f.value)).foldLeft(ctrDep)(_ ++ _)
@@ -752,9 +752,9 @@ object AstUtil {
         getDepType(elemType)
       case UserType(name, params) =>
         val nameDep = name match {
-          case LocalName(_) =>
+          case UName(_) =>
             Set.empty[String]
-          case RemoteName(module, _) =>
+          case QName(module, _) =>
             Set(module)
         }
         params.map(getDepType).foldLeft(nameDep)(_ ++ _)

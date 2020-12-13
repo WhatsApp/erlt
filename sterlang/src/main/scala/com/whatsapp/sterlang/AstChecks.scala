@@ -96,7 +96,7 @@ class AstChecks(val context: Context) {
   //   an already expanded alias, it reports an error.
   // - RHS cannot have wild type variables (`_`) - this is a difference from erl1!
   private def checkTypeAlias(program: Program, alias: TypeAlias): Unit = {
-    val tp = UserType(LocalName(alias.name), alias.params)(Doc.ZRange)
+    val tp = UserType(UName(alias.name), alias.params)(Doc.ZRange)
     val bound = collectParams(alias.params)
     val used = collectRHSTypeVars(bound)(alias.body)
     checkUsage(alias.params, used)
@@ -104,7 +104,7 @@ class AstChecks(val context: Context) {
   }
 
   private def checkOpaque(program: Program, opaque: Opaque): Unit = {
-    val tp = UserType(LocalName(opaque.name), opaque.params)(Doc.ZRange)
+    val tp = UserType(UName(opaque.name), opaque.params)(Doc.ZRange)
     val bound = collectParams(opaque.params)
     val used = collectRHSTypeVars(bound)(opaque.body)
     checkUsage(opaque.params, used)
@@ -170,13 +170,13 @@ class AstChecks(val context: Context) {
     checkUsage(structDef.params, used)
   }
 
-  private def expandType(program: Program, visited: Set[LocalName])(tp: Type): Unit =
+  private def expandType(program: Program, visited: Set[UName])(tp: Type): Unit =
     tp match {
-      case UserType(name: LocalName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
+      case UserType(name: UName, Nil) if nativeAliases.exists(a => a.name == name.stringId) =>
       // OK - fast check for global aliases like integer() -> number
       case UserType(name, params) if nativeOpaques(TypeId(name)) =>
       // OK - nativeOpaques are all nullary
-      case UserType(name: LocalName, params) =>
+      case UserType(name: UName, params) =>
         val enumOpt = program.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
         val structOpt = program.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
         val opaqueOpt = program.opaques.find(o => o.name == name.name && o.params.size == params.size)
@@ -194,7 +194,7 @@ class AstChecks(val context: Context) {
         aliasOpt.foreach { a => expandType(program, visited + name)(a.body) }
         opaqueOpt.foreach { a => expandType(program, visited + name)(a.body) }
         params.foreach(expandType(program, visited))
-      case UserType(name: RemoteName, params) =>
+      case UserType(name: QName, params) =>
         val enumOpt = context.enumDefs.find(e => e.name == name.stringId && e.params.size == params.size)
         val structOpt = context.structDefs.find(s => s.name == name.stringId && s.params.size == params.size)
         val opaqueOpt = context.opaques.find(o => o.name == name)

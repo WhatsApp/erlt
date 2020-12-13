@@ -62,20 +62,20 @@ class ParseProgSpec extends org.scalatest.funspec.AnyFunSpec {
             TypeAlias(
               "boxAlias",
               List(TypeVar("A")(ZRange)),
-              UserType(LocalName("box"), List(TypeVar("A")(ZRange)))(ZRange),
+              UserType(UName("box"), List(TypeVar("A")(ZRange)))(ZRange),
             )(ZRange),
             TypeAlias(
               "boxAlias2",
               List(TypeVar("A")(ZRange)),
-              UserType(LocalName("box2"), List(TypeVar("A")(ZRange)))(ZRange),
+              UserType(UName("box2"), List(TypeVar("A")(ZRange)))(ZRange),
             )(ZRange),
           ),
           specs = List(
             Spec(
               new LocalFunName("box_id", 1),
               FunType(
-                List(UserType(LocalName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange)),
-                UserType(LocalName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange),
+                List(UserType(UName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange)),
+                UserType(UName("boxAlias"), List(TypeVar("A")(ZRange)))(ZRange),
               )(ZRange),
             )(ZRange)
           ),

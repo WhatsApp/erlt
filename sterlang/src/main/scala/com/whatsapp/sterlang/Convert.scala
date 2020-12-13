@@ -168,9 +168,9 @@ object Convert {
       case Patterns.ConsPattern(p, hd, tl) =>
         Ast.ConsPat(convertPattern(hd), convertPattern(tl))(p)
       case Patterns.LocalEnumPattern(p, enum, ctr, fields) =>
-        Ast.EnumPat(Ast.LocalName(enum), ctr, fields.map(convertFieldPat))(p)
+        Ast.EnumPat(Ast.UName(enum), ctr, fields.map(convertFieldPat))(p)
       case Patterns.RemoteEnumPattern(p, module, enum, ctr, args) =>
-        Ast.EnumPat(Ast.RemoteName(module, enum), ctr, args.map(convertFieldPat))(p)
+        Ast.EnumPat(Ast.QName(module, enum), ctr, args.map(convertFieldPat))(p)
       case Patterns.ShapePattern(p, fields) =>
         val pats = fields map { elem =>
           val Patterns.LiteralPattern(Exprs.AtomLiteral(_, label)) = elem.key
@@ -192,9 +192,9 @@ object Convert {
           case _                       => throw new UnsupportedSyntaxError(p, "Illegal pattern")
         }
       case Patterns.LocalStructPattern(p, structName, fields) =>
-        Ast.StructPat(Ast.LocalName(structName), fields.map(convertFieldPat))(p)
+        Ast.StructPat(Ast.UName(structName), fields.map(convertFieldPat))(p)
       case Patterns.RemoteStructPattern(p, module, structName, fields) =>
-        Ast.StructPat(Ast.RemoteName(module, structName), fields.map(convertFieldPat))(p)
+        Ast.StructPat(Ast.QName(module, structName), fields.map(convertFieldPat))(p)
     }
 
   private def convertExpr(e: Exprs.Expr): Ast.Exp =
@@ -227,9 +227,9 @@ object Convert {
       case Exprs.Cons(p, hd, tl) =>
         Ast.ConsExp(convertExpr(hd), convertExpr(tl))(p)
       case Exprs.LocalEnum(p, enum, ctr, fields) =>
-        Ast.EnumExp(Ast.LocalName(enum), ctr, fields.map(convertFieldExp))(p)
+        Ast.EnumExp(Ast.UName(enum), ctr, fields.map(convertFieldExp))(p)
       case Exprs.RemoteEnum(p, module, enum, ctr, args) =>
-        Ast.EnumExp(Ast.RemoteName(module, enum), ctr, args.map(convertFieldExp))(p)
+        Ast.EnumExp(Ast.QName(module, enum), ctr, args.map(convertFieldExp))(p)
       case Exprs.ShapeCreate(p, entries) =>
         Ast.ShapeCreateExp(entries.map(convertShapeField))(p)
       case Exprs.ShapeUpdate(p, exp, entries) =>
@@ -282,17 +282,17 @@ object Convert {
       case Exprs.Bin(p, elems) =>
         Ast.Bin(elems.map(convertBinElem))(p)
       case Exprs.LocalStructCreate(p, structName, fields) =>
-        Ast.StructCreate(Ast.LocalName(structName), fields.map(convertFieldExp))(p)
+        Ast.StructCreate(Ast.UName(structName), fields.map(convertFieldExp))(p)
       case Exprs.RemoteStructCreate(p, module, structName, fields) =>
-        Ast.StructCreate(Ast.RemoteName(module, structName), fields.map(convertFieldExp))(p)
+        Ast.StructCreate(Ast.QName(module, structName), fields.map(convertFieldExp))(p)
       case Exprs.LocalStructUpdate(p, struct, structName, fields) =>
-        Ast.StructUpdate(convertExpr(struct), Ast.LocalName(structName), fields.map(convertFieldExp))(p)
+        Ast.StructUpdate(convertExpr(struct), Ast.UName(structName), fields.map(convertFieldExp))(p)
       case Exprs.RemoteStructUpdate(p, struct, module, structName, fields) =>
-        Ast.StructUpdate(convertExpr(struct), Ast.RemoteName(module, structName), fields.map(convertFieldExp))(p)
+        Ast.StructUpdate(convertExpr(struct), Ast.QName(module, structName), fields.map(convertFieldExp))(p)
       case Exprs.LocalStructSelect(p, struct, structName, index) =>
-        Ast.StructSelect(convertExpr(struct), Ast.LocalName(structName), convertIndex(index))(p)
+        Ast.StructSelect(convertExpr(struct), Ast.UName(structName), convertIndex(index))(p)
       case Exprs.RemoteStructSelect(p, struct, module, structName, index) =>
-        Ast.StructSelect(convertExpr(struct), Ast.RemoteName(module, structName), convertIndex(index))(p)
+        Ast.StructSelect(convertExpr(struct), Ast.QName(module, structName), convertIndex(index))(p)
       case Exprs.Try(p, body, tryClauses, catchClauses, after) =>
         val tryBody = convertBody(body)
         val tryRules = tryClauses.map(convertCaseClause)
@@ -369,7 +369,7 @@ object Convert {
       case Types.AnnotatedType(_, _, tp) =>
         convertType(tp)
       case Types.BitstringType(p) =>
-        Ast.UserType(Ast.LocalName("binary"), List())(p)
+        Ast.UserType(Ast.UName("binary"), List())(p)
       case Types.FunType(p, args, result) =>
         Ast.FunType(args.map(convertType), convertType(result))(p)
       case Types.Shape(p, fieldTypes) =>
@@ -385,9 +385,9 @@ object Convert {
       case Types.PredefinedType(p, "list", List(elemType)) =>
         Ast.ListType(convertType(elemType))(p)
       case Types.PredefinedType(p, name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+        Ast.UserType(Ast.UName(name), params.map(convertType))(p)
       case Types.RemoteType(p, module, typeName, params) =>
-        Ast.UserType(Ast.RemoteName(module, typeName), params.map(convertType))(p)
+        Ast.UserType(Ast.QName(module, typeName), params.map(convertType))(p)
       case Types.TupleType(p, elems) =>
         Ast.TupleType(elems.map(convertType))(p)
       case Types.TypeVariable(p, "_") =>
@@ -395,7 +395,7 @@ object Convert {
       case Types.TypeVariable(p, v) =>
         Ast.TypeVar(v)(p)
       case Types.UserType(p, name, params) =>
-        Ast.UserType(Ast.LocalName(name), params.map(convertType))(p)
+        Ast.UserType(Ast.UName(name), params.map(convertType))(p)
     }
 
   private def convertEnumCtr(variant: Forms.EnumVariantDecl): Ast.EnumCtr = {

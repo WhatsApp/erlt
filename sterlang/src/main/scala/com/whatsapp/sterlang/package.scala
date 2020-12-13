@@ -32,7 +32,7 @@ package object sterlang {
       }
       val localOpaques = program.uncheckedOpaques.map {
         case Ast.UncheckedOpaque(name, _) =>
-          Ast.TypeId(Ast.LocalName(name))
+          Ast.TypeId(Ast.UName(name))
       }
       Context(
         enumDefs ++ program.enumDefs,
@@ -57,42 +57,42 @@ package object sterlang {
 
   val nativeOpaques: Set[Ast.TypeId] =
     Set(
-      Ast.TypeId(Ast.LocalName("any")),
-      Ast.TypeId(Ast.LocalName("atom")),
-      Ast.TypeId(Ast.LocalName("binary")),
-      Ast.TypeId(Ast.LocalName("bitstring")),
-      Ast.TypeId(Ast.LocalName("byte")),
-      Ast.TypeId(Ast.LocalName("exception")),
-      Ast.TypeId(Ast.LocalName("identifier")),
-      Ast.TypeId(Ast.LocalName("iodata")),
-      Ast.TypeId(Ast.LocalName("iolist")),
-      Ast.TypeId(Ast.LocalName("message")),
-      Ast.TypeId(Ast.LocalName("none")),
-      Ast.TypeId(Ast.LocalName("number")),
-      Ast.TypeId(Ast.LocalName("pid")),
-      Ast.TypeId(Ast.LocalName("port")),
-      Ast.TypeId(Ast.LocalName("reference")),
-      Ast.TypeId(Ast.LocalName("term")),
-      Ast.TypeId(Ast.LocalName("timeout")),
-      Ast.TypeId(Ast.LocalName("char")),
-      Ast.TypeId(Ast.LocalName("boolean")),
-      Ast.TypeId(Ast.LocalName("string")),
+      Ast.TypeId(Ast.UName("any")),
+      Ast.TypeId(Ast.UName("atom")),
+      Ast.TypeId(Ast.UName("binary")),
+      Ast.TypeId(Ast.UName("bitstring")),
+      Ast.TypeId(Ast.UName("byte")),
+      Ast.TypeId(Ast.UName("exception")),
+      Ast.TypeId(Ast.UName("identifier")),
+      Ast.TypeId(Ast.UName("iodata")),
+      Ast.TypeId(Ast.UName("iolist")),
+      Ast.TypeId(Ast.UName("message")),
+      Ast.TypeId(Ast.UName("none")),
+      Ast.TypeId(Ast.UName("number")),
+      Ast.TypeId(Ast.UName("pid")),
+      Ast.TypeId(Ast.UName("port")),
+      Ast.TypeId(Ast.UName("reference")),
+      Ast.TypeId(Ast.UName("term")),
+      Ast.TypeId(Ast.UName("timeout")),
+      Ast.TypeId(Ast.UName("char")),
+      Ast.TypeId(Ast.UName("boolean")),
+      Ast.TypeId(Ast.UName("string")),
     )
 
   val nativeAliases: List[Ast.TypeAlias] =
     List(
-      Ast.TypeAlias("float", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
-      Ast.TypeAlias("integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
-      Ast.TypeAlias("neg_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+      Ast.TypeAlias("float", List.empty, Ast.UserType(Ast.UName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("integer", List.empty, Ast.UserType(Ast.UName("number"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("neg_integer", List.empty, Ast.UserType(Ast.UName("number"), List.empty)(Doc.ZRange))(
         Doc.ZRange
       ),
-      Ast.TypeAlias("non_neg_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+      Ast.TypeAlias("non_neg_integer", List.empty, Ast.UserType(Ast.UName("number"), List.empty)(Doc.ZRange))(
         Doc.ZRange
       ),
-      Ast.TypeAlias("pos_integer", List.empty, Ast.UserType(Ast.LocalName("number"), List.empty)(Doc.ZRange))(
+      Ast.TypeAlias("pos_integer", List.empty, Ast.UserType(Ast.UName("number"), List.empty)(Doc.ZRange))(
         Doc.ZRange
       ),
-      Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.LocalName("atom"), List.empty)(Doc.ZRange))(Doc.ZRange),
-      Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.LocalName("none"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("node", List.empty, Ast.UserType(Ast.UName("atom"), List.empty)(Doc.ZRange))(Doc.ZRange),
+      Ast.TypeAlias("no_return", List.empty, Ast.UserType(Ast.UName("none"), List.empty)(Doc.ZRange))(Doc.ZRange),
     )
 }

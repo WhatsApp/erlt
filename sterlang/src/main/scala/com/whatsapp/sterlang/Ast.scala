@@ -117,10 +117,12 @@ object Ast {
   sealed trait Name {
     val stringId: String
   }
-  case class LocalName(name: String) extends Name {
+  // Unqualified name (global or local)
+  case class UName(name: String) extends Name {
     override val stringId: String = name
   }
-  case class RemoteName(module: String, name: String) extends Name {
+  // Qualified name
+  case class QName(module: String, name: String) extends Name {
     override val stringId: String = module + ":" + name
   }
 
@@ -284,8 +286,8 @@ object Ast {
       funs: List[Fun],
       uncheckedFuns: List[UncheckedFun],
   ) {
-    val typeMap: Map[LocalName, RemoteName] =
-      importTypes.map { case (k, v) => LocalName(k.name) -> RemoteName(v.module, v.name) }
+    val typeMap: Map[UName, QName] =
+      importTypes.map { case (k, v) => UName(k.name) -> QName(v.module, v.name) }
   }
 
   // "High-level" program element

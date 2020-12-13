@@ -549,7 +549,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStructCreate(exp: Ast.StructCreate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructCreate(name, fields) = exp
-    val nName = normalizeTypeName(name)
+    val nName = normalizeName(name)
     val expander = dExpander(d)
 
     val structDef = getStructDef(exp.r, nName)
@@ -595,7 +595,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStructUpdate(exp: Ast.StructUpdate, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructUpdate(struct, name, fields) = exp
-    val nName = normalizeTypeName(name)
+    val nName = normalizeName(name)
     val expander = dExpander(d)
 
     val structDef = getStructDef(exp.r, nName)
@@ -635,7 +635,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabStructSelect(exp: Ast.StructSelect, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.StructSelect(struct, name, index) = exp
-    val nName = normalizeTypeName(name)
+    val nName = normalizeName(name)
     val expander = dExpander(d)
 
     val structDef = getStructDef(exp.r, nName)
@@ -890,7 +890,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
 
   private def elabEnumExp(exp: Ast.EnumExp, ty: T.Type, d: T.Depth, env: Env): AnnAst.Exp = {
     val Ast.EnumExp(eName, cName, fields) = exp
-    val nName = normalizeTypeName(eName)
+    val nName = normalizeName(eName)
     val expander = dExpander(d)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
@@ -1302,7 +1302,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
   ): (PreAnnPat, Env, PEnv) = {
     val expander = dExpander(d)
     val Ast.EnumPat(eName, cName, fields) = p
-    val nName = normalizeTypeName(eName)
+    val nName = normalizeName(eName)
 
     val enumDef = context.enumDefs.find(_.name == nName.stringId) match {
       case Some(definition) => definition
@@ -1367,7 +1367,7 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
       gen: Boolean,
   ): (PreAnnPat, Env, PEnv) = {
     val Ast.StructPat(name, fields) = p
-    val nName = normalizeTypeName(name)
+    val nName = normalizeName(name)
     val expander = dExpander(d)
 
     val structDef = getStructDef(p.r, nName)
@@ -1507,13 +1507,12 @@ class Elaborate(val vars: Vars, val context: Context, val program: Ast.Program) 
         else rem
     }
 
-  private def normalizeTypeName(eName: Ast.Name): Ast.Name =
-    eName match {
-      case local: Ast.LocalName =>
-        program.typeMap.getOrElse(local, local)
-      case rem: Ast.RemoteName =>
-        if (rem.module == program.module) Ast.LocalName(rem.name)
-        else eName
+  private def normalizeName(name: Ast.Name): Ast.Name =
+    name match {
+      case uName: Ast.UName =>
+        program.typeMap.getOrElse(uName, uName)
+      case qName: Ast.QName =>
+        if (qName.module == program.module) Ast.UName(qName.name) else qName
     }
 
   private def getStructDef(pos: Doc.Range, name: Ast.Name): Ast.StructDef =
