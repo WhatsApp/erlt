@@ -129,13 +129,21 @@ object AbstractFormConvert {
   def convertFieldDecl(term: EObject): AF_FieldDecl =
     term match {
       case ETuple(List(EAtom("record_field"), _anno, fieldNameLit)) =>
-        AF_FieldUntyped(convertAtomLit(fieldNameLit))
-      case ETuple(List(EAtom("record_field"), _anno, fieldNameLit, _expr)) =>
-        AF_FieldUntyped(convertAtomLit(fieldNameLit))
+        AF_FieldDecl(convertAtomLit(fieldNameLit), None, None)
+      case ETuple(List(EAtom("record_field"), _anno, fieldNameLit, expr)) =>
+        val defaultValue = AbstractExprConvert.convertExp(expr)
+        AF_FieldDecl(convertAtomLit(fieldNameLit), None, Some(defaultValue))
       case ETuple(List(EAtom("typed_record_field"), eUntypedField, eType)) =>
-        val AF_FieldUntyped(name) = convertFieldDecl(eUntypedField)
+        val (name, defaultValue) =
+          eUntypedField match {
+            case ETuple(List(EAtom("record_field"), _anno, fieldNameLit)) =>
+              (convertAtomLit(fieldNameLit), None)
+            case ETuple(List(EAtom("record_field"), _anno, fieldNameLit, expr)) =>
+              val defaultValue = AbstractExprConvert.convertExp(expr)
+              (convertAtomLit(fieldNameLit), Some(defaultValue))
+          }
         val tp = AbstractTypeConvert.convertType(eType)
-        AF_FieldTyped(name, tp)
+        AF_FieldDecl(name, Some(tp), defaultValue)
     }
 
   def convertAtomLit(term: EObject): String =

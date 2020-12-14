@@ -17,7 +17,7 @@
 package erlang.forms
 
 import erlang.Data.EObject
-import erlang.forms.AbstractExpr.AF_Clause
+import erlang.forms.AbstractExpr.{AF_Clause, AbstractExpr}
 import erlang.forms.AbstractType.{AbstractType, FunSpecType}
 
 object AbstractForm {
@@ -49,9 +49,7 @@ object AbstractForm {
   case class AF_FunctionDecl(name: String, arity: Int, clauses: List[AF_Clause]) extends AbstractForm
   case object AF_EOF extends AbstractForm
 
-  sealed trait AF_FieldDecl
-  case class AF_FieldUntyped(name: String) extends AF_FieldDecl
-  case class AF_FieldTyped(name: String, tp: AbstractType) extends AF_FieldDecl
+  case class AF_FieldDecl(name: String, tp: Option[AbstractType], defaultValue: Option[AbstractExpr])
 
   def module(form: AbstractForm): Option[AF_Module] =
     form match {
