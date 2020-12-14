@@ -17,7 +17,7 @@ before running the tool.
 
 Settings are controlled by three text files: `root`, `paths`, `third_party`
 (see [`CodeDirs.scala`](src/main/scala/com/whatsapp/analyzer/CodeDirs.scala)).
-Instructions for creating these files are below, in the [configure](###configure) section.
+Instructions for creating these files are below, in the [configure](#configure) section.
 
  - `root` holds the path to the root of the Erlang project to analyse
  - `paths` holds paths to the various build output directories of the project
