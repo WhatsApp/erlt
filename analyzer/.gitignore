@@ -2,6 +2,7 @@
 .idea/
 target/
 *.beam
+/otp
 /paths
 /root
 /third_party

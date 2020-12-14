@@ -34,7 +34,7 @@ object LoadForms {
 
     val absForms = rawForms match {
       case EList(elems, None) =>
-        elems.map(AbstractFormConvert.convertForm)
+        elems.map(AbstractFormConvert.convertForm(_, lite = false))
       case _ =>
         sys.error("wrong forms")
     }

@@ -26,6 +26,9 @@ object CodeDirs {
   lazy val root: String =
     Using.resource(Source.fromFile("root")) { _.getLines().toList.head }
 
+  lazy val otpLibRoot: String =
+    Using.resource(Source.fromFile("otp")) { _.getLines().toList.head }
+
   lazy val projectEbinDirs: List[String] = {
     val rawPaths = Using.resource(Source.fromFile("paths")) { _.getLines().toList.head }
     rawPaths.split(" ").toList.distinct.sorted

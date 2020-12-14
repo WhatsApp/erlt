@@ -25,7 +25,7 @@ object LoadAllForms {
       val absForms = rawForms match {
         case EList(elems, None) =>
           try {
-            elems.map(AbstractFormConvert.convertForm)
+            elems.map(AbstractFormConvert.convertForm(_, lite = false))
           } catch {
             case e: Throwable =>
               Console.err.println(s"$beamFilePath: ERROR")

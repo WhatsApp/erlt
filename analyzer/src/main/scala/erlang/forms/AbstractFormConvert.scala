@@ -35,7 +35,9 @@ object AbstractFormConvert {
     "callback",
   )
 
-  def convertForm(term: EObject): AbstractForm =
+  // if `lite=true` it returns nulls for functions
+  // nulls (instead of Option) are used for performance reasons
+  def convertForm(term: EObject, lite: Boolean): AbstractForm =
     term match {
       // af_module
       case ETuple(List(EAtom("attribute"), _anno, EAtom("module"), EAtom(name))) =>
@@ -101,8 +103,11 @@ object AbstractFormConvert {
         AF_WildAttribute(attrName, attrValue)
       // af_function_decl
       case ETuple(List(EAtom("function"), _anno, EAtom(name), ELong(arity), EList(clauseSeq, None))) =>
-        val clauses = clauseSeq.map(AbstractExprConvert.convertClause)
-        AF_FunctionDecl(name, arity.intValue, clauses)
+        if (lite) null
+        else {
+          val clauses = clauseSeq.map(AbstractExprConvert.convertClause)
+          AF_FunctionDecl(name, arity.intValue, clauses)
+        }
       case ETuple(List(EAtom("eof"), _anno)) =>
         AF_EOF
       case _ =>
