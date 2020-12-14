@@ -3,6 +3,7 @@ package com.whatsapp.eqwalizer
 import com.whatsapp.analyzer.CodeDirs
 import erlang.Beam
 import erlang.Data.EList
+import erlang.forms.AbstractForm.AbstractForm
 import erlang.forms.AbstractFormConvert
 
 import java.nio.file.Paths
@@ -58,6 +59,11 @@ object BeamDb {
     ModuleApi(forms)
   }
 
+  private def loadModule(app: App, module: String): List[AbstractForm] = {
+    val Some(EList(rawForms, None)) = Beam.loadAbstractForms(s"${app.ebinDir}/$module.beam")
+    rawForms.map(AbstractFormConvert.convertForm(_, lite = true)).filter(_ != null)
+  }
+
   def getModuleApi(module: String): Option[ModuleApi] = {
     if (moduleApis.contains(module))
       return Some(moduleApis(module))
@@ -71,6 +77,16 @@ object BeamDb {
       moduleApis = moduleApis.updated(module, moduleApi)
       Some(moduleApi)
     }
+  }
+
+  def getAbstractForms(module: String): Option[List[AbstractForm]] = {
+    val appNames = module2App(module)
+    if (appNames.isEmpty)
+      None
+    else if (appNames.size > 1)
+      throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
+    else
+      Some(loadModule(apps(appNames.head), module))
   }
 
   // For testing/debugging
