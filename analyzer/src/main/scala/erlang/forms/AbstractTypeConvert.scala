@@ -166,7 +166,7 @@ object AbstractTypeConvert {
       case ETuple(
             List(EAtom("type"), _anno, EAtom("bounded_fun"), EList(List(eFunType, EList(constraints, None)), None))
           ) =>
-        AF_ContrainedFunctionType(convertFunctionType(eFunType), constraints.map(convertConstraint))
+        AF_ConstrainedFunctionType(convertFunctionType(eFunType), constraints.map(convertConstraint))
     }
 
   def convertConstraint(term: EObject): Constraint =

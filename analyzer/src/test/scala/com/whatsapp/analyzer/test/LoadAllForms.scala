@@ -9,6 +9,8 @@ import java.io.{PrintWriter, StringWriter}
 
 object LoadAllForms {
 
+  val debug = false
+
   def main(args: Array[String]): Unit =
     loadAllForms()
 
@@ -28,14 +30,20 @@ object LoadAllForms {
             elems.map(AbstractFormConvert.convertForm(_, lite = false))
           } catch {
             case e: Throwable =>
-              Console.err.println(s"$beamFilePath: ERROR")
-              Console.err.println(shortenedStackTrace(e, 20))
+              if (debug) {
+                Console.err.println(s"$beamFilePath: ERROR")
+                Console.err.println(shortenedStackTrace(e, 20))
+              } else {
+                Console.print("E")
+              }
               List()
           }
         case _ =>
           sys.error(s"$beamFilePath: wrong forms")
       }
+      Console.out.print(".")
     }
+    Console.out.println()
   }
 
   def shortenedStackTrace(e: Throwable, maxLines: Int): String = {

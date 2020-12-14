@@ -65,7 +65,8 @@ object AbstractType {
   case class AF_RecordFieldType(name: String, tp: AbstractType)
 
   sealed trait FunSpecType
-  case class AF_ContrainedFunctionType(functionType: AF_FunctionType, constraints: List[Constraint]) extends FunSpecType
+  case class AF_ConstrainedFunctionType(functionType: AF_FunctionType, constraints: List[Constraint])
+      extends FunSpecType
   case class Constraint(tVar: String, tp: AbstractType)
 
   val predefinedTypes = Set(
