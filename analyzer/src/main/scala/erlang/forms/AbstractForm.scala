@@ -18,7 +18,7 @@ package erlang.forms
 
 import erlang.Data.EObject
 import erlang.forms.AbstractExpr.{AF_Clause, AbstractExpr}
-import erlang.forms.AbstractType.{AbstractType, FunSpecType}
+import erlang.forms.AbstractType.{AF_ConstrainedFunctionType, AbstractType}
 
 object AbstractForm {
   // name/arity
@@ -44,7 +44,8 @@ object AbstractForm {
   case class AF_RecordDecl(name: String, fields: List[AF_FieldDecl]) extends AbstractForm
   case class AF_TypeDecl(typeAttr: TypeAttr, typeName: String, abstractType: AbstractType, params: List[String])
       extends AbstractForm
-  case class AF_FunctionSpec(specAttr: SpecAttr, id: IdWithArity, types: List[FunSpecType]) extends AbstractForm
+  case class AF_FunctionSpec(specAttr: SpecAttr, id: IdWithArity, types: List[AF_ConstrainedFunctionType])
+      extends AbstractForm
   case class AF_WildAttribute(name: String, value: EObject) extends AbstractForm
   case class AF_FunctionDecl(name: String, arity: Int, clauses: List[AF_Clause]) extends AbstractForm
   case object AF_EOF extends AbstractForm

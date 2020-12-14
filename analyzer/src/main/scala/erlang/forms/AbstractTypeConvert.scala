@@ -151,7 +151,7 @@ object AbstractTypeConvert {
 
     }
 
-  def convertFunSpecType(term: EObject): FunSpecType =
+  def convertFunSpecType(term: EObject): AF_ConstrainedFunctionType =
     term match {
       // function type
       case ETuple(
@@ -162,7 +162,7 @@ object AbstractTypeConvert {
               EList(List(ETuple(List(EAtom("type"), _anno1, EAtom("product"), EList(args, None))), resultType), None),
             )
           ) =>
-        AF_FunctionType(args.map(convertType), convertType(resultType))
+        AF_ConstrainedFunctionType(AF_FunctionType(args.map(convertType), convertType(resultType)), List.empty)
       case ETuple(
             List(EAtom("type"), _anno, EAtom("bounded_fun"), EList(List(eFunType, EList(constraints, None)), None))
           ) =>
