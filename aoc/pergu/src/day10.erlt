@@ -1,0 +1,69 @@
+-module(day10).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Diffs = diff(t_lists:sort([0|get_input(FileName)])),
+    t_lists:sum([1 || 1 <- Diffs]) * t_lists:sum([1 || 3 <- Diffs]).
+
+diff([X,Y|Rest]) ->
+    [Y-X|diff([Y|Rest])];
+diff([_]) ->
+    [3].
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    Adapters = get_input(FileName),
+    SortedAdapters = t_lists:sort([t_lists:max(Adapters)+3|Adapters]),
+    {Val, _} = count_configs_m(0, SortedAdapters, new()),
+    Val.
+
+count_configs_m(N, Adapters, Memo) ->
+    case lookup({N, Adapters}, Memo) of
+        option.some{Res} -> {Res, Memo};
+        option.none -> count_configs(N, Adapters, Memo)
+    end.
+
+count_configs(N, [M], Memo) when M-N =< 3 -> {1, Memo};
+count_configs(N, [M|Rest] = Val, Memo) when M-N =< 3 ->
+    {Ans1, NewMemo} = count_configs_m(N, Rest, Memo),
+    {Ans2, FinalMemo} = count_configs_m(M, Rest, NewMemo),
+    {Ans1+Ans2, update({N, Val}, Ans1+Ans2, FinalMemo)};
+count_configs(N, [M|_Rest], Memo) when M-N > 3 -> {0, Memo}.
+
+[unchecked]
+-opaque memo() :: term().
+
+-enum option(A) :: (some{A}, none).
+
+-spec new() -> memo().
+[unchecked]
+new() -> #{}.
+
+-spec lookup({integer(), [integer()]}, memo()) -> option(integer()).
+[unchecked]
+lookup(Key, Map) ->
+    case maps:get(Key, Map, -1) of
+        -1 -> option.none;
+        N -> option.some{N}
+    end.
+
+-spec update({integer(), [integer()]}, integer(), memo()) -> memo().
+[unchecked]
+update(Key, Value, Map) ->
+    maps:put(Key, Value, Map).
+
+
+-spec get_input(string()) -> [integer()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_file(File).
+
+[unchecked]
+read_file(File) ->
+    case io:fread(File, "", "~d") of
+        {'ok', [Val]} -> [Val|read_file(File)];
+        _ -> []
+    end.
