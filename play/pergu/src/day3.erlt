@@ -5,11 +5,11 @@
         ]).
 
 [unchecked]
--opaque map(X,Y) :: term().
+-opaque t_map(X,Y) :: term().
 
--struct input :: (dim::{integer(),integer()}, tree_map::map({integer(),integer()}, integer())).
+-struct input :: (dim::{integer(),integer()}, tree_map::t_map({integer(),integer()}, integer())).
 
--spec get(X, map(X,Y)) -> Y.
+-spec get(X, t_map(X,Y)) -> Y.
 [unchecked]
 get(X, Map) -> maps:get(X, Map).
 
