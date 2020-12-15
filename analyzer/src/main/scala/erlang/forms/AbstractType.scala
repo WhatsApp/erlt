@@ -30,10 +30,8 @@ object AbstractType {
   case class AF_FunTypeAnyArgs(tp: AbstractType) extends AF_FunType
   case class AF_FunctionType(args: List[AbstractType], resType: AbstractType) extends AF_FunType
   case class AF_IntegerRangeType(t1: AF_SingletonIntegerType, t2: AF_SingletonIntegerType) extends AbstractType
-
-  sealed trait AF_MapType extends AbstractType
-  case object AF_AnyMap extends AF_MapType
-  case class AF_AssocMap(assocs: List[AF_AssocType]) extends AF_MapType
+  case object AF_AnyMap extends AbstractType
+  case class AF_AssocMap(assocs: List[AF_AssocType]) extends AbstractType
 
   sealed trait AF_AssocType {
     val types: List[AbstractType]
@@ -54,9 +52,8 @@ object AbstractType {
   case class AF_BinaryOp(op: String, arg1: AF_SingletonIntegerType, arg2: AF_SingletonIntegerType)
       extends AF_SingletonIntegerType
 
-  sealed trait AF_TupleType extends AbstractType
-  case object AF_TupleTypeAny extends AF_TupleType
-  case class AF_TupleTypeTyped(params: List[AbstractType]) extends AF_TupleType
+  case object AF_TupleTypeAny extends AbstractType
+  case class AF_TupleTypeTyped(params: List[AbstractType]) extends AbstractType
 
   case class AF_TypeUnion(params: List[AbstractType]) extends AbstractType
   case class AF_TypeVariable(v: String) extends AbstractType
