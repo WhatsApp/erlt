@@ -25,10 +25,9 @@ object AbstractType {
   // Interesting thing: types are non-empty in the whole OTP just once (inet)
   case class AF_BitstringType(types: List[AF_SingletonIntegerType]) extends AbstractType
   case object AF_EmptyListType extends AbstractType
-  sealed trait AF_FunType extends AbstractType
-  case object AF_FunTypeAny extends AF_FunType
-  case class AF_FunTypeAnyArgs(tp: AbstractType) extends AF_FunType
-  case class AF_FunctionType(args: List[AbstractType], resType: AbstractType) extends AF_FunType
+  case object AF_FunTypeAny extends AbstractType
+  case class AF_FunTypeAnyArgs(tp: AbstractType) extends AbstractType
+  case class AF_FunctionType(args: List[AbstractType], resType: AbstractType) extends AbstractType
   case class AF_IntegerRangeType(t1: AF_SingletonIntegerType, t2: AF_SingletonIntegerType) extends AbstractType
   case object AF_AnyMap extends AbstractType
   case class AF_AssocMap(assocs: List[AF_AssocType]) extends AbstractType
