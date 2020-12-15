@@ -1,0 +1,70 @@
+-module(day12).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-struct coords :: (x::integer(), y::integer()).
+
+-enum dir :: (east, west, north, south).
+
+rotate(90, dir.east) -> dir.south;
+rotate(90, dir.south) -> dir.west;
+rotate(90, dir.west) -> dir.north;
+rotate(90, dir.north) -> dir.east;
+rotate(180, Dir) -> rotate(90, rotate(90, Dir));
+rotate(270, Dir) -> rotate(90, rotate(180, Dir)).
+
+rotate_waypoint(90, #coords{x=X, y=Y}) -> #coords{x=Y, y=-X};
+rotate_waypoint(180, Dir) -> rotate_waypoint(90, rotate_waypoint(90, Dir));
+rotate_waypoint(270, Dir) -> rotate_waypoint(90, rotate_waypoint(180, Dir)).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Commands = get_input(FileName),
+    {_, #coords{x=X, y=Y}} = interpret(fun update/2, {dir.east, #coords{x=0, y=0}}, Commands),
+    abso(X)+abso(Y).
+
+abso(X) when X < 0 -> -X;
+abso(X) -> X.
+
+interpret(Fun, Acc, Commands) ->
+    t_lists:foldl(Fun, Acc, Commands).
+
+update({"N",DeltaY}, {Dir, #coords{x=X, y=Y}}) -> {Dir, #coords{x=X, y=Y+DeltaY}};
+update({"S",DeltaY}, {Dir, #coords{x=X, y=Y}}) -> {Dir, #coords{x=X, y=Y-DeltaY}};
+update({"W",DeltaX}, {Dir, #coords{x=X, y=Y}}) -> {Dir, #coords{x=X-DeltaX, y=Y}};
+update({"E",DeltaX}, {Dir, #coords{x=X, y=Y}}) -> {Dir, #coords{x=X+DeltaX, y=Y}};
+update({"F",Delta}, {Dir, Coords}) -> update({dir_to_direction(Dir), Delta}, {Dir, Coords});
+update({"R",Deg}, {Dir, Coords}) ->  {rotate(Deg, Dir), Coords};
+update({"L",Deg}, {Dir, Coords}) ->  {rotate(360-Deg, Dir), Coords}.
+
+dir_to_direction(dir.east) -> "E";
+dir_to_direction(dir.south) -> "S";
+dir_to_direction(dir.north) -> "N";
+dir_to_direction(dir.west) -> "W".
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+     {#coords{x=X, y=Y}, _} = interpret(fun waypoint/2, {#coords{x=0, y=0}, #coords{x=10, y=1}}, get_input(FileName)),
+      abso(X)+abso(Y).
+
+waypoint({"N",DeltaY}, {Pos, #coords{x=X, y=Y}}) -> {Pos, #coords{x=X, y=Y+DeltaY}};
+waypoint({"S",DeltaY}, {Pos, #coords{x=X, y=Y}}) -> {Pos, #coords{x=X, y=Y-DeltaY}};
+waypoint({"W",DeltaX}, {Pos, #coords{x=X, y=Y}}) -> {Pos, #coords{x=X-DeltaX, y=Y}};
+waypoint({"E",DeltaX}, {Pos, #coords{x=X, y=Y}}) -> {Pos, #coords{x=X+DeltaX, y=Y}};
+waypoint({"F",Delta}, {#coords{x=InitX, y=InitY}, #coords{x=DeltaX, y=DeltaY} = WayPoint}) -> 
+    {#coords{x=InitX+Delta*DeltaX, y=InitY+Delta*DeltaY}, WayPoint};
+waypoint({"R",Deg}, {Pos, Coords}) ->  {Pos, rotate_waypoint(Deg, Coords)};
+waypoint({"L",Deg}, {Pos, Coords}) ->  {Pos, rotate_waypoint(360-Deg, Coords)}.
+
+-spec get_input(string()) -> [{string(), integer()}].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File).
+
+[unchecked]
+read_input(File) ->
+    case io:fread(File, "", "~c~d") of
+        {'ok', [D,N]} -> [{D,N}|read_input(File)];
+        _ -> []
+    end.

@@ -1,0 +1,167 @@
+-module(day11).
+
+-export([puzzle1/1, puzzle2/1, print_board/1]).
+
+-export_type([smap/0]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    SMap = get_input(FileName),
+    NMap = create_n_map(SMap),
+    loop(SMap, NMap, 4).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    SMap = get_input(FileName),
+    NMap = create_neighbour_map(SMap),
+    loop(SMap, NMap, 5).
+
+loop(SeatMap, NMap, N) ->
+    case update(SeatMap, NMap, N) of
+        {false, _} -> occupied_seats(SeatMap);
+        {true, New} ->
+            %t_io:format("~n~nOccupied: ~p", {occupied_seats(New)}),
+            %print_board(New),
+            loop(New, NMap, N)
+    end.
+
+update(SeatMap, NMap, N) ->
+    t_lists:foldl(fun(Coord, Acc) -> update_pos(Coord, SeatMap, Acc, NMap, N) end, {false, new()}, keys(SeatMap)).
+
+update_pos(Coord, Old, {Changed, New}, NMap, N) ->
+    case get(Coord, Old) of
+        pos.floor -> {Changed, put(Coord, pos.floor, New)};
+        pos.free ->
+            NewVal = free_update(Coord, Old, NMap),
+            {(NewVal =/= pos.free) or Changed, put(Coord, NewVal, New)};
+        pos.occupied ->
+            NewVal = occupied_update(Coord, Old, NMap, N),
+            {(NewVal =/= pos.occupied) or Changed, put(Coord, NewVal, New)}
+    end.
+
+free_update(Coord, Map, NMap) ->
+    case occupied_neighbours(Coord, Map, NMap) > 0 of
+        true -> pos.free;
+        false -> pos.occupied
+    end.
+
+occupied_update(Coord, Map, NMap, N) ->
+    case occupied_neighbours(Coord, Map, NMap) >= N of
+        true -> pos.free;
+        false -> pos.occupied
+    end.
+
+create_n_map(SMap) ->
+    N = [{1,-1}, {1, 0}, {1, 1}, {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {-1, 1}],
+    t_lists:foldl(fun(coords.xy{X,Y} = Coord, Res) -> NBS = [coords.xy{X+A, Y+B} || {A, B} <- N], put2(Coord, NBS, Res) end, new2(), keys(SMap)).
+
+create_neighbour_map(SMap) ->
+    N = [{1,-1}, {1, 0}, {1, 1}, {0, -1}, {0, 1}, {-1, -1}, {-1, 0}, {-1, 1}],
+    t_lists:foldl(fun(Coord, Res) -> NBS = [get_neighbour(Coord, Dir, SMap) || Dir <- N], put2(Coord, NBS, Res) end, new2(), keys(SMap)).
+
+get_neighbour(coords.xy{X,Y}, {A,B}, Map) ->
+    NewCoord = coords.xy{X+A, Y+B},
+    case get(NewCoord, Map, pos.undefined) of
+        pos.floor -> get_neighbour(NewCoord, {A,B}, Map);
+        _Val -> NewCoord
+    end.
+
+occupied_neighbours(Coords, Map, NMap) ->
+    t_lists:sum([1 || Neighbour <- get2(Coords, NMap), get(Neighbour, Map, pos.undefined) =:= pos.occupied]).
+
+occupied_seats(Map) ->
+    t_lists:sum([1 || Coord <- keys(Map), get(Coord, Map) =:= pos.occupied]).
+
+get_input(FileName) ->
+    Bin = read_file(FileName),
+    create_map(Bin, new(), 1, 1).
+
+create_map(<<C,Rest/binary>>, Map, X, Y) when C == 76 ->
+    create_map(Rest, put(coords.xy{X,Y}, pos.free, Map), X+1, Y);
+create_map(<<C,Rest/binary>>, Map, X, Y) when C == 46 ->
+    create_map(Rest, put(coords.xy{X,Y}, pos.floor, Map), X+1, Y);
+create_map(<<C,Rest/binary>>, Map, X, Y) when C == 35 ->
+    create_map(Rest, put(coords.xy{X,Y}, pos.occupied, Map), X+1, Y);
+create_map(<<C,Rest/binary>>, Map, _X, Y) when C == 10 ->
+    create_map(Rest, Map, 1, Y+1);
+create_map(<<>>, Map, _X, _Y) ->
+    Map.
+
+
+
+-enum pos :: (occupied, free, floor, undefined).
+
+-enum coords :: (xy{integer(), integer()}).
+
+[unchecked]
+-opaque smap() :: term().
+
+[unchecked]
+-opaque nmap() :: term().
+
+-spec get(coords(), smap(), pos()) -> pos().
+[unchecked]
+get(XY, Map, Default) ->
+    maps:get(XY, Map, Default).
+
+-spec get(coords(), smap()) -> pos().
+[unchecked]
+get(XY, Map) ->
+    maps:get(XY, Map).
+
+-spec get2(coords(), nmap()) -> [coords()].
+[unchecked]
+get2(XY, Map) ->
+    maps:get(XY, Map).
+
+-spec put(coords(), pos(), smap()) -> smap().
+[unchecked]
+put(XY, Pos, Map) ->
+    maps:put(XY, Pos, Map).
+
+-spec put2(coords(), [coords()], nmap()) -> nmap().
+[unchecked]
+put2(XY, Pos, Map) ->
+    maps:put(XY, Pos, Map).
+
+-spec new() -> smap().
+[unchecked]
+new() ->
+    #{}.
+
+-spec new2() -> nmap().
+[unchecked]
+new2() ->
+    #{}.
+
+-spec keys(smap()) -> [coords()].
+[unchecked]
+keys(Map) ->
+    maps:keys(Map).
+
+-spec read_file(string()) -> binary().
+[unchecked]
+read_file(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    Bin.
+
+-spec print_board(smap()) -> atom().
+[unchecked]
+print_board(SeatMap) ->
+    print_board(t_lists:sort(fun sort_order/2, keys(SeatMap)), SeatMap).
+
+[unchecked]
+print_board([coords.xy{1,_}=Key|Rest], Map) ->
+    io:format("~n~s", [to_string(get(Key, Map))]),
+    print_board(Rest, Map);
+print_board([Key|Rest], Map) ->
+    io:format("~s", [to_string(get(Key, Map))]),
+    print_board(Rest, Map);
+print_board([], _) -> 'ok'.
+
+to_string(pos.occupied) -> "#";
+to_string(pos.free) -> "L";
+to_string(pos.floor) -> ".".
+
+sort_order(coords.xy{X1,Y1}, coords.xy{X2,Y2}) ->
+    (Y2 > Y1) orelse ((Y2==Y1) andalso (X2>X1)).
