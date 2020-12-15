@@ -32,9 +32,9 @@ object ModuleApi {
       exports.toList.sorted,
       imports,
       exportTypes.toList.sorted,
-      records.toList.sortBy(_.name).map(TypeUtils.globalizeRecord(module, _)),
-      specs.toList.sortBy(_.id).map(TypeUtils.globalizeSpec(module, _)),
-      types.toList.sortBy(t => (t.typeName, t.params.size)).map(TypeUtils.globalizeTypeDecl(module, _)),
+      records.toList.sortBy(_.name).map(Globalize.globalizeRecord(module, _)),
+      specs.toList.sortBy(_.id).map(Globalize.globalizeSpec(module, _)),
+      types.toList.sortBy(t => (t.typeName, t.params.size)).map(Globalize.globalizeTypeDecl(module, _)),
     )
   }
 }

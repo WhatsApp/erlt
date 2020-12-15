@@ -3,7 +3,7 @@ package com.whatsapp.eqwalizer
 import erlang.forms.AbstractForm._
 import erlang.forms.AbstractType._
 
-object TypeUtils {
+object Globalize {
   // turns all "local" types into FQ remote types
   def globalize(module: String, t: AbstractType): AbstractType =
     t match {
@@ -19,8 +19,8 @@ object TypeUtils {
         AF_AssocMap(assocs.map(globalizeAssoc(module, _)))
       case AF_RecordType(recordName, fieldTypes) =>
         AF_RecordType(recordName, fieldTypes.map(globalizeRecordField(module, _)))
-      case AF_RemoteType(module, name, params) =>
-        AF_RemoteType(module, name, params.map(globalize(module, _)))
+      case AF_RemoteType(remModule, name, params) =>
+        AF_RemoteType(remModule, name, params.map(globalize(module, _)))
       case AF_TupleTypeTyped(params) =>
         AF_TupleTypeTyped(params.map(globalize(module, _)))
       case AF_TypeUnion(params) =>
