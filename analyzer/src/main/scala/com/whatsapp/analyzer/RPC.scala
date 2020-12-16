@@ -20,6 +20,8 @@ import java.io.File
 
 import com.ericsson.otp.erlang._
 import erlang.Data._
+import erlang.forms.AbstractForm.AbstractForm
+import erlang.forms.AbstractFormConvert
 
 class RPC(val connection: OtpConnection) extends AutoCloseable {
 
@@ -27,6 +29,24 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     connection.sendRPC("analyzer", "forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     erlang.DataConvert.fromJava(received)
+  }
+
+  def getAbstractForms(beamFilePath: String): Option[List[AbstractForm]] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val rawForms = erlang.DataConvert.fromJava(received)
+
+    rawForms match {
+      case EList(elems, None) =>
+        Some(elems.map(e => AbstractFormConvert.convertForm(e, false)))
+      case ETuple(EAtom("badrpc") :: _) =>
+        println("not loaded - bad RPC interface to Erlang node")
+        None
+      case _ =>
+        println("not loaded")
+        None
+    }
   }
 
   def getUsedFuns(beamFilePath: String): Option[List[(String, String, Int)]] = {

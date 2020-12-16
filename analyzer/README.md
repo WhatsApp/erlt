@@ -8,6 +8,14 @@ to communicate with a running Erlang node via `RPC.scala`. The Erlang node is us
 to load the project's AST, and some analysis can be written in Erlang and done
 on that node when it is more convenient.
 
+In the Scala portion of the project, there are two models of Erlang code:
+- The lower-level `erlang.Data` which represents the given code purely in terms of
+tuples, atoms, lists, etc., and maps most cleanly to the AST that the Erlang node
+returns.
+- The higher-level `erlang.forms.AbstractForm` and related types, which has
+notions of modules, exports, etc., which encodes more semantics
+of the code, and therefore makes it feel more natural to inspect.
+
 ## How to configure and run
 
 This analyzer assumes that you build your project with rebar3.
@@ -26,7 +34,7 @@ Instructions for creating these files are below, in the [configure](#configure) 
 
 ### Configure
 
-1. Build your project with `rebar3 compile` (don't miss the step!)
+1. Build your project with `rebar3 compile` (don't miss this step!)
 2. Make sure your config files are correct:
    - Put the full absolute path to the root of the rebar project into the `root` file, e.g.:
 
@@ -63,8 +71,13 @@ Make sure you've configured `root`, `paths` and `third_party` before continuing.
 2. Execute a Scala analysis entrypoint in another terminal window:
 
    ```sbt "runMain {analysisClass}"```
-   
+ 
    e.g. `sbt "runMain com.whatsapp.analyzer.Behaviours"`
+
+  If the code being analyzed has particularly deep expressions, you may need to
+  increase your stack size to accomodate it, e.g.:
+
+  ```export SBT_OPTS="-Xss1000M"```
 
 ## Implemented analyses
 
@@ -78,6 +91,9 @@ Make sure you've configured `root`, `paths` and `third_party` before continuing.
 - `com.whatsapp.analyzer.GenServerCalls` - report numbers about whether
    the "protocol part" of `gen_server:call(?MODULE, {protocol_part, ...})` 
    is known at compile time or not -  `gen_server:call(?MODULE, {Request, ...})`
+- `com.whatsapp.analyzer.GenServerFeatures` - report numbers about which
+    `gen_server` features are used, e.g. is `noreply` returned from a call,
+    whether `handle_continue` is defined, etc.
 - `com.whatsapp.analyzer.HighLevelStats` - number of projects, modules,
    generated files, etc
 - `com.whatsapp.analyzer.IntersectionTypes` - find specs with 

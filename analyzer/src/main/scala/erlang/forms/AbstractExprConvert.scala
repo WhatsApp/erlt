@@ -84,15 +84,15 @@ object AbstractExprConvert {
       case ETuple(List(EAtom("case"), _anno, eExp, EList(eClauses, None))) =>
         AF_Case(convertExp(eExp), eClauses.map(convertClause))
       case ETuple(
-            List(
-              EAtom("try"),
-              _anno,
-              EList(eExps1, None),
-              EList(eClauses1, None),
-              EList(eClauses2, None),
-              EList(eExps2, None),
-            )
-          ) =>
+        List(
+          EAtom("try"),
+          _anno,
+          EList(eExps1, None),
+          EList(eClauses1, None),
+          EList(eClauses2, None),
+          EList(eExps2, None),
+        )
+      ) =>
         AF_Try(
           eExps1.map(convertExp),
           eClauses1.map(convertClause),
@@ -113,9 +113,9 @@ object AbstractExprConvert {
             AF_RemoteFun(module, name, arity.intValue)
           // TODO
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
-//        val Some(AF_LiteralAtom(module)) = maybeLiteral(moduleLit)
-//        val Some(AF_LiteralAtom(name)) = maybeLiteral(nameLit)
-//        val Some(AF_LiteralInteger(arity)) = maybeLiteral(arityLit)
+            //        val Some(AF_LiteralAtom(module)) = maybeLiteral(moduleLit)
+            //        val Some(AF_LiteralAtom(name)) = maybeLiteral(nameLit)
+            //        val Some(AF_LiteralInteger(arity)) = maybeLiteral(arityLit)
             AF_RemoteFunDynamic(eModule, eName, eArity)
 
           case ETuple(List(EAtom("clauses"), EList(eClauses, None))) =>
