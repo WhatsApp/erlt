@@ -1,0 +1,59 @@
+-module(day13).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    {Start, List} = get_input(FileName),
+    {TTA, Number} = t_lists:min([{tta(Start, Number), Number} || {_, Number} <- List]),
+    TTA*Number.
+
+tta(Start, Number) ->
+    (Number - Start rem Number) rem Number.
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    {_, List} = get_input(FileName),
+    Tests = to_tests(List),
+    test(Tests, 0, 1, -1).
+
+to_tests([{X,Y}|Rest]) ->
+    [fun(Val) -> tta(Val, Y) =:= (X rem Y) end | to_tests(Rest)];
+to_tests([]) ->
+    [].
+
+test([First|Rest] = Tests, Val, Step, LastSuccess) ->
+    case test_all(Tests, Val) of
+        true -> Val;
+        false ->
+            case {First(Val), LastSuccess} of
+                {true, -1} ->
+                    test(Tests, Val+Step, Step, Val);
+                {true, _} ->
+                    NewStep = Val-LastSuccess,
+                    test(Rest, Val+NewStep, NewStep, -1);
+                {false, _} ->
+                    test(Tests, Val+Step, Step, LastSuccess)
+            end
+    end.
+
+test_all([F|Rest], Val) ->
+    case F(Val) of
+        true -> test_all(Rest, Val);
+        false -> false
+    end;
+test_all([], _) -> true.
+
+-spec get_input(string()) -> {integer(), [{integer(), integer()}]}.
+[unchecked]
+get_input(FileName) ->
+    {'ok', [{Int, List}]} = file:consult(FileName),
+    {Int,to_position(List, 0)}.
+
+[unchecked]
+to_position(['x'|Rest], N) ->
+    to_position(Rest, N+1);
+to_position([V|Rest], N) ->
+    [{N, V}| to_position(Rest, N+1)];
+to_position([], _) ->
+    [].

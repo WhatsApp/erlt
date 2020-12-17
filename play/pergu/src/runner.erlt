@@ -1,23 +1,22 @@
 -module(runner).
 
--export([run/1]).
+-export([run/1, run_1/1]).
 
 -spec run(integer()) -> [{_A, _B}].
-run(N) -> run(1, N).
-
--spec run(integer(), integer()) -> [{_A, _B}].
 [unchecked]
-run(M, N) when M =< N ->
+run(N) -> rpc:pmap({'runner','run_1'}, [], lists:seq(1,N)).
+
+-spec run_1(integer()) -> {_A, _B}.
+[unchecked]
+run_1(M) ->
     Mod = make_module(M),
     File = make_file(M),
-    [{{Mod, 1, Mod:puzzle1(File)},
-    {Mod, 2, Mod:puzzle2(File)}}| run(M+1, N)];
-run(_, _) ->
-    [].
+    {{Mod, 1, Mod:puzzle1(File)},
+    {Mod, 2, Mod:puzzle2(File)}}.
 
 [unchecked]
 make_file(M) ->
-    "pergu/src/day" ++ integer_to_list(M) ++ ".input.txt".
+    "src/day" ++ integer_to_list(M) ++ ".input.txt".
 
 [unchecked]
 make_module(M) ->

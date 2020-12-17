@@ -1,0 +1,34 @@
+-module(day15).
+
+-export([puzzle1/1, puzzle2/1]).
+
+[unchecked]
+puzzle1(FileName) ->
+    List = get_input(FileName),
+    {Map, Last, N} = init_map(List),
+    play(Map, Last, N, 2020).
+
+[unchecked]
+puzzle2(FileName) ->
+    List = get_input(FileName),
+    {Map, Last, N} = init_map(List),
+    play(Map, Last, N, 30000000).
+
+[unchecked]
+init_map(List) ->
+    init_map(List, 1 , #{}).
+
+[unchecked]
+init_map([Last], N, Map) ->
+    {Map, Last, N};
+init_map([First|Rest], N, Map) ->
+    init_map(Rest, N+1, Map#{First=>N}).
+
+[unchecked]
+play(_Map, Last, M, M) -> Last;
+play(Map, Last, N, M) -> play(Map#{Last => N}, N - maps:get(Last, Map, N), N+1, M).
+
+[unchecked]
+get_input(FileName) ->
+    {'ok', [List]} = file:consult(FileName),
+    List.
