@@ -1,0 +1,112 @@
+-module(day14).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Input = get_input(FileName),
+    sum(eval(Input, [], new())).
+
+eval([instr.mask{NewMask} | Rest], _Mask, Mem) ->
+    eval(Rest, NewMask, Mem);
+eval([instr.write{addr=Addr, value = Val} | Rest], Mask, Mem) ->
+    eval(Rest, Mask, write(Addr, apply_mask(Val, Mask), Mem));
+eval([], _Mask, Mem) ->
+    Mem.
+
+-spec apply_mask(bitstring(), [tri()]) -> bitstring().
+[unchecked]
+apply_mask(<<A:1,RestA/bits>>, [tri.x|RestB]) ->
+    <<A:1,(apply_mask(RestA, RestB))/bits>>;
+apply_mask(<<_:1,RestA/bits>>, [tri.zero|RestB]) ->
+    <<0:1,(apply_mask(RestA, RestB))/bits>>;
+apply_mask(<<_:1,RestA/bits>>, [tri.one|RestB]) ->
+    <<1:1,(apply_mask(RestA, RestB))/bits>>;
+apply_mask(<<>>, []) -> <<>>.
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    sum(eval2(get_input(FileName), [], new())).
+
+eval2([instr.mask{NewMask} | Rest], _Mask, Mem) ->
+    eval2(Rest, NewMask, Mem);
+eval2([instr.write{addr=BaseAddr, value = Val} | Rest], Mask, M) ->
+    eval2(Rest, Mask,
+        t_lists:foldl(
+                fun(Addr, Mem) ->
+                    write(Addr, Val, Mem)
+                end,
+        M,
+        expand_addresses(<<BaseAddr:36>>, Mask, <<>>)
+        ));
+eval2([], _Mask, Mem) ->
+    Mem.
+
+-spec expand_addresses(binary(), [tri()], binary()) -> [integer()].
+[unchecked]
+expand_addresses(<<A:1,RestA/bits>>, [tri.zero|RestB], Acc) ->
+    expand_addresses(RestA, RestB, <<Acc/bits, A:1>>);
+expand_addresses(<<_:1,RestA/bits>>, [tri.one|RestB], Acc) ->
+    expand_addresses(RestA, RestB, <<Acc/bits, 1:1>>);
+expand_addresses(<<_:1,RestA/bits>>, [tri.x|RestB], Acc) ->
+    expand_addresses(RestA, RestB, <<Acc/bits, 1:1>>) ++
+    expand_addresses(RestA, RestB, <<Acc/bits, 0:1>>);
+expand_addresses(<<>>, [], <<Acc:36>>) -> [Acc].
+
+
+
+-spec sum(mem()) -> integer().
+[unchecked]
+sum(Mem) ->
+    maps:fold(fun(_,<<V:36>>, N) -> V+N end, 0, Mem).
+
+[unchecked]
+-opaque mem() :: term().
+
+-spec write(integer(), bitstring(), mem()) -> mem().
+[unchecked]
+write(Addr, MaskedVal, Mem) ->
+    maps:put(Addr, MaskedVal, Mem).
+
+-spec new() -> mem().
+[unchecked]
+new() -> #{}.
+
+
+
+-enum instr :: (write{addr::integer(), value::bitstring()}, mask{[tri()]}).
+
+-enum tri :: (zero, one, x).
+
+-spec get_input(string()) -> [instr()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File).
+
+[unchecked]
+read_input(File) ->
+    case io:get_line(File, "") of
+        'eof' -> [];
+        [] -> read_input(File);
+        Line -> [parse_line(Line) | read_input(File)]
+    end.
+
+[unchecked]
+parse_line(Line) ->
+    %%io:format("Line: ~s", [Line]),
+    case io_lib:fread("mask = ~s", Line) of
+        {'ok', [Mask], _Rest} ->
+            instr.mask{convert_mask(Mask)};
+        _ ->
+            case io_lib:fread("mem[~d] = ~d", Line) of
+               {'ok', [Addr, Value], _Rest} ->
+                    instr.write{addr=Addr, value = <<Value:36>>}
+            end
+    end.
+
+[unchecked]
+convert_mask("1" ++ Rest) -> [tri.one | convert_mask(Rest)];
+convert_mask("0" ++ Rest) -> [tri.zero | convert_mask(Rest)];
+convert_mask("X" ++ Rest) -> [tri.x | convert_mask(Rest)];
+convert_mask([]) -> [].
