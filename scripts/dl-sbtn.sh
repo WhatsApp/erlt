@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 # see https://github.com/sbt/sbtn-dist/blob/develop/download.sh
-MAC_URL=https://ci.appveyor.com/api/buildjobs/bvla560x2v3p2gdm/artifacts/client%2Ftarget%2Fbin%2Fsbtn
-LINUX_URL=https://ci.appveyor.com/api/buildjobs/cceyukq7lao7a01k/artifacts/client%2Ftarget%2Fbin%2Fsbtn
+MAC_URL=https://ci.appveyor.com/api/buildjobs/ruigr3j84oxc7dxr/artifacts/client%2Ftarget%2Fbin%2Fsbtn
+LINUX_URL=https://ci.appveyor.com/api/buildjobs/kyfi02j2n4qtvyef/artifacts/client%2Ftarget%2Fbin%2Fsbtn
 SCRIPT=`realpath -s $0`
 SCRIPT_PATH=`dirname $SCRIPT`
 SBTN_PATH="$SCRIPT_PATH/bin/sbtn"
