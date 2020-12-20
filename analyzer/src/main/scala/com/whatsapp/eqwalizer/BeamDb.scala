@@ -56,10 +56,11 @@ object BeamDb {
   private def loadModuleApi(app: App, module: String): ModuleApi = {
     val Some(EList(rawForms, None)) = Beam.loadAbstractForms(s"${app.ebinDir}/$module.beam")
     val forms = rawForms.map(AbstractFormConvert.convertForm(_, lite = true)).filter(_ != null)
+    SourceMap.put(module, forms)
     ModuleApi(forms)
   }
 
-  private def loadModule(app: App, module: String): List[AbstractForm] = {
+  def loadModule(app: App, module: String): List[AbstractForm] = {
     val Some(EList(rawForms, None)) = Beam.loadAbstractForms(s"${app.ebinDir}/$module.beam")
     rawForms.map(AbstractFormConvert.convertForm(_, lite = true)).filter(_ != null)
   }
