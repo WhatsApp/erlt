@@ -84,15 +84,15 @@ object AbstractExprConvert {
       case ETuple(List(EAtom("case"), _anno, eExp, EList(eClauses, None))) =>
         AF_Case(convertExp(eExp), eClauses.map(convertClause))
       case ETuple(
-        List(
-          EAtom("try"),
-          _anno,
-          EList(eExps1, None),
-          EList(eClauses1, None),
-          EList(eClauses2, None),
-          EList(eExps2, None),
-        )
-      ) =>
+            List(
+              EAtom("try"),
+              _anno,
+              EList(eExps1, None),
+              EList(eClauses1, None),
+              EList(eClauses2, None),
+              EList(eExps2, None),
+            )
+          ) =>
         AF_Try(
           eExps1.map(convertExp),
           eClauses1.map(convertClause),
