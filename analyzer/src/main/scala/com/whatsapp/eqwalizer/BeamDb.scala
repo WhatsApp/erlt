@@ -47,7 +47,7 @@ object BeamDb {
     result
   }
 
-  private lazy val dupMod2App: Map[String, Set[String]] =
+  lazy val dupMod2App: Map[String, Set[String]] =
     module2App.filter(_._2.size > 1)
 
   private var moduleApis: Map[String, ModuleApi] =
