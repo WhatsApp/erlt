@@ -18,16 +18,16 @@ object GenServerFeatures {
    * that we don't know.
    */
   case class Module(
-    name: String,
-    hasGenServerBehaviourAttribute: Boolean,
-    hasOtherBehaviourAttribute: Boolean,
-    hasCodeChangeDefined: Boolean,
-    handleCallReturns: List[CallClauseReturn],
-    handleCastReturns: List[CastLikeClauseReturn],
-    handleInfoClauses: List[HandleInfoClause],
-    handleContinueReturns: List[CastLikeClauseReturn],
-    initReturns: List[InitClauseReturn],
-    terminatePatterns: List[TerminateClausePattern],
+      name: String,
+      hasGenServerBehaviourAttribute: Boolean,
+      hasOtherBehaviourAttribute: Boolean,
+      hasCodeChangeDefined: Boolean,
+      handleCallReturns: List[CallClauseReturn],
+      handleCastReturns: List[CastLikeClauseReturn],
+      handleInfoClauses: List[HandleInfoClause],
+      handleContinueReturns: List[CastLikeClauseReturn],
+      initReturns: List[InitClauseReturn],
+      terminatePatterns: List[TerminateClausePattern],
   )
 
   // See Result case of https://erlang.org/doc/man/gen_server.html#Module:handle_call-3
@@ -160,12 +160,12 @@ object GenServerFeatures {
   }
 
   case class HandleInfoParamCounts(
-    totalTimeout: Int,
-    totalTimer: Int,
-    totalSystemOrLibraryMessage: Int,
-    totalCatchAll: Int,
-    totalUnknown: Int,
-   ) {
+      totalTimeout: Int,
+      totalTimer: Int,
+      totalSystemOrLibraryMessage: Int,
+      totalCatchAll: Int,
+      totalUnknown: Int,
+  ) {
     def +(that: HandleInfoParamCounts): HandleInfoParamCounts =
       HandleInfoParamCounts(
         this.totalTimeout + that.totalTimeout,
@@ -177,7 +177,7 @@ object GenServerFeatures {
   }
   object HandleInfoParamCounts {
     def empty: HandleInfoParamCounts =
-      HandleInfoParamCounts(0,0,0,0,0)
+      HandleInfoParamCounts(0, 0, 0, 0, 0)
   }
 
   case class TerminatePatternCounts(totalJustReturnsOk: Int, totalIsCustom: Int) {
@@ -267,10 +267,11 @@ object GenServerFeatures {
     def sumParams(acc: HandleInfoParamCounts, param: HandleInfoParam): HandleInfoParamCounts = {
       param match {
         case HandleInfoTimeout() => acc.copy(totalTimeout = acc.totalTimeout + 1)
-        case HandleInfoTimer() => acc.copy(totalTimer = acc.totalTimer + 1)
-        case HandleInfoSystemOrLibraryMessage() => acc.copy(totalSystemOrLibraryMessage = acc.totalSystemOrLibraryMessage + 1)
+        case HandleInfoTimer()   => acc.copy(totalTimer = acc.totalTimer + 1)
+        case HandleInfoSystemOrLibraryMessage() =>
+          acc.copy(totalSystemOrLibraryMessage = acc.totalSystemOrLibraryMessage + 1)
         case HandleInfoCatchAll() => acc.copy(totalCatchAll = acc.totalCatchAll + 1)
-        case HandleInfoUnknown() => acc.copy(totalUnknown = acc.totalUnknown + 1)
+        case HandleInfoUnknown()  => acc.copy(totalUnknown = acc.totalUnknown + 1)
       }
     }
 
@@ -366,16 +367,22 @@ object GenServerFeatures {
         }
 
         val additionalHandleCastClauses = countCastLikeClauseReturns(HandleCast(), module.handleCastReturns)
-        val additionalHandleInfoReturns = countCastLikeClauseReturns(HandleInfo(), module.handleInfoClauses.map(_.returns))
+        val additionalHandleInfoReturns =
+          countCastLikeClauseReturns(HandleInfo(), module.handleInfoClauses.map(_.returns))
         val additionalHandleInfoParams = countHandleInfoParams(module.handleInfoClauses.map(_.param))
         val additionalHandleContinueClauses = countCastLikeClauseReturns(HandleContinue(), module.handleContinueReturns)
         val additionalTerminateClausePatterns = countTerminateClausePatterns(module.terminatePatterns)
 
         totalTerminatesThatAreEquivalentToTheDefaultImplementation +=
-          (if (module.terminatePatterns.forall { case TerminateJustReturnsOk() => true ; case _ => false }) 1 else 0)
+          (if (module.terminatePatterns.forall { case TerminateJustReturnsOk() => true; case _ => false }) 1 else 0)
 
         totalHandleInfosThatAreEquivalentToTheDefaultImplementation +=
-          (if (module.handleInfoClauses.map(_.returns).forall{ case CastLikeNoReplyNewState(true) => true ; case _ => false }) 1 else 0)
+          (if (
+             module.handleInfoClauses.map(_.returns).forall {
+               case CastLikeNoReplyNewState(true) => true; case _ => false
+             }
+           ) 1
+           else 0)
 
         totalHandleCastsDefined += (if (module.handleCastReturns.nonEmpty) 1 else 0)
         totalHandleContinuesDefined += (if (module.handleContinueReturns.nonEmpty) 1 else 0)
@@ -405,8 +412,12 @@ object GenServerFeatures {
     println(s"  `handle_continue`: $totalHandleContinuesDefined")
     println(s"  `code_change`: $totalCodeChangesDefined")
     println()
-    println(s"Total `terminate` functions which could probably be deleted: $totalTerminatesThatAreEquivalentToTheDefaultImplementation")
-    println(s"Total `handle_info` functions which could probably be deleted: $totalHandleInfosThatAreEquivalentToTheDefaultImplementation")
+    println(
+      s"Total `terminate` functions which could probably be deleted: $totalTerminatesThatAreEquivalentToTheDefaultImplementation"
+    )
+    println(
+      s"Total `handle_info` functions which could probably be deleted: $totalHandleInfosThatAreEquivalentToTheDefaultImplementation"
+    )
     println()
     println(s"Total `handle_call` clauses: $totalHandleCallClauses")
     println(s"  that return `{reply,Reply,NewState}`: $totalHandleCallReplyNewState")
@@ -495,10 +506,11 @@ object GenServerFeatures {
       case HandleInfo()     => "handle_info"
     }
 
-  private def isLog(expr: AbstractExpr) = expr match {
-    case AF_RemoteCall(AF_LiteralAtom("logger"),_,_) | AF_RemoteCall(AF_LiteralAtom("error_logger"),_,_) => true
-    case _ => false
-  }
+  private def isLog(expr: AbstractExpr) =
+    expr match {
+      case AF_RemoteCall(AF_LiteralAtom("logger"), _, _) | AF_RemoteCall(AF_LiteralAtom("error_logger"), _, _) => true
+      case _                                                                                                   => false
+    }
 
   private def determineCastLikeClauseReturnValue(thisFunction: WhichCastLike)(clause: AF_Clause): CastLikeClauseReturn =
     clause.body.last match {
@@ -540,31 +552,31 @@ object GenServerFeatures {
 
   private def determineHandleInfoParamKind(clause: AF_Clause): HandleInfoParam = {
     clause.pats match {
-      case PatternLiteral(AF_LiteralAtom("timeout"))::_state::Nil =>
+      case PatternLiteral(AF_LiteralAtom("timeout")) :: _state :: Nil =>
         HandleInfoTimeout()
-      case PatternLiteral(AF_LiteralAtom("timer"))::_state::Nil =>
+      case PatternLiteral(AF_LiteralAtom("timer")) :: _state :: Nil =>
         HandleInfoTimer()
-      case PatternTuple(PatternLiteral(AF_LiteralAtom("EXIT"))::_::_::Nil)::_::Nil |
-           // https://erlang.org/doc/reference_manual/processes.html#monitors
-           PatternTuple(PatternLiteral(AF_LiteralAtom("DOWN"))::_::_::_::_::Nil)::_::Nil |
-           // https://erlang.org/doc/man/gen_tcp.html
-           PatternTuple(PatternLiteral(AF_LiteralAtom("tcp"))::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("tcp_closed"))::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("tcp_error"))::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("tcp_passive"))::_::Nil)::_::Nil |
-           // https://erlang.org/doc/man/gen_udp.html
-           PatternTuple(PatternLiteral(AF_LiteralAtom("udp"))::_::_::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("udp"))::_::_::_::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("udp_passive"))::_::Nil)::_::Nil |
-           // https://erlang.org/doc/man/ssl.html
-           PatternTuple(PatternLiteral(AF_LiteralAtom("ssl"))::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("ssl_closed"))::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("ssl_error"))::_::_::Nil)::_::Nil |
-           PatternTuple(PatternLiteral(AF_LiteralAtom("ssl_passive"))::_::Nil)::_::Nil |
-           // https://erlang.org/doc/man/ets.html
-           PatternTuple(PatternLiteral(AF_LiteralAtom("ETS-TRANSFER"))::_::_::_::Nil)::_::Nil =>
+      case PatternTuple(PatternLiteral(AF_LiteralAtom("EXIT")) :: _ :: _ :: Nil) :: _ :: Nil |
+          // https://erlang.org/doc/reference_manual/processes.html#monitors
+          PatternTuple(PatternLiteral(AF_LiteralAtom("DOWN")) :: _ :: _ :: _ :: _ :: Nil) :: _ :: Nil |
+          // https://erlang.org/doc/man/gen_tcp.html
+          PatternTuple(PatternLiteral(AF_LiteralAtom("tcp")) :: _ :: _ :: Nil) :: _ :: Nil | PatternTuple(
+            PatternLiteral(AF_LiteralAtom("tcp_closed")) :: _ :: Nil
+          ) :: _ :: Nil | PatternTuple(PatternLiteral(AF_LiteralAtom("tcp_error")) :: _ :: _ :: Nil) :: _ :: Nil |
+          PatternTuple(PatternLiteral(AF_LiteralAtom("tcp_passive")) :: _ :: Nil) :: _ :: Nil |
+          // https://erlang.org/doc/man/gen_udp.html
+          PatternTuple(PatternLiteral(AF_LiteralAtom("udp")) :: _ :: _ :: _ :: _ :: Nil) :: _ :: Nil | PatternTuple(
+            PatternLiteral(AF_LiteralAtom("udp")) :: _ :: _ :: _ :: _ :: _ :: Nil
+          ) :: _ :: Nil | PatternTuple(PatternLiteral(AF_LiteralAtom("udp_passive")) :: _ :: Nil) :: _ :: Nil |
+          // https://erlang.org/doc/man/ssl.html
+          PatternTuple(PatternLiteral(AF_LiteralAtom("ssl")) :: _ :: _ :: Nil) :: _ :: Nil | PatternTuple(
+            PatternLiteral(AF_LiteralAtom("ssl_closed")) :: _ :: Nil
+          ) :: _ :: Nil | PatternTuple(PatternLiteral(AF_LiteralAtom("ssl_error")) :: _ :: _ :: Nil) :: _ :: Nil |
+          PatternTuple(PatternLiteral(AF_LiteralAtom("ssl_passive")) :: _ :: Nil) :: _ :: Nil |
+          // https://erlang.org/doc/man/ets.html
+          PatternTuple(PatternLiteral(AF_LiteralAtom("ETS-TRANSFER")) :: _ :: _ :: _ :: Nil) :: _ :: Nil =>
         HandleInfoSystemOrLibraryMessage()
-      case PatternVariable(_)::PatternVariable(_)::Nil =>
+      case PatternVariable(_) :: PatternVariable(_) :: Nil =>
         HandleInfoCatchAll()
       case unknown =>
         println("Unknown handle_info pattern: " ++ unknown.toString)
@@ -685,9 +697,8 @@ object GenServerFeatures {
       case AF_FunctionDecl("handle_info", 2, clauses) =>
         val classifications =
           clauses.map(c =>
-            HandleInfoClause(
-              determineHandleInfoParamKind(c),
-              determineCastLikeClauseReturnValue(HandleInfo())(c)))
+            HandleInfoClause(determineHandleInfoParamKind(c), determineCastLikeClauseReturnValue(HandleInfo())(c))
+          )
         module.copy(handleInfoClauses = classifications)
       case _ =>
         module
