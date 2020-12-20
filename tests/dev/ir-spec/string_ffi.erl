@@ -2,6 +2,8 @@
 
 -module(string_ffi).
 
+-unchecked([{length, 1}, {length_ffi_help, 1}]).
+
 -export_type([string_ffi/0, string_alias/0]).
 
 -export([length/1, length_ffi/1]).

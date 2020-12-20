@@ -2,6 +2,8 @@
 
 -module(str3).
 
+-unchecked([{mk_str2, 0}, {mk_str3, 0}]).
+
 -export_type([str3/0]).
 
 -export([mk_str2/0, mk_str3/0]).

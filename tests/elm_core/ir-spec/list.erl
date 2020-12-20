@@ -2,6 +2,8 @@
 
 -module(list).
 
+-unchecked([]).
+
 -export([singleton/1, repeat/2, range/2, cons/2]).
 
 -export([map/2,

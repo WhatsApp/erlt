@@ -2,6 +2,8 @@
 
 -module(mod01).
 
+-unchecked([]).
+
 -export_type([my_pair2/1, my_pair/2]).
 
 -export([mod01F/1,

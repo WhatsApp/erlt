@@ -2,6 +2,8 @@
 
 -module(enum_mod07).
 
+-unchecked([]).
+
 -export([expr/0,
          pattern/3,
          guard/3,

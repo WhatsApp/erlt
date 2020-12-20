@@ -2,6 +2,20 @@
 
 -module(map_ffi).
 
+-unchecked([{empty, 0},
+            {filter, 2},
+            {fold, 3},
+            {from_list, 1},
+            {get, 2},
+            {insert, 3},
+            {keys, 1},
+            {map, 2},
+            {remove, 2},
+            {size, 1},
+            {to_list, 1},
+            {union, 2},
+            {values, 1}]).
+
 -export_type([map_/2]).
 
 -export([empty/0,

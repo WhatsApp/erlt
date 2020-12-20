@@ -2,6 +2,8 @@
 
 -module(enum_mod12).
 
+-unchecked([]).
+
 -export([expr/0, pattern/3, guard/3]).
 
 -spec expr() -> {enum_mod11:bar(), enum_mod11:baz()}.

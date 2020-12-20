@@ -2,6 +2,8 @@
 
 -module(enum_mod05).
 
+-unchecked([]).
+
 -export([expr/0, pattern/3, guard/3]).
 
 -spec expr() -> {enum_mod04:foo(),

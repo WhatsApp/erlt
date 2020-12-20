@@ -2,6 +2,8 @@
 
 -module(built_in).
 
+-unchecked([]).
+
 -export([use_format/0, use_lists/0]).
 
 -spec use_format() -> atom().

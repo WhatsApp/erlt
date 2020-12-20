@@ -2,6 +2,8 @@
 
 -module(lib).
 
+-unchecked([]).
+
 -export([id/1, test/0]).
 
 -export_type([public_enum/0, opaque_enum_alias/0]).

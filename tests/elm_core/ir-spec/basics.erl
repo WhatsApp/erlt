@@ -2,6 +2,8 @@
 
 -module(basics).
 
+-unchecked([]).
+
 -export([add/2, add/1, sub/1, mul/2, mul/1, idiv/1]).
 
 -export([eq/2, eq/1, neq/2, neq/1]).

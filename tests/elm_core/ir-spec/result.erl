@@ -2,6 +2,8 @@
 
 -module(result).
 
+-unchecked([]).
+
 -export_type([result/2]).
 
 -export([with_default/2, with_default/1]).

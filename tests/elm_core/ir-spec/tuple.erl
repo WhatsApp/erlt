@@ -2,6 +2,8 @@
 
 -module(tuple).
 
+-unchecked([]).
+
 -export([pair/2, pair/1]).
 
 -export([first/1, second/1]).

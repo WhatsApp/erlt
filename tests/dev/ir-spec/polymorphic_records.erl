@@ -2,6 +2,8 @@
 
 -module(polymorphic_records).
 
+-unchecked([]).
+
 -export_type([rec1/0, rec2/1, idRec/1]).
 
 -type rec1() :: #{}.

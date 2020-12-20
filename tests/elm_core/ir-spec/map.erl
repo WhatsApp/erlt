@@ -2,6 +2,8 @@
 
 -module(map).
 
+-unchecked([]).
+
 -export_type([map_/2]).
 
 -export([empty/0,

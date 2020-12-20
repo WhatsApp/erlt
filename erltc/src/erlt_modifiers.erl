@@ -18,7 +18,18 @@
 -export([parse_transform/2]).
 
 parse_transform(Forms, _Options) ->
-    erlt_ast:prewalk(Forms, fun rewrite_erlt/2).
+    Unchecked = lists:sort([{N, A} || {unchecked_function, _, N, A, _} <- Forms]),
+    Forms1 = erlt_ast:prewalk(Forms, fun rewrite_erlt/2),
+    {Fs1, [ModAttr = {_, Anno, _, _} | Fs2]} =
+        lists:splitwith(
+            fun
+                ({attribute, _, module, _}) -> false;
+                (_) -> true
+            end,
+            Forms1
+        ),
+    UncheckedAttr = {attribute, Anno, unchecked, Unchecked},
+    Fs1 ++ [ModAttr, UncheckedAttr | Fs2].
 
 rewrite_erlt({attribute, Anno, unchecked_opaque, {N, Def, Args}}, _) ->
     {attribute, Anno, type, {N, Def, rewrite_args(Args)}};

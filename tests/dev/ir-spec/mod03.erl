@@ -2,6 +2,8 @@
 
 -module(mod03).
 
+-unchecked([]).
+
 -export_type([unit0/0,
               boxed/1,
               either/2,

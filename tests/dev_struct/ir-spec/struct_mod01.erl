@@ -2,6 +2,8 @@
 
 -module(struct_mod01).
 
+-unchecked([{index, 1}]).
+
 -export_type([foo/0,
               bar/1,
               default_with_default/0,

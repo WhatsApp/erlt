@@ -2,6 +2,8 @@
 
 -module(msg).
 
+-unchecked([{self_t, 0}]).
+
 -export([mk_reply_1/1, mk_reply_2/1, mk_ping/0]).
 
 -type ping() :: {'$#msg:ping', pid()}.

@@ -2,6 +2,8 @@
 
 -module(calc_core).
 
+-unchecked([]).
+
 -export_type([expr/0]).
 
 -export([expr_number/1,

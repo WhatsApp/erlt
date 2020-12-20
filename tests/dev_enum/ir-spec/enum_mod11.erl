@@ -2,6 +2,8 @@
 
 -module(enum_mod11).
 
+-unchecked([]).
+
 -export([expr/0, pattern/3, guard/3]).
 
 -export_type([bar/0, baz/0]).
