@@ -28,7 +28,7 @@ parse_transform(Forms, _Options) ->
             end,
             Forms1
         ),
-    UncheckedAttr = {attribute, Anno, unchecked, Unchecked},
+    UncheckedAttr = {attribute, Anno, eqwalizer_unchecked, Unchecked},
     Fs1 ++ [ModAttr, UncheckedAttr | Fs2].
 
 rewrite_erlt({attribute, Anno, unchecked_opaque, {N, Def, Args}}, _) ->

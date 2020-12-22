@@ -2,7 +2,7 @@
 
 -module(enum_mod01).
 
--unchecked([{f, 0}, {g, 0}]).
+-eqwalizer_unchecked([{f, 0}, {g, 0}]).
 
 -export([f/0, g/0, p/0, q/1, r/2, s/2]).
 

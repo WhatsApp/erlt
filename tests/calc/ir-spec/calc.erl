@@ -2,7 +2,7 @@
 
 -module(calc).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([calculate/2]).
 

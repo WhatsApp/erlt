@@ -2,7 +2,7 @@
 
 -module(mod04).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([mk_unit_remote/0,
          mk_left_remote/1,

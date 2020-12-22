@@ -2,7 +2,7 @@
 
 -module(types).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([option/1]).
 

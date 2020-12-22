@@ -2,10 +2,10 @@
 
 -module(bins1).
 
--unchecked([{bc, 0},
-            {match_bins, 1},
-            {mk_bins, 0},
-            {test_bins, 0}]).
+-eqwalizer_unchecked([{bc, 0},
+                      {match_bins, 1},
+                      {mk_bins, 0},
+                      {test_bins, 0}]).
 
 -export([test_bins/0, bc/0]).
 

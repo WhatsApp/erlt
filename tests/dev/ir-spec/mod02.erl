@@ -2,7 +2,7 @@
 
 -module(mod02).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([odd/1,
          id/1,

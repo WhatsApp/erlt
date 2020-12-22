@@ -2,7 +2,7 @@
 
 -module(lib).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([id/1, test/0]).
 

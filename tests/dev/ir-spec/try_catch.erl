@@ -2,7 +2,7 @@
 
 -module(try_catch).
 
--unchecked([{t1, 2}]).
+-eqwalizer_unchecked([{t1, 2}]).
 
 -export([t1/2, t2/1]).
 

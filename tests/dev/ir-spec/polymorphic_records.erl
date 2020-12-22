@@ -2,7 +2,7 @@
 
 -module(polymorphic_records).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([rec1/0, rec2/1, idRec/1]).
 

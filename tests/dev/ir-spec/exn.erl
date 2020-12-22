@@ -2,7 +2,7 @@
 
 -module(exn).
 
--unchecked([{mk_error1, 0}]).
+-eqwalizer_unchecked([{mk_error1, 0}]).
 
 -export([mk_error1/0, mk_error2/0]).
 

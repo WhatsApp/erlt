@@ -2,7 +2,7 @@
 
 -module(result).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([result/2]).
 

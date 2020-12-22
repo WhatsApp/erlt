@@ -2,7 +2,7 @@
 
 -module(calc_core).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([expr/0]).
 

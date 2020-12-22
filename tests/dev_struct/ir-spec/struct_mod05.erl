@@ -2,7 +2,7 @@
 
 -module(struct_mod05).
 
--unchecked([{index, 1}]).
+-eqwalizer_unchecked([{index, 1}]).
 
 -export([expr/0,
          pattern/3,

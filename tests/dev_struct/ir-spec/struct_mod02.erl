@@ -2,7 +2,7 @@
 
 -module(struct_mod02).
 
--unchecked([{index, 1}]).
+-eqwalizer_unchecked([{index, 1}]).
 
 -export_type([foo/0, bar/0]).
 

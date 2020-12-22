@@ -2,7 +2,7 @@
 
 -module(enum_mod11).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([expr/0, pattern/3, guard/3]).
 

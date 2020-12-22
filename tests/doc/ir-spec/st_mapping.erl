@@ -2,7 +2,7 @@
 
 -module(st_mapping).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([option_to_list/1,
          rec1/0,

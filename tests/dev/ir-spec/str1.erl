@@ -2,7 +2,7 @@
 
 -module(str1).
 
--unchecked([{mk_str2, 0}]).
+-eqwalizer_unchecked([{mk_str2, 0}]).
 
 -export_type([str1/0]).
 

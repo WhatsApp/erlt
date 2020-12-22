@@ -2,7 +2,7 @@
 
 -module(enum_mod07).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([expr/0,
          pattern/3,

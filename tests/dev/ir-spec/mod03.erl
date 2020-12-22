@@ -2,7 +2,7 @@
 
 -module(mod03).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([unit0/0,
               boxed/1,

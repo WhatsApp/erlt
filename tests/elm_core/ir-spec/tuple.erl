@@ -2,7 +2,7 @@
 
 -module(tuple).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([pair/2, pair/1]).
 

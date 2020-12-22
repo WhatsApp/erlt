@@ -2,7 +2,7 @@
 
 -module(enum_mod06).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([enum/0]).
 

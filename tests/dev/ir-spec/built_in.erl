@@ -2,7 +2,7 @@
 
 -module(built_in).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([use_format/0, use_lists/0]).
 

@@ -2,7 +2,7 @@
 
 -module(struct_mod04).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([struct/0]).
 

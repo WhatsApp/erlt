@@ -2,7 +2,7 @@
 
 -module(mod01).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([my_pair2/1, my_pair/2]).
 

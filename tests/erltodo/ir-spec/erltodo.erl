@@ -2,7 +2,8 @@
 
 -module(erltodo).
 
--unchecked([{prompt_for_ok, 0}, {read_or_error, 1}]).
+-eqwalizer_unchecked([{prompt_for_ok, 0},
+                      {read_or_error, 1}]).
 
 -export([main/1]).
 

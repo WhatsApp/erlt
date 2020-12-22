@@ -2,7 +2,7 @@
 
 -module(shape_mod1).
 
--unchecked([{test, 0}]).
+-eqwalizer_unchecked([{test, 0}]).
 
 -export([test/0, test/1, test2/1, test_in_lc/1]).
 

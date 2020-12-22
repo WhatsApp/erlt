@@ -2,7 +2,7 @@
 
 -module(calc_parser_ffi).
 
--unchecked([{parse, 1}]).
+-eqwalizer_unchecked([{parse, 1}]).
 
 -export([parse/1]).
 

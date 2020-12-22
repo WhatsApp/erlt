@@ -2,7 +2,7 @@
 
 -module(maybe).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([maybe/1]).
 

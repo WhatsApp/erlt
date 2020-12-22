@@ -2,10 +2,10 @@
 
 -module(enum_mod03).
 
--unchecked([{bar, 0},
-            {baz, 0},
-            {foo, 0},
-            {pattern, 3}]).
+-eqwalizer_unchecked([{bar, 0},
+                      {baz, 0},
+                      {foo, 0},
+                      {pattern, 3}]).
 
 -export_type([foo/0,
               bar/1,

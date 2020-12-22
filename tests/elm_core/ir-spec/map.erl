@@ -2,7 +2,7 @@
 
 -module(map).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export_type([map_/2]).
 

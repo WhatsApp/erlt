@@ -2,7 +2,7 @@
 
 -module(basics).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -export([add/2, add/1, sub/1, mul/2, mul/1, idiv/1]).
 

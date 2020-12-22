@@ -2,7 +2,7 @@
 
 -module(import_enum_in_enum).
 
--unchecked([]).
+-eqwalizer_unchecked([]).
 
 -compile([warn_unused_import, warnings_as_errors]).
 
