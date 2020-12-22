@@ -2,6 +2,8 @@
 
 -module(import_type).
 
+-eqwalizer_unchecked([]).
+
 -compile([warn_unused_import, warnings_as_errors]).
 
 -export([f/1]).

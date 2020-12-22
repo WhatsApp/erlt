@@ -2,6 +2,8 @@
 
 -module(struct_mod04).
 
+-eqwalizer_unchecked([]).
+
 -export_type([struct/0]).
 
 -export([local/0, remote/0]).

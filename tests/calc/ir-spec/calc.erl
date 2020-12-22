@@ -2,6 +2,8 @@
 
 -module(calc).
 
+-eqwalizer_unchecked([]).
+
 -export([calculate/2]).
 
 -export_type([env/0]).

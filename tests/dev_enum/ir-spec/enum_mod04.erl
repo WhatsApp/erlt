@@ -2,6 +2,8 @@
 
 -module(enum_mod04).
 
+-eqwalizer_unchecked([]).
+
 -export_type([foo/0, bar/0, baz/0]).
 
 -export([expr/0, pattern/3, guard/3]).

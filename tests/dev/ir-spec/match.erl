@@ -2,6 +2,8 @@
 
 -module(match).
 
+-eqwalizer_unchecked([{f3, 2}, {id, 1}]).
+
 -export([id/1,
          f1/0,
          f2/0,

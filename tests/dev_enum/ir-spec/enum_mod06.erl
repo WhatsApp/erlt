@@ -2,6 +2,8 @@
 
 -module(enum_mod06).
 
+-eqwalizer_unchecked([]).
+
 -export_type([enum/0]).
 
 -export([local/0, remote/0]).

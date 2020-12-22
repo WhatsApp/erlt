@@ -2,6 +2,8 @@
 
 -module(try_catch).
 
+-eqwalizer_unchecked([{t1, 2}]).
+
 -export([t1/2, t2/1]).
 
 -type reason() :: {'$#try_catch:reason'}.

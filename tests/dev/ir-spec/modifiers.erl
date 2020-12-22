@@ -2,6 +2,12 @@
 
 -module(modifiers).
 
+-eqwalizer_unchecked([{dt, 1},
+                      {empty, 0},
+                      {ffi, 1},
+                      {get, 2},
+                      {put, 3}]).
+
 -export([ffi/1, dt/1, empty/0, get/2, put/3]).
 
 -export_type([map_/2]).

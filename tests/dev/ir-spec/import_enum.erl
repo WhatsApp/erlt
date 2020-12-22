@@ -2,6 +2,8 @@
 
 -module(import_enum).
 
+-eqwalizer_unchecked([]).
+
 -compile([warn_unused_import, warnings_as_errors]).
 
 -export([swap/1]).

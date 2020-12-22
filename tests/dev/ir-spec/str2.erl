@@ -2,6 +2,8 @@
 
 -module(str2).
 
+-eqwalizer_unchecked([{mk_str1, 0}]).
+
 -export_type([str2/0]).
 
 -export([mk_str1/0]).

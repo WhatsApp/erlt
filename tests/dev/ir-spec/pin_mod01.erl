@@ -2,6 +2,18 @@
 
 -module(pin_mod01).
 
+-eqwalizer_unchecked([{f, 1},
+                      {g, 1},
+                      {h, 1},
+                      {i, 3},
+                      {i2, 4},
+                      {j, 2},
+                      {j2, 1},
+                      {k, 2},
+                      {m, 2},
+                      {p, 2},
+                      {q, 3}]).
+
 -export([f/1,
          g/1,
          h/1,

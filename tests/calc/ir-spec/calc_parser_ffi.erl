@@ -2,6 +2,8 @@
 
 -module(calc_parser_ffi).
 
+-eqwalizer_unchecked([{parse, 1}]).
+
 -export([parse/1]).
 
 -spec parse(string()) -> calc_core:expr().

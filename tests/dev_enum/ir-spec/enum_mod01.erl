@@ -2,6 +2,8 @@
 
 -module(enum_mod01).
 
+-eqwalizer_unchecked([{f, 0}, {g, 0}]).
+
 -export([f/0, g/0, p/0, q/1, r/2, s/2]).
 
 -type possibly(T) :: {'$#enum_mod01:possibly.some', T} |

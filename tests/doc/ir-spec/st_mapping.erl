@@ -2,6 +2,8 @@
 
 -module(st_mapping).
 
+-eqwalizer_unchecked([]).
+
 -export([option_to_list/1,
          rec1/0,
          rec2/0,

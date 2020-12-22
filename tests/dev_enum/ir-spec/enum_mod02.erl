@@ -2,6 +2,8 @@
 
 -module(enum_mod02).
 
+-eqwalizer_unchecked([]).
+
 -export([p/0, q/1, r/1, s/1]).
 
 -export_type([possibly/1]).

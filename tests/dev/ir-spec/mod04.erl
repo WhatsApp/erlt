@@ -2,6 +2,8 @@
 
 -module(mod04).
 
+-eqwalizer_unchecked([]).
+
 -export([mk_unit_remote/0,
          mk_left_remote/1,
          mk_right_remote/1,

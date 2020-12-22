@@ -2,6 +2,8 @@
 
 -module(struct_mod05).
 
+-eqwalizer_unchecked([{index, 1}]).
+
 -export([expr/0,
          pattern/3,
          guard/3,

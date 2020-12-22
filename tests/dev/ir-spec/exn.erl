@@ -2,6 +2,8 @@
 
 -module(exn).
 
+-eqwalizer_unchecked([{mk_error1, 0}]).
+
 -export([mk_error1/0, mk_error2/0]).
 
 -export_type([my_error/0]).

@@ -2,6 +2,8 @@
 
 -module(typed_gb_trees).
 
+-eqwalizer_unchecked([]).
+
 -export([empty/0,
          is_empty/1,
          size/1,

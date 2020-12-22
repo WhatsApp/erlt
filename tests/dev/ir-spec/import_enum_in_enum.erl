@@ -2,6 +2,8 @@
 
 -module(import_enum_in_enum).
 
+-eqwalizer_unchecked([]).
+
 -compile([warn_unused_import, warnings_as_errors]).
 
 -export([mk_ordered_pair/1, mk_pair/2]).

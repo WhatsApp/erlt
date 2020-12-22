@@ -2,6 +2,8 @@
 
 -module(maybe).
 
+-eqwalizer_unchecked([]).
+
 -export_type([maybe/1]).
 
 -export([with_default/2,

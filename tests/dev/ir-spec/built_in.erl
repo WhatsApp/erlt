@@ -2,6 +2,8 @@
 
 -module(built_in).
 
+-eqwalizer_unchecked([]).
+
 -export([use_format/0, use_lists/0]).
 
 -spec use_format() -> atom().
