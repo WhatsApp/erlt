@@ -21,7 +21,7 @@ import erlang.forms.AbstractExpr.{AF_Assoc, AF_Literal, AbstractExpr, TypeSpecif
 
 object AbstractGuard {
   case class Guard(tests: List[Test])
-  sealed class Test
+  sealed trait Test
   case class TestLiteral(literal: AF_Literal) extends Test
   case class TestVariable(variable: String) extends Test
   case class TestTuple(elems: List[Test]) extends Test
