@@ -30,6 +30,27 @@ object GenServerFeatures {
       terminatePatterns: List[TerminateClausePattern],
   )
 
+  sealed trait ModuleComplexity
+  // Calls all reply without any timeout or anything, trivial terminate & handle_info cases etc.
+  case class Simple() extends ModuleComplexity
+  // Calls, casts, etc. can timeout, hibernate or continue
+  case class Moderate() extends ModuleComplexity
+  // Calls can noreply (complex because we need to be confident we'll reply by some other mechanism), seemingly invalid return types, etc.
+  case class Complex() extends ModuleComplexity
+  // The analysis isn't powerful enough to determine the complexity
+  case class Unknown() extends ModuleComplexity
+
+  implicit val complexityOrd = new Ordering[ModuleComplexity] {
+    private def score(mc: ModuleComplexity): Int = mc match {
+      case Simple() => 0
+      case Moderate() => 1
+      case Complex() => 2
+      case Unknown() => 3
+    }
+    def compare(self: ModuleComplexity, that: ModuleComplexity): Int =
+      score(self) compare score(that)
+  }
+
   // See Result case of https://erlang.org/doc/man/gen_server.html#Module:handle_call-3
   sealed trait CallClauseReturn
   case class CallReplyNewState() extends CallClauseReturn
@@ -211,6 +232,57 @@ object GenServerFeatures {
     (!m.hasGenServerBehaviourAttribute)
   }
 
+  def getComplexity(m: Module): ModuleComplexity = {
+
+    // Doesn't rule out getting a PID and trying to do something with it
+    def handleCallComplexity(callClause: CallClauseReturn): ModuleComplexity = callClause match {
+      case CallReplyNewState()
+        | CallRecurses()
+        | CallErrors() => Simple()
+      case CallReplyNewStateTimeout()
+        | CallReplyNewStateHibernate()
+        | CallReplyNewStateContinue()
+        | CallStopReasonReplyNewState()
+        | CallStopReasonNewState() => Moderate()
+      case CallIncorrectReturnType()
+        | CallNoReplyNewState()
+        | CallNoReplyNewStateTimeout()
+        | CallNoReplyNewStateHibernate()
+        | CallNoReplyNewStateContinue() => Complex()
+      case CallImmediatelyDelegatesRemotely()
+        | CallImmediatelyDelegatesLocally()
+        | CallUnknownReturn() => Unknown()
+    }
+
+    // Doesn't rule out getting a PID and trying to do something with it
+    def handleCastLikeComplexity(castClause: CastLikeClauseReturn): ModuleComplexity = castClause match {
+      case CastLikeNoReplyNewState(_)
+        | CastLikeRecurses()
+        | CastLikeErrors() => Simple()
+      case CastLikeNoReplyNewStateTimeout()
+        | CastLikeNoReplyNewStateHibernate()
+        | CastLikeNoReplyNewStateContinue()
+        | CastLikeStopReasonReplyNewState()
+        | CastLikeStopReasonNewState() => Moderate()
+      case CastLikeIncorrectReturnType() => Complex()
+      case CastLikeImmediatelyDelegatesRemotely()
+        | CastLikeImmediatelyDelegatesLocally()
+        | CastLikeUnknownReturn() => Unknown()
+    }
+
+    val constituentComplexities =
+      (if (m.handleContinueReturns.isEmpty) Simple() else Moderate()) ::
+        m.handleCallReturns.map(handleCallComplexity) ++
+        m.handleCastReturns.map(handleCastLikeComplexity) ++
+        m.handleInfoClauses.map(_.returns).map(handleCastLikeComplexity)
+
+    constituentComplexities.max
+  }
+
+  def usesDefaultTerminate(m: Module): Boolean = {
+    m.terminatePatterns.forall { case TerminateJustReturnsOk() => true; case _ => false }
+  }
+
   def countCastLikeClauseReturns(
       whichCastLike: WhichCastLike,
       clauseReturns: List[CastLikeClauseReturn],
@@ -282,6 +354,10 @@ object GenServerFeatures {
     val infos = Using.resource(RPC.connect())(loadData)
     var totalModules = 0
     var totalGenServers = 0
+    var totalSimpleComplexityGenServers = 0
+    var totalModerateComplexityGenServers = 0
+    var totalComplexComplexityGenServers = 0
+    var totalUnknownComplexityGenServers = 0
     var totalPossibleGenServersWithoutAttribute = 0
     var totalHandleCallsDefined, totalHandleCallClauses = 0
     var totalInitsDefined, totalInitClauses = 0
@@ -321,6 +397,12 @@ object GenServerFeatures {
       } else {
 
         totalGenServers += 1
+        getComplexity(module) match {
+          case Simple() => totalSimpleComplexityGenServers += 1
+          case Moderate() => totalModerateComplexityGenServers += 1
+          case Complex() => totalComplexComplexityGenServers += 1
+          case Unknown() => totalUnknownComplexityGenServers += 1
+        }
 
         totalCodeChangesDefined += (if (module.hasCodeChangeDefined) 1 else 0)
 
@@ -374,7 +456,7 @@ object GenServerFeatures {
         val additionalTerminateClausePatterns = countTerminateClausePatterns(module.terminatePatterns)
 
         totalTerminatesThatAreEquivalentToTheDefaultImplementation +=
-          (if (module.terminatePatterns.forall { case TerminateJustReturnsOk() => true; case _ => false }) 1 else 0)
+          (if (usesDefaultTerminate(module)) 1 else 0)
 
         totalHandleInfosThatAreEquivalentToTheDefaultImplementation +=
           (if (
@@ -398,7 +480,7 @@ object GenServerFeatures {
     }
 
     println(s"Total modules: $totalModules")
-    println(s"  that look like a `gen_server`: $totalGenServers")
+    println(s"  that have the `gen_server` attribute: $totalGenServers")
     println(
       s"  that look like a `gen_server` but don't have the `gen_server` attribute: $totalPossibleGenServersWithoutAttribute"
     )
@@ -418,6 +500,12 @@ object GenServerFeatures {
     println(
       s"Total `handle_info` functions which could probably be deleted: $totalHandleInfosThatAreEquivalentToTheDefaultImplementation"
     )
+    println()
+    println(s"Total `gen_servers` by complexity:")
+    println(s"  simple: $totalSimpleComplexityGenServers")
+    println(s"  moderate: $totalModerateComplexityGenServers")
+    println(s"  complex: $totalComplexComplexityGenServers")
+    println(s"  unknown: $totalUnknownComplexityGenServers")
     println()
     println(s"Total `handle_call` clauses: $totalHandleCallClauses")
     println(s"  that return `{reply,Reply,NewState}`: $totalHandleCallReplyNewState")
