@@ -191,6 +191,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "pico-args",
+ "quote",
  "serde",
  "serde_json",
  "tree-sitter-erlang",

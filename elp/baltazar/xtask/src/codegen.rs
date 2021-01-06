@@ -1,10 +1,11 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
+use quote::{format_ident, quote};
 use serde::Deserialize;
 use xshell::{read_file, write_file};
 
-use crate::project_root;
+use crate::{project_root, reformat};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Mode {
@@ -20,6 +21,26 @@ enum NodeType {
     Node(u16, String, Vec<String>),
 }
 
+impl NodeType {
+    fn id(&self) -> u16 {
+        match self {
+            NodeType::Punctuation(id, _) => *id,
+            NodeType::Keyword(id, _) => *id,
+            NodeType::Literal(id, _) => *id,
+            NodeType::Node(id, _, _) => *id,
+        }
+    }
+
+    fn name(&self) -> &str {
+        match self {
+            NodeType::Punctuation(_, name) => name,
+            NodeType::Keyword(_, name) => name,
+            NodeType::Literal(_, name) => name,
+            NodeType::Node(_, name, _) => name,
+        }
+    }
+}
+
 pub struct CodegenCmd {
     pub mode: Mode,
 }
@@ -27,14 +48,37 @@ pub struct CodegenCmd {
 impl CodegenCmd {
     pub fn run(self) -> Result<()> {
         let node_types = read_node_types()?;
-        generate_syntax_kinds(&node_types)?;
+
+        let syntax_kinds_file = project_root().join("crates/syntax/src/generated/syntax_kind.rs");
+        let syntax_kinds = generate_syntax_kinds(&node_types)?;
+        update(&syntax_kinds_file, &syntax_kinds, self.mode)?;
+
         Ok(())
     }
 }
 
-fn generate_syntax_kinds(_node_types: &[NodeType]) -> Result<()> {
-    println!("nodes: {:?}", read_node_types()?);
-    Ok(())
+fn generate_syntax_kinds(node_types: &[NodeType]) -> Result<String> {
+    let all_kinds: Vec<_> = node_types
+        .iter()
+        .map(|node_type| {
+            let name = format_ident!("{}", node_type.name());
+            let id = node_type.id();
+            quote! { #name = #id }
+        })
+        .collect();
+
+    let ast = quote! {
+        #![allow(bad_style, missing_docs, unreachable_pub)]
+        /// The kind of syntax node, e.g. `ATOM`, `IF_KW`, or `DOT`.
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+        #[repr(u16)]
+        pub enum SyntaxKind {
+            #(#all_kinds,)*
+            ERROR = u16::MAX
+        }
+    };
+
+    reformat(&ast.to_string())
 }
 
 fn update(path: &Path, contents: &str, mode: Mode) -> Result<()> {
@@ -90,15 +134,24 @@ fn read_node_types() -> Result<Vec<NodeType>> {
         .map(|node| {
             let id = language.id_for_node_kind(&node.name, node.named);
             match node {
-                RawNodeType { name, named: true, children: Some(children) } => {
-                    let children =
-                        children.types.iter().map(map_child_name).collect::<Result<_>>()?;
+                RawNodeType {
+                    name,
+                    named: true,
+                    children: Some(children),
+                } => {
+                    let children = children
+                        .types
+                        .iter()
+                        .map(map_child_name)
+                        .collect::<Result<_>>()?;
                     Ok(NodeType::Node(id, name.to_ascii_uppercase(), children))
                 }
-                RawNodeType { name, named: true, .. } => {
-                    Ok(NodeType::Literal(id, name.to_ascii_uppercase()))
-                }
-                RawNodeType { name, named: false, .. } => match map_name(name)? {
+                RawNodeType {
+                    name, named: true, ..
+                } => Ok(NodeType::Literal(id, name.to_ascii_uppercase())),
+                RawNodeType {
+                    name, named: false, ..
+                } => match map_name(name)? {
                     NameType::Punctuation(name) => Ok(NodeType::Punctuation(id, name)),
                     NameType::Identifier(name) => Ok(NodeType::Keyword(id, name + "_KW")),
                 },
