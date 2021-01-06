@@ -15,7 +15,7 @@ pub enum Mode {
 
 #[derive(Debug)]
 enum NodeType {
-    Punctuation(u16, String),
+    Punct(u16, String),
     Keyword(u16, String),
     Literal(u16, String),
     Node(u16, String, Vec<String>),
@@ -24,7 +24,7 @@ enum NodeType {
 impl NodeType {
     fn id(&self) -> u16 {
         match self {
-            NodeType::Punctuation(id, _) => *id,
+            NodeType::Punct(id, _) => *id,
             NodeType::Keyword(id, _) => *id,
             NodeType::Literal(id, _) => *id,
             NodeType::Node(id, _, _) => *id,
@@ -33,7 +33,7 @@ impl NodeType {
 
     fn name(&self) -> &str {
         match self {
-            NodeType::Punctuation(_, name) => name,
+            NodeType::Punct(_, name) => name,
             NodeType::Keyword(_, name) => name,
             NodeType::Literal(_, name) => name,
             NodeType::Node(_, name, _) => name,
@@ -67,6 +67,30 @@ fn generate_syntax_kinds(node_types: &[NodeType]) -> Result<String> {
         })
         .collect();
 
+    let all_keywords: Vec<_> = node_types
+        .iter()
+        .filter_map(|node_type| match node_type {
+            NodeType::Keyword(_id, name) => Some(format_ident!("{}", name)),
+            _ => None,
+        })
+        .collect();
+
+    let all_puncts: Vec<_> = node_types
+        .iter()
+        .filter_map(|node_type| match node_type {
+            NodeType::Punct(_id, name) => Some(format_ident!("{}", name)),
+            _ => None,
+        })
+        .collect();
+
+    let all_literals: Vec<_> = node_types
+        .iter()
+        .filter_map(|node_type| match node_type {
+            NodeType::Literal(_id, name) => Some(format_ident!("{}", name)),
+            _ => None,
+        })
+        .collect();
+
     let ast = quote! {
         #![allow(bad_style, missing_docs, unreachable_pub)]
         /// The kind of syntax node, e.g. `ATOM`, `IF_KW`, or `DOT`.
@@ -75,6 +99,32 @@ fn generate_syntax_kinds(node_types: &[NodeType]) -> Result<String> {
         pub enum SyntaxKind {
             #(#all_kinds,)*
             ERROR = u16::MAX
+        }
+
+        use self::SyntaxKind::*;
+
+        impl SyntaxKind {
+            pub fn is_keyword(self) -> bool {
+                match self {
+                    #(#all_keywords)|* => true,
+                    _ => false
+                }
+            }
+
+            pub fn is_punct(self) -> bool {
+                match self {
+                    #(#all_puncts)|* => true,
+                    _ => false
+                }
+            }
+
+            pub fn is_literal(self) -> bool {
+                match self {
+                    #(#all_literals)|* => true,
+                    _ => false
+                }
+            }
+
         }
     };
 
@@ -152,7 +202,7 @@ fn read_node_types() -> Result<Vec<NodeType>> {
                 RawNodeType {
                     name, named: false, ..
                 } => match map_name(name)? {
-                    NameType::Punctuation(name) => Ok(NodeType::Punctuation(id, name)),
+                    NameType::Punctuation(name) => Ok(NodeType::Punct(id, name)),
                     NameType::Identifier(name) => Ok(NodeType::Keyword(id, name + "_KW")),
                 },
             }

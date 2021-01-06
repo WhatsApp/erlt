@@ -32,3 +32,24 @@ pub enum SyntaxKind {
     WILDCARD = 10u16,
     ERROR = u16::MAX,
 }
+use self::SyntaxKind::*;
+impl SyntaxKind {
+    pub fn is_keyword(self) -> bool {
+        match self {
+            MODULE_KW => true,
+            _ => false,
+        }
+    }
+    pub fn is_punct(self) -> bool {
+        match self {
+            DQUOTE | DOLLAR | SQUOTE | LPAREN | RPAREN | COMMA | DASH | ARROW | DOT | SEMI => true,
+            _ => false,
+        }
+    }
+    pub fn is_literal(self) -> bool {
+        match self {
+            ATOM | CHAR | INTEGER | STRING | FLOAT | VAR | WILDCARD => true,
+            _ => false,
+        }
+    }
+}
