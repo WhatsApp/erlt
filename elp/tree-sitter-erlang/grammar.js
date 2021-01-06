@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+const PREC = {
+  COMMENT: 1, // Prefer comments over regexes
+  STRING: 2,  // In a string, prefer string characters over comments
+};
 
 module.exports = grammar({
-    name: 'erlang',
+    name: 'erlang_elp',
 
     word: $ => $._raw_atom,
 
@@ -75,11 +79,25 @@ module.exports = grammar({
 
         _raw_atom: $ => /[a-z\xDF-\xF6\xF8-\xFF][_@a-zA-Z0-9\xC0-\xD6\xD8-\xDE\xDF-\xF6\xF8-\xFF]*/,
 
-        _quoted_atom: $ => seq("'", repeat(choice(/[^'\\]+/, $._escape)), "'"),
+        // Precedence usage copied from
+        // https://github.com/tree-sitter/tree-sitter-javascript/blob/master/grammar.js
+        _quoted_atom: $ => seq(
+            "'",
+            repeat1(choice(token.immediate(prec(PREC.STRING, /[^'\n\\]+/)), $._escape)),
+            token.immediate("'")),
 
-        _escape: $ => token(seq('\\', choice(/[0-7]{1,3}/, /x[0-9a-fA-F]{2}/, /x{[0-9a-fA-F]+}/, '\n', /[nrtvbfesd]/))),
+        _escape: $ => token.immediate(seq(
+            '\\',
+            choice(
+                /[0-7]{1,3}/,
+                /x[0-9a-fA-F]{2}/,
+                /x{[0-9a-fA-F]+}/,
+                '\n',
+                /[nrtvbfesd]/
+            )
+        )),
 
-        _comment: $ => /%[^\n]*/,
+        _comment: $ => token(prec(PREC.COMMENT,/%[^\n]*/)),
     }
 });
 
