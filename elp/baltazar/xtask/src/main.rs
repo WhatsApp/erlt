@@ -1,7 +1,10 @@
 //! This provides extra build system commands, most notably:
 //! `cargo xtask codegen` for code generation.
 
-use std::{env, path::{Path, PathBuf}};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use pico_args::Arguments;

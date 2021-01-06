@@ -90,24 +90,15 @@ fn read_node_types() -> Result<Vec<NodeType>> {
         .map(|node| {
             let id = language.id_for_node_kind(&node.name, node.named);
             match node {
-                RawNodeType {
-                    name,
-                    named: true,
-                    children: Some(children),
-                } => {
-                    let children = children
-                        .types
-                        .iter()
-                        .map(map_child_name)
-                        .collect::<Result<_>>()?;
+                RawNodeType { name, named: true, children: Some(children) } => {
+                    let children =
+                        children.types.iter().map(map_child_name).collect::<Result<_>>()?;
                     Ok(NodeType::Node(id, name.to_ascii_uppercase(), children))
                 }
-                RawNodeType {
-                    name, named: true, ..
-                } => Ok(NodeType::Literal(id, name.to_ascii_uppercase())),
-                RawNodeType {
-                    name, named: false, ..
-                } => match map_name(name)? {
+                RawNodeType { name, named: true, .. } => {
+                    Ok(NodeType::Literal(id, name.to_ascii_uppercase()))
+                }
+                RawNodeType { name, named: false, .. } => match map_name(name)? {
                     NameType::Punctuation(name) => Ok(NodeType::Punctuation(id, name)),
                     NameType::Identifier(name) => Ok(NodeType::Keyword(id, name + "_KW")),
                 },

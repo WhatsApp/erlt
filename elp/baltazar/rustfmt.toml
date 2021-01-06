@@ -1,0 +1,3 @@
+# unstable_features = true
+# force_multiline_blocks = true
+use_small_heuristics = "Max"
