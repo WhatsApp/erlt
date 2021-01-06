@@ -14,10 +14,10 @@ pub enum Mode {
 
 #[derive(Debug)]
 enum NodeType {
-    Punctuation(String),
-    Keyword(String),
-    Literal(String),
-    Node(String, Vec<String>),
+    Punctuation(u16, String),
+    Keyword(u16, String),
+    Literal(u16, String),
+    Node(u16, String, Vec<String>),
 }
 
 pub struct CodegenCmd {
@@ -27,12 +27,12 @@ pub struct CodegenCmd {
 impl CodegenCmd {
     pub fn run(self) -> Result<()> {
         let node_types = read_node_types()?;
-        generate_syntax(&node_types)?;
+        generate_syntax_kinds(&node_types)?;
         Ok(())
     }
 }
 
-fn generate_syntax(_node_types: &[NodeType]) -> Result<()> {
+fn generate_syntax_kinds(_node_types: &[NodeType]) -> Result<()> {
     println!("nodes: {:?}", read_node_types()?);
     Ok(())
 }
@@ -83,31 +83,35 @@ fn read_node_types() -> Result<Vec<NodeType>> {
         .with_context(|| format!("accessing node types file in {}", node_types_path.display()))?;
     let node_types: Vec<RawNodeType> = serde_json::from_str(&node_types_string)
         .with_context(|| format!("parsing node types file in {}", node_types_path.display()))?;
+    let language = tree_sitter_erlang::language();
 
     node_types
         .iter()
-        .map(|node| match node {
-            RawNodeType {
-                name,
-                named: true,
-                children: Some(children),
-            } => {
-                let children = children
-                    .types
-                    .iter()
-                    .map(map_child_name)
-                    .collect::<Result<_>>()?;
-                Ok(NodeType::Node(name.to_ascii_uppercase(), children))
+        .map(|node| {
+            let id = language.id_for_node_kind(&node.name, node.named);
+            match node {
+                RawNodeType {
+                    name,
+                    named: true,
+                    children: Some(children),
+                } => {
+                    let children = children
+                        .types
+                        .iter()
+                        .map(map_child_name)
+                        .collect::<Result<_>>()?;
+                    Ok(NodeType::Node(id, name.to_ascii_uppercase(), children))
+                }
+                RawNodeType {
+                    name, named: true, ..
+                } => Ok(NodeType::Literal(id, name.to_ascii_uppercase())),
+                RawNodeType {
+                    name, named: false, ..
+                } => match map_name(name)? {
+                    NameType::Punctuation(name) => Ok(NodeType::Punctuation(id, name)),
+                    NameType::Identifier(name) => Ok(NodeType::Keyword(id, name + "_KW")),
+                },
             }
-            RawNodeType {
-                name, named: true, ..
-            } => Ok(NodeType::Literal(name.to_ascii_uppercase())),
-            RawNodeType {
-                name, named: false, ..
-            } => match map_name(name)? {
-                NameType::Punctuation(name) => Ok(NodeType::Punctuation(name)),
-                NameType::Identifier(name) => Ok(NodeType::Keyword(name + "_KW")),
-            },
         })
         .collect()
 }
