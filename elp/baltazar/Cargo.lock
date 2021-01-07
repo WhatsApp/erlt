@@ -19,8 +19,8 @@ checksum = "bf8dcb5b4bbaa28653b647d8c77bd4ed40183b48882e130c1f1ffb73de069fd7"
 name = "baltazar_syntax"
 version = "0.1.0"
 dependencies = [
- "cc",
  "tree-sitter",
+ "tree-sitter-erlang",
 ]
 
 [[package]]
@@ -148,15 +148,20 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter"
-version = "0.3.10"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fda2848555d2e422760538de9efa1ffcadc42b56b9f2f7993299820ba904eba2"
+checksum = "d18dcb776d3affaba6db04d11d645946d34a69b3172e588af96ce9fecd20faac"
 dependencies = [
  "cc",
  "regex",
- "serde",
- "serde_derive",
- "serde_json",
+]
+
+[[package]]
+name = "tree-sitter-erlang"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "tree-sitter",
 ]
 
 [[package]]
@@ -186,7 +191,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "pico-args",
+ "quote",
  "serde",
  "serde_json",
+ "tree-sitter-erlang",
  "xshell",
 ]

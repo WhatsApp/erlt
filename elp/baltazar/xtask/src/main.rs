@@ -1,14 +1,18 @@
 //! This provides extra build system commands, most notably:
 //! `cargo xtask codegen` for code generation.
 
-use std::{env, path::{Path, PathBuf}};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use pico_args::Arguments;
 
 mod codegen;
 
 use codegen::{CodegenCmd, Mode};
+use xshell::cmd;
 
 fn main() -> Result<()> {
     let mut args = Arguments::from_env();
@@ -45,4 +49,24 @@ pub fn project_root() -> PathBuf {
     .nth(1)
     .unwrap()
     .to_path_buf()
+}
+
+const PREAMBLE: &str = "Generated file, do not edit by hand, see `xtask/src/codegen.rs`";
+
+pub fn reformat(text: &str) -> Result<String> {
+    ensure_rustfmt()?;
+    let rustfmt_toml = project_root().join("rustfmt.toml");
+    let stdout = cmd!("rustfmt --config-path {rustfmt_toml} --config fn_single_line=true").stdin(text).read()?;
+    Ok(format!("//! {}\n\n{}\n", PREAMBLE, stdout))
+}
+
+fn ensure_rustfmt() -> Result<()> {
+    let out = cmd!("rustfmt --version").read()?;
+    if !out.contains("stable") {
+        bail!(
+            "Failed to run rustfmt from toolchain 'stable'. \
+             Please run `rustup component add rustfmt --toolchain stable` to install it.",
+        )
+    }
+    Ok(())
 }

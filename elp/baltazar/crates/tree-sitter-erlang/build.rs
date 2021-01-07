@@ -5,8 +5,5 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", source_file);
 
-    cc::Build::new()
-        .file(source_file)
-        .include(source_directory)
-        .compile(&package);
+    cc::Build::new().file(source_file).include(source_directory).compile(&package);
 }
