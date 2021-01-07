@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "examples/Demo.hs"
+      component: "tree-sitter-elp:exe:demo"
+
+    - path: "./"
+      component: "lib:tree-sitter-elp"

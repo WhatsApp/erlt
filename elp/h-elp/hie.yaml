@@ -1,0 +1,22 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:h-elp"
+
+    - path: "./exe/Main.hs"
+      component: "h-elp:exe:h-elp"
+
+    - path: "./test"
+      component: "h-elp:test:h-elp-test"
+
+    - path: "semantic-erlang/src"
+      component: "lib:semantic-erlang"
+
+    - path: "semantic-erlang/test"
+      component: "semantic-erlang:test:test"
+
+    - path: "tree-sitter-elp/examples/Demo.hs"
+      component: "tree-sitter-elp:exe:demo"
+
+    - path: "tree-sitter-elp/./"
+      component: "lib:tree-sitter-elp"
