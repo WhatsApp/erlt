@@ -1,4 +1,5 @@
-TREE_SITTER=tree-sitter
+# TREE_SITTER=tree-sitter
+TREE_SITTER=npm run
 
 all: gen test
 
@@ -7,7 +8,7 @@ test: gen
 	$(TREE_SITTER) test
 
 .PHONY: gen
-gen:
+gen: deps
 	$(TREE_SITTER) generate
 	# $(TREE_SITTER) generate  --report-states-for-rule _quoted_atom
 	# $(TREE_SITTER) generate  --report-states-for-rule _escape

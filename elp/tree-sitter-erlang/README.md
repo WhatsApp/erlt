@@ -3,15 +3,14 @@
 ## Usage
 
 ```base
-npm install -g tree-sitter-cli
 npm ci
-tree-sitter generate
+npm run generate
 ```
 
 ## Testing the grammar
 
 ```bash
-tree-sitter test
+npm run test
 ```
 
 As a by-product, the test will put a compiled version of the grammar
@@ -24,8 +23,8 @@ into `~/.tree-sitter`.
 ## MACOS notes
 
 The emacs tree-sitter package has the following in its source, which
-renames the `~/.tree-sitter/bin/erlang.so` file to be
-`~/.tree-sitter/bin/erlang.dylib`.
+renames the `~/.tree-sitter/bin/erlang_elp.so` file to be
+`~/.tree-sitter/bin/erlang_elp.dylib`.
 
 ```elisp
       ;; On macOS, rename .so => .dylib, because we will make a "universal"
