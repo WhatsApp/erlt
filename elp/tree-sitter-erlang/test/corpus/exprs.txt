@@ -81,6 +81,20 @@ Quoted atom
 )
 
 ==================
+Unbalanced Quoted Atom
+==================
+
+-module(
+    'foo
+).
+
+---
+
+(source_file
+  (module_attribute (atom (MISSING "'")))
+)
+
+==================
 Char
 ==================
 
