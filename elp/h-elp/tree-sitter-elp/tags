@@ -1,0 +1,14 @@
+
+./TreeSitter/ErlangELP.hs,135
+module TreeSitter.ErlangELPTreeSitter.ErlangELP0,1
+getNodeTypesPath getNodeTypesPath12,13
+getTestCorpusDir getTestCorpusDir15,16
+
+./Setup.hs,15
+main main1,2
+
+./examples/Demo.hs,101
+module Main Main2,3
+main main27,28
+printChildren printChildren66,67
+printNode printNode74,75

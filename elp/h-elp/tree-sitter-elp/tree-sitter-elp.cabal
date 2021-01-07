@@ -1,0 +1,64 @@
+cabal-version:       2.4
+name:                tree-sitter-elp
+version:             0.1.0.1
+synopsis:            Tree-sitter grammar/parser for Erlang Language Platform
+description:         This package provides a parser for Python suitable for use with the tree-sitter package.
+license:             Apache-2.0
+maintainer:          tclem@github.com
+copyright:           2020 Facebook, Inc. and its affiliates
+category:            Tree-sitter, Erlang
+build-type:          Simple
+data-files:          vendor/tree-sitter-erlang/src/node-types.json
+                   , vendor/tree-sitter-erlang/test/corpus/*.txt
+extra-source-files:  ChangeLog.md
+
+common common
+  default-language: Haskell2010
+  ghc-options:
+    -Weverything
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-import-lists
+    -Wno-missing-local-signatures
+    -Wno-monomorphism-restriction
+    -Wno-name-shadowing
+    -Wno-safe
+    -Wno-unsafe
+  if (impl(ghc >= 8.6))
+    ghc-options: -Wno-star-is-type
+  if (impl(ghc >= 8.8))
+    ghc-options: -Wno-missing-deriving-strategies
+  if (impl(ghc >= 8.10))
+    ghc-options:
+      -Wno-missing-safe-haskell-mode
+      -Wno-prepositive-qualified-module
+
+flag build-examples
+  description: Build tree-sitter-elp examples.
+  -- default:     False
+  default:     True
+
+executable demo
+  import: common
+  main-is: Demo.hs
+  if !flag(build-examples)
+    buildable: False
+  hs-source-dirs: examples
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , tree-sitter
+    , tree-sitter-elp
+
+library
+  import: common
+  exposed-modules:     TreeSitter.ErlangELP
+  autogen-modules:     Paths_tree_sitter_elp
+  other-modules:       Paths_tree_sitter_elp
+  build-depends:       base >= 4.12 && < 5
+                     , tree-sitter
+  Include-dirs:        vendor/tree-sitter-erlang/src
+  install-includes:    tree_sitter/parser.h
+  c-sources:           vendor/tree-sitter-erlang/src/parser.c
+  extra-libraries:     stdc++
