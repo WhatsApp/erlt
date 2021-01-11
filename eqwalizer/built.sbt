@@ -6,6 +6,8 @@ libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1"
 
 libraryDependencies += "com.typesafe" % "config" % "1.4.1"
 
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test"
+
 lazy val testProjects = taskKey[Seq[File]]("build beam files")
 
 resourceGenerators in Test += testProjects.taskValue
