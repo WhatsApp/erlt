@@ -38,4 +38,26 @@ object Subtype {
         false
     }
   }
+
+  def join(t1: Type, t2: Type): Type =
+    if (subType(t1, t2)) t2
+    else if (subType(t2, t1)) t1
+    else UnionType(List(t1, t2))
+
+  def meet(t1: Type, t2: Type): Type =
+    if (subType(t1, t2)) t1
+    else if (subType(t2, t1)) t2
+    else
+      (t1, t2) match {
+        case (UnionType(ty1s), _) => UnionType(ty1s.map(meet(_, t2)))
+        case (_, UnionType(ty2s)) => UnionType(ty2s.map(meet(t1, _)))
+
+        case (TupleType(elems1), TupleType(elems2)) if elems1.size == elems2.size =>
+          TupleType(elems1.lazyZip(elems2).map(meet))
+        case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
+          FunType(args1.lazyZip(args2).map(join), meet(res1, res2))
+
+        case (_, _) =>
+          NoneType
+      }
 }
