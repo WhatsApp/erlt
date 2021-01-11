@@ -49,4 +49,13 @@ object Approx {
       case AtomType | NoneType | NumberType | PidType | PortType | ReferenceType =>
         List()
     }
+
+  def joinEnvs(env0: Env, envs: List[Env]): Env = {
+    val vars = env0.keySet
+    var envAcc = env0
+    for { e <- envs } {
+      envAcc = vars.toList.map(v => v -> Subtype.join(envAcc(v), e(v))).toMap
+    }
+    envAcc
+  }
 }
