@@ -16,8 +16,11 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.ericsson.otp.erlang._
+import com.whatsapp.eqwalizer.ast.Diagnostics.SkippedConstructDiagnostics
 import com.whatsapp.eqwalizer.ast.Exprs.Clause
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
+import com.whatsapp.eqwalizer.io.EData
 
 object Forms {
   sealed trait Form { val line: Int }
@@ -29,4 +32,43 @@ object Forms {
   case class FunSpec(id: Id, types: List[ConstrainedFunType])(val line: Int) extends Form
   case class FunDecl(id: Id, clauses: List[Clause])(val line: Int) extends Form
   case class File(file: String, start: Int)(val line: Int) extends Form
+
+  sealed trait SkippedForm extends Form
+  case class SkippedTypeDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
+  case class SkippedFunSpec(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
+  case class SkippedFunDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
+  case class SkippedRecordDecl(name: String)(val line: Int) extends SkippedForm
+
+  case class IgnoredForm()(val line: Int) extends Form
+
+  def load(beamFile: String): List[Form] = {
+    import com.whatsapp.eqwalizer.io.Beam
+    import com.whatsapp.eqwalizer.io.EData.EList
+
+    val Some(EList(rawForms, None)) = Beam.loadAbstractForms(beamFile)
+    rawForms.flatMap(Convert.convertForm)
+  }
+
+  def loadDefs(beamFile: String): List[Form] = {
+    import com.whatsapp.eqwalizer.io.Beam
+
+    val formsJ = Beam.loadAbstractFormsJ(beamFile)
+    val formsDef = (for {
+      i <- 0 until formsJ.arity()
+      f = formsJ.elementAt(i)
+      if !isFunForm(f)
+    } yield f).toArray
+    formsDef.flatMap(f => Convert.convertForm(EData.fromJava(f))).toList
+  }
+
+  def isFunForm(o: OtpErlangObject): Boolean =
+    o match {
+      case t: OtpErlangTuple =>
+        t.elementAt(0) match {
+          case a: OtpErlangAtom =>
+            a.atomValue() == "function"
+          case _ => false
+        }
+      case _ => false
+    }
 }
