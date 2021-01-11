@@ -135,4 +135,17 @@ object Diagnostics {
   case object ExpNamedFun extends SkippedExpr {
     override def toString: String = "E: named_fun"
   }
+
+  sealed trait ExpansionFailure {
+    def diag: String
+  }
+  case class RecursiveType(id: RemoteId) extends Exception with ExpansionFailure {
+    def diag: String = s"RT: $id"
+  }
+  case class UnknownId(id: RemoteId) extends Exception with ExpansionFailure {
+    def diag: String = s"UT: $id"
+  }
+  case class RecursiveConstraint(n: String) extends Exception with ExpansionFailure {
+    def diag: String = s"RC: $n"
+  }
 }

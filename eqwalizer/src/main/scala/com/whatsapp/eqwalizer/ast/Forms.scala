@@ -17,7 +17,7 @@
 package com.whatsapp.eqwalizer.ast
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.eqwalizer.ast.Diagnostics.SkippedConstructDiagnostics
+import com.whatsapp.eqwalizer.ast.Diagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
 import com.whatsapp.eqwalizer.ast.Exprs.Clause
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
 import com.whatsapp.eqwalizer.io.EData
@@ -40,6 +40,10 @@ object Forms {
   case class SkippedRecordDecl(name: String)(val line: Int) extends SkippedForm
 
   case class IgnoredForm()(val line: Int) extends Form
+
+  sealed trait FailedExpandForm extends Form
+  case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
+  case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
 
   def load(beamFile: String): List[Form] = {
     import com.whatsapp.eqwalizer.io.Beam
