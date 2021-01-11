@@ -86,6 +86,8 @@ object DB {
 
   private var moduleStubs: Map[String, ModuleStub] =
     Map.empty
+  private var globalizedModuleStubs: Map[String, ModuleStub] =
+    Map.empty
 
   def getModuleStub(module: String): Option[ModuleStub] = {
     if (moduleStubs.contains(module))
@@ -100,5 +102,19 @@ object DB {
       moduleStubs = moduleStubs.updated(module, moduleApi)
       Some(moduleApi)
     }
+  }
+
+  def getGlobalizedModuleStub(module: String): Option[ModuleStub] = {
+    if (globalizedModuleStubs.contains(module))
+      Some(globalizedModuleStubs(module))
+    else
+      getModuleStub(module).map { s =>
+        val stub = s.copy(
+          types = s.types.view.mapValues(Globalize.globalizeTypeDecl(module, _)).toMap,
+          specs = s.specs.view.mapValues(Globalize.globalizeSpec(module, _)).toMap,
+        )
+        globalizedModuleStubs = globalizedModuleStubs.updated(module, stub)
+        stub
+      }
   }
 }
