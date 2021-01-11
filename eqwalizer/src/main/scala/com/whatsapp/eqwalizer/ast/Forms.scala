@@ -21,6 +21,7 @@ import com.whatsapp.eqwalizer.ast.Diagnostics.{ExpansionFailure, SkippedConstruc
 import com.whatsapp.eqwalizer.ast.Exprs.Clause
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
 import com.whatsapp.eqwalizer.io.EData
+import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeError
 
 object Forms {
   sealed trait Form { val line: Int }
@@ -44,6 +45,10 @@ object Forms {
   sealed trait FailedExpandForm extends Form
   case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
   case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
+
+  case class NoSpecFuncDecl(id: Id)(val line: Int) extends Form
+  case class TypedFuncDecl(id: Id)(val line: Int) extends Form
+  case class MistypedFuncDecl(id: Id, te: TypeError)(val line: Int) extends Form
 
   def load(beamFile: String): List[Form] = {
     import com.whatsapp.eqwalizer.io.Beam
