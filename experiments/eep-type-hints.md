@@ -37,9 +37,6 @@ The above has the same runtime semantics as:
 X
 ```
 
-Similarly:
-
-
 The suggested interpretation of this syntax for static analysis tools is to give the type hint expression type `Type`, regardless of the inferred type of `Expression`.
 
 Rationale
@@ -49,7 +46,7 @@ Erlang functions and expressions already have types, but the language currently 
 
 One use case is intentionally widening the return type of a function.
 
-Dialyzer currently rejects code in the patter match below, because regardless of the value of the ?ENV macro, at least one of the cases won't match:
+Dialyzer currently rejects code in the pattern match below, because regardless of the value of the ?ENV macro, at least one of the cases won't match:
 
 ```erl
 environment() ->
@@ -57,7 +54,7 @@ environment() ->
 
 main() ->
     case environment() of
-        dev() -> prod_stuff();
+        dev -> prod_stuff();
         prod -> dev_stuff()
     end.
 ```
@@ -88,10 +85,10 @@ os() ->
 Type hint expressions enable typing funs:
 
 ```erl
--type NumNum :: fun ((number()) -> number()).
+-type num_num() :: fun ((number()) -> number()).
 
 main(_Args) ->
-    F = (fun (X) -> X end :: NumNum),
+    F = (fun (X) -> X end :: num_num()),
     ....
 ```
 
