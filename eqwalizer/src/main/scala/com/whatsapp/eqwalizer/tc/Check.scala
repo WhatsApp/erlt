@@ -19,11 +19,12 @@ package com.whatsapp.eqwalizer.tc
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Forms.{FunDecl, FunSpec}
 import com.whatsapp.eqwalizer.ast.Types._
+import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 import scala.annotation.tailrec
 
-case class Check(module: String) {
+final case class Check(module: String) {
   val elab = new Elab(module)
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
@@ -43,8 +44,10 @@ case class Check(module: String) {
     }
 
   private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env: Env): Env = {
-    val (_, env1) = ElabPat.elabPats(clause.pats, argTys, env)
-    checkBlock(clause.body, resTy, env1)
+    val env1 = Util.initClausEnv(env, Vars.clauseVars(clause))
+    val env2 = ElabGuard.elabGuards(clause.guards, env1)
+    val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
+    checkBlock(clause.body, resTy, env3)
   }
 
   private def checkClauses(env: Env, argTys: List[Type], resTy: Type, clauses: List[Clause]): Env = {
@@ -60,7 +63,7 @@ case class Check(module: String) {
     envAcc
   }
 
-  private def checkExpr(expr: Expr, resTy: Type, env: Env): Env = {
+  def checkExpr(expr: Expr, resTy: Type, env: Env): Env = {
     if (resTy == AnyType) elab.elabExpr(expr, env)._2
     else
       expr match {
@@ -90,6 +93,16 @@ case class Check(module: String) {
           val tupleType = TupleType(elemTypes)
           if (Subtype.subType(tupleType, resTy)) envAcc
           else throw TypeMismatch(expr.l, expr, expected = resTy, got = tupleType)
+        case NilLit() =>
+          val litType = NilType
+          if (Subtype.subType(litType, resTy)) env
+          else throw TypeMismatch(expr.l, expr, expected = resTy, got = litType)
+        case Cons(head, tail) =>
+          val (headType, env1) = elab.elabExpr(head, env)
+          val typeList1 = ListType(headType)
+          if (!Subtype.subType(typeList1, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = typeList1)
+          checkExpr(tail, resTy, env1)
         case LocalCall(id, args) =>
           Util.getFunType(module, id) match {
             case Some(FunType(argTys, fResTy)) =>
@@ -129,12 +142,57 @@ case class Check(module: String) {
         case Case(sel, clauses) =>
           val (selType, env1) = elab.elabExpr(sel, env)
           checkClauses(env1, List(selType), resTy, clauses)
+        case If(clauses) =>
+          checkClauses(env, List.empty, resTy, clauses)
         case Match(mPat, mExp) =>
           val (mType, env1) = elab.elabExpr(mExp, env)
           val (t2, env2) = ElabPat.elabPat(mPat, mType, env1)
           if (Subtype.subType(t2, resTy)) env2
           else throw TypeMismatch(expr.l, expr, expected = resTy, got = t2)
+        case UnOp(op, arg) =>
+          op match {
+            case "not" =>
+              if (!Subtype.subType(booleanType, resTy)) {
+                throw TypeMismatch(expr.l, expr, expected = resTy, got = booleanType)
+              }
+              checkExpr(arg, booleanType, env)
+            case "bnot" | "+" | "-" =>
+              if (!Subtype.subType(NumberType, resTy)) {
+                throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+              }
+              checkExpr(arg, NumberType, env)
+            // $COVERAGE-OFF$
+            case _ => throw new IllegalStateException()
+            // $COVERAGE-ON$
+          }
+        case BinOp(op, arg1, arg2) =>
+          op match {
+            case "/" | "*" | "-" | "+" | "div" | "rem" | "band" | "bor" | "bxor" | "bsl" | "bsr" =>
+              if (!Subtype.subType(NumberType, resTy)) {
+                throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+              }
+              val env1 = checkExpr(arg1, NumberType, env)
+              val env2 = checkExpr(arg2, NumberType, env1)
+              env2
+            case "or" | "and" | "xor" =>
+              if (!Subtype.subType(booleanType, resTy)) {
+                throw TypeMismatch(expr.l, expr, expected = resTy, got = booleanType)
+              }
+              val env1 = checkExpr(arg1, booleanType, env)
+              val env2 = checkExpr(arg2, booleanType, env1)
+              env2
+            case "andalso" | "orelse" =>
+              val env1 = checkExpr(arg1, booleanType, env)
+              val (t2, env2) = elab.elabExpr(arg2, env1)
+              val elabType = Subtype.join(booleanType, t2)
+              if (!Subtype.subType(elabType, resTy)) {
+                throw TypeMismatch(expr.l, expr, expected = resTy, got = elabType)
+              }
+              env2
+            // $COVERAGE-OFF$
+            case _ => throw new IllegalStateException()
+            // $COVERAGE-ON$
+          }
       }
-
   }
 }
