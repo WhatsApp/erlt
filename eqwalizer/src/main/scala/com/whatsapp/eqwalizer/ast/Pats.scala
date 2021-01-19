@@ -23,7 +23,13 @@ object Pats {
   case class PatMatch(pat: Pat, arg: Pat)(val l: Int) extends Pat
   case class PatTuple(elems: List[Pat])(val l: Int) extends Pat
 
+  case class PatNil()(val l: Int) extends Pat
+  case class PatCons(h: Pat, t: Pat)(val l: Int) extends Pat
+
   case class PatNumber()(val l: Int) extends Pat
   case class PatAtom(s: String)(val l: Int) extends Pat
   case class PatVar(n: String)(val l: Int) extends Pat
+
+  case class PatUnOp(op: String, arg: Pat)(val l: Int) extends Pat
+  case class PatBinOp(op: String, arg1: Pat, arg2: Pat)(val l: Int) extends Pat
 }
