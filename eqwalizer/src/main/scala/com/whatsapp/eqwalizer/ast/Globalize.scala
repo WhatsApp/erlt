@@ -30,9 +30,11 @@ object Globalize {
         RemoteType(id, params.map(globalize(module, _)))
       case TupleType(params) =>
         TupleType(params.map(globalize(module, _)))
+      case ListType(et) =>
+        ListType(globalize(module, et))
       case UnionType(params) =>
         UnionType(params.map(globalize(module, _)))
-      case _: VarType | _: BuiltinType | _: AtomLitType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
         t
     }
 
