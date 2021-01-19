@@ -20,7 +20,7 @@ let test =
       , steps =
         [ checkout
         , setUpJava
-        , coursierCache
+        , coursierCache "sterlang"
         , run
             "Erlang version"
             "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
@@ -37,7 +37,7 @@ let buildJar =
       , steps =
         [ checkout
         , setUpJava
-        , coursierCache
+        , coursierCache "sterlang"
         , run "assembly sterlang.jar" "cd sterlang; sbt assembly"
         , usesWith
             "upload sterlang.jar"
