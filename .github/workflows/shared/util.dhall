@@ -31,10 +31,11 @@ let setUpJava =
         (toMap { java-version = "11" })
 
 let coursierCache =
+      λ(root : Text) →
       usesWith
         "Coursier Cache"
         "coursier/cache-action@v3"
-        (toMap { root = "sterlang" })
+        (toMap { root = root })
 
 
 let DEFAULT_RETENTION_DAYS = "8"

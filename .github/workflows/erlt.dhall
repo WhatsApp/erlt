@@ -20,7 +20,7 @@ in  Actions.Workflow::{
           , steps =
             [ checkout
             , setUpJava
-            , coursierCache
+            , coursierCache "sterlang"
             , run
                 "Erlang version"
                 "erl -eval 'erlang:display(erlang:system_info(otp_release)), halt().'  -noshell"
