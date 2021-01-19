@@ -1,0 +1,16 @@
+  1 -module(types2).                         | LOADED  |                                | 
+  2                                          |         |                                | 
+  3 -export_type([                           | LOADED  |                                | 
+  4     my_remote_number/0,                  |         |                                | 
+  5     unknown_remote_number/0,             |         |                                | 
+  6     my_boolean_unary_fun/0               |         |                                | 
+  7 ]).                                      |         |                                | 
+  8                                          |         |                                | 
+  9 -type my_remote_number() ::              | LOADED  |                                | U: forms1:my_number/0
+ 10     forms1:my_number().                  |         |                                | 
+ 11                                          |         |                                | 
+ 12 -type unknown_remote_number() ::         | LOADED  |                                | U: unknown:my_number/0
+ 13     unknown:my_number().                 |         |                                | 
+ 14                                          |         |                                | 
+ 15 -type my_boolean_unary_fun() ::          | LOADED  |                                | 
+ 16 types1:my_unary_fun(boolean(), boolean()……         |                                | 
