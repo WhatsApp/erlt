@@ -16,7 +16,6 @@
 
 package com.whatsapp.eqwalizer.ast
 
-import com.whatsapp.eqwalizer.ast.Diagnostics._
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Pats._
@@ -43,10 +42,10 @@ object Convert {
       case ETuple(List(EAtom("attribute"), ELong(l), EAtom("type"), ETuple(List(EAtom(n), body, EList(vs, None))))) =>
         val id = Id(n, vs.size)
         try Some(TypeDecl(id, vs.map(varString), convertType(body))(l.intValue))
-        catch { case d: SkippedConstructDiagnostics => Some(SkippedTypeDecl(id, d)(l.intValue)) }
+        catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedTypeDecl(id, d)(l.intValue)) }
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("spec"), ETuple(List(eFunId, EList(eTypeList, None))))) =>
         try Some(FunSpec(convertId(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
-        catch { case d: SkippedConstructDiagnostics => Some(SkippedFunSpec(convertId(eFunId), d)(line.intValue)) }
+        catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedFunSpec(convertId(eFunId), d)(line.intValue)) }
       case ETuple(EAtom("attribute") :: ELong(line) :: _) =>
         Some(IgnoredForm()(line.intValue))
       case ETuple(EAtom("attribute") :: _) =>
@@ -54,7 +53,7 @@ object Convert {
       case ETuple(List(EAtom("function"), ELong(line), EAtom(name), ELong(arity), EList(clauseSeq, None))) =>
         val funId = Id(name, arity.intValue)
         try Some(FunDecl(funId, clauseSeq.map(convertClause))(line.intValue))
-        catch { case d: SkippedConstructDiagnostics => Some(SkippedFunDecl(funId, d)(line.intValue)) }
+        catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedFunDecl(funId, d)(line.intValue)) }
       case _ =>
         sys.error(s"unexpected term: $term")
     }
@@ -83,9 +82,9 @@ object Convert {
       case ETuple(List(EAtom("atom"), _, EAtom(atomVal))) =>
         AtomLitType(atomVal)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("nil"), EList(List(), None))) =>
-        throw SkippedConstructDiagnostics(line.intValue, SkippedNilType)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.SkippedNilType)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("fun"), EList(List(), None))) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeAnyFun)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyFun)
       case ETuple(
             List(
               EAtom("type"),
@@ -94,7 +93,7 @@ object Convert {
               EList(List(ETuple(List(EAtom("type"), _, EAtom("any"))), _), _),
             )
           ) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeFunAnyArg)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeFunAnyArg)
       case ETuple(
             List(
               EAtom("type"),
@@ -107,11 +106,11 @@ object Convert {
       case ETuple(List(EAtom("type"), ELong(line), EAtom("range"), EList(List(_, _), None))) =>
         NumberType
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EAtom("any"))) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeAnyMap)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyMap)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EList(assocTypes, _))) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeMap)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeMap)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordNameLit :: eFieldTypes, None))) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeRecord(atomLit(recordNameLit)))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeRecord(atomLit(recordNameLit)))
       case ETuple(List(EAtom("remote_type"), _, EList(List(moduleLit, typeNameLit, EList(args, None)), None))) =>
         RemoteType(
           RemoteId(atomLit(moduleLit), atomLit(typeNameLit), args.size),
@@ -124,11 +123,11 @@ object Convert {
       case ETuple(List(EAtom("char"), _, ELong(_))) =>
         NumberType
       case ETuple(List(EAtom("op"), ELong(line), EAtom(op), _)) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeUnOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeUnOp(op))
       case ETuple(List(EAtom("op"), ELong(line), EAtom(op), _, _)) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeBinOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeBinOp(op))
       case ETuple(List(EAtom("type"), ELong(line), EAtom("tuple"), EAtom("any"))) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeAnyTuple)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyTuple)
       case ETuple(List(EAtom("type"), _, EAtom("tuple"), EList(types, None))) =>
         TupleType(types.map(convertType))
       case ETuple(List(EAtom("type"), _, EAtom("union"), EList(types, None))) =>
@@ -138,14 +137,14 @@ object Convert {
       case ETuple(List(EAtom("var"), _, EAtom(name))) =>
         VarType(name)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("list"), _)) =>
-        throw SkippedConstructDiagnostics(line.intValue, TypeAnyTuple)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyTuple)
       case ETuple(List(EAtom("type"), ELong(line), EAtom(name), EList(List(), None))) =>
         Types.builtinTypes.get(name) match {
           case Some(ty) => ty
-          case None     => throw SkippedConstructDiagnostics(line.intValue, Diagnostics.TypePredefined(name))
+          case None     => throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypePredefined(name))
         }
       case ETuple(List(EAtom("type"), ELong(line), EAtom(name), EList(_, None))) =>
-        throw SkippedConstructDiagnostics(line.intValue, Diagnostics.TypePredefined(name))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypePredefined(name))
       case _ =>
         sys.error(s"unexpected term for type: $term")
     }
@@ -184,7 +183,7 @@ object Convert {
   private def convertClause(term: EObject): Clause = {
     val ETuple(List(EAtom("clause"), ELong(l), EList(ePats, None), EList(eGuards, None), EList(eExps, None))) = term
     if (eGuards.isEmpty) Clause(ePats.map(convertPat), eExps.map(convertExp))(l.intValue)
-    else throw SkippedConstructDiagnostics(l.intValue, Diagnostics.SkippedGuard)
+    else throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.SkippedGuard)
   }
 
   def convertExp(term: EObject): Expr =
@@ -196,29 +195,29 @@ object Convert {
       case ETuple(List(EAtom("tuple"), ELong(l), EList(eExps, None))) =>
         Tuple(eExps.map(convertExp))(l.intValue)
       case ETuple(List(EAtom("nil"), ELong(l))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpList)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpList)
       case ETuple(List(EAtom("cons"), ELong(l), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpList)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpList)
       case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpBin)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBin)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpBinOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBinOp(op))
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpUnOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpUnOp(op))
       case ETuple(List(EAtom("record"), ELong(l), EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpRecord(recordName))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
       case ETuple(List(EAtom("record"), ELong(l), eExp, EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpRecord(recordName))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recordName), eFieldName)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpRecord(recordName))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
       case ETuple(List(EAtom("record_field"), ELong(l), eExp, EAtom(recordName), eFieldName)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpRecord(recordName))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
       case ETuple(List(EAtom("map"), ELong(l), EList(eAssocs, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpMap)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpMap)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("catch"), ELong(l), eExp)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpCatch)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpCatch)
       case ETuple(List(EAtom("call"), ELong(l), eExp, EList(eArgs, None))) =>
         eExp match {
           case ETuple(
@@ -233,16 +232,16 @@ object Convert {
           case ETuple(List(EAtom("atom"), ELong(_), EAtom(fname))) =>
             LocalCall(Id(fname, eArgs.size), eArgs.map(convertExp))(l.intValue)
           case _ =>
-            throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpDCall)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpDCall)
         }
       case ETuple(List(EAtom("lc"), ELong(l), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpLC)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpLC)
       case ETuple(List(EAtom("bc"), ELong(l), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpBC)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBC)
       case ETuple(List(EAtom("block"), ELong(l), EList(eExps, None))) =>
         Block(eExps.map(convertExp))(l.intValue)
       case ETuple(List(EAtom("if"), ELong(l), EList(eClauses, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpIf)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpIf)
       case ETuple(List(EAtom("case"), ELong(l), eExp, EList(eClauses, None))) =>
         Case(convertExp(eExp), eClauses.map(convertClause))(l.intValue)
       case ETuple(
@@ -255,15 +254,15 @@ object Convert {
               EList(eExps2, None),
             )
           ) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpTry)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpTry)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpReceive)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None), eTimeout, EList(defaults, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpReceive)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
       case ETuple(List(EAtom("fun"), ELong(l), eFunction)) =>
         eFunction match {
           case ETuple(List(EAtom("clauses"), EList(eClauses, None))) =>
-            throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpAnonFun)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpAnonFun)
           case ETuple(List(EAtom("function"), EAtom(name), ELong(arity))) =>
             LocalFun(Id(name, arity.intValue))(l.intValue)
           case ETuple(
@@ -276,17 +275,17 @@ object Convert {
               ) =>
             RemoteFun(RemoteId(module, name, arity.intValue))(l.intValue)
           case ETuple(List(EAtom("function"), eModule, eName, eArity)) =>
-            throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpDynFun)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpDynFun)
           case _ => throw new IllegalStateException()
         }
       case ETuple(List(EAtom("named_fun"), ELong(l), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpNamedFun)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpNamedFun)
       case ETuple(List(EAtom("atom"), ELong(l), EAtom(value))) =>
         AtomLit(value)(l.intValue)
       case ETuple(List(EAtom("char" | "float" | "integer"), ELong(l), _)) =>
         NumberLit()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.ExpString)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpString)
       case _ =>
         sys.error(s"cannot parse expr: $term")
     }
@@ -302,27 +301,27 @@ object Convert {
       case ETuple(List(EAtom("tuple"), ELong(l), EList(ePats, None))) =>
         PatTuple(ePats.map(convertPat))(l.intValue)
       case ETuple(List(EAtom("nil"), ELong(l))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatList)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatList)
       case ETuple(List(EAtom("cons"), ELong(l), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatList)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatList)
       case ETuple(List(EAtom("atom"), ELong(l), EAtom(value))) =>
         PatAtom(value)(l.intValue)
       case ETuple(List(EAtom("char" | "float" | "integer"), ELong(l), _)) =>
         PatNumber()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatString)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatString)
       case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatBin)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatBin)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), _, _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatBinOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatBinOp(op))
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatUnOp(op))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatUnOp(op))
       case ETuple(List(EAtom("record"), ELong(l), EAtom(name), EList(eRecordFieldPatterns, None))) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatRecord(name))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(name), eFieldName)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatRecord(name))
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
       case ETuple(List(EAtom("map"), ELong(l), _)) =>
-        throw SkippedConstructDiagnostics(l.intValue, Diagnostics.PatMap)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatMap)
       case _ =>
         sys.error(s"cannot parse pattern: $term")
     }
