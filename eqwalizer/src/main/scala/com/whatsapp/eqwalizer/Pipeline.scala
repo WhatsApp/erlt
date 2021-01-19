@@ -25,9 +25,6 @@ object Pipeline {
   def loadForms(beamFile: String): List[Form] =
     expandForms(globalizeForms(Forms.load(beamFile)))
 
-  def loadFormsSummary(beamFile: String): List[Form] =
-    expandForms(globalizeForms(Forms.loadDefs(beamFile)))
-
   private def globalizeForms(forms: List[Form]): List[Form] = {
     val m = forms.collect { case Module(m) => m }.head
     forms.map {
@@ -65,5 +62,4 @@ object Pipeline {
         MistypedFuncDecl(f.id, te)(f.line)
     }
   }
-
 }
