@@ -40,8 +40,9 @@ object Types {
   case class ConstrainedFunType(ty: FunType, constraints: List[Constraint])
   case class Constraint(tVar: String, ty: Type)
 
-  val booleanType: Type =
-    UnionType(List(AtomLitType("false"), AtomLitType("true")))
+  val falseType: Type = AtomLitType("false")
+  val trueType: Type = AtomLitType("true")
+  val booleanType: Type = UnionType(List(falseType, trueType))
 
   val builtinTypes: Map[String, Type] =
     Map(

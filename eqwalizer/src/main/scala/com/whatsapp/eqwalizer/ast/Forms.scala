@@ -20,7 +20,6 @@ import com.ericsson.otp.erlang._
 import com.whatsapp.eqwalizer.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
 import com.whatsapp.eqwalizer.ast.Exprs.Clause
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
-import com.whatsapp.eqwalizer.io.EData
 import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeError
 
 object Forms {
@@ -40,8 +39,6 @@ object Forms {
   case class SkippedFunDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
   case class SkippedRecordDecl(name: String)(val line: Int) extends SkippedForm
 
-  case class IgnoredForm()(val line: Int) extends Form
-
   sealed trait FailedExpandForm extends Form
   case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
   case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
@@ -58,26 +55,6 @@ object Forms {
     rawForms.flatMap(Convert.convertForm)
   }
 
-  def loadDefs(beamFile: String): List[Form] = {
-    import com.whatsapp.eqwalizer.io.Beam
-
-    val formsJ = Beam.loadAbstractFormsJ(beamFile)
-    val formsDef = (for {
-      i <- 0 until formsJ.arity()
-      f = formsJ.elementAt(i)
-      if !isFunForm(f)
-    } yield f).toArray
-    formsDef.flatMap(f => Convert.convertForm(EData.fromJava(f))).toList
-  }
-
   def isFunForm(o: OtpErlangObject): Boolean =
-    o match {
-      case t: OtpErlangTuple =>
-        t.elementAt(0) match {
-          case a: OtpErlangAtom =>
-            a.atomValue() == "function"
-          case _ => false
-        }
-      case _ => false
-    }
+    o.asInstanceOf[OtpErlangTuple].elementAt(0).equals(new OtpErlangAtom("function"))
 }
