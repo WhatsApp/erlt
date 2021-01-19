@@ -22,6 +22,26 @@ import com.whatsapp.eqwalizer.ast.Types._
 // They should be used really carefully, - they can be sound in one context,
 // but unsound in another context
 object Approx {
+  def asListType(t: Type): Option[ListType] =
+    extractListElem(t) match {
+      case Nil => None
+      case ts  => Some(ListType(UnionType(ts)))
+    }
+
+  private def extractListElem(t: Type): List[Type] =
+    t match {
+      case AnyType =>
+        List(AnyType)
+      case UnionType(tys) =>
+        tys.flatMap(extractListElem)
+      case NilType =>
+        List(AnyType)
+      case ListType(elemType) =>
+        List(elemType)
+      case _ =>
+        List()
+    }
+
   def asTupleType(t: Type, arity: Int): Option[TupleType] =
     extractTupleElems(t, arity) match {
       case Nil => None
@@ -30,31 +50,38 @@ object Approx {
 
   private def extractTupleElems(t: Type, arity: Int): List[List[Type]] =
     t match {
-      case AtomLitType(_) =>
-        List()
-      case FunType(_, _) =>
-        List()
-      case TupleType(argTys) =>
-        if (argTys.size == arity) List(argTys) else List()
-      case UnionType(tys) =>
-        tys.flatMap(extractTupleElems(_, arity))
-      case LocalType(_, _) =>
-        List()
-      case RemoteType(_, _) =>
-        List()
-      case VarType(_) =>
-        List()
       case AnyType =>
         List(List.fill(arity)(AnyType))
-      case AtomType | NoneType | NumberType | PidType | PortType | ReferenceType =>
+      case UnionType(tys) =>
+        tys.flatMap(extractTupleElems(_, arity))
+      case TupleType(argTys) =>
+        if (argTys.size == arity) List(argTys) else List()
+      case _ =>
         List()
     }
 
-  def joinEnvs(env0: Env, envs: List[Env]): Env = {
-    val vars = env0.keySet
-    var envAcc = env0
+  def joinEnvs(initEnv: Env, envs: List[Env]): Env = {
+    val vars = initEnv.keySet
+    var envAcc = initEnv
     for { e <- envs } {
       envAcc = vars.toList.map(v => v -> Subtype.join(envAcc(v), e(v))).toMap
+    }
+    envAcc
+  }
+
+  def joinEnvsAll(envs: List[Env]): Env = {
+    val allVars: Set[String] = envs.map(_.keySet).reduce(_ ++ _)
+    var envAcc: Env = Map.empty
+    for {
+      env <- envs
+      v <- allVars
+    } (envAcc.get(v), env.get(v)) match {
+      case (_, None) =>
+      // Nothing
+      case (None, Some(t)) =>
+        envAcc = envAcc.updated(v, t)
+      case (Some(t1), Some(t2)) =>
+        envAcc = envAcc.updated(v, Subtype.join(t1, t2))
     }
     envAcc
   }
