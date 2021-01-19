@@ -64,8 +64,56 @@ object ElabPat {
             }
             (TupleType(patTypes), envAcc)
         }
+      case PatNil() =>
+        val patType = Subtype.meet(NilType, t)
+        (patType, env)
+      case PatCons(hPat, tPat) =>
+        Approx.asListType(t) match {
+          case None =>
+            val (_, env1) = elabPat(hPat, NoneType, env)
+            val (_, env2) = elabPat(tPat, NoneType, env1)
+            (NoneType, env2)
+          case Some(ListType(elemType)) =>
+            val (hType, env1) = elabPat(hPat, elemType, env)
+            val (tType, env2) = elabPat(tPat, ListType(elemType), env1)
+            Approx.asListType(tType) match {
+              case None =>
+                (NoneType, env2)
+              case Some(refinedT) =>
+                (ListType(UnionType(List(hType, refinedT))), env2)
+            }
+        }
       case PatMatch(p1, p2) =>
         val (t1, env1) = elabPat(p1, t, env)
         elabPat(p2, t1, env1)
+      case unOp: PatUnOp =>
+        elabUnOp(unOp, t, env)
+      case binOp: PatBinOp =>
+        elabBinOp(binOp, t, env)
     }
+
+  def elabUnOp(pat: PatUnOp, t: Type, env: Env): (Type, Env) = {
+    val PatUnOp(op, arg) = pat
+    op match {
+      case "+" | "-" | "bnot" =>
+        val (_, env1) = elabPat(arg, NumberType, env)
+        (NumberType, env1)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+  }
+
+  def elabBinOp(binOp: PatBinOp, t: Type, env: Env): (Type, Env) = {
+    val PatBinOp(op, arg1, arg2) = binOp
+    op match {
+      case "/" | "*" | "-" | "+" | "div" | "rem" | "band" | "bor" | "bxor" | "bsl" | "bsr" =>
+        val (_, env1) = elabPat(arg1, NumberType, env)
+        val (_, env2) = elabPat(arg2, NumberType, env1)
+        (NumberType, env2)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+  }
 }
