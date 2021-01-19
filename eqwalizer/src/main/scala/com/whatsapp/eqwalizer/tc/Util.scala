@@ -17,7 +17,7 @@
 package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.{DB, Id, RemoteId}
-import com.whatsapp.eqwalizer.ast.Types.FunType
+import com.whatsapp.eqwalizer.ast.Types.{AnyType, FunType}
 
 object Util {
   def getFunType(module: String, id: Id): Option[FunType] =
@@ -32,4 +32,12 @@ object Util {
       moduleStub <- DB.getExpandedModuleStub(fqn.module)
       spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity)) if spec.types.size == 1
     } yield spec.types.head.ty
+
+  def initClausEnv(env: Env, clauseVars: Set[String]): Env = {
+    var envAcc = env
+    for {
+      v <- clauseVars if !env.contains(v)
+    } envAcc = envAcc.updated(v, AnyType)
+    envAcc
+  }
 }
