@@ -21,6 +21,8 @@ object Types {
   case class AtomLitType(atom: String) extends Type
   case class FunType(argTys: List[Type], resTy: Type) extends Type
   case class TupleType(argTys: List[Type]) extends Type
+  case object NilType extends Type
+  case class ListType(t: Type) extends Type
   case class UnionType(tys: List[Type]) extends Type
   case class LocalType(id: Id, args: List[Type]) extends Type
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
