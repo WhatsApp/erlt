@@ -84,16 +84,12 @@ object DB {
     ModuleStub(module, exports, imports, exportTypes, specs, types, skippedSpecs, skippedTypes)
   }
 
-  private var moduleStubs: Map[String, ModuleStub] =
-    Map.empty
   private var globalizedModuleStubs: Map[String, ModuleStub] =
     Map.empty
   private var expandedModuleStubs: Map[String, ModuleStub] =
     Map.empty
 
   def getModuleStub(module: String): Option[ModuleStub] = {
-    if (moduleStubs.contains(module))
-      return Some(moduleStubs(module))
     val appNames = module2App(module)
     if (appNames.isEmpty)
       None
@@ -101,8 +97,20 @@ object DB {
       throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
     else {
       val moduleApi = loadModuleStub(apps(appNames.head), module)
-      moduleStubs = moduleStubs.updated(module, moduleApi)
       Some(moduleApi)
+    }
+  }
+
+  def beamLocation(module: String): Option[String] = {
+    val appNames = module2App(module)
+    if (appNames.isEmpty)
+      None
+    else if (appNames.size > 1)
+      throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
+    else {
+      val app = apps(appNames.head)
+      val beamFile = s"${app.ebinDir}/$module.beam"
+      Some(beamFile)
     }
   }
 
