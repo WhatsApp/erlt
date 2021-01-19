@@ -43,6 +43,9 @@ object Subtype {
     }
   }
 
+  def eqv(t1: Type, t2: Type): Boolean =
+    subType(t1, t2) && subType(t2, t1)
+
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1
