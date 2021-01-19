@@ -38,9 +38,11 @@ object Expand {
         FunType(args.map(expand(_, stack)), expand(resType, stack))
       case TupleType(params) =>
         TupleType(params.map(expand(_, stack)))
+      case ListType(et) =>
+        ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
         t
       case LocalType(_, _) =>
         throw new IllegalStateException()
@@ -54,6 +56,8 @@ object Expand {
         FunType(args.map(expandConstraints(_, s, stack)), expandConstraints(resType, s, stack))
       case TupleType(params) =>
         TupleType(params.map(expandConstraints(_, s, stack)))
+      case ListType(et) =>
+        ListType(expandConstraints(et, s, stack))
       case UnionType(params) =>
         UnionType(params.map(expandConstraints(_, s, stack)))
       case VarType(v) =>
@@ -64,7 +68,7 @@ object Expand {
             case Some(tp) => expandConstraints(tp, s, stack + v)
             case None     => t
           }
-      case _: BuiltinType | _: AtomLitType => t
+      case _: BuiltinType | _: AtomLitType | NilType => t
       case LocalType(_, _) =>
         throw new IllegalStateException()
     }
