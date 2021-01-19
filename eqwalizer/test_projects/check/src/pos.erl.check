@@ -1,0 +1,40 @@
+  1 -module(pos).                              |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec atom_id1(atom()) -> atom().          |         | 
+  6 atom_id1(X) ->                             | OK      | 
+  7     X.                                     |         | 
+  8                                            |         | 
+  9 -spec atom_pat(atom()) -> any().           |         | 
+ 10 atom_pat(1) ->                             | OK      | 
+ 11     ok.                                    |         | 
+ 12                                            |         | 
+ 13 -spec atom_lit() -> atom().                |         | 
+ 14 atom_lit() -> ok.                          | OK      | 
+ 15                                            |         | 
+ 16 -spec char_lit() -> number().              |         | 
+ 17 char_lit() -> $A.                          | OK      | 
+ 18                                            |         | 
+ 19 -spec nil_lit() -> [atom()].               |         | 
+ 20 nil_lit() -> [].                           | OK      | 
+ 21                                            |         | 
+ 22 -spec block_example() -> {atom()}.         |         | 
+ 23 block_example() ->                         | OK      | 
+ 24     begin                                  |         | 
+ 25         block,                             |         | 
+ 26         {block}                            |         | 
+ 27     end.                                   |         | 
+ 28                                            |         | 
+ 29 -spec match_example() -> {match}.          |         | 
+ 30 match_example() ->                         | OK      | 
+ 31     M = match,                             |         | 
+ 32     {match} = {M}.                         |         | 
+ 33                                            |         | 
+ 34 -spec clauses(any()) ->                    |         | 
+ 35     atom() | number().                     |         | 
+ 36 clauses(X) ->                              | OK      | 
+ 37     case X of                              |         | 
+ 38         1 -> 1;                            |         | 
+ 39         1 -> ok                            |         | 
+ 40     end.                                   |         | 
