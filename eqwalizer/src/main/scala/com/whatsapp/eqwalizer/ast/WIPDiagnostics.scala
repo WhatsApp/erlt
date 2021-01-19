@@ -16,7 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
-object Diagnostics {
+object WIPDiagnostics {
 
   case class SkippedConstructDiagnostics(line: Int, construct: SkippedConstruct) extends Exception
 

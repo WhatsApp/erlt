@@ -17,7 +17,7 @@
 package com.whatsapp.eqwalizer.ast
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.eqwalizer.ast.Diagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
+import com.whatsapp.eqwalizer.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
 import com.whatsapp.eqwalizer.ast.Exprs.Clause
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
 import com.whatsapp.eqwalizer.io.EData
