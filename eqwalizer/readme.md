@@ -55,6 +55,71 @@ Loading forms from test_projects/_build/default/lib/check/ebin/foo.beam
   4 bar(X) -> X.                               | ERROR   | X. Expected: atom(), Got: number()
 ```
 
+So, to check a module `foo` from sbt console:
+
+```
+sbt:eqwalizer> test:run check foo
+```
+
+From command line:
+
+```
+sbt 'test:run check foo'
+```
+
+#### Debugging
+
+Eqwalizer doesn't support full set of Erlang expressions yet.
+It also has some other restrictions for now: for example, - it doesn't work 
+(yet) with recursive data structures defined vi `type()`s. In this case if 
+a function uses something that is not supported yet, it will be skipped.
+
+An example:
+
+```erlang
+-module(foo).
+
+-export([list_concat_opt/2]).
+
+-spec
+list_concat_opt([A], [B]) -> [A | B].
+list_concat_opt(X, []) -> X;
+list_concat_opt(X, Y) -> X ++ Y.
+```
+
+```
+sbt:eqwalizer> test:run check foo
+...
+Loading forms from test_projects/_build/default/lib/check/ebin/foo.beam
+  1 -module(foo).                              |         |
+  2                                            |         |
+  3 -export([list_concat_opt/2]).              |         |
+  4                                            |         |
+  5 -spec                                      |         |
+  6 list_concat_opt([A], [B]) -> [A | B].      |         |
+  7 list_concat_opt(X, []) -> X;               | SKIP    |
+  8 list_concat_opt(X, Y) -> X ++ Y.           |         |
+```
+
+You can get more info about why it was skipped by running `test:run debug foo`:
+
+```
+sbt:eqwalizer> test:run debug foo
+...
+Loading forms from test_projects/_build/default/lib/check/ebin/foo.beam
+  1 -module(foo).                            | LOADED  |                                |
+  2                                          |         |                                |
+  3 -export([list_concat_opt/2]).            | LOADED  |                                |
+  4                                          |         |                                |
+  5 -spec                                    | LOADED  |                                |
+  6 list_concat_opt([A], [B]) -> [A | B].    |         |                                |
+  7 list_concat_opt(X, []) -> X;             | SKIPPED |                                |
+  8 list_concat_opt(X, Y) -> X ++ Y.         |         | E: _ ++ _                      |
+```
+
+It indicates that the binary operation of list concatenation (`++`) is not
+supported yet.
+
 ### Under the hood
 
 Eqwalizer uses beam files with debug info to get Erlang AST 
