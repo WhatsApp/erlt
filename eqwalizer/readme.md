@@ -17,6 +17,9 @@ Prerequisites: `sbt` and `rebar`.
 sbt test
 ```
 
+(To update test snapshots, in `CheckSpec.scala` or in `WIPSpec.scala`, 
+set `generateOut` to `true` and re-run the tests.)
+
 ### Experimenting
 
 The current development setup allows experimenting with Erlang code inside 
@@ -135,16 +138,14 @@ In the above example, it complains about the variable `X`, saying that it has
 the type `number()`, but it is expected to be of the type `atom()` according to 
 the provided spec.
 
+Long-term, we plan to get accurate ranges, either by 
+reverse-engineering them from the debug info or 
+by integrating with [Erlang Language Platform](https://fb.quip.com/dKvwAnNJyg6h).
+
 ## Semantics of type-checking
-
-Eqwalizer checks Erlang function [specifications](http://erlang.org/doc/reference_manual/typespec.html).
-
-### The goal
 
 The goal is to ensure that the code doesn't violate contracts expressed via 
 function specifications.
-
-### What does it mean to break a contract?
 
 A function specification forms a contract: it states that it expects to receive
 arguments of certain types, and it states that it would return 
@@ -175,18 +176,32 @@ An example:
 The variable `A` is of the type `atom()`, the first argument of `my_plus/2` 
 should be a `number()`, - so passing `A` violates the contract of using `my_plus/2`.
 
-### Non-goals
-
 At the current stage of development ensuring the correct usage of specs/contracts
 is the main focus.
 
-Preventing from other errors is a NON-GOAL for now.
+#### Non-goal: detecting missing patterns
 
-Such errors include
+Erlang does not provide a general means to distinguish between missing 
+intentional and unintentional missing patterns. Sometimes a pattern is missing 
+due to programmer error and other times the missing pattern is effectively 
+an assertion that the programmer expects the data to conform to a certain shape.
 
-**Detecting probably dead code**
+For that reason, eqwalizer will (for now) not draw this distinction either.
 
-This is OK code for eqwalizer:
+```erlang
+-spec bar(atom() | number()) ->
+    atom | number.
+bar(A) when is_atom(A) -> atom.
+```  
+
+While the case when the argument is a number is not handled eqwalizer doesn't
+treat this as an error.
+
+####Non-goal: catching bug vectors
+
+eqwalizer will not error on code that it knows will be safe at runtime. 
+The following contains dead code, which is a bug vector, 
+but eqwalizer (by design) will not error:
 
 ```erlang
 -spec bar(atom() | number()) ->
@@ -197,19 +212,4 @@ bar(A) when is_atom(A) -> atom.
 ```  
 
 While the third clause can never be matched, - eqwalizer says nothing about it,
-since it well-typed.
-
-**Detecting missing patterns**
-
-(Or exhaustivity checks)
-
-Similar case is OK for eqwalizer:
-
-```erlang
--spec bar(atom() | number()) ->
-    atom | number.
-bar(A) when is_atom(A) -> atom.
-```  
-
-While the case when the argument is a number is not handled eqwalizer doesn't
-treat this as an error.
+since it is well-typed.
