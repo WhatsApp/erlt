@@ -44,8 +44,9 @@ object Expand {
         UnionType(params.map(expand(_, stack)))
       case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
         t
-      case LocalType(_, _) =>
-        throw new IllegalStateException()
+      // $COVERAGE-OFF$
+      case LocalType(_, _) => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   private def expandConstraints(t: Type, s: Map[String, Type], stack: Set[String]): Type =
@@ -69,8 +70,9 @@ object Expand {
             case None     => t
           }
       case _: BuiltinType | _: AtomLitType | NilType => t
-      case LocalType(_, _) =>
-        throw new IllegalStateException()
+      // $COVERAGE-OFF$
+      case LocalType(_, _) => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   def expandFunSpec(funSpec: FunSpec): Form = {
