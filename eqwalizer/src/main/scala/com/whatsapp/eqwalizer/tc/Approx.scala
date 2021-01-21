@@ -72,16 +72,9 @@ object Approx {
   def joinEnvsAll(envs: List[Env]): Env = {
     val allVars: Set[String] = envs.map(_.keySet).reduce(_ ++ _)
     var envAcc: Env = Map.empty
-    for {
-      env <- envs
-      v <- allVars
-    } (envAcc.get(v), env.get(v)) match {
-      case (_, None) =>
-      // Nothing
-      case (None, Some(t)) =>
-        envAcc = envAcc.updated(v, t)
-      case (Some(t1), Some(t2)) =>
-        envAcc = envAcc.updated(v, Subtype.join(t1, t2))
+    for { env <- envs; v <- allVars } envAcc.get(v) match {
+      case None    => envAcc = envAcc.updated(v, env(v))
+      case Some(t) => envAcc = envAcc.updated(v, Subtype.join(t, env(v)))
     }
     envAcc
   }
