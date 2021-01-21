@@ -45,8 +45,11 @@ object Convert {
         try Some(TypeDecl(id, vs.map(varString), convertType(body))(l.intValue))
         catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedTypeDecl(id, d)(l.intValue)) }
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("spec"), ETuple(List(eFunId, EList(eTypeList, None))))) =>
-        try Some(FunSpec(convertId(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
-        catch {
+        try {
+          if (eTypeList.size > 1)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeIntersection)
+          Some(FunSpec(convertId(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
+        } catch {
           case d: WIPDiagnostics.SkippedConstructDiagnostics =>
             Some(SkippedFunSpec(convertId(eFunId), d)(line.intValue))
         }

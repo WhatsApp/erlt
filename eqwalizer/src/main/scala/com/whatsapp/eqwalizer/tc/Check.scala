@@ -28,7 +28,6 @@ final case class Check(module: String) {
   val elab = new Elab(module)
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
-    if (spec.types.size > 1) throw IntersectionType(f.line)
     val constrainedFunType = spec.types.head
     val FunType(argTys, resTy) = constrainedFunType.ty
     checkClauses(Map.empty, argTys, resTy, f.clauses)

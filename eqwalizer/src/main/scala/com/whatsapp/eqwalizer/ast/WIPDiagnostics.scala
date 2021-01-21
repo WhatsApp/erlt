@@ -56,6 +56,9 @@ object WIPDiagnostics {
   case class TypePredefined(name: String) extends SkippedType {
     override def toString: String = s"T: $name()"
   }
+  case object TypeIntersection extends SkippedType {
+    override def toString: String = "Intersection"
+  }
   case object PatBin extends SkippedPat {
     override def toString: String = s"P: <<...>>"
   }

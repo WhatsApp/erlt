@@ -285,3 +285,9 @@ atom_or_number() :: atom() | number().
 atom_list_id(AList) -> AList.
 
 -type any_pair() :: {_, _}.
+
+-spec inter
+    (ok) -> nok;
+    (nok) -> ok.
+inter(ok) -> nok;
+inter(nok) -> ok.
