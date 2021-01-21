@@ -134,15 +134,17 @@ dynamic_calls(BeamFile) ->
     DCalls12 = lists:map(fun dynamic_call_to_str/1, DCalls1),
     DCalls12.
 
--spec gen_server_calls(file:filename()) -> {integer(),integer(),integer()}.
+-spec gen_server_calls(file:filename()) -> {integer(), integer(), integer(), integer()}.
 gen_server_calls(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
+    Module = get_module(Forms),
     Calls = collect(Forms, fun pred/1, fun gen_server_call/1),
     WithAtoms = [Call || Call = {_, _, {atom, _, _Atom}} <- Calls],
     WithTags = [Call || Call = {_, _, {tuple, _, [{atom, _, _Tag} | _]}} <- Calls],
+    WithModuleAsServerRefs = [Call || Call = {_, _ServerRef = {atom, _, Name}, _} <- Calls, Name == Module],
     Tagged = WithTags ++ WithAtoms,
     Others = Calls -- Tagged,
-    {length(Calls), length(Tagged), length(Others)}.
+    {length(Calls), length(Tagged), length(Others), length(WithModuleAsServerRefs)}.
 
 %% Returns a list of functions exported from a given module.
 -spec exports(file:filename()) -> list({atom, arity()}).
@@ -402,8 +404,8 @@ dynamic_call_to_str({M, F, A}) ->
 dynamic_call_to_str({F, A}) ->
     atom_to_list(F) ++ "/" ++ integer_to_list(A).
 
-gen_server_call({call, Line, {remote, _Line, {atom, _, gen_server}, {atom, _, call}}, [Module,Data|_]}) ->
-    {Line, Module, Data};
+gen_server_call({call, Line, {remote, _Line, {atom, _, gen_server}, {atom, _, call}}, [ServerRef, Request | _]}) ->
+    {Line, ServerRef, Request};
 gen_server_call(_) ->
     false.
 

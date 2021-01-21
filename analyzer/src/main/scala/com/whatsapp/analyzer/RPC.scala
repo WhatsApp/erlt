@@ -97,15 +97,15 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     }
   }
 
-  def getGenServerCalls(beamFilePath: String): Option[(Int, Int, Int)] = {
+  def getGenServerCalls(beamFilePath: String): Option[(Int, Int, Int, Int)] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "gen_server_calls", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
     eObject match {
-      case ETuple(List(ELong(total), ELong(tagged), ELong(others))) =>
-        Some((total.toInt, tagged.toInt, others.toInt))
+      case ETuple(List(ELong(total), ELong(tagged), ELong(others), ELong(moduleRefs))) =>
+        Some((total.toInt, tagged.toInt, others.toInt, moduleRefs.toInt))
       case _ =>
         println("not loaded")
         None

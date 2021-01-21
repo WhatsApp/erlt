@@ -4,28 +4,30 @@ import scala.util.Using
 
 object GenServerCalls {
   type Id = (String, Int)
-  case class Calls(module: String, total: Int, tagged: Int, others: Int)
+  case class Calls(module: String, total: Int, tagged: Int, others: Int, moduleRefs: Int)
   case class AppInfo(app: String, calls: List[Calls])
 
   def main(args: Array[String]): Unit = {
     val infos = Using.resource(RPC.connect())(loadData)
-    var totalCount, taggedCount, othersCount = 0
+    var totalCount, taggedCount, othersCount, moduleRefsCount = 0
     var exceptions = List[Calls]()
     for {
       info <- infos
-      Calls(module, total, tagged, others) <- info.calls
+      Calls(module, total, tagged, others, moduleRefs) <- info.calls
     } {
       totalCount = totalCount + total
       taggedCount = taggedCount + tagged
       othersCount = othersCount + others
+      moduleRefsCount = moduleRefsCount + moduleRefs
       if (others > 0) {
-        exceptions = Calls(module, total, tagged, others) :: exceptions
+        exceptions = Calls(module, total, tagged, others, moduleRefs) :: exceptions
       }
     }
 
     println(s"Total: $totalCount")
     println(s"Tagged: $taggedCount")
     println(s"Others: $othersCount")
+    println(s"ModuleName=Ref: $moduleRefsCount")
 
     for (e <- exceptions) {
       println(e)
@@ -47,8 +49,8 @@ object GenServerCalls {
 
     val infos = moduleNames.map { mName =>
       val path = s"$dir/${mName}.beam"
-      val Some((total, tagged, others)) = rpc.getGenServerCalls(path)
-      Calls(mName, total, tagged, others)
+      val Some((total, tagged, others, moduleRefs)) = rpc.getGenServerCalls(path)
+      Calls(mName, total, tagged, others, moduleRefs)
     }
     AppInfo(libName, infos)
   }
