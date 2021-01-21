@@ -14,7 +14,7 @@
  14 -spec inter                                |         | 
  15     (ok) -> nok;                           |         | 
  16     (nok) -> ok.                           |         | 
- 17 inter(ok) -> nok;                          | ERROR   | Intersection type
+ 17 inter(ok) -> nok;                          | NO SPEC | 
  18 inter(nok) -> ok.                          |         | 
  19                                            |         | 
  20 -spec slice_inter1(ok) -> nok.             |         | 

@@ -30,9 +30,6 @@ object TcDiagnostics {
   case class TypeMismatch(line: Int, expr: Expr, expected: Type, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
-  case class IntersectionType(line: Int) extends TypeError {
-    override val msg: String = """Intersection type"""
-  }
   case class UnboundVar(line: Int, n: String) extends TypeError {
     override val msg: String = s"Unbound var: ${n}"
   }

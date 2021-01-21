@@ -285,3 +285,9 @@
 285 atom_list_id(AList) -> AList.            | LOADED  |                                | 
 286                                          |         |                                | 
 287 -type any_pair() :: {_, _}.              | LOADED  |                                | 
+288                                          |         |                                | 
+289 -spec inter                              | SKIPPED | Intersection                   | 
+290     (ok) -> nok;                         |         |                                | 
+291     (nok) -> ok.                         |         |                                | 
+292 inter(ok) -> nok;                        | LOADED  |                                | 
+293 inter(nok) -> ok.                        |         |                                | 
