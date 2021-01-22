@@ -24,8 +24,8 @@ object ElabGuard {
   private def elabPredicateType(pred: String): Option[Type] = pred match {
     case "is_atom"      => Some(AtomType)
     case "is_boolean"   => Some(booleanType)
-    case "is_float"     => Some(builtinTypes("float"))
-    case "is_integer"   => Some(builtinTypes("integer"))
+    case "is_float"     => Some(floatType)
+    case "is_integer"   => Some(integerType)
     case "is_number"    => Some(NumberType)
     case "is_pid"       => Some(PidType)
     case "is_port"      => Some(PortType)
@@ -87,7 +87,7 @@ object ElabGuard {
   def elabUnOp(unOp: TestUnOp, env: Env): Env = {
     val TestUnOp(op, arg) = unOp
     op match {
-      case "not"              => elabTestT(arg, builtinTypes("boolean"), env)
+      case "not"              => elabTestT(arg, booleanType, env)
       case "bnot" | "+" | "-" => elabTestT(arg, NumberType, env)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()

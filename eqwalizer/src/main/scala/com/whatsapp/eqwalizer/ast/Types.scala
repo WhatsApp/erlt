@@ -43,6 +43,8 @@ object Types {
   val falseType: Type = AtomLitType("false")
   val trueType: Type = AtomLitType("true")
   val booleanType: Type = UnionType(List(falseType, trueType))
+  val floatType: Type = NumberType
+  val integerType: Type = NumberType
 
   val builtinTypes: Map[String, Type] =
     Map(
@@ -51,11 +53,11 @@ object Types {
       "boolean" -> booleanType,
       "byte" -> NumberType,
       "char" -> NumberType,
-      "float" -> NumberType,
+      "float" -> floatType,
       "pos_integer" -> NumberType,
       "neg_integer" -> NumberType,
       "non_neg_integer" -> NumberType,
-      "integer" -> NumberType,
+      "integer" -> integerType,
       "none" -> NoneType,
       "number" -> NumberType,
       "pid" -> PidType,
