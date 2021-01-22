@@ -38,7 +38,7 @@ class Elab(module: String) {
     }
 
   private def elabClause(clause: Clause, env: Env): (Type, Env) = {
-    val env1 = Util.initClausEnv(env, Vars.clauseVars(clause))
+    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
     val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)

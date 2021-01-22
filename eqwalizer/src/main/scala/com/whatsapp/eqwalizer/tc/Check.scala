@@ -43,7 +43,7 @@ final case class Check(module: String) {
     }
 
   private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env: Env): Env = {
-    val env1 = Util.initClausEnv(env, Vars.clauseVars(clause))
+    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
     checkBlock(clause.body, resTy, env3)

@@ -33,7 +33,7 @@ object Util {
       spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity)) if spec.types.size == 1
     } yield spec.types.head.ty
 
-  def initClausEnv(env: Env, clauseVars: Set[String]): Env = {
+  def initClauseEnv(env: Env, clauseVars: Set[String]): Env = {
     var envAcc = env
     for {
       v <- clauseVars if !env.contains(v)

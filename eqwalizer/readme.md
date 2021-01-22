@@ -197,7 +197,7 @@ bar(A) when is_atom(A) -> atom.
 While the case when the argument is a number is not handled eqwalizer doesn't
 treat this as an error.
 
-####Non-goal: catching bug vectors
+#### Non-goal: catching bug vectors
 
 eqwalizer will not error on code that it knows will be safe at runtime. 
 The following contains dead code, which is a bug vector, 
