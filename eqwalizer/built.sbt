@@ -12,6 +12,9 @@ lazy val testProjects = taskKey[Seq[File]]("build beam files")
 
 resourceGenerators in Test += testProjects.taskValue
 
+coverageMinimum := 98
+coverageFailOnMinimum := true
+
 testProjects / fileInputs += (baseDirectory.value / "test_projects" / "*" / "src" / "*.erl").toGlob
 
 testProjects := {

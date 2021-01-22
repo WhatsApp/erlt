@@ -1,0 +1,19 @@
+  1 -module(neg).                              |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 %% Gradualizer:                            |         | 
+  6 %% https://git.io/JLjXd                    |         | 
+  7 -spec foo(A) -> A.                         |         | 
+  8 foo(X) -> {X, X}.                          | ERROR   | {X, X}. Expected: A, Got: {A, A}
+  9                                            |         | 
+ 10 -spec atom_id_e(atom()) -> number().       |         | 
+ 11 atom_id_e(X) ->                            | ERROR   | 
+ 12     X.                                     |         | X. Expected: number(), Got: atom()
+ 13                                            |         | 
+ 14 -spec foo(any(), A) -> A.                  |         | 
+ 15 foo(X, _) -> X.                            | ERROR   | X. Expected: A, Got: term()
+ 16                                            |         | 
+ 17 -spec match(any()) -> {atom(), atom()}.    |         | 
+ 18 match(X) ->                                | ERROR   | 
+ 19     {ok, _} = X.                           |         | match_expr. Expected: {atom(), atom()}, Got: {'ok', term()}

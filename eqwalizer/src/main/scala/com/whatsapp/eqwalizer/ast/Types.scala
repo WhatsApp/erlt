@@ -21,6 +21,8 @@ object Types {
   case class AtomLitType(atom: String) extends Type
   case class FunType(argTys: List[Type], resTy: Type) extends Type
   case class TupleType(argTys: List[Type]) extends Type
+  case object NilType extends Type
+  case class ListType(t: Type) extends Type
   case class UnionType(tys: List[Type]) extends Type
   case class LocalType(id: Id, args: List[Type]) extends Type
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
@@ -38,8 +40,9 @@ object Types {
   case class ConstrainedFunType(ty: FunType, constraints: List[Constraint])
   case class Constraint(tVar: String, ty: Type)
 
-  val booleanType: Type =
-    UnionType(List(AtomLitType("false"), AtomLitType("true")))
+  val falseType: Type = AtomLitType("false")
+  val trueType: Type = AtomLitType("true")
+  val booleanType: Type = UnionType(List(falseType, trueType))
 
   val builtinTypes: Map[String, Type] =
     Map(

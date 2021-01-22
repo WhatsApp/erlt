@@ -18,6 +18,7 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
+import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 import scala.annotation.tailrec
@@ -26,19 +27,22 @@ class Elab(module: String) {
   @tailrec
   private def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
     exprs match {
-      case Nil =>
-        throw new IllegalStateException()
       case expr :: Nil =>
         elabExpr(expr, env)
       case expr :: rest =>
         val (_, env1) = elabExpr(expr, env)
         elabBlock(rest, env1)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   private def elabClause(clause: Clause, env: Env): (Type, Env) = {
+    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
     val argTypes = List.fill(clause.pats.size)(AnyType)
-    val (_, env1) = ElabPat.elabPats(clause.pats, argTypes, env)
-    elabBlock(clause.body, env1)
+    val env2 = ElabGuard.elabGuards(clause.guards, env1)
+    val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
+    elabBlock(clause.body, env3)
   }
 
   def elabExpr(expr: Expr, env: Env): (Type, Env) =
@@ -62,6 +66,12 @@ class Elab(module: String) {
           eType
         }
         (TupleType(elemTypes), envAcc)
+      case NilLit() =>
+        (NilType, env)
+      case Cons(head, tail) =>
+        val (headT, env1) = elabExpr(head, env)
+        val (tailT, env2) = elabExpr(tail, env1)
+        (UnionType(List(ListType(headT), tailT)), env2)
       case LocalCall(id, args) =>
         Util.getFunType(module, id) match {
           case Some(FunType(argTys, resTy)) =>
@@ -98,8 +108,41 @@ class Elab(module: String) {
         val (_, env1) = elabExpr(sel, env)
         val (ts, envs) = clauses.map(elabClause(_, env1)).unzip
         (UnionType(ts), Approx.joinEnvs(env1, envs))
+      case If(clauses) =>
+        val (ts, envs) = clauses.map(elabClause(_, env)).unzip
+        (UnionType(ts), Approx.joinEnvs(env, envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
         ElabPat.elabPat(mPat, ty, env1)
+      case UnOp(op, arg) =>
+        op match {
+          case "not" =>
+            val env1 = Check(module).checkExpr(arg, booleanType, env)
+            (booleanType, env1)
+          case "bnot" | "+" | "-" =>
+            val env1 = Check(module).checkExpr(arg, NumberType, env)
+            (NumberType, env1)
+          // $COVERAGE-OFF$
+          case _ => throw new IllegalStateException()
+          // $COVERAGE-ON$
+        }
+      case BinOp(op, arg1, arg2) =>
+        op match {
+          case "/" | "*" | "-" | "+" | "div" | "rem" | "band" | "bor" | "bxor" | "bsl" | "bsr" =>
+            val env1 = Check(module).checkExpr(arg1, NumberType, env)
+            val env2 = Check(module).checkExpr(arg2, NumberType, env1)
+            (NumberType, env2)
+          case "or" | "and" | "xor" =>
+            val env1 = Check(module).checkExpr(arg1, booleanType, env)
+            val env2 = Check(module).checkExpr(arg2, booleanType, env1)
+            (booleanType, env2)
+          case "andalso" | "orelse" =>
+            val env1 = Check(module).checkExpr(arg1, booleanType, env)
+            val (t2, env2) = elabExpr(arg2, env1)
+            (Subtype.join(booleanType, t2), env2)
+          // $COVERAGE-OFF$
+          case _ => throw new IllegalStateException()
+          // $COVERAGE-ON$
+        }
     }
 }

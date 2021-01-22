@@ -16,6 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.Guards.Guard
 import com.whatsapp.eqwalizer.ast.Pats.Pat
 
 object Exprs {
@@ -28,12 +29,20 @@ object Exprs {
   case class Match(pat: Pat, expr: Expr)(val l: Int) extends Expr
 
   case class Tuple(elems: List[Expr])(val l: Int) extends Expr
+
+  case class NilLit()(val l: Int) extends Expr
+  case class Cons(h: Expr, t: Expr)(val l: Int) extends Expr
+
   case class Case(expr: Expr, clauses: List[Clause])(val l: Int) extends Expr
+  case class If(clauses: List[Clause])(val l: Int) extends Expr
 
   case class LocalCall(id: Id, args: List[Expr])(val l: Int) extends Expr
   case class RemoteCall(id: RemoteId, args: List[Expr])(val l: Int) extends Expr
   case class LocalFun(id: Id)(val l: Int) extends Expr
   case class RemoteFun(id: RemoteId)(val l: Int) extends Expr
 
-  case class Clause(pats: List[Pat], body: List[Expr])(val l: Int)
+  case class UnOp(op: String, arg: Expr)(val l: Int) extends Expr
+  case class BinOp(op: String, arg1: Expr, arg2: Expr)(val l: Int) extends Expr
+
+  case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
 }

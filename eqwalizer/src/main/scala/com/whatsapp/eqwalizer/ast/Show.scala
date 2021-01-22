@@ -16,7 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
-import com.whatsapp.eqwalizer.ast.Exprs.Expr
+import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
 
 object Show {
@@ -28,6 +28,10 @@ object Show {
         s"""fun((${argTys.map(show).mkString(", ")}) -> ${show(resTy)})"""
       case TupleType(elems) =>
         elems.map(show).mkString("{", ", ", "}")
+      case ListType(elemType) =>
+        s"""[${show(elemType)}]"""
+      case NilType =>
+        "[]"
       case UnionType(elemTys) =>
         elemTys.map(show).mkString(" | ")
       case LocalType(Id(t, _), args) =>
@@ -53,27 +57,37 @@ object Show {
     }
 
   def show(e: Expr): String = e match {
-    case Exprs.Var(n) =>
+    case Var(n) =>
       n
     case Exprs.AtomLit(atom) =>
       s"'$atom'"
-    case Exprs.NumberLit() =>
+    case NumberLit() =>
       "number_expr"
-    case Exprs.Block(_) =>
+    case Block(_) =>
       "block_expr"
-    case Exprs.LocalCall(Id(f, _), args) =>
+    case LocalCall(Id(f, _), args) =>
       s"""$f(${args.map(show).mkString(", ")})"""
     case Exprs.RemoteCall(RemoteId(m, t, _), args) =>
       s"""$m:$t(${args.map(show).mkString(", ")})"""
-    case Exprs.LocalFun(id) =>
+    case LocalFun(id) =>
       id.toString
-    case Exprs.RemoteFun(id) =>
+    case RemoteFun(id) =>
       id.toString
-    case Exprs.Tuple(elems) =>
+    case Tuple(elems) =>
       elems.map(show).mkString("{", ", ", "}")
-    case Exprs.Match(_, _) =>
+    case Cons(h, t) =>
+      s"[${show(h)} | ${show(t)}]"
+    case NilLit() =>
+      "[]"
+    case Match(_, _) =>
       "match_expr"
-    case Exprs.Case(_, _) =>
-      "case_expr"
+    case Case(_, _) =>
+      "case ..."
+    case If(_) =>
+      "if ..."
+    case UnOp(op, _) =>
+      s"$op _"
+    case BinOp(op, _, _) =>
+      s"_ $op _"
   }
 }

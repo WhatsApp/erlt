@@ -16,7 +16,11 @@
 
 package com.whatsapp.eqwalizer.ast
 
-object Diagnostics {
+// These are diagnostics about work in progress:
+// What is supported and what is not supported yet.
+// Later - when all the constructs are supported,
+// these items would not be needed at all.
+object WIPDiagnostics {
 
   case class SkippedConstructDiagnostics(line: Int, construct: SkippedConstruct) extends Exception
 
@@ -24,12 +28,7 @@ object Diagnostics {
   sealed trait SkippedExpr extends SkippedConstruct
   sealed trait SkippedPat extends SkippedConstruct
   sealed trait SkippedType extends SkippedConstruct
-  case object SkippedGuard extends SkippedConstruct {
-    override def toString: String = "G"
-  }
-  case object SkippedNilType extends SkippedType {
-    override def toString: String = "T: []"
-  }
+  sealed trait SkippedGuard extends SkippedConstruct
   case object TypeAnyFun extends SkippedType {
     override def toString: String = "T: fun()"
   }
@@ -54,29 +53,20 @@ object Diagnostics {
   case object TypeAnyTuple extends SkippedType {
     override def toString: String = "T: tuple()"
   }
-  case object TypeBinary extends SkippedType {
-    override def toString: String = "T: binary()"
-  }
-  case object TypeList extends SkippedType {
-    override def toString: String = "T: [...]"
-  }
   case class TypePredefined(name: String) extends SkippedType {
     override def toString: String = s"T: $name()"
+  }
+  case object TypeIntersection extends SkippedType {
+    override def toString: String = "Intersection"
   }
   case object PatBin extends SkippedPat {
     override def toString: String = s"P: <<...>>"
   }
-  case class PatBinOp(op: String) extends SkippedPat {
-    override def toString: String = s"P: _ $op _"
-  }
-  case class PatUnOp(op: String) extends SkippedPat {
-    override def toString: String = s"P: $op _"
+  case object PatListConcat extends SkippedPat {
+    override def toString: String = "P: _ ++ _"
   }
   case class PatRecord(name: String) extends SkippedPat {
     override def toString: String = s"P: #$name{...}"
-  }
-  case object PatList extends SkippedPat {
-    override def toString: String = "P: [...]"
   }
   case object PatString extends SkippedPat {
     override def toString: String = """P: "...""""
@@ -86,12 +76,6 @@ object Diagnostics {
   }
   case object ExpBin extends SkippedExpr {
     override def toString: String = "E: <<...>>"
-  }
-  case class ExpBinOp(op: String) extends SkippedExpr {
-    override def toString: String = s"E: _ $op _"
-  }
-  case class ExpUnOp(op: String) extends SkippedExpr {
-    override def toString: String = s"E: $op _"
   }
   case class ExpRecord(name: String) extends SkippedExpr {
     override def toString: String = s"E: #$name{...}"
@@ -107,12 +91,6 @@ object Diagnostics {
   }
   case object ExpBC extends SkippedExpr {
     override def toString: String = "E: << || >>"
-  }
-  case object ExpIf extends SkippedExpr {
-    override def toString: String = "E: if"
-  }
-  case object ExpList extends SkippedExpr {
-    override def toString: String = "E: [...]"
   }
   case object ExpString extends SkippedExpr {
     override def toString: String = """E: "...""""
@@ -135,17 +113,35 @@ object Diagnostics {
   case object ExpNamedFun extends SkippedExpr {
     override def toString: String = "E: named_fun"
   }
+  case object ExpListConcat extends SkippedExpr {
+    override def toString: String = "E: _ ++ _"
+  }
+  case object ExpListSubtract extends SkippedExpr {
+    override def toString: String = "E: _ -- _"
+  }
+  case object TestBin extends SkippedGuard {
+    override def toString: String = "G: <<...>>"
+  }
+  case class TestRecord(name: String) extends SkippedGuard {
+    override def toString: String = s"G: #$name{...}"
+  }
+  case object TestMap extends SkippedExpr {
+    override def toString: String = "G: #{...}"
+  }
+  case object TestString extends SkippedExpr {
+    override def toString: String = """G: "...""""
+  }
 
   sealed trait ExpansionFailure {
     def diag: String
   }
   case class RecursiveType(id: RemoteId) extends Exception with ExpansionFailure {
-    def diag: String = s"RT: $id"
+    def diag: String = s"R: $id"
   }
   case class UnknownId(id: RemoteId) extends Exception with ExpansionFailure {
-    def diag: String = s"UT: $id"
+    def diag: String = s"U: $id"
   }
   case class RecursiveConstraint(n: String) extends Exception with ExpansionFailure {
-    def diag: String = s"RC: $n"
+    def diag: String = s"C: $n"
   }
 }

@@ -16,7 +16,6 @@
 
 package com.whatsapp.eqwalizer.ast
 
-import com.whatsapp.eqwalizer.ast.Diagnostics._
 import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Types._
 
@@ -25,11 +24,11 @@ object Expand {
     t match {
       case RemoteType(id, params) =>
         if (stack(id)) {
-          throw RecursiveType(id)
+          throw WIPDiagnostics.RecursiveType(id)
         } else {
-          val stub = DB.getGlobalizedModuleStub(id.module).getOrElse(throw UnknownId(id))
+          val stub = DB.getGlobalizedModuleStub(id.module).getOrElse(throw WIPDiagnostics.UnknownId(id))
           val localId = Id(id.name, id.arity)
-          val typeDecl = stub.types.getOrElse(localId, throw UnknownId(id))
+          val typeDecl = stub.types.getOrElse(localId, throw WIPDiagnostics.UnknownId(id))
           val stack1 = stack + id
           val sub = typeDecl.params.zip(params.map(expand(_, stack1))).toMap
           val body = expand(typeDecl.body, stack1)
@@ -39,12 +38,15 @@ object Expand {
         FunType(args.map(expand(_, stack)), expand(resType, stack))
       case TupleType(params) =>
         TupleType(params.map(expand(_, stack)))
+      case ListType(et) =>
+        ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
         t
-      case LocalType(_, _) =>
-        throw new IllegalStateException()
+      // $COVERAGE-OFF$
+      case LocalType(_, _) => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   private def expandConstraints(t: Type, s: Map[String, Type], stack: Set[String]): Type =
@@ -55,19 +57,22 @@ object Expand {
         FunType(args.map(expandConstraints(_, s, stack)), expandConstraints(resType, s, stack))
       case TupleType(params) =>
         TupleType(params.map(expandConstraints(_, s, stack)))
+      case ListType(et) =>
+        ListType(expandConstraints(et, s, stack))
       case UnionType(params) =>
         UnionType(params.map(expandConstraints(_, s, stack)))
       case VarType(v) =>
         if (stack(v))
-          throw RecursiveConstraint(v)
+          throw WIPDiagnostics.RecursiveConstraint(v)
         else
           s.get(v) match {
             case Some(tp) => expandConstraints(tp, s, stack + v)
             case None     => t
           }
-      case _: BuiltinType | _: AtomLitType => t
-      case LocalType(_, _) =>
-        throw new IllegalStateException()
+      case _: BuiltinType | _: AtomLitType | NilType => t
+      // $COVERAGE-OFF$
+      case LocalType(_, _) => throw new IllegalStateException()
+      // $COVERAGE-ON$
     }
 
   def expandFunSpec(funSpec: FunSpec): Form = {
@@ -85,14 +90,14 @@ object Expand {
       }
       FunSpec(funSpec.id, cfts)(funSpec.line)
     } catch {
-      case e: ExpansionFailure => FailedExpandFunSpec(funSpec.id, e)(funSpec.line)
+      case e: WIPDiagnostics.ExpansionFailure => FailedExpandFunSpec(funSpec.id, e)(funSpec.line)
     }
   }
 
   def expandTypeDecl(decl: TypeDecl): Form = {
     try decl.copy(body = expand(decl.body, Set.empty))(decl.line)
     catch {
-      case e: ExpansionFailure => FailedExpandTypeDecl(decl.id, e)(decl.line)
+      case e: WIPDiagnostics.ExpansionFailure => FailedExpandTypeDecl(decl.id, e)(decl.line)
     }
   }
 }

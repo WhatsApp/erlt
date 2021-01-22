@@ -29,11 +29,13 @@ object Subst {
         RemoteType(id, params.map(subst(s, _)))
       case TupleType(params) =>
         TupleType(params.map(subst(s, _)))
+      case ListType(elemT) =>
+        ListType(subst(s, elemT))
       case UnionType(params) =>
         UnionType(params.map(subst(s, _)))
       case VarType(v) =>
         s.getOrElse(v, t)
-      case _: BuiltinType | _: AtomLitType =>
+      case _: BuiltinType | _: AtomLitType | NilType =>
         t
     }
 }
