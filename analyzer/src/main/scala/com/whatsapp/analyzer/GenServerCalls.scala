@@ -23,9 +23,19 @@ object GenServerCalls {
       }
     }
 
-    println(s"Total: $totalCount")
-    println(s"Tagged: $taggedCount")
-    println(s"Others: $othersCount")
+    println("Results")
+    println(s"  Total: $totalCount")
+    println(s"  Tagged: $taggedCount")
+    println(s"  Others: $othersCount")
+    println("Definitions")
+    println("  Total  - The count of all gen_server:calls")
+    println("  Tagged - The count of all gen_server:calls where the message is a literal atom\n" +
+            "           or a tuple whose first argument is a literal atom, e.g.:\n" +
+            "             `gen_server:call(Pid, cancel_last_order)`\n" +
+            "             `gen_server:call(Pid, {order_pizza, Diameter, Base, Topping})`")
+    println("  Others - The count of all gen_server:calls where the message is of another\n" +
+            "           syntactic structure, such as a variable bound elsewhere, e.g.\n:" +
+            "             `gen_server:call(Pid, Message)`")
 
     for (e <- exceptions) {
       println(e)
