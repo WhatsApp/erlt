@@ -192,6 +192,16 @@ final case class Check(module: String) {
             case _ => throw new IllegalStateException()
             // $COVERAGE-ON$
           }
+        case Binary(elems) =>
+          if (!Subtype.subType(BinaryType, resTy)) {
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+          }
+          var envAcc = env
+          for { elem <- elems } {
+            val (_, env1) = elab.elabBinaryElem(elem, envAcc)
+            envAcc = env1
+          }
+          envAcc
       }
   }
 }

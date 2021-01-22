@@ -35,7 +35,7 @@ object Subst {
         UnionType(params.map(subst(s, _)))
       case VarType(v) =>
         s.getOrElse(v, t)
-      case _: BuiltinType | _: AtomLitType | NilType =>
+      case _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
         t
     }
 }

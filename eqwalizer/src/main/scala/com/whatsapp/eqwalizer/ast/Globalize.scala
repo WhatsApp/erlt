@@ -34,7 +34,7 @@ object Globalize {
         ListType(globalize(module, et))
       case UnionType(params) =>
         UnionType(params.map(globalize(module, _)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
         t
     }
 

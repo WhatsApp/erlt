@@ -16,6 +16,7 @@
 
 package com.whatsapp.eqwalizer.tc
 
+import com.whatsapp.eqwalizer.ast.BinarySpecifiers
 import com.whatsapp.eqwalizer.ast.Pats._
 import com.whatsapp.eqwalizer.ast.Types._
 
@@ -90,9 +91,27 @@ object ElabPat {
         elabUnOp(unOp, t, env)
       case binOp: PatBinOp =>
         elabBinOp(binOp, t, env)
+      case PatBinary(elems) =>
+        val patType = Subtype.meet(BinaryType, t)
+        var envAcc = env
+        for { elem <- elems } {
+          envAcc = elabBinaryElem(elem, envAcc)
+        }
+        (patType, envAcc)
     }
 
-  def elabUnOp(pat: PatUnOp, t: Type, env: Env): (Type, Env) = {
+  private def elabBinaryElem(elem: PatBinaryElem, env: Env): Env = {
+    val env1: Env = elem.size match {
+      case PatBinSizeVar(pv) => elabPat(pv, integerType, env)._2
+      case PatBinSizeConst   => env
+    }
+    val isStringLiteral = false
+    val expType = BinarySpecifiers.expType(elem.specifier, isStringLiteral)
+    val (_, env2) = elabPat(elem.pat, expType, env1)
+    env2
+  }
+
+  private def elabUnOp(pat: PatUnOp, t: Type, env: Env): (Type, Env) = {
     val PatUnOp(op, arg) = pat
     op match {
       case "+" | "-" | "bnot" =>
@@ -104,7 +123,7 @@ object ElabPat {
     }
   }
 
-  def elabBinOp(binOp: PatBinOp, t: Type, env: Env): (Type, Env) = {
+  private def elabBinOp(binOp: PatBinOp, t: Type, env: Env): (Type, Env) = {
     val PatBinOp(op, arg1, arg2) = binOp
     op match {
       case "/" | "*" | "-" | "+" | "div" | "rem" | "band" | "bor" | "bxor" | "bsl" | "bsr" =>

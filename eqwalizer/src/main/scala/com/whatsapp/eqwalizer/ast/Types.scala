@@ -27,6 +27,7 @@ object Types {
   case class LocalType(id: Id, args: List[Type]) extends Type
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
   case class VarType(name: String) extends Type
+  case object BinaryType extends Type
 
   sealed trait BuiltinType extends Type
   case object AnyType extends BuiltinType
@@ -50,6 +51,8 @@ object Types {
     Map(
       "any" -> AnyType,
       "atom" -> AtomType,
+      "binary" -> BinaryType,
+      "bitstring" -> BinaryType,
       "boolean" -> booleanType,
       "byte" -> NumberType,
       "char" -> NumberType,

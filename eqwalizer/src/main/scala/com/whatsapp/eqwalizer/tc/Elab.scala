@@ -18,7 +18,7 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.ast.Vars
+import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 import scala.annotation.tailrec
@@ -144,5 +144,23 @@ class Elab(module: String) {
           case _ => throw new IllegalStateException()
           // $COVERAGE-ON$
         }
+      case Binary(elems) =>
+        var envAcc = env
+        for { elem <- elems } {
+          val (_, env1) = elabBinaryElem(elem, envAcc)
+          envAcc = env1
+        }
+        (BinaryType, envAcc)
     }
+
+  def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
+    val env1 = elem.size match {
+      case Some(s) => Check(module).checkExpr(s, integerType, env)
+      case None    => env
+    }
+    val isStringLiteral = false
+    val expType = BinarySpecifiers.expType(elem.specifier, isStringLiteral)
+    val env2 = Check(module).checkExpr(elem.expr, expType, env1)
+    (expType, env2)
+  }
 }

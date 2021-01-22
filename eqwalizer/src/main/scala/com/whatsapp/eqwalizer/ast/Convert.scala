@@ -439,7 +439,7 @@ object Convert {
   private def convertSpecifier(eSpecifier: EObject): Specifier = {
     val unsignedSpec = eSpecifier match {
       case EList(specs, None) =>
-        specs.collect { case EAtom(spec) => spec }.flatMap(specifiers.get).head
+        specs.collect { case EAtom(s) => s }.flatMap(specifiers.get).headOption.getOrElse(UnsignedIntegerSpecifier)
       case _ =>
         UnsignedIntegerSpecifier
     }
