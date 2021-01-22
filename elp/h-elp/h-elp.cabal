@@ -20,18 +20,25 @@ library
   exposed-modules:     ELP
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
-                     , lsp
-                     , semantic-erlang
-                     , tree-sitter-elp
+  build-depends:
+       base >=4.13 && <4.15
+     , lsp
+     , semantic-erlang
+     , tree-sitter-elp
+     -- following needed because of https://github.com/alanz/lsp/issues/263
+     , constraints-extras == 0.3.0.2
+     , dependent-map == 0.4.0.0
+     , dependent-sum == 0.7.1.0
+     , dependent-sum-template == 0.1.0.3
   hs-source-dirs:      src
   default-language:    Haskell2010
 
 executable h-elp
   main-is:             Main.hs
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
-                     , h-elp
+  build-depends:
+       base >=4.13 && <4.15
+     , h-elp
   hs-source-dirs:      exe
   default-language:    Haskell2010
 
@@ -40,5 +47,30 @@ test-suite h-elp-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
-  build-depends:       base >=4.14 && <4.15
-                     , h-elp
+  build-depends:
+       base >=4.13 && <4.15
+     , aeson >=1.2.2.0
+     , binary
+     , bytestring
+     , containers
+     , directory
+     , filepath
+     , h-elp
+     , hashable
+     , hslogger
+     , lens >= 4.15.2
+     , lsp-test
+     , lsp-types
+     , rope-utf16-splay >= 0.3.1.0
+     , temporary
+     , text
+     , tree-sitter
+     , tree-sitter-elp
+
+     , hspec-expectations
+     , tasty
+     , tasty-ant-xml           >=1.1.6
+     , tasty-hspec
+     , tasty-hunit
+     , tasty-golden
+     , tasty-rerun
