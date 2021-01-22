@@ -16,6 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.BinarySpecifiers.Specifier
 import com.whatsapp.eqwalizer.ast.Guards.Guard
 import com.whatsapp.eqwalizer.ast.Pats.Pat
 
@@ -44,5 +45,8 @@ object Exprs {
   case class UnOp(op: String, arg: Expr)(val l: Int) extends Expr
   case class BinOp(op: String, arg1: Expr, arg2: Expr)(val l: Int) extends Expr
 
+  case class Binary(elems: List[BinaryElem])(val l: Int) extends Expr
+
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
+  case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)
 }

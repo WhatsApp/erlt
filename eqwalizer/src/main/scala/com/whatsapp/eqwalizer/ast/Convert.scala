@@ -16,6 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.BinarySpecifiers._
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Guards._
@@ -24,6 +25,20 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.io.EData._
 
 object Convert {
+  private val specifiers: Map[String, Specifier] =
+    Map(
+      "default" -> UnsignedIntegerSpecifier,
+      "integer" -> UnsignedIntegerSpecifier,
+      "float" -> FloatSpecifier,
+      "binary" -> BinarySpecifier,
+      "bytes" -> BytesSpecifier,
+      "bitstring" -> BitstringSpecifier,
+      "bits" -> BitsSpecifier,
+      "utf8" -> Utf8Specifier,
+      "utf16" -> Utf16Specifier,
+      "utf32" -> Utf32Specifier,
+    )
+
   def convertForm(term: EObject): Option[Form] =
     term match {
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("module"), EAtom(name))) =>
@@ -199,8 +214,8 @@ object Convert {
         NilLit()(l.intValue)
       case ETuple(List(EAtom("cons"), ELong(l), hE, tE)) =>
         Cons(convertExp(hE), convertExp(tE))(l.intValue)
-      case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBin)
+      case ETuple(List(EAtom("bin"), ELong(l), EList(binElems, None))) =>
+        Binary(binElems.map(convertBinaryElem))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), exp1, exp2)) =>
         op match {
           case "++" => throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpListConcat)
@@ -298,6 +313,16 @@ object Convert {
       // $COVERAGE-ON$
     }
 
+  private def convertBinaryElem(e: EObject): BinaryElem = {
+    val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
+    val size = eSize match {
+      case EAtom("default") => None
+      case _                => Some(convertExp(eSize))
+    }
+    val specifier = convertSpecifier(eSpecifier)
+    BinaryElem(convertExp(elem), size, specifier)(l.intValue)
+  }
+
   private def convertGuard(term: EObject): Guard = {
     val EList(tests, None) = term
     Guard(tests.map(convertTest))
@@ -323,8 +348,8 @@ object Convert {
         PatNumber()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatString)
-      case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatBin)
+      case ETuple(List(EAtom("bin"), ELong(l), EList(binElems, None))) =>
+        PatBinary(binElems.map(convertPatBinaryElem))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), p1, p2)) =>
         op match {
           case "++" => throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatListConcat)
@@ -343,6 +368,20 @@ object Convert {
       // $COVERAGE-ON$
     }
 
+  private def convertPatBinaryElem(e: EObject): PatBinaryElem = {
+    val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
+    val size = eSize match {
+      case EAtom("default") => PatBinSizeConst
+      case _ =>
+        convertPat(eSize) match {
+          case v: PatVar => PatBinSizeVar(v)
+          case _         => PatBinSizeConst
+        }
+    }
+    val specifier = convertSpecifier(eSpecifier)
+    PatBinaryElem(convertPat(elem), size, specifier)(l.intValue)
+  }
+
   private def convertTest(term: EObject): Test =
     term match {
       case ETuple(List(EAtom("var"), ELong(l), EAtom(name))) =>
@@ -354,7 +393,7 @@ object Convert {
       case ETuple(List(EAtom("cons"), ELong(l), h, t)) =>
         TestCons(convertTest(h), convertTest(t))(l.intValue)
       case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestBin)
+        TestBinaryLit()(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t1, t2)) =>
         TestBinOp(op, convertTest(t1), convertTest(t2))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t)) =>
@@ -396,4 +435,23 @@ object Convert {
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertSpecifier(eSpecifier: EObject): Specifier = {
+    val unsignedSpec = eSpecifier match {
+      case EList(specs, None) =>
+        specs.collect { case EAtom(spec) => spec }.flatMap(specifiers.get).head
+      case _ =>
+        UnsignedIntegerSpecifier
+    }
+    val signed = eSpecifier match {
+      case EList(specs, None) => specs.contains(EAtom("signed"))
+      case _                  => false
+    }
+
+    val spec =
+      if (signed && unsignedSpec == UnsignedIntegerSpecifier)
+        SignedIntegerSpecifier
+      else unsignedSpec
+    spec
+  }
 }

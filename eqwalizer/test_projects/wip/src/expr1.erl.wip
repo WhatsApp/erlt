@@ -35,8 +35,8 @@
  35 cons(H, T) ->                            | LOADED  |                                | 
  36     [H | T].                             |         |                                | 
  37                                          |         |                                | 
- 38 binary() ->                              | SKIPPED |                                | 
- 39     <<>>.                                |         | E: <<...>>                     | 
+ 38 binary() ->                              | LOADED  |                                | 
+ 39     <<>>.                                |         |                                | 
  40                                          |         |                                | 
  41 un_op(X) ->                              | LOADED  |                                | 
  42     not X.                               |         |                                | 
@@ -163,7 +163,7 @@
 163                                          |         |                                | 
 164 string_pat("ok") -> ok.                  | SKIPPED | P: "..."                       | 
 165                                          |         |                                | 
-166 bin_pat(<<>>) -> bin.                    | SKIPPED | P: <<...>>                     | 
+166 bin_pat(<<>>) -> bin.                    | LOADED  |                                | 
 167                                          |         |                                | 
 168 unop_pat(-1) -> 1.                       | LOADED  |                                | 
 169                                          |         |                                | 
@@ -185,7 +185,7 @@
 185                                          |         |                                | 
 186 cons_guard(X, Y) when [X | Y] -> Y.      | LOADED  |                                | 
 187                                          |         |                                | 
-188 bin_guard(X, Y) when <<>> -> Y.          | SKIPPED | G: <<...>>                     | 
+188 bin_guard(X, Y) when <<>> -> Y.          | LOADED  |                                | 
 189                                          |         |                                | 
 190 unop_guard(X, Y) when -X -> Y.           | LOADED  |                                | 
 191                                          |         |                                | 
