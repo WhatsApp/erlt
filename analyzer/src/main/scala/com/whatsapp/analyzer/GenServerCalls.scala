@@ -24,10 +24,25 @@ object GenServerCalls {
       }
     }
 
-    println(s"Total: $totalCount")
-    println(s"Tagged: $taggedCount")
-    println(s"Others: $othersCount")
-    println(s"ModuleName=Ref: $moduleRefsCount")
+    println("Results")
+    println(s"  Total calls: $totalCount")
+    println(s"    of which, tagged: $taggedCount")
+    println(s"    of which, others: $othersCount")
+    println(s"  ModuleName=Ref: $moduleRefsCount")
+
+    println("Definitions")
+    println("  Total  - The count of all gen_server:calls")
+    println("  Tagged - The count of all gen_server:calls where the message is a literal atom\n" +
+            "           or a tuple whose first argument is a literal atom, e.g.:\n" +
+            "             `gen_server:call(Pid, cancel_last_order)`\n" +
+            "             `gen_server:call(Pid, {order_pizza, Diameter, Base, Topping})`")
+    println("  Others - The count of all gen_server:calls where the message is of another\n" +
+            "           syntactic structure, such as a variable bound elsewhere, e.g.:\n" +
+            "             `gen_server:call(Pid, Message)`")
+    println("  ModuleName=Ref - The count of times where the module name is clearly used as\n" +
+            "                   the ServerRef, which implies the `handle_call` implementation\n" +
+            "                   used will be the one in the same file as the call, e.g.:\n" +
+            "                     `gen_server:call(?MODULE, {register_job, JobId})`")
 
     for (e <- exceptions) {
       println(e)
