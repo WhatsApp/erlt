@@ -1,0 +1,42 @@
+  1 -module(binaries).                         |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec test01_pos() -> binary().            |         | 
+  6 test01_pos() ->                            | OK      | 
+  7     <<>>.                                  |         | 
+  8                                            |         | 
+  9 -spec test02_pos(binary())                 |         | 
+ 10     -> {number(), binary()}.               |         | 
+ 11 test02_pos(<<X, Y/binary>>) -> {X, Y}.     | OK      | 
+ 12                                            |         | 
+ 13 -spec test03_pos(binary())                 |         | 
+ 14     -> binary().                           |         | 
+ 15 test03_pos(<<N, _:N, Rest/binary>>) ->     | OK      | 
+ 16     Rest.                                  |         | 
+ 17                                            |         | 
+ 18 -spec test04_neg() -> list(any()).         |         | 
+ 19 test04_neg() -> <<>>.                      | ERROR   | <<..>>. Expected: [term()], Got: number()
+ 20                                            |         | 
+ 21 -spec test05_pos(binary())                 |         | 
+ 22         -> {binary(), binary()}.           |         | 
+ 23 test05_pos(<<H:42/binary, Rest/binary>>) -…… OK      | 
+ 24     {H, Rest}.                             |         | 
+ 25                                            |         | 
+ 26 -spec test05_neg(atom()) -> binary().      |         | 
+ 27 test05_neg(A) -> <<A/signed>>.             | ERROR   | A. Expected: number(), Got: atom()
+ 28                                            |         | 
+ 29 -spec test06_neg(atom(), integer()) -> bin……         | 
+ 30 test06_neg(A, S) -> <<A:S>>.               | ERROR   | A. Expected: number(), Got: atom()
+ 31                                            |         | 
+ 32 -spec test07_neg(atom()) -> binary().      |         | 
+ 33 test07_neg(A) -> [A].                      | ERROR   | [A | []]. Expected: binary(), Got: [atom()]
+ 34                                            |         | 
+ 35 -spec test08_neg(binary()) -> float().     |         | 
+ 36 test08_neg(<<F/float, R/binary>>) -> F.    | OK      | 
+ 37                                            |         | 
+ 38 -spec test09_neg(integer(), integer()) -> ……         | 
+ 39 test09_neg(I1, I2) ->                      | OK      | 
+ 40     X = <<I1, I2>>,                        |         | 
+ 41     X.                                     |         | 
+ 42                                            |         | 
