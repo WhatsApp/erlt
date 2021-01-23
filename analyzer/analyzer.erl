@@ -34,7 +34,9 @@
     multi_specs/1,
     gen_server_calls/1,
     redefined_record_types/1,
-    range_types/1
+    range_types/1,
+    named_funs/1,
+    unnamed_funs/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -472,6 +474,32 @@ range_types(BeamFile) ->
 
 range_type({type, Line, range, [_Low, _High]}) -> {Line};
 range_type(_) -> false.
+
+%% Named funs
+
+-type named_fun_info() :: {Line :: integer(), Name :: atom()}.
+
+-spec named_funs(BeamFile :: file:filename()) -> list(named_fun_info()).
+named_funs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun named_fun/1).
+
+-spec named_fun(any()) -> named_fun_info() | false.
+named_fun({named_fun, Line, Name, _Clauses}) -> {Line, Name};
+named_fun(_) -> false.
+
+%% Unnamed funs
+
+-spec unnamed_funs(BeamFile :: file:filename()) -> [{line, integer()}].
+unnamed_funs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun unnamed_fun/1).
+
+-spec unnamed_fun(any()) -> named_fun_info() | false.
+unnamed_fun({'fun', Line, {clauses, _Clauses}}) -> {line, Line};
+unnamed_fun(_) -> false.
+
+%% Utilities
 
 pred(_) ->
     true.

@@ -346,6 +346,22 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     data.map { case ETuple(List(ELong(line))) => line.toInt }
   }
 
+  def getNamedFuns(beamFilePath: String): List[(Int, String)] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "named_funs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line), EAtom(f))) => (line.toInt, f) }
+  }
+
+  def getUnnamedFuns(beamFilePath: String): Int = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "unnamed_funs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.length
+  }
+
   def close(): Unit = {
     connection.close()
   }

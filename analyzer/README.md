@@ -100,6 +100,9 @@ Make sure you've configured `root`, `paths` and `third_party` before continuing.
    "intersection/dependent" types
 - `com.whatsapp.analyzer.ModCycles` - reports cycles between modules 
    (it takes into account only functions for now)
+- `com.whatsapp.analyzer.NamedFuns` - reports named 
+  [fun expressions](https://erlang.org/doc/reference_manual/expressions.html#fun-expressions). 
+  Since such named fun expressions are rare, it reports detailed information (module and line locations).   
 - `com.whatsapp.analyzer.OtpFunsUsage` - stats about which functions from
 OTP libs are used in the project.
 - `com.whatsapp.analyzer.Primitives concurrency` - stats about using
@@ -109,6 +112,8 @@ OTP libs are used in the project.
 - `com.whatsapp.analyzer.RangeTypes` - stats about `X..Y` types   
 - `com.whatsapp.analyzer.Receives` - stats about using `receive`s
 - `com.whatsapp.analyzer.RedefinedRecordTypes` - see below
+- `com.whatsapp.analyzer.UnnamedFuns` - reports the total number of unnamed
+  [fun expressions](https://erlang.org/doc/reference_manual/expressions.html#fun-expressions).
 
 ## Data interpretation
 
@@ -146,3 +151,12 @@ Analysis of WA code base shows:
   basically, to check that a given constant falls into a specified range.
 
 Easy to type.
+
+### Named fun expressions
+
+Run `UnnamedFuns` and `NamedFuns` inspections.
+
+In WA codebase (Jan 2021):
+
+- 32143 unnamed funs
+- 10 named funs
