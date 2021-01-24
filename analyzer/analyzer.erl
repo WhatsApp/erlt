@@ -36,7 +36,8 @@
     redefined_record_types/1,
     range_types/1,
     named_funs/1,
-    unnamed_funs/1
+    unnamed_funs/1,
+    parameterized_types/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -498,6 +499,20 @@ unnamed_funs(BeamFile) ->
 -spec unnamed_fun(any()) -> named_fun_info() | false.
 unnamed_fun({'fun', Line, {clauses, _Clauses}}) -> {line, Line};
 unnamed_fun(_) -> false.
+
+%% Parameterized types
+
+-type parameterized_type_info() :: {Line :: integer(), Name :: atom()}.
+
+-spec parameterized_types(BeamFile :: file:filename()) -> [parameterized_type_info()].
+parameterized_types(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun parameterized_type/1).
+
+-spec parameterized_type(any()) -> named_fun_info() | false.
+parameterized_type({attribute, Line, type, {Name, _Body, Vars}}) when length(Vars) > 0 -> {Line, Name};
+parameterized_type({attribute, Line, opaque, {Name, _Body, Vars}}) when length(Vars) > 0 -> {Line, Name};
+parameterized_type(_) -> false.
 
 %% Utilities
 

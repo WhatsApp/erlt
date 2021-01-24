@@ -362,6 +362,14 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     data.length
   }
 
+  def getParameterizedTypes(beamFilePath: String): List[(Int, String)] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "parameterized_types", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line), EAtom(f))) => (line.toInt, f) }
+  }
+
   def close(): Unit = {
     connection.close()
   }

@@ -102,7 +102,8 @@ Make sure you've configured `root`, `paths` and `third_party` before continuing.
    (it takes into account only functions for now)
 - `com.whatsapp.analyzer.NamedFuns` - reports named 
   [fun expressions](https://erlang.org/doc/reference_manual/expressions.html#fun-expressions). 
-  Since such named fun expressions are rare, it reports detailed information (module and line locations).   
+  Since such named fun expressions are rare, it reports detailed information (module and line locations).
+- `com.whatsapp.analyzer.ParameterizedTypes` - reports parameterized types defined in a project.     
 - `com.whatsapp.analyzer.OtpFunsUsage` - stats about which functions from
 OTP libs are used in the project.
 - `com.whatsapp.analyzer.Primitives concurrency` - stats about using
@@ -160,3 +161,12 @@ In WA codebase (Jan 2021):
 
 - 32143 unnamed funs
 - 10 named funs
+
+
+### Parameterized types
+
+Run `ParameterizedTypes` inspection.
+
+In WA codebase (Jan 2021) there are just 11 (eleven) parameterized types.
+
+Theory to check - all of them when used -> delegate to OTP stuff.
