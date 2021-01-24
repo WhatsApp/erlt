@@ -38,7 +38,8 @@
     named_funs/1,
     unnamed_funs/1,
     parameterized_types/1,
-    specs/1
+    specs/1,
+    nonempty_lists/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -524,6 +525,16 @@ specs(BeamFile) ->
 
 spec({attribute, _, spec, _} = Spec) -> Spec;
 spec(_) -> false.
+
+%% Non-empty lists
+
+-spec nonempty_lists(BeamFile :: file:filename()) -> [{integer()}].
+nonempty_lists(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun nonempty_list/1).
+
+nonempty_list({type, Line, nonempty_list, _}) -> {Line};
+nonempty_list(_) -> false.
 
 
 %% Utilities
