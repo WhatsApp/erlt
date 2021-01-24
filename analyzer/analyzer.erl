@@ -40,7 +40,8 @@
     parameterized_types/1,
     specs/1,
     nonempty_lists/1,
-    nonempty_strings/1
+    nonempty_strings/1,
+    improper_lists/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -546,6 +547,18 @@ nonempty_strings(BeamFile) ->
 
 nonempty_string({type, Line, nonempty_string, _}) -> {Line};
 nonempty_string(_) -> false.
+
+%% Improper lists
+
+-spec improper_lists(BeamFile :: file:filename()) -> [{integer()}].
+improper_lists(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun improper_list/1).
+
+improper_list({type, Line, maybe_improper_list, _}) -> {Line};
+improper_list({type, Line, nonempty_maybe_improper_list, _}) -> {Line};
+improper_list(_) -> false.
+
 
 %% Utilities
 
