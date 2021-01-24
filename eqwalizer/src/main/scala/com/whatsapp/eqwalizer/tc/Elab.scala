@@ -110,7 +110,7 @@ class Elab(module: String) {
         (UnionType(ts), Approx.joinEnvs(env1, envs))
       case If(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvs(env, envs))
+        (UnionType(ts), Approx.joinEnvs(envs.head, envs.tail))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
         ElabPat.elabPat(mPat, ty, env1)
