@@ -16,7 +16,7 @@ Erlang surface syntax.
 - [ ] Maps
 - [ ] Records
 - [ ] Anonymous functions
-- [ ] Named inner functions
+- [ ] Named inner functions (not priority)
 - [ ] Recursive type definitions
 - [ ] Opaques
 - [ ] Simple polymorphism
@@ -25,6 +25,11 @@ Erlang surface syntax.
 - [ ] Non-empty lists, maybe improper lists, etc
 - [ ] `tuple()`, `list()`
 - [ ] (Expr)(Arg1, Arg2) - checking that the head is proper fun
+
+### More elaboration/propagation
+
+- [ ] Propagate selector type in case-expressions
+- [ ] Propaget try-body type in try-of expressions
 
 ### Data-driven analysis
 
