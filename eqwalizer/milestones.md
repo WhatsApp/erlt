@@ -22,6 +22,8 @@ Erlang surface syntax.
 - [ ] Simple inference for unspecced funs
 - [ ] Numeric tower
 - [ ] Non-empty lists, maybe improper lists, etc
+- [ ] `tuple()`, `list()`
+- [ ] (Expr)(Arg1, Arg2) - checking that the head is proper fun
 
 ### Data-driven analysis
 
