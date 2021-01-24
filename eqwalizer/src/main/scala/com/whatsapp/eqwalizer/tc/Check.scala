@@ -63,7 +63,7 @@ final case class Check(module: String) {
   }
 
   def checkExpr(expr: Expr, resTy: Type, env: Env): Env = {
-    if (resTy == AnyType) elab.elabExpr(expr, env)._2
+    if (Subtype.subType(AnyType, resTy)) elab.elabExpr(expr, env)._2
     else
       expr match {
         case Var(v) =>
