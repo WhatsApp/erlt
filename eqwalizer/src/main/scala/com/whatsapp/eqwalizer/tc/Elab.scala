@@ -23,9 +23,9 @@ import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 import scala.annotation.tailrec
 
-class Elab(module: String) {
+final class Elab(module: String) {
   @tailrec
-  private def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
+  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
     exprs match {
       case expr :: Nil =>
         elabExpr(expr, env)
@@ -154,6 +154,23 @@ class Elab(module: String) {
       case Catch(cExpr) =>
         val (_, env1) = elabExpr(cExpr, env)
         (AnyType, env1)
+      case TryCatchExpr(tryBody, catchClauses, afterBody) =>
+        val (tryT, _) = elabBlock(tryBody, env)
+        val (catchTs, _) = catchClauses.map(elabClause(_, env)).unzip
+        val env1 = afterBody match {
+          case Some(block) => elabBlock(block, env)._2
+          case None        => env
+        }
+        (UnionType(tryT :: catchTs), env1)
+      case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
+        val (_, tryEnv) = elabBlock(tryBody, env)
+        val (tryTs, _) = tryClauses.map(elabClause(_, tryEnv)).unzip
+        val (catchTs, _) = catchClauses.map(elabClause(_, env)).unzip
+        val env1 = afterBody match {
+          case Some(block) => elabBlock(block, env)._2
+          case None        => env
+        }
+        (UnionType(tryTs ::: catchTs), env1)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

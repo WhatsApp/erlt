@@ -8,8 +8,9 @@ Erlang surface syntax.
 ### Surface syntax (TODO)
 
 - [x] Catch
-- [ ] Try/catch
-- [ ] Try-of/catch
+- [x] Try/catch
+- [x] Try-of/catch
+- [ ] `catch X:Y:Z ->` syntax
 - [ ] List comprehensions
 - [ ] Binary comprehensions
 - [ ] Maps

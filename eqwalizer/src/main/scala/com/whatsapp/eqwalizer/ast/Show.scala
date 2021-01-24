@@ -95,5 +95,9 @@ object Show {
       "<<..>>"
     case Catch(_) =>
       "catch"
+    case TryCatchExpr(_, _, _) =>
+      "try .. catch .."
+    case TryOfCatchExpr(_, _, _, _) =>
+      "try .. of .. catch .."
   }
 }

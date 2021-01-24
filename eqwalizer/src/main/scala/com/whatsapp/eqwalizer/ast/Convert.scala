@@ -268,13 +268,20 @@ object Convert {
             List(
               EAtom("try"),
               ELong(l),
-              EList(eExps1, None),
-              EList(eClauses1, None),
-              EList(eClauses2, None),
-              EList(eExps2, None),
+              EList(eTryBody, None),
+              EList(eTryClauses, None),
+              EList(eCatchClauses, None),
+              EList(eAfter, None),
             )
           ) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpTry)
+        val tryBody = eTryBody.map(convertExp)
+        val tryClauses = eTryClauses.map(convertClause)
+        val catchClauses = eCatchClauses.map(convertClause)
+        val afterBody = if (eAfter.isEmpty) None else Some(eAfter.map(convertExp))
+        if (tryClauses.isEmpty)
+          TryCatchExpr(tryBody, catchClauses, afterBody)(l.intValue)
+        else
+          TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody)(l.intValue)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None), eTimeout, EList(defaults, None))) =>

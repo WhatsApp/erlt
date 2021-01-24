@@ -101,8 +101,8 @@
 101         false -> true                    |         |                                | 
 102     end.                                 |         |                                | 
 103                                          |         |                                | 
-104 try_exp(E) ->                            | SKIPPED |                                | 
-105     try                                  |         | E: try                         | 
+104 try_exp(E) ->                            | LOADED  |                                | 
+105     try                                  |         |                                | 
 106         E                                |         |                                | 
 107     catch                                |         |                                | 
 108         Y -> Y                           |         |                                | 

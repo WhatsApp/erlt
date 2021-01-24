@@ -204,6 +204,22 @@ final case class Check(module: String) {
           envAcc
         case Catch(_) =>
           throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+        case TryCatchExpr(tryBody, catchClauses, afterBody) =>
+          checkBlock(tryBody, resTy, env)
+          catchClauses.map(checkClause(_, List(AnyType), resTy, env))
+          afterBody match {
+            case Some(block) => elab.elabBlock(block, env)._2
+            case None        => env
+          }
+        case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
+          val (tryBodyT, tryEnv) = elab.elabBlock(tryBody, env)
+          tryClauses.map(checkClause(_, List(tryBodyT), resTy, tryEnv))
+          catchClauses.map(checkClause(_, List(AnyType), resTy, env))
+          val env1 = afterBody match {
+            case Some(block) => elab.elabBlock(block, env)._2
+            case None        => env
+          }
+          env1
       }
   }
 }
