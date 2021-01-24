@@ -46,6 +46,7 @@ object Exprs {
   case class BinOp(op: String, arg1: Expr, arg2: Expr)(val l: Int) extends Expr
 
   case class Binary(elems: List[BinaryElem])(val l: Int) extends Expr
+  case class Catch(expr: Expr)(val l: Int) extends Expr
 
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
   case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)

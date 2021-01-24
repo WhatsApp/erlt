@@ -7,7 +7,7 @@ Erlang surface syntax.
 
 ### Surface syntax (TODO)
 
-- [ ] Catch
+- [x] Catch
 - [ ] Try/catch
 - [ ] Try-of/catch
 - [ ] List comprehensions

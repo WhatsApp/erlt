@@ -312,3 +312,29 @@ test68_pos({E, _}) -> E.
     ([atom()] | [number()]) ->
     [atom() | number()].
 test69_pos([H | T]) -> [H | T].
+
+-spec test70_neg() ->
+    [atom() | number()].
+test70_neg() ->
+    catch test69_pos([atom]).
+
+-spec test71_neg() ->
+    [atom() | number()].
+test71_neg() ->
+    catch test69_pos(atom).
+
+-spec test72_neg() ->
+    any().
+test72_neg() ->
+    catch test69_pos(atom).
+
+-spec test73_pos() ->
+    any().
+test73_pos() ->
+    catch test69_pos([atom]).
+
+-spec test74_pos() ->
+    any().
+test74_pos() ->
+    X = (catch test69_pos([atom])),
+    X.

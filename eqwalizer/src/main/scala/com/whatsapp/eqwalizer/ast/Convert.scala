@@ -237,7 +237,7 @@ object Convert {
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("catch"), ELong(l), eExp)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpCatch)
+        Catch(convertExp(eExp))(l.intValue)
       case ETuple(List(EAtom("call"), ELong(l), eExp, EList(eArgs, None))) =>
         eExp match {
           case ETuple(

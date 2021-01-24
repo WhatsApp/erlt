@@ -77,9 +77,6 @@ object WIPDiagnostics {
   case object ExpMap extends SkippedExpr {
     override def toString: String = "E: #{...}"
   }
-  case object ExpCatch extends SkippedExpr {
-    override def toString: String = "E: catch"
-  }
   case object ExpLC extends SkippedExpr {
     override def toString: String = "E: [ || ]"
   }

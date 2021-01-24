@@ -151,6 +151,9 @@ class Elab(module: String) {
           envAcc = env1
         }
         (BinaryType, envAcc)
+      case Catch(cExpr) =>
+        val (_, env1) = elabExpr(cExpr, env)
+        (AnyType, env1)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

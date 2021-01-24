@@ -93,5 +93,7 @@ object Show {
       s"_ $op _"
     case Binary(_) =>
       "<<..>>"
+    case Catch(_) =>
+      "catch"
   }
 }

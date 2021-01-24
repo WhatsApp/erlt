@@ -202,6 +202,8 @@ final case class Check(module: String) {
             envAcc = env1
           }
           envAcc
+        case Catch(_) =>
+          throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
       }
   }
 }
