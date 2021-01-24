@@ -37,7 +37,8 @@
     range_types/1,
     named_funs/1,
     unnamed_funs/1,
-    parameterized_types/1
+    parameterized_types/1,
+    specs/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -513,6 +514,17 @@ parameterized_types(BeamFile) ->
 parameterized_type({attribute, Line, type, {Name, _Body, Vars}}) when length(Vars) > 0 -> {Line, Name};
 parameterized_type({attribute, Line, opaque, {Name, _Body, Vars}}) when length(Vars) > 0 -> {Line, Name};
 parameterized_type(_) -> false.
+
+%% Specs
+
+-spec specs(BeamFile :: file:filename()) -> [any()].
+specs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun spec/1).
+
+spec({attribute, _, spec, _} = Spec) -> Spec;
+spec(_) -> false.
+
 
 %% Utilities
 

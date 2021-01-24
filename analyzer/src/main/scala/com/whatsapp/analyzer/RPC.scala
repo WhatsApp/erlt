@@ -17,10 +17,9 @@
 package com.whatsapp.analyzer
 
 import java.io.File
-
 import com.ericsson.otp.erlang._
 import erlang.Data._
-import erlang.forms.AbstractForm.AbstractForm
+import erlang.forms.AbstractForm.{AF_FunctionSpec, AbstractForm}
 import erlang.forms.AbstractFormConvert
 
 class RPC(val connection: OtpConnection) extends AutoCloseable {
@@ -46,6 +45,21 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
       case _ =>
         println("not loaded")
         None
+    }
+  }
+
+  def getSpecs(beamFilePath: String): List[AF_FunctionSpec] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "specs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val rawForms = erlang.DataConvert.fromJava(received)
+
+    rawForms match {
+      case EList(elems, None) =>
+        elems.map(e => AbstractFormConvert.convertForm(e, false)).collect { case s: AF_FunctionSpec => s }
+      case _ =>
+        println("not loaded")
+        List.empty
     }
   }
 
