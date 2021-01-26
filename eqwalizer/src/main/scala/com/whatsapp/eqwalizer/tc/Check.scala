@@ -194,7 +194,7 @@ final case class Check(module: String) {
           }
         case Binary(elems) =>
           if (!Subtype.subType(BinaryType, resTy)) {
-            throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = BinaryType)
           }
           var envAcc = env
           for { elem <- elems } {

@@ -16,7 +16,7 @@
  16     Rest.                                  |         | 
  17                                            |         | 
  18 -spec test04_neg() -> list(any()).         |         | 
- 19 test04_neg() -> <<>>.                      | ERROR   | <<..>>. Expected: [term()], Got: number()
+ 19 test04_neg() -> <<>>.                      | ERROR   | <<..>>. Expected: [term()], Got: binary()
  20                                            |         | 
  21 -spec test05_pos(binary())                 |         | 
  22         -> {binary(), binary()}.           |         | 
