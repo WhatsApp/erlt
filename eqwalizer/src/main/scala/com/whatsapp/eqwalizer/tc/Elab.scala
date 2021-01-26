@@ -18,14 +18,14 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.ast.Vars
+import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 import scala.annotation.tailrec
 
-class Elab(module: String) {
+final class Elab(module: String) {
   @tailrec
-  private def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
+  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
     exprs match {
       case expr :: Nil =>
         elabExpr(expr, env)
@@ -110,7 +110,7 @@ class Elab(module: String) {
         (UnionType(ts), Approx.joinEnvs(env1, envs))
       case If(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvs(env, envs))
+        (UnionType(ts), Approx.joinEnvs(envs.head, envs.tail))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
         ElabPat.elabPat(mPat, ty, env1)
@@ -144,5 +144,43 @@ class Elab(module: String) {
           case _ => throw new IllegalStateException()
           // $COVERAGE-ON$
         }
+      case Binary(elems) =>
+        var envAcc = env
+        for { elem <- elems } {
+          val (_, env1) = elabBinaryElem(elem, envAcc)
+          envAcc = env1
+        }
+        (BinaryType, envAcc)
+      case Catch(cExpr) =>
+        val (_, env1) = elabExpr(cExpr, env)
+        (AnyType, env1)
+      case TryCatchExpr(tryBody, catchClauses, afterBody) =>
+        val (tryT, _) = elabBlock(tryBody, env)
+        val (catchTs, _) = catchClauses.map(elabClause(_, env)).unzip
+        val env1 = afterBody match {
+          case Some(block) => elabBlock(block, env)._2
+          case None        => env
+        }
+        (UnionType(tryT :: catchTs), env1)
+      case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
+        val (_, tryEnv) = elabBlock(tryBody, env)
+        val (tryTs, _) = tryClauses.map(elabClause(_, tryEnv)).unzip
+        val (catchTs, _) = catchClauses.map(elabClause(_, env)).unzip
+        val env1 = afterBody match {
+          case Some(block) => elabBlock(block, env)._2
+          case None        => env
+        }
+        (UnionType(tryTs ::: catchTs), env1)
     }
+
+  def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
+    val env1 = elem.size match {
+      case Some(s) => Check(module).checkExpr(s, integerType, env)
+      case None    => env
+    }
+    val isStringLiteral = false
+    val expType = BinarySpecifiers.expType(elem.specifier, isStringLiteral)
+    val env2 = Check(module).checkExpr(elem.expr, expType, env1)
+    (expType, env2)
+  }
 }

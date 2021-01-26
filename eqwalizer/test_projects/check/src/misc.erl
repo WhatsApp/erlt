@@ -312,3 +312,47 @@ test68_pos({E, _}) -> E.
     ([atom()] | [number()]) ->
     [atom() | number()].
 test69_pos([H | T]) -> [H | T].
+
+-spec test70_neg() ->
+    [atom() | number()].
+test70_neg() ->
+    catch test69_pos([atom]).
+
+-spec test71_neg() ->
+    [atom() | number()].
+test71_neg() ->
+    catch test69_pos(atom).
+
+-spec test72_neg() ->
+    any().
+test72_neg() ->
+    catch test69_pos(atom).
+
+-spec test73_pos() ->
+    any().
+test73_pos() ->
+    catch test69_pos([atom]).
+
+-spec test74_pos() ->
+    any().
+test74_pos() ->
+    X = (catch test69_pos([atom])),
+    X.
+
+-spec test75_pos() -> ok.
+test75_pos() ->
+    try
+        ok
+    of
+        ok -> ok
+    after
+        nook
+    end.
+
+-spec test76_pos(any()) -> atom().
+test76_pos(A) when is_atom(A) -> A;
+test76_pos(_) ->
+    erlang:throw({error, not_an_atom}).
+
+-spec test77_neg(any()) -> atom().
+test77_neg(A) -> catch(test76_pos(A)).

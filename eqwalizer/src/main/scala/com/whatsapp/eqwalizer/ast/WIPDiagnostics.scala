@@ -59,9 +59,6 @@ object WIPDiagnostics {
   case object TypeIntersection extends SkippedType {
     override def toString: String = "Intersection"
   }
-  case object PatBin extends SkippedPat {
-    override def toString: String = s"P: <<...>>"
-  }
   case object PatListConcat extends SkippedPat {
     override def toString: String = "P: _ ++ _"
   }
@@ -74,17 +71,11 @@ object WIPDiagnostics {
   case object PatMap extends SkippedPat {
     override def toString: String = "P: #{...}"
   }
-  case object ExpBin extends SkippedExpr {
-    override def toString: String = "E: <<...>>"
-  }
   case class ExpRecord(name: String) extends SkippedExpr {
     override def toString: String = s"E: #$name{...}"
   }
   case object ExpMap extends SkippedExpr {
     override def toString: String = "E: #{...}"
-  }
-  case object ExpCatch extends SkippedExpr {
-    override def toString: String = "E: catch"
   }
   case object ExpLC extends SkippedExpr {
     override def toString: String = "E: [ || ]"
@@ -94,9 +85,6 @@ object WIPDiagnostics {
   }
   case object ExpString extends SkippedExpr {
     override def toString: String = """E: "...""""
-  }
-  case object ExpTry extends SkippedExpr {
-    override def toString: String = "E: try"
   }
   case object ExpReceive extends SkippedExpr {
     override def toString: String = "E: receive"
@@ -118,9 +106,6 @@ object WIPDiagnostics {
   }
   case object ExpListSubtract extends SkippedExpr {
     override def toString: String = "E: _ -- _"
-  }
-  case object TestBin extends SkippedGuard {
-    override def toString: String = "G: <<...>>"
   }
   case class TestRecord(name: String) extends SkippedGuard {
     override def toString: String = s"G: #$name{...}"

@@ -55,6 +55,8 @@ object ElabGuard {
         elabUnOp(unOp, env)
       case binOp: TestBinOp =>
         elabBinOp(binOp, env)
+      case TestBinaryLit() =>
+        env
     }
 
   private def elabTestT(test: Test, t: Type, env: Env): Env =

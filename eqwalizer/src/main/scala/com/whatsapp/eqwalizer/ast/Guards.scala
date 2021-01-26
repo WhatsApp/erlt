@@ -30,4 +30,6 @@ object Guards {
 
   case class TestUnOp(op: String, arg: Test)(val l: Int) extends Test
   case class TestBinOp(op: String, arg1: Test, arg2: Test)(val l: Int) extends Test
+  // Simplification. See https://fburl.com/binaryguards
+  case class TestBinaryLit()(val l: Int) extends Test
 }

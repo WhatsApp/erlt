@@ -42,7 +42,17 @@ object Vars {
         patVars(arg)
       case PatBinOp(_, arg1, arg2) =>
         patVars(arg1) ++ patVars(arg2)
+      case PatBinary(elems) =>
+        elems.flatMap(binaryElemVars).toSet
     }
+
+  private def binaryElemVars(elem: PatBinaryElem): Set[String] = {
+    val sizeVars: Set[String] = elem.size match {
+      case Pats.PatBinSizeConst => Set.empty
+      case PatBinSizeVar(v)     => Set(v.n)
+    }
+    sizeVars ++ patVars(elem.pat)
+  }
 
   def clauseVars(clause: Clause): Set[String] =
     clause.pats.flatMap(patVars).toSet

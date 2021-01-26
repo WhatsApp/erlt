@@ -54,6 +54,8 @@ object Show {
         "port()"
       case ReferenceType =>
         "reference()"
+      case BinaryType =>
+        "binary()"
     }
 
   def show(e: Expr): String = e match {
@@ -89,5 +91,13 @@ object Show {
       s"$op _"
     case BinOp(op, _, _) =>
       s"_ $op _"
+    case Binary(_) =>
+      "<<..>>"
+    case Catch(_) =>
+      "catch"
+    case TryCatchExpr(_, _, _) =>
+      "try .. catch .."
+    case TryOfCatchExpr(_, _, _, _) =>
+      "try .. of .. catch .."
   }
 }

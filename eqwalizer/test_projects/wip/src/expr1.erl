@@ -62,9 +62,6 @@ map_create() ->
 map_update(M) ->
     M#{id => 1}.
 
-catch_exp(X) ->
-    catch X.
-
 call1(X) ->
     id(X).
 

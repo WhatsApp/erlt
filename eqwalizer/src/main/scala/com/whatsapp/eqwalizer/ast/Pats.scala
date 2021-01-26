@@ -16,6 +16,8 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.BinarySpecifiers.Specifier
+
 object Pats {
   sealed trait Pat { val l: Int }
 
@@ -32,4 +34,11 @@ object Pats {
 
   case class PatUnOp(op: String, arg: Pat)(val l: Int) extends Pat
   case class PatBinOp(op: String, arg1: Pat, arg2: Pat)(val l: Int) extends Pat
+
+  case class PatBinary(elems: List[PatBinaryElem])(val l: Int) extends Pat
+  case class PatBinaryElem(pat: Pat, size: PatBinSize, specifier: Specifier)(val l: Int)
+
+  sealed trait PatBinSize
+  case object PatBinSizeConst extends PatBinSize
+  case class PatBinSizeVar(v: PatVar) extends PatBinSize
 }

@@ -312,3 +312,47 @@
 312     ([atom()] | [number()]) ->             |         | 
 313     [atom() | number()].                   |         | 
 314 test69_pos([H | T]) -> [H | T].            | OK      | 
+315                                            |         | 
+316 -spec test70_neg() ->                      |         | 
+317     [atom() | number()].                   |         | 
+318 test70_neg() ->                            | ERROR   | 
+319     catch test69_pos([atom]).              |         | catch. Expected: [atom() | number()], Got: term()
+320                                            |         | 
+321 -spec test71_neg() ->                      |         | 
+322     [atom() | number()].                   |         | 
+323 test71_neg() ->                            | ERROR   | 
+324     catch test69_pos(atom).                |         | catch. Expected: [atom() | number()], Got: term()
+325                                            |         | 
+326 -spec test72_neg() ->                      |         | 
+327     any().                                 |         | 
+328 test72_neg() ->                            | ERROR   | 
+329     catch test69_pos(atom).                |         | 'atom'. Expected: [atom()] | [number()], Got: 'atom'
+330                                            |         | 
+331 -spec test73_pos() ->                      |         | 
+332     any().                                 |         | 
+333 test73_pos() ->                            | OK      | 
+334     catch test69_pos([atom]).              |         | 
+335                                            |         | 
+336 -spec test74_pos() ->                      |         | 
+337     any().                                 |         | 
+338 test74_pos() ->                            | OK      | 
+339     X = (catch test69_pos([atom])),        |         | 
+340     X.                                     |         | 
+341                                            |         | 
+342 -spec test75_pos() -> ok.                  |         | 
+343 test75_pos() ->                            | OK      | 
+344     try                                    |         | 
+345         ok                                 |         | 
+346     of                                     |         | 
+347         ok -> ok                           |         | 
+348     after                                  |         | 
+349         nook                               |         | 
+350     end.                                   |         | 
+351                                            |         | 
+352 -spec test76_pos(any()) -> atom().         |         | 
+353 test76_pos(A) when is_atom(A) -> A;        | OK      | 
+354 test76_pos(_) ->                           |         | 
+355     erlang:throw({error, not_an_atom}).    |         | 
+356                                            |         | 
+357 -spec test77_neg(any()) -> atom().         |         | 
+358 test77_neg(A) -> catch(test76_pos(A)).     | ERROR   | catch. Expected: atom(), Got: term()

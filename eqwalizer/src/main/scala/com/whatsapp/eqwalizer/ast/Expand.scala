@@ -42,7 +42,7 @@ object Expand {
         ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
         t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
@@ -69,7 +69,7 @@ object Expand {
             case Some(tp) => expandConstraints(tp, s, stack + v)
             case None     => t
           }
-      case _: BuiltinType | _: AtomLitType | NilType => t
+      case _: BuiltinType | _: AtomLitType | NilType | BinaryType => t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$

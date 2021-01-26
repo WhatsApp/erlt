@@ -164,11 +164,11 @@
 164 -type my_term() ::                       | LOADED  |                                | 
 165     term().                              |         |                                | 
 166                                          |         |                                | 
-167 -type my_binary() ::                     | SKIPPED |                                | 
-168     binary().                            |         | T: binary()                    | 
+167 -type my_binary() ::                     | LOADED  |                                | 
+168     binary().                            |         |                                | 
 169                                          |         |                                | 
-170 -type my_bitstring() ::                  | SKIPPED |                                | 
-171     binary().                            |         | T: binary()                    | 
+170 -type my_bitstring() ::                  | LOADED  |                                | 
+171     binary().                            |         |                                | 
 172                                          |         |                                | 
 173 -type my_boolean() ::                    | LOADED  |                                | 
 174     boolean().                           |         |                                | 

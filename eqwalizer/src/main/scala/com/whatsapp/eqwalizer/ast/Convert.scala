@@ -16,6 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.BinarySpecifiers._
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Guards._
@@ -24,16 +25,30 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.io.EData._
 
 object Convert {
+  private val specifiers: Map[String, Specifier] =
+    Map(
+      "default" -> UnsignedIntegerSpecifier,
+      "integer" -> UnsignedIntegerSpecifier,
+      "float" -> FloatSpecifier,
+      "binary" -> BinarySpecifier,
+      "bytes" -> BytesSpecifier,
+      "bitstring" -> BitstringSpecifier,
+      "bits" -> BitsSpecifier,
+      "utf8" -> Utf8Specifier,
+      "utf16" -> Utf16Specifier,
+      "utf32" -> Utf32Specifier,
+    )
+
   def convertForm(term: EObject): Option[Form] =
     term match {
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("module"), EAtom(name))) =>
         Some(Module(name)(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export"), EList(ids, None))) =>
-        Some(Export(ids.map(convertId))(line.intValue))
+        Some(Export(ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("import"), ETuple(List(EAtom(m), EList(ids, None))))) =>
-        Some(Import(m, ids.map(convertId))(line.intValue))
+        Some(Import(m, ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export_type"), EList(typesIds, None))) =>
-        Some(ExportType(typesIds.map(convertId))(line.intValue))
+        Some(ExportType(typesIds.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(_, None))))) =>
         Some(SkippedRecordDecl(name)(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("file"), ETuple(List(EString(file), ELong(start))))) =>
@@ -48,10 +63,10 @@ object Convert {
         try {
           if (eTypeList.size > 1)
             throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeIntersection)
-          Some(FunSpec(convertId(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
+          Some(FunSpec(convertIdInAttr(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
         } catch {
           case d: WIPDiagnostics.SkippedConstructDiagnostics =>
-            Some(SkippedFunSpec(convertId(eFunId), d)(line.intValue))
+            Some(SkippedFunSpec(convertIdInAttr(eFunId), d)(line.intValue))
         }
       case ETuple(EAtom("attribute") :: _) =>
         None
@@ -69,10 +84,17 @@ object Convert {
     name
   }
 
-  private def convertId(term: EObject): Id = {
-    val ETuple(List(EAtom(name), ELong(arity))) = term
-    Id(name, arity.intValue)
-  }
+  private def convertIdInAttr(term: EObject): Id =
+    term match {
+      case ETuple(List(EAtom(name), ELong(arity))) =>
+        Id(name, arity.intValue)
+      case ETuple(List(EAtom(module), EAtom(name), ELong(arity))) =>
+        // it should be the same module by construction, -> localizing
+        Id(name, arity.intValue)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
 
   private def atomLit(term: EObject): String = {
     val ETuple(List(EAtom("atom"), _, EAtom(atomVal))) = term
@@ -199,8 +221,8 @@ object Convert {
         NilLit()(l.intValue)
       case ETuple(List(EAtom("cons"), ELong(l), hE, tE)) =>
         Cons(convertExp(hE), convertExp(tE))(l.intValue)
-      case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBin)
+      case ETuple(List(EAtom("bin"), ELong(l), EList(binElems, None))) =>
+        Binary(binElems.map(convertBinaryElem))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), exp1, exp2)) =>
         op match {
           case "++" => throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpListConcat)
@@ -222,7 +244,7 @@ object Convert {
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("catch"), ELong(l), eExp)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpCatch)
+        Catch(convertExp(eExp))(l.intValue)
       case ETuple(List(EAtom("call"), ELong(l), eExp, EList(eArgs, None))) =>
         eExp match {
           case ETuple(
@@ -253,13 +275,20 @@ object Convert {
             List(
               EAtom("try"),
               ELong(l),
-              EList(eExps1, None),
-              EList(eClauses1, None),
-              EList(eClauses2, None),
-              EList(eExps2, None),
+              EList(eTryBody, None),
+              EList(eTryClauses, None),
+              EList(eCatchClauses, None),
+              EList(eAfter, None),
             )
           ) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpTry)
+        val tryBody = eTryBody.map(convertExp)
+        val tryClauses = eTryClauses.map(convertClause)
+        val catchClauses = eCatchClauses.map(convertClause)
+        val afterBody = if (eAfter.isEmpty) None else Some(eAfter.map(convertExp))
+        if (tryClauses.isEmpty)
+          TryCatchExpr(tryBody, catchClauses, afterBody)(l.intValue)
+        else
+          TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody)(l.intValue)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None), eTimeout, EList(defaults, None))) =>
@@ -298,6 +327,16 @@ object Convert {
       // $COVERAGE-ON$
     }
 
+  private def convertBinaryElem(e: EObject): BinaryElem = {
+    val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
+    val size = eSize match {
+      case EAtom("default") => None
+      case _                => Some(convertExp(eSize))
+    }
+    val specifier = convertSpecifier(eSpecifier)
+    BinaryElem(convertExp(elem), size, specifier)(l.intValue)
+  }
+
   private def convertGuard(term: EObject): Guard = {
     val EList(tests, None) = term
     Guard(tests.map(convertTest))
@@ -323,8 +362,8 @@ object Convert {
         PatNumber()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatString)
-      case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatBin)
+      case ETuple(List(EAtom("bin"), ELong(l), EList(binElems, None))) =>
+        PatBinary(binElems.map(convertPatBinaryElem))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), p1, p2)) =>
         op match {
           case "++" => throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatListConcat)
@@ -343,6 +382,20 @@ object Convert {
       // $COVERAGE-ON$
     }
 
+  private def convertPatBinaryElem(e: EObject): PatBinaryElem = {
+    val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
+    val size = eSize match {
+      case EAtom("default") => PatBinSizeConst
+      case _ =>
+        convertPat(eSize) match {
+          case v: PatVar => PatBinSizeVar(v)
+          case _         => PatBinSizeConst
+        }
+    }
+    val specifier = convertSpecifier(eSpecifier)
+    PatBinaryElem(convertPat(elem), size, specifier)(l.intValue)
+  }
+
   private def convertTest(term: EObject): Test =
     term match {
       case ETuple(List(EAtom("var"), ELong(l), EAtom(name))) =>
@@ -354,7 +407,7 @@ object Convert {
       case ETuple(List(EAtom("cons"), ELong(l), h, t)) =>
         TestCons(convertTest(h), convertTest(t))(l.intValue)
       case ETuple(List(EAtom("bin"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestBin)
+        TestBinaryLit()(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t1, t2)) =>
         TestBinOp(op, convertTest(t1), convertTest(t2))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t)) =>
@@ -396,4 +449,23 @@ object Convert {
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertSpecifier(eSpecifier: EObject): Specifier = {
+    val unsignedSpec = eSpecifier match {
+      case EList(specs, None) =>
+        specs.collect { case EAtom(s) => s }.flatMap(specifiers.get).headOption.getOrElse(UnsignedIntegerSpecifier)
+      case _ =>
+        UnsignedIntegerSpecifier
+    }
+    val signed = eSpecifier match {
+      case EList(specs, None) => specs.contains(EAtom("signed"))
+      case _                  => false
+    }
+
+    val spec =
+      if (signed && unsignedSpec == UnsignedIntegerSpecifier)
+        SignedIntegerSpecifier
+      else unsignedSpec
+    spec
+  }
 }
