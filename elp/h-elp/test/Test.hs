@@ -4,17 +4,19 @@
 
 import           Control.Monad
 import           Data.Hashable
+import qualified Data.Map as Map
 import           Data.Rope.UTF16 ( Rope )
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
+import           GHC.Word
 import           Foreign.C.String
 import           Foreign.Marshal.Alloc
 import           Foreign.Marshal.Array          ( mallocArray )
 import           Foreign.Ptr
 import           Foreign.Storable
 import           Language.Haskell.LSP.Test
-import           Language.LSP.Types           as J
-import           Language.LSP.Types.Lens      as J
+import           Language.LSP.Types
+import           Language.LSP.Types.Lens
 import           Language.LSP.VFS
 import           System.Directory
 import           System.FilePath
@@ -29,6 +31,7 @@ import           TreeSitter.Tree
 import Test.Tasty
 import Test.Tasty.HUnit
 
+main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
@@ -49,20 +52,34 @@ testVFS = testGroup "VFS"
                [ "-module(foo)."
                , "-xxxx(yyy)."
                ]
-          itemA = J.TextDocumentItem uriA "erlang" 0 aContent
-          uriA = filePathToUri "A/A.hs"
-          a = J.TextDocumentIdentifier uriA
+          content2 = T.unlines
+               [ "-abcdef(foo)."
+               , "-xxxx(yyy)."
+               ]
+          content3 = T.unlines
+               [ "-module(foo)."
+               , "-abcd(yyy)."
+               ]
+          itemA = TextDocumentItem uriA "erlang" 0 aContent
+          uriA = filePathToUri "src/foo.erl"
+          nUriA = toNormalizedUri uriA
+          a = TextDocumentIdentifier uriA
           msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
-        let r = openVFS vfs msg
+        let (v1,_) = openVFS vfs msg
         parser <- treeSitterParser
         (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
         sexp <- nodeAsSexpr node
         sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
 
-        tree2 <- treeSitterParseEdit () tree
-        (tree3,node2) <- treeSitterParseIncrement parser () tree2
-        sexp2 <- nodeAsSexpr node
-        sexp2 @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
+        let Just (VirtualFile _ _ rope1) = Map.lookup nUriA (vfsMap v1)
+        let change = TextDocumentContentChangeEvent Nothing Nothing content3
+        let edit = lspChangeAsTSInputEdit rope1 change
+        tree2 <- treeSitterParseEdit edit tree
+
+        let rope2 = applyChange rope1 change
+        (tree3,node2) <- treeSitterParseIncrement parser rope2 tree2
+        sexp2 <- nodeAsSexpr node2
+        sexp2 @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
 
         assertBool "show me the logs!" False
         free parser
@@ -119,7 +136,7 @@ treeSitterParseFull parser source = do
   -- pp $ "Node:" ++ show nn
   return (tree, nn)
 
-treeSitterParseEdit :: p -> Ptr Tree -> IO (Ptr Tree)
+treeSitterParseEdit :: TSInputEdit -> Ptr Tree -> IO (Ptr Tree)
 treeSitterParseEdit edit tree = do
 
   let edit1 = TSInputEdit
@@ -139,17 +156,76 @@ treeSitterParseEdit edit tree = do
                 , editNewEndPoint = TSPoint 0 4
                 }
   inp <- malloc
-  poke inp edit2
+  poke inp edit
   ts_tree_edit tree inp
   return tree
 
+-- Based on Language.LSP.VFS.applyChange.
+-- TODO: move this somewhere meaningful
+lspChangeAsTSInputEdit :: Rope -> TextDocumentContentChangeEvent -> TSInputEdit
+lspChangeAsTSInputEdit rope change = edit
+  where
+    edit = case change of
+      (TextDocumentContentChangeEvent Nothing                                          Nothing     txt) ->
+        -- replace the entire string
+        let
+        in TSInputEdit
+             { editStartByte   = 0
+             , editOldEndByte  = fromIntegral $ Rope.length rope
+             , editNewEndByte  = fromIntegral $ T.length txt
+             , editStartPoint  = TSPoint 0 0
+             , editOldEndPoint = TSPoint (fromIntegral $ Rope.rows rope) 0
+               -- probably have to use something other than hard coded
+               -- col of zero. First approximation.
+             , editNewEndPoint = TSPoint (fromIntegral $ Rope.rows (Rope.fromText txt)) 0
+               -- If we integrate this with the VFS change processing,
+               -- the Rope.fromText will not be wasted.
+             }
+      (TextDocumentContentChangeEvent (Just (Range from to)) _ txt) ->
+        -- replace a portion with a new string.  The length parameter is optional and deprecated
+        let
+          startByte = byteAddress rope from
+          endByte   = byteAddress rope to
+          startPoint = position2TSPoint from
+        in TSInputEdit
+             { editStartByte   = startByte
+             , editOldEndByte  = endByte
+             , editNewEndByte  = startByte + fromIntegral (T.length txt)
+             , editStartPoint  = startPoint
+             , editOldEndPoint = position2TSPoint to
+               -- probably have to use something other than hard coded
+               -- col of zero. First approximation.
+             , editNewEndPoint = addText startPoint txt
+               -- If we integrate this with the VFS change processing,
+               -- the Rope.fromText will not be wasted.
+             }
+      (TextDocumentContentChangeEvent Nothing (Just _) _txt) -> undefined
 
-treeSitterParseIncrement :: Ptr Parser -> p -> Ptr Tree -> IO (Ptr Tree, Node)
-treeSitterParseIncrement parser edit tree = do
+    byteAddress :: Rope -> Position -> Word32
+    byteAddress rope (Position line col)
+      = fromIntegral $ Rope.rowColumnCodeUnits (Rope.RowColumn line col) rope
 
-  let source2 =
-        -- "-moable(foo).\n-x(y).\n"
-        "-moable(foo).\n-x(y).\n"
+    position2TSPoint :: Position -> TSPoint
+    position2TSPoint (Position line col) = TSPoint (fromIntegral line) (fromIntegral col)
+
+    addText :: TSPoint -> T.Text -> TSPoint
+    addText (TSPoint row col) txt = TSPoint row' col'
+      where
+        rope = Rope.fromText txt
+        newRows = Rope.rows rope
+        lastCol = Rope.length $ snd $ Rope.splitAtLine newRows rope
+        (row', col') = case Rope.rows rope of
+          0 -> (row,                  col + fromIntegral lastCol)
+          r -> (row + fromIntegral r, fromIntegral lastCol)
+
+
+treeSitterParseIncrement :: Ptr Parser -> Rope -> Ptr Tree -> IO (Ptr Tree, Node)
+treeSitterParseIncrement parser rope tree = do
+
+  -- let source2 =
+  --       -- "-moable(foo).\n-x(y).\n"
+  --       "-abcdef(foo).\n-xxxx(yyy).\n"
+  let source2 = Rope.toString rope
   (str2, _len2) <- newCStringLen source2
 
   fp <- mkReadFunction vfsReadFunction
@@ -177,16 +253,16 @@ treeSitterParseIncrement parser edit tree = do
 -- | Tree Sitter 'ReadFunction' using a VFS as the payload
 vfsReadFunction :: ReadFunction
 vfsReadFunction ppayload offset ppos lenPtr = do
-  pp $ "******iread entered"
-  pp $ "******iread ppayload=" ++ show (ppayload, offset, ppos)
+  pp $ "******vfsReadFunction entered"
+  pp $ "******vfsReadFunction ppayload=" ++ show (ppayload, offset, ppos)
   -- type ReadFunction = (Ptr Payload -> Word32 -> Ptr TSPoint -> Ptr Word32 -> IO CString)
   tin <- peek ppayload
   let pstr = plusPtr (inputPayload tin) (fromIntegral offset)
   str <- peekCString pstr
-  hPutStrLn stderr $ "******iread str=[" ++ show str ++ "]"
+  hPutStrLn stderr $ "******vfsReadFunction str=[" ++ show str ++ "]"
   len <- withCStringLen str $ \(_s,l) -> return l
   poke lenPtr (fromIntegral len)
-  -- pp $ "******iread ending=" ++ show (pstr, len)
+  -- pp $ "******vfsReadFunction ending=" ++ show (pstr, len)
   return pstr
 
 nodeAsSexpr :: Node -> IO String
