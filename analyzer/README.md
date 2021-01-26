@@ -15,6 +15,10 @@ returns.
 - The higher-level `erlang.forms.AbstractForm` and related types, which has
 notions of modules, exports, etc., which encodes more semantics
 of the code, and therefore makes it feel more natural to inspect.
+- `erlang.CErl` - Scala's representation of `cerl:cerl()`. - Experimental WIP
+stuff. There are ideas of using this representation in eqwalizer. It's put into
+analyzer for now to ease development and experimentation. One nice feature of 
+`cerl` - lexical scoping.
 
 ## How to configure and run
 
