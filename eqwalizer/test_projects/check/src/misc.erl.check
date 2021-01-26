@@ -316,12 +316,12 @@
 316 -spec test70_neg() ->                      |         | 
 317     [atom() | number()].                   |         | 
 318 test70_neg() ->                            | ERROR   | 
-319     catch test69_pos([atom]).              |         | catch. Expected: [atom() | number()], Got: number()
+319     catch test69_pos([atom]).              |         | catch. Expected: [atom() | number()], Got: term()
 320                                            |         | 
 321 -spec test71_neg() ->                      |         | 
 322     [atom() | number()].                   |         | 
 323 test71_neg() ->                            | ERROR   | 
-324     catch test69_pos(atom).                |         | catch. Expected: [atom() | number()], Got: number()
+324     catch test69_pos(atom).                |         | catch. Expected: [atom() | number()], Got: term()
 325                                            |         | 
 326 -spec test72_neg() ->                      |         | 
 327     any().                                 |         | 

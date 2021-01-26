@@ -203,7 +203,7 @@ final case class Check(module: String) {
           }
           envAcc
         case Catch(_) =>
-          throw TypeMismatch(expr.l, expr, expected = resTy, got = NumberType)
+          throw TypeMismatch(expr.l, expr, expected = resTy, got = AnyType)
         case TryCatchExpr(tryBody, catchClauses, afterBody) =>
           checkBlock(tryBody, resTy, env)
           catchClauses.map(checkClause(_, List(AnyType), resTy, env))
