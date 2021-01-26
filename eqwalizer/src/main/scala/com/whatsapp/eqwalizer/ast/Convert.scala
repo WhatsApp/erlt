@@ -44,11 +44,11 @@ object Convert {
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("module"), EAtom(name))) =>
         Some(Module(name)(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export"), EList(ids, None))) =>
-        Some(Export(ids.map(convertId))(line.intValue))
+        Some(Export(ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("import"), ETuple(List(EAtom(m), EList(ids, None))))) =>
-        Some(Import(m, ids.map(convertId))(line.intValue))
+        Some(Import(m, ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export_type"), EList(typesIds, None))) =>
-        Some(ExportType(typesIds.map(convertId))(line.intValue))
+        Some(ExportType(typesIds.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(_, None))))) =>
         Some(SkippedRecordDecl(name)(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("file"), ETuple(List(EString(file), ELong(start))))) =>
@@ -63,10 +63,10 @@ object Convert {
         try {
           if (eTypeList.size > 1)
             throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeIntersection)
-          Some(FunSpec(convertId(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
+          Some(FunSpec(convertIdInAttr(eFunId), eTypeList.map(convertFunSpecType))(line.intValue))
         } catch {
           case d: WIPDiagnostics.SkippedConstructDiagnostics =>
-            Some(SkippedFunSpec(convertId(eFunId), d)(line.intValue))
+            Some(SkippedFunSpec(convertIdInAttr(eFunId), d)(line.intValue))
         }
       case ETuple(EAtom("attribute") :: _) =>
         None
@@ -84,10 +84,17 @@ object Convert {
     name
   }
 
-  private def convertId(term: EObject): Id = {
-    val ETuple(List(EAtom(name), ELong(arity))) = term
-    Id(name, arity.intValue)
-  }
+  private def convertIdInAttr(term: EObject): Id =
+    term match {
+      case ETuple(List(EAtom(name), ELong(arity))) =>
+        Id(name, arity.intValue)
+      case ETuple(List(EAtom(module), EAtom(name), ELong(arity))) =>
+        // it should be the same module by construction, -> localizing
+        Id(name, arity.intValue)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
 
   private def atomLit(term: EObject): String = {
     val ETuple(List(EAtom("atom"), _, EAtom(atomVal))) = term
