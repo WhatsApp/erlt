@@ -348,3 +348,11 @@
 348     after                                  |         | 
 349         nook                               |         | 
 350     end.                                   |         | 
+351                                            |         | 
+352 -spec test76_pos(any()) -> atom().         |         | 
+353 test76_pos(A) when is_atom(A) -> A;        | OK      | 
+354 test76_pos(_) ->                           |         | 
+355     erlang:throw({error, not_an_atom}).    |         | 
+356                                            |         | 
+357 -spec test77_neg(any()) -> atom().         |         | 
+358 test77_neg(A) -> catch(test76_pos(A)).     | ERROR   | catch. Expected: atom(), Got: term()

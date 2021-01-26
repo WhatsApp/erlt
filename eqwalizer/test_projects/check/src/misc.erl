@@ -348,3 +348,11 @@ test75_pos() ->
     after
         nook
     end.
+
+-spec test76_pos(any()) -> atom().
+test76_pos(A) when is_atom(A) -> A;
+test76_pos(_) ->
+    erlang:throw({error, not_an_atom}).
+
+-spec test77_neg(any()) -> atom().
+test77_neg(A) -> catch(test76_pos(A)).
