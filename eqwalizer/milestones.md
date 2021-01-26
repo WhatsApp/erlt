@@ -29,7 +29,7 @@ Erlang surface syntax.
 ### More elaboration/propagation
 
 - [ ] Propagate selector type in case-expressions
-- [ ] Propaget try-body type in try-of expressions
+- [ ] Propagate try-body type in try-of expressions
 
 ### Data-driven analysis
 
