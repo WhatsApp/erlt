@@ -338,3 +338,13 @@
 338 test74_pos() ->                            | OK      | 
 339     X = (catch test69_pos([atom])),        |         | 
 340     X.                                     |         | 
+341                                            |         | 
+342 -spec test75_pos() -> ok.                  |         | 
+343 test75_pos() ->                            | OK      | 
+344     try                                    |         | 
+345         ok                                 |         | 
+346     of                                     |         | 
+347         ok -> ok                           |         | 
+348     after                                  |         | 
+349         nook                               |         | 
+350     end.                                   |         | 

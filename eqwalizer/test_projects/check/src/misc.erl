@@ -338,3 +338,13 @@ test73_pos() ->
 test74_pos() ->
     X = (catch test69_pos([atom])),
     X.
+
+-spec test75_pos() -> ok.
+test75_pos() ->
+    try
+        ok
+    of
+        ok -> ok
+    after
+        nook
+    end.
