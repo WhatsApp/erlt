@@ -562,7 +562,7 @@ improper_list(_) -> false.
 
 %% Core forms
 
--spec get_core_forms(file:filename()) -> {ok, cerl:cerl()} | {error}.
+-spec get_core_forms(file:filename()) -> {ok, cerl:cerl()} | error.
 get_core_forms(BeamFile) ->
     case beam_lib:chunks(BeamFile, [debug_info]) of
         {ok, {Module, [{debug_info, {debug_info_v1, Backend, Metadata}}]}} ->
@@ -570,7 +570,7 @@ get_core_forms(BeamFile) ->
                 {ok, Core} -> {ok, Core};
                 {error, _} -> error
             end;
-        _ -> {error}
+        _ -> error
     end.
 
 %% Utilities
