@@ -97,3 +97,30 @@
  97     after                                  |         | 
  98         only_atom(atom)                    |         | 
  99     end.                                   |         | 
+100                                            |         | 
+101                                            |         | 
+102 -spec test11_pos(any(), boolean())         |         | 
+103     -> atom().                             |         | 
+104 test11_pos(Y, Cond) ->                     | OK      | 
+105     Res =                                  |         | 
+106         try ok()                           |         | 
+107         after                              |         | 
+108             if is_atom(Y) -> ok end        |         | 
+109         end,                               |         | 
+110     if                                     |         | 
+111         Cond -> Res;                       |         | 
+112         true -> Y                          |         | 
+113     end.                                   |         | 
+114                                            |         | 
+115 -spec test12_neg(any(), boolean())         |         | 
+116     -> atom().                             |         | 
+117 test12_neg(Y, Cond) ->                     | ERROR   | 
+118     Res =                                  |         | 
+119         try ok()                           |         | 
+120         after                              |         | 
+121             if is_number(Y) -> ok end      |         | 
+122         end,                               |         | 
+123     if                                     |         | 
+124         Cond -> Res;                       |         | 
+125         true -> Y                          |         | Y. Expected: atom(), Got: number()
+126     end.                                   |         | 

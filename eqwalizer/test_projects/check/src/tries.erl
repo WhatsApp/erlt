@@ -97,3 +97,30 @@ test10_pos() ->
     after
         only_atom(atom)
     end.
+
+
+-spec test11_pos(any(), boolean())
+    -> atom().
+test11_pos(Y, Cond) ->
+    Res =
+        try ok()
+        after
+            if is_atom(Y) -> ok end
+        end,
+    if
+        Cond -> Res;
+        true -> Y
+    end.
+
+-spec test12_neg(any(), boolean())
+    -> atom().
+test12_neg(Y, Cond) ->
+    Res =
+        try ok()
+        after
+            if is_number(Y) -> ok end
+        end,
+    if
+        Cond -> Res;
+        true -> Y
+    end.
