@@ -61,9 +61,9 @@ object DataConvert {
       case otpTuple: OtpErlangTuple =>
         val elems = otpTuple.elements().toList.map(fromJava)
         ETuple(elems)
+      case ef: OtpErlangExternalFun =>
+        EExternalFun(ef.module, ef.function, ef.arity)
       case _: OtpErlangFun =>
         sys.error("OtpErlangFun is not expected")
-      case _: OtpErlangExternalFun =>
-        sys.error("OtpErlangExternalFun is not expected")
     }
 }

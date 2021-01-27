@@ -18,6 +18,7 @@ package com.whatsapp.analyzer
 
 import java.io.File
 import com.ericsson.otp.erlang._
+import erlang.{CErl, CErlConvert}
 import erlang.Data._
 import erlang.forms.AbstractForm.{AF_FunctionSpec, AbstractForm}
 import erlang.forms.AbstractFormConvert
@@ -406,6 +407,21 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     val received = connection.receiveRPC
     val EList(data, _) = erlang.DataConvert.fromJava(received)
     data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def loadCoreForms(beamFilePath: String): Option[CErl.CModule] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "get_core_forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val eObject = erlang.DataConvert.fromJava(received)
+
+    eObject match {
+      case ETuple(List(EAtom("ok"), cerlEObj)) =>
+        Some(CErlConvert.convert(cerlEObj).asInstanceOf[CErl.CModule])
+      case _ =>
+        println("not loaded")
+        None
+    }
   }
 
   def close(): Unit = {
