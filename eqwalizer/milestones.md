@@ -10,6 +10,7 @@ Erlang surface syntax.
 - [x] Catch
 - [x] Try/catch
 - [x] Try-of/catch
+- [x] Receives
 - [ ] `catch X:Y:Z ->` syntax
 - [ ] List comprehensions
 - [ ] Binary comprehensions

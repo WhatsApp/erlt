@@ -108,118 +108,107 @@
 108         Y -> Y                           |         |                                | 
 109     end.                                 |         |                                | 
 110                                          |         |                                | 
-111 receive_exp() ->                         | SKIPPED |                                | 
-112     receive                              |         | E: receive                     | 
-113         X -> X                           |         |                                | 
-114     end.                                 |         |                                | 
-115                                          |         |                                | 
-116 receive_timeout(Timeout, Default) ->     | SKIPPED |                                | 
-117     receive                              |         | E: receive                     | 
-118         X -> X                           |         |                                | 
-119     after Timeout -> Default             |         |                                | 
-120     end.                                 |         |                                | 
-121                                          |         |                                | 
-122 anon_fun() ->                            | SKIPPED |                                | 
-123     fun (X) -> X end.                    |         | E: lambda                      | 
-124                                          |         |                                | 
-125 named_fun() ->                           | SKIPPED |                                | 
-126     fun Fun(X) -> X end.                 |         | E: named_fun                   | 
-127                                          |         |                                | 
-128 fun_lit() ->                             | LOADED  |                                | 
-129     fun anon_fun/0.                      |         |                                | 
-130                                          |         |                                | 
-131 remote_fun_lit() ->                      | LOADED  |                                | 
-132     fun terms1:anon_fun/0.               |         |                                | 
+111 anon_fun() ->                            | SKIPPED |                                | 
+112     fun (X) -> X end.                    |         | E: lambda                      | 
+113                                          |         |                                | 
+114 named_fun() ->                           | SKIPPED |                                | 
+115     fun Fun(X) -> X end.                 |         | E: named_fun                   | 
+116                                          |         |                                | 
+117 fun_lit() ->                             | LOADED  |                                | 
+118     fun anon_fun/0.                      |         |                                | 
+119                                          |         |                                | 
+120 remote_fun_lit() ->                      | LOADED  |                                | 
+121     fun terms1:anon_fun/0.               |         |                                | 
+122                                          |         |                                | 
+123 dyn_fun(M, F) ->                         | SKIPPED |                                | 
+124     fun M:F/0.                           |         | E: dynfun                      | 
+125                                          |         |                                | 
+126 dyn_call1(M) ->                          | SKIPPED |                                | 
+127     M:start().                           |         | E: dcall                       | 
+128                                          |         |                                | 
+129 dyn_call2(M, F, X, Y) ->                 | SKIPPED |                                | 
+130     M:F(X, Y).                           |         | E: dcall                       | 
+131                                          |         |                                | 
+132 %%%% Patterns                            |         |                                | 
 133                                          |         |                                | 
-134 dyn_fun(M, F) ->                         | SKIPPED |                                | 
-135     fun M:F/0.                           |         | E: dynfun                      | 
-136                                          |         |                                | 
-137 dyn_call1(M) ->                          | SKIPPED |                                | 
-138     M:start().                           |         | E: dcall                       | 
+134 match_pat(X = x, Y = x) -> ok.           | LOADED  |                                | 
+135                                          |         |                                | 
+136 wildcard_pat(_) -> ok.                   | LOADED  |                                | 
+137                                          |         |                                | 
+138 tuple_pat({_, _}) -> ok.                 | LOADED  |                                | 
 139                                          |         |                                | 
-140 dyn_call2(M, F, X, Y) ->                 | SKIPPED |                                | 
-141     M:F(X, Y).                           |         | E: dcall                       | 
-142                                          |         |                                | 
-143 %%%% Patterns                            |         |                                | 
-144                                          |         |                                | 
-145 match_pat(X = x, Y = x) -> ok.           | LOADED  |                                | 
-146                                          |         |                                | 
-147 wildcard_pat(_) -> ok.                   | LOADED  |                                | 
-148                                          |         |                                | 
-149 tuple_pat({_, _}) -> ok.                 | LOADED  |                                | 
-150                                          |         |                                | 
-151 nil_pat([]) -> ok.                       | LOADED  |                                | 
-152                                          |         |                                | 
-153 cons_pat([X|Y]) -> {X, Y}.               | LOADED  |                                | 
-154                                          |         |                                | 
-155 lit_pat1(1) -> ok.                       | LOADED  |                                | 
-156 lit_pat2(1.0) -> ok.                     | LOADED  |                                | 
-157 lit_pat3($c) -> ok.                      | LOADED  |                                | 
-158                                          |         |                                | 
-159 atom_pat(ok) -> nok.                     | LOADED  |                                | 
-160                                          |         |                                | 
-161 string_pat("ok") -> ok.                  | SKIPPED | P: "..."                       | 
-162                                          |         |                                | 
-163 bin_pat(<<>>) -> bin.                    | LOADED  |                                | 
-164                                          |         |                                | 
-165 unop_pat(-1) -> 1.                       | LOADED  |                                | 
-166                                          |         |                                | 
-167 binop_pat(3 + 5) -> 0.                   | LOADED  |                                | 
-168                                          |         |                                | 
-169 record_pat(#test_rec{}) -> test_rec.     | SKIPPED | P: #test_rec{...}              | 
-170                                          |         |                                | 
-171 record_index_pat(#test_rec.id) -> test_r…… SKIPPED | P: #test_rec{...}              | 
-172                                          |         |                                | 
-173 map_pat(#{id := X}) -> id.               | SKIPPED | P: #{...}                      | 
-174                                          |         |                                | 
-175 %%% Guards                               |         |                                | 
-176                                          |         |                                | 
-177 var_guard(X, Y) when X -> Y.             | LOADED  |                                | 
-178                                          |         |                                | 
-179 tuple_guard(X, Y) when {X, Y} -> Y.      | LOADED  |                                | 
-180                                          |         |                                | 
-181 nil_guard(X, Y) when [] -> Y.            | LOADED  |                                | 
+140 nil_pat([]) -> ok.                       | LOADED  |                                | 
+141                                          |         |                                | 
+142 cons_pat([X|Y]) -> {X, Y}.               | LOADED  |                                | 
+143                                          |         |                                | 
+144 lit_pat1(1) -> ok.                       | LOADED  |                                | 
+145 lit_pat2(1.0) -> ok.                     | LOADED  |                                | 
+146 lit_pat3($c) -> ok.                      | LOADED  |                                | 
+147                                          |         |                                | 
+148 atom_pat(ok) -> nok.                     | LOADED  |                                | 
+149                                          |         |                                | 
+150 string_pat("ok") -> ok.                  | SKIPPED | P: "..."                       | 
+151                                          |         |                                | 
+152 bin_pat(<<>>) -> bin.                    | LOADED  |                                | 
+153                                          |         |                                | 
+154 unop_pat(-1) -> 1.                       | LOADED  |                                | 
+155                                          |         |                                | 
+156 binop_pat(3 + 5) -> 0.                   | LOADED  |                                | 
+157                                          |         |                                | 
+158 record_pat(#test_rec{}) -> test_rec.     | SKIPPED | P: #test_rec{...}              | 
+159                                          |         |                                | 
+160 record_index_pat(#test_rec.id) -> test_r…… SKIPPED | P: #test_rec{...}              | 
+161                                          |         |                                | 
+162 map_pat(#{id := X}) -> id.               | SKIPPED | P: #{...}                      | 
+163                                          |         |                                | 
+164 %%% Guards                               |         |                                | 
+165                                          |         |                                | 
+166 var_guard(X, Y) when X -> Y.             | LOADED  |                                | 
+167                                          |         |                                | 
+168 tuple_guard(X, Y) when {X, Y} -> Y.      | LOADED  |                                | 
+169                                          |         |                                | 
+170 nil_guard(X, Y) when [] -> Y.            | LOADED  |                                | 
+171                                          |         |                                | 
+172 cons_guard(X, Y) when [X | Y] -> Y.      | LOADED  |                                | 
+173                                          |         |                                | 
+174 bin_guard(X, Y) when <<>> -> Y.          | LOADED  |                                | 
+175                                          |         |                                | 
+176 unop_guard(X, Y) when -X -> Y.           | LOADED  |                                | 
+177                                          |         |                                | 
+178 binop_guard(X, Y) when X + Y -> Y.       | LOADED  |                                | 
+179                                          |         |                                | 
+180 record_guard(X, Y)                       | SKIPPED |                                | 
+181     when #test_rec{} -> Y.               |         | G: #test_rec{...}              | 
 182                                          |         |                                | 
-183 cons_guard(X, Y) when [X | Y] -> Y.      | LOADED  |                                | 
-184                                          |         |                                | 
-185 bin_guard(X, Y) when <<>> -> Y.          | LOADED  |                                | 
-186                                          |         |                                | 
-187 unop_guard(X, Y) when -X -> Y.           | LOADED  |                                | 
+183 record_index_guard(X, Y)                 | SKIPPED |                                | 
+184     when #test_rec.id -> Y.              |         | G: #test_rec{...}              | 
+185                                          |         |                                | 
+186 record_field_guard(X)                    | SKIPPED |                                | 
+187     when X#test_rec.id -> ok.            |         | G: #test_rec{...}              | 
 188                                          |         |                                | 
-189 binop_guard(X, Y) when X + Y -> Y.       | LOADED  |                                | 
-190                                          |         |                                | 
-191 record_guard(X, Y)                       | SKIPPED |                                | 
-192     when #test_rec{} -> Y.               |         | G: #test_rec{...}              | 
-193                                          |         |                                | 
-194 record_index_guard(X, Y)                 | SKIPPED |                                | 
-195     when #test_rec.id -> Y.              |         | G: #test_rec{...}              | 
-196                                          |         |                                | 
-197 record_field_guard(X)                    | SKIPPED |                                | 
-198     when X#test_rec.id -> ok.            |         | G: #test_rec{...}              | 
-199                                          |         |                                | 
-200 map_guard(X)                             | SKIPPED |                                | 
-201     when #{} -> ok.                      |         | G: #{...}                      | 
-202                                          |         |                                | 
-203 map_update_guard(X)                      | SKIPPED |                                | 
-204     when X#{id := 3} -> ok.              |         | G: #{...}                      | 
-205                                          |         |                                | 
-206 call_guard(X)                            | LOADED  |                                | 
-207     when is_number(X) -> ok.             |         |                                | 
-208                                          |         |                                | 
-209 remote_call_guard(X)                     | LOADED  |                                | 
-210     when erlang:is_number(X) -> ok.      |         |                                | 
+189 map_guard(X)                             | SKIPPED |                                | 
+190     when #{} -> ok.                      |         | G: #{...}                      | 
+191                                          |         |                                | 
+192 map_update_guard(X)                      | SKIPPED |                                | 
+193     when X#{id := 3} -> ok.              |         | G: #{...}                      | 
+194                                          |         |                                | 
+195 call_guard(X)                            | LOADED  |                                | 
+196     when is_number(X) -> ok.             |         |                                | 
+197                                          |         |                                | 
+198 remote_call_guard(X)                     | LOADED  |                                | 
+199     when erlang:is_number(X) -> ok.      |         |                                | 
+200                                          |         |                                | 
+201 atom_guard(X)                            | LOADED  |                                | 
+202     when ok -> ok.                       |         |                                | 
+203                                          |         |                                | 
+204 string_guard(X)                          | SKIPPED |                                | 
+205     when "string" -> ok.                 |         | G: "..."                       | 
+206                                          |         |                                | 
+207 lit_guard(X)                             | LOADED  |                                | 
+208     when $c -> ok.                       |         |                                | 
+209                                          |         |                                | 
+210 list_concat(X, Y) -> X ++ Y.             | SKIPPED | E: _ ++ _                      | 
 211                                          |         |                                | 
-212 atom_guard(X)                            | LOADED  |                                | 
-213     when ok -> ok.                       |         |                                | 
-214                                          |         |                                | 
-215 string_guard(X)                          | SKIPPED |                                | 
-216     when "string" -> ok.                 |         | G: "..."                       | 
-217                                          |         |                                | 
-218 lit_guard(X)                             | LOADED  |                                | 
-219     when $c -> ok.                       |         |                                | 
-220                                          |         |                                | 
-221 list_concat(X, Y) -> X ++ Y.             | SKIPPED | E: _ ++ _                      | 
-222                                          |         |                                | 
-223 list_subtract(X, Y) -> X -- Y.           | SKIPPED | E: _ -- _                      | 
-224                                          |         |                                | 
-225 string_prefix("prefix" ++ S) -> S.       | SKIPPED | P: _ ++ _                      | 
+212 list_subtract(X, Y) -> X -- Y.           | SKIPPED | E: _ -- _                      | 
+213                                          |         |                                | 
+214 string_prefix("prefix" ++ S) -> S.       | SKIPPED | P: _ ++ _                      | 

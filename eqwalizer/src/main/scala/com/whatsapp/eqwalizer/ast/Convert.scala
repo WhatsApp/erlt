@@ -290,9 +290,9 @@ object Convert {
         else
           TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody)(l.intValue)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
+        Receive(eClauses.map(convertClause))(l.intValue)
       case ETuple(List(EAtom("receive"), ELong(l), EList(eClauses, None), eTimeout, EList(defaults, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpReceive)
+        ReceiveWithTimeout(eClauses.map(convertClause), convertExp(eTimeout), defaults.map(convertExp))(l.intValue)
       case ETuple(List(EAtom("fun"), ELong(l), eFunction)) =>
         eFunction match {
           case ETuple(List(EAtom("clauses"), EList(eClauses, None))) =>

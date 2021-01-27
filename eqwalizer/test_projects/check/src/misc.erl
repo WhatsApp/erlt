@@ -2,7 +2,7 @@
 
 %% The majority of these tests are just
 %% to get some code coverage.
-%% Many of the do not have any special meaning.
+%% Many of them do not have any special meaning.
 
 -compile([export_all, nowarn_export_all]).
 
@@ -356,3 +356,49 @@ test76_pos(_) ->
 
 -spec test77_neg(any()) -> atom().
 test77_neg(A) -> catch(test76_pos(A)).
+
+-spec test78_pos() -> any().
+test78_pos() ->
+    receive
+        X -> X
+    end.
+
+-spec test79_neg() -> atom().
+test79_neg() ->
+    receive
+        X -> X
+    end.
+
+-spec test80_neg(any()) -> atom().
+test80_neg(Timeout) ->
+    receive
+        X -> X
+    after Timeout ->
+        default
+    end.
+
+-spec test81_neg(any()) -> atom().
+test81_neg(Timeout) ->
+    receive
+        X when is_atom(X) -> X
+    after Timeout ->
+        default
+    end.
+
+-spec test82_pos() -> atom().
+test82_pos() ->
+    A = atom,
+    Msg = receive
+        A -> A
+    after 10 ->
+        default
+    end,
+    {Msg}.
+
+-spec test83_pos(integer()) -> atom().
+test83_pos(Timeout) ->
+    receive
+        _ -> atom
+    after Timeout ->
+        default
+    end.
