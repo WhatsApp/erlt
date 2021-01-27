@@ -99,5 +99,9 @@ object Show {
       "try .. catch .."
     case TryOfCatchExpr(_, _, _, _) =>
       "try .. of .. catch .."
+    case Receive(_) =>
+      "receive .."
+    case ReceiveWithTimeout(_, _, _) =>
+      "receive .."
   }
 }

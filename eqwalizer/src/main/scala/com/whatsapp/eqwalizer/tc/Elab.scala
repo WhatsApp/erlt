@@ -171,6 +171,14 @@ final class Elab(module: String) {
           case None        => env
         }
         (UnionType(tryTs ::: catchTs), env1)
+      case Receive(clauses) =>
+        val (ts, envs) = clauses.map(elabClause(_, env)).unzip
+        (UnionType(ts), Approx.joinEnvsAll(envs))
+      case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
+        val (ts, envs) = clauses.map(elabClause(_, env)).unzip
+        val env1 = Check(module).checkExpr(timeout, integerType, env)
+        val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
+        (UnionType(timeoutT :: ts), Approx.joinEnvsAll(timeoutEnv :: envs))
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

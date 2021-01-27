@@ -86,9 +86,6 @@ object WIPDiagnostics {
   case object ExpString extends SkippedExpr {
     override def toString: String = """E: "...""""
   }
-  case object ExpReceive extends SkippedExpr {
-    override def toString: String = "E: receive"
-  }
   case object ExpDynFun extends SkippedExpr {
     override def toString: String = "E: dynfun"
   }

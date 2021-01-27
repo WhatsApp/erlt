@@ -56,6 +56,8 @@ object Exprs {
       after: Option[List[Expr]],
   )(val l: Int)
       extends Expr
+  case class Receive(clauses: List[Clause])(val l: Int) extends Expr
+  case class ReceiveWithTimeout(clauses: List[Clause], timeout: Expr, timeoutBlock: List[Expr])(val l: Int) extends Expr
 
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
   case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)

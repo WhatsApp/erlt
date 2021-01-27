@@ -220,6 +220,13 @@ final case class Check(module: String) {
             case None        => env
           }
           env1
+        case Receive(clauses) =>
+          checkClauses(env, List(AnyType), resTy, clauses)
+        case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
+          val rEnv = checkClauses(env, List(AnyType), resTy, clauses)
+          val tEnv1 = checkExpr(timeout, integerType, env)
+          val tEnv2 = checkBlock(timeoutBlock, resTy, tEnv1)
+          Approx.joinEnvsAll(List(rEnv, tEnv2))
       }
   }
 }

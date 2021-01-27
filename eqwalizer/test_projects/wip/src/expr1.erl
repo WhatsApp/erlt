@@ -108,17 +108,6 @@ try_exp(E) ->
         Y -> Y
     end.
 
-receive_exp() ->
-    receive
-        X -> X
-    end.
-
-receive_timeout(Timeout, Default) ->
-    receive
-        X -> X
-    after Timeout -> Default
-    end.
-
 anon_fun() ->
     fun (X) -> X end.
 
