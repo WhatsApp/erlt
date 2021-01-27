@@ -1,0 +1,41 @@
+  1 -module(guards).                           |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec test01(atom() | number()) -> atom(). |         | 
+  6 test01(X) when is_atom(X) -> X.            | OK      | 
+  7                                            |         | 
+  8 -spec test01_if                            |         | 
+  9     (atom() | number()) ->                 |         | 
+ 10     atom().                                |         | 
+ 11 test01_if(X) ->                            | OK      | 
+ 12     if                                     |         | 
+ 13         is_number(X) -> undef;             |         | 
+ 14         is_atom(X) -> X                    |         | 
+ 15     end.                                   |         | 
+ 16                                            |         | 
+ 17 -spec test02                               |         | 
+ 18     (atom() | number(), atom() | number()) |         | 
+ 19     -> atom().                             |         | 
+ 20 test02(X, _) when is_atom(X) -> X;         | OK      | 
+ 21 test02(_, Y) when is_atom(Y) -> Y;         |         | 
+ 22 test02(_, _) -> default.                   |         | 
+ 23                                            |         | 
+ 24 -spec test02_if                            |         | 
+ 25     (atom() | number(), atom() | number()) |         | 
+ 26         -> atom().                         |         | 
+ 27 test02_if(X, Y) ->                         | OK      | 
+ 28     if                                     |         | 
+ 29         is_atom(X) -> X;                   |         | 
+ 30         is_atom(Y) -> Y;                   |         | 
+ 31         true -> default                    |         | 
+ 32     end.                                   |         | 
+ 33                                            |         | 
+ 34                                            |         | 
+ 35 -spec test03(atom()) -> boolean() | undef. |         | 
+ 36 test03(X) when is_boolean(X) -> X;         | OK      | 
+ 37 test03(_) -> undef.                        |         | 
+ 38                                            |         | 
+ 39 -spec test04(any()) -> number() | undef.   |         | 
+ 40 test04(X) when is_number(X) -> X;          | OK      | 
+ 41 test04(_) -> undef.                        |         | 

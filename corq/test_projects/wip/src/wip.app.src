@@ -1,0 +1,3 @@
+{application, wip,
+  [{description, "wip"}, {vsn, "inplace"}, {applications, [kernel, stdlib]}]
+}.

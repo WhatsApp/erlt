@@ -1,0 +1,126 @@
+  1 -module(tries).                            |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec foo() -> {atom(), any()}.            |         | 
+  6 foo() -> {foo, bar}.                       | OK      | 
+  7                                            |         | 
+  8 -spec ok() -> ok.                          |         | 
+  9 ok() -> ok.                                | OK      | 
+ 10                                            |         | 
+ 11 -spec only_atom(atom()) -> ok.             |         | 
+ 12 only_atom(A) when is_atom(A) -> ok.        | OK      | 
+ 13                                            |         | 
+ 14 -spec test01_pos() -> atom().              |         | 
+ 15 test01_pos() ->                            | OK      | 
+ 16     try foo() of                           |         | 
+ 17         {X, _} -> X                        |         | 
+ 18     catch                                  |         | 
+ 19         {error, _} -> error                |         | 
+ 20     end.                                   |         | 
+ 21                                            |         | 
+ 22 -spec test02_neg() -> atom().              |         | 
+ 23 test02_neg() ->                            | ERROR   | 
+ 24     try foo() of                           |         | 
+ 25         {_, Y} -> Y                        |         | Y. Expected: atom(), Got: term()
+ 26     catch                                  |         | 
+ 27         {error, _} -> error                |         | 
+ 28     end.                                   |         | 
+ 29                                            |         | 
+ 30 -spec test03_neg() -> atom().              |         | 
+ 31 test03_neg() ->                            | ERROR   | 
+ 32     Res = try foo() of                     |         | 
+ 33         {_, _} -> []                       |         | 
+ 34     catch                                  |         | 
+ 35         {error, _} -> error                |         | 
+ 36     end,                                   |         | 
+ 37     Res.                                   |         | Res. Expected: atom(), Got: [] | 'error'
+ 38                                            |         | 
+ 39 -spec test04_pos(any()) ->                 |         | 
+ 40     {ok | error, atom()}.                  |         | 
+ 41 test04_pos(X) ->                           | OK      | 
+ 42     Res = try foo() of                     |         | 
+ 43               {_, _} -> ok                 |         | 
+ 44           catch                            |         | 
+ 45               {error, _} -> error          |         | 
+ 46           after                            |         | 
+ 47             if                             |         | 
+ 48                 is_atom(X) -> ok           |         | 
+ 49             end                            |         | 
+ 50           end,                             |         | 
+ 51     {Res, X}.                              |         | 
+ 52                                            |         | 
+ 53 -spec test05_pos(any()) ->                 |         | 
+ 54     {ok | error, atom()}.                  |         | 
+ 55 test05_pos(X) ->                           | OK      | 
+ 56     A =                                    |         | 
+ 57         try ok()                           |         | 
+ 58         catch                              |         | 
+ 59             {error, _} -> error            |         | 
+ 60         after                              |         | 
+ 61             if                             |         | 
+ 62                 is_atom(X) -> ok           |         | 
+ 63             end                            |         | 
+ 64         end,                               |         | 
+ 65     {A, X}.                                |         | 
+ 66                                            |         | 
+ 67 -spec test06_neg() -> ok.                  |         | 
+ 68 test06_neg() ->                            | ERROR   | 
+ 69     try ok()                               |         | 
+ 70     catch _ -> error                       |         | 'error'. Expected: 'ok', Got: 'error'
+ 71     end.                                   |         | 
+ 72                                            |         | 
+ 73 -spec test07_neg() -> error.               |         | 
+ 74 test07_neg() ->                            | ERROR   | 
+ 75     try ok()                               |         | ok(). Expected: 'error', Got: 'ok'
+ 76     catch _ -> error                       |         | 
+ 77     end.                                   |         | 
+ 78                                            |         | 
+ 79 -spec test08_neg() -> ok.                  |         | 
+ 80 test08_neg() ->                            | ERROR   | 
+ 81     try ok()                               |         | 
+ 82     after                                  |         | 
+ 83         only_atom(1)                       |         | number_expr. Expected: atom(), Got: number()
+ 84     end.                                   |         | 
+ 85                                            |         | 
+ 86 -spec test09_pos() -> ok.                  |         | 
+ 87 test09_pos() ->                            | OK      | 
+ 88     try ok()                               |         | 
+ 89     after                                  |         | 
+ 90         only_atom(atom)                    |         | 
+ 91     end.                                   |         | 
+ 92                                            |         | 
+ 93 -spec test10_pos() -> ok.                  |         | 
+ 94 test10_pos() ->                            | OK      | 
+ 95     try ok() of                            |         | 
+ 96         X -> X                             |         | 
+ 97     after                                  |         | 
+ 98         only_atom(atom)                    |         | 
+ 99     end.                                   |         | 
+100                                            |         | 
+101                                            |         | 
+102 -spec test11_pos(any(), boolean())         |         | 
+103     -> atom().                             |         | 
+104 test11_pos(Y, Cond) ->                     | OK      | 
+105     Res =                                  |         | 
+106         try ok()                           |         | 
+107         after                              |         | 
+108             if is_atom(Y) -> ok end        |         | 
+109         end,                               |         | 
+110     if                                     |         | 
+111         Cond -> Res;                       |         | 
+112         true -> Y                          |         | 
+113     end.                                   |         | 
+114                                            |         | 
+115 -spec test12_neg(any(), boolean())         |         | 
+116     -> atom().                             |         | 
+117 test12_neg(Y, Cond) ->                     | ERROR   | 
+118     Res =                                  |         | 
+119         try ok()                           |         | 
+120         after                              |         | 
+121             if is_number(Y) -> ok end      |         | 
+122         end,                               |         | 
+123     if                                     |         | 
+124         Cond -> Res;                       |         | 
+125         true -> Y                          |         | Y. Expected: atom(), Got: number()
+126     end.                                   |         | 

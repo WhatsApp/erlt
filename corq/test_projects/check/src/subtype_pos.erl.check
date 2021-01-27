@@ -1,0 +1,36 @@
+  1 -module(subtype_pos).                      |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -type ab() :: a | b.                       |         | 
+  6 -type pair_diff_elems() ::                 |         | 
+  7     {a, b} | {b, a}.                       |         | 
+  8 -type pair_ab() ::                         |         | 
+  9     {ab(), ab()}.                          |         | 
+ 10                                            |         | 
+ 11 -spec f01({A, A}) -> any().                |         | 
+ 12 f01(X) -> X.                               | OK      | 
+ 13                                            |         | 
+ 14 -spec f02(atom()) -> any().                |         | 
+ 15 f02(X) -> X.                               | OK      | 
+ 16                                            |         | 
+ 17 -spec f03 (fun((any()) -> atom())) ->      |         | 
+ 18     fun((atom()) -> any()).                |         | 
+ 19 f03(F) -> F.                               | OK      | 
+ 20                                            |         | 
+ 21 -spec f04(a | b) -> (a | b | c).           |         | 
+ 22 f04(X) -> X.                               | OK      | 
+ 23                                            |         | 
+ 24 -spec f05(none() | none()) -> a | b.       |         | 
+ 25 f05(X) -> X.                               | OK      | 
+ 26                                            |         | 
+ 27 -spec f06({a, b} | {b, a}) ->              |         | 
+ 28            {a | b, a | b}.                 |         | 
+ 29 f06(X) -> X.                               | OK      | 
+ 30                                            |         | 
+ 31 -spec f07(pair_diff_elems()) ->            |         | 
+ 32     pair_ab().                             |         | 
+ 33 f07(X) -> X.                               | OK      | 
+ 34                                            |         | 
+ 35 -spec f08(none()) -> {none(), none()}.     |         | 
+ 36 f08(X) -> X.                               | OK      | 

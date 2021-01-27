@@ -1,0 +1,35 @@
+  1 -module(other).                            |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 % occurrence typing                        |         | 
+  6 -spec clauses(any()) ->                    |         | 
+  7     atom() | number().                     |         | 
+  8 clauses(X) ->                              | ERROR   | 
+  9     case X of                              |         | 
+ 10         ok -> X;                           |         | X. Expected: atom() | number(), Got: term()
+ 11         1 -> X                             |         | 
+ 12     end.                                   |         | 
+ 13                                            |         | 
+ 14 -spec inter                                |         | 
+ 15     (ok) -> nok;                           |         | 
+ 16     (nok) -> ok.                           |         | 
+ 17 inter(ok) -> nok;                          | NO SPEC | 
+ 18 inter(nok) -> ok.                          |         | 
+ 19                                            |         | 
+ 20 -spec slice_inter1(ok) -> nok.             |         | 
+ 21 slice_inter1(ok) -> inter(ok).             | ERROR   | Unbound var: inter/1
+ 22                                            |         | 
+ 23 -spec slice_inter2(ok) -> nok.             |         | 
+ 24 slice_inter2(ok) ->                        | ERROR   | 
+ 25     other:inter(ok).                       |         | Unbound var: other:inter/1
+ 26                                            |         | 
+ 27 -spec get_inter1() ->                      |         | 
+ 28     any().                                 |         | 
+ 29 get_inter1() ->                            | ERROR   | 
+ 30     fun inter/1.                           |         | Unbound var: inter/1
+ 31                                            |         | 
+ 32 -spec get_inter2() ->                      |         | 
+ 33     any().                                 |         | 
+ 34 get_inter2() ->                            | ERROR   | 
+ 35     fun other:inter/1.                     |         | Unbound var: other:inter/1
