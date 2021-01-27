@@ -60,6 +60,11 @@ testVFS = testGroup "VFS"
                [ "-module(foo)."
                , "-abcd(yyy)."
                ]
+          content4 = T.unlines
+               [ "-module(foo)."
+               , "-abcd(yyy)."
+               , "-g(h)."
+               ]
           itemA = TextDocumentItem uriA "erlang" 0 aContent
           uriA = filePathToUri "src/foo.erl"
           nUriA = toNormalizedUri uriA
@@ -72,14 +77,31 @@ testVFS = testGroup "VFS"
         sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
 
         let Just (VirtualFile _ _ rope1) = Map.lookup nUriA (vfsMap v1)
-        let change = TextDocumentContentChangeEvent Nothing Nothing content3
+        let change = TextDocumentContentChangeEvent Nothing Nothing content4
         let edit = lspChangeAsTSInputEdit rope1 change
         tree2 <- treeSitterParseEdit edit tree
 
         let rope2 = applyChange rope1 change
         (tree3,node2) <- treeSitterParseIncrement parser rope2 tree2
         sexp2 <- nodeAsSexpr node2
-        sexp2 @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
+        sexp2 @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)) (attribute (atom) (atom)))"
+
+        let change2
+              = TextDocumentContentChangeEvent
+                    (Just (Range (Position 0 1) (Position 0 3))) Nothing "jj"
+
+        let rope3 = applyChange rope1 change2
+        Rope.toString rope1 @?= "-module(foo).\n-xxxx(yyy).\n"
+        Rope.toString rope3 @?= "-jjdule(foo).\n-xxxx(yyy).\n"
+        let edit2 = lspChangeAsTSInputEdit rope3 change2
+        edit2 @?= TSInputEdit
+                   { editStartByte  = 1
+                   , editOldEndByte = 3
+                   , editNewEndByte = 3
+                   , editStartPoint  = TSPoint {pointRow = 0, pointColumn = 1}
+                   , editOldEndPoint = TSPoint {pointRow = 0, pointColumn = 3}
+                   , editNewEndPoint = TSPoint {pointRow = 0, pointColumn = 3}
+                   }
 
         assertBool "show me the logs!" False
         free parser
@@ -123,7 +145,6 @@ treeSitterParser = do
   pp $ "set language:" ++ show (r, tree_sitter_erlang_elp)
   return parser
 
--- treeSitterParseFull :: Ptr Parser -> String -> IO (Ptr Tree)
 treeSitterParseFull :: Ptr Parser -> String -> IO (Ptr Tree, Node)
 treeSitterParseFull parser source = do
   (str, len) <- newCStringLen source
@@ -138,23 +159,6 @@ treeSitterParseFull parser source = do
 
 treeSitterParseEdit :: TSInputEdit -> Ptr Tree -> IO (Ptr Tree)
 treeSitterParseEdit edit tree = do
-
-  let edit1 = TSInputEdit
-                { editStartByte   = 8
-                , editOldEndByte  = 9
-                , editNewEndByte  = 8
-                , editStartPoint  = TSPoint 0 8
-                , editOldEndPoint = TSPoint 0 9
-                , editNewEndPoint = TSPoint 0 8
-                }
-  let edit2 = TSInputEdit
-                { editStartByte   = 3
-                , editOldEndByte  = 4
-                , editNewEndByte  = 4
-                , editStartPoint  = TSPoint 0 3
-                , editOldEndPoint = TSPoint 0 4
-                , editNewEndPoint = TSPoint 0 4
-                }
   inp <- malloc
   poke inp edit
   ts_tree_edit tree inp
@@ -166,7 +170,7 @@ lspChangeAsTSInputEdit :: Rope -> TextDocumentContentChangeEvent -> TSInputEdit
 lspChangeAsTSInputEdit rope change = edit
   where
     edit = case change of
-      (TextDocumentContentChangeEvent Nothing                                          Nothing     txt) ->
+      (TextDocumentContentChangeEvent Nothing Nothing txt) ->
         -- replace the entire string
         let
         in TSInputEdit
@@ -182,7 +186,8 @@ lspChangeAsTSInputEdit rope change = edit
                -- the Rope.fromText will not be wasted.
              }
       (TextDocumentContentChangeEvent (Just (Range from to)) _ txt) ->
-        -- replace a portion with a new string.  The length parameter is optional and deprecated
+        -- replace a portion with a new string.  The length parameter
+        -- is optional and deprecated
         let
           startByte = byteAddress rope from
           endByte   = byteAddress rope to
@@ -214,9 +219,11 @@ lspChangeAsTSInputEdit rope change = edit
         rope = Rope.fromText txt
         newRows = Rope.rows rope
         lastCol = Rope.length $ snd $ Rope.splitAtLine newRows rope
-        (row', col') = case Rope.rows rope of
-          0 -> (row,                  col + fromIntegral lastCol)
-          r -> (row + fromIntegral r, fromIntegral lastCol)
+        (row', col') = case newRows of
+          0 -> ( row
+               , col + fromIntegral lastCol)
+          r -> ( row + fromIntegral r
+               , fromIntegral lastCol)
 
 
 treeSitterParseIncrement :: Ptr Parser -> Rope -> Ptr Tree -> IO (Ptr Tree, Node)

@@ -39,6 +39,8 @@ executable h-elp
   build-depends:
        base >=4.13 && <4.15
      , h-elp
+     , lsp
+     , text
   hs-source-dirs:      exe
   default-language:    Haskell2010
 
