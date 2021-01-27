@@ -1,0 +1,74 @@
+  1 -module(guards_logic).                     |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec test01(atom()) -> boolean().         |         | 
+  6 test01(X) when X -> X;                     | OK      | 
+  7 test01(_) -> false.                        |         | 
+  8                                            |         | 
+  9 -spec test02(atom()) -> boolean().         |         | 
+ 10 test02(X) when not X -> X;                 | OK      | 
+ 11 test02(_) -> false.                        |         | 
+ 12                                            |         | 
+ 13 -spec test03(atom(), atom()) -> boolean(). |         | 
+ 14 test03(X, _) when X -> X;                  | OK      | 
+ 15 test03(_, Y) when Y -> Y.                  |         | 
+ 16                                            |         | 
+ 17 -spec test04(atom(), atom()) -> boolean(). |         | 
+ 18 test04(X, Y) when X orelse Y -> X.         | OK      | 
+ 19                                            |         | 
+ 20 -spec test05(atom(), atom()) -> boolean(). |         | 
+ 21 test05(X, Y) when X andalso Y -> Y.        | OK      | 
+ 22                                            |         | 
+ 23 -spec test06(atom(), atom()) -> true.      |         | 
+ 24 test06(X, Y) when X andalso Y -> Y.        | OK      | 
+ 25                                            |         | 
+ 26 -spec test07_neg(atom(), atom()) -> false. |         | 
+ 27 test07_neg(X, Y) when X andalso Y -> Y.    | ERROR   | Y. Expected: 'false', Got: 'true'
+ 28                                            |         | 
+ 29 -spec test08_neg(any()) -> number().       |         | 
+ 30 test08_neg(X) when not is_number(X) -> X.  | ERROR   | X. Expected: number(), Got: term()
+ 31                                            |         | 
+ 32 % We don't try to process                  |         | 
+ 33 % logic connectives in a smart way         |         | 
+ 34 % in guards so far.                        |         | 
+ 35 % Recommendation for users:                |         | 
+ 36 % rewrite it via true syntax of guards     |         | 
+ 37 -spec test09_neg (any())                   |         | 
+ 38               -> number() | atom().        |         | 
+ 39 test09_neg(X)                              | ERROR   | 
+ 40   when is_number(X) or is_atom(X) -> X.    |         | X. Expected: number() | atom(), Got: term()
+ 41                                            |         | 
+ 42 -spec test10 (any())                       |         | 
+ 43       -> number() | atom().                |         | 
+ 44 test10(X)                                  | OK      | 
+ 45   when is_number(X); is_atom(X) -> X.      |         | 
+ 46                                            |         | 
+ 47 -spec test11_neg (any())                   |         | 
+ 48       -> number() | atom().                |         | 
+ 49 test11_neg(X)                              | ERROR   | 
+ 50   when is_number(X);                       |         | 
+ 51        is_atom(X);                         |         | 
+ 52        is_pid(X)-> X.                      |         | X. Expected: number() | atom(), Got: number() | atom() | pid()
+ 53                                            |         | 
+ 54 -spec test12(any(), any()) -> number().    |         | 
+ 55 test12(X, _) when X + 1 > 0 -> X;          | OK      | 
+ 56 test12(_, Y) when Y / 3 > 1 -> Y.          |         | 
+ 57                                            |         | 
+ 58 -spec test13 (any(), any())                |         | 
+ 59           -> {number(), number()}.         |         | 
+ 60 test13(X, Y)                               | OK      | 
+ 61     when X + 1 > 0, Y / 3 > 1 ->           |         | 
+ 62     {X, Y}.                                |         | 
+ 63                                            |         | 
+ 64 -spec test14_neg (any(), any())            |         | 
+ 65         -> {number(), number()}.           |         | 
+ 66 test14_neg(X, Y)                           | ERROR   | 
+ 67     when X + 1 > 0; Y / 3 > 1 ->           |         | 
+ 68     {X, Y}.                                |         | {X, Y}. Expected: {number(), number()}, Got: {term(), term()}
+ 69                                            |         | 
+ 70 -spec test15 (any(), any())                |         | 
+ 71          -> {number(), number()}           |         | 
+ 72           | {boolean(), boolean()}.        |         | 
+ 73 test15(X, Y) when X + Y > 0 -> {X, Y};     | OK      | 
+ 74 test15(X, Y) when X, Y -> {X, Y}.          |         | 

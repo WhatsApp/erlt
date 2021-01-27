@@ -1,0 +1,7 @@
+  1 -module(attibutes).                      | LOADED  |                                | 
+  2                                          |         |                                | 
+  3 -binary_attr(<<1,2,3>>).                 |         |                                | 
+  4                                          |         |                                | 
+  5 -map_attr(#{id => 1}).                   |         |                                | 
+  6                                          |         |                                | 
+  7 -list_attr([1|1]).                       |         |                                | 

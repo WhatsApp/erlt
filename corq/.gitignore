@@ -1,0 +1,8 @@
+.bloop/
+.bsp/
+.cache/
+.idea/
+.metals/
+target/
+*.iml
+core_analyzer.beam

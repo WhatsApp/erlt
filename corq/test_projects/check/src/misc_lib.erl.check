@@ -1,0 +1,6 @@
+  1 -module(misc_lib).                         |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec boolean_id(boolean()) -> boolean().  |         | 
+  6 boolean_id(B) -> B.                        | OK      | 
