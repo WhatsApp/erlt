@@ -14,32 +14,24 @@
  * limitations under the License.
  */
 
-package com.whatsapp.corq
+package com.whatsapp.corq.io
 
 import com.ericsson.otp.erlang._
 import erlang.{CErl, CErlConvert, Data}
 import erlang.Data._
 
 class RPC(val connection: OtpConnection) extends AutoCloseable {
-  // switch to `get_core_forms` if you don't want to log core erlang textual format
-  val FUN = "get_core_forms_pretty"
 
   def loadCoreForms(beamFilePath: String): Option[CErl.CModule] = {
     println("loading " + beamFilePath)
 
-    connection.sendRPC("core_analyzer", FUN, new OtpErlangList(new OtpErlangString(beamFilePath)))
+    connection.sendRPC("core_analyzer", "get_core_forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
-    def convert(cerlEObj: Data.EObject) =
-      Some(CErlConvert.convert(cerlEObj).asInstanceOf[CErl.CModule])
-
     eObject match {
-      case ETuple(List(EAtom("ok"), cerlEObj, prettyForms)) =>
-        println(prettyForms)
-        convert(cerlEObj)
       case ETuple(List(EAtom("ok"), cerlEObj)) =>
-        convert(cerlEObj)
+        Some(CErlConvert.convert(cerlEObj).asInstanceOf[CErl.CModule])
       case other =>
         throw new Error(s"could not load core erlang $beamFilePath, got: $other")
     }

@@ -17,10 +17,9 @@
  // copied from analyzer
 package erlang
 
+import erlang.Data.Anno
+
 object CErl {
-  sealed trait Anno
-  case class AnnoList(anno: List[Data.EObject]) extends Anno
-  case class AnnoString(anno: String) extends Anno
 
   sealed trait CErl
   case class CAlias(anno: Anno, v: CErl, pat: CErl) extends CErl
@@ -32,7 +31,7 @@ object CErl {
   case class CCatch(anno: Anno, body: CErl) extends CErl
   case class CClause(anno: Anno, pats: List[CErl], guard: CErl, body: CErl) extends CErl
   case class CCons(anno: Anno, hd: CErl, tl: CErl) extends CErl
-  case class CFun(anno: Anno, vars: List[CErl], body: CErl) extends CErl
+  case class CFun(anno: Anno, vars: List[CVar], body: CErl) extends CErl
   case class CLet(anno: Anno, vars: List[CErl], arg: CErl, body: CErl) extends CErl
   case class CLetRec(anno: Anno, defs: List[(CErl, CErl)], body: CErl) extends CErl
   case class CLiteral(anno: Anno, value: Data.EObject) extends CErl

@@ -14,24 +14,29 @@
 -module(core_analyzer).
 
 -export([
-    get_core_forms/1,
-    get_core_forms_pretty/1
+    get_core_forms/1
 ]).
 
--spec get_core_forms_pretty(file:filename()) -> {ok, cerl:cerl(), string()} | {error, term()}.
-get_core_forms_pretty(BeamFile) ->
-    case get_core_forms(BeamFile) of
-        {ok, Core} ->
-                    Pretty = lists:flatten(core_pp:format_all(Core)),
-                    {ok, Core, Pretty};
-        Other -> Other
-    end.
+-define(DEBUG, ).
 
--spec get_core_forms(file:filename()) -> {ok, cerl:cerl()} | {error, term()}.
+-ifdef(DEBUG).
+-define(DEBUG_CORE(Core), log_core(Core)).
+log_core(Core) ->
+    io:format("~s~n", [lists:flatten(core_pp:format(Core))]).
+-else.
+-define(?DEBUG_CORE(Core), ok).
+-endif.
+
+
+-spec get_core_forms(file:filename()) -> {ok, cerl:cerl()} | error.
 get_core_forms(BeamFile) ->
+    io:format("Got request for ~p~n", [BeamFile]),
     case beam_lib:chunks(BeamFile, [debug_info]) of
         {ok, {Module, [{debug_info, {debug_info_v1, Backend, Metadata}}]}} ->
             case Backend:debug_info(core_v1, Module, Metadata, []) of
-                {ok, Core} -> {ok, Core}
+                {ok, Core} ->
+                    ?DEBUG_CORE(Core),
+                    {ok, Core}
             end
     end.
+

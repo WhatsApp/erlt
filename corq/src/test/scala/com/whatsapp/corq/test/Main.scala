@@ -17,7 +17,7 @@
 package com.whatsapp.corq.test
 
 import com.whatsapp.corq.ast.DB
-// import com.whatsapp.corq.test.util._
+import com.whatsapp.corq.test.util._
 
 object Main {
   sealed trait Cmd
@@ -25,38 +25,36 @@ object Main {
   case object Debug extends Cmd
 
   def main(args: Array[String]): Unit = {
-    DB.main(args)
-    // if (args.length != 2) {
-    //   help()
-    //   return
-    // }
-    // val cmd: Cmd = args(0) match {
-    //   case "check" => Check
-    //   case "debug" => Debug
-    //   case _       => help(); return
-    // }
+    if (args.length != 2) {
+      help()
+      return
+    }
+    val cmd: Cmd = args(0) match {
+      case "check" => Check
+      case "debug" => Debug
+      case _       => help(); return
+    }
 
+    val module = args(1)
+    DB.beamLocation(module) match {
+      case None =>
+        Console.err.println(s"Cannot locate beam file for module $module")
+      case Some(beamFile) =>
+        Console.println(s"Loading forms from $beamFile")
 
-    // val module = args(1)
-    // DB.beamLocation(module) match {
-    //   case None =>
-    //     Console.err.println(s"Cannot locate beam file for module $module")
-    //   case Some(beamFile) =>
-    //     Console.println(s"Loading forms from $beamFile")
+        val feedback = cmd match {
+          case Check => TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
+          case Debug => WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
+        }
 
-    //     val feedback = cmd match {
-    //       case Check => TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-    //       case Debug => WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
-    //     }
-
-        Console.println("hello test main")
-    // }
+        Console.println(feedback)
+    }
   }
 
-  // def help(): Unit = {
-  //   Console.println("com.whatsapp.corq.test.Main")
-  //   Console.println("usage:")
-  //   Console.println("  check <module_name>")
-  //   Console.println("  debug <module_name>")
-  // }
+  def help(): Unit = {
+    Console.println("com.whatsapp.corq.test.util.TypeCheckModule")
+    Console.println("usage:")
+    Console.println("  check <module_name>")
+    Console.println("  debug <module_name>")
+  }
 }
