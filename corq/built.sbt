@@ -1,25 +1,20 @@
 name := "corq"
 
-libraryDependencies ++= Seq (
-  "com.lihaoyi" %% "pprint" % "0.5.6",
-  "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.4.0"
-)
-// initialCommands in console := """import com.whatsapp.corq._"""
-
 scalaVersion := "2.13.4"
 
-libraryDependencies += "org.erlang.otp" % "jinterface" % "1.6.1"
-
-libraryDependencies += "com.typesafe" % "config" % "1.4.1"
-
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.2" % "test"
+libraryDependencies ++= Seq (
+  "org.erlang.otp" % "jinterface" % "1.6.1",
+  "com.typesafe" % "config" % "1.4.1",
+  "org.scalatest" %% "scalatest" % "3.2.2" % "test",
+  "com.lihaoyi" %% "pprint" % "0.5.6"
+)
 
 lazy val testProjects = taskKey[Seq[File]]("build beam files")
 
 resourceGenerators in Test += testProjects.taskValue
 
-// TODO: coverage
-// coverageMinimum := 0
+// TODO: put back
+// coverageMinimum := 98
 // coverageFailOnMinimum := true
 
 testProjects / fileInputs += (baseDirectory.value / "test_projects" / "*" / "src" / "*.erl").toGlob

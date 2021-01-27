@@ -42,7 +42,7 @@ object CErlConvert {
       case ETuple(List(EAtom("c_cons"), anno, hd, tl)) =>
         CCons(convertAnno(anno), convert(hd), convert(tl))
       case ETuple(List(EAtom("c_fun"), anno, EList(vars, None), body)) =>
-        CFun(convertAnno(anno), vars.map(convert), convert(body))
+        CFun(convertAnno(anno), vars.map(convert).map(_.asInstanceOf[CVar]), convert(body))
       case ETuple(List(EAtom("c_let"), anno, EList(vars, None), arg, body)) =>
         CLet(convertAnno(anno), vars.map(convert), convert(arg), convert(body))
       case ETuple(List(EAtom("c_letrec"), anno, EList(defs, None), body)) =>
@@ -91,14 +91,11 @@ object CErlConvert {
     }
   }
 
-  // This is just an artifact of how Erlang transfers lists/strings
-  // - see https://github.com/erlang/otp/blob/master/erts/emulator/beam/external.c
-  // is_external_string
-  private def convertAnno(eObject: EObject): Anno =
-    eObject match {
-      case EList(anno, None) => AnnoList(anno)
-      case EString(str)      => AnnoString(str)
-    }
+  // assuming annotations are uninformative
+  private def convertAnno(_eObject: EObject): Anno = {
+    Anno()
+  }
+
 
   private def convertEvar(eVar: EObject): VarName =
     eVar match {

@@ -20,6 +20,7 @@ package erlang
 // Scala-idiomatic representation of Erlang Data
 object Data {
   sealed trait EObject
+  case class Anno() extends EObject
   case class EAtom(atom: String) extends EObject {
     def asBoolean(): Boolean =
       atom match {

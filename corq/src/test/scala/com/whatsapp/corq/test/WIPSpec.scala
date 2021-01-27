@@ -16,15 +16,14 @@
 
 package com.whatsapp.corq.test
 
-import com.whatsapp.corq.test.util.TcDiagnosticsText
+import com.whatsapp.corq.test.util.WIPDiagnosticsText
+
 import java.nio.file.{Files, Paths}
 
-import com.whatsapp.corq.ast.DB
-
-class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
+class WIPSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
-  testDir(srcDir = "test_projects/check/src", ebinDir = "test_projects/_build/default/lib/check/ebin")
+  testDir(srcDir = "test_projects/wip/src", ebinDir = "test_projects/_build/default/lib/wip/ebin")
 
   def testDir(srcDir: String, ebinDir: String): Unit = {
     describe(ebinDir) {
@@ -38,9 +37,8 @@ class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
   def testBeam(srdDir: String, ebinDir: String, module: String): Unit =
     it(s"$srdDir/$module.erl") {
       val beamFile = s"$ebinDir/$module.beam"
-      val diag = TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-      println(s"diagnostics: $diag")
-      val expPath = Paths.get(s"$srdDir/$module.erl.check")
+      val diag = WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
+      val expPath = Paths.get(s"$srdDir/$module.erl.wip")
       if (generateOut) Files.write(expPath, diag.getBytes)
       val exp = new String(Files.readAllBytes(expPath))
       assert(exp == diag)
