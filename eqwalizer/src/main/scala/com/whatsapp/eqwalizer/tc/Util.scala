@@ -33,11 +33,14 @@ object Util {
       spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity)) if spec.types.size == 1
     } yield spec.types.head.ty
 
-  def initClauseEnv(env: Env, clauseVars: Set[String]): Env = {
-    var envAcc = env
+  def enterScope(env0: Env, scopeVars: Set[String]): Env = {
+    var env = env0
     for {
-      v <- clauseVars if !env.contains(v)
-    } envAcc = envAcc.updated(v, AnyType)
-    envAcc
+      v <- scopeVars if !env0.contains(v)
+    } env = env.updated(v, AnyType)
+    env
   }
+
+  def exitScope(env0: Env, env1: Env): Env =
+    env1.view.filterKeys(env0.contains).toMap
 }

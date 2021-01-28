@@ -37,12 +37,14 @@ final class Elab(module: String) {
       // $COVERAGE-ON$
     }
 
-  private def elabClause(clause: Clause, env: Env): (Type, Env) = {
-    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
+  private def elabClause(clause: Clause, env0: Env): (Type, Env) = {
+    val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
     val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
-    elabBlock(clause.body, env3)
+    val (elabType, env4) = elabBlock(clause.body, env3)
+    val env5 = Util.exitScope(env0, env4)
+    (elabType, env5)
   }
 
   def elabExpr(expr: Expr, env: Env): (Type, Env) =
