@@ -558,6 +558,7 @@ improper_lists(BeamFile) ->
 
 improper_list({type, Line, maybe_improper_list, _}) -> {Line};
 improper_list({type, Line, nonempty_maybe_improper_list, _}) -> {Line};
+improper_list({type, Line, nonempty_improper_list, _}) -> {Line};
 improper_list(_) -> false.
 
 %% Core forms

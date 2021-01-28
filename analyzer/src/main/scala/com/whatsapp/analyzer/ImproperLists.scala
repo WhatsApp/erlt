@@ -25,14 +25,14 @@ object ImproperLists {
 
   def main(args: Array[String]): Unit = {
     val infos = Using.resource(RPC.connect())(loadData)
-    var allLines: Set[Line] = Set.empty
+    var count: Int = 0
     for (info <- infos) {
       if (info.lines.nonEmpty) {
-        allLines = allLines ++ info.lines
+        count += info.lines.size
         println(s"${info.module}: ${info.lines.mkString(", ")}")
       }
     }
-    println(s"All lines: ${allLines.toList.sorted.mkString(", ")}")
+    println(s"Total: $count")
   }
 
   private def loadData(rpc: RPC): List[Info] = {
