@@ -42,7 +42,8 @@
     nonempty_lists/1,
     nonempty_strings/1,
     improper_lists/1,
-    get_core_forms/1
+    get_core_forms/1,
+    io_xxxs/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -571,6 +572,18 @@ get_core_forms(BeamFile) ->
             Backend:debug_info(core_v1, Module, Metadata, []);
         Error -> Error
     end.
+
+%% iolist() and iodata()
+
+-spec io_xxxs(BeamFile :: file:filename()) -> [{integer()}].
+io_xxxs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    Specs = [Spec || Spec = {attribute, _, spec, _} <- Forms],
+    collect(Specs, fun pred/1, fun io_xxx/1).
+
+io_xxx({type, Line, iolist, _}) -> {Line};
+io_xxx({type, Line, iodata, _}) -> {Line};
+io_xxx(_) -> false.
 
 %% Utilities
 
