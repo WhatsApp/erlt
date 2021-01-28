@@ -35,7 +35,7 @@ object ElabGuard {
 
   def elabGuards(guards: List[Guard], env: Env): Env =
     if (guards.isEmpty) env
-    else Approx.joinEnvsAll(guards.map(elabGuard(_, env)))
+    else Approx.joinEnvs(guards.map(elabGuard(_, env)))
 
   private def elabGuard(guard: Guard, env: Env): Env = {
     var envAcc = env

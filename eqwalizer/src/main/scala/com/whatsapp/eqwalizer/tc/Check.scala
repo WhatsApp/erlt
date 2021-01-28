@@ -53,7 +53,7 @@ final case class Check(module: String) {
 
   private def checkClauses(env: Env, argTys: List[Type], resTy: Type, clauses: List[Clause]): Env = {
     val envs = clauses.map(checkClause(_, argTys, resTy, env))
-    Approx.joinEnvs(env, envs)
+    Approx.joinEnvs(envs)
   }
 
   def checkExprs(exprs: List[Expr], tys: List[Type], env: Env): Env = {
@@ -228,7 +228,7 @@ final case class Check(module: String) {
           val rEnv = checkClauses(env, List(AnyType), resTy, clauses)
           val tEnv1 = checkExpr(timeout, integerType, env)
           val tEnv2 = checkBlock(timeoutBlock, resTy, tEnv1)
-          Approx.joinEnvsAll(List(rEnv, tEnv2))
+          Approx.joinEnvs(List(rEnv, tEnv2))
       }
   }
 }

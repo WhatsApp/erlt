@@ -109,10 +109,10 @@ final class Elab(module: String) {
       case Case(sel, clauses) =>
         val (_, env1) = elabExpr(sel, env)
         val (ts, envs) = clauses.map(elabClause(_, env1)).unzip
-        (UnionType(ts), Approx.joinEnvs(env1, envs))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case If(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvs(envs.head, envs.tail))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
         ElabPat.elabPat(mPat, ty, env1)
@@ -175,12 +175,12 @@ final class Elab(module: String) {
         (UnionType(tryTs ::: catchTs), env1)
       case Receive(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvsAll(envs))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
         val env1 = Check(module).checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
-        (UnionType(timeoutT :: ts), Approx.joinEnvsAll(timeoutEnv :: envs))
+        (UnionType(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
