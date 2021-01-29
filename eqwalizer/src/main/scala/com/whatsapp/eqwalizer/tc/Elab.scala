@@ -21,21 +21,16 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-import scala.annotation.tailrec
-
 final class Elab(module: String) {
-  @tailrec
-  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
-    exprs match {
-      case expr :: Nil =>
-        elabExpr(expr, env)
-      case expr :: rest =>
-        val (_, env1) = elabExpr(expr, env)
-        elabBlock(rest, env1)
-      // $COVERAGE-OFF$
-      case _ => throw new IllegalStateException()
-      // $COVERAGE-ON$
+  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
+    var (elabType, envAcc) = elabExpr(exprs.head, env)
+    for (expr <- exprs.tail) {
+      val (t1, env1) = elabExpr(expr, envAcc)
+      elabType = t1
+      envAcc = env1
     }
+    (elabType, Util.exitScope(env, envAcc))
+  }
 
   private def elabClause(clause: Clause, env0: Env): (Type, Env) = {
     val env1 = Util.enterScope(env0, Vars.clauseVars(clause))

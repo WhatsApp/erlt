@@ -22,8 +22,6 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-import scala.annotation.tailrec
-
 final case class Check(module: String) {
   val elab = new Elab(module)
 
@@ -33,14 +31,15 @@ final case class Check(module: String) {
     checkClauses(Map.empty, argTys, resTy, f.clauses)
   }
 
-  @tailrec
-  private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env =
-    if (block.size == 1)
-      checkExpr(block.head, resTy, env)
-    else {
-      val (_, env1) = elab.elabExpr(block.head, env)
-      checkBlock(block.tail, resTy, env1)
+  private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env = {
+    var envAcc = env
+    for (expr <- block.init) {
+      val (_, env1) = elab.elabExpr(expr, envAcc)
+      envAcc = env1
     }
+    envAcc = checkExpr(block.last, resTy, envAcc)
+    Util.exitScope(env, envAcc)
+  }
 
   private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env0: Env): Env = {
     val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
