@@ -261,10 +261,10 @@ object Convert {
           case _ =>
             throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpDCall)
         }
-      case ETuple(List(EAtom("lc"), ELong(l), _, _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpLC)
-      case ETuple(List(EAtom("bc"), ELong(l), _, _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpBC)
+      case ETuple(List(EAtom("lc"), ELong(l), eTemplate, EList(eQualifiers, None))) =>
+        LComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))(l.intValue)
+      case ETuple(List(EAtom("bc"), ELong(l), eTemplate, EList(eQualifiers, None))) =>
+        BComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))(l.intValue)
       case ETuple(List(EAtom("block"), ELong(l), EList(eExps, None))) =>
         Block(eExps.map(convertExp))(l.intValue)
       case ETuple(List(EAtom("if"), ELong(l), EList(eClauses, None))) =>
@@ -395,6 +395,16 @@ object Convert {
     val specifier = convertSpecifier(eSpecifier)
     PatBinaryElem(convertPat(elem), size, specifier)(l.intValue)
   }
+
+  private def convertQualifier(term: EObject): Qualifier =
+    term match {
+      case ETuple(List(EAtom("generate"), ELong(l), ePat, eExp)) =>
+        LGenerate(convertPat(ePat), convertExp(eExp))
+      case ETuple(List(EAtom("b_generate"), ELong(l), ePat, eExp)) =>
+        BGenerate(convertPat(ePat), convertExp(eExp))
+      case _ =>
+        Filter(convertExp(term))
+    }
 
   private def convertTest(term: EObject): Test =
     term match {

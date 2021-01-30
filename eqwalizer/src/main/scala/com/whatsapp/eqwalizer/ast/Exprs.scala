@@ -45,6 +45,8 @@ object Exprs {
   case class UnOp(op: String, arg: Expr)(val l: Int) extends Expr
   case class BinOp(op: String, arg1: Expr, arg2: Expr)(val l: Int) extends Expr
 
+  case class LComprehension(template: Expr, qualifiers: List[Qualifier])(val l: Int) extends Expr
+  case class BComprehension(template: Expr, qualifiers: List[Qualifier])(val l: Int) extends Expr
   case class Binary(elems: List[BinaryElem])(val l: Int) extends Expr
   case class Catch(expr: Expr)(val l: Int) extends Expr
   case class TryCatchExpr(tryBody: List[Expr], catchClauses: List[Clause], after: Option[List[Expr]])(val l: Int)
@@ -61,4 +63,10 @@ object Exprs {
 
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
   case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)
+
+  sealed trait Qualifier
+  sealed trait Generator extends Qualifier
+  case class LGenerate(pat: Pat, expr: Expr) extends Generator
+  case class BGenerate(pat: Pat, expr: Expr) extends Generator
+  case class Filter(expr: Expr) extends Qualifier
 }

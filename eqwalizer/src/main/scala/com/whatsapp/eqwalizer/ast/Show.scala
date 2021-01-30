@@ -103,5 +103,9 @@ object Show {
       "receive .."
     case ReceiveWithTimeout(_, _, _) =>
       "receive .."
+    case LComprehension(_, _) =>
+      "[ || ]"
+    case BComprehension(_, _) =>
+      "<< || >>"
   }
 }
