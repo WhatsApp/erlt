@@ -28,8 +28,13 @@ module.exports = grammar({
         $._comment
     ],
 
+    supertypes: $ => [
+        $._form,
+        $._expr,
+    ],
+
     rules: {
-        source_file: $ => repeat($._form),
+        source_file: $ => field('forms', repeat($._form)),
 
         _form: $ => choice(
             $.module_attribute,
@@ -37,18 +42,18 @@ module.exports = grammar({
             $.function
         ),
 
-        module_attribute: $ => seq('-', 'module', '(', $.atom, ')', '.'),
+        module_attribute: $ => seq('-', 'module', '(', field('name', $.atom), ')', '.'),
 
-        attribute: $ => seq('-', $.atom, '(', $._expr, ')', '.'),
+        attribute: $ => seq('-', field('name', $.atom), '(', field('value', $._expr), ')', '.'),
 
-        function: $ => seq(sepBy1($.function_clause, ';'), '.'),
+        function: $ => seq(sepBy1(field('clauses', $.function_clause), ';'), '.'),
 
-        function_clause: $ => seq($.atom, $.arg_list, '->', $.block),
+        function_clause: $ => seq(field('name', $.atom), field('arg_list', $.arg_list), '->', field('body', $.block)),
 
         // TODO: separate expr and patterns
-        arg_list: $ => seq('(', sepBy($._expr, ','), ')'),
+        arg_list: $ => seq('(', sepBy(field('args', $._expr), ','), ')'),
 
-        block: $ => sepBy1($._expr, ','),
+        block: $ => sepBy1(field('exprs', $._expr), ','),
 
         _expr: $ => choice(
             $.atom,
