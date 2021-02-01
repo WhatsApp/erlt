@@ -17,7 +17,8 @@
 package com.whatsapp.eqwalizer
 
 import com.whatsapp.eqwalizer.ast.Forms._
-import com.whatsapp.eqwalizer.ast.{DB, Expand, Forms, Globalize}
+import com.whatsapp.eqwalizer.ast.WIPDiagnostics.{NotRequested, SkippedConstructDiagnostics}
+import com.whatsapp.eqwalizer.ast.{DB, Expand, Forms, Globalize, Id}
 import com.whatsapp.eqwalizer.tc.Check
 import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeError
 
@@ -51,6 +52,27 @@ object Pipeline {
       case x =>
         x
     }
+  }
+
+  def checkFun(beamFile: String, id: Id): (List[Form], Int, Int) = {
+    val forms = loadForms(beamFile)
+    val module = forms.collect { case Module(m) => m }.head
+    val stub = DB.getExpandedModuleStub(module).get
+    var start, end = 0
+    val checkedForms = forms.map {
+      case f: FunDecl =>
+        if (f.id == id) stub.specs.get(f.id).map(checkFun(module, f, _)).getOrElse(NoSpecFuncDecl(f.id)(f.line))
+        else SkippedFunDecl(id: Id, SkippedConstructDiagnostics(f.line, NotRequested))(f.line)
+      case fSpec: FunSpec if fSpec.id == id =>
+        start = fSpec.line
+        fSpec
+      case x =>
+        if (start > 0 && end == 0) {
+          end = x.line
+        }
+        x
+    }
+    (checkedForms, start, end)
   }
 
   private def checkFun(module: String, f: FunDecl, spec: FunSpec): Form = {

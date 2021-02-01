@@ -1,0 +1,8 @@
+372 -spec test80_neg(any()) -> atom().         |         | 
+373 test80_neg(Timeout) ->                     | ERROR   | 
+374     receive                                |         | 
+375         X -> X                             |         | X. Expected: atom(), Got: term()
+376     after Timeout ->                       |         | 
+377         default                            |         | 
+378     end.                                   |         | 
+379                                            |         | 

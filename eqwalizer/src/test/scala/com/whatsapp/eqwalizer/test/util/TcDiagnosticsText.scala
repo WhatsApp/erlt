@@ -18,6 +18,7 @@ package com.whatsapp.eqwalizer.test.util
 
 import com.whatsapp.eqwalizer.Pipeline
 import com.whatsapp.eqwalizer.ast.Forms._
+import com.whatsapp.eqwalizer.ast.Id
 import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeError
 
 import java.nio.file.{Files, Paths}
@@ -65,10 +66,10 @@ object TcDiagnosticsText {
     }
   }
 
-  def checkForms(beamFile: String): List[String] =
-    checkFormsD(beamFile).map(_.format())
+  def checkFile(beamFile: String): List[String] =
+    checkFileD(beamFile).map(_.format())
 
-  private def checkFormsD(beamFile: String): List[DLine] = {
+  private def checkFileD(beamFile: String): List[DLine] = {
     import scala.jdk.CollectionConverters.CollectionHasAsScala
 
     val forms = Pipeline.checkForms(beamFile)
@@ -87,6 +88,33 @@ object TcDiagnosticsText {
       val l = i + 1
       DLine(l, text, statusDs.get(l), errorDs.get(l))
     }
+  }
+
+  def checkFun(beamFile: String, id: Id): List[String] =
+    checkFunD(beamFile, id).map(_.format())
+
+  private def checkFunD(beamFile: String, id: Id): List[DLine] = {
+    import scala.jdk.CollectionConverters.CollectionHasAsScala
+
+    val (forms, start, end) = Pipeline.checkFun(beamFile, id)
+
+    val erlFile = forms.collect({ case File(erlFile, _) => erlFile }).head
+    val erlPathFromForms = Paths.get(erlFile)
+    val erlPath =
+      if (erlPathFromForms.isAbsolute) erlPathFromForms
+      else Paths.get(beamFile.replace("/ebin/", "/src/").replace(".beam", ".erl"))
+    val lines = Files.readAllLines(erlPath).asScala.toList.map(_.replace('\t', ' '))
+
+    val trueEnd = if (end == 0) lines.length else (end - 1)
+
+    val statusDs = statusDiags(forms)
+    val errorDs = errorDiags(forms)
+
+    val origLines = lines.zipWithIndex.map { case (text, i) =>
+      val l = i + 1
+      DLine(l, text, statusDs.get(l), errorDs.get(l))
+    }
+    origLines.slice(start - 1, trueEnd)
   }
 
   private def statusDiags(forms: List[Form]): Map[Int, Status] = {
