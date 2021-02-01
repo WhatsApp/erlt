@@ -23,6 +23,10 @@ impl std::hash::Hash for SyntaxNode {
 }
 
 impl SyntaxNode {
+    pub fn root(tree: Rc<Tree>) -> SyntaxNode {
+        Self::new(tree.clone(), tree.root_node())
+    }
+
     pub fn new<'a>(tree: Rc<Tree>, node: Node<'a>) -> SyntaxNode {
         // Safety: the lifetime parameter of the node relates to
         // the lifetime of the tree - since we store the two together,
@@ -40,11 +44,11 @@ impl SyntaxNode {
 
     pub fn field_children(&self, field_id: u16) -> SyntaxNodeFieldChildren {
         let mut cursor = self.1.walk();
-        let done = cursor.goto_first_child();
+        let done = !cursor.goto_first_child();
         SyntaxNodeFieldChildren { tree: self.0.clone(), field_id, done, raw: cursor }
     }
 
-    // fn node<'a>(&'a self) -> Node<'a> {
+    // pub(crate) fn node<'a>(&'a self) -> Node<'a> {
     //     self.1
     // }
 }
@@ -72,6 +76,7 @@ impl fmt::Debug for SyntaxNodeFieldChildren {
         f.debug_struct("SyntaxNodeFieldChildren")
             .field("parent", &self.raw.node().parent())
             .field("field_id", &self.field_id)
+            .field("done", &self.done)
             .finish()
     }
 }
@@ -90,7 +95,7 @@ impl Iterator for SyntaxNodeFieldChildren {
         }
 
         let node = self.raw.node();
-        self.done = self.raw.goto_next_sibling();
+        self.done = !self.raw.goto_next_sibling();
 
         Some(SyntaxNode::new(self.tree.clone(), node))
     }
