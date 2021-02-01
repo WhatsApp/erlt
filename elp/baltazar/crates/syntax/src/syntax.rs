@@ -1,6 +1,8 @@
-use std::{mem, rc::Rc};
+use std::{fmt, iter::FusedIterator, mem, rc::Rc};
 
-use tree_sitter::{Node, Tree};
+use tree_sitter::{Node, Tree, TreeCursor};
+
+pub use crate::generated::syntax_kind::SyntaxKind;
 
 #[derive(Debug, Clone)]
 pub struct SyntaxNode(Rc<Tree>, Node<'static>);
@@ -31,7 +33,67 @@ impl SyntaxNode {
         SyntaxNode(tree, node)
     }
 
-    fn node<'a>(&'a self) -> Node<'a> {
-        self.1
+    pub fn kind(&self) -> SyntaxKind {
+        // TODO: proper conversion
+        unsafe { mem::transmute(self.1.kind_id()) }
+    }
+
+    pub fn field_children(&self, field_id: u16) -> SyntaxNodeFieldChildren {
+        let mut cursor = self.1.walk();
+        let done = cursor.goto_first_child();
+        SyntaxNodeFieldChildren { tree: self.0.clone(), field_id, done, raw: cursor }
+    }
+
+    // fn node<'a>(&'a self) -> Node<'a> {
+    //     self.1
+    // }
+}
+
+pub struct SyntaxNodeFieldChildren {
+    tree: Rc<Tree>,
+    field_id: u16,
+    done: bool,
+    raw: TreeCursor<'static>,
+}
+
+impl Clone for SyntaxNodeFieldChildren {
+    fn clone(&self) -> Self {
+        SyntaxNodeFieldChildren {
+            tree: self.tree.clone(),
+            field_id: self.field_id,
+            done: self.done,
+            raw: self.raw.node().walk(),
+        }
     }
 }
+
+impl fmt::Debug for SyntaxNodeFieldChildren {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SyntaxNodeFieldChildren")
+            .field("parent", &self.raw.node().parent())
+            .field("field_id", &self.field_id)
+            .finish()
+    }
+}
+
+impl Iterator for SyntaxNodeFieldChildren {
+    type Item = SyntaxNode;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        while self.raw.field_id() != Some(self.field_id) {
+            if !self.raw.goto_next_sibling() {
+                return None;
+            }
+        }
+
+        let node = self.raw.node();
+        self.done = self.raw.goto_next_sibling();
+
+        Some(SyntaxNode::new(self.tree.clone(), node))
+    }
+}
+
+impl FusedIterator for SyntaxNodeFieldChildren {}
