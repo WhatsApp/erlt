@@ -1,40 +1,103 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeInType #-}
 
-import Control.Lens hiding (Iso, List)
-import Control.Monad
-import Control.Monad.Reader
-import Data.Aeson hiding (Options, defaultOptions)
-import qualified Data.HashMap.Strict as HM
-import Data.List (isSuffixOf)
+import Control.Lens (to, (^.))
+import Control.Monad.Reader (ReaderT, runReaderT, asks)
+import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Map as Map
-import Data.Rope.UTF16 (Rope)
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
 import ELP
-import Foreign.C.String
-import Foreign.Marshal.Alloc
-import Foreign.Marshal.Array (mallocArray)
-import Foreign.Ptr
-import Foreign.Storable
+  ( nodeAsSexpr,
+    parseChange,
+    treeSitterParseFull,
+    treeSitterParser,
+  )
+import Foreign.Ptr (Ptr)
 import GHC.Generics (Generic)
-import GHC.Word
 import Language.LSP.Diagnostics (partitionBySource)
 import Language.LSP.Server
+  ( Handlers,
+    LspM,
+    Options (textDocumentSync),
+    ServerDefinition
+      ( ServerDefinition,
+        doInitialize,
+        interpretHandler,
+        onConfigurationChange,
+        options,
+        staticHandlers
+      ),
+    defaultOptions,
+    getVirtualFile,
+    notificationHandler,
+    publishDiagnostics,
+    requestHandler,
+    runLspT,
+    runServer,
+    sendNotification,
+    setupLogger,
+    type (<~>) (Iso), MonadLsp
+  )
 import Language.LSP.Types
-import Language.LSP.Types.Lens as Lsp hiding (options, publishDiagnostics, textDocumentSync)
-import Language.LSP.VFS
-import System.Directory
-import System.FilePath
-import System.Log.Logger
-import TreeSitter.ErlangELP
-import TreeSitter.Node
-import TreeSitter.Parser
-import TreeSitter.Tree
-import UnliftIO
-import UnliftIO.Concurrent
+  ( CodeAction (CodeAction),
+    CodeActionContext (CodeActionContext),
+    CodeActionParams (CodeActionParams),
+    Command (Command),
+    CompletionItem (CompletionItem),
+    CompletionItemKind (CiConstant),
+    CompletionList (CompletionList),
+    Diagnostic (Diagnostic),
+    DiagnosticSeverity (DsWarning),
+    DocumentSymbol (DocumentSymbol),
+    Hover (Hover),
+    HoverContents (HoverContents),
+    List (List),
+    LogMessageParams (LogMessageParams),
+    MarkupContent (MarkupContent),
+    MarkupKind (MkPlainText),
+    MessageType (MtInfo, MtLog),
+    NormalizedUri,
+    Position (Position),
+    Range (Range),
+    RequestMessage (RequestMessage),
+    SMethod
+      ( SInitialized,
+        STextDocumentCodeAction,
+        STextDocumentCompletion,
+        STextDocumentDidChange,
+        STextDocumentDidOpen,
+        STextDocumentDocumentSymbol,
+        STextDocumentHover,
+        SWindowLogMessage,
+        SWindowShowMessage
+      ),
+    SaveOptions (SaveOptions),
+    ShowMessageParams (ShowMessageParams),
+    SymbolKind (SkObject),
+    TextDocumentSyncKind (TdSyncIncremental),
+    TextDocumentSyncOptions (TextDocumentSyncOptions),
+    mkRange,
+    toNormalizedUri,
+    uriToFilePath,
+    type (|?) (InL, InR), TextDocumentVersion
+  )
+import Language.LSP.Types.Lens as Lsp
+  ( HasContentChanges (contentChanges),
+    HasParams (params),
+    HasText (text),
+    HasTextDocument (textDocument),
+    HasUri (uri),
+  )
+import Language.LSP.VFS (VirtualFile (VirtualFile))
+import System.Log.Logger (Priority (INFO), infoM)
+import TreeSitter.Node (Node)
+import TreeSitter.Parser (Parser)
+import TreeSitter.Tree (Tree)
+import UnliftIO (MVar, MonadIO (liftIO), modifyMVar, newMVar)
 
 -- ---------------------------------------------------------------------
 
@@ -46,7 +109,7 @@ main = do
 
   parser <- treeSitterParser
   let pc = ParserContext parser mempty
-  handlerEnv <- HandlerEnv <$> newEmptyMVar <*> newEmptyMVar <*> newMVar pc
+  handlerEnv <- HandlerEnv <$> newMVar pc
 
   runServer $
     ServerDefinition
@@ -79,9 +142,7 @@ lspOptions =
 -- ---------------------------------------------------------------------
 
 data HandlerEnv = HandlerEnv
-  { relRegToken :: MVar (RegistrationToken WorkspaceDidChangeWatchedFiles),
-    absRegToken :: MVar (RegistrationToken WorkspaceDidChangeWatchedFiles),
-    heParser :: MVar ParserContext
+  { heParser :: MVar ParserContext
   }
 
 data ParserContext = ParserContext
@@ -117,8 +178,8 @@ handlers =
         liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show fileName
         mdoc <- getVirtualFile docUri
         case mdoc of
-          Just (VirtualFile _lspversion version rope) -> do
-            liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show version
+          Just (VirtualFile _lspversion vsn _rope) -> do
+            liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
             mparser <- asks heParser
             sexp <- liftIO $
               modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
@@ -141,22 +202,27 @@ handlers =
         liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
         mdoc <- getVirtualFile doc
         case mdoc of
-          Just (VirtualFile _lspversion version rope) -> do
-            liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show version
+          Just (VirtualFile _lspversion vsn rope) -> do
+            liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
             mparser <- asks heParser
             sexp <- liftIO $
               modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
                 (tree, node) <- case Map.lookup doc pcsmap of
                   Nothing -> do
-                    infoM "h-elp" $ "ParserContext not found, doing full parse"
-                    (tree, node) <- treeSitterParseFull parser (Rope.toString rope)
-                    return (tree, node)
-                  Just (TsFile tree _node) -> do
+                    infoM "h-elp" "ParserContext not found, doing full parse"
+                    treeSitterParseFull parser (Rope.toString rope)
+                  Just (TsFile tree node) -> do
                     -- TODO: fold over the changes
-                    let tsEdit = lspChangeAsTSInputEdit rope (head changeList)
-                    tree2 <- treeSitterParseEdit tsEdit tree
-                    (tree3, node2) <- treeSitterParseIncrement parser rope tree2
-                    return (tree3, node2)
+                    -- Question: Is this valid, given the rope has all the changes already?
+                    -- TODO: update lsp/vfs to provide a callback on every change
+                    case changeList of
+                      [] -> do
+                        infoM "h-elp" "No changes in didChange message"
+                        return (tree, node)
+                      [c] -> parseChange rope parser tree c
+                      _ -> do
+                        infoM "h-elp" "Multiple changes in didChange message, doing full parse"
+                        treeSitterParseFull parser (Rope.toString rope)
                 sexp <- nodeAsSexpr node
                 liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
                 let pcsmap' = Map.insert doc (TsFile tree node) pcsmap
@@ -316,7 +382,7 @@ handlers =
 -- | Analyze the file and send any diagnostics to the client in a
 -- "textDocument/publishDiagnostics" notification
 -- sendDiagnostics :: NormalizedUri -> Maybe Int -> LspM Config ()
--- sendDiagnostics :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
+sendDiagnostics :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
 sendDiagnostics fileUri version msg = do
   let diags =
         [ Diagnostic

@@ -29,6 +29,7 @@ import TreeSitter.ErlangELP
 import TreeSitter.Node
 import TreeSitter.Parser
 import TreeSitter.Tree
+import TreeSitter.Query
 
 main :: IO ()
 main = defaultMain tests
@@ -41,7 +42,8 @@ tests =
         2 + 2 @?= 4,
       testCase "7 is odd" $
         assertBool "Oops, 7 is even" (odd 7),
-      testVFS
+      -- testVFS,
+      testQuery
     ]
 
 testVFS :: TestTree
@@ -117,6 +119,57 @@ testVFS =
           return ()
     ]
 
+-- ---------------------------------------------------------------------
+-- See https://github.com/tree-sitter/tree-sitter/blob/master/docs/section-2-using-parsers.md#the-query-api
+testQuery :: TestTree
+testQuery =
+  testGroup
+    "Query"
+    [ testCase "Query" $ do
+        initVFS $ \vfs -> do
+          let aContent =
+                T.unlines
+                  [ "-module(foo).",
+                    "-xxxx(yyy)."
+                  ]
+              itemA = TextDocumentItem uriA "erlang" 0 aContent
+              uriA = filePathToUri "src/foo.erl"
+              nUriA = toNormalizedUri uriA
+              a = TextDocumentIdentifier uriA
+              msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
+          let (v1, _) = openVFS vfs msg
+          parser <- treeSitterParser
+          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+          sexp <- nodeAsSexpr node
+          sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
+
+          let queryStr = "(module_attribute)"
+          -- let queryStr = "(attribute)"
+          -- let queryStr = "(arg_list)"
+          (str, len) <- newCStringLen queryStr
+          e <- malloc
+          r <- malloc
+          query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
+          ee <- peek e
+          rr <- peek r
+          rr @?= TSQueryErrorNone
+
+          qc <- ts_query_cursor_new
+          -- void ts_query_cursor_exec(TSQueryCursor *, const TSQuery *, TSNode);
+          n <- malloc
+          poke n node
+          ts_query_cursor_exec_p qc query n
+          -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
+          pmatch <- malloc
+          matched <- ts_query_cursor_next_match qc pmatch
+          match <- peek pmatch
+          matched @?= True
+          [match]  @?= []
+
+          assertBool "show me the logs!" False
+          free parser
+          return ()
+    ]
 {-
 
 data Node = Node

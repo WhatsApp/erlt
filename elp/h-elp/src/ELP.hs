@@ -37,6 +37,7 @@ import TreeSitter.Tree
 pp :: String -> IO ()
 pp = hPutStrLn stderr
 
+-- ---------------------------------------------------------------------
 -- TODO: free the parser, or bracket it with a free
 treeSitterParser :: IO (Ptr Parser)
 treeSitterParser = do
@@ -54,6 +55,7 @@ treeSitterParser = do
   pp $ "set language:" ++ show (r, tree_sitter_erlang_elp)
   return parser
 
+-- ---------------------------------------------------------------------
 treeSitterParseFull :: Ptr Parser -> String -> IO (Ptr Tree, Node)
 treeSitterParseFull parser source = do
   (str, len) <- newCStringLen source
@@ -66,6 +68,7 @@ treeSitterParseFull parser source = do
   -- pp $ "Node:" ++ show nn
   return (tree, nn)
 
+-- ---------------------------------------------------------------------
 treeSitterParseEdit :: TSInputEdit -> Ptr Tree -> IO (Ptr Tree)
 treeSitterParseEdit edit tree = do
   inp <- malloc
@@ -73,6 +76,7 @@ treeSitterParseEdit edit tree = do
   ts_tree_edit tree inp
   return tree
 
+-- ---------------------------------------------------------------------
 -- Based on Language.LSP.VFS.applyChange.
 -- TODO: move this somewhere meaningful
 lspChangeAsTSInputEdit :: Rope -> TextDocumentContentChangeEvent -> TSInputEdit
@@ -137,11 +141,12 @@ lspChangeAsTSInputEdit rope change = edit
               fromIntegral lastCol
             )
 
+-- ---------------------------------------------------------------------
+
 treeSitterParseIncrement :: Ptr Parser -> Rope -> Ptr Tree -> IO (Ptr Tree, Node)
 treeSitterParseIncrement parser rope tree = do
-  -- let source2 =
-  --       -- "-moable(foo).\n-x(y).\n"
-  --       "-abcdef(foo).\n-xxxx(yyy).\n"
+  -- TODO: do we *have* to convert the entire rope to a string?
+  -- optimise the TSHInput function to use a rope instead of a string.
   let source2 = Rope.toString rope
   (str2, _len2) <- newCStringLen source2
 
@@ -156,16 +161,15 @@ treeSitterParseIncrement parser rope tree = do
   ip <- malloc
   poke ip i
   ts_parser_log_to_stderr parser
-  -- tree2       <- ts_parser_parse_string parser tree str2 len2
   pp $ "invoking ts_parser_parse_p1"
-  tree <- ts_parser_parse_p1 parser tree ip
-  pp $ "got tree:" ++ show tree
+  tree2 <- ts_parser_parse_p1 parser tree ip
+  pp $ "got tree:" ++ show tree2
   n <- malloc
-  ts_tree_root_node_p tree n
-  -- pp $ "after ts_tree_root_node_p"
+  ts_tree_root_node_p tree2 n
   nn <- peek n
-  -- pp $ "Node:" ++ show nn
-  return (tree, nn)
+  return (tree2, nn)
+
+-- ---------------------------------------------------------------------
 
 -- | Tree Sitter 'ReadFunction' using a VFS as the payload
 vfsReadFunction :: ReadFunction
@@ -182,6 +186,7 @@ vfsReadFunction ppayload offset ppos lenPtr = do
   -- pp $ "******vfsReadFunction ending=" ++ show (pstr, len)
   return pstr
 
+-- ---------------------------------------------------------------------
 nodeAsSexpr :: Node -> IO String
 nodeAsSexpr nn = do
   let tsn = nodeTSNode nn
@@ -196,3 +201,14 @@ nodeAsSexpr nn = do
   pp $ "after poke"
   pp $ "node sexpr:" ++ str
   return str
+
+-- ---------------------------------------------------------------------
+
+parseChange :: Rope -> Ptr Parser -> Ptr Tree -> TextDocumentContentChangeEvent -> IO (Ptr Tree, Node)
+parseChange rope parser tree lspChange = do
+  let tsEdit = lspChangeAsTSInputEdit rope lspChange
+  tree2 <- treeSitterParseEdit tsEdit tree
+  (tree3, node) <- treeSitterParseIncrement parser rope tree2
+  return (tree3, node)
+
+-- ---------------------------------------------------------------------

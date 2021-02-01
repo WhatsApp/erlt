@@ -6,7 +6,7 @@ packages: .
 source-repository-package
     type: git
     location: https://github.com/alanz/haskell-tree-sitter.git
-    tag: 1a851f54a080c2faa6a2487998fd16b1381fe2d
+    tag: 5456058adc5be7c95343bc09ae9006f0a8c84f4
     subdir: tree-sitter
 
 source-repository-package
