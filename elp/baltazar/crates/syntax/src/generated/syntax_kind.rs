@@ -5,8 +5,6 @@
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u16)]
 pub enum SyntaxKind {
-    EXPR = 0u16,
-    FORM = 0u16,
     ARG_LIST = 30u16,
     ATOM = 36u16,
     ATTRIBUTE = 27u16,

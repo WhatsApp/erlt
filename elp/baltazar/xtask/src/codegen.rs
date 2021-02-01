@@ -1,8 +1,9 @@
-use std::{collections::HashMap, path::Path};
+use std::{collections::BTreeMap, path::Path};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use quote::{format_ident, quote};
 use serde::Deserialize;
+use tree_sitter::Language;
 use xshell::{read_file, write_file};
 
 use crate::{project_root, reformat};
@@ -36,10 +37,11 @@ struct Node {
 
 #[derive(Debug)]
 struct Field {
+    id: u16,
     name: String,
     multiple: bool,
     required: bool,
-    types: Vec<String>,
+    ty: String,
 }
 
 impl NodeType {
@@ -87,10 +89,13 @@ impl CodegenCmd {
 fn generate_syntax_kinds(node_types: &[NodeType]) -> Result<String> {
     let all_kinds: Vec<_> = node_types
         .iter()
-        .map(|node_type| {
-            let name = format_ident!("{}", to_upper_snake_case(node_type.name()));
+        .filter_map(|node_type| {
             let id = node_type.id();
-            quote! { #name = #id }
+            if id == 0 {
+                return None;
+            }
+            let name = format_ident!("{}", to_upper_snake_case(node_type.name()));
+            Some(quote! { #name = #id })
         })
         .collect();
 
@@ -159,45 +164,124 @@ fn generate_syntax_kinds(node_types: &[NodeType]) -> Result<String> {
 }
 
 fn generate_nodes(node_types: &[NodeType]) -> Result<String> {
-    let defs = node_types.iter().filter_map(|node| {
-        match node {
-            NodeType::Keyword(_, _) => None,
-            NodeType::Punct(_, _) => None,
-            NodeType::Literal(_, name) => {
-                let name = format_ident!("{}", name);
-                Some(quote! {
-                    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-                    pub struct #name {
-                        pub(crate) syntax: SyntaxNode,
+    let defs = node_types.iter().filter_map(|node| match node {
+        NodeType::Keyword(_, _) => None,
+        NodeType::Punct(_, _) => None,
+        NodeType::Literal(_, name) => {
+            let kind = format_ident!("{}", to_upper_snake_case(&name));
+            let name = format_ident!("{}", name);
+
+            Some(quote! {
+                #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+                pub struct #name {
+                    pub(crate) syntax: SyntaxNode,
+                }
+
+                impl AstNode for #name {
+                    fn can_cast(kind: SyntaxKind) -> bool {
+                        kind == #kind
                     }
-                })
-            }
-            NodeType::Enum(_, en) => {
-                let variants: Vec<_> =
-                    en.variants.iter().map(|var| format_ident!("{}", var)).collect();
-                let name = format_ident!("{}", en.name);
-                Some(quote! {
-                    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-                    pub enum #name {
-                        #(#variants(#variants),)*
+
+                    fn cast(syntax: SyntaxNode) -> Option<Self> {
+                        if Self::can_cast(syntax.kind()) { Some(Self { syntax }) } else { None }
                     }
-                })
-            }
-            NodeType::Node(_, node) => {
-                let name = format_ident!("{}", node.name);
-                // let kind = format_ident!("{}", to_upper_snake_case(&node.name));
-                Some(quote! {
-                    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-                    pub struct #name {
-                        pub(crate) syntax: SyntaxNode,
+
+                    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+                }
+            })
+        }
+        NodeType::Enum(_, en) => {
+            let variants: Vec<_> = en.variants.iter().map(|var| format_ident!("{}", var)).collect();
+            let name = format_ident!("{}", en.name);
+            let kinds: Vec<_> = en.variants.iter().map(|var| format_ident!("{}", to_upper_snake_case(var))).collect();
+
+            Some(quote! {
+                #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+                pub enum #name {
+                    #(#variants(#variants),)*
+                }
+
+                impl AstNode for #name {
+                    fn can_cast(kind: SyntaxKind) -> bool {
+                        match kind {
+                            #(#kinds)|* => true,
+                            _ => false
+                        }
                     }
-                })
-            }
+
+                    fn cast(syntax: SyntaxNode) -> Option<Self> {
+                        match syntax.kind() {
+                            #(
+                            #kinds => Some(#name::#variants(#variants { syntax })),
+                            )*
+                            _ => None,
+                        }
+                    }
+
+                    fn syntax(&self) -> &SyntaxNode {
+                        match self {
+                            #(
+                            #name::#variants(it) => &it.syntax,
+                            )*
+                        }
+                    }
+                }
+            })
+        }
+        NodeType::Node(_, node) => {
+            let kind = format_ident!("{}", to_upper_snake_case(&node.name));
+            let name = format_ident!("{}", node.name);
+
+            let methods = node.fields.iter().map(|field| {
+                let method_name = format_ident!("{}", field.name);
+                let ty = format_ident!("{}", field.ty);
+                let id = field.id;
+
+                if field.multiple {
+                    quote! {
+                        pub fn #method_name(&self) -> AstChildren<#ty> {
+                            support::children(&self.syntax, #id)
+                        }
+                    }
+                } else {
+                    quote! {
+                        pub fn #method_name(&self) -> Option<#ty> {
+                            support::child(&self.syntax, #id)
+                        }
+                    }
+                }
+            });
+
+            Some(quote! {
+                #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+                pub struct #name {
+                    pub(crate) syntax: SyntaxNode,
+                }
+
+                impl #name {
+                    #(#methods)*
+                }
+
+                impl AstNode for #name {
+                    fn can_cast(kind: SyntaxKind) -> bool {
+                        kind == #kind
+                    }
+
+                    fn cast(syntax: SyntaxNode) -> Option<Self> {
+                        if Self::can_cast(syntax.kind()) { Some(Self { syntax }) } else { None }
+                    }
+
+                    fn syntax(&self) -> &SyntaxNode { &self.syntax }
+                }
+            })
         }
     });
 
     let ast = quote! {
-        use crate::syntax::SyntaxNode;
+        use crate::{
+            ast::{AstNode, AstChildren, support},
+            syntax::{SyntaxNode, SyntaxKind, SyntaxKind::*},
+        };
 
         #(#defs)*
     };
@@ -229,7 +313,7 @@ struct RawNodeType {
     name: String,
     named: bool,
     subtypes: Option<Vec<RawType>>,
-    fields: Option<HashMap<String, RawField>>,
+    fields: Option<BTreeMap<String, RawField>>,
 }
 
 #[derive(Deserialize)]
@@ -267,7 +351,7 @@ fn read_node_types() -> Result<Vec<NodeType>> {
                 RawNodeType { name, named: true, fields: Some(fields), .. } if fields.len() > 0 => {
                     let fields = fields
                         .iter()
-                        .map(|(name, field)| map_field(name, field))
+                        .map(|(name, field)| map_field(name, field, &language))
                         .collect::<Result<_>>()?;
                     let name = to_camel_case(name);
                     Ok(NodeType::Node(id, Node { name, fields }))
@@ -365,11 +449,17 @@ fn map_type(child: &RawType) -> Result<String> {
     }
 }
 
-fn map_field(name: &str, field: &RawField) -> Result<Field> {
+fn map_field(name: &str, field: &RawField, language: &Language) -> Result<Field> {
+    if field.types.len() != 1 {
+        bail!("fields with multiple types not supported in {}", name)
+    }
+
+    let id = language.field_id_for_name(name).unwrap();
     Ok(Field {
+        id,
         name: name.to_owned(),
         multiple: field.multiple,
         required: field.required,
-        types: field.types.iter().map(map_type).collect::<Result<_>>()?,
+        ty: map_type(&field.types[0])?,
     })
 }
