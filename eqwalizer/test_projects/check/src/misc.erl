@@ -402,3 +402,10 @@ test83_pos(Timeout) ->
     after Timeout ->
         default
     end.
+
+-spec test84_neg() -> any().
+test84_neg() ->
+    begin
+        Z = 2
+    end,
+    Z.

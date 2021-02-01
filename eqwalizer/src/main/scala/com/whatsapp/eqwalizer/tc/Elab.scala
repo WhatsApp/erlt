@@ -21,28 +21,25 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-import scala.annotation.tailrec
-
 final class Elab(module: String) {
-  @tailrec
-  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) =
-    exprs match {
-      case expr :: Nil =>
-        elabExpr(expr, env)
-      case expr :: rest =>
-        val (_, env1) = elabExpr(expr, env)
-        elabBlock(rest, env1)
-      // $COVERAGE-OFF$
-      case _ => throw new IllegalStateException()
-      // $COVERAGE-ON$
+  def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
+    var (elabType, envAcc) = elabExpr(exprs.head, env)
+    for (expr <- exprs.tail) {
+      val (t1, env1) = elabExpr(expr, envAcc)
+      elabType = t1
+      envAcc = env1
     }
+    (elabType, Util.exitScope(env, envAcc))
+  }
 
-  private def elabClause(clause: Clause, env: Env): (Type, Env) = {
-    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
+  private def elabClause(clause: Clause, env0: Env): (Type, Env) = {
+    val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
     val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
-    elabBlock(clause.body, env3)
+    val (elabType, env4) = elabBlock(clause.body, env3)
+    val env5 = Util.exitScope(env0, env4)
+    (elabType, env5)
   }
 
   def elabExpr(expr: Expr, env: Env): (Type, Env) =
@@ -107,10 +104,10 @@ final class Elab(module: String) {
       case Case(sel, clauses) =>
         val (_, env1) = elabExpr(sel, env)
         val (ts, envs) = clauses.map(elabClause(_, env1)).unzip
-        (UnionType(ts), Approx.joinEnvs(env1, envs))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case If(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvs(envs.head, envs.tail))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
         ElabPat.elabPat(mPat, ty, env1)
@@ -173,12 +170,12 @@ final class Elab(module: String) {
         (UnionType(tryTs ::: catchTs), env1)
       case Receive(clauses) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
-        (UnionType(ts), Approx.joinEnvsAll(envs))
+        (UnionType(ts), Approx.joinEnvs(envs))
       case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
         val (ts, envs) = clauses.map(elabClause(_, env)).unzip
         val env1 = Check(module).checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
-        (UnionType(timeoutT :: ts), Approx.joinEnvsAll(timeoutEnv :: envs))
+        (UnionType(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

@@ -22,8 +22,6 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-import scala.annotation.tailrec
-
 final case class Check(module: String) {
   val elab = new Elab(module)
 
@@ -33,25 +31,28 @@ final case class Check(module: String) {
     checkClauses(Map.empty, argTys, resTy, f.clauses)
   }
 
-  @tailrec
-  private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env =
-    if (block.size == 1)
-      checkExpr(block.head, resTy, env)
-    else {
-      val (_, env1) = elab.elabExpr(block.head, env)
-      checkBlock(block.tail, resTy, env1)
+  private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env = {
+    var envAcc = env
+    for (expr <- block.init) {
+      val (_, env1) = elab.elabExpr(expr, envAcc)
+      envAcc = env1
     }
+    envAcc = checkExpr(block.last, resTy, envAcc)
+    Util.exitScope(env, envAcc)
+  }
 
-  private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env: Env): Env = {
-    val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
+  private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env0: Env): Env = {
+    val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
-    checkBlock(clause.body, resTy, env3)
+    val env4 = checkBlock(clause.body, resTy, env3)
+    val env5 = Util.exitScope(env0, env4)
+    env5
   }
 
   private def checkClauses(env: Env, argTys: List[Type], resTy: Type, clauses: List[Clause]): Env = {
     val envs = clauses.map(checkClause(_, argTys, resTy, env))
-    Approx.joinEnvs(env, envs)
+    Approx.joinEnvs(envs)
   }
 
   def checkExprs(exprs: List[Expr], tys: List[Type], env: Env): Env = {
@@ -226,7 +227,7 @@ final case class Check(module: String) {
           val rEnv = checkClauses(env, List(AnyType), resTy, clauses)
           val tEnv1 = checkExpr(timeout, integerType, env)
           val tEnv2 = checkBlock(timeoutBlock, resTy, tEnv1)
-          Approx.joinEnvsAll(List(rEnv, tEnv2))
+          Approx.joinEnvs(List(rEnv, tEnv2))
       }
   }
 }
