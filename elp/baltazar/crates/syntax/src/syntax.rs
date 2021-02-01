@@ -2,7 +2,7 @@ use std::{mem, rc::Rc};
 
 use tree_sitter::{Node, Tree};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct SyntaxNode(Rc<Tree>, Node<'static>);
 
 impl PartialEq for SyntaxNode {
