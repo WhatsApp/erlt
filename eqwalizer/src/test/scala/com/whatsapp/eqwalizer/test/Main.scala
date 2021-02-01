@@ -16,7 +16,7 @@
 
 package com.whatsapp.eqwalizer.test
 
-import com.whatsapp.eqwalizer.ast.DB
+import com.whatsapp.eqwalizer.ast.{DB, Id}
 import com.whatsapp.eqwalizer.test.util._
 
 object Main {
@@ -35,7 +35,7 @@ object Main {
       case _       => help(); return
     }
 
-    val module = args(1)
+    val (module, idOpt) = mfa(args(1))
     DB.beamLocation(module) match {
       case None =>
         Console.err.println(s"Cannot locate beam file for module $module")
@@ -43,18 +43,40 @@ object Main {
         Console.println(s"Loading forms from $beamFile")
 
         val feedback = cmd match {
-          case Check => TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-          case Debug => WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
+          case Check =>
+            idOpt match {
+              case Some(id) =>
+                TcDiagnosticsText.checkFun(beamFile, id).mkString("", "\n", "\n")
+              case None =>
+                TcDiagnosticsText.checkFile(beamFile).mkString("", "\n", "\n")
+            }
+
+          case Debug =>
+            WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
         }
 
         Console.println(feedback)
     }
   }
 
-  def help(): Unit = {
+  private def help(): Unit = {
     Console.println("com.whatsapp.eqwalizer.test.util.TypeCheckModule")
     Console.println("usage:")
     Console.println("  check <module_name>")
     Console.println("  debug <module_name>")
+  }
+
+  private def mfa(s: String): (String, Option[Id]) = {
+    s.split(':') match {
+      case Array(module) =>
+        (module, None)
+      case Array(module, fun) =>
+        fun.split('/') match {
+          case Array(f, arity) => (module, Some(Id(f, arity.toInt)))
+          case _               => sys.error(s"Cannot parse $s")
+        }
+      case _ =>
+        sys.error(s"Cannot parse $s")
+    }
   }
 }
