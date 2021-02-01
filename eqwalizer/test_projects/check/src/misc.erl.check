@@ -402,3 +402,10 @@
 402     after Timeout ->                       |         | 
 403         default                            |         | 
 404     end.                                   |         | 
+405                                            |         | 
+406 -spec test84_neg() -> any().               |         | 
+407 test84_neg() ->                            | ERROR   | 
+408     begin                                  |         | 
+409         Z = 2                              |         | 
+410     end,                                   |         | 
+411     Z.                                     |         | Unbound var: Z
