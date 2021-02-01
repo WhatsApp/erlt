@@ -10,6 +10,8 @@ import Data.Aeson hiding (Options, defaultOptions)
 import qualified Data.HashMap.Strict as HM
 import Data.List (isSuffixOf)
 import qualified Data.Map as Map
+import Data.Rope.UTF16 (Rope)
+import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
 import ELP
 import Foreign.C.String
@@ -79,7 +81,7 @@ lspOptions =
 data HandlerEnv = HandlerEnv
   { relRegToken :: MVar (RegistrationToken WorkspaceDidChangeWatchedFiles),
     absRegToken :: MVar (RegistrationToken WorkspaceDidChangeWatchedFiles),
-    parser :: MVar ParserContext
+    heParser :: MVar ParserContext
   }
 
 data ParserContext = ParserContext
@@ -113,20 +115,19 @@ handlers =
             docUri = toNormalizedUri doc
         let aContent = msg ^. params . textDocument . text
         liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show fileName
-        sendDiagnostics docUri (Just 0)
         mdoc <- getVirtualFile docUri
         case mdoc of
           Just (VirtualFile _lspversion version rope) -> do
             liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show version
-            mparser <- asks parser
-            -- modifyMVar :: MVar a -> (a -> IO (a, b)) -> IO b
-            liftIO $
+            mparser <- asks heParser
+            sexp <- liftIO $
               modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
                 (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
                 sexp <- nodeAsSexpr node
                 liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
                 let pcsmap' = Map.insert docUri (TsFile tree node) pcsmap
-                return (ParserContext parser pcsmap', ())
+                return (ParserContext parser pcsmap', sexp)
+            sendDiagnostics docUri (Just 0) (T.pack sexp)
             return ()
           Nothing -> do
             liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
@@ -135,11 +136,33 @@ handlers =
 
       notificationHandler STextDocumentDidChange $ \msg -> do
         let doc = msg ^. params . textDocument . uri . to toNormalizedUri
+            List changeList = msg ^. params . contentChanges
+        -- docUri = toNormalizedUri doc
         liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
         mdoc <- getVirtualFile doc
         case mdoc of
           Just (VirtualFile _lspversion version rope) -> do
             liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show version
+            mparser <- asks heParser
+            sexp <- liftIO $
+              modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+                (tree, node) <- case Map.lookup doc pcsmap of
+                  Nothing -> do
+                    infoM "h-elp" $ "ParserContext not found, doing full parse"
+                    (tree, node) <- treeSitterParseFull parser (Rope.toString rope)
+                    return (tree, node)
+                  Just (TsFile tree _node) -> do
+                    -- TODO: fold over the changes
+                    let tsEdit = lspChangeAsTSInputEdit rope (head changeList)
+                    tree2 <- treeSitterParseEdit tsEdit tree
+                    (tree3, node2) <- treeSitterParseIncrement parser rope tree2
+                    return (tree3, node2)
+                sexp <- nodeAsSexpr node
+                liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
+                let pcsmap' = Map.insert doc (TsFile tree node) pcsmap
+                return (ParserContext parser pcsmap', sexp)
+            sendDiagnostics doc (Just 0) (T.pack sexp)
+            return ()
           Nothing -> do
             liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc,
       -- ===================================
@@ -293,15 +316,15 @@ handlers =
 -- | Analyze the file and send any diagnostics to the client in a
 -- "textDocument/publishDiagnostics" notification
 -- sendDiagnostics :: NormalizedUri -> Maybe Int -> LspM Config ()
-sendDiagnostics :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> m ()
-sendDiagnostics fileUri version = do
+-- sendDiagnostics :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
+sendDiagnostics fileUri version msg = do
   let diags =
         [ Diagnostic
             (Range (Position 0 1) (Position 0 5))
             (Just DsWarning) -- severity
             Nothing -- code
-            (Just "lsp-hello") -- source
-            "Example diagnostic message"
+            (Just "ELP") -- source
+            msg
             Nothing -- tags
             (Just (List []))
         ]
