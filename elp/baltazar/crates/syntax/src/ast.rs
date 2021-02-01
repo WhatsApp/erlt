@@ -47,3 +47,8 @@ pub(crate) mod support {
         AstChildren::new(parent, field_id)
     }
 }
+
+#[test]
+fn assert_ast_is_object_safe() {
+    fn _f(_: &dyn AstNode) {}
+}
