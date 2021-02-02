@@ -409,3 +409,10 @@
 409         Z = 2                              |         | 
 410     end,                                   |         | 
 411     Z.                                     |         | 
+412                                            |         | 
+413 -spec test85() -> atom().                  |         | 
+414 test85() ->                                | OK      | 
+415     receive                                |         | 
+416         A when is_atom(A) -> A;            |         | 
+417         X when is_number(X) -> number      |         | 
+418     end.                                   |         | 

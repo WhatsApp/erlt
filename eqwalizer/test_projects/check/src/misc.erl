@@ -409,3 +409,10 @@ test84_pos() ->
         Z = 2
     end,
     Z.
+
+-spec test85() -> atom().
+test85() ->
+    receive
+        A when is_atom(A) -> A;
+        X when is_number(X) -> number
+    end.
