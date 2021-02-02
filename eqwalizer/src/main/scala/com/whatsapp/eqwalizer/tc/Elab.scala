@@ -175,6 +175,44 @@ final class Elab(module: String) {
         val env1 = Check(module).checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
         (UnionType(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
+      case LComprehension(template, qualifiers) =>
+        var envAcc = env
+        qualifiers.foreach {
+          case LGenerate(gPat, gExpr) =>
+            val (gT, gEnv) = elabExpr(gExpr, envAcc)
+            if (!Subtype.subType(gT, ListType(AnyType)))
+              throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
+            val Some(ListType(gElemT)) = Approx.asListType(gT)
+            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            envAcc = pEnv
+          case BGenerate(gPat, gExpr) =>
+            envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
+            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            envAcc = pEnv
+          case Filter(fExpr) =>
+            envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+        }
+        val (tType, _) = elabExpr(template, envAcc)
+        (ListType(tType), env)
+      case BComprehension(template, qualifiers) =>
+        var envAcc = env
+        qualifiers.foreach {
+          case LGenerate(gPat, gExpr) =>
+            val (gT, gEnv) = elabExpr(gExpr, envAcc)
+            if (!Subtype.subType(gT, ListType(AnyType)))
+              throw TypeMismatch(expr.l, expr, expected = ListType(AnyType), got = gT)
+            val Some(ListType(gElemT)) = Approx.asListType(gT)
+            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            envAcc = pEnv
+          case BGenerate(gPat, gExpr) =>
+            envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
+            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            envAcc = pEnv
+          case Filter(fExpr) =>
+            envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+        }
+        Check(module).checkExpr(template, BinaryType, envAcc)
+        (BinaryType, env)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

@@ -1,0 +1,15 @@
+  1 -module(comprehensions_todo).              |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec test01                               |         | 
+  6     ([atom() | number()]) ->               |         | 
+  7     [atom()].                              |         | 
+  8 test01(L) ->                               | ERROR   | 
+  9     [X || X <- L, is_atom(X)].             |         | Unbound var: is_atom/1
+ 10                                            |         | 
+ 11 -spec test02                               |         | 
+ 12     ([atom() | boolean()]) ->              |         | 
+ 13     [boolean()].                           |         | 
+ 14 test02(L) ->                               | ERROR   | 
+ 15     [X || X <- L, X].                      |         | X. Expected: 'false' | 'true', Got: atom() | 'false' | 'true'
