@@ -40,12 +40,19 @@ final case class Check(module: String) {
     checkExpr(block.last, resTy, envAcc)
   }
 
-  private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env0: Env, effVars: Set[String]): Env = {
-    val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
+  private def checkClause(
+      clause: Clause,
+      argTys: List[Type],
+      resTy: Type,
+      env0: Env,
+      effScopeVars: Set[String],
+  ): Env = {
+    val allScopeVars = Vars.clauseVars(clause)
+    val env1 = Util.enterScope(env0, allScopeVars)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
     val env4 = checkBlock(clause.body, resTy, env3)
-    Util.exitScope(env0, env4, effVars)
+    Util.exitScope(env0, env4, effScopeVars)
   }
 
   def checkExprs(exprs: List[Expr], tys: List[Type], env: Env): Env = {

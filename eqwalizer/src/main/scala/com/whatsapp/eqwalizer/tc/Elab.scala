@@ -32,13 +32,14 @@ final class Elab(module: String) {
     (elabType, envAcc)
   }
 
-  private def elabClause(clause: Clause, env0: Env, effVars: Set[String]): (Type, Env) = {
-    val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
+  private def elabClause(clause: Clause, env0: Env, effScopeVars: Set[String]): (Type, Env) = {
+    val allScopeVars = Vars.clauseVars(clause)
+    val env1 = Util.enterScope(env0, allScopeVars)
     val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
     val (eType, env4) = elabBlock(clause.body, env3)
-    (eType, Util.exitScope(env0, env4, effVars))
+    (eType, Util.exitScope(env0, env4, effScopeVars))
   }
 
   def elabExpr(expr: Expr, env: Env): (Type, Env) =
