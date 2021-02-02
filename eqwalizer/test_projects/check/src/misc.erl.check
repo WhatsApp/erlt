@@ -175,19 +175,19 @@
 175     (any()) -> none().                     |         | 
 176 test43_pos([_ | Y]) when Y + 1 > 0 -> Y.   | OK      | 
 177                                            |         | 
-178 -spec test44_neg(any()) -> any().          |         | 
-179 test44_neg(X) ->                           | ERROR   | 
+178 -spec test44_pos(any()) -> any().          |         | 
+179 test44_pos(X) ->                           | OK      | 
 180     case X of                              |         | 
 181         Z -> ok                            |         | 
 182     end,                                   |         | 
-183     Z.                                     |         | Unbound var: Z
+183     Z.                                     |         | 
 184                                            |         | 
-185 -spec test45_neg(any()) -> atom().         |         | 
-186 test45_neg(X) ->                           | ERROR   | 
+185 -spec test45_pos(any()) -> atom().         |         | 
+186 test45_pos(X) ->                           | OK      | 
 187     case X of                              |         | 
 188         _ -> Z = ok                        |         | 
 189     end,                                   |         | 
-190     Z.                                     |         | Unbound var: Z
+190     Z.                                     |         | 
 191                                            |         | 
 192 -spec test46_neg() -> number().            |         | 
 193 test46_neg() -> false.                     | ERROR   | 'false'. Expected: number(), Got: 'false'
@@ -403,9 +403,9 @@
 403         default                            |         | 
 404     end.                                   |         | 
 405                                            |         | 
-406 -spec test84_neg() -> any().               |         | 
-407 test84_neg() ->                            | ERROR   | 
+406 -spec test84_pos() -> number().            |         | 
+407 test84_pos() ->                            | OK      | 
 408     begin                                  |         | 
 409         Z = 2                              |         | 
 410     end,                                   |         | 
-411     Z.                                     |         | Unbound var: Z
+411     Z.                                     |         | 

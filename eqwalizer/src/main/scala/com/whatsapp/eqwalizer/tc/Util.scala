@@ -41,6 +41,8 @@ object Util {
     env
   }
 
-  def exitScope(env0: Env, env1: Env): Env =
-    env1.view.filterKeys(env0.contains).toMap
+  def exitScope(env0: Env, env1: Env, scopeVars: Set[String]): Env = {
+    val allVars = env0.keySet ++ scopeVars
+    env1.view.filterKeys(allVars).toMap
+  }
 }

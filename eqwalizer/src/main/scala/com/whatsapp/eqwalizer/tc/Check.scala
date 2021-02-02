@@ -28,7 +28,7 @@ final case class Check(module: String) {
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
     val constrainedFunType = spec.types.head
     val FunType(argTys, resTy) = constrainedFunType.ty
-    checkClauses(Map.empty, argTys, resTy, f.clauses)
+    f.clauses.map(checkClause(_, argTys, resTy, Map.empty, Set.empty))
   }
 
   private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env = {
@@ -37,22 +37,15 @@ final case class Check(module: String) {
       val (_, env1) = elab.elabExpr(expr, envAcc)
       envAcc = env1
     }
-    envAcc = checkExpr(block.last, resTy, envAcc)
-    Util.exitScope(env, envAcc)
+    checkExpr(block.last, resTy, envAcc)
   }
 
-  private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env0: Env): Env = {
+  private def checkClause(clause: Clause, argTys: List[Type], resTy: Type, env0: Env, effVars: Set[String]): Env = {
     val env1 = Util.enterScope(env0, Vars.clauseVars(clause))
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
     val env4 = checkBlock(clause.body, resTy, env3)
-    val env5 = Util.exitScope(env0, env4)
-    env5
-  }
-
-  private def checkClauses(env: Env, argTys: List[Type], resTy: Type, clauses: List[Clause]): Env = {
-    val envs = clauses.map(checkClause(_, argTys, resTy, env))
-    Approx.joinEnvs(envs)
+    Util.exitScope(env0, env4, effVars)
   }
 
   def checkExprs(exprs: List[Expr], tys: List[Type], env: Env): Env = {
@@ -141,9 +134,13 @@ final case class Check(module: String) {
           checkBlock(block, resTy, env)
         case Case(sel, clauses) =>
           val (selType, env1) = elab.elabExpr(sel, env)
-          checkClauses(env1, List(selType), resTy, clauses)
+          val effVars = Vars.clausesVars(clauses)
+          val envs2 = clauses.map(checkClause(_, List(selType), resTy, env1, effVars))
+          Approx.joinEnvs(envs2)
         case If(clauses) =>
-          checkClauses(env, List.empty, resTy, clauses)
+          val effVars = Vars.clausesVars(clauses)
+          val envs1 = clauses.map(checkClause(_, List.empty, resTy, env, effVars))
+          Approx.joinEnvs(envs1)
         case Match(mPat, mExp) =>
           val (mType, env1) = elab.elabExpr(mExp, env)
           val (t2, env2) = ElabPat.elabPat(mPat, mType, env1)
@@ -207,27 +204,30 @@ final case class Check(module: String) {
           throw TypeMismatch(expr.l, expr, expected = resTy, got = AnyType)
         case TryCatchExpr(tryBody, catchClauses, afterBody) =>
           checkBlock(tryBody, resTy, env)
-          catchClauses.map(checkClause(_, List(AnyType), resTy, env))
+          catchClauses.map(checkClause(_, List(AnyType), resTy, env, Set.empty))
           afterBody match {
             case Some(block) => elab.elabBlock(block, env)._2
             case None        => env
           }
         case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
           val (tryBodyT, tryEnv) = elab.elabBlock(tryBody, env)
-          tryClauses.map(checkClause(_, List(tryBodyT), resTy, tryEnv))
-          catchClauses.map(checkClause(_, List(AnyType), resTy, env))
-          val env1 = afterBody match {
+          tryClauses.map(checkClause(_, List(tryBodyT), resTy, tryEnv, Set.empty))
+          catchClauses.map(checkClause(_, List(AnyType), resTy, env, Set.empty))
+          afterBody match {
             case Some(block) => elab.elabBlock(block, env)._2
             case None        => env
           }
-          env1
         case Receive(clauses) =>
-          checkClauses(env, List(AnyType), resTy, clauses)
+          val effVars = Vars.clausesVars(clauses)
+          val envs1 = clauses.map(checkClause(_, List(AnyType), resTy, env, effVars))
+          Approx.joinEnvs(envs1)
         case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
-          val rEnv = checkClauses(env, List(AnyType), resTy, clauses)
+          val effVars = Vars.clausesAndBlockVars(clauses, timeoutBlock)
+          val envs1 = clauses.map(checkClause(_, List(AnyType), resTy, env, effVars))
           val tEnv1 = checkExpr(timeout, integerType, env)
           val tEnv2 = checkBlock(timeoutBlock, resTy, tEnv1)
-          Approx.joinEnvs(List(rEnv, tEnv2))
+          val tEnv3 = Util.exitScope(env, tEnv2, effVars)
+          Approx.joinEnvs(tEnv3 :: envs1)
       }
   }
 }
