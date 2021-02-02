@@ -12,8 +12,8 @@ Erlang surface syntax.
 - [x] Try-of/catch
 - [x] Receives
 - [ ] `catch X:Y:Z ->` syntax
-- [ ] List comprehensions
-- [ ] Binary comprehensions
+- [x] List comprehensions
+- [x] Binary comprehensions
 - [ ] Maps
 - [ ] Records
 - [ ] Anonymous functions
