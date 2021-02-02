@@ -20,7 +20,7 @@ fn main() -> Result<()> {
 
     match subcommand.as_str() {
         "codegen" => {
-            args.finish()?;
+            finish_args(args)?;
             let mode = Mode::Overwrite;
             CodegenCmd { mode }.run()
         }
@@ -67,6 +67,14 @@ fn ensure_rustfmt() -> Result<()> {
             "Failed to run rustfmt from toolchain 'stable'. \
              Please run `rustup component add rustfmt --toolchain stable` to install it.",
         )
+    }
+    Ok(())
+}
+
+fn finish_args(args: Arguments) -> Result<()> {
+    let unexpected = args.finish();
+    if !unexpected.is_empty() {
+        bail!("Unexpected arguments: {:?}", unexpected);
     }
     Ok(())
 }
