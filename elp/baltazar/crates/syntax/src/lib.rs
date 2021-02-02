@@ -29,11 +29,33 @@ mod tests {
     use super::Parser;
 
     #[test]
-    fn basic_ast() {
+    fn function_clause_ast() {
         let mut parser = Parser::new();
-        let file = parser.parse("foo(1) -> 2, 3.");
+        let text = "foo(1) -> 2, 3.";
+        let file = parser.parse(text);
 
         assert_eq!(file.forms().count(), 1);
-        assert!(matches!(file.forms().nth(0), Some(Form::Function(_))))
+        if let Form::Function(function) = file.forms().nth(0).unwrap() {
+            assert_eq!(function.clauses().count(), 1);
+            let clause = function.clauses().nth(0).unwrap();
+
+            assert!(clause.arg_list().is_some());
+            assert_eq!(clause.arg_list().unwrap().args().count(), 1);
+
+            let arg = clause.arg_list().unwrap().args().nth(0).unwrap();
+            if let Expr::Integer(integer) = arg {
+                assert_eq!(&text[integer.syntax().byte_range()], "1");
+            } else {
+                assert!(matches!(arg, Expr::Integer(_)));
+            }
+
+            assert!(clause.body().is_some());
+            let body = clause.body().unwrap();
+            assert_eq!(body.exprs().count(), 2);
+            assert!(matches!(body.exprs().nth(0).unwrap(), Expr::Integer(_)));
+            assert!(matches!(body.exprs().nth(1).unwrap(), Expr::Integer(_)));
+        } else {
+            assert!(matches!(file.forms().nth(0), Some(Form::Function(_))));
+        }
     }
 }

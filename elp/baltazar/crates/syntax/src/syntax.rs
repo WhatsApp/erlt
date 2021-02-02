@@ -1,10 +1,10 @@
-use std::{fmt, iter::FusedIterator, mem, rc::Rc};
+use std::{fmt, iter::FusedIterator, mem, ops::Range, rc::Rc};
 
 use tree_sitter::{Node, Tree, TreeCursor};
 
 pub use crate::generated::syntax_kind::SyntaxKind;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct SyntaxNode(Rc<Tree>, Node<'static>);
 
 impl PartialEq for SyntaxNode {
@@ -19,6 +19,19 @@ impl std::hash::Hash for SyntaxNode {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         Rc::as_ptr(&self.0).hash(state);
         self.1.hash(state)
+    }
+}
+
+impl fmt::Debug for SyntaxNode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("SyntaxNode")
+            .field(&format_args!(
+                "{} {} - {}",
+                self.1.kind(),
+                self.1.start_position(),
+                self.1.end_position()
+            ))
+            .finish()
     }
 }
 
@@ -46,6 +59,10 @@ impl SyntaxNode {
         let mut cursor = self.1.walk();
         let done = !cursor.goto_first_child();
         SyntaxNodeFieldChildren { tree: self.0.clone(), field_id, done, raw: cursor }
+    }
+
+    pub fn byte_range(&self) -> Range<usize> {
+        self.1.byte_range()
     }
 
     // pub(crate) fn node<'a>(&'a self) -> Node<'a> {
