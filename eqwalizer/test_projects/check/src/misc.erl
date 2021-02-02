@@ -175,15 +175,15 @@ test42_pos([X | Y]) -> {X, Y}.
     (any()) -> none().
 test43_pos([_ | Y]) when Y + 1 > 0 -> Y.
 
--spec test44_neg(any()) -> any().
-test44_neg(X) ->
+-spec test44_pos(any()) -> any().
+test44_pos(X) ->
     case X of
         Z -> ok
     end,
     Z.
 
--spec test45_neg(any()) -> atom().
-test45_neg(X) ->
+-spec test45_pos(any()) -> atom().
+test45_pos(X) ->
     case X of
         _ -> Z = ok
     end,
@@ -403,8 +403,8 @@ test83_pos(Timeout) ->
         default
     end.
 
--spec test84_neg() -> any().
-test84_neg() ->
+-spec test84_pos() -> number().
+test84_pos() ->
     begin
         Z = 2
     end,

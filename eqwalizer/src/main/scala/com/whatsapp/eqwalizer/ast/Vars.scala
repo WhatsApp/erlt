@@ -16,7 +16,7 @@
 
 package com.whatsapp.eqwalizer.ast
 
-import com.whatsapp.eqwalizer.ast.Exprs.Clause
+import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Pats._
 
 object Vars {
@@ -54,6 +54,67 @@ object Vars {
     sizeVars ++ patVars(elem.pat)
   }
 
+  private def binaryElemVars(elem: BinaryElem): Set[String] = {
+    val sizeVars: Set[String] = elem.size.map(exprVars).getOrElse(Set.empty)
+    sizeVars ++ exprVars(elem.expr)
+  }
+
+  def blockVars(block: List[Expr]): Set[String] =
+    block.map(exprVars).reduce(_ ++ _)
+
+  private def exprVars(expr: Expr): Set[String] = expr match {
+    case Var(_) =>
+      Set.empty
+    case AtomLit(_) =>
+      Set.empty
+    case NumberLit() =>
+      Set.empty
+    case Block(exprs) =>
+      blockVars(exprs)
+    case Match(pat, expr) =>
+      patVars(pat) ++ exprVars(expr)
+    case Tuple(elems) =>
+      elems.flatMap(exprVars).toSet
+    case NilLit() =>
+      Set.empty
+    case Cons(h, t) =>
+      exprVars(h) ++ exprVars(t)
+    case Case(expr, clauses) =>
+      exprVars(expr) ++ clausesVars(clauses)
+    case If(clauses) =>
+      clausesVars(clauses)
+    case LocalCall(id, args) =>
+      args.flatMap(exprVars).toSet
+    case RemoteCall(id, args) =>
+      args.flatMap(exprVars).toSet
+    case LocalFun(id) =>
+      Set.empty
+    case RemoteFun(id) =>
+      Set.empty
+    case UnOp(op, arg) =>
+      exprVars(arg)
+    case BinOp(op, arg1, arg2) =>
+      exprVars(arg1) ++ exprVars(arg2)
+    case Binary(elems) =>
+      elems.flatMap(binaryElemVars).toSet
+    case Catch(e) =>
+      exprVars(e)
+    case TryCatchExpr(tryBody, catchClauses, after) =>
+      Set.empty
+    case TryOfCatchExpr(tryBody, tryClauses, catchClauses, after) =>
+      Set.empty
+    case Receive(clauses) =>
+      clausesVars(clauses)
+    case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
+      clausesVars(clauses) intersect blockVars(timeoutBlock)
+  }
+
+  def clausesVars(clauses: List[Clause]): Set[String] =
+    clauses.map(clauseVars).reduce(_ intersect _)
+
+  def clausesAndBlockVars(clauses: List[Clause], block: List[Expr]): Set[String] =
+    (blockVars(block) :: clauses.map(clauseVars)).reduce(_ intersect _)
+
   def clauseVars(clause: Clause): Set[String] =
-    clause.pats.flatMap(patVars).toSet
+    clause.pats.flatMap(patVars).toSet ++ blockVars(clause.body)
 }
