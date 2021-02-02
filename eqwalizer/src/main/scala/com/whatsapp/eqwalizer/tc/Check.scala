@@ -61,13 +61,9 @@ final case class Check(module: String) {
     else
       expr match {
         case Var(v) =>
-          env.get(v) match {
-            case Some(vt) =>
-              if (Subtype.subType(vt, resTy)) env
-              else throw TypeMismatch(expr.l, expr, expected = resTy, got = vt)
-            case None =>
-              throw UnboundVar(expr.l, v)
-          }
+          val vt = env(v)
+          if (Subtype.subType(vt, resTy)) env
+          else throw TypeMismatch(expr.l, expr, expected = resTy, got = vt)
         case AtomLit(a) =>
           val litType = AtomLitType(a)
           if (Subtype.subType(litType, resTy)) env

@@ -44,12 +44,7 @@ final class Elab(module: String) {
   def elabExpr(expr: Expr, env: Env): (Type, Env) =
     expr match {
       case Var(v) =>
-        env.get(v) match {
-          case Some(vt) =>
-            (vt, env)
-          case None =>
-            throw UnboundVar(expr.l, v)
-        }
+        (env(v), env)
       case AtomLit(a) =>
         (AtomLitType(a), env)
       case NumberLit() =>
