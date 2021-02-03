@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "compile",
+            "options": {
+                "cwd": "${workspaceFolder}/client"
+            },
+            "group": "build",
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "label": "Client Build",
+            "detail": "tsc -b"
+        },
+        {
+            "type": "cargo",
+            "command": "build",
+            "problemMatcher": ["$rustc"],
+            "group": "build",
+            "label": "Server Build"
+        },
+        {
+            "label": "Build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": ["Server Build", "Client Build"]
+        }
+    ],
+}

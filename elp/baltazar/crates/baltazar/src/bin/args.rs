@@ -1,7 +1,11 @@
+use std::path::PathBuf;
+
 use anyhow::{bail, Result};
 use pico_args::Arguments;
 
 pub struct Args {
+    pub log_file: Option<PathBuf>,
+    pub no_buffering: bool,
     pub command: Command,
 }
 
@@ -19,6 +23,8 @@ USAGE:
 
 FLAGS:
     -h, --help               Print this help
+    --log-file <PATH>        Log to the specified file instead of stderr
+    --no-log-buffering       Flush logs immediately
 
 COMMANDS:
     <not specified>          Launch LSP server
@@ -31,14 +37,18 @@ impl Args {
         let mut arguments = Arguments::from_env();
 
         if arguments.contains(["-h", "--help"]) {
-            return Ok(Args { command: Command::Help });
+            return Ok(Args {
+                log_file: None, no_buffering: false, command: Command::Help });
         }
+
+        let log_file = arguments.opt_value_from_str("--log-file")?;
+        let no_buffering = arguments.contains("--no-log-buffering");
 
         let command = match arguments.subcommand()? {
             Some(command) => command,
             None => {
                 finish_args(arguments)?;
-                return Ok(Args { command: Command::RunServer });
+                return Ok(Args { log_file, no_buffering, command: Command::RunServer });
             }
         };
 
@@ -49,7 +59,7 @@ impl Args {
         };
 
         finish_args(arguments)?;
-        Ok(Args { command })
+        Ok(Args { log_file, no_buffering, command })
     }
 }
 
