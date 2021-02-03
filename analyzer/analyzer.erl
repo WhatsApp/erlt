@@ -43,7 +43,14 @@
     nonempty_strings/1,
     improper_lists/1,
     get_core_forms/1,
-    io_xxxs/1
+    io_xxxs/1,
+    map_field_assocs/1,
+    map_field_exacts/1,
+    map_field_exact_atoms/1,
+    map_field_exact_non_atoms/1,
+    map_exact_non_atom_singles/1,
+    mixed_maps/1,
+    map_exact_non_atom_multis/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -584,6 +591,80 @@ io_xxxs(BeamFile) ->
 io_xxx({type, Line, iolist, _}) -> {Line};
 io_xxx({type, Line, iodata, _}) -> {Line};
 io_xxx(_) -> false.
+
+%% map fields
+
+-spec map_field_assocs(BeamFile :: file:filename()) -> [{integer()}].
+map_field_assocs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_assoc/1).
+
+map_field_assoc({type, Line, map_field_assoc, _}) -> {Line};
+map_field_assoc(_) -> false.
+
+-spec map_field_exacts(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exacts(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact/1).
+
+map_field_exact({type, Line, map_field_exact, _}) -> {Line};
+map_field_exact(_) -> false.
+
+-spec map_field_exact_atoms(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exact_atoms(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact_atom/1).
+
+map_field_exact_atom({type, Line, map_field_exact, [{atom, _, _}, _]}) -> {Line};
+map_field_exact_atom(_) -> false.
+
+-spec map_field_exact_non_atoms(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exact_non_atoms(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact_non_atom/1).
+
+map_field_exact_non_atom({type, _, map_field_exact, [{atom, _, _}, _]}) -> false;
+map_field_exact_non_atom({type, Line, map_field_exact, _}) -> {Line};
+map_field_exact_non_atom(_) -> false.
+
+-spec map_exact_non_atom_singles(BeamFile :: file:filename()) -> [{integer()}].
+map_exact_non_atom_singles(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_exact_non_atom_single/1).
+
+map_exact_non_atom_single({type, _, map, [{type, _, map_field_exact, [{atom, _, _}, _]}]}) -> false;
+map_exact_non_atom_single({type, _, map, [{type, Line, map_field_exact, _}]}) -> {Line};
+map_exact_non_atom_single(_) -> false.
+
+-spec map_exact_non_atom_multis(BeamFile :: file:filename()) -> [{integer()}].
+map_exact_non_atom_multis(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_exact_non_atom_multi/1).
+
+map_exact_non_atom_multi({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Exacts = lists:filter(
+        fun
+        ({type, _, map_field_exact, [{atom, _, _}, _]}) -> false;
+        ({type, _, map_field_exact, _}) -> true;
+        (_) -> false end,
+        Assocs
+    ),
+    ((erlang:length(Exacts) > 0) and (erlang:length(Assocs) > 1)) andalso {Line};
+map_exact_non_atom_multi(_) -> false.
+
+-spec mixed_maps(BeamFile :: file:filename()) -> [{integer()}].
+mixed_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun mixed_map/1).
+
+mixed_map({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Exacts = lists:filter(fun ({type, _, map_field_exact, _}) -> true; (_) -> false end, Assocs),
+    Optionals = lists:filter(fun ({type, _, map_field_assoc, _}) -> true; (_) -> false end, Assocs),
+    ((erlang:length(Exacts) > 0) and (erlang:length(Optionals) > 0)) andalso {Line};
+mixed_map(_) -> false.
+
+
+%% {type,ANNO,map,[Rep(A_1), ..., Rep(A_k)]}
 
 %% Utilities
 
