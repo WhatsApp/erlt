@@ -24,7 +24,7 @@ package object corq {
       srcRoot: String,
       libRoot: String,
       apps: List[String],
-      thirdPartyApps: Set[String],
+      thirdPartyApps: Set[String]
   )
 
   lazy val config: Config = {
@@ -36,7 +36,7 @@ package object corq {
       libRoot = config.getString("lib_root"),
       srcRoot = config.getString("src_root"),
       apps = config.getStringList("apps").asScala.toList,
-      thirdPartyApps = config.getStringList("third_party_apps").asScala.toSet,
+      thirdPartyApps = config.getStringList("third_party_apps").asScala.toSet
     )
   }
 }

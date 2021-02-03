@@ -38,7 +38,7 @@ final case class Check(module: String) {
   def checkExpr(expr: CErl, resTy: Type, env: Env): Env = {
 //    if (Subtype.subType(AnyType, resTy)) elab.elabExpr(expr, env)._2
 //    else
-      expr match {
+    expr match {
       case CApply(_, op, args) =>
         env
       case CBinary(_, segments) =>

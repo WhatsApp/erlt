@@ -73,6 +73,6 @@ object Types {
       "module" -> AtomType,
       "node" -> AtomType,
       "no_return" -> NoneType,
-      "timeout" -> UnionType(List(AtomLitType("infinity"), NumberType)),
+      "timeout" -> UnionType(List(AtomLitType("infinity"), NumberType))
     )
 }

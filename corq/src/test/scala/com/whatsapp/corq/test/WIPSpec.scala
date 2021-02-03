@@ -23,7 +23,10 @@ import java.nio.file.{Files, Paths}
 class WIPSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
-  testDir(srcDir = "test_projects/wip/src", ebinDir = "test_projects/_build/default/lib/wip/ebin")
+  testDir(
+    srcDir = "test_projects/wip/src",
+    ebinDir = "test_projects/_build/default/lib/wip/ebin"
+  )
 
   def testDir(srcDir: String, ebinDir: String): Unit = {
     describe(ebinDir) {

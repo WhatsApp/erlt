@@ -39,7 +39,7 @@ object WIPDiagnosticsText {
       text: String,
       formDiag: Option[FormDiag],
       skipDiag: Option[SkippedConstruct],
-      expandDiag: Option[ExpansionFailure],
+      expandDiag: Option[ExpansionFailure]
   ) {
     def format(): String = {
       val lineNum = line.toString.reverse.padTo(3, ' ').reverse
@@ -48,7 +48,8 @@ object WIPDiagnosticsText {
         else text.take(width) ++ "……"
       val diagText = formDiag.map(_.toString).getOrElse("").colTrim(7)
       val skipText = skipDiag.map(_.toString).getOrElse("").colTrim(30)
-      val expandText = expandDiag.map(_.diag).getOrElse("").colTrim(30, lastColumn = true)
+      val expandText =
+        expandDiag.map(_.diag).getOrElse("").colTrim(30, lastColumn = true)
       s"$lineNum $lineText $diagText | $skipText | $expandText"
     }
   }
@@ -76,16 +77,19 @@ object WIPDiagnosticsText {
     val erlPathFromForms = Paths.get(erlFile)
     val erlPath =
       if (erlPathFromForms.isAbsolute) erlPathFromForms
-      else Paths.get(beamFile.replace("/ebin/", "/src/").replace(".beam", ".erl"))
-    val lines = Files.readAllLines(erlPath).asScala.toList.map(_.replace('\t', ' '))
+      else
+        Paths.get(beamFile.replace("/ebin/", "/src/").replace(".beam", ".erl"))
+    val lines =
+      Files.readAllLines(erlPath).asScala.toList.map(_.replace('\t', ' '))
 
     val formDs = formDiags(forms)
     val skipDs = skipDiags(forms)
     val expandDs = expandDiags(forms)
 
-    lines.zipWithIndex.map { case (text, i) =>
-      val l = i + 1
-      DLine(l, text, formDs.get(l), skipDs.get(l), expandDs.get(l))
+    lines.zipWithIndex.map {
+      case (text, i) =>
+        val l = i + 1
+        DLine(l, text, formDs.get(l), skipDs.get(l), expandDs.get(l))
     }
   }
 
@@ -107,9 +111,10 @@ object WIPDiagnosticsText {
   private def skipDiags(forms: List[Form]): Map[Int, SkippedConstruct] = {
     var diags: Map[Int, SkippedConstruct] = Map.empty
     for (form <- forms) form match {
-      case SkippedTypeDecl(_, reason) => diags += reason.line -> reason.construct
-      case SkippedFunSpec(_, reason)  => diags += reason.line -> reason.construct
-      case SkippedFunDecl(_, reason)  => diags += reason.line -> reason.construct
+      case SkippedTypeDecl(_, reason) =>
+        diags += reason.line -> reason.construct
+      case SkippedFunSpec(_, reason) => diags += reason.line -> reason.construct
+      case SkippedFunDecl(_, reason) => diags += reason.line -> reason.construct
       // nothing
       case _ =>
     }

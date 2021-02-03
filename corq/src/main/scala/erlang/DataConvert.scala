@@ -47,13 +47,13 @@ object DataConvert {
           node = otpPid.node(),
           id = otpPid.id(),
           serial = otpPid.serial(),
-          otpPid.creation(),
+          otpPid.creation()
         )
       case otpPort: OtpErlangPort =>
         EPort(
           otpPort.node(),
           otpPort.id(),
-          otpPort.creation(),
+          otpPort.creation()
         )
       case otpRef: OtpErlangRef =>
         ERef(otpRef.node(), otpRef.creation(), otpRef.ids().toList)

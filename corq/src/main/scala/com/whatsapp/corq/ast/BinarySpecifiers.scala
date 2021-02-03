@@ -33,14 +33,16 @@ object BinarySpecifiers {
 
   def expType(s: Specifier, stringLiteral: Boolean): Types.Type =
     s match {
-      case SignedIntegerSpecifier | UnsignedIntegerSpecifier | Utf8Specifier | Utf16Specifier | Utf32Specifier =>
+      case SignedIntegerSpecifier | UnsignedIntegerSpecifier | Utf8Specifier |
+          Utf16Specifier | Utf32Specifier =>
         // $COVERAGE-OFF$
         if (stringLiteral) throw new IllegalStateException()
         // $COVERAGE-ON$
         integerType
       case FloatSpecifier =>
         floatType
-      case BinarySpecifier | BytesSpecifier | BitstringSpecifier | BitsSpecifier =>
+      case BinarySpecifier | BytesSpecifier | BitstringSpecifier |
+          BitsSpecifier =>
         BinaryType
     }
 }

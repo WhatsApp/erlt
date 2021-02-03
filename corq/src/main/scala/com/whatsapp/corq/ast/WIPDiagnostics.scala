@@ -22,7 +22,8 @@ package com.whatsapp.corq.ast
 // these items would not be needed at all.
 object WIPDiagnostics {
 
-  case class SkippedConstructDiagnostics(line: Int, construct: SkippedConstruct) extends Exception
+  case class SkippedConstructDiagnostics(line: Int, construct: SkippedConstruct)
+      extends Exception
 
   sealed trait SkippedConstruct
   sealed trait SkippedExpr extends SkippedConstruct
@@ -120,13 +121,17 @@ object WIPDiagnostics {
   sealed trait ExpansionFailure {
     def diag: String
   }
-  case class RecursiveType(id: RemoteId) extends Exception with ExpansionFailure {
+  case class RecursiveType(id: RemoteId)
+      extends Exception
+      with ExpansionFailure {
     def diag: String = s"R: $id"
   }
   case class UnknownId(id: RemoteId) extends Exception with ExpansionFailure {
     def diag: String = s"U: $id"
   }
-  case class RecursiveConstraint(n: String) extends Exception with ExpansionFailure {
+  case class RecursiveConstraint(n: String)
+      extends Exception
+      with ExpansionFailure {
     def diag: String = s"C: $n"
   }
 }

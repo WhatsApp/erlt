@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
- // copied from analyzer
+// copied from analyzer
 package erlang
 
 import erlang.Data.Anno
@@ -25,27 +25,56 @@ object CErl {
   case class CAlias(anno: Anno, v: CErl, pat: CErl) extends CErl
   case class CApply(anno: Anno, op: CErl, args: List[CErl]) extends CErl
   case class CBinary(anno: Anno, segments: List[CBitstr]) extends CErl
-  case class CBitstr(anno: Anno, value: CErl, size: CErl, unit: CErl, typ: CErl, flags: CErl) extends CErl
-  case class CCall(anno: Anno, module: CErl, name: CErl, args: List[CErl]) extends CErl
+  case class CBitstr(
+      anno: Anno,
+      value: CErl,
+      size: CErl,
+      unit: CErl,
+      typ: CErl,
+      flags: CErl
+  ) extends CErl
+  case class CCall(anno: Anno, module: CErl, name: CErl, args: List[CErl])
+      extends CErl
   case class CCase(anno: Anno, arg: CErl, clauses: List[CErl]) extends CErl
   case class CCatch(anno: Anno, body: CErl) extends CErl
-  case class CClause(anno: Anno, pats: List[CErl], guard: CErl, body: CErl) extends CErl
+  case class CClause(anno: Anno, pats: List[CErl], guard: CErl, body: CErl)
+      extends CErl
   case class CCons(anno: Anno, hd: CErl, tl: CErl) extends CErl
   case class CFun(anno: Anno, vars: List[CVar], body: CErl) extends CErl
-  case class CLet(anno: Anno, vars: List[CErl], arg: CErl, body: CErl) extends CErl
-  case class CLetRec(anno: Anno, defs: List[(CErl, CErl)], body: CErl) extends CErl
+  case class CLet(anno: Anno, vars: List[CErl], arg: CErl, body: CErl)
+      extends CErl
+  case class CLetRec(anno: Anno, defs: List[(CErl, CErl)], body: CErl)
+      extends CErl
   case class CLiteral(anno: Anno, value: Data.EObject) extends CErl
   // TODO
-  case class CMap(anno: Anno, arg: CErl, es: List[CErl], isPat: Boolean) extends CErl
+  case class CMap(anno: Anno, arg: CErl, es: List[CErl], isPat: Boolean)
+      extends CErl
   // TODO
   case class CMapPair(anno: Anno, op: CErl, key: CErl, cVal: CErl) extends CErl
-  case class CModule(anno: Anno, name: CErl, exports: List[CErl], attrs: List[(CErl, CErl)], defs: List[(CErl, CErl)])
-      extends CErl
+  case class CModule(
+      anno: Anno,
+      name: CErl,
+      exports: List[CErl],
+      attrs: List[(CErl, CErl)],
+      defs: List[(CErl, CErl)]
+  ) extends CErl
   case class CPrimOp(anno: Anno, name: CErl, args: List[CErl]) extends CErl
-  case class CReceive(anno: Anno, clauses: List[CErl], timeout: CErl, action: CErl) extends CErl
+  case class CReceive(
+      anno: Anno,
+      clauses: List[CErl],
+      timeout: CErl,
+      action: CErl
+  ) extends CErl
   // TODO - can be any()???
   case class CSeq(anno: Anno, arg: CErl, body: CErl) extends CErl
-  case class CTry(anno: Anno, arg: CErl, vars: List[CErl], body: CErl, evars: List[CErl], handler: CErl) extends CErl
+  case class CTry(
+      anno: Anno,
+      arg: CErl,
+      vars: List[CErl],
+      body: CErl,
+      evars: List[CErl],
+      handler: CErl
+  ) extends CErl
   case class CTuple(anno: Anno, es: List[CErl]) extends CErl
   case class CValues(anno: Anno, es: List[CErl]) extends CErl
   case class CVar(anno: Anno, name: VarName) extends CErl

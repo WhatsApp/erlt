@@ -26,9 +26,12 @@ object Expand {
         if (stack(id)) {
           throw WIPDiagnostics.RecursiveType(id)
         } else {
-          val stub = DB.getGlobalizedModuleStub(id.module).getOrElse(throw WIPDiagnostics.UnknownId(id))
+          val stub = DB
+            .getGlobalizedModuleStub(id.module)
+            .getOrElse(throw WIPDiagnostics.UnknownId(id))
           val localId = Id(id.name, id.arity)
-          val typeDecl = stub.types.getOrElse(localId, throw WIPDiagnostics.UnknownId(id))
+          val typeDecl =
+            stub.types.getOrElse(localId, throw WIPDiagnostics.UnknownId(id))
           val stack1 = stack + id
           val sub = typeDecl.params.zip(params.map(expand(_, stack1))).toMap
           val body = expand(typeDecl.body, stack1)
@@ -42,19 +45,27 @@ object Expand {
         ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType |
+          BinaryType =>
         t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
 
-  private def expandConstraints(t: Type, s: Map[String, Type], stack: Set[String]): Type =
+  private def expandConstraints(
+      t: Type,
+      s: Map[String, Type],
+      stack: Set[String]
+  ): Type =
     t match {
       case RemoteType(id, params) =>
         RemoteType(id, params.map(expandConstraints(_, s, stack)))
       case FunType(args, resType) =>
-        FunType(args.map(expandConstraints(_, s, stack)), expandConstraints(resType, s, stack))
+        FunType(
+          args.map(expandConstraints(_, s, stack)),
+          expandConstraints(resType, s, stack)
+        )
       case TupleType(params) =>
         TupleType(params.map(expandConstraints(_, s, stack)))
       case ListType(et) =>
@@ -84,20 +95,28 @@ object Expand {
           else {
             val FunType(args, res) = cft.ty
             val subst = cft.constraints.map(c => c.tVar -> c.ty).toMap
-            FunType(args.map(expandConstraints(_, subst, Set.empty)), expandConstraints(res, subst, Set.empty))
+            FunType(
+              args.map(expandConstraints(_, subst, Set.empty)),
+              expandConstraints(res, subst, Set.empty)
+            )
           }
-        ConstrainedFunType(FunType(args.map(expand(_, Set.empty)), expand(res, Set.empty)), List.empty)
+        ConstrainedFunType(
+          FunType(args.map(expand(_, Set.empty)), expand(res, Set.empty)),
+          List.empty
+        )
       }
       FunSpec(funSpec.id, cfts)(funSpec.line)
     } catch {
-      case e: WIPDiagnostics.ExpansionFailure => FailedExpandFunSpec(funSpec.id, e)(funSpec.line)
+      case e: WIPDiagnostics.ExpansionFailure =>
+        FailedExpandFunSpec(funSpec.id, e)(funSpec.line)
     }
   }
 
   def expandTypeDecl(decl: TypeDecl): Form = {
     try decl.copy(body = expand(decl.body, Set.empty))(decl.line)
     catch {
-      case e: WIPDiagnostics.ExpansionFailure => FailedExpandTypeDecl(decl.id, e)(decl.line)
+      case e: WIPDiagnostics.ExpansionFailure =>
+        FailedExpandTypeDecl(decl.id, e)(decl.line)
     }
   }
 }

@@ -31,11 +31,14 @@ object Data {
   }
   case class EBitStr(bin: Array[Byte], pad_bits: Int) extends EObject
   case class EDouble(d: Double) extends EObject
-  case class EExternalFun(module: String, function: String, arity: Int) extends EObject
-  case class EList(elems: List[EObject], lastTail: Option[EObject]) extends EObject
+  case class EExternalFun(module: String, function: String, arity: Int)
+      extends EObject
+  case class EList(elems: List[EObject], lastTail: Option[EObject])
+      extends EObject
   case class ELong(value: BigInt) extends EObject
   case class EMap(entries: List[(EObject, EObject)]) extends EObject
-  case class EPid(node: String, id: Int, serial: Int, creation: Int) extends EObject
+  case class EPid(node: String, id: Int, serial: Int, creation: Int)
+      extends EObject
   case class EPort(node: String, id: Int, creation: Int) extends EObject
   case class ERef(node: String, creation: Int, ids: List[Int]) extends EObject
   case class EString(str: String) extends EObject
