@@ -33,7 +33,4 @@ object TcDiagnostics {
   case class UnboundVar(line: Int, n: String) extends TypeError {
     override val msg: String = s"Unbound var: ${n}"
   }
-  case class UnboundId(line: Int, id: String) extends TypeError {
-    override val msg: String = s"Unbound id: $id"
-  }
 }
