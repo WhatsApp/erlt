@@ -34,16 +34,20 @@ object Globalize {
         ListType(globalize(module, et))
       case UnionType(params) =>
         UnionType(params.map(globalize(module, _)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType |
+          BinaryType =>
         t
     }
 
   def globalizeSpec(module: String, spec: FunSpec): FunSpec = {
-    val types = spec.types.map { case ConstrainedFunType(FunType(args, res), constraints) =>
-      ConstrainedFunType(
-        FunType(args.map(globalize(module, _)), globalize(module, res)),
-        constraints.map { case Constraint(v, tp) => Constraint(v, globalize(module, tp)) },
-      )
+    val types = spec.types.map {
+      case ConstrainedFunType(FunType(args, res), constraints) =>
+        ConstrainedFunType(
+          FunType(args.map(globalize(module, _)), globalize(module, res)),
+          constraints.map {
+            case Constraint(v, tp) => Constraint(v, globalize(module, tp))
+          }
+        )
     }
     spec.copy(types = types)(spec.line)
   }

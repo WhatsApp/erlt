@@ -24,7 +24,10 @@ import com.whatsapp.corq.ast.DB
 class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
 
-  testDir(srcDir = "test_projects/check/src", ebinDir = "test_projects/_build/default/lib/check/ebin")
+  testDir(
+    srcDir = "test_projects/check/src",
+    ebinDir = "test_projects/_build/default/lib/check/ebin"
+  )
 
   def testDir(srcDir: String, ebinDir: String): Unit = {
     describe(ebinDir) {

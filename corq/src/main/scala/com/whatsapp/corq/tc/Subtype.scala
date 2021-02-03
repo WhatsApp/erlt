@@ -35,7 +35,8 @@ object Subtype {
         true
       case (ListType(et1), ListType(et2)) =>
         subType(et1, et2)
-      case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
+      case (FunType(args1, res1), FunType(args2, res2))
+          if args1.size == args2.size =>
         subType(res1, res2) && args2.lazyZip(args1).forall(subType)
 
       case _ =>
@@ -59,11 +60,13 @@ object Subtype {
         case (UnionType(ty1s), _) => UnionType(ty1s.map(meet(_, t2)))
         case (_, UnionType(ty2s)) => UnionType(ty2s.map(meet(t1, _)))
 
-        case (TupleType(elems1), TupleType(elems2)) if elems1.size == elems2.size =>
+        case (TupleType(elems1), TupleType(elems2))
+            if elems1.size == elems2.size =>
           TupleType(elems1.lazyZip(elems2).map(meet))
         case (ListType(et1), ListType(et2)) =>
           ListType(meet(et1, et2))
-        case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
+        case (FunType(args1, res1), FunType(args2, res2))
+            if args1.size == args2.size =>
           FunType(args1.lazyZip(args2).map(join), meet(res1, res2))
 
         case (_, _) =>

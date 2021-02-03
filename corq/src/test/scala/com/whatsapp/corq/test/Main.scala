@@ -43,8 +43,10 @@ object Main {
         Console.println(s"Loading forms from $beamFile")
 
         val feedback = cmd match {
-          case Check => TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-          case Debug => WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
+          case Check =>
+            TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
+          case Debug =>
+            WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
         }
 
         Console.println(feedback)

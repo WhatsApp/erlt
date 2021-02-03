@@ -30,7 +30,8 @@ object Util {
   def getFunType(fqn: RemoteId): Option[FunType] =
     for {
       moduleStub <- DB.getExpandedModuleStub(fqn.module)
-      spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity)) if spec.types.size == 1
+      spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity))
+      if spec.types.size == 1
     } yield spec.types.head.ty
 
   def initClauseEnv(env: Env, clauseVars: Set[String]): Env = {
@@ -41,5 +42,5 @@ object Util {
 //    } envAcc = envAcc.updated(v, AnyType)
 //    envAcc
 //  }
-    }
+  }
 }

@@ -29,20 +29,47 @@ object CErlConvert {
         CApply(convertAnno(anno), convert(op), args.map(convert))
       case ETuple(List(EAtom("c_binary"), anno, EList(segments, None))) =>
         CBinary(convertAnno(anno), segments.map(convertToCBitstr))
-      case ETuple(List(EAtom("c_bitstr"), anno, cVal, size, unit, cType, flags)) =>
-        CBitstr(convertAnno(anno), convert(cVal), convert(size), convert(unit), convert(cType), convert(flags))
-      case ETuple(List(EAtom("c_call"), anno, module, name, EList(args, None))) =>
-        CCall(convertAnno(anno), convert(module), convert(name), args.map(convert))
+      case ETuple(
+            List(EAtom("c_bitstr"), anno, cVal, size, unit, cType, flags)
+          ) =>
+        CBitstr(
+          convertAnno(anno),
+          convert(cVal),
+          convert(size),
+          convert(unit),
+          convert(cType),
+          convert(flags)
+        )
+      case ETuple(
+            List(EAtom("c_call"), anno, module, name, EList(args, None))
+          ) =>
+        CCall(
+          convertAnno(anno),
+          convert(module),
+          convert(name),
+          args.map(convert)
+        )
       case ETuple(List(EAtom("c_case"), anno, arg, EList(clauses, None))) =>
         CCase(convertAnno(anno), convert(arg), clauses.map(convert))
       case ETuple(List(EAtom("c_catch"), anno, body)) =>
         CCatch(convertAnno(anno), convert(body))
-      case ETuple(List(EAtom("c_clause"), anno, EList(pats, None), guard, body)) =>
-        CClause(convertAnno(anno), pats.map(convert), convert(guard), convert(body))
+      case ETuple(
+            List(EAtom("c_clause"), anno, EList(pats, None), guard, body)
+          ) =>
+        CClause(
+          convertAnno(anno),
+          pats.map(convert),
+          convert(guard),
+          convert(body)
+        )
       case ETuple(List(EAtom("c_cons"), anno, hd, tl)) =>
         CCons(convertAnno(anno), convert(hd), convert(tl))
       case ETuple(List(EAtom("c_fun"), anno, EList(vars, None), body)) =>
-        CFun(convertAnno(anno), vars.map(convert).map(_.asInstanceOf[CVar]), convert(body))
+        CFun(
+          convertAnno(anno),
+          vars.map(convert).map(_.asInstanceOf[CVar]),
+          convert(body)
+        )
       case ETuple(List(EAtom("c_let"), anno, EList(vars, None), arg, body)) =>
         CLet(convertAnno(anno), vars.map(convert), convert(arg), convert(body))
       case ETuple(List(EAtom("c_letrec"), anno, EList(defs, None), body)) =>
@@ -50,27 +77,73 @@ object CErlConvert {
       case ETuple(List(EAtom("c_literal"), anno, value)) =>
         CLiteral(convertAnno(anno), value)
       // c_map - TODO clarify
-      case ETuple(List(EAtom("c_map"), anno, arg, EList(es, None), isPat: EAtom)) =>
-        CMap(convertAnno(anno), convert(arg), es.map(convert), isPat.asBoolean())
+      case ETuple(
+            List(EAtom("c_map"), anno, arg, EList(es, None), isPat: EAtom)
+          ) =>
+        CMap(
+          convertAnno(anno),
+          convert(arg),
+          es.map(convert),
+          isPat.asBoolean()
+        )
       // c_map_pair TODO - clarify
       case ETuple(List(EAtom("c_map_pair"), anno, op, key, cVal)) =>
         CMapPair(convertAnno(anno), convert(op), convert(key), convert(cVal))
-      case ETuple(List(EAtom("c_module"), anno, name, EList(exports, None), EList(attrs, None), EList(defs, None))) =>
+      case ETuple(
+            List(
+              EAtom("c_module"),
+              anno,
+              name,
+              EList(exports, None),
+              EList(attrs, None),
+              EList(defs, None)
+            )
+          ) =>
         CModule(
           convertAnno(anno),
           convert(name),
           exports.map(convert),
           attrs.map(convertTuple2),
-          defs.map(convertTuple2),
+          defs.map(convertTuple2)
         )
       case ETuple(List(EAtom("c_primop"), anno, name, EList(args, None))) =>
         CPrimOp(convertAnno(anno), convert(name), args.map(convert))
-      case ETuple(List(EAtom("c_receive"), anno, EList(clauses, None), timeout, action)) =>
-        CReceive(convertAnno(anno), clauses.map(convert), convert(timeout), convert(action))
+      case ETuple(
+            List(
+              EAtom("c_receive"),
+              anno,
+              EList(clauses, None),
+              timeout,
+              action
+            )
+          ) =>
+        CReceive(
+          convertAnno(anno),
+          clauses.map(convert),
+          convert(timeout),
+          convert(action)
+        )
       case ETuple(List(EAtom("c_seq"), anno, arg, body)) =>
         CSeq(convertAnno(anno), convert(arg), convert(body))
-      case ETuple(List(EAtom("c_try"), anno, arg, EList(vars, None), body, EList(evars, None), handler)) =>
-        CTry(convertAnno(anno), convert(arg), vars.map(convert), convert(body), evars.map(convert), convert(handler))
+      case ETuple(
+            List(
+              EAtom("c_try"),
+              anno,
+              arg,
+              EList(vars, None),
+              body,
+              EList(evars, None),
+              handler
+            )
+          ) =>
+        CTry(
+          convertAnno(anno),
+          convert(arg),
+          vars.map(convert),
+          convert(body),
+          evars.map(convert),
+          convert(handler)
+        )
       case ETuple(List(EAtom("c_tuple"), anno, EList(es, None))) =>
         CTuple(convertAnno(anno), es.map(convert))
       case ETuple(List(EAtom("c_values"), anno, EList(es, None))) =>
@@ -96,12 +169,12 @@ object CErlConvert {
     Anno()
   }
 
-
   private def convertEvar(eVar: EObject): VarName =
     eVar match {
-      case ELong(i)                            => VarNameInt(i.intValue)
-      case EAtom(atom)                         => VarNameAtom(atom)
-      case ETuple(List(EAtom(atom), ELong(i))) => VarNameAtomInt(atom, i.intValue)
+      case ELong(i)    => VarNameInt(i.intValue)
+      case EAtom(atom) => VarNameAtom(atom)
+      case ETuple(List(EAtom(atom), ELong(i))) =>
+        VarNameAtomInt(atom, i.intValue)
     }
 
   def convertTuple2(eObject: EObject): (CErl, CErl) =

@@ -23,8 +23,10 @@ object EData {
   case class EAtom(atom: String) extends EObject
   case class EBitStr(bin: Array[Byte], pad_bits: Int) extends EObject
   case class EDouble(d: Double) extends EObject
-  case class EExternalFun(module: String, function: String, arity: Int) extends EObject
-  case class EList(elems: List[EObject], lastTail: Option[EObject]) extends EObject
+  case class EExternalFun(module: String, function: String, arity: Int)
+      extends EObject
+  case class EList(elems: List[EObject], lastTail: Option[EObject])
+      extends EObject
   case class ELong(value: BigInt) extends EObject
   case class EMap(entries: List[(EObject, EObject)]) extends EObject
   case class EString(str: String) extends EObject

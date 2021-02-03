@@ -47,18 +47,28 @@ object Pipeline {
   def checkForms(beamFile: String): List[Form] = {
     // TODO: don't hard-code
     val fullPath = "/Users/mheiber/erlt/corq/" + beamFile
-    val CModule(_, CLiteral(_, EAtom(module)), _, _, defs) = DB.loadCoreModule(fullPath)
+    val CModule(_, CLiteral(_, EAtom(module)), _, _, defs) =
+      DB.loadCoreModule(fullPath)
     val specs = DB.getExpandedModuleStub(module).get.specs
     defs.map {
       case (CVar(_, VarNameAtomInt(name, arity)), expr: CFun) => {
         val id = Id(name, arity)
         // TODO: line
-        specs.get(id).map(checkFun(module, id, expr, _, 0)).getOrElse(NoSpecFuncDecl(id)(0))
+        specs
+          .get(id)
+          .map(checkFun(module, id, expr, _, 0))
+          .getOrElse(NoSpecFuncDecl(id)(0))
       }
     }
   }
 
-  private def checkFun(module: String, id: Id, f: CFun, spec: FunSpec, line: Int): Form = {
+  private def checkFun(
+      module: String,
+      id: Id,
+      f: CFun,
+      spec: FunSpec,
+      line: Int
+  ): Form = {
     try {
       Check(module).checkFun(id, f, spec)
       TypedFuncDecl(id)(line)

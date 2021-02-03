@@ -29,7 +29,7 @@ package object ast {
   case class App(
       name: String,
       ebinDir: String,
-      modules: List[String],
+      modules: List[String]
   )
 
   case class ModuleStub(
@@ -40,6 +40,6 @@ package object ast {
       specs: Map[Id, FunSpec],
       types: Map[Id, TypeDecl],
       skippedSpecs: Map[Id, SkippedFunSpec],
-      skippedTypes: Map[Id, SkippedTypeDecl],
+      skippedTypes: Map[Id, SkippedTypeDecl]
   )
 }

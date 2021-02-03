@@ -25,7 +25,11 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
   def loadCoreForms(beamFilePath: String): Option[CErl.CModule] = {
     println("loading " + beamFilePath)
 
-    connection.sendRPC("core_analyzer", "get_core_forms", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    connection.sendRPC(
+      "core_analyzer",
+      "get_core_forms",
+      new OtpErlangList(new OtpErlangString(beamFilePath))
+    )
     val received = connection.receiveRPC
     val eObject = erlang.DataConvert.fromJava(received)
 
@@ -33,7 +37,9 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
       case ETuple(List(EAtom("ok"), cerlEObj)) =>
         Some(CErlConvert.convert(cerlEObj).asInstanceOf[CErl.CModule])
       case other =>
-        throw new Error(s"could not load core erlang $beamFilePath, got: $other")
+        throw new Error(
+          s"could not load core erlang $beamFilePath, got: $other"
+        )
     }
   }
 

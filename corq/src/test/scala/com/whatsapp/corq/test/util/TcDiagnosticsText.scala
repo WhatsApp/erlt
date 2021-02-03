@@ -52,7 +52,7 @@ object TcDiagnosticsText {
       line: Int,
       text: String,
       status: Option[Status],
-      error: Option[TypeError],
+      error: Option[TypeError]
   ) {
     def format(): String = {
       val lineNum = line.toString.reverse.padTo(3, ' ').reverse
@@ -60,7 +60,8 @@ object TcDiagnosticsText {
         if (text.length <= width) text.padTo(width, ' ') ++ " |"
         else text.take(width) ++ "……"
       val diagText = status.map(_.toString).getOrElse("").colTrim(7)
-      val errorText = error.map(_.msg).getOrElse("").colTrim(80, lastColumn = true)
+      val errorText =
+        error.map(_.msg).getOrElse("").colTrim(80, lastColumn = true)
       s"$lineNum $lineText $diagText | $errorText"
     }
   }
@@ -76,15 +77,18 @@ object TcDiagnosticsText {
     val erlPathFromForms = Paths.get(erlFile)
     val erlPath =
       if (erlPathFromForms.isAbsolute) erlPathFromForms
-      else Paths.get(beamFile.replace("/ebin/", "/src/").replace(".beam", ".erl"))
-    val lines = Files.readAllLines(erlPath).asScala.toList.map(_.replace('\t', ' '))
+      else
+        Paths.get(beamFile.replace("/ebin/", "/src/").replace(".beam", ".erl"))
+    val lines =
+      Files.readAllLines(erlPath).asScala.toList.map(_.replace('\t', ' '))
 
     val statusDs = statusDiags(forms)
     val errorDs = errorDiags(forms)
 
-    lines.zipWithIndex.map { case (text, i) =>
-      val l = i + 1
-      DLine(l, text, statusDs.get(l), errorDs.get(l))
+    lines.zipWithIndex.map {
+      case (text, i) =>
+        val l = i + 1
+        DLine(l, text, statusDs.get(l), errorDs.get(l))
     }
   }
 

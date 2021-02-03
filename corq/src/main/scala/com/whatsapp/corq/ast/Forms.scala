@@ -17,7 +17,10 @@
 package com.whatsapp.corq.ast
 
 import com.ericsson.otp.erlang._
-import com.whatsapp.corq.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
+import com.whatsapp.corq.ast.WIPDiagnostics.{
+  ExpansionFailure,
+  SkippedConstructDiagnostics
+}
 import com.whatsapp.corq.ast.Exprs.Clause
 import com.whatsapp.corq.ast.Types.{ConstrainedFunType, Type}
 import com.whatsapp.corq.tc.TcDiagnostics.TypeError
@@ -28,20 +31,30 @@ object Forms {
   case class Export(funs: List[Id])(val line: Int) extends Form
   case class Import(module: String, funs: List[Id])(val line: Int) extends Form
   case class ExportType(types: List[Id])(val line: Int) extends Form
-  case class TypeDecl(id: Id, params: List[String], body: Type)(val line: Int) extends Form
-  case class FunSpec(id: Id, types: List[ConstrainedFunType])(val line: Int) extends Form
+  case class TypeDecl(id: Id, params: List[String], body: Type)(val line: Int)
+      extends Form
+  case class FunSpec(id: Id, types: List[ConstrainedFunType])(val line: Int)
+      extends Form
   case class FunDecl(id: Id, clauses: List[Clause])(val line: Int) extends Form
   case class File(file: String, start: Int)(val line: Int) extends Form
 
   sealed trait SkippedForm extends Form
-  case class SkippedTypeDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
-  case class SkippedFunSpec(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
-  case class SkippedFunDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm
+  case class SkippedTypeDecl(id: Id, diag: SkippedConstructDiagnostics)(
+      val line: Int
+  ) extends SkippedForm
+  case class SkippedFunSpec(id: Id, diag: SkippedConstructDiagnostics)(
+      val line: Int
+  ) extends SkippedForm
+  case class SkippedFunDecl(id: Id, diag: SkippedConstructDiagnostics)(
+      val line: Int
+  ) extends SkippedForm
   case class SkippedRecordDecl(name: String)(val line: Int) extends SkippedForm
 
   sealed trait FailedExpandForm extends Form
-  case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
-  case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
+  case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int)
+      extends FailedExpandForm
+  case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int)
+      extends FailedExpandForm
 
   case class NoSpecFuncDecl(id: Id)(val line: Int) extends Form
   case class TypedFuncDecl(id: Id)(val line: Int) extends Form
@@ -56,5 +69,7 @@ object Forms {
   }
 
   def isFunForm(o: OtpErlangObject): Boolean =
-    o.asInstanceOf[OtpErlangTuple].elementAt(0).equals(new OtpErlangAtom("function"))
+    o.asInstanceOf[OtpErlangTuple]
+      .elementAt(0)
+      .equals(new OtpErlangAtom("function"))
 }

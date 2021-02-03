@@ -47,16 +47,24 @@ object Exprs {
 
   case class Binary(elems: List[BinaryElem])(val l: Int) extends Expr
   case class Catch(expr: Expr)(val l: Int) extends Expr
-  case class TryCatchExpr(tryBody: List[Expr], catchClauses: List[Clause], after: Option[List[Expr]])(val l: Int)
+  case class TryCatchExpr(
+      tryBody: List[Expr],
+      catchClauses: List[Clause],
+      after: Option[List[Expr]]
+  )(val l: Int)
       extends Expr
   case class TryOfCatchExpr(
       tryBody: List[Expr],
       tryClauses: List[Clause],
       catchClauses: List[Clause],
-      after: Option[List[Expr]],
+      after: Option[List[Expr]]
   )(val l: Int)
       extends Expr
 
-  case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
-  case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)
+  case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(
+      val l: Int
+  )
+  case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(
+      val l: Int
+  )
 }

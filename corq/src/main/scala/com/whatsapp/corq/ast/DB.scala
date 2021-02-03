@@ -35,28 +35,35 @@ object DB {
   }
 
   private def loadData(beamFilePath: String)(rpc: RPC): CErl.CModule = {
-        val Some(module) = rpc.loadCoreForms(beamFilePath)
-        pprint.pprintln(module)
-        // pprint.pprintln(module, height = 1000)
-        module
+    val Some(module) = rpc.loadCoreForms(beamFilePath)
+    pprint.pprintln(module)
+    // pprint.pprintln(module, height = 1000)
+    module
   }
   // END
 
-
   private def dirModules(dir: String): List[String] =
-    Paths.get(dir).toFile.listFiles((_, f) => f.endsWith(".beam")).map(_.getName.dropRight(5)).toList
+    Paths
+      .get(dir)
+      .toFile
+      .listFiles((_, f) => f.endsWith(".beam"))
+      .map(_.getName.dropRight(5))
+      .toList
   private def appEbinDir(app: String): String =
     s"${config.libRoot}/$app/ebin"
   private lazy val otpEbinDirs: Map[String, String] = {
     val libRoot = config.otpLibRoot
-    val libs = Paths.get(libRoot).toFile.listFiles().filter(_.isDirectory).map(_.getName)
+    val libs =
+      Paths.get(libRoot).toFile.listFiles().filter(_.isDirectory).map(_.getName)
     libs.map(dir => dir.split("-")(0) -> s"$libRoot/$dir/ebin").toMap
   }
 
   lazy val otpApps: Map[String, App] =
     otpEbinDirs.map { case (n, dir) => n -> App(n, dir, dirModules(dir)) }
   lazy val projectApps: Map[String, App] =
-    config.apps.map(n => n -> App(n, appEbinDir(n), dirModules(appEbinDir(n)))).toMap
+    config.apps
+      .map(n => n -> App(n, appEbinDir(n), dirModules(appEbinDir(n))))
+      .toMap
   lazy val apps: Map[String, App] =
     otpApps ++ projectApps
 
@@ -101,7 +108,16 @@ object DB {
         case s: SkippedFunSpec  => skippedSpecs += s.id -> s
         case _                  =>
       }
-    ModuleStub(module, exports, imports, exportTypes, specs, types, skippedSpecs, skippedTypes)
+    ModuleStub(
+      module,
+      exports,
+      imports,
+      exportTypes,
+      specs,
+      types,
+      skippedSpecs,
+      skippedTypes
+    )
   }
 
   private var globalizedModuleStubs: Map[String, ModuleStub] =
@@ -114,7 +130,9 @@ object DB {
     if (appNames.isEmpty)
       None
     else if (appNames.size > 1)
-      throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
+      throw new IllegalStateException(
+        s"module $module is defined in ${appNames.mkString(", ")}"
+      )
     else {
       val moduleApi = loadModuleStub(apps(appNames.head), module)
       Some(moduleApi)
@@ -126,7 +144,9 @@ object DB {
     if (appNames.isEmpty)
       None
     else if (appNames.size > 1)
-      throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
+      throw new IllegalStateException(
+        s"module $module is defined in ${appNames.mkString(", ")}"
+      )
     else {
       val app = apps(appNames.head)
       val beamFile = s"${app.ebinDir}/$module.beam"
@@ -140,8 +160,11 @@ object DB {
     else
       getModuleStub(module).map { s =>
         val stub = s.copy(
-          types = s.types.view.mapValues(Globalize.globalizeTypeDecl(module, _)).toMap,
-          specs = s.specs.view.mapValues(Globalize.globalizeSpec(module, _)).toMap,
+          types = s.types.view
+            .mapValues(Globalize.globalizeTypeDecl(module, _))
+            .toMap,
+          specs =
+            s.specs.view.mapValues(Globalize.globalizeSpec(module, _)).toMap
         )
         globalizedModuleStubs = globalizedModuleStubs.updated(module, stub)
         stub
@@ -153,8 +176,12 @@ object DB {
       Some(expandedModuleStubs(module))
     else
       getGlobalizedModuleStub(module).map { s =>
-        val types = s.types.values.map(Expand.expandTypeDecl).collect { case t: TypeDecl => t }
-        val specs = s.specs.values.map(Expand.expandFunSpec).collect { case s: FunSpec => s }
+        val types = s.types.values.map(Expand.expandTypeDecl).collect {
+          case t: TypeDecl => t
+        }
+        val specs = s.specs.values.map(Expand.expandFunSpec).collect {
+          case s: FunSpec => s
+        }
         val tMap = types.map(t => t.id -> t).toMap
         val sMap = specs.map(s => s.id -> s).toMap
         val stub = s.copy(types = tMap, specs = sMap)
