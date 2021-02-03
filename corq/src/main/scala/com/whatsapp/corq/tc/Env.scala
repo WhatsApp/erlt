@@ -45,11 +45,15 @@ object Env {
   ): Env = {
     val vars = initialEnv.store.keySet
     var acc = envs.head.store
-    for (v <- vars) {
-      for (other <- envs map (_.store)) {
-        val ty = op(acc(v), other(v))
-        acc = acc + (v -> ty)
-      }
+    for {
+      v <- vars
+      other <- envs map (_.store)
+    } {
+      val default = initialEnv.store(v)
+      val left = acc.getOrElse(v, default)
+      val right = other.getOrElse(v, default)
+      val ty = op(left, right)
+      acc += (v -> ty)
     }
     new Env(initialEnv.module, acc)
   }

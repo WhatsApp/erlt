@@ -129,15 +129,37 @@ final class Elab(val module: String, check: Check) {
         consType(hdType, tlType)
       case CLet(_, vars, arg, body) =>
         val exprTy = elabExpr(arg, env)
-        val env1 = vars match {
-          case (cvar @ CVar(_, _)) :: Nil =>
-            env + (cvar -> exprTy)
+        exprTy match {
+          /**
+            * type the Let as NoneType if the arg is NoneType.
+            * This is so we don't end up with nonsense like:
+            * CValuesType(List(NoneType, NilType))
+            *
+            * For example:
+            * `case self() of A when is_atom(A)-> ok end, A`
+            * produces Core Erlang like this:
+            * let <_2, A> = ....
+            *     let <_1> = primop 'match_fail' ({'case_clause',_0}) in  <_1,[]>`
+            * The `[]` seems to be CE's choice of dummy value here
+            */
+          case NoneType =>
+            check.checkExpr(
+              body,
+              AnyType,
+              env ++ (vars zip (vars map (_ => NoneType)))
+            )
+            NoneType
           case _ =>
-            val CValuesType(tys) = exprTy
-            assert(vars.size == tys.size)
-            env ++ (vars zip tys)
+            val env1 = vars match {
+              case (cvar @ CVar(_, _)) :: Nil =>
+                env + (cvar -> exprTy)
+              case _ =>
+                val CValuesType(tys) = exprTy
+                assert(vars.size == tys.size)
+                env ++ (vars zip tys)
+            }
+            elabExpr(body, env1)
         }
-        elabExpr(body, env1)
       case CLetRec(_, defs, body) =>
         for ((cvar, fun) <- defs) {
           cvar match {
