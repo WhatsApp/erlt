@@ -88,7 +88,7 @@ final case class Check(module: String) {
       }
       case _: CApply | _: CBinary | _: CBitstr | _: CCall | _: CLiteral |
           _: CLet | _: CLetRec | _: CPrimOp | _: CTry | _: CTuple | _: CVar |
-          _: CCons | _: CSeq | _: CCase | _: CCatch =>
+          _: CCons | _: CSeq | _: CCase | _: CCatch | _: CValues =>
         val actualTy = elab.elabExpr(expr, env)
         if (!Subtype.subType(actualTy, resTy)) {
           throw TypeMismatch(expr, resTy, actualTy)

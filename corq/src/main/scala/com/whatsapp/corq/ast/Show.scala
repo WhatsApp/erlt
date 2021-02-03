@@ -120,6 +120,7 @@ object Show {
       // case CPrimOp(anno, name, args) => "CPrimOp"
       // case CReceive(anno, clauses, timeout, action) => "CReceive"
       // case CSeq(anno, arg, body) => "CSeq"
-      // case CValues(anno, es) => "CValues"
+      case CValues(anno, es) =>
+        es map show mkString ("ValueList: <", ", ", ">")
     }
 }

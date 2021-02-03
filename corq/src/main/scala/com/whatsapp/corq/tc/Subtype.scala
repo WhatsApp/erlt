@@ -55,13 +55,7 @@ object Subtype {
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1
-    else {
-      (t1, t2) match {
-        case (CValuesType(elems1), CValuesType(elems2)) =>
-          CValuesType(elems1 zip elems2 map (join _).tupled)
-        case _ => UnionType(List(t1, t2))
-      }
-    }
+    else UnionType(List(t1, t2))
 
   def meet(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t1

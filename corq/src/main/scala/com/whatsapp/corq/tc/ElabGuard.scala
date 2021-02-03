@@ -51,7 +51,7 @@ case class ElabGuard(elab: Elab) {
       envs: EnvMap
   ): (Env, EnvMap) =
     if (op == "not")
-      (Env.empty(elab.module), Map.empty) // skip, not doing negated types yet
+      (env, envs) // skip, not doing negated types yet
     else
       args match {
         case (cvar: CVar) :: Nil =>
@@ -60,9 +60,9 @@ case class ElabGuard(elab: Elab) {
             throw new IllegalStateException(s"unrecognized guard op $op")
           )
           val meetTy = Subtype.meet(predTy, env(cvar))
-          (env + (cvar -> meetTy), Map.empty)
+          (env + (cvar -> meetTy), envs)
         case arg :: Nil =>
-          (elabGuardUnOp(op, arg, env), Map.empty)
+          (elabGuardUnOp(op, arg, env), envs)
         case List(left: CVar, right: CVar)
             if envs.contains(left) && envs.contains(left) =>
           val typeOp = op match {
@@ -72,7 +72,7 @@ case class ElabGuard(elab: Elab) {
           val combined = Env.combine(env, typeOp, List(envs(left), envs(right)))
           (combined, envs)
         case List(arg1, arg2) =>
-          (elabGuardBinOp(op, arg1, arg2, env), Map.empty)
+          (elabGuardBinOp(op, arg1, arg2, env), envs)
         // $COVERAGE-OFF$
         case x => sys.error(s"unexpected $x")
         // $COVERAGE-ON$
