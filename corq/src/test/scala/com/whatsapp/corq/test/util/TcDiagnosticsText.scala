@@ -72,7 +72,13 @@ object TcDiagnosticsText {
   private def checkFormsD(beamFile: String): List[DLine] = {
     import scala.jdk.CollectionConverters.CollectionHasAsScala
 
-    val (erlFile, forms) = Pipeline.checkForms(beamFile)
+    val (erlFile, forms0) = Pipeline.checkForms(beamFile)
+
+    val forms = forms0 filter {
+      case _: BuiltInFuncDecl => false
+      case _                  => true
+    }
+    forms foreach (form => assert(form.line != 0))
 
     val erlPathFromForms = Paths.get(erlFile)
     val erlPath =

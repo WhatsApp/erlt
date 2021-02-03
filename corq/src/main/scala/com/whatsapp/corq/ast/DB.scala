@@ -19,25 +19,24 @@ package com.whatsapp.corq.ast
 import com.whatsapp.corq.ast.Forms._
 import com.whatsapp.corq.config
 import com.whatsapp.corq.io.{Beam, EData, RPC}
-import com.whatsapp.corq.{config}
+import com.whatsapp.corq.config
 import erlang.CErl
 import java.nio.file.Paths
+
+import com.whatsapp.corq.tc.BuiltIn
 
 import scala.util.Using
 
 object DB {
 
   // BEGIN new
-  // TODO: abs path, don't hard-code below
   def loadCoreModule(beamFilePath: String): CErl.CModule = {
-    println(s"loading core forms $beamFilePath")
     Using.resource(RPC.connect())(loadData(beamFilePath))
   }
 
   private def loadData(beamFilePath: String)(rpc: RPC): CErl.CModule = {
     val Some(module) = rpc.loadCoreForms(beamFilePath)
-    pprint.pprintln(module)
-    // pprint.pprintln(module, height = 1000)
+    // pprint.pprintln(module)
     module
   }
   // END
@@ -165,6 +164,7 @@ object DB {
             .toMap,
           specs =
             s.specs.view.mapValues(Globalize.globalizeSpec(module, _)).toMap
+              ++ BuiltIn.moduleInfoSpecs
         )
         globalizedModuleStubs = globalizedModuleStubs.updated(module, stub)
         stub

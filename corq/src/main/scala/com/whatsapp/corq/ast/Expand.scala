@@ -82,7 +82,7 @@ object Expand {
           }
       case _: BuiltinType | _: AtomLitType | NilType | BinaryType => t
       // $COVERAGE-OFF$
-      case LocalType(_, _) => throw new IllegalStateException()
+      case _ => sys.error(s"unexpected $t")
       // $COVERAGE-ON$
     }
 

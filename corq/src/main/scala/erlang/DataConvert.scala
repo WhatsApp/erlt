@@ -18,6 +18,7 @@
 package erlang
 
 import com.ericsson.otp.erlang._
+import com.whatsapp.corq.ast.RemoteId
 import erlang.Data._
 
 // Conversion from Java Erlang to Scala Erlang
@@ -63,7 +64,7 @@ object DataConvert {
         val elems = otpTuple.elements().toList.map(fromJava)
         ETuple(elems)
       case ef: OtpErlangExternalFun =>
-        EExternalFun(ef.module, ef.function, ef.arity)
+        EExternalFun(RemoteId(ef.module, ef.function, ef.arity))
       case _: OtpErlangFun =>
         sys.error("OtpErlangFun is not expected")
     }

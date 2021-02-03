@@ -59,6 +59,9 @@ object Forms {
   case class NoSpecFuncDecl(id: Id)(val line: Int) extends Form
   case class TypedFuncDecl(id: Id)(val line: Int) extends Form
   case class MistypedFuncDecl(id: Id, te: TypeError)(val line: Int) extends Form
+  case class BuiltInFuncDecl(id: Id) extends Form {
+    val line = 0
+  }
 
   def load(beamFile: String): List[Form] = {
     import com.whatsapp.corq.io.Beam

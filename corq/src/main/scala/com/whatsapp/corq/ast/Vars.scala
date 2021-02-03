@@ -18,42 +18,35 @@ package com.whatsapp.corq.ast
 
 import com.whatsapp.corq.ast.Exprs.Clause
 import com.whatsapp.corq.ast.Pats._
+import erlang.CErl._
+import erlang.Data._
 
 object Vars {
-  private def patVars(pat: Pat): Set[String] =
+  private def patVars(pat: CErl): Set[CVar] =
     pat match {
-      case PatWild() =>
-        Set.empty
-      case PatMatch(pat, arg) =>
-        patVars(pat) ++ patVars(arg)
-      case PatTuple(elems) =>
+      case CAlias(_, cvar: CVar, _expr) =>
+        Set(cvar)
+      case CTuple(_, elems) =>
         elems.flatMap(patVars).toSet
-      case PatNil() =>
-        Set.empty
-      case PatCons(h, t) =>
-        patVars(h) ++ patVars(t)
-      case PatNumber() =>
-        Set.empty
-      case PatAtom(_) =>
-        Set.empty
-      case PatVar(n) =>
-        Set(n)
-      case PatUnOp(_, arg) =>
-        patVars(arg)
-      case PatBinOp(_, arg1, arg2) =>
-        patVars(arg1) ++ patVars(arg2)
-      case PatBinary(elems) =>
+      case CCons(_, hd, tl) =>
+        patVars(hd) ++ patVars(tl)
+      case CBinary(anno, elems) =>
         elems.flatMap(binaryElemVars).toSet
+      case _: CLiteral => Set.empty
+      case cvar: CVar  => Set(cvar)
+      // $COVERAGE-OFF$
+      case _ => sys.error(s"unexpected $pat")
+      // $COVERAGE-ON$
     }
-
-  private def binaryElemVars(elem: PatBinaryElem): Set[String] = {
-    val sizeVars: Set[String] = elem.size match {
-      case Pats.PatBinSizeConst => Set.empty
-      case PatBinSizeVar(v)     => Set(v.n)
-    }
-    sizeVars ++ patVars(elem.pat)
+  private def binaryElemVars(elem: CBitstr): Set[CVar] = {
+    Set.empty
+//    val sizeVars: Set[CVar] = elem.size match {
+//      case Pats.PatBinSizeConst => Set.empty
+//      case PatBinSizeVar(v)     => Set(v.n)
+//    }
+//    sizeVars ++ patVars(elem.pat)
   }
 
-  def clauseVars(clause: Clause): Set[String] =
+  def clauseVars(clause: CClause): Set[CVar] =
     clause.pats.flatMap(patVars).toSet
 }

@@ -17,10 +17,12 @@
 // copied from analyzer
 package erlang
 
+import com.whatsapp.corq.ast.RemoteId
+
 // Scala-idiomatic representation of Erlang Data
 object Data {
   sealed trait EObject
-  case class Anno() extends EObject
+  case class Anno(line: Int) extends EObject
   case class EAtom(atom: String) extends EObject {
     def asBoolean(): Boolean =
       atom match {
@@ -31,8 +33,7 @@ object Data {
   }
   case class EBitStr(bin: Array[Byte], pad_bits: Int) extends EObject
   case class EDouble(d: Double) extends EObject
-  case class EExternalFun(module: String, function: String, arity: Int)
-      extends EObject
+  case class EExternalFun(remoteId: RemoteId) extends EObject
   case class EList(elems: List[EObject], lastTail: Option[EObject])
       extends EObject
   case class ELong(value: BigInt) extends EObject

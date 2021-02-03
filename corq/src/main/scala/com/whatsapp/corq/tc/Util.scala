@@ -17,30 +17,33 @@
 package com.whatsapp.corq.tc
 
 import com.whatsapp.corq.ast.{DB, Id, RemoteId}
-import com.whatsapp.corq.ast.Types.{AnyType, FunType}
+import com.whatsapp.corq.ast.Types.{AnyType, FunType, NoneType}
+import erlang.CErl._
+import erlang.Data.ELong
 
 object Util {
-  def getFunType(module: String, id: Id): Option[FunType] =
-    for {
-      moduleStub <- DB.getExpandedModuleStub(module)
-      hostModule = moduleStub.imports.getOrElse(id, module)
-      ft <- getFunType(RemoteId(hostModule, id.name, id.arity))
-    } yield ft
+  def getApplyType(module: String, id: Id): Option[FunType] = {
+    BuiltIn.letRecSpecialFunToType
+      .get(id)
+      .orElse(for {
+        moduleStub <- DB.getExpandedModuleStub(module)
+        hostModule = moduleStub.imports.getOrElse(id, module)
+        ft <- getCallType(RemoteId(hostModule, id.name, id.arity))
+      } yield ft)
+  }
 
-  def getFunType(fqn: RemoteId): Option[FunType] =
+  def getCallType(fqn: RemoteId): Option[FunType] =
     for {
       moduleStub <- DB.getExpandedModuleStub(fqn.module)
       spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity))
       if spec.types.size == 1
     } yield spec.types.head.ty
 
-  def initClauseEnv(env: Env, clauseVars: Set[String]): Env = {
-    env
-//    var envAcc = env
-//    for {
-//      v <- clauseVars if !env.contains(v)
-//    } envAcc = envAcc.updated(v, AnyType)
-//    envAcc
-//  }
+  def initClauseEnv(env: Env, clauseVars: Set[CVar]): Env = {
+    var envAcc = env
+    for {
+      v <- clauseVars if !env.contains(v)
+    } envAcc = envAcc + (v -> AnyType)
+    envAcc
   }
 }

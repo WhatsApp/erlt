@@ -18,6 +18,12 @@ package com.whatsapp.corq.ast
 
 object Types {
   sealed trait Type
+
+  /**
+    * type particular to Core Erlang
+    */
+  case class CValuesType(tys: List[Type]) extends Type
+
   case class AtomLitType(atom: String) extends Type
   case class FunType(argTys: List[Type], resTy: Type) extends Type
   case class TupleType(argTys: List[Type]) extends Type

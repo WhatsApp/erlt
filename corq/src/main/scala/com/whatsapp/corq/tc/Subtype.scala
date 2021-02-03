@@ -21,15 +21,15 @@ import com.whatsapp.corq.ast.Types._
 object Subtype {
   def subType(t1: Type, t2: Type): Boolean = {
     (t1, t2) match {
-      case (_, _) if t1 == t2   => true
-      case (_, AnyType)         => true
-      case (NoneType, _)        => true
-      case (UnionType(tys1), _) => tys1.forall(subType(_, t2))
-      case (_, UnionType(tys2)) => tys2.exists(subType(t1, _))
-
+      case (_, _) if t1 == t2         => true
+      case (_, AnyType)               => true
+      case (NoneType, _)              => true
+      case (UnionType(tys1), _)       => tys1.forall(subType(_, t2))
+      case (_, UnionType(tys2))       => tys2.exists(subType(t1, _))
       case (AtomLitType(_), AtomType) => true
-
       case (TupleType(tys1), TupleType(tys2)) if tys1.size == tys2.size =>
+        tys1.lazyZip(tys2).forall(subType)
+      case (CValuesType(tys1), CValuesType(tys2)) if tys1.size == tys2.size =>
         tys1.lazyZip(tys2).forall(subType)
       case (NilType, ListType(_)) =>
         true
@@ -47,10 +47,21 @@ object Subtype {
   def eqv(t1: Type, t2: Type): Boolean =
     subType(t1, t2) && subType(t2, t1)
 
+  def joinAll(types: List[Type]): Type =
+    // Core Erlang can contain `case` with no branches
+    if (types.isEmpty) NoneType
+    else types reduceLeft ((t1, t2) => join(t1, t2))
+
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1
-    else UnionType(List(t1, t2))
+    else {
+      (t1, t2) match {
+        case (CValuesType(elems1), CValuesType(elems2)) =>
+          CValuesType(elems1 zip elems2 map (join _).tupled)
+        case _ => UnionType(List(t1, t2))
+      }
+    }
 
   def meet(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t1
@@ -59,10 +70,12 @@ object Subtype {
       (t1, t2) match {
         case (UnionType(ty1s), _) => UnionType(ty1s.map(meet(_, t2)))
         case (_, UnionType(ty2s)) => UnionType(ty2s.map(meet(t1, _)))
-
         case (TupleType(elems1), TupleType(elems2))
             if elems1.size == elems2.size =>
           TupleType(elems1.lazyZip(elems2).map(meet))
+        case (CValuesType(elems1), CValuesType(elems2))
+            if elems1.size == elems2.size =>
+          CValuesType(elems1.lazyZip(elems2).map(meet))
         case (ListType(et1), ListType(et2)) =>
           ListType(meet(et1, et2))
         case (FunType(args1, res1), FunType(args2, res2))

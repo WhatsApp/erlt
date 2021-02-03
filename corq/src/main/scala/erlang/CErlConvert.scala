@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// copied from analyzer
+// adapted from analyzer
 package erlang
 
+import com.whatsapp.corq.ast.Id
 import erlang.Data._
 import erlang.CErl._
 
 object CErlConvert {
 
+  def convertAll[T](objs: List[EObject]): List[T] =
+    objs.map(convert).asInstanceOf[List[T]]
+
   def convert(eObject: EObject): CErl =
     eObject match {
       case ETuple(List(EAtom("c_alias"), anno, cvar, pat)) =>
-        CAlias(convertAnno(anno), convert(cvar), convert(pat))
+        CAlias(
+          convertAnno(anno),
+          convert(cvar).asInstanceOf[CVar],
+          convert(pat)
+        )
       case ETuple(List(EAtom("c_apply"), anno, op, EList(args, None))) =>
         CApply(convertAnno(anno), convert(op), args.map(convert))
       case ETuple(List(EAtom("c_binary"), anno, EList(segments, None))) =>
@@ -50,7 +58,7 @@ object CErlConvert {
           args.map(convert)
         )
       case ETuple(List(EAtom("c_case"), anno, arg, EList(clauses, None))) =>
-        CCase(convertAnno(anno), convert(arg), clauses.map(convert))
+        CCase(convertAnno(anno), convert(arg), convertAll[CClause](clauses))
       case ETuple(List(EAtom("c_catch"), anno, body)) =>
         CCatch(convertAnno(anno), convert(body))
       case ETuple(
@@ -65,15 +73,20 @@ object CErlConvert {
       case ETuple(List(EAtom("c_cons"), anno, hd, tl)) =>
         CCons(convertAnno(anno), convert(hd), convert(tl))
       case ETuple(List(EAtom("c_fun"), anno, EList(vars, None), body)) =>
-        CFun(
+        CFun(convertAnno(anno), convertAll[CVar](vars), convert(body))
+      case ETuple(List(EAtom("c_let"), anno, EList(vars, None), arg, body)) =>
+        CLet(
           convertAnno(anno),
-          vars.map(convert).map(_.asInstanceOf[CVar]),
+          convertAll[CVar](vars),
+          convert(arg),
           convert(body)
         )
-      case ETuple(List(EAtom("c_let"), anno, EList(vars, None), arg, body)) =>
-        CLet(convertAnno(anno), vars.map(convert), convert(arg), convert(body))
       case ETuple(List(EAtom("c_letrec"), anno, EList(defs, None), body)) =>
-        CLetRec(convertAnno(anno), defs.map(convertTuple2), convert(body))
+        CLetRec(
+          convertAnno(anno),
+          defs.map(convertTuple2(_).asInstanceOf[(CVar, CFun)]).toMap,
+          convert(body)
+        )
       case ETuple(List(EAtom("c_literal"), anno, value)) =>
         CLiteral(convertAnno(anno), value)
       // c_map - TODO clarify
@@ -139,9 +152,9 @@ object CErlConvert {
         CTry(
           convertAnno(anno),
           convert(arg),
-          vars.map(convert),
+          convertAll[CVar](vars),
           convert(body),
-          evars.map(convert),
+          convertAll[CVar](evars),
           convert(handler)
         )
       case ETuple(List(EAtom("c_tuple"), anno, EList(es, None))) =>
@@ -164,21 +177,27 @@ object CErlConvert {
     }
   }
 
-  // assuming annotations are uninformative
-  private def convertAnno(_eObject: EObject): Anno = {
-    Anno()
-  }
+  private def convertAnno(data: EObject): Anno =
+    data match {
+      case EList(List(ETuple(_), ELong(line), ETuple(_)), _) =>
+        Anno(line.intValue)
+      case EList(List(ELong(line), _), None) => Anno(line.intValue)
+      // special value: should not appear in any error messages
+      case _ => Anno(0)
+    }
 
   private def convertEvar(eVar: EObject): VarName =
     eVar match {
       case ELong(i)    => VarNameInt(i.intValue)
       case EAtom(atom) => VarNameAtom(atom)
       case ETuple(List(EAtom(atom), ELong(i))) =>
-        VarNameAtomInt(atom, i.intValue)
+        VarNameAtomInt(Id(atom, i.intValue))
+      case _ => sys.error(s"unexpected: $eVar")
     }
 
   def convertTuple2(eObject: EObject): (CErl, CErl) =
     eObject match {
       case ETuple(List(e1, e2)) => (convert(e1), convert(e2))
+      case _                    => sys.error(s"unexpected $eObject")
     }
 }
