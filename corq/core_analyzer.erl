@@ -17,26 +17,43 @@
     get_core_forms/1
 ]).
 
--define(DEBUG, ).
+% -define(DEBUG, true).
 
 -ifdef(DEBUG).
 -define(DEBUG_CORE(Core), log_core(Core)).
 log_core(Core) ->
     io:format("~s~n", [lists:flatten(core_pp:format(Core))]).
 -else.
--define(?DEBUG_CORE(Core), ok).
+-define(DEBUG_CORE(Core), ok).
 -endif.
 
+% copied from dialyzer_utils.erl 84adefa331
+src_compiler_opts() ->
+  [
+    no_copt,
+    to_core,
+    binary,
+    return_errors,
+    no_inline,
+    strict_record_tests,
+    strict_record_updates,
+    dialyzer,
+    no_spawn_compiler_process
+  ].
 
--spec get_core_forms(file:filename()) -> {ok, cerl:cerl()} | error.
-get_core_forms(BeamFile) ->
-    io:format("Got request for ~p~n", [BeamFile]),
-    case beam_lib:chunks(BeamFile, [debug_info]) of
-        {ok, {Module, [{debug_info, {debug_info_v1, Backend, Metadata}}]}} ->
-            case Backend:debug_info(core_v1, Module, Metadata, []) of
-                {ok, Core} ->
-                    ?DEBUG_CORE(Core),
-                    {ok, Core}
-            end
-    end.
-
+% adapted from dialyzer_utils.erl 84adefa331
+get_core_forms(File) ->
+  case beam_lib:chunks(File, [debug_info]) of
+    {ok, {Module, [{debug_info, {debug_info_v1, Backend, Metadata}}]}} ->
+      case Backend:debug_info(core_v1, Module, Metadata, src_compiler_opts()) of
+        {ok, Core} ->
+          Cleaned = dialyzer_clean_core:clean(Core),
+          ?DEBUG_CORE(Cleaned),
+          {ok, Cleaned};
+        {error, _} ->
+          {error, "  Could not get Core Erlang code for: " ++ File ++ "\n"}
+      end;
+    _ ->
+      {error, "  Could not get Core Erlang code for: " ++ File ++ "\n" ++
+        "  Recompile with +debug_info or analyze starting from source code"}
+  end.

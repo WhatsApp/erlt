@@ -3,7 +3,6 @@ name := "corq"
 scalaVersion := "2.13.4"
 
 libraryDependencies ++= Seq (
-  "org.erlang.otp" % "jinterface" % "1.6.1",
   "com.typesafe" % "config" % "1.4.1",
   "org.scalatest" %% "scalatest" % "3.2.2" % "test",
   "com.lihaoyi" %% "pprint" % "0.5.6"

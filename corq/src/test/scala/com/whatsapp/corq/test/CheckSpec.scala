@@ -42,7 +42,6 @@ class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
     it(s"$srdDir/$module.erl") {
       val beamFile = s"$ebinDir/$module.beam"
       val diag = TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-      println(s"diagnostics: $diag")
       val expPath = Paths.get(s"$srdDir/$module.erl.check")
       if (generateOut) Files.write(expPath, diag.getBytes)
       val exp = new String(Files.readAllBytes(expPath))

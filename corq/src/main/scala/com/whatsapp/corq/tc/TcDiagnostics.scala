@@ -17,6 +17,7 @@
 package com.whatsapp.corq.tc
 
 import com.whatsapp.corq.ast.Exprs.Expr
+import com.whatsapp.corq.ast.{Id, RemoteId}
 import com.whatsapp.corq.ast.Show.show
 import com.whatsapp.corq.ast.Types.Type
 import erlang.CErl._
@@ -28,15 +29,19 @@ object TcDiagnostics {
     val line: Int
     val msg: String
   }
-  case class TypeMismatch(line: Int, expr: CErl, expected: Type, got: Type)
+  case class TypeMismatch(expr: CErl, expected: Type, got: Type)
       extends TypeError {
+    val line = expr.line
     override val msg: String =
       s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
-  case class UnboundVar(line: Int, n: String) extends TypeError {
-    override val msg: String = s"Unbound var: ${n}"
+  case class UnboundVar(line: Int, n: CVar) extends TypeError {
+    override val msg: String = s"Unbound var: ${n.name}"
   }
-  case class UnboundId(line: Int, id: String) extends TypeError {
-    override val msg: String = s"Unbound id: $id"
+  case class UnboundId(line: Int, id: Id) extends TypeError {
+    override val msg: String = s"Unbound var: $id"
+  }
+  case class UnboundRemoteId(line: Int, id: RemoteId) extends TypeError {
+    override val msg: String = s"Unbound var: $id"
   }
 }

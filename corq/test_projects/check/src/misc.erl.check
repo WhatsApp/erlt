@@ -2,7 +2,7 @@
   2                                            |         | 
   3 %% The majority of these tests are just    |         | 
   4 %% to get some code coverage.              |         | 
-  5 %% Many of the do not have any special mea……         | 
+  5 %% Many of them do not have any special me……         | 
   6                                            |         | 
   7 -compile([export_all, nowarn_export_all]). |         | 
   8                                            |         | 
@@ -175,19 +175,19 @@
 175     (any()) -> none().                     |         | 
 176 test43_pos([_ | Y]) when Y + 1 > 0 -> Y.   | OK      | 
 177                                            |         | 
-178 -spec test44_neg(any()) -> any().          |         | 
-179 test44_neg(X) ->                           | ERROR   | 
+178 -spec test44_pos(any()) -> any().          |         | 
+179 test44_pos(X) ->                           | OK      | 
 180     case X of                              |         | 
 181         Z -> ok                            |         | 
 182     end,                                   |         | 
-183     Z.                                     |         | Unbound var: Z
+183     Z.                                     |         | 
 184                                            |         | 
-185 -spec test45_neg(any()) -> atom().         |         | 
-186 test45_neg(X) ->                           | ERROR   | 
+185 -spec test45_pos(any()) -> atom().         |         | 
+186 test45_pos(X) ->                           | OK      | 
 187     case X of                              |         | 
 188         _ -> Z = ok                        |         | 
 189     end,                                   |         | 
-190     Z.                                     |         | Unbound var: Z
+190     Z.                                     |         | 
 191                                            |         | 
 192 -spec test46_neg() -> number().            |         | 
 193 test46_neg() -> false.                     | ERROR   | 'false'. Expected: number(), Got: 'false'
@@ -356,3 +356,56 @@
 356                                            |         | 
 357 -spec test77_neg(any()) -> atom().         |         | 
 358 test77_neg(A) -> catch(test76_pos(A)).     | ERROR   | catch. Expected: atom(), Got: term()
+359                                            |         | 
+360 -spec test78_pos() -> any().               |         | 
+361 test78_pos() ->                            | OK      | 
+362     receive                                |         | 
+363         X -> X                             |         | 
+364     end.                                   |         | 
+365                                            |         | 
+366 -spec test79_neg() -> atom().              |         | 
+367 test79_neg() ->                            | ERROR   | 
+368     receive                                |         | 
+369         X -> X                             |         | X. Expected: atom(), Got: term()
+370     end.                                   |         | 
+371                                            |         | 
+372 -spec test80_neg(any()) -> atom().         |         | 
+373 test80_neg(Timeout) ->                     | ERROR   | 
+374     receive                                |         | 
+375         X -> X                             |         | X. Expected: atom(), Got: term()
+376     after Timeout ->                       |         | 
+377         default                            |         | 
+378     end.                                   |         | 
+379                                            |         | 
+380 -spec test81_neg(any()) -> atom().         |         | 
+381 test81_neg(Timeout) ->                     | ERROR   | 
+382     receive                                |         | 
+383         X when is_atom(X) -> X             |         | 
+384     after Timeout ->                       |         | Timeout. Expected: number(), Got: term()
+385         default                            |         | 
+386     end.                                   |         | 
+387                                            |         | 
+388 -spec test82_pos() -> atom().              |         | 
+389 test82_pos() ->                            | ERROR   | 
+390     A = atom,                              |         | 
+391     Msg = receive                          |         | 
+392         A -> A                             |         | 
+393     after 10 ->                            |         | 
+394         default                            |         | 
+395     end,                                   |         | 
+396     {Msg}.                                 |         | {Msg}. Expected: atom(), Got: {'default' | 'atom'}
+397                                            |         | 
+398 -spec test83_pos(integer()) -> atom().     |         | 
+399 test83_pos(Timeout) ->                     | OK      | 
+400     receive                                |         | 
+401         _ -> atom                          |         | 
+402     after Timeout ->                       |         | 
+403         default                            |         | 
+404     end.                                   |         | 
+405                                            |         | 
+406 -spec test84_pos() -> number().            |         | 
+407 test84_pos() ->                            | OK      | 
+408     begin                                  |         | 
+409         Z = 2                              |         | 
+410     end,                                   |         | 
+411     Z.                                     |         | 

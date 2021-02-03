@@ -17,12 +17,12 @@
 package com.whatsapp.corq
 
 import com.whatsapp.corq.ast.Forms._
-import com.whatsapp.corq.ast.{DB, Expand, Forms, Globalize, Id}
-import com.whatsapp.corq.tc.Check
+import com.whatsapp.corq.ast.Types.ConstrainedFunType
+import com.whatsapp.corq.ast.{DB, Expand, Forms, Globalize, Id, WIPDiagnostics}
+import com.whatsapp.corq.tc.{BuiltIn, Check, Env}
 import com.whatsapp.corq.tc.TcDiagnostics.TypeError
-import erlang.{CErl, Data}
-import erlang.CErl.{CFun, CLiteral, CModule, CVar, VarNameAtomInt}
-import erlang.Data.EAtom
+import erlang.CErl._
+import erlang.Data._
 
 object Pipeline {
   def loadForms(beamFile: String): List[Form] =
@@ -44,22 +44,42 @@ object Pipeline {
       case x           => x
     }
 
-  def checkForms(beamFile: String): List[Form] = {
-    // TODO: don't hard-code
-    val fullPath = "/Users/mheiber/erlt/corq/" + beamFile
-    val CModule(_, CLiteral(_, EAtom(module)), _, _, defs) =
-      DB.loadCoreModule(fullPath)
-    val specs = DB.getExpandedModuleStub(module).get.specs
-    defs.map {
-      case (CVar(_, VarNameAtomInt(name, arity)), expr: CFun) => {
-        val id = Id(name, arity)
-        // TODO: line
-        specs
-          .get(id)
-          .map(checkFun(module, id, expr, _, 0))
-          .getOrElse(NoSpecFuncDecl(id)(0))
+  def moduleToSourceFile(module: CModule): String =
+    module.attrs
+      .collect({
+        case (
+              CLiteral(_, EAtom("file")),
+              CLiteral(_, EList(ETuple(EString(fileName) :: _) :: _, _))
+            ) =>
+          fileName
+      })
+      .headOption
+      .getOrElse(
+        throw new IllegalStateException(
+          s"module $module.name is missing a -file attribute"
+        )
+      )
+
+  def checkForms(beamFile: String): (String, List[Form]) = {
+    val module = DB.loadCoreModule(beamFile)
+    val srcFile = moduleToSourceFile(module)
+    val CModule(_, CLiteral(_, EAtom(moduleName)), _, _, defs) = module
+
+    val specs = DB.getExpandedModuleStub(moduleName).get.specs
+    val forms = defs.map {
+      case (CVar(_, VarNameAtomInt(id)), expr: CFun) => {
+        if (BuiltIn.moduleInfoSpecs.contains(id)) {
+          BuiltInFuncDecl(id)
+        } else {
+          specs
+            .get(id)
+            .map(checkFun(moduleName, id, expr, _, expr.line))
+            .getOrElse(NoSpecFuncDecl(id)(expr.line))
+        }
       }
+      case d => sys.error(s"unexpected def $d")
     }
+    (srcFile, forms)
   }
 
   private def checkFun(
@@ -70,11 +90,20 @@ object Pipeline {
       line: Int
   ): Form = {
     try {
-      Check(module).checkFun(id, f, spec)
+      // no need to check these every time
+      if (!BuiltIn.moduleInfoSpecs.contains(id)) {
+        // not handling constraints
+        Check(module).checkSpeccedFun(id, f, spec, Env.empty(module))
+      }
       TypedFuncDecl(id)(line)
     } catch {
       case te: TypeError =>
         MistypedFuncDecl(id, te)(line)
+      case diag @ WIPDiagnostics.SkippedConstructDiagnostics(
+            line,
+            _construct
+          ) =>
+        SkippedFunDecl(id, diag)(line)
     }
   }
 }

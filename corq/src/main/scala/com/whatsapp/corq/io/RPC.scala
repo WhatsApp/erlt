@@ -23,8 +23,6 @@ import erlang.Data._
 class RPC(val connection: OtpConnection) extends AutoCloseable {
 
   def loadCoreForms(beamFilePath: String): Option[CErl.CModule] = {
-    println("loading " + beamFilePath)
-
     connection.sendRPC(
       "core_analyzer",
       "get_core_forms",
@@ -37,9 +35,11 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
       case ETuple(List(EAtom("ok"), cerlEObj)) =>
         Some(CErlConvert.convert(cerlEObj).asInstanceOf[CErl.CModule])
       case other =>
+        // $COVERAGE-OFF$
         throw new Error(
           s"could not load core erlang $beamFilePath, got: $other"
         )
+      // $COVERAGE-ON$
     }
   }
 

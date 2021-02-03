@@ -17,12 +17,20 @@
 // copied from analyzer
 package erlang
 
+import com.whatsapp.corq.ast.Id
 import erlang.Data.Anno
 
 object CErl {
 
-  sealed trait CErl
-  case class CAlias(anno: Anno, v: CErl, pat: CErl) extends CErl
+  sealed trait CErl {
+    def anno: Anno
+
+    /**
+      * zero indicates no known line number
+      */
+    def line: Int = anno.line
+  }
+  case class CAlias(anno: Anno, v: CVar, pat: CErl) extends CErl
   case class CApply(anno: Anno, op: CErl, args: List[CErl]) extends CErl
   case class CBinary(anno: Anno, segments: List[CBitstr]) extends CErl
   case class CBitstr(
@@ -35,16 +43,15 @@ object CErl {
   ) extends CErl
   case class CCall(anno: Anno, module: CErl, name: CErl, args: List[CErl])
       extends CErl
-  case class CCase(anno: Anno, arg: CErl, clauses: List[CErl]) extends CErl
+  case class CCase(anno: Anno, sel: CErl, clauses: List[CClause]) extends CErl
   case class CCatch(anno: Anno, body: CErl) extends CErl
   case class CClause(anno: Anno, pats: List[CErl], guard: CErl, body: CErl)
       extends CErl
   case class CCons(anno: Anno, hd: CErl, tl: CErl) extends CErl
   case class CFun(anno: Anno, vars: List[CVar], body: CErl) extends CErl
-  case class CLet(anno: Anno, vars: List[CErl], arg: CErl, body: CErl)
+  case class CLet(anno: Anno, vars: List[CVar], arg: CErl, body: CErl)
       extends CErl
-  case class CLetRec(anno: Anno, defs: List[(CErl, CErl)], body: CErl)
-      extends CErl
+  case class CLetRec(anno: Anno, defs: Map[CVar, CFun], body: CErl) extends CErl
   case class CLiteral(anno: Anno, value: Data.EObject) extends CErl
   // TODO
   case class CMap(anno: Anno, arg: CErl, es: List[CErl], isPat: Boolean)
@@ -70,19 +77,25 @@ object CErl {
   case class CTry(
       anno: Anno,
       arg: CErl,
-      vars: List[CErl],
+      bodyVars: List[CVar],
       body: CErl,
-      evars: List[CErl],
+      evars: List[CVar],
       handler: CErl
   ) extends CErl
-  case class CTuple(anno: Anno, es: List[CErl]) extends CErl
-  case class CValues(anno: Anno, es: List[CErl]) extends CErl
+  case class CTuple(anno: Anno, elems: List[CErl]) extends CErl
+  case class CValues(anno: Anno, elems: List[CErl]) extends CErl
   case class CVar(anno: Anno, name: VarName) extends CErl
-  case class C___XXX(raw: Data.EObject) extends CErl
+  case class C___XXX(anno: Anno, raw: Data.EObject) extends CErl
 
   sealed trait VarName
-  case class VarNameInt(i: Int) extends VarName
-  case class VarNameAtom(atom: String) extends VarName
-  case class VarNameAtomInt(atom: String, arity: Int) extends VarName
+  case class VarNameInt(i: Int) extends VarName {
+    override def toString = s"_$i"
+  }
+  case class VarNameAtom(atom: String) extends VarName {
+    override def toString = s"'$atom'"
+  }
+  case class VarNameAtomInt(id: Id) extends VarName {
+    override def toString = id.toString
+  }
 
 }
