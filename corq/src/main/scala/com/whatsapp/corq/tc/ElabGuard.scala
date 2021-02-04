@@ -16,10 +16,8 @@
 
 package com.whatsapp.corq.tc
 
-import com.whatsapp.corq.ast.Forms.SkippedFunDecl
 import com.whatsapp.corq.ast.Types._
-import com.whatsapp.corq.ast.WIPDiagnostics
-import com.whatsapp.corq.ast.WIPDiagnostics.ExpString
+import com.whatsapp.corq.tc.TcDiagnostics.UnboundVar
 import erlang.CErl._
 import erlang.Data._
 
@@ -59,8 +57,9 @@ case class ElabGuard(elab: Elab) {
             op,
             throw new IllegalStateException(s"unrecognized guard op $op")
           )
-          val meetTy = Subtype.meet(predTy, env(cvar))
-          (env + (cvar -> meetTy), envs)
+          val meetTy = Subtype.meet(predTy, env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar)))
+          val env1: Env = env + (cvar.name -> meetTy)
+          (env1, envs)
         case arg :: Nil =>
           (elabGuardUnOp(op, arg, env), envs)
         case List(left: CVar, right: CVar)
@@ -69,7 +68,7 @@ case class ElabGuard(elab: Elab) {
             case "or"  => Subtype.join _
             case "and" => Subtype.meet _
           }
-          val combined = Env.combine(env, typeOp, List(envs(left), envs(right)))
+          val combined = Approx.combineEnvs(env, typeOp, List(envs(left), envs(right)))
           (combined, envs)
         case List(arg1, arg2) =>
           (elabGuardBinOp(op, arg1, arg2, env), envs)
@@ -180,13 +179,13 @@ case class ElabGuard(elab: Elab) {
         None
       case c => Some(elabGuard(c, env))
     }
-    env = Env.combine(env, op, clauseEnvs)
+    env = Approx.combineEnvs(env, op, clauseEnvs)
     sel match {
-      case cvar: CVar => env += (cvar -> leftBoolTy)
-      case _          => env
+      case cvar: CVar => env += (cvar.name -> leftBoolTy)
+      case _          => ()
     }
     clauses map (_.body) foreach {
-      case cvar: CVar => env += (cvar -> rightBoolTy)
+      case cvar: CVar => env += (cvar.name -> rightBoolTy)
       case _          => ()
     }
     env
@@ -195,12 +194,12 @@ case class ElabGuard(elab: Elab) {
   private def elabTestT(test: CErl, t: Type, env: Env): Env = {
     test match {
       case cvar: CVar =>
-        val testType = env.get(cvar) match {
+        val testType = env.get(cvar.name) match {
           case Some(vt) =>
             Subtype.meet(vt, t)
           case None => t
         }
-        env + (cvar -> testType)
+        env + (cvar.name -> testType)
       case _ => env
     }
   }
@@ -233,8 +232,8 @@ case class ElabGuard(elab: Elab) {
         val env2 = elabTestT(arg2, booleanType, env1)
         env2
       case "==" | "=:=" =>
-        val arg2Ty = elab.elabExpr(arg2, env)
-        elabTestT(arg1, arg2Ty, env)
+        val (arg2Ty, env1) = elab.elabExpr(arg2, env)
+        elabTestT(arg1, arg2Ty, env1)
       case "op" | "/=" | "=<" | "<" | ">=" | ">" =>
         env
       // $COVERAGE-OFF$

@@ -93,7 +93,7 @@ object Pipeline {
       // no need to check these every time
       if (!BuiltIn.moduleInfoSpecs.contains(id)) {
         // not handling constraints
-        Check(module).checkSpeccedFun(id, f, spec, Env.empty(module))
+        Check(module).checkSpeccedFun(id, f, spec, Map.empty)
       }
       TypedFuncDecl(id)(line)
     } catch {

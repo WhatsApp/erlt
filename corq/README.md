@@ -11,5 +11,3 @@ in another shell in this directory:
 ```sh
 sbt test
 ```
-
-NOTE: I hardcoded an absolute path to my file system somewhere, search for "mheiber" and fix it, then teach me how to Java

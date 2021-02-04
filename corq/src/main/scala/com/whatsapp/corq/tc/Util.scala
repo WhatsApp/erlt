@@ -42,8 +42,8 @@ object Util {
   def initClauseEnv(env: Env, clauseVars: Set[CVar]): Env = {
     var envAcc = env
     for {
-      v <- clauseVars if !env.contains(v)
-    } envAcc = envAcc + (v -> AnyType)
+      v <- clauseVars if !env.contains(v.name)
+    } envAcc = envAcc + (v.name -> AnyType)
     envAcc
   }
 }

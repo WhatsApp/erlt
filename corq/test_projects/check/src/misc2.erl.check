@@ -1,0 +1,20 @@
+  1 -module(misc2).                            |         | 
+  2 -compile([export_all]).                    |         | 
+  3                                            |         | 
+  4 %%                                         |         | 
+  5 %%-spec improper_neg() -> any().           |         | 
+  6 %%improper_neg() -> [a | [b | c]].         |         | 
+  7 %%                                         |         | 
+  8 %%-spec test_env_pos(any()) -> {atom(), at……         | 
+  9 %%test_env_pos(X) ->                       |         | 
+ 10 %%Y = if is_atom(X) -> X end,              |         | 
+ 11 %%{X, Y}.                                  |         | 
+ 12 %%                                         |         | 
+ 13 %%-spec test_var_fun_pos(fun((atom()) -> p……         | 
+ 14 %%test_var_fun_pos(F, X) -> F(X).          |         | 
+ 15 %%                                         |         | 
+ 16 %%-spec test_var_fun_neg(fun((atom()) -> p……         | 
+ 17 %%test_var_fun_neg(F, X) -> F(X).          |         | 
+ 18                                            |         | 
+ 19 -spec catch_pos() -> any().                |         | 
+ 20 catch_pos() -> catch lists:map(1, 1).      | ERROR   | case .... Expected: fun((term()) -> term()), Got: number()
