@@ -65,13 +65,13 @@
  65     {A, X}.                                |         | 
  66                                            |         | 
  67 -spec test06_neg() -> ok.                  |         | 
- 68 test06_neg() ->                            | ERROR   | case .... Expected: 'ok', Got: 'ok' | 'error'
+ 68 test06_neg() ->                            | ERROR   | case .... Expected: 'ok', Got: 'error'
  69     try ok()                               |         | 
  70     catch _ -> error                       |         | 
  71     end.                                   |         | 
  72                                            |         | 
  73 -spec test07_neg() -> error.               |         | 
- 74 test07_neg() ->                            | ERROR   | case .... Expected: 'error', Got: 'ok' | 'error'
+ 74 test07_neg() ->                            | ERROR   | case .... Expected: 'error', Got: 'ok'
  75     try ok()                               |         | 
  76     catch _ -> error                       |         | 
  77     end.                                   |         | 

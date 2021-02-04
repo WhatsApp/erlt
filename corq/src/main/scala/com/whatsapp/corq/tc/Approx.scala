@@ -61,4 +61,41 @@ object Approx {
         List()
     }
 
+  def asCValuesType(t: Type, arity: Int): Option[CValuesType] =
+    extractValueElems(t, arity) match {
+      case Nil => None
+      case tss => Some(CValuesType(tss.transpose.map(UnionType)))
+    }
+
+  private def extractValueElems(t: Type, arity: Int): List[List[Type]] =
+    t match {
+      case AnyType =>
+        List(List.fill(arity)(AnyType))
+      case UnionType(tys) =>
+        tys.flatMap(extractValueElems(_, arity))
+      case CValuesType(argTys) =>
+        if (argTys.size == arity) List(argTys) else Nil
+      case _ => Nil
+    }
+
+  def combineEnvs(
+               initialEnv: Env,
+               op: (Type, Type) => Type,
+               envs: Iterable[Env]
+             ): Env = {
+    val vars = initialEnv.keySet
+    var acc = envs.head
+    for {
+      v <- vars
+      other <- envs
+    } {
+      val default = initialEnv(v)
+      val left = acc.getOrElse(v, default)
+      val right = other.getOrElse(v, default)
+      val ty = op(left, right)
+      acc += (v -> ty)
+    }
+    acc
+  }
+
 }

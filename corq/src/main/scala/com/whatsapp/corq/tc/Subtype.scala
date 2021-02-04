@@ -47,11 +47,6 @@ object Subtype {
   def eqv(t1: Type, t2: Type): Boolean =
     subType(t1, t2) && subType(t2, t1)
 
-  def joinAll(types: List[Type]): Type =
-    // Core Erlang can contain `case` with no branches
-    if (types.isEmpty) NoneType
-    else types reduceLeft ((t1, t2) => join(t1, t2))
-
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1

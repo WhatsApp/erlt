@@ -74,11 +74,11 @@
  74                                            |         | 
  75 -spec test18_neg (boolean(), atom())       |         | 
  76         -> number().                       |         | 
- 77 test18_neg(X, Y) -> X orelse Y.            | ERROR   | case .... Expected: number(), Got: atom()
+ 77 test18_neg(X, Y) -> X orelse Y.            | ERROR   | case .... Expected: number(), Got: 'true'
  78                                            |         | 
  79 -spec test19_neg (boolean(), number())     |         | 
  80         -> {number()}.                     |         | 
- 81 test19_neg(X, Y) -> X andalso Y.           | ERROR   | case .... Expected: {number()}, Got: number() | 'false'
+ 81 test19_neg(X, Y) -> X andalso Y.           | ERROR   | case .... Expected: {number()}, Got: number()
  82                                            |         | 
  83 -spec test20_neg(number()) -> [atom()].    |         | 
  84 test20_neg(X) -> [- X].                    | ERROR   | case .... Expected: [atom()], Got: [number()]
@@ -115,7 +115,7 @@
 115 test28_neg(B) -> boolean_id(B).            | ERROR   | case .... Expected: 'false' | 'true', Got: atom()
 116                                            |         | 
 117 -spec test29_neg() -> [].                  |         | 
-118 test29_neg() -> [true, false].             | ERROR   | case .... Expected: [], Got: ['true' | 'false']
+118 test29_neg() -> [true, false].             | ERROR   | case .... Expected: [], Got: ['true']
 119                                            |         | 
 120 -spec test30_neg() -> atom.                |         | 
 121 test30_neg() -> 1.                         | ERROR   | case .... Expected: 'atom', Got: number()
@@ -320,12 +320,12 @@
 320                                            |         | 
 321 -spec test71_neg() ->                      |         | 
 322     [atom() | number()].                   |         | 
-323 test71_neg() ->                            | ERROR   | case .... Expected: [atom() | number()], Got: term()
+323 test71_neg() ->                            | ERROR   | case .... Expected: [atom()] | [number()], Got: 'atom'
 324     catch test69_pos(atom).                |         | 
 325                                            |         | 
 326 -spec test72_neg() ->                      |         | 
 327     any().                                 |         | 
-328 test72_neg() ->                            | OK      | 
+328 test72_neg() ->                            | ERROR   | case .... Expected: [atom()] | [number()], Got: 'atom'
 329     catch test69_pos(atom).                |         | 
 330                                            |         | 
 331 -spec test73_pos() ->                      |         | 

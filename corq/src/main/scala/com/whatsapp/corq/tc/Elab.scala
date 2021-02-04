@@ -17,12 +17,11 @@
 package com.whatsapp.corq.tc
 
 import com.whatsapp.corq.ast.Types._
-import com.whatsapp.corq.ast.{Id, RemoteId, Vars, WIPDiagnostics}
+import com.whatsapp.corq.ast.{RemoteId, Vars, WIPDiagnostics}
 import com.whatsapp.corq.tc.TcDiagnostics._
 import erlang.CErl._
 import erlang.Data._
 import com.whatsapp.corq.ast.WIPDiagnostics.SkippedConstructDiagnostics
-import com.whatsapp.corq.tc.BuiltIn
 
 final class Elab(val module: String, check: Check) {
 
@@ -34,12 +33,12 @@ final class Elab(val module: String, check: Check) {
         Util
           .getCallType(remoteId)
           .getOrElse(throw UnboundRemoteId(parent.anno.line, remoteId))
-      case EList(Nil, _) =>
+      case EList(Nil, None) =>
         NilType
-      case EList(hd :: tl, _) =>
+      case EList(hd :: tl, None) =>
         val hdType = elabData(parent, hd, env)
         val tlType = elabData(parent, EList(tl, None), env)
-        consType(hdType, tlType)
+        consType(parent, hdType, tlType)
       case _: EBitStr =>
         BinaryType
       case _: EDouble =>
@@ -65,8 +64,12 @@ final class Elab(val module: String, check: Check) {
       case _ => sys.error(s"unexpected $data")
     }
 
-  def elabTryHandler(evars: List[CVar], body: CErl, env: Env): (Type, Env) = {
-    val handlerTypes = evars zip (evars.size match {
+  private def elabTryHandler(
+      evars: List[CVar],
+      body: CErl,
+      env: Env
+  ): (Type, Env) = {
+    val handlerTypes = evars.map(_.name) zip (evars.size match {
       case 3 =>
         /* Class:Msg:stack */
         BuiltIn.catchMatchWithStackTypes
@@ -74,25 +77,24 @@ final class Elab(val module: String, check: Check) {
         ElabPat.elabPats(evars, List(BuiltIn.catchMatchNoStackType), env)._1
     })
     val env1 = env ++ handlerTypes
-    val handlerTy = elabExpr(body, env1)
-    (handlerTy, env1)
+    val (handlerTy, env2) = elabExpr(body, env1)
+    (handlerTy, env2)
   }
 
-  def elabExpr(expr: CErl, env: Env): Type =
+  def elabExpr(expr: CErl, env: Env): (Type, Env) =
     expr match {
-      case CApply(_, op, args) =>
-        val CVar(_, VarNameAtomInt(id)) = op
-        Util.getApplyType(module, id) match {
-          case Some(FunType(argTys, fResTy)) =>
-            check.checkExprs(args, argTys, env)
-            fResTy
-          case None =>
-            throw UnboundId(expr.line, id)
+      case CApply(_, cvar @ CVar(Anno(line), varName), args) =>
+        val FunType(funArgTys, funResTy) = varName match {
+          case VarNameAtomInt(id) =>
+            Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
+          case _ => env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
         }
+        val env1 = check.checkExprs(args, funArgTys, env)
+        (funResTy, env1)
       case CBinary(_, _) =>
-        BinaryType
+        (BinaryType, env)
       case CBitstr(_, _, _, _, _, _) =>
-        BinaryType
+        (BinaryType, env)
       case CCall(_, moduleExpr, funExpr, args) =>
         // can allow union types here in the future, but must be atom literal types now
         // which is kind of useless
@@ -106,9 +108,10 @@ final class Elab(val module: String, check: Check) {
                 List(LitAtom(eMod), LitAtom(eFun), CLiteral(_, ELong(eArity)))
               ) =>
             val id2 = RemoteId(eMod, eFun, eArity.toInt)
-            Util
+            val ty = Util
               .getCallType(id2)
               .getOrElse(throw UnboundRemoteId(funExpr.anno.line, id2))
+            (ty, env)
           case _ =>
             val FunType(argTys, funReturnTy) = Util
               .getCallType(id)
@@ -117,19 +120,28 @@ final class Elab(val module: String, check: Check) {
               case (argExpr, expectedArgTy) =>
                 check.checkExpr(argExpr, expectedArgTy, env)
             }
-            funReturnTy
+            (funReturnTy, env)
         }
-      case ccase: CCase =>
-        Subtype.joinAll(elabCaseBranches(ccase, env))
-      case CCatch(_anno, _body) =>
-        AnyType
+      case CCase(_, sel, clauses) =>
+        val (argTys, env2) = elabExpr(sel, env) match {
+          case (CValuesType(tys), e) => (tys, e)
+          case (ty, e)               => (List(ty), e)
+        }
+        if (clauses.isEmpty) (NoneType, env)
+        else {
+          val (ts, envs) = clauses.map(elabClause(_, argTys, env2)).unzip
+          (ts reduceLeft Subtype.join, Approx.combineEnvs(env2, Subtype.join, envs))
+        }
+      case CCatch(_, body) =>
+        check.checkExpr(body, AnyType, env)
+        (AnyType, env)
       case CCons(_, hd, tl) =>
-        val hdType = elabExpr(hd, env)
-        val tlType = elabExpr(tl, env)
-        consType(hdType, tlType)
+        val (hdType, env1) = elabExpr(hd, env)
+        val (tlType, env2) = elabExpr(tl, env1)
+        (consType(expr, hdType, tlType), env2)
       case CLet(_, vars, arg, body) =>
-        val exprTy = elabExpr(arg, env)
-        exprTy match {
+        val (argTy, env1) = elabExpr(arg, env)
+        argTy match {
           /**
             * type the Let as NoneType if the arg is NoneType.
             * This is so we don't end up with nonsense like:
@@ -146,19 +158,21 @@ final class Elab(val module: String, check: Check) {
             check.checkExpr(
               body,
               AnyType,
-              env ++ (vars zip (vars map (_ => NoneType)))
+              env ++ (vars.map(_.name) zip vars.map(_ => NoneType)).toMap
             )
-            NoneType
+            (NoneType, env1)
           case _ =>
-            val env1 = vars match {
+            val env2 = vars match {
               case (cvar @ CVar(_, _)) :: Nil =>
-                env + (cvar -> exprTy)
+                env1 + (cvar.name -> argTy)
               case _ =>
-                val CValuesType(tys) = exprTy
-                assert(vars.size == tys.size)
-                env ++ (vars zip tys)
+                // assertion that the arity of the CValues matches that
+                // of the pattern, which I suspect is an invariant of Core Erlang
+                val Some(CValuesType(tys)) =
+                  Approx.asCValuesType(argTy, vars.size)
+                env ++ (vars.map(_.name) zip tys)
             }
-            elabExpr(body, env1)
+            elabExpr(body, env2)
         }
       case CLetRec(_, defs, body) =>
         for ((cvar, fun) <- defs) {
@@ -171,25 +185,42 @@ final class Elab(val module: String, check: Check) {
         }
         elabExpr(body, env)
       case lit: CLiteral =>
-        elabData(lit, lit.value, env)
+        (elabData(lit, lit.value, env), env)
       case primop: CPrimOp =>
-        BuiltIn.primOpToReturnType(primop)
+        (BuiltIn.primOpToReturnType(primop), env)
       case CSeq(_, arg, body) =>
-        check.checkExpr(arg, AnyType, env)
-        elabExpr(body, env)
-      case ctry: CTry =>
-        val (bodyTy, handlerTy) = elabTryBranches(ctry, env)
-        Subtype.join(bodyTy, handlerTy)
+        val env1 = check.checkExpr(arg, AnyType, env)
+        elabExpr(body, env1)
+      case CTry(_, arg, bodyVars, body, evars, handler) =>
+        val (argTy, env1) = elabExpr(arg, env)
+        val (_, env2) = ElabPat.elabPats(bodyVars, List(argTy), env1)
+        val (bodyTy, bodyEnv) = elabExpr(body, env2)
+        val (handlerTy, handlerEnv) = elabTryHandler(evars, handler, env1)
+        val ty = Subtype.join(bodyTy, handlerTy)
+        // TODO: consider including env for `after` call as well. It's in a fun defined in a letrec
+        (ty, Approx.combineEnvs(env, Subtype.join, bodyEnv :: handlerEnv :: Nil))
       case CTuple(_, elems) =>
+        var envAcc = env
         val elemTypes = elems.map { elem =>
-          elabExpr(elem, env)
+          val (eType, env1) = elabExpr(elem, envAcc)
+          envAcc = env1
+          eType
         }
-        TupleType(elemTypes)
-      case CValues(_, exprs) =>
-        val tys = exprs.map(elabExpr(_, env))
-        CValuesType(tys)
+        (TupleType(elemTypes), envAcc)
+      case CValues(_, elems) =>
+        var envAcc = env
+        val elemTypes = elems.map { elem =>
+          val (eType, env1) = elabExpr(elem, envAcc)
+          envAcc = env1
+          eType
+        }
+        (CValuesType(elemTypes), envAcc)
+      case CVar(Anno(line), VarNameAtomInt(id)) =>
+        val ty = Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
+        (ty, env)
       case cvar: CVar =>
-        env(cvar)
+        val ty = env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+        (ty, env)
       case _: CFun =>
         throw SkippedConstructDiagnostics(
           expr.anno.line,
@@ -202,43 +233,26 @@ final class Elab(val module: String, check: Check) {
       case _ => sys.error(s"Unexpected $expr")
     }
 
-  def elabCaseBranches(ccase: CCase, env: Env): List[Type] = {
-    val CCase(_, sel, clauses) = ccase
-    val argTys = elabExpr(sel, env) match {
-      case CValuesType(tys) => tys
-      case ty               => List(ty)
-    }
-    val clauseTypes = clauses.map(elabClause(_, argTys, env))
-    clauseTypes
-  }
-
-  def elabClause(clause: CClause, argTys: List[Type], env: Env): Type = {
+  def elabClause(clause: CClause, argTys: List[Type], env: Env): (Type, Env) = {
     val env1 = Util.initClauseEnv(env, Vars.clauseVars(clause))
     val env2 = ElabGuard(this).elabGuard(clause.guard, env1)
     val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
     elabExpr(clause.body, env3)
   }
 
-  def elabTryBranches(c: CTry, env: Env): (Type, Type) = {
-    val argTy = elabExpr(c.arg, env)
-    val bodyEnv = ElabPat.elabPats(c.bodyVars, List(argTy), env)._2
-    val bodyTy = elabExpr(c.body, bodyEnv)
-    val handlerTy = elabTryHandler(c.evars, c.handler, env)._1
-    (bodyTy, handlerTy)
-  }
-
-  private def getStaticAtom(expr: CErl, env: Env): String =
-    elabExpr(expr, env) match {
+  private def getStaticAtom(expr: CErl, env: Env): String = {
+    elabExpr(expr, env)._1 match {
       case AtomLitType(module) => module
       case moduleExprTy =>
         throw TypeMismatch(expr, AtomLitType("<<known atom>>"), moduleExprTy)
     }
+  }
 
-  private def consType(hdType: Type, tlType: Type): Type = {
+  private def consType(expr: CErl, hdType: Type, tlType: Type): Type = {
     val tailElemType = tlType match {
       case NilType      => NoneType
       case ListType(ty) => ty
-      case _            => sys.error(s"unexpected $tlType")
+      case ty           => throw TypeMismatch(expr, ListType(hdType), ty)
     }
     ListType(Subtype.join(hdType, tailElemType))
   }

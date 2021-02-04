@@ -83,7 +83,7 @@ object ElabPat {
     pat match {
       case CAlias(anno, v, pat) =>
         val (patTy, env1) = elabPat(pat, t, env)
-        (t, env1 + (v -> patTy))
+        (t, env1 + (v.name -> patTy))
 
       case CBinary(anno, elems) =>
         val patType = Subtype.meet(BinaryType, t)
@@ -130,11 +130,11 @@ object ElabPat {
             (TupleType(patTypes), envAcc)
         }
       case cv: CVar =>
-        val patType = env.get(cv) match {
+        val patType = env.get(cv.name) match {
           case Some(vt) => Subtype.meet(vt, t)
           case None     => t
         }
-        (patType, env + (cv -> patType))
+        (patType, env + (cv.name -> patType))
       // $COVERAGE-OFF$
       case x => sys.error(s"unexpected $x")
       // $COVERAGE-ON$
