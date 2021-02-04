@@ -8,32 +8,32 @@
   8                                            |         | 
   9 -spec test02_pos(binary())                 |         | 
  10     -> {number(), binary()}.               |         | 
- 11 test02_pos(<<X, Y/binary>>) -> {X, Y}.     | OK      | 
+ 11 test02_pos(<<X, Y/binary>>) -> {X, Y}.     | ERROR   | Unbound var: 'X'
  12                                            |         | 
  13 -spec test03_pos(binary())                 |         | 
  14     -> binary().                           |         | 
- 15 test03_pos(<<N, _:N, Rest/binary>>) ->     | OK      | 
+ 15 test03_pos(<<N, _:N, Rest/binary>>) ->     | ERROR   | Unbound var: _3
  16     Rest.                                  |         | 
  17                                            |         | 
  18 -spec test04_neg() -> list(any()).         |         | 
- 19 test04_neg() -> <<>>.                      | ERROR   | <<..>>. Expected: [term()], Got: binary()
+ 19 test04_neg() -> <<>>.                      | ERROR   | case .... Expected: [term()], Got: binary()
  20                                            |         | 
  21 -spec test05_pos(binary())                 |         | 
  22         -> {binary(), binary()}.           |         | 
- 23 test05_pos(<<H:42/binary, Rest/binary>>) -…… OK      | 
+ 23 test05_pos(<<H:42/binary, Rest/binary>>) -…… ERROR   | Unbound var: 'H'
  24     {H, Rest}.                             |         | 
  25                                            |         | 
  26 -spec test05_neg(atom()) -> binary().      |         | 
- 27 test05_neg(A) -> <<A/signed>>.             | ERROR   | A. Expected: number(), Got: atom()
+ 27 test05_neg(A) -> <<A/signed>>.             | OK      | 
  28                                            |         | 
  29 -spec test06_neg(atom(), integer()) -> bin……         | 
- 30 test06_neg(A, S) -> <<A:S>>.               | ERROR   | A. Expected: number(), Got: atom()
+ 30 test06_neg(A, S) -> <<A:S>>.               | OK      | 
  31                                            |         | 
  32 -spec test07_neg(atom()) -> binary().      |         | 
- 33 test07_neg(A) -> [A].                      | ERROR   | [A | []]. Expected: binary(), Got: [atom()]
+ 33 test07_neg(A) -> [A].                      | ERROR   | case .... Expected: binary(), Got: [atom()]
  34                                            |         | 
  35 -spec test08_neg(binary()) -> float().     |         | 
- 36 test08_neg(<<F/float, R/binary>>) -> F.    | OK      | 
+ 36 test08_neg(<<F/float, R/binary>>) -> F.    | ERROR   | Unbound var: 'F'
  37                                            |         | 
  38 -spec test09_neg(integer(), integer()) -> ……         | 
  39 test09_neg(I1, I2) ->                      | OK      | 
