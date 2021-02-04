@@ -24,10 +24,10 @@
  24 test06(X, Y) when X andalso Y -> Y.        | OK      | 
  25                                            |         | 
  26 -spec test07_neg(atom(), atom()) -> false. |         | 
- 27 test07_neg(X, Y) when X andalso Y -> Y.    | ERROR   | Y. Expected: 'false', Got: 'true'
+ 27 test07_neg(X, Y) when X andalso Y -> Y.    | ERROR   | case .... Expected: 'false', Got: 'true'
  28                                            |         | 
  29 -spec test08_neg(any()) -> number().       |         | 
- 30 test08_neg(X) when not is_number(X) -> X.  | ERROR   | X. Expected: number(), Got: term()
+ 30 test08_neg(X) when not is_number(X) -> X.  | ERROR   | case .... Expected: number(), Got: term()
  31                                            |         | 
  32 % We don't try to process                  |         | 
  33 % logic connectives in a smart way         |         | 
@@ -36,8 +36,8 @@
  36 % rewrite it via true syntax of guards     |         | 
  37 -spec test09_neg (any())                   |         | 
  38               -> number() | atom().        |         | 
- 39 test09_neg(X)                              | ERROR   | 
- 40   when is_number(X) or is_atom(X) -> X.    |         | X. Expected: number() | atom(), Got: term()
+ 39 test09_neg(X)                              | OK      | 
+ 40   when is_number(X) or is_atom(X) -> X.    |         | 
  41                                            |         | 
  42 -spec test10 (any())                       |         | 
  43       -> number() | atom().                |         | 
@@ -46,10 +46,10 @@
  46                                            |         | 
  47 -spec test11_neg (any())                   |         | 
  48       -> number() | atom().                |         | 
- 49 test11_neg(X)                              | ERROR   | 
+ 49 test11_neg(X)                              | ERROR   | case .... Expected: number() | atom(), Got: number() | atom() | pid()
  50   when is_number(X);                       |         | 
  51        is_atom(X);                         |         | 
- 52        is_pid(X)-> X.                      |         | X. Expected: number() | atom(), Got: number() | atom() | pid()
+ 52        is_pid(X)-> X.                      |         | 
  53                                            |         | 
  54 -spec test12(any(), any()) -> number().    |         | 
  55 test12(X, _) when X + 1 > 0 -> X;          | OK      | 
@@ -63,9 +63,9 @@
  63                                            |         | 
  64 -spec test14_neg (any(), any())            |         | 
  65         -> {number(), number()}.           |         | 
- 66 test14_neg(X, Y)                           | ERROR   | 
+ 66 test14_neg(X, Y)                           | ERROR   | case .... Expected: {number(), number()}, Got: {number(), term()}
  67     when X + 1 > 0; Y / 3 > 1 ->           |         | 
- 68     {X, Y}.                                |         | {X, Y}. Expected: {number(), number()}, Got: {term(), term()}
+ 68     {X, Y}.                                |         | 
  69                                            |         | 
  70 -spec test15 (any(), any())                |         | 
  71          -> {number(), number()}           |         | 

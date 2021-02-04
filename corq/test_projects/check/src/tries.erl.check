@@ -20,25 +20,25 @@
  20     end.                                   |         | 
  21                                            |         | 
  22 -spec test02_neg() -> atom().              |         | 
- 23 test02_neg() ->                            | ERROR   | 
+ 23 test02_neg() ->                            | ERROR   | case .... Expected: atom(), Got: term()
  24     try foo() of                           |         | 
- 25         {_, Y} -> Y                        |         | Y. Expected: atom(), Got: term()
+ 25         {_, Y} -> Y                        |         | 
  26     catch                                  |         | 
  27         {error, _} -> error                |         | 
  28     end.                                   |         | 
  29                                            |         | 
  30 -spec test03_neg() -> atom().              |         | 
- 31 test03_neg() ->                            | ERROR   | 
+ 31 test03_neg() ->                            | ERROR   | case .... Expected: atom(), Got: [] | 'error'
  32     Res = try foo() of                     |         | 
  33         {_, _} -> []                       |         | 
  34     catch                                  |         | 
  35         {error, _} -> error                |         | 
  36     end,                                   |         | 
- 37     Res.                                   |         | Res. Expected: atom(), Got: [] | 'error'
+ 37     Res.                                   |         | 
  38                                            |         | 
  39 -spec test04_pos(any()) ->                 |         | 
  40     {ok | error, atom()}.                  |         | 
- 41 test04_pos(X) ->                           | OK      | 
+ 41 test04_pos(X) ->                           | ERROR   | case .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
  42     Res = try foo() of                     |         | 
  43               {_, _} -> ok                 |         | 
  44           catch                            |         | 
@@ -52,7 +52,7 @@
  52                                            |         | 
  53 -spec test05_pos(any()) ->                 |         | 
  54     {ok | error, atom()}.                  |         | 
- 55 test05_pos(X) ->                           | OK      | 
+ 55 test05_pos(X) ->                           | ERROR   | case .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
  56     A =                                    |         | 
  57         try ok()                           |         | 
  58         catch                              |         | 
@@ -65,22 +65,22 @@
  65     {A, X}.                                |         | 
  66                                            |         | 
  67 -spec test06_neg() -> ok.                  |         | 
- 68 test06_neg() ->                            | ERROR   | 
+ 68 test06_neg() ->                            | ERROR   | case .... Expected: 'ok', Got: 'ok' | 'error'
  69     try ok()                               |         | 
- 70     catch _ -> error                       |         | 'error'. Expected: 'ok', Got: 'error'
+ 70     catch _ -> error                       |         | 
  71     end.                                   |         | 
  72                                            |         | 
  73 -spec test07_neg() -> error.               |         | 
- 74 test07_neg() ->                            | ERROR   | 
- 75     try ok()                               |         | ok(). Expected: 'error', Got: 'ok'
+ 74 test07_neg() ->                            | ERROR   | case .... Expected: 'error', Got: 'ok' | 'error'
+ 75     try ok()                               |         | 
  76     catch _ -> error                       |         | 
  77     end.                                   |         | 
  78                                            |         | 
  79 -spec test08_neg() -> ok.                  |         | 
- 80 test08_neg() ->                            | ERROR   | 
+ 80 test08_neg() ->                            | ERROR   | case .... Expected: atom(), Got: number()
  81     try ok()                               |         | 
  82     after                                  |         | 
- 83         only_atom(1)                       |         | number_expr. Expected: atom(), Got: number()
+ 83         only_atom(1)                       |         | 
  84     end.                                   |         | 
  85                                            |         | 
  86 -spec test09_pos() -> ok.                  |         | 
@@ -101,7 +101,7 @@
 101                                            |         | 
 102 -spec test11_pos(any(), boolean())         |         | 
 103     -> atom().                             |         | 
-104 test11_pos(Y, Cond) ->                     | OK      | 
+104 test11_pos(Y, Cond) ->                     | ERROR   | case .... Expected: atom(), Got: term()
 105     Res =                                  |         | 
 106         try ok()                           |         | 
 107         after                              |         | 
@@ -114,7 +114,7 @@
 114                                            |         | 
 115 -spec test12_neg(any(), boolean())         |         | 
 116     -> atom().                             |         | 
-117 test12_neg(Y, Cond) ->                     | ERROR   | 
+117 test12_neg(Y, Cond) ->                     | ERROR   | case .... Expected: atom(), Got: term()
 118     Res =                                  |         | 
 119         try ok()                           |         | 
 120         after                              |         | 
@@ -122,5 +122,5 @@
 122         end,                               |         | 
 123     if                                     |         | 
 124         Cond -> Res;                       |         | 
-125         true -> Y                          |         | Y. Expected: atom(), Got: number()
+125         true -> Y                          |         | 
 126     end.                                   |         | 

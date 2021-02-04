@@ -27,7 +27,7 @@
  27     {an | na,                              |         | 
  28      atom() | number(),                    |         | 
  29      atom() | number()}.                   |         | 
- 30 test02() ->                                | OK      | 
+ 30 test02() ->                                | ERROR   | case .... Expected: {'an' | 'na', atom() | number(), atom() | number()}, Got: ……
  31     {X, Y} = {foo(), bar()},               |         | 
  32     Marker = if                            |         | 
  33                  is_atom(X),               |         | 
