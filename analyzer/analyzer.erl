@@ -43,7 +43,21 @@
     nonempty_strings/1,
     improper_lists/1,
     get_core_forms/1,
-    io_xxxs/1
+    io_xxxs/1,
+    map_field_assocs/1,
+    map_field_exacts/1,
+    map_field_exact_atoms/1,
+    map_field_exact_non_atoms/1,
+    map_exact_non_atom_singles/1,
+    mixed_maps/1,
+    map_exact_non_atom_multis/1,
+    any_maps/1,
+    all_maps/1,
+    map_assocs/1,
+    shapes/1,
+    dicts/1,
+    empty_maps/1,
+    strange_maps/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -584,6 +598,166 @@ io_xxxs(BeamFile) ->
 io_xxx({type, Line, iolist, _}) -> {Line};
 io_xxx({type, Line, iodata, _}) -> {Line};
 io_xxx(_) -> false.
+
+%% map fields
+
+-spec map_field_assocs(BeamFile :: file:filename()) -> [{integer()}].
+map_field_assocs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_assoc/1).
+
+map_field_assoc({type, Line, map_field_assoc, _}) -> {Line};
+map_field_assoc(_) -> false.
+
+-spec map_field_exacts(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exacts(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact/1).
+
+map_field_exact({type, Line, map_field_exact, _}) -> {Line};
+map_field_exact(_) -> false.
+
+-spec map_field_exact_atoms(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exact_atoms(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact_atom/1).
+
+map_field_exact_atom({type, Line, map_field_exact, [{atom, _, _}, _]}) -> {Line};
+map_field_exact_atom(_) -> false.
+
+-spec map_field_exact_non_atoms(BeamFile :: file:filename()) -> [{integer()}].
+map_field_exact_non_atoms(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_field_exact_non_atom/1).
+
+map_field_exact_non_atom({type, _, map_field_exact, [{atom, _, _}, _]}) -> false;
+map_field_exact_non_atom({type, Line, map_field_exact, _}) -> {Line};
+map_field_exact_non_atom(_) -> false.
+
+-spec map_exact_non_atom_singles(BeamFile :: file:filename()) -> [{integer()}].
+map_exact_non_atom_singles(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_exact_non_atom_single/1).
+
+map_exact_non_atom_single({type, _, map, [{type, _, map_field_exact, [{atom, _, _}, _]}]}) -> false;
+map_exact_non_atom_single({type, _, map, [{type, Line, map_field_exact, _}]}) -> {Line};
+map_exact_non_atom_single(_) -> false.
+
+-spec map_assocs(BeamFile :: file:filename()) -> [{integer()}].
+map_assocs(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_assoc/1).
+
+map_assoc({type, _, map, [{type, Line, map_field_assoc, _}]}) -> {Line};
+map_assoc(_) -> false.
+
+-spec map_exact_non_atom_multis(BeamFile :: file:filename()) -> [{integer()}].
+map_exact_non_atom_multis(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map_exact_non_atom_multi/1).
+
+map_exact_non_atom_multi({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Exacts = lists:filter(
+        fun
+        ({type, _, map_field_exact, [{atom, _, _}, _]}) -> false;
+        ({type, _, map_field_exact, _}) -> true;
+        (_) -> false end,
+        Assocs
+    ),
+    ((erlang:length(Exacts) > 0) and (erlang:length(Assocs) > 1)) andalso {Line};
+map_exact_non_atom_multi(_) -> false.
+
+-spec mixed_maps(BeamFile :: file:filename()) -> [{integer()}].
+mixed_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun mixed_map/1).
+
+mixed_map({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Exacts = lists:filter(fun ({type, _, map_field_exact, _}) -> true; (_) -> false end, Assocs),
+    Optionals = lists:filter(fun ({type, _, map_field_assoc, _}) -> true; (_) -> false end, Assocs),
+    ((erlang:length(Exacts) > 0) and (erlang:length(Optionals) > 0)) andalso {Line};
+mixed_map(_) -> false.
+
+-spec shapes(BeamFile :: file:filename()) -> [{integer()}].
+shapes(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun shape/1).
+
+shape(F) ->
+    case {shape1(F), dict1(F)} of
+        {{Line}, false} -> {Line};
+        _ -> false
+    end.
+
+shape1({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Parts = lists:filter(
+        fun
+            ({type, _, map_field_exact, [{atom, _, _}, _]}) -> true;
+            ({type, _, map_field_assoc, [{atom, _, _}, _]}) -> true;
+            (_) -> false
+        end,
+        Assocs
+    ),
+    (erlang:length(Parts) > 0) andalso {Line};
+shape1(_) -> false.
+
+-spec dicts(BeamFile :: file:filename()) -> [{integer()}].
+dicts(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun dict/1).
+
+dict(F) ->
+    case {shape1(F), dict1(F)} of
+        {false, {Line}} -> {Line};
+        _ -> false
+    end.
+
+dict1({type, Line, map, Assocs}) when is_list(Assocs) ->
+    Parts = lists:filter(
+        fun
+            ({type, _, map_field_exact, [{atom, _, _}, _]}) -> false;
+            ({type, _, map_field_assoc, [{atom, _, _}, _]}) -> false;
+            (_) -> true
+        end,
+        Assocs
+    ),
+    (erlang:length(Parts) > 0) andalso {Line};
+dict1(_) -> false.
+
+-spec any_maps(BeamFile :: file:filename()) -> [{integer()}].
+any_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun any_map/1).
+
+any_map({type, Line, map, any}) -> {Line};
+any_map(_) -> false.
+
+-spec empty_maps(BeamFile :: file:filename()) -> [{integer()}].
+empty_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun empty_map/1).
+
+empty_map({type, Line, map, []}) -> {Line};
+empty_map(_) -> false.
+
+-spec all_maps(BeamFile :: file:filename()) -> [{integer()}].
+all_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun map/1).
+
+map({type, Line, map, _}) -> {Line};
+map(_) -> false.
+
+-spec strange_maps(BeamFile :: file:filename()) -> [{integer()}].
+strange_maps(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun strange_map/1).
+
+strange_map(F) ->
+    case {shape1(F), dict1(F)} of
+        {{Line}, {Line}} -> {Line};
+        _ -> false
+    end.
 
 %% Utilities
 

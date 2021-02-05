@@ -409,6 +409,118 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     data.map { case ETuple(List(ELong(line))) => line.toInt }
   }
 
+  def getMapFieldAssocs(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_field_assocs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMapFieldExacts(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_field_exacts", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMapFieldExactAtoms(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_field_exact_atoms", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMapFieldExactNonAtoms(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_exact_non_atom_multis", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMapExactNonAtomMultis(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_exact_non_atom_multis", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMapExactNonAtomSingles(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_exact_non_atom_singles", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getMixedMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "mixed_maps", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getAnyMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "any_maps", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getAllMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "all_maps", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getEmptyMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "empty_maps", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getAssocMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "map_assocs", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getShapes(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "shapes", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getDicts(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "dicts", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
+  def getStrangeMaps(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "strange_maps", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
   def getNonEmptyStrings(beamFilePath: String): List[Int] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "nonempty_strings", new OtpErlangList(new OtpErlangString(beamFilePath)))
