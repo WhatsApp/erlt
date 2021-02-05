@@ -94,19 +94,16 @@ object Show {
         s"""${show(m)}:${show(f)}(${showExprs(args)})"""
       case CCase(_, _arg, _clauses)                          => "case ..."
       case CCatch(_, _body)                                  => "catch ..."
-      case c @ CClause(_, pats, _guard, _body)               => showExprs(pats)
       case CFun(_, vars, _body)                              => s"""fun (${showExprs(vars)})"""
       case CLet(_, _vars, _arg, _body)                       => "let ..."
       case CLiteral(_, value)                                => show(value)
-      case CTry(_, _arg, _bodyVars, _body, _evars, _handler) => "CTry"
       case CVar(_, name) =>
         name match {
           case VarNameInt(i)                   => s"var$i"
           case VarNameAtom(atom)               => s"$atom"
           case VarNameAtomInt(Id(name, arity)) => s"$name/$arity"
         }
-      case CAlias(anno, cvar, pat) => show(cvar)
-      case CCons(anno, h, t) =>
+      case CCons(_, h, t) =>
         s"[${show(h)} | ${show(t)}]"
       // not used yet
       case CTuple(_, elems) =>
@@ -120,7 +117,6 @@ object Show {
       // case CPrimOp(anno, name, args) => "CPrimOp"
       // case CReceive(anno, clauses, timeout, action) => "CReceive"
       // case CSeq(anno, arg, body) => "CSeq"
-      case CValues(anno, es) =>
-        es map show mkString ("ValueList: <", ", ", ">")
+      case _ => e.toString
     }
 }

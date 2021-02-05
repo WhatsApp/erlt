@@ -20,14 +20,12 @@ import com.whatsapp.corq.ast.Forms.FunSpec
 import com.whatsapp.corq.ast.Types._
 import com.whatsapp.corq.ast.{Id, Vars}
 import com.whatsapp.corq.tc.TcDiagnostics._
-import erlang.CErl
 import erlang.CErl._
-import erlang.Data._
 
 final case class Check(module: String) {
   val elab = new Elab(module, this)
 
-  def checkSpeccedFun(id: Id, f: CFun, spec: FunSpec, env: Env): Unit = {
+  def checkSpeccedFun(f: CFun, spec: FunSpec, env: Env): Unit = {
     val constrainedFunType = spec.types.head
     val FunType(argTys, resTy) = constrainedFunType.ty
     val env1 = env ++ (f.vars.map(_.name) zip argTys).toMap
@@ -67,7 +65,7 @@ final case class Check(module: String) {
     }
     envAcc
   }
-  //  @tailrec
+
   def checkExpr(expr: CErl, resTy: Type, env: Env): Env = {
     expr match {
       case CCase(_, sel, clauses) =>
@@ -80,14 +78,12 @@ final case class Check(module: String) {
           val envs = clauses.map(checkClause(_, argTys, resTy, env2))
           Approx.combineEnvs(env2, Subtype.join, envs)
         }
-
       case CCons(_, hd, tl) =>
         val (headType, env1) = elab.elabExpr(hd, env)
         val listType1 = ListType(headType)
         if (!Subtype.subType(listType1, resTy))
           throw TypeMismatch(expr, expected = resTy, got = listType1)
         checkExpr(tl, resTy, env1)
-
       case CLetRec(_, defs, body) =>
         for ((cvar, fun) <- defs) {
           cvar match {
@@ -101,20 +97,6 @@ final case class Check(module: String) {
       case CSeq(_, arg, body) =>
         val env1 = checkExpr(arg, AnyType, env)
         checkExpr(body, resTy, env1)
-      case CFun(_, vars, body) => {
-        resTy match {
-          case FunType(expArgTys, expFunResTy) => {
-            if (expArgTys.lengthCompare(vars) != 0)
-              throw TypeMismatch(
-                expr,
-                resTy,
-                FunType(vars.map(_ => AnyType), AnyType)
-              )
-            checkFunBody(body, expFunResTy, env ++ (vars.map(_.name).zip(expArgTys).toMap))
-          }
-          case other => throw TypeMismatch(expr, resTy, other)
-        }
-      }
       case CTry(_, arg, bodyVars, body, evars, handler) =>
         val (argTy, env1) = elab.elabExpr(arg, env)
         val (_, env2) = ElabPat.elabPats(bodyVars, List(argTy), env1)
@@ -128,10 +110,6 @@ final case class Check(module: String) {
           throw TypeMismatch(expr, resTy, actualTy)
         }
         env1
-      // $COVERAGE-OFF$
-      case other =>
-        throw new IllegalStateException(s"internal error: unexpected $other")
-      // $COVERAGE-ON$
     }
   }
 
@@ -150,17 +128,4 @@ final case class Check(module: String) {
     })
     checkExpr(body, resTy, env ++ handlerTypes)
   }
-
-//  @tailrec
-//      case CCase(_, sel, clauses) =>
-//        val (selType, env1) = elab.elabExpr(sel, env)
-//        clauses.map(checkClause(_, List(selType), resTy, env1))
-//      case ctry @ CTry(_, arg, bodyVars, body, handlerVars, handler) =>
-//        val (bodyTy, handlerTy) = elab.elabTryBranches(ctry, env)
-//        if (!Subtype.subType(handlerTy, resTy))
-//          throw TypeMismatch(handler, resTy, handlerTy)
-//        if (!Subtype.subType(bodyTy, resTy))
-//          throw TypeMismatch(body, resTy, bodyTy)
-  // These are OK to do in elab mode
-
 }

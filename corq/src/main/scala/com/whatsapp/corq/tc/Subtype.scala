@@ -44,9 +44,6 @@ object Subtype {
     }
   }
 
-  def eqv(t1: Type, t2: Type): Boolean =
-    subType(t1, t2) && subType(t2, t1)
-
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1
@@ -62,9 +59,6 @@ object Subtype {
         case (TupleType(elems1), TupleType(elems2))
             if elems1.size == elems2.size =>
           TupleType(elems1.lazyZip(elems2).map(meet))
-        case (CValuesType(elems1), CValuesType(elems2))
-            if elems1.size == elems2.size =>
-          CValuesType(elems1.lazyZip(elems2).map(meet))
         case (ListType(et1), ListType(et2)) =>
           ListType(meet(et1, et2))
         case (FunType(args1, res1), FunType(args2, res2))

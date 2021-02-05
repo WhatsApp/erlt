@@ -58,34 +58,17 @@ object ElabPat {
         }
       case ELong(_) =>
         NumberType
-      case emap: EMap =>
-        throw new Error(s"not implemented $emap")
-      case EPid(node, id, serial, creation) =>
-        PidType
-      case EPort(node, id, creation) =>
-        PortType
-      case ERef(node, creation, ids) =>
-        ReferenceType
-      case ETuple(elems) =>
-        Approx.asTupleType(t, elems.size) match {
-          case None =>
-            NoneType
-          case Some(TupleType(elemTypes)) =>
-            val patTypes = elems.zip(elemTypes).map {
-              case (elem, elemT) =>
-                elabPatData(elem, elemT, env)
-            }
-            TupleType(patTypes)
-        }
+      // $COVERAGE-OFF$
       case _ => sys.error(s"unexpected $data")
+      // $COVERAGE-ON$
     }
   def elabPat(pat: CErl, t: Type, env: Env): (Type, Env) =
     pat match {
-      case CAlias(anno, v, pat) =>
+      case CAlias(_, v, pat) =>
         val (patTy, env1) = elabPat(pat, t, env)
         (t, env1 + (v.name -> patTy))
 
-      case CBinary(anno, elems) =>
+      case CBinary(_, elems) =>
         val patType = Subtype.meet(BinaryType, t)
         var envAcc = env
         for { elem <- elems } {

@@ -36,7 +36,7 @@ object Approx {
       case UnionType(tys) =>
         tys.flatMap(extractListElem)
       case NilType =>
-        List(AnyType)
+        List(NoneType)
       case ListType(elemType) =>
         List(elemType)
       case _ =>
@@ -79,10 +79,10 @@ object Approx {
     }
 
   def combineEnvs(
-               initialEnv: Env,
-               op: (Type, Type) => Type,
-               envs: Iterable[Env]
-             ): Env = {
+      initialEnv: Env,
+      op: (Type, Type) => Type,
+      envs: Iterable[Env]
+  ): Env = {
     val vars = initialEnv.keySet
     var acc = envs.head
     for {

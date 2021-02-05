@@ -87,7 +87,8 @@ final class Elab(val module: String, check: Check) {
         val FunType(funArgTys, funResTy) = varName match {
           case VarNameAtomInt(id) =>
             Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
-          case _ => env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+          case _ =>
+            env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
         }
         val env1 = check.checkExprs(args, funArgTys, env)
         (funResTy, env1)
@@ -130,7 +131,10 @@ final class Elab(val module: String, check: Check) {
         if (clauses.isEmpty) (NoneType, env)
         else {
           val (ts, envs) = clauses.map(elabClause(_, argTys, env2)).unzip
-          (ts reduceLeft Subtype.join, Approx.combineEnvs(env2, Subtype.join, envs))
+          (
+            ts reduceLeft Subtype.join,
+            Approx.combineEnvs(env2, Subtype.join, envs)
+          )
         }
       case CCatch(_, body) =>
         check.checkExpr(body, AnyType, env)
@@ -198,7 +202,10 @@ final class Elab(val module: String, check: Check) {
         val (handlerTy, handlerEnv) = elabTryHandler(evars, handler, env1)
         val ty = Subtype.join(bodyTy, handlerTy)
         // TODO: consider including env for `after` call as well. It's in a fun defined in a letrec
-        (ty, Approx.combineEnvs(env, Subtype.join, bodyEnv :: handlerEnv :: Nil))
+        (
+          ty,
+          Approx.combineEnvs(env, Subtype.join, bodyEnv :: handlerEnv :: Nil)
+        )
       case CTuple(_, elems) =>
         var envAcc = env
         val elemTypes = elems.map { elem =>
@@ -216,10 +223,12 @@ final class Elab(val module: String, check: Check) {
         }
         (CValuesType(elemTypes), envAcc)
       case CVar(Anno(line), VarNameAtomInt(id)) =>
-        val ty = Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
+        val ty =
+          Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
         (ty, env)
       case cvar: CVar =>
-        val ty = env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+        val ty =
+          env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
         (ty, env)
       case _: CFun =>
         throw SkippedConstructDiagnostics(
