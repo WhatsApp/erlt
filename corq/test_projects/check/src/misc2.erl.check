@@ -1,20 +1,33 @@
   1 -module(misc2).                            |         | 
   2 -compile([export_all]).                    |         | 
   3                                            |         | 
-  4 %%                                         |         | 
-  5 %%-spec improper_neg() -> any().           |         | 
-  6 %%improper_neg() -> [a | [b | c]].         |         | 
-  7 %%                                         |         | 
-  8 %%-spec test_env_pos(any()) -> {atom(), at……         | 
-  9 %%test_env_pos(X) ->                       |         | 
- 10 %%Y = if is_atom(X) -> X end,              |         | 
- 11 %%{X, Y}.                                  |         | 
- 12 %%                                         |         | 
- 13 %%-spec test_var_fun_pos(fun((atom()) -> p……         | 
- 14 %%test_var_fun_pos(F, X) -> F(X).          |         | 
- 15 %%                                         |         | 
- 16 %%-spec test_var_fun_neg(fun((atom()) -> p……         | 
- 17 %%test_var_fun_neg(F, X) -> F(X).          |         | 
- 18                                            |         | 
- 19 -spec catch_pos() -> any().                |         | 
- 20 catch_pos() -> catch lists:map(1, 1).      | ERROR   | case .... Expected: fun((term()) -> term()), Got: number()
+  4 -spec improper_neg() -> any().             |         | 
+  5 improper_neg() -> [a | [b | c]].           | OK      | 
+  6                                            |         | 
+  7 -spec test_env_pos(any()) -> {atom(), atom……         | 
+  8 test_env_pos(X) ->                         | OK      | 
+  9   Y = if is_atom(X) -> X end,              |         | 
+ 10   {X, Y}.                                  |         | 
+ 11                                            |         | 
+ 12 -spec test_var_fun_pos(fun((atom()) -> pid……         | 
+ 13 test_var_fun_pos(F, X) -> F(X).            | OK      | 
+ 14                                            |         | 
+ 15 -spec test_var_fun_neg(fun((atom()) -> pid……         | 
+ 16 test_var_fun_neg(F, X) -> F(X).            | ERROR   | case .... Expected: atom(), Got: reference()
+ 17                                            |         | 
+ 18 -spec atom_call_neg_01(atom()) -> any().   |         | 
+ 19 atom_call_neg_01(X) -> X:main(1).          | ERROR   | case .... Expected: '<<known atom>>', Got: atom()
+ 20                                            |         | 
+ 21 -spec atom_call_neg_02(atom()) -> any().   |         | 
+ 22 atom_call_neg_02(X) -> lists:X(1).         | ERROR   | case .... Expected: '<<known atom>>', Got: atom()
+ 23                                            |         | 
+ 24 -spec atom_call_neg_03(maps | sets, new) -……         | 
+ 25 atom_call_neg_03(M, F) -> M:F(0).          | ERROR   | case .... Expected: '<<known atom>>', Got: 'maps' | 'sets'
+ 26                                            |         | 
+ 27 -spec atom_call_neg_04(maps, to_list | uni……         | 
+ 28 atom_call_neg_04(M, F) -> M:F(#{}).        | ERROR   | case .... Expected: '<<known atom>>', Got: 'to_list' | 'union'
+ 29                                            |         | 
+ 30 -spec atom_call_pos_01(lists, member) -> b……         | 
+ 31 atom_call_pos_01(Mod, Fun) -> Mod:Fun(1, […… OK      | 
+ 32                                            |         | 
+ 33                                            |         | 

@@ -57,7 +57,10 @@ case class ElabGuard(elab: Elab) {
             op,
             throw new IllegalStateException(s"unrecognized guard op $op")
           )
-          val meetTy = Subtype.meet(predTy, env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar)))
+          val meetTy = Subtype.meet(
+            predTy,
+            env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+          )
           val env1: Env = env + (cvar.name -> meetTy)
           (env1, envs)
         case arg :: Nil =>
@@ -68,7 +71,8 @@ case class ElabGuard(elab: Elab) {
             case "or"  => Subtype.join _
             case "and" => Subtype.meet _
           }
-          val combined = Approx.combineEnvs(env, typeOp, List(envs(left), envs(right)))
+          val combined =
+            Approx.combineEnvs(env, typeOp, List(envs(left), envs(right)))
           (combined, envs)
         case List(arg1, arg2) =>
           (elabGuardBinOp(op, arg1, arg2, env), envs)
@@ -226,7 +230,6 @@ case class ElabGuard(elab: Elab) {
         val env1 = elabTestT(arg1, NumberType, env)
         val env2 = elabTestT(arg2, NumberType, env1)
         env2
-      // TODO: can this be combined with the next case?
       case "or" | "and" | "xor" =>
         val env1 = elabTestT(arg1, booleanType, env)
         val env2 = elabTestT(arg2, booleanType, env1)

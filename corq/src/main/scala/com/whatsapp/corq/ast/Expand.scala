@@ -49,7 +49,7 @@ object Expand {
           BinaryType =>
         t
       // $COVERAGE-OFF$
-      case LocalType(_, _) => throw new IllegalStateException()
+      case _ => sys.error(s"unexpected $t")
       // $COVERAGE-ON$
     }
 

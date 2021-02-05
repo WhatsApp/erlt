@@ -37,35 +37,20 @@ object DataConvert {
         EList(elems, lastTail)
       case otpLong: OtpErlangLong =>
         ELong(otpLong.bigIntegerValue())
+      case otpString: OtpErlangString =>
+        EString(otpString.stringValue())
       case otpMap: OtpErlangMap =>
         val otpKeys = otpMap.keys()
         val otpValues = otpKeys.map(k => otpMap.get(k))
         val eKeys = otpKeys.toList.map(fromJava)
         val eValues = otpValues.toList.map(fromJava)
         EMap(eKeys.zip(eValues))
-      case otpPid: OtpErlangPid =>
-        EPid(
-          node = otpPid.node(),
-          id = otpPid.id(),
-          serial = otpPid.serial(),
-          otpPid.creation()
-        )
-      case otpPort: OtpErlangPort =>
-        EPort(
-          otpPort.node(),
-          otpPort.id(),
-          otpPort.creation()
-        )
-      case otpRef: OtpErlangRef =>
-        ERef(otpRef.node(), otpRef.creation(), otpRef.ids().toList)
-      case otpString: OtpErlangString =>
-        EString(otpString.stringValue())
       case otpTuple: OtpErlangTuple =>
         val elems = otpTuple.elements().toList.map(fromJava)
         ETuple(elems)
-      case ef: OtpErlangExternalFun =>
-        EExternalFun(RemoteId(ef.module, ef.function, ef.arity))
-      case _: OtpErlangFun =>
-        sys.error("OtpErlangFun is not expected")
+      case _ =>
+        // $COVERAGE-OFF$
+        sys.error(s"unexpected data $jObject")
+      // $COVERAGE-ON$
     }
 }

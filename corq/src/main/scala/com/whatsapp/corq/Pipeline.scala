@@ -55,9 +55,11 @@ object Pipeline {
       })
       .headOption
       .getOrElse(
+        // $COVERAGE-OFF$
         throw new IllegalStateException(
           s"module $module.name is missing a -file attribute"
         )
+        // $COVERAGE-ON$
       )
 
   def checkForms(beamFile: String): (String, List[Form]) = {
@@ -77,7 +79,9 @@ object Pipeline {
             .getOrElse(NoSpecFuncDecl(id)(expr.line))
         }
       }
+      // $COVERAGE-OFF$
       case d => sys.error(s"unexpected def $d")
+      // $COVERAGE-ON$
     }
     (srcFile, forms)
   }
@@ -93,7 +97,7 @@ object Pipeline {
       // no need to check these every time
       if (!BuiltIn.moduleInfoSpecs.contains(id)) {
         // not handling constraints
-        Check(module).checkSpeccedFun(id, f, spec, Map.empty)
+        Check(module).checkSpeccedFun(f, spec, Map.empty)
       }
       TypedFuncDecl(id)(line)
     } catch {

@@ -37,6 +37,9 @@ object Globalize {
       case _: VarType | _: BuiltinType | _: AtomLitType | NilType |
           BinaryType =>
         t
+      // $COVERAGE-OFF$
+      case _ => sys.error(s"unexpected $t")
+      // $COVERAGE-ON$
     }
 
   def globalizeSpec(module: String, spec: FunSpec): FunSpec = {
