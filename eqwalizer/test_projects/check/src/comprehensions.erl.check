@@ -1,0 +1,139 @@
+  1 -module(comprehensions).                   |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec gen_atom(any()) -> atom().           |         | 
+  6 gen_atom(A) when is_atom(A) -> A;          | OK      | 
+  7 gen_atom(_) -> not_atom.                   |         | 
+  8                                            |         | 
+  9 -spec gen_number(any()) -> number().       |         | 
+ 10 gen_number(N) when is_number(N) -> N;      | OK      | 
+ 11 gen_number(_) -> 0.                        |         | 
+ 12                                            |         | 
+ 13 -spec test01                               |         | 
+ 14     ([{atom()} | {atom(), number()}]) ->   |         | 
+ 15     [atom()].                              |         | 
+ 16 test01(L) ->                               | OK      | 
+ 17     [A || {A} <- L].                       |         | 
+ 18                                            |         | 
+ 19 -spec test02_neg                           |         | 
+ 20     ([{atom()} | {atom(), number()}]) ->   |         | 
+ 21     [atom()].                              |         | 
+ 22 test02_neg(L) ->                           | ERROR   | 
+ 23     [N || {_, N} <- L].                    |         | [ || ]. Expected: [atom()], Got: [number()]
+ 24                                            |         | 
+ 25 -spec test03                               |         | 
+ 26     ([{atom()} | {atom(), number()}]) ->   |         | 
+ 27     {[atom()], x}.                         |         | 
+ 28 test03(L) ->                               | OK      | 
+ 29     Atoms = [gen_atom(X) || X <- L],       |         | 
+ 30     X = x,                                 |         | 
+ 31     {Atoms, X}.                            |         | 
+ 32                                            |         | 
+ 33 -spec test04_neg(any()) -> [any()].        |         | 
+ 34 test04_neg(L) ->                           | ERROR   | 
+ 35     [X || X <- L].                         |         | L. Expected: [term()], Got: term()
+ 36                                            |         | 
+ 37 -spec test05(binary()) -> [number()].      |         | 
+ 38 test05(B) ->                               | OK      | 
+ 39     [Y || <<Y>> <= B ].                    |         | 
+ 40                                            |         | 
+ 41 -spec test06_neg(binary()) -> list(any()). |         | 
+ 42 test06_neg(B) ->                           | ERROR   | 
+ 43     << Y || <<Y>> <= B >>.                 |         | << || >>. Expected: [term()], Got: binary()
+ 44                                            |         | 
+ 45 -spec test07(list(binary())) -> binary().  |         | 
+ 46 test07(LB) ->                              | OK      | 
+ 47     << Y || Y <- LB >>.                    |         | 
+ 48                                            |         | 
+ 49 -spec test08_neg(binary()) -> binary().    |         | 
+ 50 test08_neg(B) ->                           | ERROR   | 
+ 51     << Y || Y <- B >>.                     |         | B. Expected: [term()], Got: binary()
+ 52                                            |         | 
+ 53 -spec test09_neg(list(binary())) -> binary……         | 
+ 54 test09_neg(LB) ->                          | ERROR   | 
+ 55     << Y || <<Y>> <= LB >>.                |         | LB. Expected: binary(), Got: [binary()]
+ 56                                            |         | 
+ 57 -spec test10(binary()) -> [number()].      |         | 
+ 58 test10(LB) ->                              | OK      | 
+ 59     [ Y || <<Y>> <= LB ].                  |         | 
+ 60                                            |         | 
+ 61 -spec test11_neg(binary()) -> [binary()].  |         | 
+ 62 test11_neg(LB) ->                          | ERROR   | 
+ 63     [ Y || <<Y>> <= LB ].                  |         | [ || ]. Expected: [binary()], Got: [number()]
+ 64                                            |         | 
+ 65 -spec test12(binary()) -> [binary()].      |         | 
+ 66 test12(LB) ->                              | ERROR   | 
+ 67     << Y || <<Y>> <= LB >>.                |         | << || >>. Expected: [binary()], Got: binary()
+ 68                                            |         | 
+ 69 -spec test13_neg(binary()) -> binary().    |         | 
+ 70 test13_neg(LB) ->                          | ERROR   | 
+ 71     << Y || <<Y>> <= LB >>.                |         | Y. Expected: binary(), Got: number()
+ 72                                            |         | 
+ 73 -spec test14(binary()) -> binary().        |         | 
+ 74 test14(LB) ->                              | OK      | 
+ 75     << <<Y>> || <<Y>> <= LB >>.            |         | 
+ 76                                            |         | 
+ 77 -spec test15_neg(binary()) -> binary().    |         | 
+ 78 test15_neg(LB) ->                          | ERROR   | 
+ 79     << <<Y>> ||                            |         | 
+ 80         <<Y>> <= LB,                       |         | 
+ 81         gen_atom(Y) >>.                    |         | gen_atom(Y). Expected: 'false' | 'true', Got: atom()
+ 82                                            |         | 
+ 83 -spec test16_neg(any()) -> [any()].        |         | 
+ 84 test16_neg(L) ->                           | ERROR   | 
+ 85     Res = [X || X <- L],                   |         | L. Expected: [term()], Got: term()
+ 86     Res.                                   |         | 
+ 87                                            |         | 
+ 88 -spec test17(binary()) -> [number()].      |         | 
+ 89 test17(LB) ->                              | OK      | 
+ 90     Res = [ Y || <<Y>> <= LB ],            |         | 
+ 91     Res.                                   |         | 
+ 92                                            |         | 
+ 93 -spec test18_neg(boolean()) -> [boolean()]……         | 
+ 94 test18_neg(L) ->                           | ERROR   | 
+ 95     Res = [X || X <- L, X],                |         | L. Expected: [term()], Got: 'false' | 'true'
+ 96     Res.                                   |         | 
+ 97                                            |         | 
+ 98 -spec test19([boolean()]) -> [binary()].   |         | 
+ 99 test19(L) ->                               | OK      | 
+100     Res = [erlang:atom_to_binary(X) ||     |         | 
+101             X <- L, X],                    |         | 
+102     Res.                                   |         | 
+103                                            |         | 
+104 -spec test20(binary()) -> binary().        |         | 
+105 test20(LB) ->                              | OK      | 
+106     Res = << <<Y>> || <<Y>> <= LB >>,      |         | 
+107     Res.                                   |         | 
+108                                            |         | 
+109 -spec test21_neg(list(binary())) -> binary……         | 
+110 test21_neg(LB) ->                          | ERROR   | 
+111     Res = << Y || <<Y>> <= LB >>,          |         | LB. Expected: binary(), Got: [binary()]
+112     Res.                                   |         | 
+113                                            |         | 
+114 -spec test22_neg(binary()) -> binary().    |         | 
+115 test22_neg(B) ->                           | ERROR   | 
+116     Res = << Y || Y <- B >>,               |         | << || >>. Expected: [term()], Got: binary()
+117     Res.                                   |         | 
+118                                            |         | 
+119 -spec test23([binary()]) -> binary().      |         | 
+120 test23(B) ->                               | OK      | 
+121     Res = << Y || Y <- B >>,               |         | 
+122     Res.                                   |         | 
+123                                            |         | 
+124 -spec test24([boolean()]) -> binary().     |         | 
+125 test24(B) ->                               | OK      | 
+126     Res = << (erlang:atom_to_binary(Y)) || |         | 
+127             Y <- B, Y >>,                  |         | 
+128     Res.                                   |         | 
+129                                            |         | 
+130 -spec num_atom(number(), atom())           |         | 
+131     -> number().                           |         | 
+132 num_atom(_, _) -> 3.                       | OK      | 
+133                                            |         | 
+134 -spec test25                               |         | 
+135     ([{number()} | [atom()]]) ->           |         | 
+136     [number()].                            |         | 
+137 test25(L) ->                               | OK      | 
+138     [num_atom(A, B) + 1 ||                 |         | 
+139         {A} <- L, [B] <- L].               |         | 

@@ -107,6 +107,10 @@ object Vars {
       clausesVars(clauses)
     case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
       clausesVars(clauses) intersect blockVars(timeoutBlock)
+    case LComprehension(_, _) =>
+      Set.empty
+    case BComprehension(_, _) =>
+      Set.empty
   }
 
   def clausesVars(clauses: List[Clause]): Set[String] =

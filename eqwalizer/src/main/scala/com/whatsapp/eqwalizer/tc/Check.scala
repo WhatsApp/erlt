@@ -231,6 +231,49 @@ final case class Check(module: String) {
           val tEnv2 = checkBlock(timeoutBlock, resTy, tEnv1)
           val tEnv3 = Util.exitScope(env, tEnv2, effVars)
           Approx.joinEnvs(tEnv3 :: envs1)
+        case LComprehension(template, qualifiers) =>
+          var envAcc = env
+          qualifiers.foreach {
+            case LGenerate(gPat, gExpr) =>
+              val (gT, gEnv) = elab.elabExpr(gExpr, envAcc)
+              if (!Subtype.subType(gT, ListType(AnyType)))
+                throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
+              val Some(ListType(gElemT)) = Approx.asListType(gT)
+              val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+              envAcc = pEnv
+            case BGenerate(gPat, gExpr) =>
+              envAcc = checkExpr(gExpr, BinaryType, envAcc)
+              val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+              envAcc = pEnv
+            case Filter(fExpr) =>
+              envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+          }
+          val (tType, _) = elab.elabExpr(template, envAcc)
+          val elabType = ListType(tType)
+          if (!Subtype.subType(elabType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = elabType)
+          env
+        case BComprehension(template, qualifiers) =>
+          if (!Subtype.subType(BinaryType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = BinaryType)
+          var envAcc = env
+          qualifiers.foreach {
+            case LGenerate(gPat, gExpr) =>
+              val (gT, gEnv) = elab.elabExpr(gExpr, envAcc)
+              if (!Subtype.subType(gT, ListType(AnyType)))
+                throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
+              val Some(ListType(gElemT)) = Approx.asListType(gT)
+              val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+              envAcc = pEnv
+            case BGenerate(gPat, gExpr) =>
+              envAcc = checkExpr(gExpr, BinaryType, envAcc)
+              val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+              envAcc = pEnv
+            case Filter(fExpr) =>
+              envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+          }
+          checkExpr(template, BinaryType, envAcc)
+          env
       }
   }
 }
