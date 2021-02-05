@@ -1,0 +1,33 @@
+  1 -module(core_wip).                       | LOADED  |                                | 
+  2 -compile([export_all]).                  |         |                                | 
+  3                                          |         |                                | 
+  4 -type ty1(X) :: [X] | pid() | reference(…… LOADED  |                                | U: file:filename/0
+  5 -opaque ty2(X, Y) :: fun((X) -> Y).      |         |                                | 
+  6                                          |         |                                | 
+  7 -export_type([ty1/1, ty2/2]).            | LOADED  |                                | 
+  8                                          |         |                                | 
+  9 -record(rec, {a :: number(), b :: string…… SKIPPED |                                | 
+ 10                                          |         |                                | 
+ 11 -spec test_01() -> #{}.                  | SKIPPED | T: #{...}                      | 
+ 12 test_01() ->                             | SKIPPED |                                | 
+ 13   #{}.                                   |         | E: #{...}                      | 
+ 14                                          |         |                                | 
+ 15 -spec test_02() -> #{a => 1, b => 2, c :…… SKIPPED | T: #{...}                      | 
+ 16 test_02() ->                             | SKIPPED |                                | 
+ 17   #{a => 1, c => 2}.                     |         | E: #{...}                      | 
+ 18                                          |         |                                | 
+ 19 -spec test_03() -> #rec{}.               | SKIPPED | T: #rec{...}                   | 
+ 20 test_03() -> #rec{a = 3}.                | SKIPPED | E: #rec{...}                   | 
+ 21                                          |         |                                | 
+ 22 -spec test_fun_neg() -> list(any()).     | LOADED  |                                | 
+ 23 test_fun_neg() -> fun(X) -> X end.       | SKIPPED | E: lambda                      | 
+ 24                                          |         |                                | 
+ 25 -spec map_pattern(any(), any()) -> ok.   | LOADED  |                                | 
+ 26 map_pattern(M, K) ->                     | SKIPPED |                                | 
+ 27   #{ K := V1, K := V2 } = M,             |         | P: #{...}                      | 
+ 28   K, V1, K, V2.                          |         |                                | 
+ 29                                          |         |                                | 
+ 30 -spec test_fun_pos(atom()) -> number().  | LOADED  |                                | 
+ 31 test_fun_pos(Atom) ->                    | SKIPPED |                                | 
+ 32   30 * (fun(AnAtom, ANum) -> lists:nth(0……         | E: dcall                       | 
+ 33                                          |         |                                | 
