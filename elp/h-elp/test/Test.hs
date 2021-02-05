@@ -1,23 +1,36 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
+import AST.Unmarshal
+import Control.Carrier.Reader
+import Control.Exception
 import Control.Monad
+import Control.Monad.IO.Class
+import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import Data.Hashable
 import qualified Data.Map as Map
 import Data.Rope.UTF16 (Rope)
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
+import Data.Text.Encoding
 import Foreign.C.String
 import Foreign.Marshal.Alloc
 import Foreign.Marshal.Array (mallocArray)
 import Foreign.Ptr
 import Foreign.Storable
 import GHC.Word
+import Language.Erlang.AST (SourceFile, ann, extraChildren)
+import qualified Language.Erlang.AST as Erlang
+import Language.Erlang.Grammar
 import Language.Haskell.LSP.Test
 import Language.LSP.Types
 import Language.LSP.Types.Lens
 import Language.LSP.VFS
+import qualified Source.Range as S
+import qualified Source.Span as S
 import System.Directory
 import System.FilePath
 import System.IO
@@ -25,25 +38,28 @@ import System.IO.Temp
 import System.Log.Logger
 import Test.Tasty
 import Test.Tasty.HUnit
+import TreeSitter.Cursor
 import TreeSitter.ErlangELP
 import TreeSitter.Node
 import TreeSitter.Parser
-import TreeSitter.Tree
 import TreeSitter.Query
+import TreeSitter.Tree
+
+-- ---------------------------------------------------------------------
 
 main :: IO ()
 main = defaultMain tests
+
+logToStderr :: Bool
+logToStderr = True
 
 tests :: TestTree
 tests =
   testGroup
     "Tests"
-    [ testCase "2+2=4" $
-        2 + 2 @?= 4,
-      testCase "7 is odd" $
-        assertBool "Oops, 7 is even" (odd 7),
-      -- testVFS,
-      testQuery
+    [ testVFS,
+      testQuery,
+      testAST
     ]
 
 testVFS :: TestTree
@@ -114,7 +130,7 @@ testVFS =
                 editNewEndPoint = TSPoint {pointRow = 0, pointColumn = 3}
               }
 
-          assertBool "show me the logs!" False
+          -- assertBool "show me the logs!" False
           free parser
           return ()
     ]
@@ -125,11 +141,11 @@ testQuery :: TestTree
 testQuery =
   testGroup
     "Query"
-    [ testCase "Query" $ do
+    [ testCase "Query no error" $ do
         initVFS $ \vfs -> do
           let aContent =
                 T.unlines
-                  [ "-module(foo).",
+                  [ "-odule(foo).",
                     "-xxxx(yyy)."
                   ]
               itemA = TextDocumentItem uriA "erlang" 0 aContent
@@ -141,10 +157,11 @@ testQuery =
           parser <- treeSitterParser
           (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
           sexp <- nodeAsSexpr node
-          sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
+          sexp @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
 
-          let queryStr = "(module_attribute)"
+          -- let queryStr = "(module_attribute)"
           -- let queryStr = "(attribute)"
+          let queryStr = "(attribute (atom) @a (atom) @b)"
           -- let queryStr = "(arg_list)"
           (str, len) <- newCStringLen queryStr
           e <- malloc
@@ -155,21 +172,151 @@ testQuery =
           rr @?= TSQueryErrorNone
 
           qc <- ts_query_cursor_new
-          -- void ts_query_cursor_exec(TSQueryCursor *, const TSQuery *, TSNode);
+          -- TODO: use withNode instead
           n <- malloc
-          poke n node
+          poke n (nodeTSNode node)
           ts_query_cursor_exec_p qc query n
           -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
           pmatch <- malloc
           matched <- ts_query_cursor_next_match qc pmatch
           match <- peek pmatch
           matched @?= True
-          [match]  @?= []
+          take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
 
-          assertBool "show me the logs!" False
+          c1 <- peek (qmCaptures match)
+          take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
+          qcIndex c1 @?= 0
+
+          -- ---------------------------
+          matched <- ts_query_cursor_next_match qc pmatch
+          match <- peek pmatch
+          matched @?= True
+          take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+
+          c2 <- peek (qmCaptures match)
+          take 55 (show (qcNode c2)) @?= "TSNode 14 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
+          qcIndex c2 @?= 0
+
+          -- assertBool "show me the logs!" False
+          free parser
+          return (),
+      -- -------------------------------------------
+      testCase "Query with MISSING" $ do
+        initVFS $ \vfs -> do
+          let aContent =
+                T.unlines
+                  [ "-odule(foo)",
+                    "-xxxx(yyy)."
+                  ]
+              itemA = TextDocumentItem uriA "erlang" 0 aContent
+              uriA = filePathToUri "src/foo.erl"
+              nUriA = toNormalizedUri uriA
+              a = TextDocumentIdentifier uriA
+              msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
+          let (v1, _) = openVFS vfs msg
+          parser <- treeSitterParser
+          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+          sexp <- nodeAsSexpr node
+          sexp @?= "(source_file (attribute (atom) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
+          let queryStr = "(attribute (atom) @a (atom) @b)"
+          -- let queryStr = "(MISSING)"
+          (str, len) <- newCStringLen queryStr
+          e <- malloc
+          r <- malloc
+          query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
+          ee <- peek e
+          rr <- peek r
+          rr @?= TSQueryErrorNone
+
+          qc <- ts_query_cursor_new
+          -- TODO: use withNode instead
+          n <- malloc
+          poke n (nodeTSNode node)
+          ts_query_cursor_exec_p qc query n
+          -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
+          pmatch <- malloc
+          matched <- ts_query_cursor_next_match qc pmatch
+          match <- peek pmatch
+          matched @?= True
+          take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+
+          c1 <- peek (qmCaptures match)
+          take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
+          qcIndex c1 @?= 0
+
+          -- ---------------------------
+          matched <- ts_query_cursor_next_match qc pmatch
+          match <- peek pmatch
+          matched @?= True
+          take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+
+          c2 <- peek (qmCaptures match)
+          take 55 (show (qcNode c2)) @?= "TSNode 13 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
+          qcIndex c2 @?= 0
+
+          -- assertBool "show me the logs!" False
           free parser
           return ()
     ]
+
+-- ---------------------------------------------------------------------
+testAST :: TestTree
+testAST =
+  testGroup
+    "Read AST"
+    [ testCase "AST full file" $ do
+        initVFS $ \vfs -> do
+          let aContent =
+                T.unlines
+                  -- [ "-odu le(foo)",
+                  --   "-xxxx(yyy)."
+                  -- ]
+                  -- [ "-odu le.",
+                  --   "-xxxx(yyy)."
+                  -- ]
+                  [ "-xxx(yyy).",
+                    "-odu le(foo)",
+                    "-aaaa(bbb)."
+                  ]
+              itemA = TextDocumentItem uriA "erlang" 0 aContent
+              uriA = filePathToUri "src/foo.erl"
+              nUriA = toNormalizedUri uriA
+              a = TextDocumentIdentifier uriA
+              msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
+          let (v1, _) = openVFS vfs msg
+          parser <- treeSitterParser
+          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+          -- sexp <- nodeAsSexpr node
+          sexp <- nodeAsSexprDetail node
+          -- sexp @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
+          -- sexp @?= "(source_file (attribute (atom) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
+          -- sexp @?= "(source_file (attribute (atom) (ERROR) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
+          -- sexp @?= "(source_file (attribute (atom) (ERROR) (atom) (MISSING \".\")))"
+          sexp @?= "(source_file (source_file_repeat1 (source_file_repeat1 (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.)) (attribute (-) (atom (_raw_atom)) (ERROR (_ERROR (_raw_atom))) (() (atom (_raw_atom)) ()) (MISSING \".\"))) (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.))) (end))"
+
+          -- ast <- erlangAst (encodeUtf8 aContent)
+          -- ast <- erlangAstBare (encodeUtf8 aContent)
+          ast <- erlangAstText (encodeUtf8 aContent)
+          -- [ast] @?= []
+          show ast @?= "Right (UnmarshalDiagnostics [(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")])],SourceFile {ann = \"-xxx(yyy).\\n-odu le(foo)\\n-aaaa(bbb).\\n\", extraChildren = [L1 (Attribute {ann = \"-xxx(yyy).\", extraChildren = L1 (Atom {ann = \"xxx\", text = \"xxx\"}) :| [L1 (Atom {ann = \"yyy\", text = \"yyy\"})]}),L1 (Attribute {ann = \"-odu le(foo)\", extraChildren = L1 (Atom {ann = \"odu\", text = \"odu\"}) :| [L1 (Atom {ann = \"foo\", text = \"foo\"})]}),L1 (Attribute {ann = \"-aaaa(bbb).\", extraChildren = L1 (Atom {ann = \"aaaa\", text = \"aaaa\"}) :| [L1 (Atom {ann = \"bbb\", text = \"bbb\"})]})]})"
+
+          -- assertBool "show me the logs!" False
+          free parser
+          return ()
+    ]
+
+-- ---------------------------------------------------------------------
+
+erlangAst :: ByteString -> IO (Either String (UnmarshalDiagnostics, SourceFile (S.Range, S.Span)))
+erlangAst = parseByteString @Erlang.SourceFile @(S.Range, S.Span) tree_sitter_erlang_elp
+
+erlangAstBare :: ByteString -> IO (Either String (UnmarshalDiagnostics, SourceFile ()))
+erlangAstBare = parseByteString @Erlang.SourceFile @() tree_sitter_erlang_elp
+
+erlangAstText :: ByteString -> IO (Either String (UnmarshalDiagnostics, SourceFile T.Text))
+erlangAstText = parseByteString @Erlang.SourceFile @T.Text tree_sitter_erlang_elp
+
+-- ---------------------------------------------------------------------
 {-
 
 data Node = Node
@@ -188,7 +335,7 @@ data Node = Node
 -- | Print st stderr, where the haskell tree-sitter logging goes
 -- too. Convenient, it does not get in the way of tasty output either.
 pp :: String -> IO ()
-pp = hPutStrLn stderr
+pp str = when logToStderr $ hPutStrLn stderr str
 
 -- TODO: free the parser, or bracket it with a free
 treeSitterParser :: IO (Ptr Parser)
@@ -308,8 +455,7 @@ treeSitterParseIncrement parser rope tree = do
   pp $ "input:" ++ show i
   ip <- malloc
   poke ip i
-  ts_parser_log_to_stderr parser
-  -- tree2       <- ts_parser_parse_string parser tree str2 len2
+  when logToStderr $ ts_parser_log_to_stderr parser
   pp $ "invoking ts_parser_parse_p1"
   tree <- ts_parser_parse_p1 parser tree ip
   pp $ "got tree:" ++ show tree
@@ -338,14 +484,19 @@ vfsReadFunction ppayload offset ppos lenPtr = do
 nodeAsSexpr :: Node -> IO String
 nodeAsSexpr nn = do
   let tsn = nodeTSNode nn
-  pp $ "tsn:" ++ show tsn
   tsnp <- malloc
   poke tsnp tsn
-  pp $ "after poke"
   strp <- ts_node_string_p tsnp
-  pp $ "after poke 2"
   str <- peekCString strp
   free strp
-  pp $ "after poke"
-  pp $ "node sexpr:" ++ str
+  return str
+
+nodeAsSexprDetail :: Node -> IO String
+nodeAsSexprDetail nn = do
+  let tsn = nodeTSNode nn
+  tsnp <- malloc
+  poke tsnp tsn
+  strp <- ts_node_string_extra_p tsnp
+  str <- peekCString strp
+  free strp
   return str

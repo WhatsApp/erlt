@@ -24,22 +24,27 @@ library
        base >=4.13 && <4.15
      , semantic-erlang
      -- following needed because of https://github.com/alanz/lsp/issues/263
-     , constraints-extras == 0.3.0.2
-     , dependent-map == 0.4.0.0
-     , dependent-sum == 0.7.1.0
-     , dependent-sum-template == 0.1.0.3
+     -- , constraints-extras == 0.3.0.2
+     -- , dependent-map == 0.4.0.0
+     -- , dependent-sum == 0.7.1.0
+     -- , dependent-sum-template == 0.1.0.3
+     , attoparsec
      , aeson >=1.2.2.0
      , binary
      , bytestring
      , containers
      , directory
      , filepath
+     , fused-effects
      , hashable
      , hslogger
      , lens >= 4.15.2
      , lsp-test
      , lsp-types
      , rope-utf16-splay >= 0.3.1.0
+     , semantic-erlang
+     , semantic-ast
+     , semantic-source
      , temporary
      , text
      , tree-sitter
@@ -56,12 +61,14 @@ executable h-elp
      -- temporary, putting src directory in hs-source-dirs for now
      -- , h-elp
 
+     , attoparsec
      , aeson
      , binary
      , bytestring
      , containers
      , directory
      , filepath
+     , fused-effects
      , hashable
      , hslogger
      , lens >= 4.15.2
@@ -71,6 +78,8 @@ executable h-elp
      , mtl
      , rope-utf16-splay >= 0.3.1.0
      , semantic-erlang
+     , semantic-ast
+     , semantic-source
      , temporary
      , text
      , tree-sitter
@@ -89,11 +98,13 @@ test-suite h-elp-test
   build-depends:
        base >=4.13 && <4.15
      , aeson >=1.2.2.0
+     , attoparsec
      , binary
      , bytestring
      , containers
      , directory
      , filepath
+     , fused-effects
      , h-elp
      , hashable
      , hslogger
@@ -101,7 +112,9 @@ test-suite h-elp-test
      , lsp-test
      , lsp-types
      , rope-utf16-splay >= 0.3.1.0
+     , semantic-ast
      , semantic-erlang
+     , semantic-source
      , temporary
      , text
      , tree-sitter

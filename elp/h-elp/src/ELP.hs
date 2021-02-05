@@ -4,27 +4,27 @@
 
 module ELP where
 
-import Control.Monad
-import Data.Hashable
-import qualified Data.Map as Map
+-- import Control.Monad
+-- import Data.Hashable
+-- import qualified Data.Map as Map
 import Data.Rope.UTF16 (Rope)
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
 import Foreign.C.String
 import Foreign.Marshal.Alloc
-import Foreign.Marshal.Array (mallocArray)
+-- import Foreign.Marshal.Array (mallocArray)
 import Foreign.Ptr
 import Foreign.Storable
 import GHC.Word
-import Language.Haskell.LSP.Test
+-- import Language.Haskell.LSP.Test
 import Language.LSP.Types
-import Language.LSP.Types.Lens
-import Language.LSP.VFS
-import System.Directory
-import System.FilePath
+-- import Language.LSP.Types.Lens
+-- import Language.LSP.VFS
+-- import System.Directory
+-- import System.FilePath
 import System.IO
-import System.IO.Temp
-import System.Log.Logger
+-- import System.IO.Temp
+-- import System.Log.Logger
 import TreeSitter.ErlangELP
 import TreeSitter.Node
 import TreeSitter.Parser
