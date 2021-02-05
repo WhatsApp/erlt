@@ -4,31 +4,68 @@
 
 module ELP where
 
--- import Control.Monad
--- import Data.Hashable
--- import qualified Data.Map as Map
 import Data.Rope.UTF16 (Rope)
 import qualified Data.Rope.UTF16 as Rope
+-- import qualified Data.Rope.UTF16.Internal as Rope
+import qualified Data.Rope.UTF16.Internal.Position as Rope
+import AST.Unmarshal
+    ( UnmarshalDiagnostics,
+      unmarshalNode,
+      UnmarshalError(getUnmarshalError),
+      Unmarshal,
+      UnmarshalAnn,
+      UnmarshalState(UnmarshalState, diagnostics) )
+-- import Control.Carrier.Reader
+import Control.Carrier.State.Strict ( runState )
+-- import qualified Data.ByteString as B
+-- import qualified Language.Erlang.AST as Erlang
+-- import System.IO.Temp
+import Control.Exception ( catch )
+import Control.Monad.IO.Class ( MonadIO(liftIO) )
+import Data.ByteString (ByteString)
+-- import Data.Rope.UTF16 (Rope)
+-- import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Text as T
 import Foreign.C.String
-import Foreign.Marshal.Alloc
--- import Foreign.Marshal.Array (mallocArray)
-import Foreign.Ptr
-import Foreign.Storable
-import GHC.Word
--- import Language.Haskell.LSP.Test
+    ( withCStringLen, peekCString, newCStringLen )
+import Foreign.Marshal.Alloc ( free, malloc )
+import Foreign.Ptr ( Ptr, plusPtr, castPtr, nullPtr )
+import Foreign.Storable ( Storable(peek, poke) )
+import GHC.Word ( Word32 )
+import Language.Erlang.AST (SourceFile)
+import Language.Erlang.Grammar ( tree_sitter_erlang_elp )
 import Language.LSP.Types
--- import Language.LSP.Types.Lens
--- import Language.LSP.VFS
--- import System.Directory
--- import System.FilePath
-import System.IO
--- import System.IO.Temp
--- import System.Log.Logger
-import TreeSitter.ErlangELP
+    ( Position(Position),
+      Range(Range),
+      TextDocumentContentChangeEvent(TextDocumentContentChangeEvent) )
+import Data.SplayTree ( Measured(measure) )
+import qualified Source.Range as S
+import qualified Source.Span as S
+import System.IO ( stderr, hPutStrLn )
+import TreeSitter.Cursor ( withCursor )
+-- import TreeSitter.ErlangELP
 import TreeSitter.Node
+    ( Node(nodeTSNode), ts_node_string_p, TSPoint(TSPoint) )
 import TreeSitter.Parser
+    ( Parser,
+      ts_parser_parse_p1,
+      ts_parser_log_to_stderr,
+      mkReadFunction,
+      ts_parser_parse_string,
+      ts_parser_set_language,
+      ts_parser_set_timeout_micros,
+      ts_parser_timeout_micros,
+      ts_parser_new,
+      TSInputEncoding(TSInputEncodingUTF8),
+      TSHInput(TSHInput, inputRead, inputEncoding, inputPayload),
+      ReadFunction )
+-- import TreeSitter.Query
 import TreeSitter.Tree
+    ( Tree,
+      withRootNode,
+      ts_tree_edit,
+      ts_tree_root_node_p,
+      TSInputEdit(..) )
 
 -- ---------------------------------------------------------------------
 
@@ -48,8 +85,8 @@ treeSitterParser = do
 
   ts_parser_set_timeout_micros parser 3_000_0000
 
-  timeout <- ts_parser_timeout_micros parser
-  pp $ "timeout:" ++ show timeout
+  timeout_r <- ts_parser_timeout_micros parser
+  pp $ "timeout:" ++ show timeout_r
 
   r <- ts_parser_set_language parser tree_sitter_erlang_elp
   pp $ "set language:" ++ show (r, tree_sitter_erlang_elp)
@@ -60,12 +97,9 @@ treeSitterParseFull :: Ptr Parser -> String -> IO (Ptr Tree, Node)
 treeSitterParseFull parser source = do
   (str, len) <- newCStringLen source
   tree <- ts_parser_parse_string parser nullPtr str len
-  -- pp $ "got tree:" ++ show tree
   n <- malloc
   ts_tree_root_node_p tree n
-  -- pp $ "after ts_tree_root_node_p"
   nn <- peek n
-  -- pp $ "Node:" ++ show nn
   return (tree, nn)
 
 -- ---------------------------------------------------------------------
@@ -119,8 +153,8 @@ lspChangeAsTSInputEdit rope change = edit
       (TextDocumentContentChangeEvent Nothing (Just _) _txt) -> undefined
 
     byteAddress :: Rope -> Position -> Word32
-    byteAddress rope (Position line col) =
-      fromIntegral $ Rope.rowColumnCodeUnits (Rope.RowColumn line col) rope
+    byteAddress rope' (Position line col) =
+      fromIntegral $ Rope.rowColumnCodeUnits (Rope.RowColumn line col) rope'
 
     position2TSPoint :: Position -> TSPoint
     position2TSPoint (Position line col) = TSPoint (fromIntegral line) (fromIntegral col)
@@ -128,9 +162,9 @@ lspChangeAsTSInputEdit rope change = edit
     addText :: TSPoint -> T.Text -> TSPoint
     addText (TSPoint row col) txt = TSPoint row' col'
       where
-        rope = Rope.fromText txt
-        newRows = Rope.rows rope
-        lastCol = Rope.length $ snd $ Rope.splitAtLine newRows rope
+        rope' = Rope.fromText txt
+        newRows = Rope.rows rope'
+        lastCol = Rope.length $ snd $ Rope.splitAtLine newRows rope'
         (row', col') = case newRows of
           0 ->
             ( row,
@@ -161,7 +195,7 @@ treeSitterParseIncrement parser rope tree = do
   ip <- malloc
   poke ip i
   ts_parser_log_to_stderr parser
-  pp $ "invoking ts_parser_parse_p1"
+  pp "invoking ts_parser_parse_p1"
   tree2 <- ts_parser_parse_p1 parser tree ip
   pp $ "got tree:" ++ show tree2
   n <- malloc
@@ -174,7 +208,7 @@ treeSitterParseIncrement parser rope tree = do
 -- | Tree Sitter 'ReadFunction' using a VFS as the payload
 vfsReadFunction :: ReadFunction
 vfsReadFunction ppayload offset ppos lenPtr = do
-  pp $ "******vfsReadFunction entered"
+  pp "******vfsReadFunction entered"
   pp $ "******vfsReadFunction ppayload=" ++ show (ppayload, offset, ppos)
   -- type ReadFunction = (Ptr Payload -> Word32 -> Ptr TSPoint -> Ptr Word32 -> IO CString)
   tin <- peek ppayload
@@ -193,12 +227,12 @@ nodeAsSexpr nn = do
   pp $ "tsn:" ++ show tsn
   tsnp <- malloc
   poke tsnp tsn
-  pp $ "after poke"
+  pp "after poke"
   strp <- ts_node_string_p tsnp
-  pp $ "after poke 2"
+  pp "after poke 2"
   str <- peekCString strp
   free strp
-  pp $ "after poke"
+  pp "after poke"
   pp $ "node sexpr:" ++ str
   return str
 
@@ -210,5 +244,44 @@ parseChange rope parser tree lspChange = do
   tree2 <- treeSitterParseEdit tsEdit tree
   (tree3, node) <- treeSitterParseIncrement parser rope tree2
   return (tree3, node)
+
+-- ---------------------------------------------------------------------
+
+-- TODO: move this to AST.Unmarshal
+unmarshallTree :: (UnmarshalAnn a, Unmarshal t) => ByteString -> Ptr Tree -> IO (Either String (UnmarshalDiagnostics, t a))
+unmarshallTree source treePtr =
+  if treePtr == nullPtr
+    then pure (Left "error: didn't get a root node")
+    else do
+      r <-
+        withRootNode treePtr $ \rootPtr ->
+          withCursor (castPtr rootPtr) $ \cursor ->
+            (Right <$> runState (UnmarshalState source cursor mempty) (liftIO (peek rootPtr) >>= unmarshalNode))
+              `catch` (pure . Left . getUnmarshalError)
+      case r of
+        Left e -> pure $ Left e
+        Right (s, res) -> pure $ Right (diagnostics s, res)
+
+treeToAst :: ByteString -> Ptr Tree -> IO (Either String (UnmarshalDiagnostics, SourceFile (S.Range, S.Span)))
+treeToAst = unmarshallTree
+
+treeToAstBare :: ByteString -> Ptr Tree -> IO (Either String (UnmarshalDiagnostics, SourceFile ()))
+treeToAstBare = unmarshallTree
+
+treeToAstText :: ByteString -> Ptr Tree -> IO (Either String (UnmarshalDiagnostics, SourceFile T.Text))
+treeToAstText = unmarshallTree
+
+-- ---------------------------------------------------------------------
+
+codeUnitsRowColumn :: Int -> Rope -> Rope.RowColumn
+codeUnitsRowColumn offset rope = Rope.rowColumn . measure . fst $ Rope.splitAt offset rope
+
+-- ---------------------------------------------------------------------
+
+offsetsToRange :: Rope.Rope -> (Int,Int) -> Range
+offsetsToRange rope (start,end) = Range (Position r1 c1) (Position r2 c2)
+  where
+    Rope.RowColumn r1 c1 = codeUnitsRowColumn start rope
+    Rope.RowColumn r2 c2 = codeUnitsRowColumn end rope
 
 -- ---------------------------------------------------------------------

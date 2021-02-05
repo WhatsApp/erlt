@@ -95,6 +95,7 @@ test-suite h-elp-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
        base >=4.13 && <4.15
      , aeson >=1.2.2.0

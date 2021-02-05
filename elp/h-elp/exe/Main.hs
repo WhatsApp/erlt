@@ -4,17 +4,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeInType #-}
 
+import qualified Source.Range as S
+import qualified Source.Span as S
+import AST.Unmarshal ( UnmarshalDiagnostics(..), TSDiagnostic(..) )
 import Control.Lens (to, (^.))
-import Control.Monad.Reader (ReaderT, runReaderT, asks)
+import qualified Data.ByteString as B
+import Control.Monad.Reader (ReaderT, asks, runReaderT)
 import Data.Aeson (FromJSON, ToJSON)
 import qualified Data.Map as Map
 import qualified Data.Rope.UTF16 as Rope
+import qualified Data.Rope.UTF16.Internal.Position as Rope
 import qualified Data.Text as T
 import ELP
   ( nodeAsSexpr,
     parseChange,
     treeSitterParseFull,
-    treeSitterParser,
+    treeSitterParser, treeToAstBare, codeUnitsRowColumn, offsetsToRange
+  , pp
   )
 import Foreign.Ptr (Ptr)
 import GHC.Generics (Generic)
@@ -22,6 +28,7 @@ import Language.LSP.Diagnostics (partitionBySource)
 import Language.LSP.Server
   ( Handlers,
     LspM,
+    MonadLsp,
     Options (textDocumentSync),
     ServerDefinition
       ( ServerDefinition,
@@ -40,7 +47,7 @@ import Language.LSP.Server
     runServer,
     sendNotification,
     setupLogger,
-    type (<~>) (Iso), MonadLsp
+    type (<~>) (Iso),
   )
 import Language.LSP.Types
   ( CodeAction (CodeAction),
@@ -80,10 +87,11 @@ import Language.LSP.Types
     SymbolKind (SkObject),
     TextDocumentSyncKind (TdSyncIncremental),
     TextDocumentSyncOptions (TextDocumentSyncOptions),
+    TextDocumentVersion,
     mkRange,
     toNormalizedUri,
     uriToFilePath,
-    type (|?) (InL, InR), TextDocumentVersion
+    type (|?) (InL, InR),
   )
 import Language.LSP.Types.Lens as Lsp
   ( HasContentChanges (contentChanges),
@@ -98,6 +106,7 @@ import TreeSitter.Node (Node)
 import TreeSitter.Parser (Parser)
 import TreeSitter.Tree (Tree)
 import UnliftIO (MVar, MonadIO (liftIO), modifyMVar, newMVar)
+import Data.Text.Encoding (encodeUtf8)
 
 -- ---------------------------------------------------------------------
 
@@ -181,14 +190,15 @@ handlers =
           Just (VirtualFile _lspversion vsn _rope) -> do
             liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
             mparser <- asks heParser
-            sexp <- liftIO $
+            (sexp, tree) <- liftIO $
               modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
                 (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
                 sexp <- nodeAsSexpr node
                 liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
                 let pcsmap' = Map.insert docUri (TsFile tree node) pcsmap
-                return (ParserContext parser pcsmap', sexp)
-            sendDiagnostics docUri (Just 0) (T.pack sexp)
+                return (ParserContext parser pcsmap', (sexp, tree))
+            reportDiagnostics docUri (Just 0) (Rope.fromText aContent) tree
+            -- sendDiagnosticsMessage docUri (Just 0) (T.pack sexp)
             return ()
           Nothing -> do
             liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
@@ -202,10 +212,10 @@ handlers =
         liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
         mdoc <- getVirtualFile doc
         case mdoc of
-          Just (VirtualFile _lspversion vsn rope) -> do
+          Just (VirtualFile lspversion vsn rope) -> do
             liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
             mparser <- asks heParser
-            sexp <- liftIO $
+            (sexp, tree) <- liftIO $
               modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
                 (tree, node) <- case Map.lookup doc pcsmap of
                   Nothing -> do
@@ -226,8 +236,9 @@ handlers =
                 sexp <- nodeAsSexpr node
                 liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
                 let pcsmap' = Map.insert doc (TsFile tree node) pcsmap
-                return (ParserContext parser pcsmap', sexp)
-            sendDiagnostics doc (Just 0) (T.pack sexp)
+                return (ParserContext parser pcsmap', (sexp, tree))
+            reportDiagnostics doc (Just lspversion) rope tree
+            -- sendDiagnosticsMessage doc (Just 0) (T.pack sexp)
             return ()
           Nothing -> do
             liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc,
@@ -239,7 +250,7 @@ handlers =
           responder $
             Right $
               Just $
-                Hover (HoverContents (MarkupContent MkPlainText "hello")) Nothing,
+                Hover (HoverContents (MarkupContent MkPlainText "hello1")) Nothing,
       -- -----------------------------------
 
       requestHandler STextDocumentDocumentSymbol $
@@ -379,11 +390,48 @@ handlers =
 
 -- ---------------------------------------------------------------------
 
+reportDiagnostics :: MonadLsp config m
+ => NormalizedUri -> TextDocumentVersion -> Rope.Rope -> Ptr Tree -> m ()
+reportDiagnostics fileUri version rope tree = do
+  diags <- liftIO $ makeDiagnostics rope tree
+  liftIO $ pp $ "reportDiagnostics:diags=" ++ show diags
+  sendDiagnostics fileUri version diags
+
+makeDiagnostics :: Rope.Rope -> Ptr Tree -> IO [Diagnostic]
+makeDiagnostics rope tree = do
+  mr <- treeToAstBare (encodeUtf8 $ Rope.toText rope) tree
+  case mr of
+    Right (UnmarshalDiagnostics diags, ast) -> do
+      let
+        bar = concatMap snd diags
+        lspDiags = map (toDiagnostic . \(p,d) -> (offsetsToRange rope p, d))  bar
+      return lspDiags
+    Left err -> return []
+
+toDiagnostic :: (Range, TSDiagnostic) -> Diagnostic
+toDiagnostic (range, diag) =
+         Diagnostic
+            range
+            (Just DsWarning) -- severity
+            Nothing -- code
+            (Just "ELP") -- source
+            (T.pack $ show diag)
+            Nothing -- tags
+            (Just (List []))
+
+
+sendDiagnostics :: MonadLsp config m
+  => NormalizedUri -> TextDocumentVersion -> [Diagnostic] -> m ()
+sendDiagnostics fileUri version diags = do
+  liftIO $ pp $ "sendDiagnostics:(fileUri,version,diags)=" ++ show (fileUri,version,diags)
+  publishDiagnostics 100 fileUri version (partitionBySource diags)
+
+-- ---------------------------------------------------------------------
 -- | Analyze the file and send any diagnostics to the client in a
 -- "textDocument/publishDiagnostics" notification
 -- sendDiagnostics :: NormalizedUri -> Maybe Int -> LspM Config ()
-sendDiagnostics :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
-sendDiagnostics fileUri version msg = do
+sendDiagnosticsMessage :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
+sendDiagnosticsMessage fileUri version msg = do
   let diags =
         [ Diagnostic
             (Range (Position 0 1) (Position 0 5))
