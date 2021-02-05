@@ -126,3 +126,14 @@
 126     Res = << (erlang:atom_to_binary(Y)) || |         | 
 127             Y <- B, Y >>,                  |         | 
 128     Res.                                   |         | 
+129                                            |         | 
+130 -spec num_atom(number(), atom())           |         | 
+131     -> number().                           |         | 
+132 num_atom(_, _) -> 3.                       | OK      | 
+133                                            |         | 
+134 -spec test25                               |         | 
+135     ([{number()} | [atom()]]) ->           |         | 
+136     [number()].                            |         | 
+137 test25(L) ->                               | OK      | 
+138     [num_atom(A, B) + 1 ||                 |         | 
+139         {A} <- L, [B] <- L].               |         | 

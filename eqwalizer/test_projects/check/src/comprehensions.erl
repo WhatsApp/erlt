@@ -126,3 +126,14 @@ test24(B) ->
     Res = << (erlang:atom_to_binary(Y)) ||
             Y <- B, Y >>,
     Res.
+
+-spec num_atom(number(), atom())
+    -> number().
+num_atom(_, _) -> 3.
+
+-spec test25
+    ([{number()} | [atom()]]) ->
+    [number()].
+test25(L) ->
+    [num_atom(A, B) + 1 ||
+        {A} <- L, [B] <- L].
