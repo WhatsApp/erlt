@@ -1,7 +1,12 @@
-pub use anyhow::Result;
 
-use anyhow::anyhow;
+pub use server_setup::ServerSetup;
+
+use anyhow::{anyhow, Result};
 use serde::de::DeserializeOwned;
+
+mod server;
+mod server_setup;
+mod config;
 
 pub fn from_json<T: DeserializeOwned>(what: &'static str, json: serde_json::Value) -> Result<T> {
     let res = serde_path_to_error::deserialize(&json)

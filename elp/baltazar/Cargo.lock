@@ -37,6 +37,7 @@ name = "baltazar"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "crossbeam-channel",
  "env_logger",
  "log",
  "lsp-server",
@@ -46,6 +47,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_path_to_error",
+ "vfs",
 ]
 
 [[package]]
@@ -123,6 +125,12 @@ dependencies = [
  "matches",
  "percent-encoding",
 ]
+
+[[package]]
+name = "fst"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d79238883cf0307100b90aba4a755d8051a3182305dfe7f649a1e9dc0517006f"
 
 [[package]]
 name = "hermit-abi"
@@ -259,6 +267,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "paths"
+version = "0.0.0"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=336909b#336909b63a14b801520c6627d90d750babcfe280"
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -311,6 +324,12 @@ name = "regex-syntax"
 version = "0.6.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b181ba2dcf07aaccad5448e8ead58db5b742cf85dfe035e2227f137a539a189"
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "ryu"
@@ -478,6 +497,16 @@ dependencies = [
  "matches",
  "percent-encoding",
  "serde",
+]
+
+[[package]]
+name = "vfs"
+version = "0.0.0"
+source = "git+https://github.com/rust-analyzer/rust-analyzer?rev=336909b#336909b63a14b801520c6627d90d750babcfe280"
+dependencies = [
+ "fst",
+ "paths",
+ "rustc-hash",
 ]
 
 [[package]]

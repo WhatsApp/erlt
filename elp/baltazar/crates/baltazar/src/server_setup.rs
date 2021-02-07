@@ -1,0 +1,77 @@
+use std::{convert::TryFrom, env};
+
+use anyhow::Result;
+use lsp_server::Connection;
+use lsp_types::{InitializeParams, InitializeResult, ServerInfo};
+use vfs::AbsPathBuf;
+
+use crate::{config::Config, from_json, server::Server};
+
+mod capabilities;
+
+pub struct ServerSetup {
+    connection: Connection,
+}
+
+impl ServerSetup {
+    pub fn new(connection: Connection) -> ServerSetup {
+        ServerSetup { connection }
+    }
+
+    pub fn to_server(self) -> Result<Server> {
+        let config = self.initialize()?;
+
+        log::info!("initial state: {:#?}", config);
+
+        Ok(Server::new(self.connection.sender, self.connection.receiver, config))
+    }
+
+    fn initialize(&self) -> Result<Config> {
+        let (id, params) = self.connection.initialize_start()?;
+        let params = from_json::<lsp_types::InitializeParams>("InitializeParams", params)?;
+
+        let server_capabilities = capabilities::from_client(&params.capabilities);
+
+        let result = InitializeResult {
+            capabilities: server_capabilities,
+            server_info: Some(ServerInfo {
+                name: "baltazar".to_string(),
+                version: Some(env!("CARGO_PKG_VERSION").to_string()),
+            }),
+        };
+
+        self.connection.initialize_finish(id, serde_json::to_value(result).unwrap())?;
+
+        if let Some(client_info) = &params.client_info {
+            log::info!(
+                "Client '{}' {}",
+                client_info.name,
+                client_info.version.as_ref().unwrap_or(&String::from("<unknown>"))
+            );
+        }
+
+        let root_path = root_path(&params)?;
+
+        let mut config = Config::new(root_path, params.capabilities);
+        if let Some(options) = params.initialization_options {
+            config.update(options);
+        }
+
+        Ok(config)
+    }
+}
+
+fn root_path(params: &InitializeParams) -> Result<AbsPathBuf> {
+    match params
+        .root_uri
+        .as_ref()
+        .and_then(|uri| uri.to_file_path().ok())
+        .and_then(|path| AbsPathBuf::try_from(path).ok())
+    {
+        Some(path) => Ok(path),
+        None => {
+            let cwd = env::current_dir()?;
+            Ok(AbsPathBuf::assert(cwd))
+        }
+    }
+}
