@@ -1,6 +1,7 @@
 use std::{env, fs, path::PathBuf, process};
 
-use baltazar::{from_json, Result};
+use anyhow::Result;
+use baltazar::ServerSetup;
 use lsp_server::Connection;
 
 mod args;
@@ -49,16 +50,9 @@ fn setup_logging(log_file: Option<PathBuf>, no_buffering: bool) -> Result<()> {
 
 fn run_server() -> Result<()> {
     log::info!("server will start");
-
     let (connection, io_threads) = Connection::stdio();
 
-    let server_capabilities = serde_json::json!({});
-    let init_params = connection.initialize(server_capabilities)?;
-
-    let init_result = from_json::<lsp_types::InitializeParams>("InitializeParams", init_params)?;
-    if let Some(client_info) = init_result.client_info {
-        log::info!("Client '{}' {}", client_info.name, client_info.version.unwrap_or_default())
-    }
+    ServerSetup::new(connection).to_server()?.main_loop()?;
 
     io_threads.join()?;
     log::info!("server did shut down");
