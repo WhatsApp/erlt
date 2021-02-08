@@ -39,6 +39,7 @@ package object ast {
       exportTypes: Set[Id],
       specs: Map[Id, FunSpec],
       types: Map[Id, TypeDecl],
+      records: Map[String, RecDecl],
       skippedSpecs: Map[Id, SkippedFunSpec],
       skippedTypes: Map[Id, SkippedTypeDecl],
   )
