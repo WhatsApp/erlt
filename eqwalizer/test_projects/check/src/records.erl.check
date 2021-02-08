@@ -1,0 +1,33 @@
+  1 -module(records).                          |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -record(rec1, {}).                         |         | 
+  6 -record(rec2, {}).                         |         | 
+  7 -record(rec3, {}).                         |         | 
+  8                                            |         | 
+  9 -spec mk_rec1_pos() -> #rec1{}.            |         | 
+ 10 mk_rec1_pos() -> #rec1{}.                  | OK      | 
+ 11                                            |         | 
+ 12 -spec mk_rec1_neg() -> #rec1{}.            |         | 
+ 13 mk_rec1_neg() -> #rec2{}.                  | ERROR   | #rec2{...}. Expected: #rec1{}, Got: #rec2{}
+ 14                                            |         | 
+ 15 -spec mk_rec1a_pos() -> #rec1{}.           |         | 
+ 16 mk_rec1a_pos() ->                          | OK      | 
+ 17     R = #rec1{},                           |         | 
+ 18     R.                                     |         | 
+ 19                                            |         | 
+ 20 -spec mk_rec1a_neg() -> #rec1{}.           |         | 
+ 21 mk_rec1a_neg() ->                          | ERROR   | 
+ 22     R = #rec2{},                           |         | 
+ 23     R.                                     |         | R. Expected: #rec1{}, Got: #rec2{}
+ 24                                            |         | 
+ 25 -spec mk_rec_pos(atom()) ->                |         | 
+ 26     #rec1{} | #rec2{}.                     |         | 
+ 27 mk_rec_pos(rec1) -> #rec1{};               | OK      | 
+ 28 mk_rec_pos(rec2) -> #rec2{}.               |         | 
+ 29                                            |         | 
+ 30 -spec mk_rec_neg(atom()) ->                |         | 
+ 31     #rec1{} | #rec3{}.                     |         | 
+ 32 mk_rec_neg(rec1) -> #rec1{};               | ERROR   | 
+ 33 mk_rec_neg(rec2) -> #rec2{}.               |         | #rec2{...}. Expected: #rec1{} | #rec3{}, Got: #rec2{}
