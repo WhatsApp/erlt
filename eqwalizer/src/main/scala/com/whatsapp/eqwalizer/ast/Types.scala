@@ -47,6 +47,7 @@ object Types {
   val booleanType: Type = UnionType(List(falseType, trueType))
   val floatType: Type = NumberType
   val integerType: Type = NumberType
+  val undefined: Type = AtomLitType("undefined")
 
   val builtinTypes: Map[String, Type] =
     Map(

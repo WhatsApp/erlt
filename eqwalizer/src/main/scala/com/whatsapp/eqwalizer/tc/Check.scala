@@ -63,7 +63,7 @@ final case class Check(module: String) {
     envAcc
   }
 
-  def checkExpr(expr: Expr, resTy: Type, env: Env): Env = {
+  def checkExpr(expr: Expr, resTy: Type, env: Env): Env =
     if (Subtype.subType(AnyType, resTy)) elab.elabExpr(expr, env)._2
     else
       expr match {
@@ -274,6 +274,62 @@ final case class Check(module: String) {
           }
           checkExpr(template, BinaryType, envAcc)
           env
+        case rCreate: RecordCreate =>
+          val recType = RecordType(rCreate.recName)
+          if (!Subtype.subType(recType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = recType)
+          else
+            checkRecordCreate(rCreate, env)
+        case rUpdate: RecordUpdate =>
+          val recType = RecordType(rUpdate.recName)
+          if (!Subtype.subType(recType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = recType)
+          else
+            checkRecordUpdate(rUpdate, env)
+        case RecordSelect(recExpr, recName, fieldName) =>
+          val recDecl = Util.getRecord(module, recName).get
+          val field = recDecl.fields.find(_.name == fieldName).get
+          val fieldT = field.tp
+          if (!Subtype.subType(fieldT, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = fieldT)
+          else
+            checkExpr(recExpr, RecordType(recName), env)
+        case RecordIndex(_, _) =>
+          val indT = integerType
+          if (!Subtype.subType(indT, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = indT)
+          else
+            env
       }
+
+  def checkRecordCreate(rCreate: RecordCreate, env: Env): Env = {
+    val RecordCreate(recName, fields) = rCreate
+    val recDecl = Util.getRecord(module, recName).get
+    val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+    val undefinedFields = fieldDecls.keySet -- fields.map(_.name)
+    for (uField <- undefinedFields) {
+      val fieldDecl = fieldDecls(uField)
+      if (fieldDecl.defaultValue.isEmpty && !Subtype.subType(undefined, fieldDecl.tp)) {
+        throw UndefinedField(rCreate.l, recName, uField)
+      }
+    }
+    var envAcc = env
+    for (field <- fields) {
+      val fieldDecl = fieldDecls(field.name)
+      envAcc = checkExpr(field.value, fieldDecl.tp, envAcc)
+    }
+    envAcc
+  }
+
+  def checkRecordUpdate(rUpdate: RecordUpdate, env: Env): Env = {
+    val RecordUpdate(recExpr, recName, fields) = rUpdate
+    var envAcc = checkExpr(recExpr, RecordType(recName), env)
+    val recDecl = Util.getRecord(module, recName).get
+    val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+    for (field <- fields) {
+      val fieldDecl = fieldDecls(field.name)
+      envAcc = checkExpr(field.value, fieldDecl.tp, envAcc)
+    }
+    envAcc
   }
 }

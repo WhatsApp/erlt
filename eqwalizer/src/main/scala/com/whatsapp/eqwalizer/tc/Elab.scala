@@ -221,6 +221,22 @@ final class Elab(module: String) {
         }
         Check(module).checkExpr(template, BinaryType, envAcc)
         (BinaryType, env)
+      case rCreate: RecordCreate =>
+        val recType = RecordType(rCreate.recName)
+        val env1 = Check(module).checkRecordCreate(rCreate, env)
+        (recType, env1)
+      case rUpdate: RecordUpdate =>
+        val recType = RecordType(rUpdate.recName)
+        val env1 = Check(module).checkRecordUpdate(rUpdate, env)
+        (recType, env1)
+      case RecordSelect(recExpr, recName, fieldName) =>
+        val recDecl = Util.getRecord(module, recName).get
+        val field = recDecl.fields.find(_.name == fieldName).get
+        val fieldT = field.tp
+        val env1 = Check(module).checkExpr(recExpr, RecordType(recName), env)
+        (fieldT, env1)
+      case RecordIndex(_, _) =>
+        (integerType, env)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
