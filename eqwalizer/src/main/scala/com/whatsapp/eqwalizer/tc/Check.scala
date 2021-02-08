@@ -23,8 +23,9 @@ import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final case class Check(module: String) {
-  val elab = new Elab(module)
-  val elabPat = new ElabPat(module)
+  private val elab = new Elab(module)
+  private val elabPat = new ElabPat(module)
+  private val elabGuard = new ElabGuard(module)
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
     val constrainedFunType = spec.types.head
@@ -50,7 +51,7 @@ final case class Check(module: String) {
   ): Env = {
     val allScopeVars = Vars.clauseVars(clause)
     val env1 = Util.enterScope(env0, allScopeVars)
-    val env2 = ElabGuard.elabGuards(clause.guards, env1)
+    val env2 = elabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
     val env4 = checkBlock(clause.body, resTy, env3)
     Util.exitScope(env0, env4, exportedVars)

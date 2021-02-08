@@ -36,5 +36,5 @@ object Guards {
   // Simplification. See https://fburl.com/binaryguards
   case class TestBinaryLit()(val l: Int) extends Test
 
-  case class TestRecordField(fieldName: String, test: Test)
+  case class TestRecordField(name: String, value: Test)
 }

@@ -23,6 +23,7 @@ import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final class Elab(module: String) {
   private val elabPat = new ElabPat(module)
+  private val elabGuard = new ElabGuard(module)
 
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
     var (elabType, envAcc) = elabExpr(exprs.head, env)
@@ -38,7 +39,7 @@ final class Elab(module: String) {
     val allScopeVars = Vars.clauseVars(clause)
     val env1 = Util.enterScope(env0, allScopeVars)
     val argTypes = List.fill(clause.pats.size)(AnyType)
-    val env2 = ElabGuard.elabGuards(clause.guards, env1)
+    val env2 = elabGuard.elabGuards(clause.guards, env1)
     val (_, env3) = elabPat.elabPats(clause.pats, argTypes, env2)
     val (eType, env4) = elabBlock(clause.body, env3)
     (eType, Util.exitScope(env0, env4, exportedVars))
