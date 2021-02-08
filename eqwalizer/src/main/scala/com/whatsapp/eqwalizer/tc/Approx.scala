@@ -35,7 +35,7 @@ object Approx {
       case UnionType(tys) =>
         tys.flatMap(extractListElem)
       case NilType =>
-        List(AnyType)
+        List(NoneType)
       case ListType(elemType) =>
         List(elemType)
       case _ =>
