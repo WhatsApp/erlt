@@ -102,7 +102,7 @@ final case class Check(module: String) {
         case LocalCall(id, args) =>
           Util.getFunType(module, id) match {
             case Some(FunType(argTys, fResTy)) =>
-              val env1 = Check(module).checkExprs(args, argTys, env)
+              val env1 = checkExprs(args, argTys, env)
               if (Subtype.subType(fResTy, resTy)) env1
               else throw TypeMismatch(expr.l, expr, expected = resTy, got = fResTy)
             case None =>
@@ -111,7 +111,7 @@ final case class Check(module: String) {
         case RemoteCall(fqn, args) =>
           Util.getFunType(fqn) match {
             case Some(FunType(argTys, fResTy)) =>
-              val env1 = Check(module).checkExprs(args, argTys, env)
+              val env1 = checkExprs(args, argTys, env)
               if (Subtype.subType(fResTy, resTy)) env1
               else throw TypeMismatch(expr.l, expr, expected = resTy, got = fResTy)
             case None =>
@@ -246,7 +246,7 @@ final case class Check(module: String) {
               val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
               envAcc = pEnv
             case Filter(fExpr) =>
-              envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+              envAcc = checkExpr(fExpr, booleanType, envAcc)
           }
           val (tType, _) = elab.elabExpr(template, envAcc)
           val elabType = ListType(tType)
@@ -270,7 +270,7 @@ final case class Check(module: String) {
               val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
               envAcc = pEnv
             case Filter(fExpr) =>
-              envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+              envAcc = checkExpr(fExpr, booleanType, envAcc)
           }
           checkExpr(template, BinaryType, envAcc)
           env
