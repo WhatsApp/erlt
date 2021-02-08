@@ -431,3 +431,8 @@ unzip2_neg([]) -> {[],[]};
 unzip2_neg([{H1, H2}|T]) ->
     {T1, T2} = unzip2_neg(T),
     {[H1|T1], [H2|T2]}.
+
+-spec wrong_list_neg() -> any().
+wrong_list_neg() ->
+    X = [1 | 2],
+    X.

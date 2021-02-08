@@ -431,3 +431,8 @@
 431 unzip2_neg([{H1, H2}|T]) ->                |         | 
 432     {T1, T2} = unzip2_neg(T),              |         | 
 433     {[H1|T1], [H2|T2]}.                    |         | {[H1 | T1], [H2 | T2]}. Expected: {[atom()] | [number()], [atom()] | [number()]}, Got: {[atom() | number()], [atom() |……
+434                                            |         | 
+435 -spec wrong_list_neg() -> any().           |         | 
+436 wrong_list_neg() ->                        | ERROR   | 
+437     X = [1 | 2],                           |         | number_expr. Expected: [term()], Got: number()
+438     X.                                     |         | 
