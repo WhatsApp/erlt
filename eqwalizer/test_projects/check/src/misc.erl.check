@@ -416,3 +416,18 @@
 416         A when is_atom(A) -> A;            |         | 
 417         X when is_number(X) -> number      |         | 
 418     end.                                   |         | 
+419                                            |         | 
+420 -spec unzip1_neg([{integer(),atom()}])     |         | 
+421         -> {[atom()], [integer()]}.        |         | 
+422 unzip1_neg([]) -> {[],[]};                 | ERROR   | 
+423 unzip1_neg([{H1, H2}|T]) ->                |         | 
+424     {T1, T2} = unzip1_neg(T),              |         | 
+425     {[H1|T1], [H2|T2]}.                    |         | {[H1 | T1], [H2 | T2]}. Expected: {[atom()], [number()]}, Got: {[number()] | [atom()], [atom()] | [number()]}
+426                                            |         | 
+427 -spec unzip2_neg([{integer(),atom()}])     |         | 
+428     -> {[atom()] | [integer()],            |         | 
+429         [atom()] | [integer()]}.           |         | 
+430 unzip2_neg([]) -> {[],[]};                 | OK      | 
+431 unzip2_neg([{H1, H2}|T]) ->                |         | 
+432     {T1, T2} = unzip2_neg(T),              |         | 
+433     {[H1|T1], [H2|T2]}.                    |         | 
