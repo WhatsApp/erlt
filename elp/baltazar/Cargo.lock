@@ -39,6 +39,7 @@ dependencies = [
  "anyhow",
  "crossbeam-channel",
  "env_logger",
+ "fxhash",
  "log",
  "lsp-server",
  "lsp-types",
@@ -47,6 +48,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_path_to_error",
+ "text-size",
  "vfs",
 ]
 
@@ -69,6 +71,12 @@ name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+
+[[package]]
+name = "byteorder"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae44d1a3d5a19df61dd0c8beb138458ac2a53a7ac09eba97d55592540004306b"
 
 [[package]]
 name = "cc"
@@ -131,6 +139,15 @@ name = "fst"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d79238883cf0307100b90aba4a755d8051a3182305dfe7f649a1e9dc0517006f"
+
+[[package]]
+name = "fxhash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c31b6d751ae2c7f11320402d34e41349dd1016f8d5d45e48c4312bc8625af50c"
+dependencies = [
+ "byteorder",
+]
 
 [[package]]
 name = "hermit-abi"
@@ -419,6 +436,12 @@ checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
 ]
+
+[[package]]
+name = "text-size"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "288cb548dbe72b652243ea797201f3d481a0609a967980fcc5b2315ea811560a"
 
 [[package]]
 name = "thread_local"
