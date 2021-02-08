@@ -18,7 +18,7 @@ package com.whatsapp.eqwalizer.ast
 
 import com.ericsson.otp.erlang._
 import com.whatsapp.eqwalizer.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstructDiagnostics}
-import com.whatsapp.eqwalizer.ast.Exprs.Clause
+import com.whatsapp.eqwalizer.ast.Exprs.{Clause, Expr}
 import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, Type}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeError
 
@@ -29,9 +29,12 @@ object Forms {
   case class Import(module: String, funs: List[Id])(val line: Int) extends Form
   case class ExportType(types: List[Id])(val line: Int) extends Form
   case class TypeDecl(id: Id, params: List[String], body: Type)(val line: Int) extends Form
+  case class RecDecl(name: String, fields: List[RecField])(val line: Int) extends Form
   case class FunSpec(id: Id, types: List[ConstrainedFunType])(val line: Int) extends Form
   case class FunDecl(id: Id, clauses: List[Clause])(val line: Int) extends Form
   case class File(file: String, start: Int)(val line: Int) extends Form
+
+  case class RecField(name: String, tp: Type, defaultValue: Option[Expr])(val line: Int)
 
   sealed trait SkippedForm extends Form
   case class SkippedTypeDecl(id: Id, diag: SkippedConstructDiagnostics)(val line: Int) extends SkippedForm

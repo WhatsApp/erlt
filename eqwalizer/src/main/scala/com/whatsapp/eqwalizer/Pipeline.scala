@@ -31,6 +31,7 @@ object Pipeline {
     forms.map {
       case s: FunSpec  => Globalize.globalizeSpec(m, s)
       case t: TypeDecl => Globalize.globalizeTypeDecl(m, t)
+      case r: RecDecl  => Globalize.globalizeRecDecl(m, r)
       case x           => x
     }
   }
@@ -39,6 +40,7 @@ object Pipeline {
     forms.map {
       case s: FunSpec  => Expand.expandFunSpec(s)
       case t: TypeDecl => Expand.expandTypeDecl(t)
+      case r: RecDecl  => Expand.expandRecDecl(r)
       case x           => x
     }
 

@@ -49,8 +49,10 @@ object Convert {
         Some(Import(m, ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export_type"), EList(typesIds, None))) =>
         Some(ExportType(typesIds.map(convertIdInAttr))(line.intValue))
-      case ETuple(List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(_, None))))) =>
-        Some(SkippedRecordDecl(name)(line.intValue))
+      case ETuple(
+            List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(fields, None))))
+          ) =>
+        Some(RecDecl(name, fields.map(recField))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("file"), ETuple(List(EString(file), ELong(start))))) =>
         Some(File(file, start.intValue)(line.intValue))
       case ETuple(List(EAtom("eof"), ELong(line))) =>
@@ -74,6 +76,32 @@ object Convert {
         val funId = Id(name, arity.intValue)
         try Some(FunDecl(funId, clauseSeq.map(convertClause))(line.intValue))
         catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedFunDecl(funId, d)(line.intValue)) }
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def recField(term: EObject): RecField =
+    term match {
+      case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit)) =>
+        RecField(atomLit(fieldNameLit), AnyType, None)(l.intValue)
+      case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit, expr)) =>
+        val defaultValue = convertExp(expr)
+        RecField(atomLit(fieldNameLit), AnyType, Some(defaultValue))(l.intValue)
+      case ETuple(List(EAtom("typed_record_field"), eUntypedField, eType)) =>
+        val (name, defaultValue, i) =
+          eUntypedField match {
+            case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit)) =>
+              (atomLit(fieldNameLit), None, l.intValue)
+            case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit, expr)) =>
+              val defaultValue = convertExp(expr)
+              (atomLit(fieldNameLit), Some(defaultValue), l.intValue)
+            // $COVERAGE-OFF$
+            case _ => throw new IllegalStateException()
+            // $COVERAGE-ON$
+          }
+        val tp = convertType(eType)
+        RecField(name, tp, defaultValue)(i)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
@@ -135,11 +163,14 @@ object Convert {
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyMap)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EList(assocTypes, _))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeMap)
-      case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordNameLit :: eFieldTypes, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(
-          line.intValue,
-          WIPDiagnostics.TypeRecord(atomLit(recordNameLit)),
-        )
+      case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordName :: eFieldTypes, None))) =>
+        if (eFieldTypes.isEmpty)
+          RecordType(atomLit(recordName))
+        else
+          throw WIPDiagnostics.SkippedConstructDiagnostics(
+            line.intValue,
+            WIPDiagnostics.RefinedRecord(atomLit(recordName)),
+          )
       case ETuple(List(EAtom("remote_type"), _, EList(List(moduleLit, typeNameLit, EList(args, None)), None))) =>
         RemoteType(
           RemoteId(atomLit(moduleLit), atomLit(typeNameLit), args.size),

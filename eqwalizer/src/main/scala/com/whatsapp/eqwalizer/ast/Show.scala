@@ -56,6 +56,8 @@ object Show {
         "reference()"
       case BinaryType =>
         "binary()"
+      case RecordType(n) =>
+        s"#$n{}"
     }
 
   def show(e: Expr): String = e match {

@@ -42,7 +42,7 @@ object WIPDiagnostics {
   case object TypeMap extends SkippedType {
     override def toString: String = "T: #{...}"
   }
-  case class TypeRecord(name: String) extends SkippedType {
+  case class RefinedRecord(name: String) extends SkippedType {
     override def toString: String = s"T: #$name{...}"
   }
   case class TypeUnOp(op: String) extends SkippedType {

@@ -68,226 +68,225 @@
  68     any_pair/0                           |         |                                | 
  69 ]).                                      |         |                                | 
  70                                          |         |                                | 
- 71 -record(test_record, {}).                | SKIPPED |                                | 
+ 71 -record(test_record, {}).                | LOADED  |                                | 
  72                                          |         |                                | 
  73 -opaque my_opaque() :: atom().           |         |                                | 
  74                                          |         |                                | 
- 75 %% IGNORED                               |         |                                | 
- 76 -type my_record() ::                     | SKIPPED |                                | 
- 77     #test_record{}.                      |         | T: #test_record{...}           | 
- 78                                          |         |                                | 
- 79 -type my_pair(A, B) ::                   | LOADED  |                                | 
- 80     {A, B}.                              |         |                                | 
- 81                                          |         |                                | 
- 82 -type my_any() ::                        | LOADED  |                                | 
- 83     any().                               |         |                                | 
- 84                                          |         |                                | 
- 85 -type my_none() ::                       | LOADED  |                                | 
- 86     none().                              |         |                                | 
- 87                                          |         |                                | 
- 88 -type my_pid() ::                        | LOADED  |                                | 
- 89     pid().                               |         |                                | 
- 90                                          |         |                                | 
- 91 -type my_port() ::                       | LOADED  |                                | 
- 92     port().                              |         |                                | 
- 93                                          |         |                                | 
- 94 -type my_reference() ::                  | LOADED  |                                | 
- 95     reference().                         |         |                                | 
- 96                                          |         |                                | 
- 97 -type my_nil1() ::                       | LOADED  |                                | 
- 98     [].                                  |         |                                | 
- 99                                          |         |                                | 
-100 -type my_nil2() ::                       | LOADED  |                                | 
-101     nil().                               |         |                                | 
-102                                          |         |                                | 
-103 -type my_atom() ::                       | LOADED  |                                | 
-104     atom().                              |         |                                | 
-105                                          |         |                                | 
-106 -type my_atom_literal() ::               | LOADED  |                                | 
-107     ok.                                  |         |                                | 
-108                                          |         |                                | 
-109 -type my_bitstring1() ::                 | SKIPPED |                                | 
-110     <<>>.                                |         | T: binary()                    | 
-111                                          |         |                                | 
-112 -type my_bitstring2() ::                 | SKIPPED |                                | 
-113     <<_:2>>.                             |         | T: binary()                    | 
-114                                          |         |                                | 
-115 -type my_bitstring3() ::                 | SKIPPED |                                | 
-116     <<_:_*2>>.                           |         | T: binary()                    | 
-117                                          |         |                                | 
-118 %%% functions                            |         |                                | 
-119                                          |         |                                | 
-120 -type my_fun_any() ::                    | SKIPPED |                                | 
-121     fun().                               |         | T: fun()                       | 
-122                                          |         |                                | 
-123 -type my_fun_any_arg() ::                | SKIPPED |                                | 
-124     fun((...) -> ok).                    |         | T: fun((...) -> Type)          | 
-125                                          |         |                                | 
-126 -type my_fun() ::                        | LOADED  |                                | 
-127     fun((number()) -> number()).         |         |                                | 
-128                                          |         |                                | 
-129 %% NUMBERS                               |         |                                | 
-130                                          |         |                                | 
-131 -type my_float() ::                      | LOADED  |                                | 
-132     float().                             |         |                                | 
-133                                          |         |                                | 
-134 -type my_integer() ::                    | LOADED  |                                | 
-135     integer().                           |         |                                | 
-136                                          |         |                                | 
-137 -type my_integer_literal() ::            | LOADED  |                                | 
-138     1.                                   |         |                                | 
-139                                          |         |                                | 
-140 -type my_integer_range() ::              | LOADED  |                                | 
-141     [0..33].                             |         |                                | 
-142                                          |         |                                | 
-143 %% TODO - Ops                            |         |                                | 
-144                                          |         |                                | 
-145 -type my_list(A) ::                      | LOADED  |                                | 
-146     list(A).                             |         |                                | 
-147                                          |         |                                | 
-148 -type                                    | SKIPPED |                                | 
-149 my_maybe_improper_list2(T1, T2) ::       |         |                                | 
-150     maybe_improper_list(T1, T2).         |         | T: maybe_improper_list()       | 
-151                                          |         |                                | 
-152 -type                                    | SKIPPED |                                | 
-153 my_nonempty_improper_list2(T1, T2) ::    |         |                                | 
-154     nonempty_improper_list(T1, T2).      |         | T: nonempty_improper_list()    | 
-155                                          |         |                                | 
-156 -type my_nonempty_list1(T) ::            | SKIPPED |                                | 
-157     nonempty_list(T).                    |         | T: nonempty_list()             | 
-158                                          |         |                                | 
-159 -type my_tuple() ::                      | SKIPPED |                                | 
-160     tuple().                             |         | T: tuple()                     | 
-161                                          |         |                                | 
-162 %%%%%%%%                                 |         |                                | 
-163                                          |         |                                | 
-164 -type my_term() ::                       | LOADED  |                                | 
-165     term().                              |         |                                | 
-166                                          |         |                                | 
-167 -type my_binary() ::                     | LOADED  |                                | 
-168     binary().                            |         |                                | 
-169                                          |         |                                | 
-170 -type my_bitstring() ::                  | LOADED  |                                | 
-171     binary().                            |         |                                | 
-172                                          |         |                                | 
-173 -type my_boolean() ::                    | LOADED  |                                | 
-174     boolean().                           |         |                                | 
-175                                          |         |                                | 
-176 -type my_byte() ::                       | LOADED  |                                | 
-177     byte().                              |         |                                | 
-178                                          |         |                                | 
-179 -type my_char()  ::                      | LOADED  |                                | 
-180     char().                              |         |                                | 
-181                                          |         |                                | 
-182 -type my_nil() ::                        | LOADED  |                                | 
-183     nil().                               |         |                                | 
-184                                          |         |                                | 
-185 -type my_number() ::                     | LOADED  |                                | 
-186     number().                            |         |                                | 
-187                                          |         |                                | 
-188 -type my_list() ::                       | SKIPPED |                                | 
-189     list().                              |         | T: list()                      | 
-190                                          |         |                                | 
-191 -type my_maybe_improper_list0() ::       | SKIPPED |                                | 
-192     maybe_improper_list().               |         | T: maybe_improper_list()       | 
-193                                          |         |                                | 
-194 -type my_nonempty_list0() ::             | SKIPPED |                                | 
-195     nonempty_list().                     |         | T: nonempty_list()             | 
-196                                          |         |                                | 
-197 -type my_string() ::                     | SKIPPED |                                | 
-198     string().                            |         | T: string()                    | 
-199                                          |         |                                | 
-200 -type my_nonempty_string() ::            | SKIPPED |                                | 
-201     nonempty_string().                   |         | T: nonempty_string()           | 
-202                                          |         |                                | 
-203 -type my_iodata() ::                     | SKIPPED |                                | 
-204     iodata().                            |         | T: iodata()                    | 
-205                                          |         |                                | 
-206 -type my_iolist() ::                     | SKIPPED |                                | 
-207     iolist().                            |         | T: iolist()                    | 
-208                                          |         |                                | 
-209 -type my_map() ::                        | SKIPPED |                                | 
-210     map().                               |         | T: map()                       | 
-211                                          |         |                                | 
-212 -type my_function() ::                   | SKIPPED |                                | 
-213     function().                          |         | T: function()                  | 
-214                                          |         |                                | 
-215 -type my_module() ::                     | LOADED  |                                | 
-216     module().                            |         |                                | 
-217                                          |         |                                | 
-218 -type my_mfa() ::                        | LOADED  |                                | 
-219     mfa().                               |         |                                | 
-220                                          |         |                                | 
-221 -type my_arity() ::                      | LOADED  |                                | 
-222     arity().                             |         |                                | 
-223                                          |         |                                | 
-224 -type my_identifier() ::                 | LOADED  |                                | 
-225     identifier().                        |         |                                | 
-226                                          |         |                                | 
-227 -type my_node() ::                       | LOADED  |                                | 
-228     node().                              |         |                                | 
-229                                          |         |                                | 
-230 -type my_timeout() ::                    | LOADED  |                                | 
-231     timeout().                           |         |                                | 
-232                                          |         |                                | 
-233 -type my_no_return() ::                  | LOADED  |                                | 
-234     no_return().                         |         |                                | 
-235                                          |         |                                | 
-236 -type my_non_neg_integer() ::            | LOADED  |                                | 
-237     non_neg_integer().                   |         |                                | 
-238                                          |         |                                | 
-239 -type my_pos_integer() ::                | LOADED  |                                | 
-240     pos_integer().                       |         |                                | 
-241                                          |         |                                | 
-242 -type my_neg_integer() ::                | LOADED  |                                | 
-243     neg_integer().                       |         |                                | 
-244                                          |         |                                | 
-245 %% the same logic for types in specs     |         |                                | 
-246                                          |         |                                | 
-247 -spec                                    | LOADED  |                                | 
-248 number_id(number()) ->                   |         |                                | 
-249           number().                      |         |                                | 
-250 number_id(X) -> X.                       | LOADED  |                                | 
-251                                          |         |                                | 
-252 -spec                                    | LOADED  |                                | 
-253 atom_id(Atom :: atom()) -> atom().       |         |                                | 
-254 atom_id(A) -> A.                         | LOADED  |                                | 
-255                                          |         |                                | 
-256 -spec                                    | SKIPPED |                                | 
-257 record_id(#test_record{}) ->             |         | T: #test_record{...}           | 
-258           #test_record{}.                |         |                                | 
-259 record_id(X) -> X.                       | LOADED  |                                | 
-260                                          |         |                                | 
-261 -spec                                    | LOADED  |                                | 
-262 my_number_id(my_number()) ->             |         |                                | 
-263              my_number().                |         |                                | 
-264 my_number_id(N) -> N.                    | LOADED  |                                | 
-265                                          |         |                                | 
-266 -type                                    | LOADED  |                                | 
-267 atom_or_number() :: atom() | number().   |         |                                | 
-268                                          |         |                                | 
-269 -type op_type1() :: -1.                  | SKIPPED | T: - _                         | 
-270 -type op_type2() :: 1 + 2.               | SKIPPED | T: _ + _                       | 
-271                                          |         |                                | 
-272 -type char_lit() :: $a.                  | LOADED  |                                | 
-273                                          |         |                                | 
-274 -type prop_map() ::                      | SKIPPED |                                | 
-275     #{a := number(), b := atom()}.       |         | T: #{...}                      | 
-276                                          |         |                                | 
-277 -type my_booleans() :: my_list(boolean()…… LOADED  |                                | 
-278                                          |         |                                | 
-279 -type my_unary_fun(A, B) ::              | LOADED  |                                | 
-280     fun((A) -> B).                       |         |                                | 
-281 -type my_boolean_unary_fun() ::          | LOADED  |                                | 
-282     my_unary_fun(boolean(), boolean()).  |         |                                | 
-283                                          |         |                                | 
-284 -spec atom_list_id(AList) -> AList when …… LOADED  |                                | 
-285 atom_list_id(AList) -> AList.            | LOADED  |                                | 
-286                                          |         |                                | 
-287 -type any_pair() :: {_, _}.              | LOADED  |                                | 
-288                                          |         |                                | 
-289 -spec inter                              | SKIPPED | Intersection                   | 
-290     (ok) -> nok;                         |         |                                | 
-291     (nok) -> ok.                         |         |                                | 
-292 inter(ok) -> nok;                        | LOADED  |                                | 
-293 inter(nok) -> ok.                        |         |                                | 
+ 75 -type my_record() ::                     | LOADED  |                                | 
+ 76     #test_record{}.                      |         |                                | 
+ 77                                          |         |                                | 
+ 78 -type my_pair(A, B) ::                   | LOADED  |                                | 
+ 79     {A, B}.                              |         |                                | 
+ 80                                          |         |                                | 
+ 81 -type my_any() ::                        | LOADED  |                                | 
+ 82     any().                               |         |                                | 
+ 83                                          |         |                                | 
+ 84 -type my_none() ::                       | LOADED  |                                | 
+ 85     none().                              |         |                                | 
+ 86                                          |         |                                | 
+ 87 -type my_pid() ::                        | LOADED  |                                | 
+ 88     pid().                               |         |                                | 
+ 89                                          |         |                                | 
+ 90 -type my_port() ::                       | LOADED  |                                | 
+ 91     port().                              |         |                                | 
+ 92                                          |         |                                | 
+ 93 -type my_reference() ::                  | LOADED  |                                | 
+ 94     reference().                         |         |                                | 
+ 95                                          |         |                                | 
+ 96 -type my_nil1() ::                       | LOADED  |                                | 
+ 97     [].                                  |         |                                | 
+ 98                                          |         |                                | 
+ 99 -type my_nil2() ::                       | LOADED  |                                | 
+100     nil().                               |         |                                | 
+101                                          |         |                                | 
+102 -type my_atom() ::                       | LOADED  |                                | 
+103     atom().                              |         |                                | 
+104                                          |         |                                | 
+105 -type my_atom_literal() ::               | LOADED  |                                | 
+106     ok.                                  |         |                                | 
+107                                          |         |                                | 
+108 -type my_bitstring1() ::                 | SKIPPED |                                | 
+109     <<>>.                                |         | T: binary()                    | 
+110                                          |         |                                | 
+111 -type my_bitstring2() ::                 | SKIPPED |                                | 
+112     <<_:2>>.                             |         | T: binary()                    | 
+113                                          |         |                                | 
+114 -type my_bitstring3() ::                 | SKIPPED |                                | 
+115     <<_:_*2>>.                           |         | T: binary()                    | 
+116                                          |         |                                | 
+117 %%% functions                            |         |                                | 
+118                                          |         |                                | 
+119 -type my_fun_any() ::                    | SKIPPED |                                | 
+120     fun().                               |         | T: fun()                       | 
+121                                          |         |                                | 
+122 -type my_fun_any_arg() ::                | SKIPPED |                                | 
+123     fun((...) -> ok).                    |         | T: fun((...) -> Type)          | 
+124                                          |         |                                | 
+125 -type my_fun() ::                        | LOADED  |                                | 
+126     fun((number()) -> number()).         |         |                                | 
+127                                          |         |                                | 
+128 %% NUMBERS                               |         |                                | 
+129                                          |         |                                | 
+130 -type my_float() ::                      | LOADED  |                                | 
+131     float().                             |         |                                | 
+132                                          |         |                                | 
+133 -type my_integer() ::                    | LOADED  |                                | 
+134     integer().                           |         |                                | 
+135                                          |         |                                | 
+136 -type my_integer_literal() ::            | LOADED  |                                | 
+137     1.                                   |         |                                | 
+138                                          |         |                                | 
+139 -type my_integer_range() ::              | LOADED  |                                | 
+140     [0..33].                             |         |                                | 
+141                                          |         |                                | 
+142 %% TODO - Ops                            |         |                                | 
+143                                          |         |                                | 
+144 -type my_list(A) ::                      | LOADED  |                                | 
+145     list(A).                             |         |                                | 
+146                                          |         |                                | 
+147 -type                                    | SKIPPED |                                | 
+148 my_maybe_improper_list2(T1, T2) ::       |         |                                | 
+149     maybe_improper_list(T1, T2).         |         | T: maybe_improper_list()       | 
+150                                          |         |                                | 
+151 -type                                    | SKIPPED |                                | 
+152 my_nonempty_improper_list2(T1, T2) ::    |         |                                | 
+153     nonempty_improper_list(T1, T2).      |         | T: nonempty_improper_list()    | 
+154                                          |         |                                | 
+155 -type my_nonempty_list1(T) ::            | SKIPPED |                                | 
+156     nonempty_list(T).                    |         | T: nonempty_list()             | 
+157                                          |         |                                | 
+158 -type my_tuple() ::                      | SKIPPED |                                | 
+159     tuple().                             |         | T: tuple()                     | 
+160                                          |         |                                | 
+161 %%%%%%%%                                 |         |                                | 
+162                                          |         |                                | 
+163 -type my_term() ::                       | LOADED  |                                | 
+164     term().                              |         |                                | 
+165                                          |         |                                | 
+166 -type my_binary() ::                     | LOADED  |                                | 
+167     binary().                            |         |                                | 
+168                                          |         |                                | 
+169 -type my_bitstring() ::                  | LOADED  |                                | 
+170     binary().                            |         |                                | 
+171                                          |         |                                | 
+172 -type my_boolean() ::                    | LOADED  |                                | 
+173     boolean().                           |         |                                | 
+174                                          |         |                                | 
+175 -type my_byte() ::                       | LOADED  |                                | 
+176     byte().                              |         |                                | 
+177                                          |         |                                | 
+178 -type my_char()  ::                      | LOADED  |                                | 
+179     char().                              |         |                                | 
+180                                          |         |                                | 
+181 -type my_nil() ::                        | LOADED  |                                | 
+182     nil().                               |         |                                | 
+183                                          |         |                                | 
+184 -type my_number() ::                     | LOADED  |                                | 
+185     number().                            |         |                                | 
+186                                          |         |                                | 
+187 -type my_list() ::                       | SKIPPED |                                | 
+188     list().                              |         | T: list()                      | 
+189                                          |         |                                | 
+190 -type my_maybe_improper_list0() ::       | SKIPPED |                                | 
+191     maybe_improper_list().               |         | T: maybe_improper_list()       | 
+192                                          |         |                                | 
+193 -type my_nonempty_list0() ::             | SKIPPED |                                | 
+194     nonempty_list().                     |         | T: nonempty_list()             | 
+195                                          |         |                                | 
+196 -type my_string() ::                     | SKIPPED |                                | 
+197     string().                            |         | T: string()                    | 
+198                                          |         |                                | 
+199 -type my_nonempty_string() ::            | SKIPPED |                                | 
+200     nonempty_string().                   |         | T: nonempty_string()           | 
+201                                          |         |                                | 
+202 -type my_iodata() ::                     | SKIPPED |                                | 
+203     iodata().                            |         | T: iodata()                    | 
+204                                          |         |                                | 
+205 -type my_iolist() ::                     | SKIPPED |                                | 
+206     iolist().                            |         | T: iolist()                    | 
+207                                          |         |                                | 
+208 -type my_map() ::                        | SKIPPED |                                | 
+209     map().                               |         | T: map()                       | 
+210                                          |         |                                | 
+211 -type my_function() ::                   | SKIPPED |                                | 
+212     function().                          |         | T: function()                  | 
+213                                          |         |                                | 
+214 -type my_module() ::                     | LOADED  |                                | 
+215     module().                            |         |                                | 
+216                                          |         |                                | 
+217 -type my_mfa() ::                        | LOADED  |                                | 
+218     mfa().                               |         |                                | 
+219                                          |         |                                | 
+220 -type my_arity() ::                      | LOADED  |                                | 
+221     arity().                             |         |                                | 
+222                                          |         |                                | 
+223 -type my_identifier() ::                 | LOADED  |                                | 
+224     identifier().                        |         |                                | 
+225                                          |         |                                | 
+226 -type my_node() ::                       | LOADED  |                                | 
+227     node().                              |         |                                | 
+228                                          |         |                                | 
+229 -type my_timeout() ::                    | LOADED  |                                | 
+230     timeout().                           |         |                                | 
+231                                          |         |                                | 
+232 -type my_no_return() ::                  | LOADED  |                                | 
+233     no_return().                         |         |                                | 
+234                                          |         |                                | 
+235 -type my_non_neg_integer() ::            | LOADED  |                                | 
+236     non_neg_integer().                   |         |                                | 
+237                                          |         |                                | 
+238 -type my_pos_integer() ::                | LOADED  |                                | 
+239     pos_integer().                       |         |                                | 
+240                                          |         |                                | 
+241 -type my_neg_integer() ::                | LOADED  |                                | 
+242     neg_integer().                       |         |                                | 
+243                                          |         |                                | 
+244 %% the same logic for types in specs     |         |                                | 
+245                                          |         |                                | 
+246 -spec                                    | LOADED  |                                | 
+247 number_id(number()) ->                   |         |                                | 
+248           number().                      |         |                                | 
+249 number_id(X) -> X.                       | LOADED  |                                | 
+250                                          |         |                                | 
+251 -spec                                    | LOADED  |                                | 
+252 atom_id(Atom :: atom()) -> atom().       |         |                                | 
+253 atom_id(A) -> A.                         | LOADED  |                                | 
+254                                          |         |                                | 
+255 -spec                                    | LOADED  |                                | 
+256 record_id(#test_record{}) ->             |         |                                | 
+257           #test_record{}.                |         |                                | 
+258 record_id(X) -> X.                       | LOADED  |                                | 
+259                                          |         |                                | 
+260 -spec                                    | LOADED  |                                | 
+261 my_number_id(my_number()) ->             |         |                                | 
+262              my_number().                |         |                                | 
+263 my_number_id(N) -> N.                    | LOADED  |                                | 
+264                                          |         |                                | 
+265 -type                                    | LOADED  |                                | 
+266 atom_or_number() :: atom() | number().   |         |                                | 
+267                                          |         |                                | 
+268 -type op_type1() :: -1.                  | SKIPPED | T: - _                         | 
+269 -type op_type2() :: 1 + 2.               | SKIPPED | T: _ + _                       | 
+270                                          |         |                                | 
+271 -type char_lit() :: $a.                  | LOADED  |                                | 
+272                                          |         |                                | 
+273 -type prop_map() ::                      | SKIPPED |                                | 
+274     #{a := number(), b := atom()}.       |         | T: #{...}                      | 
+275                                          |         |                                | 
+276 -type my_booleans() :: my_list(boolean()…… LOADED  |                                | 
+277                                          |         |                                | 
+278 -type my_unary_fun(A, B) ::              | LOADED  |                                | 
+279     fun((A) -> B).                       |         |                                | 
+280 -type my_boolean_unary_fun() ::          | LOADED  |                                | 
+281     my_unary_fun(boolean(), boolean()).  |         |                                | 
+282                                          |         |                                | 
+283 -spec atom_list_id(AList) -> AList when …… LOADED  |                                | 
+284 atom_list_id(AList) -> AList.            | LOADED  |                                | 
+285                                          |         |                                | 
+286 -type any_pair() :: {_, _}.              | LOADED  |                                | 
+287                                          |         |                                | 
+288 -spec inter                              | SKIPPED | Intersection                   | 
+289     (ok) -> nok;                         |         |                                | 
+290     (nok) -> ok.                         |         |                                | 
+291 inter(ok) -> nok;                        | LOADED  |                                | 
+292 inter(nok) -> ok.                        |         |                                | 

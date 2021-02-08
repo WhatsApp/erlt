@@ -72,7 +72,6 @@
 
 -opaque my_opaque() :: atom().
 
-%% IGNORED
 -type my_record() ::
     #test_record{}.
 
