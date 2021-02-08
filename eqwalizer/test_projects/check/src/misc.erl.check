@@ -124,7 +124,7 @@
 124 test31_neg() -> fun test30_neg/0.          | ERROR   | test30_neg/0. Expected: 'atom', Got: fun(() -> 'atom')
 125                                            |         | 
 126 -spec test32_neg() -> atom.                |         | 
-127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | misc_lib:boolean_id/1. Expected: 'atom', Got: fun(('false' | 'true') -> 'false……
+127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | misc_lib:boolean_id/1. Expected: 'atom', Got: fun(('false' | 'true') -> 'false' | 'true')
 128                                            |         | 
 129 -spec test33_pos(a | b, b | c) -> b.       |         | 
 130 test33_pos(AB, BC) ->                      | OK      | 

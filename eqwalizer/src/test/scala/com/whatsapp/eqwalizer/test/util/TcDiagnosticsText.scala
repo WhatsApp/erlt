@@ -61,7 +61,7 @@ object TcDiagnosticsText {
         if (text.length <= width) text.padTo(width, ' ') ++ " |"
         else text.take(width) ++ "……"
       val diagText = status.map(_.toString).getOrElse("").colTrim(7)
-      val errorText = error.map(_.msg).getOrElse("").colTrim(80, lastColumn = true)
+      val errorText = error.map(_.msg).getOrElse("").colTrim(120, lastColumn = true)
       s"$lineNum $lineText $diagText | $errorText"
     }
   }
