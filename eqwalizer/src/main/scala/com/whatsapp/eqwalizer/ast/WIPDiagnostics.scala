@@ -93,9 +93,6 @@ object WIPDiagnostics {
   case object ExpListSubtract extends SkippedExpr {
     override def toString: String = "E: _ -- _"
   }
-  case class TestRecord(name: String) extends SkippedGuard {
-    override def toString: String = s"G: #$name{...}"
-  }
   case object TestMap extends SkippedExpr {
     override def toString: String = "G: #{...}"
   }

@@ -467,12 +467,12 @@ object Convert {
         TestBinOp(op, convertTest(t1), convertTest(t2))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t)) =>
         TestUnOp(op, convertTest(t))(l.intValue)
-      case ETuple(List(EAtom("record"), ELong(l), EAtom(recordName), EList(_, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
-      case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recordName), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
-      case ETuple(List(EAtom("record_field"), ELong(l), eTest, EAtom(recordName), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
+      case ETuple(List(EAtom("record"), ELong(l), EAtom(recName), EList(eFields, None))) =>
+        TestRecordCreate(recName, eFields.map(convertTestRecordField))(l.intValue)
+      case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recName), eFieldName)) =>
+        TestRecordIndex(recName, atomLit(eFieldName))(l.intValue)
+      case ETuple(List(EAtom("record_field"), ELong(l), eTest, EAtom(recName), eFieldName)) =>
+        TestRecordSelect(convertTest(eTest), recName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), EList(_, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestMap)
       case ETuple(List(EAtom("map"), ELong(l), _, EList(_, None))) =>
@@ -504,6 +504,11 @@ object Convert {
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertTestRecordField(term: EObject): TestRecordField = {
+    val ETuple(List(EAtom("record_field"), _, eName, eVal)) = term
+    TestRecordField(atomLit(eName), convertTest(eVal))
+  }
 
   private def convertSpecifier(eSpecifier: EObject): Specifier = {
     val unsignedSpec = eSpecifier match {

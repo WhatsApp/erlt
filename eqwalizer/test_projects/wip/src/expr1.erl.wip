@@ -177,14 +177,14 @@
 177                                          |         |                                | 
 178 binop_guard(X, Y) when X + Y -> Y.       | LOADED  |                                | 
 179                                          |         |                                | 
-180 record_guard(X, Y)                       | SKIPPED |                                | 
-181     when #test_rec{} -> Y.               |         | G: #test_rec{...}              | 
+180 record_guard(X, Y)                       | LOADED  |                                | 
+181     when #test_rec{} -> Y.               |         |                                | 
 182                                          |         |                                | 
-183 record_index_guard(X, Y)                 | SKIPPED |                                | 
-184     when #test_rec.id -> Y.              |         | G: #test_rec{...}              | 
+183 record_index_guard(X, Y)                 | LOADED  |                                | 
+184     when #test_rec.id -> Y.              |         |                                | 
 185                                          |         |                                | 
-186 record_field_guard(X)                    | SKIPPED |                                | 
-187     when X#test_rec.id -> ok.            |         | G: #test_rec{...}              | 
+186 record_field_guard(X)                    | LOADED  |                                | 
+187     when X#test_rec.id -> ok.            |         |                                | 
 188                                          |         |                                | 
 189 map_guard(X)                             | SKIPPED |                                | 
 190     when #{} -> ok.                      |         | G: #{...}                      | 
