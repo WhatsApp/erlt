@@ -109,5 +109,13 @@ object Show {
       "[ || ]"
     case BComprehension(_, _) =>
       "<< || >>"
+    case RecordCreate(recName, _) =>
+      s"#$recName{...}"
+    case RecordUpdate(_, recName, _) =>
+      s"...#$recName{...}"
+    case RecordSelect(_, recName, fieldName) =>
+      s"...#$recName.$fieldName"
+    case RecordIndex(recName, fieldName) =>
+      s"#$recName.$fieldName"
   }
 }

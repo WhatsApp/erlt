@@ -111,7 +111,18 @@ object Vars {
       Set.empty
     case BComprehension(_, _) =>
       Set.empty
+    case RecordCreate(_, fields) =>
+      fields.flatMap(fieldVars).toSet
+    case RecordUpdate(e, recName, fields) =>
+      exprVars(e) ++ fields.flatMap(fieldVars)
+    case RecordSelect(e, _, _) =>
+      exprVars(e)
+    case RecordIndex(_, _) =>
+      Set.empty
   }
+
+  private def fieldVars(recordField: RecordField): Set[String] =
+    exprVars(recordField.value)
 
   def clausesVars(clauses: List[Clause]): Set[String] =
     clauses.map(clauseVars).reduce(_ intersect _)

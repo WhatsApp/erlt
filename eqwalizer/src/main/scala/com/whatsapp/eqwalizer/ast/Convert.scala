@@ -263,13 +263,13 @@ object Convert {
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), exp)) =>
         UnOp(op, convertExp(exp))(l.intValue)
       case ETuple(List(EAtom("record"), ELong(l), EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordCreate(recordName, eRecordFieldExps.map(convertRecordField))(l.intValue)
       case ETuple(List(EAtom("record"), ELong(l), eExp, EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordUpdate(convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))(l.intValue)
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recordName), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordIndex(recordName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("record_field"), ELong(l), eExp, EAtom(recordName), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordSelect(convertExp(eExp), recordName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), EList(eAssocs, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
@@ -353,6 +353,15 @@ object Convert {
         NumberLit()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpString)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def convertRecordField(term: EObject): RecordField =
+    term match {
+      case ETuple(List(EAtom("record_field"), _anno, eName, exp)) =>
+        RecordField(atomLit(eName), convertExp(exp))
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$

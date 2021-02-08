@@ -44,17 +44,17 @@
  44 bin_op(X, Y) ->                          | LOADED  |                                | 
  45     X andalso Y.                         |         |                                | 
  46                                          |         |                                | 
- 47 record_create() ->                       | SKIPPED |                                | 
- 48     #test_rec{}.                         |         | E: #test_rec{...}              | 
+ 47 record_create() ->                       | LOADED  |                                | 
+ 48     #test_rec{}.                         |         |                                | 
  49                                          |         |                                | 
- 50 record_update(Rec) ->                    | SKIPPED |                                | 
- 51     Rec#test_rec{id = 1}.                |         | E: #test_rec{...}              | 
+ 50 record_update(Rec) ->                    | LOADED  |                                | 
+ 51     Rec#test_rec{id = 1}.                |         |                                | 
  52                                          |         |                                | 
- 53 record_select(Rec) ->                    | SKIPPED |                                | 
- 54     Rec#test_rec.id.                     |         | E: #test_rec{...}              | 
+ 53 record_select(Rec) ->                    | LOADED  |                                | 
+ 54     Rec#test_rec.id.                     |         |                                | 
  55                                          |         |                                | 
- 56 record_index() ->                        | SKIPPED |                                | 
- 57     #test_rec.id.                        |         | E: #test_rec{...}              | 
+ 56 record_index() ->                        | LOADED  |                                | 
+ 57     #test_rec.id.                        |         |                                | 
  58                                          |         |                                | 
  59 map_create() ->                          | SKIPPED |                                | 
  60     #{id => 1}.                          |         | E: #{...}                      | 
