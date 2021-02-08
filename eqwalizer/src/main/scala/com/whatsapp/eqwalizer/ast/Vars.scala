@@ -44,6 +44,10 @@ object Vars {
         patVars(arg1) ++ patVars(arg2)
       case PatBinary(elems) =>
         elems.flatMap(binaryElemVars).toSet
+      case PatRecord(_, fields) =>
+        fields.flatMap(f => patVars(f.pat)).toSet
+      case PatRecordIndex(_, _) =>
+        Set.empty
     }
 
   private def binaryElemVars(elem: PatBinaryElem): Set[String] = {

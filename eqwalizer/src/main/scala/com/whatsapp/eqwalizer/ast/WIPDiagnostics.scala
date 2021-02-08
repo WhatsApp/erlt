@@ -63,9 +63,6 @@ object WIPDiagnostics {
   case object PatListConcat extends SkippedPat {
     override def toString: String = "P: _ ++ _"
   }
-  case class PatRecord(name: String) extends SkippedPat {
-    override def toString: String = s"P: #$name{...}"
-  }
   case object PatString extends SkippedPat {
     override def toString: String = """P: "...""""
   }

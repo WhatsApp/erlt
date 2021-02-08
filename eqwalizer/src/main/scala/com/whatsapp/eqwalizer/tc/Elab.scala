@@ -22,6 +22,8 @@ import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final class Elab(module: String) {
+  private val elabPat = new ElabPat(module)
+
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
     var (elabType, envAcc) = elabExpr(exprs.head, env)
     for (expr <- exprs.tail) {
@@ -37,7 +39,7 @@ final class Elab(module: String) {
     val env1 = Util.enterScope(env0, allScopeVars)
     val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = ElabGuard.elabGuards(clause.guards, env1)
-    val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
+    val (_, env3) = elabPat.elabPats(clause.pats, argTypes, env2)
     val (eType, env4) = elabBlock(clause.body, env3)
     (eType, Util.exitScope(env0, env4, exportedVars))
   }
@@ -115,7 +117,7 @@ final class Elab(module: String) {
         (UnionType(ts), Approx.joinEnvs(envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
-        ElabPat.elabPat(mPat, ty, env1)
+        elabPat.elabPat(mPat, ty, env1)
       case UnOp(op, arg) =>
         op match {
           case "not" =>
@@ -191,11 +193,11 @@ final class Elab(module: String) {
             if (!Subtype.subType(gT, ListType(AnyType)))
               throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
             val Some(ListType(gElemT)) = Approx.asListType(gT)
-            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
             envAcc = pEnv
           case BGenerate(gPat, gExpr) =>
             envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
-            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
             envAcc = pEnv
           case Filter(fExpr) =>
             envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
@@ -210,11 +212,11 @@ final class Elab(module: String) {
             if (!Subtype.subType(gT, ListType(AnyType)))
               throw TypeMismatch(expr.l, expr, expected = ListType(AnyType), got = gT)
             val Some(ListType(gElemT)) = Approx.asListType(gT)
-            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
             envAcc = pEnv
           case BGenerate(gPat, gExpr) =>
             envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
-            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
             envAcc = pEnv
           case Filter(fExpr) =>
             envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)

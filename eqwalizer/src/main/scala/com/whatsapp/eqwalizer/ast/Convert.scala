@@ -22,7 +22,7 @@ import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Guards._
 import com.whatsapp.eqwalizer.ast.Pats._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.io.EData._
+import com.whatsapp.eqwalizer.io.EData.{ETuple, _}
 
 object Convert {
   private val specifiers: Map[String, Specifier] =
@@ -411,16 +411,21 @@ object Convert {
         }
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), p)) =>
         PatUnOp(op, convertPat(p))(l.intValue)
-      case ETuple(List(EAtom("record"), ELong(l), EAtom(name), EList(eRecordFieldPatterns, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
+      case ETuple(List(EAtom("record"), ELong(l), EAtom(name), EList(eFields, None))) =>
+        PatRecord(name, eFields.map(convertPatRecordField))(l.intValue)
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(name), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
+        PatRecordIndex(name, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatMap)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertPatRecordField(term: EObject): PatRecordField = {
+    val ETuple(List(EAtom("record_field"), _, eName, ePat)) = term
+    PatRecordField(atomLit(eName), convertPat(ePat))
+  }
 
   private def convertPatBinaryElem(e: EObject): PatBinaryElem = {
     val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e

@@ -102,3 +102,30 @@ select1_neg(Foo) ->
 select2_neg(Foo) ->
     Id = Foo#foo.name,
     Id.
+
+-spec rec_index_pat_pos(any())
+    -> integer().
+rec_index_pat_pos(#foo.id = I) -> I.
+
+-spec rec_index_pat_neg(any())
+        -> atom().
+rec_index_pat_neg(#foo.id = I) -> I.
+
+-spec rec_pat_pos(any())
+        -> {integer(), atom()}.
+rec_pat_pos(#foo{id = I, name = N}) ->
+    {I, N}.
+
+-spec rec_pat_neg(any())
+        -> {integer(), atom()}.
+rec_pat_neg(#foo{id = I, name = N}) ->
+    {N, I}.
+
+-spec pat_fields(#any_foo{}) ->
+    {#foo{}, #foo{}}.
+pat_fields(
+    #any_foo{
+        id = (#foo{} = I),
+        name = (#foo{} = N)
+    }
+) -> {I, N}.

@@ -102,3 +102,30 @@
 102 select2_neg(Foo) ->                        | ERROR   | 
 103     Id = Foo#foo.name,                     |         | 
 104     Id.                                    |         | Id. Expected: number(), Got: atom()
+105                                            |         | 
+106 -spec rec_index_pat_pos(any())             |         | 
+107     -> integer().                          |         | 
+108 rec_index_pat_pos(#foo.id = I) -> I.       | OK      | 
+109                                            |         | 
+110 -spec rec_index_pat_neg(any())             |         | 
+111         -> atom().                         |         | 
+112 rec_index_pat_neg(#foo.id = I) -> I.       | ERROR   | I. Expected: atom(), Got: number()
+113                                            |         | 
+114 -spec rec_pat_pos(any())                   |         | 
+115         -> {integer(), atom()}.            |         | 
+116 rec_pat_pos(#foo{id = I, name = N}) ->     | OK      | 
+117     {I, N}.                                |         | 
+118                                            |         | 
+119 -spec rec_pat_neg(any())                   |         | 
+120         -> {integer(), atom()}.            |         | 
+121 rec_pat_neg(#foo{id = I, name = N}) ->     | ERROR   | 
+122     {N, I}.                                |         | {N, I}. Expected: {number(), atom()}, Got: {atom(), number()}
+123                                            |         | 
+124 -spec pat_fields(#any_foo{}) ->            |         | 
+125     {#foo{}, #foo{}}.                      |         | 
+126 pat_fields(                                | OK      | 
+127     #any_foo{                              |         | 
+128         id = (#foo{} = I),                 |         | 
+129         name = (#foo{} = N)                |         | 
+130     }                                      |         | 
+131 ) -> {I, N}.                               |         | 
