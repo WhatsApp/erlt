@@ -124,7 +124,7 @@
 124 test31_neg() -> fun test30_neg/0.          | ERROR   | test30_neg/0. Expected: 'atom', Got: fun(() -> 'atom')
 125                                            |         | 
 126 -spec test32_neg() -> atom.                |         | 
-127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | misc_lib:boolean_id/1. Expected: 'atom', Got: fun(('false' | 'true') -> 'false……
+127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | misc_lib:boolean_id/1. Expected: 'atom', Got: fun(('false' | 'true') -> 'false' | 'true')
 128                                            |         | 
 129 -spec test33_pos(a | b, b | c) -> b.       |         | 
 130 test33_pos(AB, BC) ->                      | OK      | 
@@ -416,3 +416,23 @@
 416         A when is_atom(A) -> A;            |         | 
 417         X when is_number(X) -> number      |         | 
 418     end.                                   |         | 
+419                                            |         | 
+420 -spec unzip1_neg([{integer(),atom()}])     |         | 
+421         -> {[atom()], [integer()]}.        |         | 
+422 unzip1_neg([]) -> {[],[]};                 | ERROR   | 
+423 unzip1_neg([{H1, H2}|T]) ->                |         | 
+424     {T1, T2} = unzip1_neg(T),              |         | 
+425     {[H1|T1], [H2|T2]}.                    |         | {[H1 | T1], [H2 | T2]}. Expected: {[atom()], [number()]}, Got: {[number() | atom()], [atom() | number()]}
+426                                            |         | 
+427 -spec unzip2_neg([{integer(),atom()}])     |         | 
+428     -> {[atom()] | [integer()],            |         | 
+429         [atom()] | [integer()]}.           |         | 
+430 unzip2_neg([]) -> {[],[]};                 | ERROR   | 
+431 unzip2_neg([{H1, H2}|T]) ->                |         | 
+432     {T1, T2} = unzip2_neg(T),              |         | 
+433     {[H1|T1], [H2|T2]}.                    |         | {[H1 | T1], [H2 | T2]}. Expected: {[atom()] | [number()], [atom()] | [number()]}, Got: {[atom() | number()], [atom() |……
+434                                            |         | 
+435 -spec wrong_list_neg() -> any().           |         | 
+436 wrong_list_neg() ->                        | ERROR   | 
+437     X = [1 | 2],                           |         | number_expr. Expected: [term()], Got: number()
+438     X.                                     |         | 

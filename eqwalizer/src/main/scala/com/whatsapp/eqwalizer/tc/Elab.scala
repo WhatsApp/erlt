@@ -63,7 +63,15 @@ final class Elab(module: String) {
       case Cons(head, tail) =>
         val (headT, env1) = elabExpr(head, env)
         val (tailT, env2) = elabExpr(tail, env1)
-        (UnionType(List(ListType(headT), tailT)), env2)
+        if (!Subtype.subType(tailT, ListType(AnyType))) {
+          throw TypeMismatch(expr.l, tail, expected = ListType(AnyType), got = tailT)
+        } else {
+          val resType = Approx.asListType(tailT) match {
+            case Some(ListType(t)) => ListType(Subtype.join(headT, t))
+            case None              => headT
+          }
+          (resType, env2)
+        }
       case LocalCall(id, args) =>
         Util.getFunType(module, id) match {
           case Some(FunType(argTys, resTy)) =>

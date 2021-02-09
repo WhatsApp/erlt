@@ -416,3 +416,23 @@ test85() ->
         A when is_atom(A) -> A;
         X when is_number(X) -> number
     end.
+
+-spec unzip1_neg([{integer(),atom()}])
+        -> {[atom()], [integer()]}.
+unzip1_neg([]) -> {[],[]};
+unzip1_neg([{H1, H2}|T]) ->
+    {T1, T2} = unzip1_neg(T),
+    {[H1|T1], [H2|T2]}.
+
+-spec unzip2_neg([{integer(),atom()}])
+    -> {[atom()] | [integer()],
+        [atom()] | [integer()]}.
+unzip2_neg([]) -> {[],[]};
+unzip2_neg([{H1, H2}|T]) ->
+    {T1, T2} = unzip2_neg(T),
+    {[H1|T1], [H2|T2]}.
+
+-spec wrong_list_neg() -> any().
+wrong_list_neg() ->
+    X = [1 | 2],
+    X.
