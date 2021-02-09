@@ -60,14 +60,7 @@ object Pipeline {
             ) =>
           fileName
       })
-      .headOption
-      .getOrElse(
-        // $COVERAGE-OFF$
-        throw new IllegalStateException(
-          s"module $module.name is missing a -file attribute"
-        )
-        // $COVERAGE-ON$
-      )
+      .head
 
   def checkForms(beamFile: String): (String, List[Form]) = {
     val module = DB.loadCoreModule(beamFile)
