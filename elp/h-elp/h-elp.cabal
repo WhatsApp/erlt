@@ -20,19 +20,74 @@ library
   exposed-modules:     ELP
   -- other-modules:
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
-                     , lsp
-                     , semantic-erlang
-                     , tree-sitter-elp
+  build-depends:
+       base >=4.13 && <4.15
+     , semantic-erlang
+     -- following needed because of https://github.com/alanz/lsp/issues/263
+     -- , constraints-extras == 0.3.0.2
+     -- , dependent-map == 0.4.0.0
+     -- , dependent-sum == 0.7.1.0
+     -- , dependent-sum-template == 0.1.0.3
+     , attoparsec
+     , aeson >=1.2.2.0
+     , binary
+     , bytestring
+     , containers
+     , directory
+     , filepath
+     , fused-effects
+     , hashable
+     , hslogger
+     , lens >= 4.15.2
+     , lsp-test
+     , lsp-types
+     , rope-utf16-splay >= 0.3.2.0
+     , semantic-erlang
+     , semantic-ast
+     , semantic-source
+     , temporary
+     , text
+     , tree-sitter
+     , tree-sitter-elp
   hs-source-dirs:      src
+  ghc-options:         -Wall
   default-language:    Haskell2010
 
 executable h-elp
   main-is:             Main.hs
   -- other-extensions:
-  build-depends:       base >=4.14 && <4.15
-                     , h-elp
-  hs-source-dirs:      exe
+  build-depends:
+       base >=4.13 && <4.15
+     -- temporary, putting src directory in hs-source-dirs for now
+     -- , h-elp
+
+     , attoparsec
+     , aeson
+     , binary
+     , bytestring
+     , containers
+     , directory
+     , filepath
+     , fused-effects
+     , hashable
+     , hslogger
+     , lens >= 4.15.2
+     , lsp
+     , lsp-test
+     , lsp-types
+     , mtl
+     , rope-utf16-splay >= 0.3.2.0
+     , semantic-erlang
+     , semantic-ast
+     , semantic-source
+     , temporary
+     , text
+     , tree-sitter
+     , tree-sitter-elp
+     , unliftio
+     , unordered-containers
+  hs-source-dirs:      exe src
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   default-language:    Haskell2010
 
 test-suite h-elp-test
@@ -40,5 +95,36 @@ test-suite h-elp-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Test.hs
-  build-depends:       base >=4.14 && <4.15
-                     , h-elp
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+       base >=4.13 && <4.15
+     , aeson >=1.2.2.0
+     , attoparsec
+     , binary
+     , bytestring
+     , containers
+     , directory
+     , filepath
+     , fused-effects
+     , h-elp
+     , hashable
+     , hslogger
+     , lens >= 4.15.2
+     , lsp-test
+     , lsp-types
+     , rope-utf16-splay >= 0.3.2.0
+     , semantic-ast
+     , semantic-erlang
+     , semantic-source
+     , temporary
+     , text
+     , tree-sitter
+     , tree-sitter-elp
+
+     , hspec-expectations
+     , tasty
+     , tasty-ant-xml           >=1.1.6
+     , tasty-hspec
+     , tasty-hunit
+     , tasty-golden
+     , tasty-rerun

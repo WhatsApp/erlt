@@ -1,0 +1,4 @@
+-module(foo).
+-(x).
+-ff(floog).
+-c(x).

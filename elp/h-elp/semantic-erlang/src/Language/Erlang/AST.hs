@@ -13,6 +13,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -ddump-splices -ddump-to-file -dsuppress-uniques #-}
 
 module Language.Erlang.AST
 ( module Language.Erlang.AST
