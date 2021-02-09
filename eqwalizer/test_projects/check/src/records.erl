@@ -129,3 +129,21 @@ pat_fields(
         name = (#foo{} = N)
     }
 ) -> {I, N}.
+
+-spec rec_guard1(any()) -> #foo{}.
+rec_guard1(Foo)
+    when Foo#foo.id > 0 -> Foo.
+
+-spec rec_guard2_neg(any()) -> ok.
+rec_guard2_neg(Foo)
+    when Foo == #foo{} -> ok.
+
+-spec rec_guard3_pos(any(), any())
+    -> number().
+rec_guard3_pos(Foo, X)
+    when Foo == #foo_def{id = X} -> X.
+
+-spec rec_guard4_neg(any(), any())
+        -> atom().
+rec_guard4_neg(Foo, X)
+    when Foo == #foo_def{id = X} -> X.

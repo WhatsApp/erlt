@@ -129,3 +129,21 @@
 129         name = (#foo{} = N)                |         | 
 130     }                                      |         | 
 131 ) -> {I, N}.                               |         | 
+132                                            |         | 
+133 -spec rec_guard1(any()) -> #foo{}.         |         | 
+134 rec_guard1(Foo)                            | OK      | 
+135     when Foo#foo.id > 0 -> Foo.            |         | 
+136                                            |         | 
+137 -spec rec_guard2_neg(any()) -> ok.         |         | 
+138 rec_guard2_neg(Foo)                        | ERROR   | 
+139     when Foo == #foo{} -> ok.              |         | #foo{...}: id is 'undefined'
+140                                            |         | 
+141 -spec rec_guard3_pos(any(), any())         |         | 
+142     -> number().                           |         | 
+143 rec_guard3_pos(Foo, X)                     | OK      | 
+144     when Foo == #foo_def{id = X} -> X.     |         | 
+145                                            |         | 
+146 -spec rec_guard4_neg(any(), any())         |         | 
+147         -> atom().                         |         | 
+148 rec_guard4_neg(Foo, X)                     | ERROR   | 
+149     when Foo == #foo_def{id = X} -> X.     |         | X. Expected: atom(), Got: number()
