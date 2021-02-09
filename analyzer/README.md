@@ -116,6 +116,7 @@ OTP libs are used in the project.
    dynamic "primitives": `apply/2`, `apply/3`
 - `com.whatsapp.analyzer.RangeTypes` - stats about `X..Y` types   
 - `com.whatsapp.analyzer.Receives` - stats about using `receive`s
+- `com.whatsapp.analyzer.RecordIndices` - places like `#my_record.my_field`
 - `com.whatsapp.analyzer.RedefinedRecordTypes` - see below
 - `com.whatsapp.analyzer.UnnamedFuns` - reports the total number of unnamed
   [fun expressions](https://erlang.org/doc/reference_manual/expressions.html#fun-expressions).

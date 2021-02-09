@@ -57,7 +57,8 @@
     shapes/1,
     dicts/1,
     empty_maps/1,
-    strange_maps/1
+    strange_maps/1,
+    record_indices/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -758,6 +759,14 @@ strange_map(F) ->
         {{Line}, {Line}} -> {Line};
         _ -> false
     end.
+
+-spec record_indices(BeamFile :: file:filename()) -> [{integer()}].
+record_indices(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun record_index/1).
+
+record_index({record_index,Line,_,_}) -> {Line};
+record_index(_) -> false.
 
 %% Utilities
 
