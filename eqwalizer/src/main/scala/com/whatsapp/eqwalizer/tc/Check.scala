@@ -22,10 +22,10 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-final case class Check(module: String) {
-  private val elab = new Elab(module)
-  private val elabPat = new ElabPat(module)
-  private val elabGuard = new ElabGuard(module)
+final class Check(module: String) {
+  lazy val elab = new Elab(module, this)
+  lazy val elabPat = new ElabPat(module)
+  lazy val elabGuard = new ElabGuard(module)
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
     val constrainedFunType = spec.types.head

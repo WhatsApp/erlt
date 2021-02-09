@@ -79,7 +79,7 @@ object Pipeline {
 
   private def checkFun(module: String, f: FunDecl, spec: FunSpec): Form = {
     try {
-      Check(module).checkFun(f, spec)
+      new Check(module).checkFun(f, spec)
       TypedFuncDecl(f.id)(f.line)
     } catch {
       case te: TypeError =>
