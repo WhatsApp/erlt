@@ -1,4 +1,4 @@
--module(blah).
--xxx(yyy).
--aa(ba)
-.
+-module(foo).
+-(x).
+-ff(floog).
+-c(x).

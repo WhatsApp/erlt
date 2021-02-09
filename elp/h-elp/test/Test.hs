@@ -4,9 +4,10 @@
 {-# LANGUAGE TypeApplications #-}
 
 import AST.Unmarshal
-    ( parseByteString,
-      TSDiagnostic(TSDError),
-      UnmarshalDiagnostics(..) )
+  ( TSDiagnostic (TSDError),
+    UnmarshalDiagnostics (..),
+    parseByteString,
+  )
 -- import Control.Carrier.Reader
 -- import Control.Carrier.State.Strict
 -- import Control.Exception
@@ -17,49 +18,68 @@ import Data.ByteString (ByteString)
 -- import Data.Hashable
 import qualified Data.Map as Map
 -- import Data.Rope.UTF16 (Rope)
-import qualified Data.Rope.UTF16 as Rope
+
 -- import qualified Data.Rope.UTF16.Internal as Rope
-import qualified Data.Rope.UTF16.Internal.Position as Rope
-import Data.SplayTree ( Measured(measure) )
-import qualified Data.Text as T
-import Data.Text.Encoding ( encodeUtf8 )
-import Foreign.C.String
-    ( withCStringLen, peekCString, newCStringLen )
-import Foreign.Marshal.Alloc ( malloc, free )
-import Foreign.Ptr ( plusPtr )
-import Foreign.Storable ( Storable(poke, peek) )
+
 -- import GHC.Word
+
+-- import Language.Haskell.LSP.Test
+
+import Data.Rope.UTF16 (codeUnitsRowColumn)
+import qualified Data.Rope.UTF16 as Rope
+import qualified Data.Rope.UTF16.Internal.Position as Rope
+import Data.SplayTree (Measured (measure))
+import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
+import ELP
+  ( lspChangeAsTSInputEdit,
+    nodeAsSexpr,
+    pp,
+    treeSitterParseEdit,
+    treeSitterParseFull,
+    treeSitterParseIncrement,
+    treeToAstText,
+  )
+import Foreign.C.String
+  ( newCStringLen,
+    peekCString,
+    withCStringLen,
+  )
+import Foreign.Marshal.Alloc (free, malloc)
+import Foreign.Ptr (plusPtr)
+import Foreign.Storable (Storable (peek, poke))
 import Language.Erlang.AST (SourceFile)
 import qualified Language.Erlang.AST as Erlang
-import Language.Erlang.Grammar ( tree_sitter_erlang_elp )
--- import Language.Haskell.LSP.Test
+import Language.Erlang.Grammar (tree_sitter_erlang_elp)
 import Language.LSP.Types
-    ( toNormalizedUri,
-      filePathToUri,
-      Position(Position),
-      Range(Range),
-      TextDocumentContentChangeEvent(TextDocumentContentChangeEvent),
-      DidOpenTextDocumentParams(DidOpenTextDocumentParams),
-      SMethod(STextDocumentDidOpen),
-      NotificationMessage(NotificationMessage),
-      TextDocumentIdentifier(TextDocumentIdentifier),
-      TextDocumentItem(TextDocumentItem) )
+  ( DidOpenTextDocumentParams (DidOpenTextDocumentParams),
+    NotificationMessage (NotificationMessage),
+    Position (Position),
+    Range (Range),
+    SMethod (STextDocumentDidOpen),
+    TextDocumentContentChangeEvent (TextDocumentContentChangeEvent),
+    TextDocumentIdentifier (TextDocumentIdentifier),
+    TextDocumentItem (TextDocumentItem),
+    filePathToUri,
+    toNormalizedUri,
+  )
 import Language.LSP.Types.Lens ()
 import Language.LSP.VFS
-    ( applyChange,
-      openVFS,
-      initVFS,
-      VirtualFile(VirtualFile),
-      VFS(vfsMap) )
+  ( VFS (vfsMap),
+    VirtualFile (VirtualFile),
+    applyChange,
+    initVFS,
+    openVFS,
+  )
 import qualified Source.Range as S
 import qualified Source.Span as S
 import System.Directory ()
 import System.FilePath ()
-import System.IO ( stderr, hPutStrLn )
+import System.IO (hPutStrLn, stderr)
 import System.IO.Temp ()
 import System.Log.Logger ()
-import Test.Tasty ( testGroup, defaultMain, TestTree )
-import Test.Tasty.HUnit ( (@?=), testCase )
+import Test.Tasty (TestTree, defaultMain, testGroup)
+import Test.Tasty.HUnit (testCase, (@?=))
 import TreeSitter.Cursor ()
 import TreeSitter.ErlangELP ()
 import TreeSitter.Node
@@ -67,7 +87,7 @@ import TreeSitter.Node
     TSPoint (..),
     ts_node_string_extra_p,
   )
-import TreeSitter.Parser ( TSHInput(inputPayload), ReadFunction )
+import TreeSitter.Parser (ReadFunction, TSHInput (inputPayload), withParser)
 import TreeSitter.Query
   ( TSQueryCapture (qcIndex, qcNode),
     TSQueryError (TSQueryErrorNone),
@@ -80,16 +100,6 @@ import TreeSitter.Query
 import TreeSitter.Tree
   ( TSInputEdit (..),
   )
-import ELP
-    ( pp,
-      codeUnitsRowColumn,
-      treeToAstText,
-      treeSitterParseIncrement,
-      treeSitterParseEdit,
-      lspChangeAsTSInputEdit,
-      nodeAsSexpr,
-      treeSitterParseFull,
-      treeSitterParser )
 
 -- ---------------------------------------------------------------------
 
@@ -103,8 +113,8 @@ tests :: TestTree
 tests =
   testGroup
     "Tests"
-    [ -- testVFS,
-      -- testQuery,
+    [ testVFS,
+      testQuery,
       testAST
     ]
 
@@ -141,43 +151,43 @@ testVFS =
               a = TextDocumentIdentifier uriA
               msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
           let (v1, _) = openVFS vfs msg
-          parser <- treeSitterParser
-          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
-          sexp <- nodeAsSexpr node
-          sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
+          withParser tree_sitter_erlang_elp $ \parser -> do
+            -- parser <- treeSitterParser
+            (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+            sexp <- nodeAsSexpr node
+            sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
 
-          let Just (VirtualFile _ _ rope1) = Map.lookup nUriA (vfsMap v1)
-          let change = TextDocumentContentChangeEvent Nothing Nothing content4
-          let edit = lspChangeAsTSInputEdit rope1 change
-          tree2 <- treeSitterParseEdit edit tree
+            let Just (VirtualFile _ _ rope1) = Map.lookup nUriA (vfsMap v1)
+            let change = TextDocumentContentChangeEvent Nothing Nothing content4
+            lspChangeAsTSInputEdit (Rope.fromText "") rope1 change @?= Nothing
+            (tree2,_) <- treeSitterParseFull parser (T.unpack content4)
 
-          let rope2 = applyChange rope1 change
-          (tree3, node2) <- treeSitterParseIncrement parser rope2 tree2
-          sexp2 <- nodeAsSexpr node2
-          sexp2 @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)) (attribute (atom) (atom)))"
+            let rope2 = applyChange rope1 change
+            (tree3, node2) <- treeSitterParseIncrement parser rope2 tree2
+            sexp2 <- nodeAsSexpr node2
+            sexp2 @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)) (attribute (atom) (atom)))"
 
-          let change2 =
-                TextDocumentContentChangeEvent
-                  (Just (Range (Position 0 1) (Position 0 3)))
-                  Nothing
-                  "jj"
+            let change2 =
+                  TextDocumentContentChangeEvent
+                    (Just (Range (Position 0 1) (Position 0 3)))
+                    Nothing
+                    "jj"
 
-          let rope3 = applyChange rope1 change2
-          Rope.toString rope1 @?= "-module(foo).\n-xxxx(yyy).\n"
-          Rope.toString rope3 @?= "-jjdule(foo).\n-xxxx(yyy).\n"
-          let edit2 = lspChangeAsTSInputEdit rope3 change2
-          edit2
-            @?= TSInputEdit
-              { editStartByte = 1,
-                editOldEndByte = 3,
-                editNewEndByte = 3,
-                editStartPoint = TSPoint {pointRow = 0, pointColumn = 1},
-                editOldEndPoint = TSPoint {pointRow = 0, pointColumn = 3},
-                editNewEndPoint = TSPoint {pointRow = 0, pointColumn = 3}
-              }
+            let rope3 = applyChange rope1 change2
+            Rope.toString rope1 @?= "-module(foo).\n-xxxx(yyy).\n"
+            Rope.toString rope3 @?= "-jjdule(foo).\n-xxxx(yyy).\n"
+            let Just edit2 = lspChangeAsTSInputEdit rope2 rope3 change2
+            edit2
+              @?= TSInputEdit
+                { editStartByte = 1,
+                  editOldEndByte = 3,
+                  editNewEndByte = 3,
+                  editStartPoint = TSPoint {pointRow = 0, pointColumn = 1},
+                  editOldEndPoint = TSPoint {pointRow = 0, pointColumn = 3},
+                  editNewEndPoint = TSPoint {pointRow = 0, pointColumn = 3}
+                }
 
           -- assertBool "show me the logs!" False
-          free parser
           return ()
     ]
 
@@ -200,51 +210,51 @@ testQuery =
               a = TextDocumentIdentifier uriA
               msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
           let (v1, _) = openVFS vfs msg
-          parser <- treeSitterParser
-          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
-          sexp <- nodeAsSexpr node
-          sexp @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
+          withParser tree_sitter_erlang_elp $ \parser -> do
+            -- parser <- treeSitterParser
+            (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+            sexp <- nodeAsSexpr node
+            sexp @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
 
-          -- let queryStr = "(module_attribute)"
-          -- let queryStr = "(attribute)"
-          let queryStr = "(attribute (atom) @a (atom) @b)"
-          -- let queryStr = "(arg_list)"
-          (str, len) <- newCStringLen queryStr
-          e <- malloc
-          r <- malloc
-          query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
-          ee <- peek e
-          rr <- peek r
-          rr @?= TSQueryErrorNone
+            -- let queryStr = "(module_attribute)"
+            -- let queryStr = "(attribute)"
+            let queryStr = "(attribute (atom) @a (atom) @b)"
+            -- let queryStr = "(arg_list)"
+            (str, len) <- newCStringLen queryStr
+            e <- malloc
+            r <- malloc
+            query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
+            ee <- peek e
+            rr <- peek r
+            rr @?= TSQueryErrorNone
 
-          qc <- ts_query_cursor_new
-          -- TODO: use withNode instead
-          n <- malloc
-          poke n (nodeTSNode node)
-          ts_query_cursor_exec_p qc query n
-          -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
-          pmatch <- malloc
-          matched <- ts_query_cursor_next_match qc pmatch
-          match <- peek pmatch
-          matched @?= True
-          take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+            qc <- ts_query_cursor_new
+            -- TODO: use withNode instead
+            n <- malloc
+            poke n (nodeTSNode node)
+            ts_query_cursor_exec_p qc query n
+            -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
+            pmatch <- malloc
+            matched <- ts_query_cursor_next_match qc pmatch
+            match <- peek pmatch
+            matched @?= True
+            take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
 
-          c1 <- peek (qmCaptures match)
-          take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
-          qcIndex c1 @?= 0
+            c1 <- peek (qmCaptures match)
+            take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
+            qcIndex c1 @?= 0
 
-          -- ---------------------------
-          matched <- ts_query_cursor_next_match qc pmatch
-          match <- peek pmatch
-          matched @?= True
-          take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+            -- ---------------------------
+            matched <- ts_query_cursor_next_match qc pmatch
+            match <- peek pmatch
+            matched @?= True
+            take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
 
-          c2 <- peek (qmCaptures match)
-          take 55 (show (qcNode c2)) @?= "TSNode 14 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
-          qcIndex c2 @?= 0
+            c2 <- peek (qmCaptures match)
+            take 55 (show (qcNode c2)) @?= "TSNode 14 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
+            qcIndex c2 @?= 0
 
           -- assertBool "show me the logs!" False
-          free parser
           return (),
       -- -------------------------------------------
       testCase "Query with MISSING" $ do
@@ -260,48 +270,48 @@ testQuery =
               a = TextDocumentIdentifier uriA
               msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
           let (v1, _) = openVFS vfs msg
-          parser <- treeSitterParser
-          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
-          sexp <- nodeAsSexpr node
-          sexp @?= "(source_file (attribute (atom) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
-          let queryStr = "(attribute (atom) @a (atom) @b)"
-          -- let queryStr = "(MISSING)"
-          (str, len) <- newCStringLen queryStr
-          e <- malloc
-          r <- malloc
-          query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
-          ee <- peek e
-          rr <- peek r
-          rr @?= TSQueryErrorNone
+          withParser tree_sitter_erlang_elp $ \parser -> do
+            -- parser <- treeSitterParser
+            (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+            sexp <- nodeAsSexpr node
+            sexp @?= "(source_file (attribute (atom) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
+            let queryStr = "(attribute (atom) @a (atom) @b)"
+            -- let queryStr = "(MISSING)"
+            (str, len) <- newCStringLen queryStr
+            e <- malloc
+            r <- malloc
+            query <- ts_query_new tree_sitter_erlang_elp str (fromIntegral len) e r
+            ee <- peek e
+            rr <- peek r
+            rr @?= TSQueryErrorNone
 
-          qc <- ts_query_cursor_new
-          -- TODO: use withNode instead
-          n <- malloc
-          poke n (nodeTSNode node)
-          ts_query_cursor_exec_p qc query n
-          -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
-          pmatch <- malloc
-          matched <- ts_query_cursor_next_match qc pmatch
-          match <- peek pmatch
-          matched @?= True
-          take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+            qc <- ts_query_cursor_new
+            -- TODO: use withNode instead
+            n <- malloc
+            poke n (nodeTSNode node)
+            ts_query_cursor_exec_p qc query n
+            -- bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
+            pmatch <- malloc
+            matched <- ts_query_cursor_next_match qc pmatch
+            match <- peek pmatch
+            matched @?= True
+            take 70 (show match) @?= "TSQueryMatch {qmId = 0, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
 
-          c1 <- peek (qmCaptures match)
-          take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
-          qcIndex c1 @?= 0
+            c1 <- peek (qmCaptures match)
+            take 55 (show (qcNode c1)) @?= "TSNode 1 (TSPoint {pointRow = 0, pointColumn = 1}) 0 0x"
+            qcIndex c1 @?= 0
 
-          -- ---------------------------
-          matched <- ts_query_cursor_next_match qc pmatch
-          match <- peek pmatch
-          matched @?= True
-          take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
+            -- ---------------------------
+            matched <- ts_query_cursor_next_match qc pmatch
+            match <- peek pmatch
+            matched @?= True
+            take 70 (show match) @?= "TSQueryMatch {qmId = 1, qmPatternIndex = 0, qmCaptureCount = 2, qmCapt"
 
-          c2 <- peek (qmCaptures match)
-          take 55 (show (qcNode c2)) @?= "TSNode 13 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
-          qcIndex c2 @?= 0
+            c2 <- peek (qmCaptures match)
+            take 55 (show (qcNode c2)) @?= "TSNode 13 (TSPoint {pointRow = 1, pointColumn = 1}) 0 0"
+            qcIndex c2 @?= 0
 
           -- assertBool "show me the logs!" False
-          free parser
           return ()
     ]
 
@@ -324,38 +334,39 @@ testAST =
               a = TextDocumentIdentifier uriA
               msg = NotificationMessage "2.0" STextDocumentDidOpen (DidOpenTextDocumentParams itemA)
           let (v1, _) = openVFS vfs msg
-          parser <- treeSitterParser
-          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
-          -- sexp <- nodeAsSexpr node
-          sexp <- nodeAsSexprDetail node
-          sexp @?= "(source_file (source_file_repeat1 (source_file_repeat1 (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.)) (attribute (-) (atom (_raw_atom)) (ERROR (_ERROR (_raw_atom))) (() (atom (_raw_atom)) ()) (MISSING \".\"))) (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.))) (end))"
+          withParser tree_sitter_erlang_elp $ \parser -> do
+            -- parser <- treeSitterParser
+            (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+            -- sexp <- nodeAsSexpr node
+            sexp <- nodeAsSexprDetail node
+            sexp @?= "(source_file (source_file_repeat1 (source_file_repeat1 (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.)) (attribute (-) (atom (_raw_atom)) (ERROR (_ERROR (_raw_atom))) (() (atom (_raw_atom)) ()) (MISSING \".\"))) (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.))) (end))"
 
-          -- ast <- erlangAst (encodeUtf8 aContent)
-          -- ast <- erlangAstBare (encodeUtf8 aContent)
-          ast <- erlangAstText (encodeUtf8 aContent)
-          let expectedAstStr = "Right (UnmarshalDiagnostics [(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")])],SourceFile {ann = \"-xxx(yyy).\\n-odu le(foo)\\n-aaaa(bbb).\\n\", extraChildren = [L1 (Attribute {ann = \"-xxx(yyy).\", extraChildren = L1 (Atom {ann = \"xxx\", text = \"xxx\"}) :| [L1 (Atom {ann = \"yyy\", text = \"yyy\"})]}),L1 (Attribute {ann = \"-odu le(foo)\", extraChildren = L1 (Atom {ann = \"odu\", text = \"odu\"}) :| [L1 (Atom {ann = \"foo\", text = \"foo\"})]}),L1 (Attribute {ann = \"-aaaa(bbb).\", extraChildren = L1 (Atom {ann = \"aaaa\", text = \"aaaa\"}) :| [L1 (Atom {ann = \"bbb\", text = \"bbb\"})]})]})"
-          -- [ast] @?= []
-          show ast @?= expectedAstStr
+            -- ast <- erlangAst (encodeUtf8 aContent)
+            -- ast <- erlangAstBare (encodeUtf8 aContent)
+            ast <- erlangAstText (encodeUtf8 aContent)
+            let expectedAstStr = "Right (UnmarshalDiagnostics [(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")])],SourceFile {ann = \"-xxx(yyy).\\n-odu le(foo)\\n-aaaa(bbb).\\n\", extraChildren = [L1 (Attribute {ann = \"-xxx(yyy).\", extraChildren = L1 (Atom {ann = \"xxx\", text = \"xxx\"}) :| [L1 (Atom {ann = \"yyy\", text = \"yyy\"})]}),L1 (Attribute {ann = \"-odu le(foo)\", extraChildren = L1 (Atom {ann = \"odu\", text = \"odu\"}) :| [L1 (Atom {ann = \"foo\", text = \"foo\"})]}),L1 (Attribute {ann = \"-aaaa(bbb).\", extraChildren = L1 (Atom {ann = \"aaaa\", text = \"aaaa\"}) :| [L1 (Atom {ann = \"bbb\", text = \"bbb\"})]})]})"
+            -- [ast] @?= []
+            show ast @?= expectedAstStr
 
-          r <- treeToAstText (encodeUtf8 aContent) tree
-          show r @?= expectedAstStr
+            r <- treeToAstText (encodeUtf8 aContent) tree
+            show r @?= expectedAstStr
 
-          let Right (UnmarshalDiagnostics ds, _) = r
-              [(_, [d1, d2])] = ds
-          [d1] @?= [((16, 19), TSDError)]
-          let rope = Rope.fromText aContent
-              (r1, r2) = Rope.splitAt 16 rope
-          show r1 @?= "Rope {unrope = Fork Leaf \"-xxx(yyy).\\n-odu \" Leaf (Position {codeUnits = 16, rowColumn = RowColumn {row = 1, column = 5}})}"
-          [measure r1]
-            @?= [ Rope.Position
-                    { Rope.codeUnits = 16,
-                      Rope.rowColumn = Rope.RowColumn {Rope.row = 1, Rope.column = 5}
-                    }
-                ]
-          [codeUnitsRowColumn 16 rope] @?= [Rope.RowColumn {Rope.row = 1, Rope.column = 5}]
+            let Right (UnmarshalDiagnostics ds, _) = r
+                [(_, [d1, d2])] = ds
+            [d1] @?= [((16, 19), TSDError)]
+            let rope = Rope.fromText aContent
+                (r1, r2) = Rope.splitAt 16 rope
+            show r1 @?= "Rope {unrope = Fork Leaf \"-xxx(yyy).\\n-odu \" Leaf (Position {codeUnits = 16, rowColumn = RowColumn {row = 1, column = 5}})}"
+            [measure r1]
+              @?= [ Rope.Position
+                      { Rope.codeUnits = 16,
+                        Rope.rowColumn = Rope.RowColumn {Rope.row = 1, Rope.column = 5}
+                      }
+                  ]
+            [codeUnitsRowColumn 16 rope] @?= [Rope.RowColumn {Rope.row = 1, Rope.column = 5}]
 
           -- assertBool "show me the logs!" False
-          free parser
+          -- free parser
           return ()
     ]
 
@@ -416,23 +427,6 @@ data Node = Node
 -- -- too. Convenient, it does not get in the way of tasty output either.
 -- pp :: String -> IO ()
 -- pp str = when logToStderr $ hPutStrLn stderr str
-
--- -- TODO: free the parser, or bracket it with a free
--- treeSitterParser :: IO (Ptr Parser)
--- treeSitterParser = do
---   parser <- ts_parser_new
---   pp $ "got parser:" ++ show parser
---   timeout <- ts_parser_timeout_micros parser
---   pp $ "timeout:" ++ show timeout
-
---   ts_parser_set_timeout_micros parser 3_000_0000
-
---   timeout <- ts_parser_timeout_micros parser
---   pp $ "timeout:" ++ show timeout
-
---   r <- ts_parser_set_language parser tree_sitter_erlang_elp
---   pp $ "set language:" ++ show (r, tree_sitter_erlang_elp)
---   return parser
 
 -- treeSitterParseFull :: Ptr Parser -> String -> IO (Ptr Tree, Node)
 -- treeSitterParseFull parser source = do

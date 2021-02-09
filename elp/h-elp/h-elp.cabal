@@ -41,7 +41,7 @@ library
      , lens >= 4.15.2
      , lsp-test
      , lsp-types
-     , rope-utf16-splay >= 0.3.1.0
+     , rope-utf16-splay >= 0.3.2.0
      , semantic-erlang
      , semantic-ast
      , semantic-source
@@ -76,7 +76,7 @@ executable h-elp
      , lsp-test
      , lsp-types
      , mtl
-     , rope-utf16-splay >= 0.3.1.0
+     , rope-utf16-splay >= 0.3.2.0
      , semantic-erlang
      , semantic-ast
      , semantic-source
@@ -112,7 +112,7 @@ test-suite h-elp-test
      , lens >= 4.15.2
      , lsp-test
      , lsp-types
-     , rope-utf16-splay >= 0.3.1.0
+     , rope-utf16-splay >= 0.3.2.0
      , semantic-ast
      , semantic-erlang
      , semantic-source
