@@ -17,7 +17,10 @@
 package com.whatsapp.coralizer.test.util
 
 import com.whatsapp.coralizer.Pipeline
-import com.whatsapp.coralizer.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstruct}
+import com.whatsapp.coralizer.ast.WIPDiagnostics.{
+  ExpansionFailure,
+  SkippedConstruct
+}
 import com.whatsapp.coralizer.ast.Forms._
 
 import java.nio.file.{Files, Paths}
