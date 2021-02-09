@@ -92,11 +92,11 @@ object Show {
         s"""$f(${showExprs(args)})"""
       case CCall(_, m, f, args) =>
         s"""${show(m)}:${show(f)}(${showExprs(args)})"""
-      case CCase(_, _arg, _clauses)                          => "case ..."
-      case CCatch(_, _body)                                  => "catch ..."
-      case CFun(_, vars, _body)                              => s"""fun (${showExprs(vars)})"""
-      case CLet(_, _vars, _arg, _body)                       => "let ..."
-      case CLiteral(_, value)                                => show(value)
+      case CCase(_, _arg, _clauses)    => "case ..."
+      case CCatch(_, _body)            => "catch ..."
+      case CFun(_, vars, _body)        => s"""fun (${showExprs(vars)})"""
+      case CLet(_, _vars, _arg, _body) => "let ..."
+      case CLiteral(_, value)          => show(value)
       case CVar(_, name) =>
         name match {
           case VarNameInt(i)                   => s"var$i"
