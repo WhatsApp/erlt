@@ -32,7 +32,7 @@ final class Elab(val module: String, check: Check) {
       case EExternalFun(remoteId) =>
         Util
           .getCallType(remoteId)
-          .getOrElse(throw UnboundRemoteId(parent.anno.line, remoteId))
+          .getOrElse(throw UnboundRemoteId(parent.line, parent, remoteId))
       case EList(Nil, None) =>
         NilType
       case EList(hd :: tl, None) =>
@@ -83,12 +83,14 @@ final class Elab(val module: String, check: Check) {
 
   def elabExpr(expr: CErl, env: Env): (Type, Env) =
     expr match {
-      case CApply(_, cvar @ CVar(Anno(line), varName), args) =>
+      case CApply(_, cvar @ CVar(_, varName), args) =>
         val FunType(funArgTys, funResTy) = varName match {
           case VarNameAtomInt(id) =>
-            Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
+            Util
+              .getApplyType(module, id)
+              .getOrElse(throw UnboundId(cvar.line, cvar, id))
           case _ =>
-            env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+            env.getOrElse(cvar.name, throw UnboundVar(cvar.line, cvar))
         }
         val env1 = check.checkExprs(args, funArgTys, env)
         (funResTy, env1)
@@ -111,12 +113,12 @@ final class Elab(val module: String, check: Check) {
             val id2 = RemoteId(eMod, eFun, eArity.toInt)
             val ty = Util
               .getCallType(id2)
-              .getOrElse(throw UnboundRemoteId(funExpr.anno.line, id2))
+              .getOrElse(throw UnboundRemoteId(funExpr.line, funExpr, id2))
             (ty, env)
           case _ =>
             val FunType(argTys, funReturnTy) = Util
               .getCallType(id)
-              .getOrElse(throw UnboundRemoteId(funExpr.anno.line, id))
+              .getOrElse(throw UnboundRemoteId(funExpr.line, funExpr, id))
             (args zip argTys).foreach {
               case (argExpr, expectedArgTy) =>
                 check.checkExpr(argExpr, expectedArgTy, env)
@@ -222,13 +224,15 @@ final class Elab(val module: String, check: Check) {
           eType
         }
         (CValuesType(elemTypes), envAcc)
-      case CVar(Anno(line), VarNameAtomInt(id)) =>
+      case CVar(_, VarNameAtomInt(id)) =>
         val ty =
-          Util.getApplyType(module, id).getOrElse(throw UnboundId(line, id))
+          Util
+            .getApplyType(module, id)
+            .getOrElse(throw UnboundId(expr.line, expr, id))
         (ty, env)
       case cvar: CVar =>
         val ty =
-          env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+          env.getOrElse(cvar.name, throw UnboundVar(cvar.line, cvar))
         (ty, env)
       case _: CFun =>
         throw SkippedConstructDiagnostics(
@@ -253,7 +257,12 @@ final class Elab(val module: String, check: Check) {
     elabExpr(expr, env)._1 match {
       case AtomLitType(module) => module
       case moduleExprTy =>
-        throw TypeMismatch(expr, AtomLitType("<<known atom>>"), moduleExprTy)
+        throw TypeMismatch(
+          expr.line,
+          expr,
+          AtomLitType("<<known atom>>"),
+          moduleExprTy
+        )
     }
   }
 
@@ -261,7 +270,7 @@ final class Elab(val module: String, check: Check) {
     val tailElemType = tlType match {
       case NilType      => NoneType
       case ListType(ty) => ty
-      case ty           => throw TypeMismatch(expr, ListType(AnyType), ty)
+      case ty           => throw TypeMismatch(expr.line, expr, ListType(AnyType), ty)
     }
     ListType(Subtype.join(hdType, tailElemType))
   }

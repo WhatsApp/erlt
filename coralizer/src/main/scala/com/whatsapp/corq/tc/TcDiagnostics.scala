@@ -23,25 +23,24 @@ import com.whatsapp.coralizer.ast.Types.Type
 import erlang.CErl._
 
 object TcDiagnostics {
-  case class TcDiagnostics(line: Int, msg: String)
-
   sealed trait TypeError extends Exception {
+    val expr: CErl
     val line: Int
     val msg: String
   }
-  case class TypeMismatch(expr: CErl, expected: Type, got: Type)
+  case class TypeMismatch(line: Int, expr: CErl, expected: Type, got: Type)
       extends TypeError {
-    val line = expr.line
     override val msg: String =
       s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
-  case class UnboundVar(line: Int, n: CVar) extends TypeError {
-    override val msg: String = s"Unbound var: ${n.name}"
+  case class UnboundVar(line: Int, expr: CVar) extends TypeError {
+    override val msg: String = s"Unbound var: ${expr.name}"
   }
-  case class UnboundId(line: Int, id: Id) extends TypeError {
+  case class UnboundId(line: Int, expr: CErl, id: Id) extends TypeError {
     override val msg: String = s"Unbound var: $id"
   }
-  case class UnboundRemoteId(line: Int, id: RemoteId) extends TypeError {
+  case class UnboundRemoteId(line: Int, expr: CErl, id: RemoteId)
+      extends TypeError {
     override val msg: String = s"Unbound var: $id"
   }
 }

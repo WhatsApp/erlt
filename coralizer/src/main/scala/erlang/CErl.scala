@@ -21,8 +21,13 @@ import com.whatsapp.coralizer.ast.Id
 import erlang.Data.Anno
 
 object CErl {
+  var currentNodeId = 0
 
   sealed trait CErl {
+    currentNodeId += 1
+
+    val nodeId: Int = currentNodeId
+
     def anno: Anno
 
     /**
@@ -60,10 +65,10 @@ object CErl {
   case class CMapPair(anno: Anno, op: CErl, key: CErl, cVal: CErl) extends CErl
   case class CModule(
       anno: Anno,
-      name: CErl,
+      name: String,
       exports: List[CErl],
-      attrs: List[(CErl, CErl)],
-      defs: List[(CErl, CErl)]
+      attrs: Map[String, CErl],
+      defs: Map[CVar, CFun]
   ) extends CErl
   case class CPrimOp(anno: Anno, name: CErl, args: List[CErl]) extends CErl
   case class CReceive(

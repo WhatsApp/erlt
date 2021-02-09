@@ -1,0 +1,49 @@
+-module(subtype_pos).
+-exports f01/1, f02/1, f03/1, f04/1, f05/1, f06/1, f07/1, f08/1, module_info/0, module_info/1.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/subtype_pos.erl 1})])
+-compile([(export_all nowarn_export_all)])
+-type([({pair_ab {type 9 tuple [({user_type 9 ab [()]} {user_type 9 ab [()]})]} [()]})])
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(subtype_pos, X)
+    }
+}
+
+f06/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+f01/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+f07/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+f05/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+f03/1 = fun (var0)  { 
+    case var0 of {  F when true -> F }
+}
+
+f04/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+f02/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(subtype_pos)
+    }
+}
+
+f08/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}

@@ -1,0 +1,159 @@
+-module(guards_simple).
+-exports atom_neg_1/1, atom_neg_2/1, atom_neg_3/1, atom_pos_1/1, atom_pos_2/1, atom_pos_3/1, boolean_neg_1/1, boolean_neg_2/1, boolean_neg_3/1, boolean_pos_1/1, boolean_pos_2/1, boolean_pos_3/1, float_neg/1, float_pos/1, integer_neg/1, integer_pos/1, module_info/0, module_info/1, pid_neg/1, pid_pos/1, port_neg/1, port_pos/1, reference_neg/1, reference_pos/1.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/guards_simple.erl 1})])
+-compile([(export_all nowarn_export_all)])
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(guards_simple, X)
+    }
+}
+
+float_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
+    }
+}
+
+integer_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
+    }
+}
+
+atom_pos_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_atom(Y) -> Y
+            }
+    }
+}
+
+atom_neg_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_tuple(Y) -> Y               | Y. Expected: atom(), Got: term()
+            }
+    }
+}
+
+atom_neg_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_list(X) -> X                 | X. Expected: atom(), Got: term()
+            }
+    }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(guards_simple)
+    }
+}
+
+atom_pos_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_atom(X) -> X
+            }
+    }
+}
+
+boolean_pos_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_boolean(X) -> X
+            }
+    }
+}
+
+boolean_neg_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_atom(Y) -> Y                | Y. Expected: 'false' | 'true', Got: atom()
+            }
+    }
+}
+
+boolean_pos_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_boolean(Y) -> Y
+            }
+    }
+}
+
+pid_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_number(X) -> X                      | X. Expected: pid(), Got: number()
+    }
+}
+
+reference_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_port(X) -> X                        | X. Expected: pid(), Got: port()
+    }
+}
+
+boolean_neg_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_atom(X) -> X                        | X. Expected: 'false' | 'true', Got: atom()
+    }
+}
+
+boolean_pos_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X
+    }
+}
+
+integer_pos/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_integer(X) -> X
+    }
+}
+
+boolean_neg_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_atom(X) -> X                 | X. Expected: 'false' | 'true', Got: atom()
+            }
+    }
+}
+
+pid_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_pid(X) -> X }
+}
+
+atom_neg_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_number(X) -> X                      | X. Expected: atom(), Got: number()
+    }
+}
+
+port_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_port(X) -> X
+    }
+}
+
+float_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_float(X) -> X
+    }
+}
+
+port_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_reference(X) -> X                   | X. Expected: pid(), Got: reference()
+    }
+}
+
+reference_pos/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_reference(X) -> X                   | X. Expected: port(), Got: reference()
+    }
+}
+
+atom_pos_1/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_atom(X) -> X
+    }
+}

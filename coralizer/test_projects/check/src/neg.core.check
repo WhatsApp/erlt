@@ -1,0 +1,39 @@
+-module(neg).
+-exports atom_id_e/1, foo/1, foo/2, match/1, module_info/0, module_info/1.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/neg.erl 1})])
+-compile([(export_all nowarn_export_all)])
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(neg, X)
+    }
+}
+
+atom_id_e/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }                       | X. Expected: number(), Got: atom()
+}
+
+foo/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        X var4 when true -> X                                | X. Expected: A, Got: term()
+    }
+}
+
+match/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                {ok, var3} when true -> X                    | X. Expected: {atom(), atom()}, Got: term()
+            }
+    }
+}
+
+foo/1 = fun (var0)  { 
+    case var0 of {  X when true -> {X, X}                    | {X, X}. Expected: A, Got: {A, A}
+    }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(neg)
+    }
+}

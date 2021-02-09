@@ -5,7 +5,8 @@ scalaVersion := "2.13.4"
 libraryDependencies ++= Seq (
   "com.typesafe" % "config" % "1.4.1",
   "org.scalatest" %% "scalatest" % "3.2.2" % "test",
-  "com.lihaoyi" %% "pprint" % "0.5.6"
+  "com.lihaoyi" %% "pprint" % "0.5.6",
+  "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.4.0"
 )
 
 lazy val testProjects = taskKey[Seq[File]]("build beam files")
