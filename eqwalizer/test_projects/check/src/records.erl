@@ -147,3 +147,16 @@ rec_guard3_pos(Foo, X)
         -> atom().
 rec_guard4_neg(Foo, X)
     when Foo == #foo_def{id = X} -> X.
+
+-record(rec_a, { field :: number() }).
+-record(rec_b, { field :: #rec_a{} }).
+
+-spec record_in_record
+    (#rec_b{}) -> number().
+record_in_record(X) ->
+    (X#rec_b.field)#rec_a.field.
+
+-spec record_in_record_neg
+    (#rec_b{}) -> atom().
+record_in_record_neg(X) ->
+    (X#rec_b.field)#rec_a.field.

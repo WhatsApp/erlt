@@ -147,3 +147,16 @@
 147         -> atom().                         |         | 
 148 rec_guard4_neg(Foo, X)                     | ERROR   | 
 149     when Foo == #foo_def{id = X} -> X.     |         | X. Expected: atom(), Got: number()
+150                                            |         | 
+151 -record(rec_a, { field :: number() }).     |         | 
+152 -record(rec_b, { field :: #rec_a{} }).     |         | 
+153                                            |         | 
+154 -spec record_in_record                     |         | 
+155     (#rec_b{}) -> number().                |         | 
+156 record_in_record(X) ->                     | OK      | 
+157     (X#rec_b.field)#rec_a.field.           |         | 
+158                                            |         | 
+159 -spec record_in_record_neg                 |         | 
+160     (#rec_b{}) -> atom().                  |         | 
+161 record_in_record_neg(X) ->                 | ERROR   | 
+162     (X#rec_b.field)#rec_a.field.           |         | ...#rec_a.field. Expected: atom(), Got: number()
