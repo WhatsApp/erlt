@@ -17,6 +17,7 @@
 package erlang
 
 import com.whatsapp.coralizer.ast.Id
+import com.whatsapp.coralizer.tc.LitAtom
 import erlang.Data._
 import erlang.CErl._
 
@@ -114,10 +115,19 @@ object CErlConvert {
           ) =>
         CModule(
           convertAnno(anno),
-          convert(name),
+          convert(name) match {
+            case LitAtom(nameStr) => nameStr
+            case _ => sys.error(s"unexpected module name attribute $name")
+          },
           exports.map(convert),
-          attrs.map(convertTuple2),
-          defs.map(convertTuple2)
+          attrs
+            .map(convertTuple2)
+            .map {
+              case (LitAtom(attrName), attrVal) => (attrName, attrVal)
+              case x                            => sys.error(s"unexpected attribute ${x}")
+            }
+            .toMap,
+          defs.map(convertTuple2).asInstanceOf[List[(CVar, CFun)]].toMap
         )
       case ETuple(List(EAtom("c_primop"), anno, name, EList(args, None))) =>
         CPrimOp(convertAnno(anno), convert(name), args.map(convert))

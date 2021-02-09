@@ -81,23 +81,23 @@
  81 test19_neg(X, Y) -> X andalso Y.           | ERROR   | Y. Expected: {number()}, Got: number()
  82                                            |         | 
  83 -spec test20_neg(number()) -> [atom()].    |         | 
- 84 test20_neg(X) -> [- X].                    | ERROR   | case .... Expected: [atom()], Got: [number()]
+ 84 test20_neg(X) -> [- X].                    | ERROR   | let .... Expected: [atom()], Got: [number()]
  85                                            |         | 
  86 -spec test21_neg (number(), number())      |         | 
  87               -> [atom()].                 |         | 
- 88 test21_neg(X, Y) -> [X / Y].               | ERROR   | case .... Expected: [atom()], Got: [number()]
+ 88 test21_neg(X, Y) -> [X / Y].               | ERROR   | let .... Expected: [atom()], Got: [number()]
  89                                            |         | 
  90 -spec test22_neg (boolean())               |         | 
  91         -> [number()].                     |         | 
- 92 test22_neg(X) -> [not X].                  | ERROR   | case .... Expected: [number()], Got: ['false' | 'true']
+ 92 test22_neg(X) -> [not X].                  | ERROR   | let .... Expected: [number()], Got: ['false' | 'true']
  93                                            |         | 
  94 -spec test23_neg (boolean(), boolean())    |         | 
  95         -> [number()].                     |         | 
- 96 test23_neg(X, Y) -> [X or Y].              | ERROR   | case .... Expected: [number()], Got: ['false' | 'true']
+ 96 test23_neg(X, Y) -> [X or Y].              | ERROR   | let .... Expected: [number()], Got: ['false' | 'true']
  97                                            |         | 
  98 -spec test24_neg (boolean(), atom())       |         | 
  99         -> [number()].                     |         | 
-100 test24_neg(X, Y) -> [X orelse Y].          | ERROR   | case .... Expected: [number()], Got: [atom()]
+100 test24_neg(X, Y) -> [X orelse Y].          | ERROR   | let .... Expected: [number()], Got: [atom()]
 101                                            |         | 
 102 -spec test25_pos                           |         | 
 103   ([boolean()]) -> boolean() | undefined.  |         | 
@@ -121,7 +121,7 @@
 121 test30_neg() -> 1.                         | ERROR   | 1. Expected: 'atom', Got: number()
 122                                            |         | 
 123 -spec test31_neg() -> atom.                |         | 
-124 test31_neg() -> fun test30_neg/0.          | ERROR   | case .... Expected: 'atom', Got: fun(() -> 'atom')
+124 test31_neg() -> fun test30_neg/0.          | ERROR   | test30_neg/0. Expected: 'atom', Got: fun(() -> 'atom')
 125                                            |         | 
 126 -spec test32_neg() -> atom.                |         | 
 127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | 'erlang':'make_fun'('misc_lib','boolean_id',1). Expected: 'atom', Got: fun(('f……
@@ -315,7 +315,7 @@
 315                                            |         | 
 316 -spec test70_neg() ->                      |         | 
 317     [atom() | number()].                   |         | 
-318 test70_neg() ->                            | ERROR   | case .... Expected: [atom() | number()], Got: term()
+318 test70_neg() ->                            | ERROR   | catch .... Expected: [atom() | number()], Got: term()
 319     catch test69_pos([atom]).              |         | 
 320                                            |         | 
 321 -spec test71_neg() ->                      |         | 
@@ -355,4 +355,4 @@
 355     erlang:throw({error, not_an_atom}).    |         | 
 356                                            |         | 
 357 -spec test77_neg(any()) -> atom().         |         | 
-358 test77_neg(A) -> catch(test76_pos(A)).     | ERROR   | case .... Expected: atom(), Got: term()
+358 test77_neg(A) -> catch(test76_pos(A)).     | ERROR   | catch .... Expected: atom(), Got: term()

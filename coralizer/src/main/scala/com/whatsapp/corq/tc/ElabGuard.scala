@@ -59,7 +59,7 @@ case class ElabGuard(elab: Elab) {
           )
           val meetTy = Subtype.meet(
             predTy,
-            env.getOrElse(cvar.name, throw UnboundVar(cvar.anno.line, cvar))
+            env.getOrElse(cvar.name, throw UnboundVar(cvar.line, cvar))
           )
           val env1: Env = env + (cvar.name -> meetTy)
           (env1, envs)

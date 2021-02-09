@@ -24,6 +24,7 @@ import com.whatsapp.coralizer.ast.{
   Forms,
   Globalize,
   Id,
+  PrettyCErl,
   WIPDiagnostics
 }
 import com.whatsapp.coralizer.tc.{BuiltIn, Check, Env}
@@ -55,17 +56,16 @@ object Pipeline {
     module.attrs
       .collect({
         case (
-              CLiteral(_, EAtom("file")),
+              "file",
               CLiteral(_, EList(ETuple(EString(fileName) :: _) :: _, _))
             ) =>
           fileName
       })
       .head
 
-  def checkForms(beamFile: String): (String, List[Form]) = {
-    val module = DB.loadCoreModule(beamFile)
+  def checkForms(module: CModule): (String, List[Form]) = {
     val srcFile = moduleToSourceFile(module)
-    val CModule(_, CLiteral(_, EAtom(moduleName)), _, _, defs) = module
+    val CModule(_, moduleName, _, _, defs) = module
 
     val specs = DB.getExpandedModuleStub(moduleName).get.specs
     val forms = defs.map {
@@ -82,7 +82,7 @@ object Pipeline {
       // $COVERAGE-OFF$
       case d => sys.error(s"unexpected def $d")
       // $COVERAGE-ON$
-    }
+    }.toList
     (srcFile, forms)
   }
 

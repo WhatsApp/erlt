@@ -33,11 +33,12 @@ final case class Check(module: String) {
       checkExpr(f.body, resTy, env1)
     } catch {
       case te: TypeError if te.line == 0 =>
+        val line = f.line
         throw te match {
-          case te: TypeMismatch    => te.copy(expr = f.body)
-          case te: UnboundVar      => te.copy(line = f.anno.line)
-          case te: UnboundId       => te.copy(line = f.anno.line)
-          case te: UnboundRemoteId => te.copy(line = f.anno.line)
+          case te: TypeMismatch    => te.copy(line = line)
+          case te: UnboundVar      => te.copy(line = line)
+          case te: UnboundId       => te.copy(line = line)
+          case te: UnboundRemoteId => te.copy(line = line)
         }
     }
   }
@@ -101,7 +102,7 @@ final case class Check(module: String) {
       case _ =>
         val (actualTy, env1) = elab.elabExpr(expr, env)
         if (!Subtype.subType(actualTy, resTy)) {
-          throw TypeMismatch(expr, resTy, actualTy)
+          throw TypeMismatch(expr.line, expr, resTy, actualTy)
         }
         env1
     }

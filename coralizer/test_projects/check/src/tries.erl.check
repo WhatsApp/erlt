@@ -28,7 +28,7 @@
  28     end.                                   |         | 
  29                                            |         | 
  30 -spec test03_neg() -> atom().              |         | 
- 31 test03_neg() ->                            | ERROR   | case .... Expected: atom(), Got: [] | 'error'
+ 31 test03_neg() ->                            | ERROR   | let .... Expected: atom(), Got: [] | 'error'
  32     Res = try foo() of                     |         | 
  33         {_, _} -> []                       |         | 
  34     catch                                  |         | 
@@ -38,7 +38,7 @@
  38                                            |         | 
  39 -spec test04_pos(any()) ->                 |         | 
  40     {ok | error, atom()}.                  |         | 
- 41 test04_pos(X) ->                           | ERROR   | case .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
+ 41 test04_pos(X) ->                           | ERROR   | let .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
  42     Res = try foo() of                     |         | 
  43               {_, _} -> ok                 |         | 
  44           catch                            |         | 
@@ -52,7 +52,7 @@
  52                                            |         | 
  53 -spec test05_pos(any()) ->                 |         | 
  54     {ok | error, atom()}.                  |         | 
- 55 test05_pos(X) ->                           | ERROR   | case .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
+ 55 test05_pos(X) ->                           | ERROR   | let .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
  56     A =                                    |         | 
  57         try ok()                           |         | 
  58         catch                              |         | 
@@ -71,7 +71,7 @@
  71     end.                                   |         | 
  72                                            |         | 
  73 -spec test07_neg() -> error.               |         | 
- 74 test07_neg() ->                            | ERROR   | case .... Expected: 'error', Got: 'ok'
+ 74 test07_neg() ->                            | ERROR   | var0. Expected: 'error', Got: 'ok'
  75     try ok()                               |         | 
  76     catch _ -> error                       |         | 
  77     end.                                   |         | 
@@ -101,7 +101,7 @@
 101                                            |         | 
 102 -spec test11_pos(any(), boolean())         |         | 
 103     -> atom().                             |         | 
-104 test11_pos(Y, Cond) ->                     | ERROR   | case .... Expected: atom(), Got: term()
+104 test11_pos(Y, Cond) ->                     | ERROR   | let .... Expected: atom(), Got: term()
 105     Res =                                  |         | 
 106         try ok()                           |         | 
 107         after                              |         | 
@@ -114,7 +114,7 @@
 114                                            |         | 
 115 -spec test12_neg(any(), boolean())         |         | 
 116     -> atom().                             |         | 
-117 test12_neg(Y, Cond) ->                     | ERROR   | case .... Expected: atom(), Got: term()
+117 test12_neg(Y, Cond) ->                     | ERROR   | let .... Expected: atom(), Got: term()
 118     Res =                                  |         | 
 119         try ok()                           |         | 
 120         after                              |         | 

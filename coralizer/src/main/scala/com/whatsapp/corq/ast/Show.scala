@@ -68,7 +68,6 @@ object Show {
     data match {
       case EDouble(value)                  => value.toString
       case ELong(value)                    => value.toString
-      case EDouble(_) | ELong(_)           => data.toString
       case EAtom(atom)                     => s"'$atom'"
       case EBitStr(bin, pad_bits)          => "<<...>>"
       case EExternalFun(RemoteId(m, f, a)) => s"$m:$f/$a"
@@ -77,9 +76,14 @@ object Show {
       case EString(str)  => s""""$str""""
       case ETuple(elems) => s"{${showDatas(elems)}}"
       // never hit
-      // case EMap(entries) =>
-      //   val inside = entries.foldLeft("")((memo, a) => s"$memo ${show(a._1)} => ${show(a._2)}")
-      //   s"#{$inside}"
+      case EMap(entries) =>
+        if (entries.isEmpty) ""
+        else {
+          val inside = entries.foldLeft("")((memo, a) =>
+            s"$memo ${show(a._1)} => ${show(a._2)}"
+          )
+          s"#{$inside}"
+        }
       // case EPid(node, id, serial, creation) => "pid"
       // case EPort(node, id, creation) => "port"
       // case ERef(node, creation, ids) => "ref"

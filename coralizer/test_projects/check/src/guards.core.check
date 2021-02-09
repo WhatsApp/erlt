@@ -1,0 +1,62 @@
+-module(guards).
+-exports module_info/0, module_info/1, test01/1, test01_if/1, test02/2, test02_if/2, test03/1, test04/1.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/guards.erl 1})])
+-compile([(export_all nowarn_export_all)])
+
+test02_if/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        X Y when true -> case <> of { 
+                 when erlang:is_atom(X) -> X
+                 when erlang:is_atom(Y) -> Y
+                 when true -> default
+            }
+    }
+}
+
+test04/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_number(X) -> X
+        var2 when true -> undef
+    }
+}
+
+test02/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        X var4 when erlang:is_atom(X) -> X
+        var5 Y when erlang:is_atom(Y) -> Y
+        var6 var7 when true -> default
+    }
+}
+
+test01_if/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_number(X) -> undef
+                 when erlang:is_atom(X) -> X
+            }
+    }
+}
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(guards, X)
+    }
+}
+
+test03/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X
+        var2 when true -> undef
+    }
+}
+
+test01/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_atom(X) -> X
+    }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(guards)
+    }
+}

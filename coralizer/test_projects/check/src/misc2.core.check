@@ -1,0 +1,70 @@
+-module(misc2).
+-exports atom_call_neg_01/1, atom_call_neg_02/1, atom_call_neg_03/2, atom_call_neg_04/2, atom_call_pos_01/2, improper_neg/0, module_info/0, module_info/1, test_env_pos/1, test_var_fun_neg/2, test_var_fun_pos/2.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/misc2.erl 1})])
+-compile([(export_all)])
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(misc2, X)
+    }
+}
+
+atom_call_neg_01/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> X:main(1)                             | X. Expected: '<<known atom>>', Got: atom()
+    }
+}
+
+improper_neg/0 = fun ()  { 
+    case <> of { 
+         when true -> [a | [b | c]]                          | ['b' | 'c']. Expected: [term()], Got: 'c'
+    }
+}
+
+atom_call_neg_03/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        M F when true -> M:F(0)                              | M. Expected: '<<known atom>>', Got: 'maps' | 'sets'
+    }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(misc2)
+    }
+}
+
+atom_call_neg_02/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> lists:X(1)                            | X. Expected: '<<known atom>>', Got: atom()
+    }
+}
+
+test_var_fun_neg/2 = fun (var0, var1)  { 
+    case <var0, var1> of {  F X when true -> F(X)
+    }
+}
+
+test_var_fun_pos/2 = fun (var0, var1)  { 
+    case <var0, var1> of {  F X when true -> F(X)
+    }
+}
+
+test_env_pos/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> let var1 = case <> of { 
+                 when erlang:is_atom(X) -> X
+            } in {  let Y = var1 in {  {X, Y} } }
+    }
+}
+
+atom_call_pos_01/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        Mod Fun when true -> Mod:Fun(1, [()])
+    }
+}
+
+atom_call_neg_04/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        M F when true -> M:F()                               | F. Expected: '<<known atom>>', Got: 'to_list' | 'union'
+    }
+}

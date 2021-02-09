@@ -44,7 +44,7 @@ object Main {
 
         val feedback = cmd match {
           case Check =>
-            TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
+            TcDiagnosticsText.check(beamFile).erlWithErrors
           case Debug =>
             WIPDiagnosticsText.loadForms(beamFile).mkString("", "\n", "\n")
         }

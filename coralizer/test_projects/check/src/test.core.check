@@ -1,0 +1,24 @@
+-module(test).
+-exports module_info/0, module_info/1.
+-file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/test.erl 1})])
+
+clauses/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                1 when true -> 1
+                1 when true -> ok
+            }
+    }
+}
+
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(test)
+    }
+}
+
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(test, X)
+    }
+}

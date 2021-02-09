@@ -17,9 +17,10 @@
 package com.whatsapp.coralizer.test
 
 import com.whatsapp.coralizer.test.util.TcDiagnosticsText
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 
 import com.whatsapp.coralizer.ast.DB
+import com.whatsapp.coralizer.test.util.TcDiagnosticsText.Checked
 
 class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
   val generateOut = false
@@ -38,13 +39,20 @@ class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
     }
   }
 
-  def testBeam(srdDir: String, ebinDir: String, module: String): Unit =
-    it(s"$srdDir/$module.erl") {
+  def testBeam(srcDir: String, ebinDir: String, module: String): Unit =
+    it(s"$srcDir/$module.erl") {
       val beamFile = s"$ebinDir/$module.beam"
-      val diag = TcDiagnosticsText.checkForms(beamFile).mkString("", "\n", "\n")
-      val expPath = Paths.get(s"$srdDir/$module.erl.check")
-      if (generateOut) Files.write(expPath, diag.getBytes)
-      val exp = new String(Files.readAllBytes(expPath))
-      assert(exp == diag)
+      val Checked(erl, core) = TcDiagnosticsText.check(beamFile)
+      expTest(erl, Paths.get(s"$srcDir/$module.erl.check"))
+      expTest(core, Paths.get(s"$srcDir/$module.core.check"))
     }
+
+  private def expTest(diagnostics: String, expPath: Path): Unit = {
+    if (generateOut) {
+      Files.write(expPath, diagnostics.getBytes)
+    }
+    val exp = new String(Files.readAllBytes(expPath))
+    assert(exp == diagnostics)
+  }
+
 }

@@ -19,8 +19,12 @@ package com.whatsapp.coralizer.test.util
 import com.whatsapp.coralizer.Pipeline
 import com.whatsapp.coralizer.ast.Forms._
 import com.whatsapp.coralizer.tc.TcDiagnostics.TypeError
-
 import java.nio.file.{Files, Paths}
+
+import com.whatsapp.coralizer.ast.{DB, PrettyCErl}
+import erlang.CErl.CModule
+
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 object TcDiagnosticsText {
   private val width: Int = 42
@@ -66,14 +70,55 @@ object TcDiagnosticsText {
     }
   }
 
-  def checkForms(beamFile: String): List[String] =
-    checkFormsD(beamFile).map(_.format())
+  case class Checked(erlWithErrors: String, coreWithErrors: String)
 
-  private def checkFormsD(beamFile: String): List[DLine] = {
+  private def checkBeam(beamFile: String): (CModule, String, List[Form]) = {
     import scala.jdk.CollectionConverters.CollectionHasAsScala
+    val module = DB.loadCoreModule(beamFile)
+    val (erlFile, forms) = Pipeline.checkForms(module)
+    (module, erlFile, forms)
+  }
 
-    val (erlFile, forms0) = Pipeline.checkForms(beamFile)
+  def check(beamFile: String): Checked = {
+    val (module, erlFile, forms) = checkBeam(beamFile)
+    val annotatedSource = annotateSource(beamFile, erlFile, forms)
+    val annotatedCore = annotateCore(module, forms)
+    Checked(annotatedSource, annotatedCore)
+  }
 
+  def annotateCore(module: CModule, forms: List[Form]): String = {
+    var errNodeIds = Map.empty[Int, TypeError]
+    forms foreach {
+      case MistypedFuncDecl(id, te) => errNodeIds += (te.expr.nodeId -> te)
+      case _                        =>
+    }
+
+    val s = PrettyCErl(module, errNodeIds, 50)
+    val pat = "¦⊢([0-9]+)⊣¦".r
+    var lines = new StringBuilder("")
+    for (line <- s.lines) {
+      val matchData = pat.findAllIn(line).matchData
+      if (matchData.isEmpty) {
+        lines ++= line
+        lines ++= "\n"
+      } else {
+        val nodeId = matchData.next().group(1).toInt
+        val err = errNodeIds(nodeId)
+        lines ++= pat
+          .replaceAllIn(line, "")
+          .padTo(60, " ")
+          .mkString("") + " | " + err.msg
+        lines ++= "\n"
+      }
+    }
+    lines.toString
+  }
+
+  private def annotateSource(
+      beamFile: String,
+      erlFile: String,
+      forms0: List[Form]
+  ): String = {
     val forms = forms0 filter {
       case _: BuiltInFuncDecl => false
       case _                  => true
@@ -91,11 +136,12 @@ object TcDiagnosticsText {
     val statusDs = statusDiags(forms)
     val errorDs = errorDiags(forms)
 
-    lines.zipWithIndex.map {
+    val dlines = lines.zipWithIndex.map {
       case (text, i) =>
         val l = i + 1
         DLine(l, text, statusDs.get(l), errorDs.get(l))
     }
+    dlines.map(_.format()).mkString("", "\n", "\n")
   }
 
   private def statusDiags(forms: List[Form]): Map[Int, Status] = {
