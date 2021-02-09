@@ -66,6 +66,10 @@ object Exprs {
   case class RecordSelect(expr: Expr, recName: String, fieldName: String)(val l: Int) extends Expr
   case class RecordIndex(recName: String, fieldName: String)(val l: Int) extends Expr
 
+  case class MapCreate(kvs: List[(Expr, Expr)])(val l: Int) extends Expr
+  case class ReqMapUpdate(map: Expr, kvs: List[(String, Expr)])(val l: Int) extends Expr
+  case class GenMapUpdate(map: Expr, kvs: List[(Expr, Expr)])(val l: Int) extends Expr
+
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
   case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)
   case class RecordField(name: String, value: Expr)

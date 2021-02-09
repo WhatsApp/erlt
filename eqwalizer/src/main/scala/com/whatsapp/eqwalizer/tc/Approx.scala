@@ -66,4 +66,42 @@ object Approx {
     for { env <- envs; v <- vars } envAcc = envAcc.updated(v, Subtype.join(envAcc(v), env(v)))
     envAcc
   }
+
+  private def adjustShapeMap(t: ShapeMap, keyT: Type, valT: Type): Type =
+    keyT match {
+      case AtomLitType(key) =>
+        val oldProps = t.props.filterNot(_.key == key)
+        val newProps = ReqProp(key, valT) :: oldProps
+        ShapeMap(newProps)
+      case _ =>
+        if (t.props.isEmpty)
+          DictMap(keyT, valT)
+        else
+          DictMap(Subtype.join(AtomType, keyT), t.props.map(_.tp).fold(valT)(Subtype.join))
+    }
+
+  private def adjustDictMap(dictMap: DictMap, keyT: Type, valT: Type): Type =
+    DictMap(Subtype.join(dictMap.kType, keyT), Subtype.join(dictMap.vType, valT))
+
+  def adjustMapType(mapT: Type, keyT: Type, valT: Type): Type =
+    mapT match {
+      case shapeMap: ShapeMap => adjustShapeMap(shapeMap, keyT, valT)
+      case dictMap: DictMap   => adjustDictMap(dictMap, keyT, valT)
+      case UnionType(elems)   => UnionType(elems.map(adjustMapType(_, keyT, valT)))
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  def isShapeWithKey(mapT: Type, key: String): Boolean =
+    mapT match {
+      case shapeMap: ShapeMap =>
+        shapeMap.props.exists {
+          case ReqProp(k, _) => k == key
+          case OptProp(_, _) => false
+        }
+      case UnionType(elems) => elems.forall(isShapeWithKey(_, key))
+      case _                => false
+    }
+
 }

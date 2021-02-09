@@ -56,11 +56,11 @@
  56 record_index() ->                        | LOADED  |                                | 
  57     #test_rec.id.                        |         |                                | 
  58                                          |         |                                | 
- 59 map_create() ->                          | SKIPPED |                                | 
- 60     #{id => 1}.                          |         | E: #{...}                      | 
+ 59 map_create() ->                          | LOADED  |                                | 
+ 60     #{id => 1}.                          |         |                                | 
  61                                          |         |                                | 
- 62 map_update(M) ->                         | SKIPPED |                                | 
- 63     M#{id => 1}.                         |         | E: #{...}                      | 
+ 62 map_update(M) ->                         | LOADED  |                                | 
+ 63     M#{id => 1}.                         |         |                                | 
  64                                          |         |                                | 
  65 call1(X) ->                              | LOADED  |                                | 
  66     id(X).                               |         |                                | 

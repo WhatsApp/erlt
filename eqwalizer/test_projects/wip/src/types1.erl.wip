@@ -205,8 +205,8 @@
 205 -type my_iolist() ::                     | SKIPPED |                                | 
 206     iolist().                            |         | T: iolist()                    | 
 207                                          |         |                                | 
-208 -type my_map() ::                        | SKIPPED |                                | 
-209     map().                               |         | T: map()                       | 
+208 -type my_map() ::                        | LOADED  |                                | 
+209     map().                               |         |                                | 
 210                                          |         |                                | 
 211 -type my_function() ::                   | SKIPPED |                                | 
 212     function().                          |         | T: function()                  | 
@@ -270,8 +270,8 @@
 270                                          |         |                                | 
 271 -type char_lit() :: $a.                  | LOADED  |                                | 
 272                                          |         |                                | 
-273 -type prop_map() ::                      | SKIPPED |                                | 
-274     #{a := number(), b := atom()}.       |         | T: #{...}                      | 
+273 -type prop_map() ::                      | LOADED  |                                | 
+274     #{a := number(), b => atom()}.       |         |                                | 
 275                                          |         |                                | 
 276 -type my_booleans() :: my_list(boolean()…… LOADED  |                                | 
 277                                          |         |                                | 
@@ -290,3 +290,23 @@
 290     (nok) -> ok.                         |         |                                | 
 291 inter(ok) -> nok;                        | LOADED  |                                | 
 292 inter(nok) -> ok.                        |         |                                | 
+293                                          |         |                                | 
+294 -type bad_map1() :: #{                   | SKIPPED |                                | 
+295     atom() => atom(),                    |         | Bad shape prop                 | 
+296     integer() => integer()               |         |                                | 
+297 }.                                       |         |                                | 
+298                                          |         |                                | 
+299 -type bad_map2() :: #{                   | SKIPPED |                                | 
+300     atom() := atom(),                    |         | Bad shape prop                 | 
+301     integer() := integer()               |         |                                | 
+302 }.                                       |         |                                | 
+303                                          |         |                                | 
+304 -type empty_map() :: #{}.                | LOADED  |                                | 
+305                                          |         |                                | 
+306 -type int_dict() ::                      | LOADED  |                                | 
+307     #{integer() => integer()}.           |         |                                | 
+308                                          |         |                                | 
+309 -type single_shape1() ::                 | LOADED  |                                | 
+310     #{id => integer()}.                  |         |                                | 
+311 -type single_shape2() ::                 | LOADED  |                                | 
+312     #{id := integer()}.                  |         |                                | 

@@ -35,3 +35,33 @@
  35 -spec f08({none(), none()}) -> none().     |         | 
  36 f08(X) -> X.                               | ERROR   | X. Expected: none(), Got: {none(), none()}
  37                                            |         | 
+ 38 -spec map01(map()) -> #{}.                 |         | 
+ 39 map01(M) -> M.                             | ERROR   | M. Expected: #{}, Got: #{term() => term()}
+ 40                                            |         | 
+ 41 -spec map02(#{a => atom()})                |         | 
+ 42         -> #{a := atom()}.                 |         | 
+ 43 map02(M) -> M.                             | ERROR   | M. Expected: #{a := atom()}, Got: #{a => atom()}
+ 44                                            |         | 
+ 45 -spec map03(#{a := atom(), b := atom()})   |         | 
+ 46         -> #{a => atom()}.                 |         | 
+ 47 map03(M) -> M.                             | ERROR   | M. Expected: #{a => atom()}, Got: #{a := atom(), b := atom()}
+ 48                                            |         | 
+ 49 -spec map05(#{                             |         | 
+ 50     a | b => a | b | c                     |         | 
+ 51 }) -> #{                                   |         | 
+ 52     a := a | b,                            |         | 
+ 53     b => a | b                             |         | 
+ 54 }.                                         |         | 
+ 55 map05(M) -> M.                             | ERROR   | M. Expected: #{a := 'a' | 'b', b => 'a' | 'b'}, Got: #{'a' | 'b' => 'a' | 'b' | 'c'}
+ 56                                            |         | 
+ 57 -spec map06(#{any() => integer()})         |         | 
+ 58         -> #{atom() => integer()}.         |         | 
+ 59 map06(M) -> M.                             | ERROR   | M. Expected: #{atom() => number()}, Got: #{term() => number()}
+ 60                                            |         | 
+ 61 -spec map07(#{atom() => any()})            |         | 
+ 62         -> #{atom() => integer()}.         |         | 
+ 63 map07(M) -> M.                             | ERROR   | M. Expected: #{atom() => number()}, Got: #{atom() => term()}
+ 64                                            |         | 
+ 65 -spec map08(#{atom() => any()})            |         | 
+ 66         -> #{}.                            |         | 
+ 67 map08(M) -> M.                             | ERROR   | M. Expected: #{}, Got: #{atom() => term()}

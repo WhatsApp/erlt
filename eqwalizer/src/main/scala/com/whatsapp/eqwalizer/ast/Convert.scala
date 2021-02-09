@@ -164,9 +164,26 @@ object Convert {
       case ETuple(List(EAtom("type"), ELong(line), EAtom("range"), EList(List(_, _), None))) =>
         NumberType
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EAtom("any"))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyMap)
+        DictMap(AnyType, AnyType)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EList(assocTypes, _))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeMap)
+        if (assocTypes.isEmpty) {
+          ShapeMap(List.empty)
+        } else if (assocTypes.length == 1)
+          assocTypes.head match {
+            case ETuple(List(EAtom("type"), _, EAtom("map_field_assoc"), EList(List(ekT, evT), None))) =>
+              val keyType = convertType(ekT)
+              val valType = convertType(evT)
+              keyType match {
+                case AtomLitType(k) =>
+                  ShapeMap(List(OptProp(k, valType)))
+                case _ =>
+                  DictMap(keyType, valType)
+              }
+            case prop =>
+              ShapeMap(List(convertPropType(prop)))
+          }
+        else
+          ShapeMap(assocTypes.map(convertPropType))
       case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordName :: eFieldTypes, None))) =>
         if (eFieldTypes.isEmpty)
           RecordType(atomLit(recordName))
@@ -210,6 +227,31 @@ object Convert {
         }
       case ETuple(List(EAtom("type"), ELong(line), EAtom(name), EList(_, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypePredefined(name))
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def convertPropType(t: EObject): Prop =
+    t match {
+      case ETuple(List(EAtom("type"), ELong(l), EAtom("map_field_assoc"), EList(List(ekT, evT), None))) =>
+        val keyType = convertType(ekT)
+        val valType = convertType(evT)
+        keyType match {
+          case AtomLitType(k) =>
+            OptProp(k, valType)
+          case _ =>
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+        }
+      case ETuple(List(EAtom("type"), ELong(l), EAtom("map_field_exact"), EList(List(ekT, evT), None))) =>
+        val keyType = convertType(ekT)
+        val valType = convertType(evT)
+        keyType match {
+          case AtomLitType(k) =>
+            ReqProp(k, valType)
+          case _ =>
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+        }
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
@@ -275,9 +317,15 @@ object Convert {
       case ETuple(List(EAtom("record_field"), ELong(l), eExp, EAtom(recordName), eFieldName)) =>
         RecordSelect(convertExp(eExp), recordName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), EList(eAssocs, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
+        MapCreate(eAssocs.map(convertKV))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
+        val map = convertExp(eExp)
+        if (eAssocs.isEmpty)
+          GenMapUpdate(map, List())(l.intValue)
+        else if (isAvUpdate(eAssocs.head))
+          ReqMapUpdate(map, eAssocs.map(convertAV))(l.intValue)
+        else
+          GenMapUpdate(map, eAssocs.map(convertKV))(l.intValue)
       case ETuple(List(EAtom("catch"), ELong(l), eExp)) =>
         Catch(convertExp(eExp))(l.intValue)
       case ETuple(List(EAtom("call"), ELong(l), eExp, EList(eArgs, None))) =>
@@ -360,6 +408,36 @@ object Convert {
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
+    }
+
+  private def convertKV(term: EObject): (Expr, Expr) =
+    term match {
+      case ETuple(List(EAtom("map_field_assoc"), _, eExp1, eExp2)) =>
+        (convertExp(eExp1), convertExp(eExp2))
+      case ETuple(List(_, ELong(l), _, _)) =>
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def convertAV(term: EObject): (String, Expr) =
+    term match {
+      case ETuple(List(EAtom("map_field_exact"), ELong(l), ETuple(List(EAtom("atom"), _, EAtom(key))), eExp2)) =>
+        (key, convertExp(eExp2))
+      case ETuple(List(_, ELong(l), _, _)) =>
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def isAvUpdate(term: EObject): Boolean =
+    term match {
+      case ETuple(List(EAtom("map_field_exact"), _, _, _)) =>
+        true
+      case _ =>
+        false
     }
 
   private def convertRecordField(term: EObject): RecordField =

@@ -271,7 +271,7 @@ atom_or_number() :: atom() | number().
 -type char_lit() :: $a.
 
 -type prop_map() ::
-    #{a := number(), b := atom()}.
+    #{a := number(), b => atom()}.
 
 -type my_booleans() :: my_list(boolean()).
 
@@ -290,3 +290,23 @@ atom_list_id(AList) -> AList.
     (nok) -> ok.
 inter(ok) -> nok;
 inter(nok) -> ok.
+
+-type bad_map1() :: #{
+    atom() => atom(),
+    integer() => integer()
+}.
+
+-type bad_map2() :: #{
+    atom() := atom(),
+    integer() := integer()
+}.
+
+-type empty_map() :: #{}.
+
+-type int_dict() ::
+    #{integer() => integer()}.
+
+-type single_shape1() ::
+    #{id => integer()}.
+-type single_shape2() ::
+    #{id := integer()}.
