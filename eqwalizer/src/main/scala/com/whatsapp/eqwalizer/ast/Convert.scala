@@ -52,7 +52,11 @@ object Convert {
       case ETuple(
             List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(fields, None))))
           ) =>
-        Some(RecDecl(name, fields.map(recField))(line.intValue))
+        try {
+          Some(RecDecl(name, fields.map(recField))(line.intValue))
+        } catch {
+          case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedRecordDecl(name, d)(line.intValue))
+        }
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("file"), ETuple(List(EString(file), ELong(start))))) =>
         Some(File(file, start.intValue)(line.intValue))
       case ETuple(List(EAtom("eof"), ELong(line))) =>

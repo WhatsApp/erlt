@@ -107,9 +107,9 @@ object WIPDiagnosticsText {
   private def skipDiags(forms: List[Form]): Map[Int, SkippedConstruct] = {
     var diags: Map[Int, SkippedConstruct] = Map.empty
     for (form <- forms) form match {
-      case SkippedTypeDecl(_, reason) => diags += reason.line -> reason.construct
-      case SkippedFunSpec(_, reason)  => diags += reason.line -> reason.construct
-      case SkippedFunDecl(_, reason)  => diags += reason.line -> reason.construct
+      case sf: SkippedForm =>
+        val reason = sf.diag
+        diags += reason.line -> reason.construct
       // nothing
       case _ =>
     }

@@ -43,7 +43,7 @@ object WIPDiagnostics {
     override def toString: String = "T: #{...}"
   }
   case class RefinedRecord(name: String) extends SkippedType {
-    override def toString: String = s"T: #$name{...}"
+    override def toString: String = s"T: #$name{_::_}"
   }
   case class TypeUnOp(op: String) extends SkippedType {
     override def toString: String = s"T: $op _"
