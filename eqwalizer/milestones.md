@@ -15,7 +15,7 @@ Erlang surface syntax.
 - [x] List comprehensions
 - [x] Binary comprehensions
 - [ ] Maps
-- [ ] Records
+- [x] Records
 - [ ] Anonymous functions
 - [ ] Named inner functions (not priority)
 - [ ] Recursive type definitions
