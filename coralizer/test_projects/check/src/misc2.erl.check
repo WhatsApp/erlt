@@ -2,7 +2,7 @@
   2 -compile([export_all]).                    |         | 
   3                                            |         | 
   4 -spec improper_neg() -> any().             |         | 
-  5 improper_neg() -> [a | [b | c]].           | OK      | 
+  5 improper_neg() -> [a | [b | c]].           | ERROR   | ['b' | 'c']. Expected: [term()], Got: 'c'
   6                                            |         | 
   7 -spec test_env_pos(any()) -> {atom(), atom……         | 
   8 test_env_pos(X) ->                         | OK      | 

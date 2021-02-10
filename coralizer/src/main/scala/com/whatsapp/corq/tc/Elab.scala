@@ -261,7 +261,7 @@ final class Elab(val module: String, check: Check) {
     val tailElemType = tlType match {
       case NilType      => NoneType
       case ListType(ty) => ty
-      case ty           => throw TypeMismatch(expr, ListType(hdType), ty)
+      case ty           => throw TypeMismatch(expr, ListType(AnyType), ty)
     }
     ListType(Subtype.join(hdType, tailElemType))
   }

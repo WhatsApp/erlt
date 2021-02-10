@@ -115,7 +115,7 @@
 115 test28_neg(B) -> boolean_id(B).            | ERROR   | B. Expected: 'false' | 'true', Got: atom()
 116                                            |         | 
 117 -spec test29_neg() -> [].                  |         | 
-118 test29_neg() -> [true, false].             | ERROR   | ['true' | ['false' | []]]. Expected: [], Got: ['true']
+118 test29_neg() -> [true, false].             | ERROR   | ['true' | ['false' | []]]. Expected: [], Got: ['true' | 'false']
 119                                            |         | 
 120 -spec test30_neg() -> atom.                |         | 
 121 test30_neg() -> 1.                         | ERROR   | 1. Expected: 'atom', Got: number()
