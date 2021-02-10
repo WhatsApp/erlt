@@ -13,19 +13,19 @@
  13 test_var_fun_pos(F, X) -> F(X).            | OK      | 
  14                                            |         | 
  15 -spec test_var_fun_neg(fun((atom()) -> pid……         | 
- 16 test_var_fun_neg(F, X) -> F(X).            | ERROR   | case .... Expected: atom(), Got: reference()
+ 16 test_var_fun_neg(F, X) -> F(X).            | ERROR   | X. Expected: atom(), Got: reference()
  17                                            |         | 
  18 -spec atom_call_neg_01(atom()) -> any().   |         | 
- 19 atom_call_neg_01(X) -> X:main(1).          | ERROR   | case .... Expected: '<<known atom>>', Got: atom()
+ 19 atom_call_neg_01(X) -> X:main(1).          | ERROR   | X. Expected: '<<known atom>>', Got: atom()
  20                                            |         | 
  21 -spec atom_call_neg_02(atom()) -> any().   |         | 
- 22 atom_call_neg_02(X) -> lists:X(1).         | ERROR   | case .... Expected: '<<known atom>>', Got: atom()
+ 22 atom_call_neg_02(X) -> lists:X(1).         | ERROR   | X. Expected: '<<known atom>>', Got: atom()
  23                                            |         | 
  24 -spec atom_call_neg_03(maps | sets, new) -……         | 
- 25 atom_call_neg_03(M, F) -> M:F(0).          | ERROR   | case .... Expected: '<<known atom>>', Got: 'maps' | 'sets'
+ 25 atom_call_neg_03(M, F) -> M:F(0).          | ERROR   | M. Expected: '<<known atom>>', Got: 'maps' | 'sets'
  26                                            |         | 
  27 -spec atom_call_neg_04(maps, to_list | uni……         | 
- 28 atom_call_neg_04(M, F) -> M:F(#{}).        | ERROR   | case .... Expected: '<<known atom>>', Got: 'to_list' | 'union'
+ 28 atom_call_neg_04(M, F) -> M:F(#{}).        | ERROR   | F. Expected: '<<known atom>>', Got: 'to_list' | 'union'
  29                                            |         | 
  30 -spec atom_call_pos_01(lists, member) -> b……         | 
  31 atom_call_pos_01(Mod, Fun) -> Mod:Fun(1, […… OK      | 

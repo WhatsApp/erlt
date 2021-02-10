@@ -20,9 +20,9 @@
  20     end.                                   |         | 
  21                                            |         | 
  22 -spec test02_neg() -> atom().              |         | 
- 23 test02_neg() ->                            | ERROR   | case .... Expected: atom(), Got: term()
+ 23 test02_neg() ->                            | ERROR   | 
  24     try foo() of                           |         | 
- 25         {_, Y} -> Y                        |         | 
+ 25         {_, Y} -> Y                        |         | Y. Expected: atom(), Got: term()
  26     catch                                  |         | 
  27         {error, _} -> error                |         | 
  28     end.                                   |         | 
@@ -65,9 +65,9 @@
  65     {A, X}.                                |         | 
  66                                            |         | 
  67 -spec test06_neg() -> ok.                  |         | 
- 68 test06_neg() ->                            | ERROR   | case .... Expected: 'ok', Got: 'error'
+ 68 test06_neg() ->                            | ERROR   | 
  69     try ok()                               |         | 
- 70     catch _ -> error                       |         | 
+ 70     catch _ -> error                       |         | 'error'. Expected: 'ok', Got: 'error'
  71     end.                                   |         | 
  72                                            |         | 
  73 -spec test07_neg() -> error.               |         | 
@@ -77,10 +77,10 @@
  77     end.                                   |         | 
  78                                            |         | 
  79 -spec test08_neg() -> ok.                  |         | 
- 80 test08_neg() ->                            | ERROR   | case .... Expected: atom(), Got: number()
+ 80 test08_neg() ->                            | ERROR   | 
  81     try ok()                               |         | 
  82     after                                  |         | 
- 83         only_atom(1)                       |         | 
+ 83         only_atom(1)                       |         | ELong(1). Expected: atom(), Got: number()
  84     end.                                   |         | 
  85                                            |         | 
  86 -spec test09_pos() -> ok.                  |         | 

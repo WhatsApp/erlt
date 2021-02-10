@@ -33,12 +33,15 @@ final case class Check(module: String) {
       checkExpr(f.body, resTy, env1)
     } catch {
       case te: TypeError =>
-        throw te match {
-          case te: TypeMismatch    => te.copy(expr = f.body)
-          case te: UnboundVar      => te.copy(line = f.anno.line)
-          case te: UnboundId       => te.copy(line = f.anno.line)
-          case te: UnboundRemoteId => te.copy(line = f.anno.line)
+        if (te.line == 0) {
+          throw te match {
+            case te: TypeMismatch    => te.copy(expr = f.body)
+            case te: UnboundVar      => te.copy(line = f.anno.line)
+            case te: UnboundId       => te.copy(line = f.anno.line)
+            case te: UnboundRemoteId => te.copy(line = f.anno.line)
+          }
         }
+        else throw te
     }
   }
 

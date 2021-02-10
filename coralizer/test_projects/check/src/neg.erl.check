@@ -5,14 +5,14 @@
   5 %% Gradualizer:                            |         | 
   6 %% https://git.io/JLjXd                    |         | 
   7 -spec foo(A) -> A.                         |         | 
-  8 foo(X) -> {X, X}.                          | ERROR   | case .... Expected: A, Got: {A, A}
+  8 foo(X) -> {X, X}.                          | ERROR   | {X, X}. Expected: A, Got: {A, A}
   9                                            |         | 
  10 -spec atom_id_e(atom()) -> number().       |         | 
- 11 atom_id_e(X) ->                            | ERROR   | case .... Expected: number(), Got: atom()
- 12     X.                                     |         | 
+ 11 atom_id_e(X) ->                            | ERROR   | 
+ 12     X.                                     |         | X. Expected: number(), Got: atom()
  13                                            |         | 
  14 -spec foo(any(), A) -> A.                  |         | 
- 15 foo(X, _) -> X.                            | ERROR   | case .... Expected: A, Got: term()
+ 15 foo(X, _) -> X.                            | ERROR   | X. Expected: A, Got: term()
  16                                            |         | 
  17 -spec match(any()) -> {atom(), atom()}.    |         | 
  18 match(X) ->                                | ERROR   | case .... Expected: {atom(), atom()}, Got: term()
