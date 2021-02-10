@@ -78,12 +78,6 @@ final case class Check(module: String) {
           val envs = clauses.map(checkClause(_, argTys, resTy, env2))
           Approx.combineEnvs(env2, Subtype.join, envs)
         }
-      case CCons(_, hd, tl) =>
-        val (headType, env1) = elab.elabExpr(hd, env)
-        val listType1 = ListType(headType)
-        if (!Subtype.subType(listType1, resTy))
-          throw TypeMismatch(expr, expected = resTy, got = listType1)
-        checkExpr(tl, resTy, env1)
       case CLetRec(_, defs, body) =>
         for ((cvar, fun) <- defs) {
           cvar match {
