@@ -1,8 +1,9 @@
 -module(misc_lib).
 -exports boolean_id/1, module_info/0, module_info/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/misc_lib.erl 1})])
+-file([({misc_lib.erl 1})])
 -compile([(export_all nowarn_export_all)])
 
+:: fun(('false' | 'true') -> 'false' | 'true')
 boolean_id/1 = fun (var0)  { 
     case var0 of {  B when true -> B }
 }

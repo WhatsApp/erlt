@@ -1,40 +1,48 @@
 -module(subtype_pos).
 -exports f01/1, f02/1, f03/1, f04/1, f05/1, f06/1, f07/1, f08/1, module_info/0, module_info/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/subtype_pos.erl 1})])
+-file([({subtype_pos.erl 1})])
 -compile([(export_all nowarn_export_all)])
+-type([({ab {type 5 union [({atom 5 a} {atom 5 b})]} [()]})])
+-type([({pair_diff_elems {type 7 union [({type 7 tuple [({atom 7 a} {atom 7 b})]} {type 7 tuple [({atom 7 b} {atom 7 a})]})]} [()]})])
 -type([({pair_ab {type 9 tuple [({user_type 9 ab [()]} {user_type 9 ab [()]})]} [()]})])
 
-module_info/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> erlang:get_module_info(subtype_pos, X)
-    }
-}
-
-f06/1 = fun (var0)  { 
-    case var0 of {  X when true -> X }
-}
-
+:: fun(({A, A}) -> term())
 f01/1 = fun (var0)  { 
     case var0 of {  X when true -> X }
 }
 
-f07/1 = fun (var0)  { 
+:: fun((atom()) -> term())
+f02/1 = fun (var0)  { 
     case var0 of {  X when true -> X }
 }
 
-f05/1 = fun (var0)  { 
-    case var0 of {  X when true -> X }
-}
-
+:: fun((fun((term()) -> atom())) -> fun((atom()) -> term()))
 f03/1 = fun (var0)  { 
     case var0 of {  F when true -> F }
 }
 
+:: fun(('a' | 'b') -> 'a' | 'b' | 'c')
 f04/1 = fun (var0)  { 
     case var0 of {  X when true -> X }
 }
 
-f02/1 = fun (var0)  { 
+:: fun((none() | none()) -> 'a' | 'b')
+f05/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+:: fun(({'a', 'b'} | {'b', 'a'}) -> {'a' | 'b', 'a' | 'b'})
+f06/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+:: fun((pair_diff_elems()) -> pair_ab())
+f07/1 = fun (var0)  { 
+    case var0 of {  X when true -> X }
+}
+
+:: fun((none()) -> {none(), none()})
+f08/1 = fun (var0)  { 
     case var0 of {  X when true -> X }
 }
 
@@ -44,6 +52,8 @@ module_info/0 = fun ()  {
     }
 }
 
-f08/1 = fun (var0)  { 
-    case var0 of {  X when true -> X }
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(subtype_pos, X)
+    }
 }

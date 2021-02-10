@@ -93,10 +93,11 @@ object TcDiagnosticsText {
       case _                        =>
     }
 
-    val s = PrettyCErl(module, errNodeIds, 50)
+    val specs = DB.getModuleStub(module.name).get.specs
+    val core = PrettyCErl(module, specs, errNodeIds, 50)
     val pat = "¦⊢([0-9]+)⊣¦".r
     var lines = new StringBuilder("")
-    for (line <- s.lines) {
+    for (line <- core.lines) {
       val matchData = pat.findAllIn(line).matchData
       if (matchData.isEmpty) {
         lines ++= line

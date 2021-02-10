@@ -1,39 +1,78 @@
 -module(tries).
 -exports foo/0, module_info/0, module_info/1, ok/0, only_atom/1, test01_pos/0, test02_neg/0, test03_neg/0, test04_pos/1, test05_pos/1, test06_neg/0, test07_neg/0, test08_neg/0, test09_pos/0, test10_pos/0, test11_pos/2, test12_neg/2.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/tries.erl 1})])
+-file([({tries.erl 1})])
 -compile([(export_all nowarn_export_all)])
 
-module_info/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> erlang:get_module_info(tries, X)
-    }
-}
-
-test08_neg/0 = fun ()  { 
-    case <> of { 
-         when true -> letrec (after$^0/0 = fun ()  { 
-                    case <> of { 
-                         when true -> only_atom/1(1)
-                    }
-                }) in  { 
-                try ok/0() of  { 
-                    var0 -> after$^0/0() , var0
-                }
-                catch {
-                    var3, var2, var1 -> case {var3, var2, var1} of { 
-                        {var3, var2, var1} when true ->
-                        after$^0/0() , primop:raise(var1, var2)
-                    }
-                }
-                
-            }
-    }
-}
-
+:: fun(() -> {atom(), term()})
 foo/0 = fun ()  { 
     case <> of {   when true -> {foo, bar} }
 }
 
+:: fun(() -> 'ok')
+ok/0 = fun ()  {  case <> of {   when true -> ok }
+}
+
+:: fun((atom()) -> 'ok')
+only_atom/1 = fun (var0)  { 
+    case var0 of {  A when erlang:is_atom(A) -> ok
+    }
+}
+
+:: fun(() -> atom())
+test01_pos/0 = fun ()  { 
+    case <> of { 
+         when true -> try foo/0() of  { 
+                var0 -> case var0 of { 
+                    {X, var5} when true -> X
+                }
+            }
+            catch {
+                var4, var3, var2 -> case {var4, var3, var2} of { 
+                    {throw, {error, var6}, var7} when true ->
+                    error
+                }
+            }
+            
+    }
+}
+
+:: fun(() -> atom())
+test02_neg/0 = fun ()  { 
+    case <> of { 
+         when true -> try foo/0() of  { 
+                var0 -> case var0 of { 
+                    {var5, Y} when true -> Y                 | Y. Expected: atom(), Got: term()
+                }
+            }
+            catch {
+                var4, var3, var2 -> case {var4, var3, var2} of { 
+                    {throw, {error, var6}, var7} when true ->
+                    error
+                }
+            }
+            
+    }
+}
+
+:: fun(() -> atom())
+test03_neg/0 = fun ()  { 
+    case <> of { 
+         when true -> let var5 = try foo/0() of  {           | let .... Expected: atom(), Got: [] | 'error'
+                var0 -> case var0 of { 
+                    {var7, var8} when true -> [()]
+                }
+            }
+            catch {
+                var4, var3, var2 -> case {var4, var3, var2} of { 
+                    {throw, {error, var9}, var10} when true ->
+                    error
+                }
+            }
+             in {  let Res = var5 in {  Res } }
+    }
+}
+
+:: fun((term()) -> {'ok' | 'error', atom()})
 test04_pos/1 = fun (var0)  { 
     case var0 of { 
         X when true -> let var10 = letrec (after$^0/0 =      | let .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
@@ -73,112 +112,7 @@ test04_pos/1 = fun (var0)  {
     }
 }
 
-module_info/0 = fun ()  { 
-    case <> of { 
-         when true -> erlang:get_module_info(tries)
-    }
-}
-
-test10_pos/0 = fun ()  { 
-    case <> of { 
-         when true -> letrec (after$^0/0 = fun ()  { 
-                    case <> of { 
-                         when true -> only_atom/1(atom)
-                    }
-                }) in  { 
-                try try ok/0() of  { 
-                        var0 -> case var0 of { 
-                            X when true -> X
-                        }
-                    }
-                    catch {
-                        var4, var3, var2 -> case {var4, var3, var2} of { 
-                            
-                        }
-                    }
-                     of  { 
-                    var5 -> after$^0/0() , var5
-                }
-                catch {
-                    var8, var7, var6 -> case {var8, var7, var6} of { 
-                        {var8, var7, var6} when true ->
-                        after$^0/0() , primop:raise(var6, var7)
-                    }
-                }
-                
-            }
-    }
-}
-
-test09_pos/0 = fun ()  { 
-    case <> of { 
-         when true -> letrec (after$^0/0 = fun ()  { 
-                    case <> of { 
-                         when true -> only_atom/1(atom)
-                    }
-                }) in  { 
-                try ok/0() of  { 
-                    var0 -> after$^0/0() , var0
-                }
-                catch {
-                    var3, var2, var1 -> case {var3, var2, var1} of { 
-                        {var3, var2, var1} when true ->
-                        after$^0/0() , primop:raise(var1, var2)
-                    }
-                }
-                
-            }
-    }
-}
-
-test11_pos/2 = fun (var0, var1)  { 
-    case <var0, var1> of { 
-        Y Cond when true -> let var6 = letrec (after$^0/0 =  | let .... Expected: atom(), Got: term()
-                fun ()  { 
-                    case <> of { 
-                         when true -> case <> of { 
-                                 when erlang:is_atom(Y) ->
-                                ok
-                            }
-                    }
-                }) in  { 
-                try ok/0() of  { 
-                    var2 -> after$^0/0() , var2
-                }
-                catch {
-                    var5, var4, var3 -> case {var5, var4, var3} of { 
-                        {var5, var4, var3} when true ->
-                        after$^0/0() , primop:raise(var3, var4)
-                    }
-                }
-                
-            } in { 
-                let Res = var6 in { 
-                    case <> of { 
-                         when erlang:=:=(Cond, true) ->
-                        Res
-                         when true -> Y
-                    }
-                }
-            }
-    }
-}
-
-test07_neg/0 = fun ()  { 
-    case <> of { 
-         when true -> try ok/0() of  { 
-                var0 -> var0                                 | var0. Expected: 'error', Got: 'ok'
-            }
-            catch {
-                var3, var2, var1 -> case {var3, var2, var1} of { 
-                    {throw, var4, var5} when true ->
-                    error
-                }
-            }
-            
-    }
-}
-
+:: fun((term()) -> {'ok' | 'error', atom()})
 test05_pos/1 = fun (var0)  { 
     case var0 of { 
         X when true -> let var9 = letrec (after$^0/0 =       | let .... Expected: {'ok' | 'error', atom()}, Got: {'ok' | 'error', term()}
@@ -212,28 +146,7 @@ test05_pos/1 = fun (var0)  {
     }
 }
 
-test02_neg/0 = fun ()  { 
-    case <> of { 
-         when true -> try foo/0() of  { 
-                var0 -> case var0 of { 
-                    {var5, Y} when true -> Y                 | Y. Expected: atom(), Got: term()
-                }
-            }
-            catch {
-                var4, var3, var2 -> case {var4, var3, var2} of { 
-                    {throw, {error, var6}, var7} when true ->
-                    error
-                }
-            }
-            
-    }
-}
-
-only_atom/1 = fun (var0)  { 
-    case var0 of {  A when erlang:is_atom(A) -> ok
-    }
-}
-
+:: fun(() -> 'ok')
 test06_neg/0 = fun ()  { 
     case <> of { 
          when true -> try ok/0() of  { 
@@ -249,23 +162,133 @@ test06_neg/0 = fun ()  {
     }
 }
 
-test03_neg/0 = fun ()  { 
+:: fun(() -> 'error')
+test07_neg/0 = fun ()  { 
     case <> of { 
-         when true -> let var5 = try foo/0() of  {           | let .... Expected: atom(), Got: [] | 'error'
-                var0 -> case var0 of { 
-                    {var7, var8} when true -> [()]
-                }
+         when true -> try ok/0() of  { 
+                var0 -> var0                                 | var0. Expected: 'error', Got: 'ok'
             }
             catch {
-                var4, var3, var2 -> case {var4, var3, var2} of { 
-                    {throw, {error, var9}, var10} when true ->
+                var3, var2, var1 -> case {var3, var2, var1} of { 
+                    {throw, var4, var5} when true ->
                     error
                 }
             }
-             in {  let Res = var5 in {  Res } }
+            
     }
 }
 
+:: fun(() -> 'ok')
+test08_neg/0 = fun ()  { 
+    case <> of { 
+         when true -> letrec (after$^0/0 = fun ()  { 
+                    case <> of { 
+                         when true -> only_atom/1(1)
+                    }
+                }) in  { 
+                try ok/0() of  { 
+                    var0 -> after$^0/0() , var0
+                }
+                catch {
+                    var3, var2, var1 -> case {var3, var2, var1} of { 
+                        {var3, var2, var1} when true ->
+                        after$^0/0() , primop:raise(var1, var2)
+                    }
+                }
+                
+            }
+    }
+}
+
+:: fun(() -> 'ok')
+test09_pos/0 = fun ()  { 
+    case <> of { 
+         when true -> letrec (after$^0/0 = fun ()  { 
+                    case <> of { 
+                         when true -> only_atom/1(atom)
+                    }
+                }) in  { 
+                try ok/0() of  { 
+                    var0 -> after$^0/0() , var0
+                }
+                catch {
+                    var3, var2, var1 -> case {var3, var2, var1} of { 
+                        {var3, var2, var1} when true ->
+                        after$^0/0() , primop:raise(var1, var2)
+                    }
+                }
+                
+            }
+    }
+}
+
+:: fun(() -> 'ok')
+test10_pos/0 = fun ()  { 
+    case <> of { 
+         when true -> letrec (after$^0/0 = fun ()  { 
+                    case <> of { 
+                         when true -> only_atom/1(atom)
+                    }
+                }) in  { 
+                try try ok/0() of  { 
+                        var0 -> case var0 of { 
+                            X when true -> X
+                        }
+                    }
+                    catch {
+                        var4, var3, var2 -> case {var4, var3, var2} of { 
+                            
+                        }
+                    }
+                     of  { 
+                    var5 -> after$^0/0() , var5
+                }
+                catch {
+                    var8, var7, var6 -> case {var8, var7, var6} of { 
+                        {var8, var7, var6} when true ->
+                        after$^0/0() , primop:raise(var6, var7)
+                    }
+                }
+                
+            }
+    }
+}
+
+:: fun((term(), 'false' | 'true') -> atom())
+test11_pos/2 = fun (var0, var1)  { 
+    case <var0, var1> of { 
+        Y Cond when true -> let var6 = letrec (after$^0/0 =  | let .... Expected: atom(), Got: term()
+                fun ()  { 
+                    case <> of { 
+                         when true -> case <> of { 
+                                 when erlang:is_atom(Y) ->
+                                ok
+                            }
+                    }
+                }) in  { 
+                try ok/0() of  { 
+                    var2 -> after$^0/0() , var2
+                }
+                catch {
+                    var5, var4, var3 -> case {var5, var4, var3} of { 
+                        {var5, var4, var3} when true ->
+                        after$^0/0() , primop:raise(var3, var4)
+                    }
+                }
+                
+            } in { 
+                let Res = var6 in { 
+                    case <> of { 
+                         when erlang:=:=(Cond, true) ->
+                        Res
+                         when true -> Y
+                    }
+                }
+            }
+    }
+}
+
+:: fun((term(), 'false' | 'true') -> atom())
 test12_neg/2 = fun (var0, var1)  { 
     case <var0, var1> of { 
         Y Cond when true -> let var6 = letrec (after$^0/0 =  | let .... Expected: atom(), Got: term()
@@ -299,22 +322,14 @@ test12_neg/2 = fun (var0, var1)  {
     }
 }
 
-test01_pos/0 = fun ()  { 
+module_info/0 = fun ()  { 
     case <> of { 
-         when true -> try foo/0() of  { 
-                var0 -> case var0 of { 
-                    {X, var5} when true -> X
-                }
-            }
-            catch {
-                var4, var3, var2 -> case {var4, var3, var2} of { 
-                    {throw, {error, var6}, var7} when true ->
-                    error
-                }
-            }
-            
+         when true -> erlang:get_module_info(tries)
     }
 }
 
-ok/0 = fun ()  {  case <> of {   when true -> ok }
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(tries, X)
+    }
 }

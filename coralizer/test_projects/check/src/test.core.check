@@ -1,7 +1,8 @@
 -module(test).
 -exports module_info/0, module_info/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/test.erl 1})])
+-file([({test.erl 1})])
 
+:: fun((term()) -> atom() | number())
 clauses/1 = fun (var0)  { 
     case var0 of { 
         X when true -> case X of { 
