@@ -1,5 +1,5 @@
--module(sample).
--exports module_info/0, module_info/1, test03_pos/1.
+-module(sample)
+-exports(module_info/0, module_info/1, test03_pos/1)
 -file([({sample.erl 1})])
 -compile([(export_all)])
 

@@ -1,5 +1,5 @@
--module(test).
--exports module_info/0, module_info/1.
+-module(test)
+-exports(module_info/0, module_info/1)
 -file([({test.erl 1})])
 
 :: fun((term()) -> atom() | number())

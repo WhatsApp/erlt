@@ -1,5 +1,5 @@
--module(scoping).
--exports bar/0, foo/0, module_info/0, module_info/1, test01/0, test02/0, test03/0, test04/0, test05/0, test06/0.
+-module(scoping)
+-exports(bar/0, foo/0, module_info/0, module_info/1, test01/0, test02/0, test03/0, test04/0, test05/0, test06/0)
 -file([({scoping.erl 1})])
 -compile([(export_all nowarn_export_all)])
 

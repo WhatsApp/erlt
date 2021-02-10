@@ -16,7 +16,6 @@
 
 package com.whatsapp.coralizer.ast
 
-import com.whatsapp.coralizer.ast.Forms.FunSpec
 import com.whatsapp.coralizer.tc.TcDiagnostics.TypeError
 import erlang.Data._
 import erlang.CErl._
@@ -24,14 +23,14 @@ import erlang.CErl._
 object PrettyCErl {
   def apply(
       e: CErl,
-      specs: Map[Id, FunSpec],
+      moduleStub: ModuleStub,
       errors: Map[Int, TypeError],
       width: Int
   ): String =
-    new PrettyCErl(specs, errors).formattedLayout(e, width)
+    new PrettyCErl(moduleStub, errors).formattedLayout(e, width)
 }
 
-private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
+private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
     extends org.bitbucket.inkytonik.kiama.output.PrettyPrinter {
 
   def formattedLayout(e: CErl, width: Int): String =
@@ -68,35 +67,43 @@ private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
         def defToDoc(d: (CVar, CFun)): Doc =
           line <> d._1 <+> "=" <+> d._2
 
+        val typeDocs = moduleStub.types.map {
+          case (Id(name, arity), decl) =>
+            text(s"-type $name($arity) :: " + Show.show(decl.body))
+        }.toList
+
         def specToDoc(id: Id): Doc =
-          specs
+          moduleStub.specs
             .get(id)
             .map(spec =>
-              line <> (vsep(spec.types map { x =>
+              line <> vsep(spec.types map { x =>
                 ":: " + Show.show(x.ty)
-              }))
+              })
             )
-            .getOrElse("")
+            .getOrElse(emptyDoc)
 
-        val defsDocs = defs collect {
+        val defsDocs = defs map {
           case d @ (CVar(_, VarNameAtomInt(id)), _) =>
             specToDoc(id) <> defToDoc(d)
-          case d => defToDoc(d)
+          // $COVERAGE-OFF$
+          case d => sys.error(s"unexpected $d")
+          // $COVERAGE-ON$
         }
 
         val attrDocs =
-          for ((k, v) <- attrs filter (_._1 != "spec"))
+          for (
+            (k, v) <- attrs filter (x =>
+              x._1 != "spec" && x._1 != "type" && x._1 != "opaque"
+            )
+          )
             yield "-" <> k <> "(" <> v <> ")"
-        "-module(" <> name <> ")." <@>
-          "-exports " <> exports <> "." <@> vsep(attrDocs.toList) <@> vsep(
-          defsDocs.toList
-        )
+
+        val moduleDoc = "-module" <> parens(name)
+        val exportsDoc = "-exports" <> parens(exports)
+
+        vsep(moduleDoc :: exportsDoc :: attrDocs ++ typeDocs ++ defsDocs)
 
       case CPrimOp(_, name, args) => "primop:" <> name <> parens(args)
-      case _: CReceive =>
-        sys.error(
-          "unexpected receive. Core Erlang generated from Erlang is no longer expected to have receives"
-        )
       case CSeq(_, arg, body) => arg <+> "," <+> body
       case CTry(_, arg, bodyVars, body, evars, handler) =>
         "try" <+> nest(arg) <+> "of" <+> block(
@@ -107,7 +114,9 @@ private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
       case CTuple(_, elems)  => braces(elems)
       case CValues(_, elems) => "<" <> elems <> ">"
       case e: CVar           => Show.show(e)
+      // $COVERAGE-OFF$
       case _: C___XXX        => sys.error(s"unexpected $e")
+      // $COVERAGE-ON$
     }
 
   def doc(data: EObject): Doc =
@@ -121,15 +130,17 @@ private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
       case EList(elems, lastTail) =>
         val improper: Doc = lastTail match {
           case Some(tl) => space <> "| improper" <> parens(tl)
-          case None     => ""
+          case None     => emptyDoc
         }
         "[" <> parens(elems) <> improper <> "]"
       case ELong(value)  => value.toString
       case data: EMap    => Show.show(data)
       case EString(str)  => str
       case ETuple(elems) => braces(elems)
-      case _: Anno | _: EPid | _: EPort | _: ERef | _: C___XXX =>
+      case _: Anno | _: EPid | _: EPort | _: ERef | _: C___XXX | _: CReceive =>
+        // $COVERAGE-OFF$
         sys.error(s"unexpected $data")
+      // $COVERAGE-ON$
     }
 
   implicit def cerlToDoc(e: CErl): Doc =
@@ -146,7 +157,7 @@ private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
   def docArgs(
       es: Iterable[Doc]
   ): Doc =
-    if (es.isEmpty) { "" }
+    if (es.isEmpty) { emptyDoc }
     else nest(hsep(es.toList, comma))
 
   def block(doc: Doc) =

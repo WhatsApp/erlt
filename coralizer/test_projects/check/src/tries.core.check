@@ -1,5 +1,5 @@
--module(tries).
--exports foo/0, module_info/0, module_info/1, ok/0, only_atom/1, test01_pos/0, test02_neg/0, test03_neg/0, test04_pos/1, test05_pos/1, test06_neg/0, test07_neg/0, test08_neg/0, test09_pos/0, test10_pos/0, test11_pos/2, test12_neg/2.
+-module(tries)
+-exports(foo/0, module_info/0, module_info/1, ok/0, only_atom/1, test01_pos/0, test02_neg/0, test03_neg/0, test04_pos/1, test05_pos/1, test06_neg/0, test07_neg/0, test08_neg/0, test09_pos/0, test10_pos/0, test11_pos/2, test12_neg/2)
 -file([({tries.erl 1})])
 -compile([(export_all nowarn_export_all)])
 

@@ -1,5 +1,5 @@
--module(other).
--exports clauses/1, get_inter1/0, get_inter2/0, inter/1, module_info/0, module_info/1, slice_inter1/1, slice_inter2/1.
+-module(other)
+-exports(clauses/1, get_inter1/0, get_inter2/0, inter/1, module_info/0, module_info/1, slice_inter1/1, slice_inter2/1)
 -file([({other.erl 1})])
 -compile([(export_all nowarn_export_all)])
 

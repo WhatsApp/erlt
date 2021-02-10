@@ -17,17 +17,15 @@
 package com.whatsapp.coralizer
 
 import com.whatsapp.coralizer.ast.Forms._
-import com.whatsapp.coralizer.ast.Types.ConstrainedFunType
 import com.whatsapp.coralizer.ast.{
   DB,
   Expand,
   Forms,
   Globalize,
   Id,
-  PrettyCErl,
   WIPDiagnostics
 }
-import com.whatsapp.coralizer.tc.{BuiltIn, Check, Env}
+import com.whatsapp.coralizer.tc.{BuiltIn, Check}
 import com.whatsapp.coralizer.tc.TcDiagnostics.TypeError
 import erlang.CErl._
 import erlang.Data._
