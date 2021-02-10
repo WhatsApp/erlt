@@ -118,13 +118,13 @@
 118 test29_neg() -> [true, false].             | ERROR   | ['true' | ['false' | []]]. Expected: [], Got: ['true']
 119                                            |         | 
 120 -spec test30_neg() -> atom.                |         | 
-121 test30_neg() -> 1.                         | ERROR   | ELong(1). Expected: 'atom', Got: number()
+121 test30_neg() -> 1.                         | ERROR   | 1. Expected: 'atom', Got: number()
 122                                            |         | 
 123 -spec test31_neg() -> atom.                |         | 
 124 test31_neg() -> fun test30_neg/0.          | ERROR   | case .... Expected: 'atom', Got: fun(() -> 'atom')
 125                                            |         | 
 126 -spec test32_neg() -> atom.                |         | 
-127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | 'erlang':'make_fun'('misc_lib','boolean_id',ELong(1)). Expected: 'atom', Got: ……
+127 test32_neg() -> fun misc_lib:boolean_id/1. | ERROR   | 'erlang':'make_fun'('misc_lib','boolean_id',1). Expected: 'atom', Got: fun(('f……
 128                                            |         | 
 129 -spec test33_pos(a | b, b | c) -> b.       |         | 
 130 test33_pos(AB, BC) ->                      | ERROR   | 
@@ -196,7 +196,7 @@
 196 test47_neg() -> [].                        | ERROR   | []. Expected: number(), Got: []
 197                                            |         | 
 198 -spec test48_neg() -> atom().              |         | 
-199 test48_neg() -> test47_neg().              | ERROR   | CVar(Anno(199),test47_neg/0)(). Expected: atom(), Got: number()
+199 test48_neg() -> test47_neg().              | ERROR   | test47_neg/0(). Expected: atom(), Got: number()
 200                                            |         | 
 201 -spec test49_neg() -> atom().              |         | 
 202 test49_neg() -> misc:test47_neg().         | ERROR   | 'misc':'test47_neg'(). Expected: atom(), Got: number()
