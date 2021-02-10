@@ -93,8 +93,8 @@ object TcDiagnosticsText {
       case _                        =>
     }
 
-    val specs = DB.getModuleStub(module.name).get.specs
-    val core = PrettyCErl(module, specs, errNodeIds, 50)
+    val moduleStub = DB.getModuleStub(module.name).get
+    val core = PrettyCErl(module, moduleStub, errNodeIds, 50)
     val pat = "¦⊢([0-9]+)⊣¦".r
     var lines = new StringBuilder("")
     for (line <- core.lines) {

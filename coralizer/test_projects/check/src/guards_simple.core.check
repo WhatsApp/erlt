@@ -1,5 +1,5 @@
--module(guards_simple).
--exports atom_neg_1/1, atom_neg_2/1, atom_neg_3/1, atom_pos_1/1, atom_pos_2/1, atom_pos_3/1, boolean_neg_1/1, boolean_neg_2/1, boolean_neg_3/1, boolean_pos_1/1, boolean_pos_2/1, boolean_pos_3/1, float_neg/1, float_pos/1, integer_neg/1, integer_pos/1, module_info/0, module_info/1, pid_neg/1, pid_pos/1, port_neg/1, port_pos/1, reference_neg/1, reference_pos/1.
+-module(guards_simple)
+-exports(atom_neg_1/1, atom_neg_2/1, atom_neg_3/1, atom_pos_1/1, atom_pos_2/1, atom_pos_3/1, boolean_neg_1/1, boolean_neg_2/1, boolean_neg_3/1, boolean_pos_1/1, boolean_pos_2/1, boolean_pos_3/1, float_neg/1, float_pos/1, integer_neg/1, integer_pos/1, module_info/0, module_info/1, pid_neg/1, pid_pos/1, port_neg/1, port_pos/1, reference_neg/1, reference_pos/1)
 -file([({guards_simple.erl 1})])
 -compile([(export_all nowarn_export_all)])
 

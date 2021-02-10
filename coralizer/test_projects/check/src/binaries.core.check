@@ -1,5 +1,5 @@
--module(binaries).
--exports module_info/0, module_info/1, test01_pos/0, test02_pos/1, test03_pos/1, test04_neg/0, test05_neg/1, test05_pos/1, test06_neg/2, test07_neg/1, test08_neg/1, test09_neg/2.
+-module(binaries)
+-exports(module_info/0, module_info/1, test01_pos/0, test02_pos/1, test03_pos/1, test04_neg/0, test05_neg/1, test05_pos/1, test06_neg/2, test07_neg/1, test08_neg/1, test09_neg/2)
 -file([({binaries.erl 1})])
 -compile([(export_all nowarn_export_all)])
 

@@ -1,5 +1,5 @@
--module(pos).
--exports atom_id1/1, atom_lit/0, atom_pat/1, block_example/0, char_lit/0, clauses/1, match_example/0, module_info/0, module_info/1, nil_lit/0.
+-module(pos)
+-exports(atom_id1/1, atom_lit/0, atom_pat/1, block_example/0, char_lit/0, clauses/1, match_example/0, module_info/0, module_info/1, nil_lit/0)
 -file([({pos.erl 1})])
 -compile([(export_all nowarn_export_all)])
 
