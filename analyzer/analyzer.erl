@@ -60,7 +60,8 @@
     strange_maps/1,
     record_indices/1,
     exact_map_updates/1,
-    assoc_map_updates/1
+    assoc_map_updates/1,
+    mixed_map_updates/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -767,8 +768,8 @@ exact_map_updates(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     collect(Forms, fun pred/1, fun exact_map_update/1).
 
-exact_map_update({map, Line, _MapExpr, Assocs}) ->
-    Exacts = [Exact || {map_field_exact,_,_,_} = Exact <- Assocs],
+exact_map_update({map, Line, _MapExpr, MapPairs}) ->
+    Exacts = [Exact || {map_field_exact,_,_,_} = Exact <- MapPairs],
     (erlang:length(Exacts) > 0) andalso {Line};
 exact_map_update(_) ->
     false.
@@ -778,10 +779,22 @@ assoc_map_updates(BeamFile) ->
     {ok, Forms} = get_abstract_forms(BeamFile),
     collect(Forms, fun pred/1, fun assoc_map_update/1).
 
-assoc_map_update({map, Line, _MapExpr, Assocs}) ->
-    Exacts = [Exact || {map_field_assoc,_,_,_} = Exact <- Assocs],
-    (erlang:length(Exacts) > 1) andalso {Line};
+assoc_map_update({map, Line, _MapExpr, MapPairs}) ->
+    Assocs = [Assoc || {map_field_assoc,_,_,_} = Assoc <- MapPairs],
+    (erlang:length(Assocs) > 1) andalso {Line};
 assoc_map_update(_) ->
+    false.
+
+-spec mixed_map_updates(BeamFile :: file:filename()) -> [{integer()}].
+mixed_map_updates(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun mixed_map_update/1).
+
+mixed_map_update({map, Line, _MapExpr, MapPairs}) ->
+    Exacts = [Exact || {map_field_exact,_,_,_} = Exact <- MapPairs],
+    Assocs = [Assoc || {map_field_assoc,_,_,_} = Assoc <- MapPairs],
+    (erlang:length(Exacts) > 0) andalso (erlang:length(Assocs) > 1) andalso {Line};
+mixed_map_update(_) ->
     false.
 
 -spec record_indices(BeamFile :: file:filename()) -> [{integer()}].

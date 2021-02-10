@@ -537,6 +537,14 @@ class RPC(val connection: OtpConnection) extends AutoCloseable {
     data.map { case ETuple(List(ELong(line))) => line.toInt }
   }
 
+  def getMixedMapUpdates(beamFilePath: String): List[Int] = {
+    println("loading " + beamFilePath)
+    connection.sendRPC("analyzer", "mixed_map_updates", new OtpErlangList(new OtpErlangString(beamFilePath)))
+    val received = connection.receiveRPC
+    val EList(data, _) = erlang.DataConvert.fromJava(received)
+    data.map { case ETuple(List(ELong(line))) => line.toInt }
+  }
+
   def getRecordIndices(beamFilePath: String): List[Int] = {
     println("loading " + beamFilePath)
     connection.sendRPC("analyzer", "record_indices", new OtpErlangList(new OtpErlangString(beamFilePath)))
