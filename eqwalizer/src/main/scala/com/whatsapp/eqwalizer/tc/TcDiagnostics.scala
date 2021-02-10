@@ -30,6 +30,9 @@ object TcDiagnostics {
   case class TypeMismatch(line: Int, expr: Expr, expected: Type, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
+  case class UndefinedField(line: Int, recName: String, fieldName: String) extends TypeError {
+    override val msg: String = s"#$recName{...}: $fieldName is 'undefined'"
+  }
   case class UnboundVar(line: Int, n: String) extends TypeError {
     override val msg: String = s"Unbound var: ${n}"
   }

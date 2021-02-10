@@ -31,12 +31,15 @@ object Pats {
   case class PatNumber()(val l: Int) extends Pat
   case class PatAtom(s: String)(val l: Int) extends Pat
   case class PatVar(n: String)(val l: Int) extends Pat
+  case class PatRecord(recName: String, fields: List[PatRecordField])(val l: Int) extends Pat
+  case class PatRecordIndex(recName: String, fieldName: String)(val l: Int) extends Pat
 
   case class PatUnOp(op: String, arg: Pat)(val l: Int) extends Pat
   case class PatBinOp(op: String, arg1: Pat, arg2: Pat)(val l: Int) extends Pat
 
   case class PatBinary(elems: List[PatBinaryElem])(val l: Int) extends Pat
   case class PatBinaryElem(pat: Pat, size: PatBinSize, specifier: Specifier)(val l: Int)
+  case class PatRecordField(name: String, pat: Pat)
 
   sealed trait PatBinSize
   case object PatBinSizeConst extends PatBinSize

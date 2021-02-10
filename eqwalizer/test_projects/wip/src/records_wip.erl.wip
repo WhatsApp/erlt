@@ -1,0 +1,22 @@
+  1 -module(records_wip).                    | LOADED  |                                | 
+  2                                          |         |                                | 
+  3 -export([fun_call/1]).                   | LOADED  |                                | 
+  4                                          |         |                                | 
+  5 -record(func_rec, {                      | LOADED  |                                | 
+  6     func :: fun(() -> 3)                 |         |                                | 
+  7 }).                                      |         |                                | 
+  8                                          |         |                                | 
+  9 -record(func_rec1, {                     | SKIPPED |                                | 
+ 10     func =                               |         |                                | 
+ 11         fun() -> 3 end                   |         | E: lambda                      | 
+ 12         :: fun(() -> 3)                  |         |                                | 
+ 13 }).                                      |         |                                | 
+ 14                                          |         |                                | 
+ 15 -spec fun_call(#func_rec{}) -> number(). | LOADED  |                                | 
+ 16 fun_call(X) -> (X#func_rec.func)().      | SKIPPED | E: dcall                       | 
+ 17                                          |         |                                | 
+ 18 -record(any_box, {inner :: any()}).      | LOADED  |                                | 
+ 19                                          |         |                                | 
+ 20 %% "Refined" record type                 |         |                                | 
+ 21 -type int_box() ::                       | SKIPPED |                                | 
+ 22     #any_box{inner :: integer()}.        |         | T: #any_box{_::_}              | 

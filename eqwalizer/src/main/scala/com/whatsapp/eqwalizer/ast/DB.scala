@@ -68,6 +68,7 @@ object DB {
     var exportTypes: Set[Id] = Set.empty
     var specs: Map[Id, FunSpec] = Map.empty
     var types: Map[Id, TypeDecl] = Map.empty
+    var records: Map[String, RecDecl] = Map.empty
     var skippedSpecs: Map[Id, SkippedFunSpec] = Map.empty
     var skippedTypes: Map[Id, SkippedTypeDecl] = Map.empty
     for (f <- forms)
@@ -77,11 +78,12 @@ object DB {
         case e: ExportType      => exportTypes ++= e.types
         case t: TypeDecl        => types += t.id -> t
         case s: FunSpec         => specs += s.id -> s
+        case r: RecDecl         => records += r.name -> r
         case t: SkippedTypeDecl => skippedTypes += t.id -> t
         case s: SkippedFunSpec  => skippedSpecs += s.id -> s
         case _                  =>
       }
-    ModuleStub(module, exports, imports, exportTypes, specs, types, skippedSpecs, skippedTypes)
+    ModuleStub(module, exports, imports, exportTypes, specs, types, records, skippedSpecs, skippedTypes)
   }
 
   private var globalizedModuleStubs: Map[String, ModuleStub] =
@@ -122,6 +124,7 @@ object DB {
         val stub = s.copy(
           types = s.types.view.mapValues(Globalize.globalizeTypeDecl(module, _)).toMap,
           specs = s.specs.view.mapValues(Globalize.globalizeSpec(module, _)).toMap,
+          records = s.records.view.mapValues(Globalize.globalizeRecDecl(module, _)).toMap,
         )
         globalizedModuleStubs = globalizedModuleStubs.updated(module, stub)
         stub
@@ -135,9 +138,11 @@ object DB {
       getGlobalizedModuleStub(module).map { s =>
         val types = s.types.values.map(Expand.expandTypeDecl).collect { case t: TypeDecl => t }
         val specs = s.specs.values.map(Expand.expandFunSpec).collect { case s: FunSpec => s }
+        val records = s.records.values.map(Expand.expandRecDecl).collect { case r: RecDecl => r }
         val tMap = types.map(t => t.id -> t).toMap
         val sMap = specs.map(s => s.id -> s).toMap
-        val stub = s.copy(types = tMap, specs = sMap)
+        val sRecords = records.map(r => r.name -> r).toMap
+        val stub = s.copy(types = tMap, specs = sMap, records = sRecords)
         expandedModuleStubs = expandedModuleStubs.updated(module, stub)
         stub
       }

@@ -27,6 +27,7 @@ object Types {
   case class LocalType(id: Id, args: List[Type]) extends Type
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
   case class VarType(name: String) extends Type
+  case class RecordType(name: String) extends Type
   case object BinaryType extends Type
 
   sealed trait BuiltinType extends Type
@@ -46,6 +47,7 @@ object Types {
   val booleanType: Type = UnionType(List(falseType, trueType))
   val floatType: Type = NumberType
   val integerType: Type = NumberType
+  val undefined: Type = AtomLitType("undefined")
 
   val builtinTypes: Map[String, Type] =
     Map(

@@ -21,7 +21,10 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-final class Elab(module: String) {
+final class Elab(module: String, check: Check) {
+  private val elabPat = new ElabPat(module)
+  private val elabGuard = new ElabGuard(module)
+
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
     var (elabType, envAcc) = elabExpr(exprs.head, env)
     for (expr <- exprs.tail) {
@@ -36,8 +39,8 @@ final class Elab(module: String) {
     val allScopeVars = Vars.clauseVars(clause)
     val env1 = Util.enterScope(env0, allScopeVars)
     val argTypes = List.fill(clause.pats.size)(AnyType)
-    val env2 = ElabGuard.elabGuards(clause.guards, env1)
-    val (_, env3) = ElabPat.elabPats(clause.pats, argTypes, env2)
+    val env2 = elabGuard.elabGuards(clause.guards, env1)
+    val (_, env3) = elabPat.elabPats(clause.pats, argTypes, env2)
     val (eType, env4) = elabBlock(clause.body, env3)
     (eType, Util.exitScope(env0, env4, exportedVars))
   }
@@ -75,7 +78,7 @@ final class Elab(module: String) {
       case LocalCall(id, args) =>
         Util.getFunType(module, id) match {
           case Some(FunType(argTys, resTy)) =>
-            val env1 = Check(module).checkExprs(args, argTys, env)
+            val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
           case None =>
             throw UnboundVar(expr.l, id.toString)
@@ -83,7 +86,7 @@ final class Elab(module: String) {
       case RemoteCall(fqn, args) =>
         Util.getFunType(fqn) match {
           case Some(FunType(argTys, resTy)) =>
-            val env1 = Check(module).checkExprs(args, argTys, env)
+            val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
           case None =>
             throw UnboundVar(expr.l, fqn.toString)
@@ -115,14 +118,14 @@ final class Elab(module: String) {
         (UnionType(ts), Approx.joinEnvs(envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
-        ElabPat.elabPat(mPat, ty, env1)
+        elabPat.elabPat(mPat, ty, env1)
       case UnOp(op, arg) =>
         op match {
           case "not" =>
-            val env1 = Check(module).checkExpr(arg, booleanType, env)
+            val env1 = check.checkExpr(arg, booleanType, env)
             (booleanType, env1)
           case "bnot" | "+" | "-" =>
-            val env1 = Check(module).checkExpr(arg, NumberType, env)
+            val env1 = check.checkExpr(arg, NumberType, env)
             (NumberType, env1)
           // $COVERAGE-OFF$
           case _ => throw new IllegalStateException()
@@ -131,15 +134,15 @@ final class Elab(module: String) {
       case BinOp(op, arg1, arg2) =>
         op match {
           case "/" | "*" | "-" | "+" | "div" | "rem" | "band" | "bor" | "bxor" | "bsl" | "bsr" =>
-            val env1 = Check(module).checkExpr(arg1, NumberType, env)
-            val env2 = Check(module).checkExpr(arg2, NumberType, env1)
+            val env1 = check.checkExpr(arg1, NumberType, env)
+            val env2 = check.checkExpr(arg2, NumberType, env1)
             (NumberType, env2)
           case "or" | "and" | "xor" =>
-            val env1 = Check(module).checkExpr(arg1, booleanType, env)
-            val env2 = Check(module).checkExpr(arg2, booleanType, env1)
+            val env1 = check.checkExpr(arg1, booleanType, env)
+            val env2 = check.checkExpr(arg2, booleanType, env1)
             (booleanType, env2)
           case "andalso" | "orelse" =>
-            val env1 = Check(module).checkExpr(arg1, booleanType, env)
+            val env1 = check.checkExpr(arg1, booleanType, env)
             val (t2, env2) = elabExpr(arg2, env1)
             (Subtype.join(booleanType, t2), env2)
           // $COVERAGE-OFF$
@@ -180,7 +183,7 @@ final class Elab(module: String) {
       case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
         val effVars = Vars.clausesAndBlockVars(clauses, timeoutBlock)
         val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
-        val env1 = Check(module).checkExpr(timeout, integerType, env)
+        val env1 = check.checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
         (UnionType(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
       case LComprehension(template, qualifiers) =>
@@ -191,14 +194,14 @@ final class Elab(module: String) {
             if (!Subtype.subType(gT, ListType(AnyType)))
               throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
             val Some(ListType(gElemT)) = Approx.asListType(gT)
-            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
             envAcc = pEnv
           case BGenerate(gPat, gExpr) =>
-            envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
-            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            envAcc = check.checkExpr(gExpr, BinaryType, envAcc)
+            val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
             envAcc = pEnv
           case Filter(fExpr) =>
-            envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+            envAcc = check.checkExpr(fExpr, booleanType, envAcc)
         }
         val (tType, _) = elabExpr(template, envAcc)
         (ListType(tType), env)
@@ -210,27 +213,43 @@ final class Elab(module: String) {
             if (!Subtype.subType(gT, ListType(AnyType)))
               throw TypeMismatch(expr.l, expr, expected = ListType(AnyType), got = gT)
             val Some(ListType(gElemT)) = Approx.asListType(gT)
-            val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+            val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
             envAcc = pEnv
           case BGenerate(gPat, gExpr) =>
-            envAcc = Check(module).checkExpr(gExpr, BinaryType, envAcc)
-            val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+            envAcc = check.checkExpr(gExpr, BinaryType, envAcc)
+            val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
             envAcc = pEnv
           case Filter(fExpr) =>
-            envAcc = Check(module).checkExpr(fExpr, booleanType, envAcc)
+            envAcc = check.checkExpr(fExpr, booleanType, envAcc)
         }
-        Check(module).checkExpr(template, BinaryType, envAcc)
+        check.checkExpr(template, BinaryType, envAcc)
         (BinaryType, env)
+      case rCreate: RecordCreate =>
+        val recType = RecordType(rCreate.recName)
+        val env1 = check.checkRecordCreate(rCreate, env)
+        (recType, env1)
+      case rUpdate: RecordUpdate =>
+        val recType = RecordType(rUpdate.recName)
+        val env1 = check.checkRecordUpdate(rUpdate, env)
+        (recType, env1)
+      case RecordSelect(recExpr, recName, fieldName) =>
+        val recDecl = Util.getRecord(module, recName).get
+        val field = recDecl.fields.find(_.name == fieldName).get
+        val fieldT = field.tp
+        val env1 = check.checkExpr(recExpr, RecordType(recName), env)
+        (fieldT, env1)
+      case RecordIndex(_, _) =>
+        (integerType, env)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
     val env1 = elem.size match {
-      case Some(s) => Check(module).checkExpr(s, integerType, env)
+      case Some(s) => check.checkExpr(s, integerType, env)
       case None    => env
     }
     val isStringLiteral = false
     val expType = BinarySpecifiers.expType(elem.specifier, isStringLiteral)
-    val env2 = Check(module).checkExpr(elem.expr, expType, env1)
+    val env2 = check.checkExpr(elem.expr, expType, env1)
     (expType, env2)
   }
 }

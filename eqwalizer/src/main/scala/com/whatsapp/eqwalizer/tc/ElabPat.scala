@@ -20,7 +20,7 @@ import com.whatsapp.eqwalizer.ast.BinarySpecifiers
 import com.whatsapp.eqwalizer.ast.Pats._
 import com.whatsapp.eqwalizer.ast.Types._
 
-object ElabPat {
+final class ElabPat(module: String) {
   def elabPats(pats: List[Pat], tys: List[Type], env: Env): (List[Type], Env) = {
     var envAcc = env
     val patTypes = (pats zip tys).map { case (pat, ty) =>
@@ -98,6 +98,20 @@ object ElabPat {
           envAcc = elabBinaryElem(elem, envAcc)
         }
         (patType, envAcc)
+      case PatRecordIndex(_, _) =>
+        val patType = Subtype.meet(integerType, t)
+        (patType, env)
+      case PatRecord(recName, fields) =>
+        val recType = Subtype.meet(RecordType(recName), t)
+        val recDecl = Util.getRecord(module, recName).get
+        val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+        var envAcc = env
+        for (field <- fields) {
+          val fieldDecl = fieldDecls(field.name)
+          val (_, env1) = elabPat(field.pat, fieldDecl.tp, envAcc)
+          envAcc = env1
+        }
+        (recType, envAcc)
     }
 
   private def elabBinaryElem(elem: PatBinaryElem, env: Env): Env = {

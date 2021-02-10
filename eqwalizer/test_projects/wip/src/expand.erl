@@ -28,3 +28,5 @@ tuple_box({A, B}) -> {{box, A}, {box, B}}.
     Rec when Rec :: {rec, Rec}.
 fun_with_rec_constraints() ->
     {rec, fun_with_rec_constraints()}.
+
+-record(rec_box, {box :: box(atom())}).

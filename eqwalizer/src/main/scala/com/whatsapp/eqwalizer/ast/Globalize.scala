@@ -34,7 +34,7 @@ object Globalize {
         ListType(globalize(module, et))
       case UnionType(params) =>
         UnionType(params.map(globalize(module, _)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
         t
     }
 
@@ -50,4 +50,10 @@ object Globalize {
 
   def globalizeTypeDecl(module: String, decl: TypeDecl): TypeDecl =
     decl.copy(body = globalize(module, decl.body))(decl.line)
+
+  def globalizeRecDecl(module: String, decl: RecDecl): RecDecl =
+    decl.copy(fields = decl.fields.map(globalizeRecField(module, _)))(decl.line)
+
+  private def globalizeRecField(module: String, field: RecField): RecField =
+    field.copy(tp = globalize(module, field.tp))(field.line)
 }

@@ -44,6 +44,10 @@ object Vars {
         patVars(arg1) ++ patVars(arg2)
       case PatBinary(elems) =>
         elems.flatMap(binaryElemVars).toSet
+      case PatRecord(_, fields) =>
+        fields.flatMap(f => patVars(f.pat)).toSet
+      case PatRecordIndex(_, _) =>
+        Set.empty
     }
 
   private def binaryElemVars(elem: PatBinaryElem): Set[String] = {
@@ -111,7 +115,18 @@ object Vars {
       Set.empty
     case BComprehension(_, _) =>
       Set.empty
+    case RecordCreate(_, fields) =>
+      fields.flatMap(fieldVars).toSet
+    case RecordUpdate(e, recName, fields) =>
+      exprVars(e) ++ fields.flatMap(fieldVars)
+    case RecordSelect(e, _, _) =>
+      exprVars(e)
+    case RecordIndex(_, _) =>
+      Set.empty
   }
+
+  private def fieldVars(recordField: RecordField): Set[String] =
+    exprVars(recordField.value)
 
   def clausesVars(clauses: List[Clause]): Set[String] =
     clauses.map(clauseVars).reduce(_ intersect _)

@@ -1,0 +1,162 @@
+  1 -module(records).                          |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -record(rec1, {}).                         |         | 
+  6 -record(rec2, {}).                         |         | 
+  7 -record(rec3, {}).                         |         | 
+  8                                            |         | 
+  9 -record(any_foo, {id, name}).              |         | 
+ 10                                            |         | 
+ 11 -record(foo, {                             |         | 
+ 12     id :: integer(),                       |         | 
+ 13     name :: atom()                         |         | 
+ 14 }).                                        |         | 
+ 15                                            |         | 
+ 16 -record(foo_def, {                         |         | 
+ 17     id = 1 :: integer(),                   |         | 
+ 18     name = default :: atom()               |         | 
+ 19 }).                                        |         | 
+ 20                                            |         | 
+ 21 -spec mk_rec1_pos() -> #rec1{}.            |         | 
+ 22 mk_rec1_pos() -> #rec1{}.                  | OK      | 
+ 23                                            |         | 
+ 24 -spec mk_rec1_neg() -> #rec1{}.            |         | 
+ 25 mk_rec1_neg() -> #rec2{}.                  | ERROR   | #rec2{...}. Expected: #rec1{}, Got: #rec2{}
+ 26                                            |         | 
+ 27 -spec mk_rec1a_pos() -> #rec1{}.           |         | 
+ 28 mk_rec1a_pos() ->                          | OK      | 
+ 29     R = #rec1{},                           |         | 
+ 30     R.                                     |         | 
+ 31                                            |         | 
+ 32 -spec mk_rec1a_neg() -> #rec1{}.           |         | 
+ 33 mk_rec1a_neg() ->                          | ERROR   | 
+ 34     R = #rec2{},                           |         | 
+ 35     R.                                     |         | R. Expected: #rec1{}, Got: #rec2{}
+ 36                                            |         | 
+ 37 -spec mk_rec_pos(atom()) ->                |         | 
+ 38     #rec1{} | #rec2{}.                     |         | 
+ 39 mk_rec_pos(rec1) -> #rec1{};               | OK      | 
+ 40 mk_rec_pos(rec2) -> #rec2{}.               |         | 
+ 41                                            |         | 
+ 42 -spec mk_rec_neg(atom()) ->                |         | 
+ 43     #rec1{} | #rec3{}.                     |         | 
+ 44 mk_rec_neg(rec1) -> #rec1{};               | ERROR   | 
+ 45 mk_rec_neg(rec2) -> #rec2{}.               |         | #rec2{...}. Expected: #rec1{} | #rec3{}, Got: #rec2{}
+ 46                                            |         | 
+ 47 -spec mk_foo_pos() -> #foo{}.              |         | 
+ 48 mk_foo_pos() ->                            | OK      | 
+ 49     Foo = #foo{id = 42},                   |         | 
+ 50     Foo.                                   |         | 
+ 51                                            |         | 
+ 52 -spec mk_foo_neg() -> #foo{}.              |         | 
+ 53 mk_foo_neg() ->                            | ERROR   | 
+ 54     Foo = #foo{name = bar},                |         | #foo{...}: id is 'undefined'
+ 55     Foo.                                   |         | 
+ 56                                            |         | 
+ 57 -spec fix_foo_pos(#foo{}) -> #foo{}.       |         | 
+ 58 fix_foo_pos(Foo) ->                        | OK      | 
+ 59     Foo#foo{name = default, id = 0}.       |         | 
+ 60                                            |         | 
+ 61 -spec fix_foo1_pos(#foo{}) -> #foo{}.      |         | 
+ 62 fix_foo1_pos(Foo) ->                       | OK      | 
+ 63     Foo1 = Foo#foo{name = default, id = 0}……         | 
+ 64     Foo1.                                  |         | 
+ 65                                            |         | 
+ 66 -spec fix_foo_neg(#foo{}) -> #foo{}.       |         | 
+ 67 fix_foo_neg(Foo) ->                        | ERROR   | 
+ 68     Foo#foo_def{name = default, id = 0}.   |         | ...#foo_def{...}. Expected: #foo{}, Got: #foo_def{}
+ 69                                            |         | 
+ 70 -spec index1_pos() -> integer().           |         | 
+ 71 index1_pos() ->                            | OK      | 
+ 72     #foo.name.                             |         | 
+ 73                                            |         | 
+ 74 -spec index2_pos() -> integer().           |         | 
+ 75 index2_pos() ->                            | OK      | 
+ 76     Index = #foo.name,                     |         | 
+ 77     Index.                                 |         | 
+ 78                                            |         | 
+ 79 -spec index1_neg() -> atom().              |         | 
+ 80 index1_neg() ->                            | ERROR   | 
+ 81     #foo.name.                             |         | #foo.name. Expected: atom(), Got: number()
+ 82                                            |         | 
+ 83 -spec index2_neg() -> atom().              |         | 
+ 84 index2_neg() ->                            | ERROR   | 
+ 85     Index = #foo.name,                     |         | 
+ 86     Index.                                 |         | Index. Expected: atom(), Got: number()
+ 87                                            |         | 
+ 88 -spec select1_pos(#foo{}) -> integer().    |         | 
+ 89 select1_pos(Foo) ->                        | OK      | 
+ 90     Foo#foo.id.                            |         | 
+ 91                                            |         | 
+ 92 -spec select2_pos(#foo{}) -> integer().    |         | 
+ 93 select2_pos(Foo) ->                        | OK      | 
+ 94     Id = Foo#foo.id,                       |         | 
+ 95     Id.                                    |         | 
+ 96                                            |         | 
+ 97 -spec select1_neg(#foo{}) -> integer().    |         | 
+ 98 select1_neg(Foo) ->                        | ERROR   | 
+ 99     Foo#foo.name.                          |         | ...#foo.name. Expected: number(), Got: atom()
+100                                            |         | 
+101 -spec select2_neg(#foo{}) -> integer().    |         | 
+102 select2_neg(Foo) ->                        | ERROR   | 
+103     Id = Foo#foo.name,                     |         | 
+104     Id.                                    |         | Id. Expected: number(), Got: atom()
+105                                            |         | 
+106 -spec rec_index_pat_pos(any())             |         | 
+107     -> integer().                          |         | 
+108 rec_index_pat_pos(#foo.id = I) -> I.       | OK      | 
+109                                            |         | 
+110 -spec rec_index_pat_neg(any())             |         | 
+111         -> atom().                         |         | 
+112 rec_index_pat_neg(#foo.id = I) -> I.       | ERROR   | I. Expected: atom(), Got: number()
+113                                            |         | 
+114 -spec rec_pat_pos(any())                   |         | 
+115         -> {integer(), atom()}.            |         | 
+116 rec_pat_pos(#foo{id = I, name = N}) ->     | OK      | 
+117     {I, N}.                                |         | 
+118                                            |         | 
+119 -spec rec_pat_neg(any())                   |         | 
+120         -> {integer(), atom()}.            |         | 
+121 rec_pat_neg(#foo{id = I, name = N}) ->     | ERROR   | 
+122     {N, I}.                                |         | {N, I}. Expected: {number(), atom()}, Got: {atom(), number()}
+123                                            |         | 
+124 -spec pat_fields(#any_foo{}) ->            |         | 
+125     {#foo{}, #foo{}}.                      |         | 
+126 pat_fields(                                | OK      | 
+127     #any_foo{                              |         | 
+128         id = (#foo{} = I),                 |         | 
+129         name = (#foo{} = N)                |         | 
+130     }                                      |         | 
+131 ) -> {I, N}.                               |         | 
+132                                            |         | 
+133 -spec rec_guard1(any()) -> #foo{}.         |         | 
+134 rec_guard1(Foo)                            | OK      | 
+135     when Foo#foo.id > 0 -> Foo.            |         | 
+136                                            |         | 
+137 -spec rec_guard2_neg(any()) -> ok.         |         | 
+138 rec_guard2_neg(Foo)                        | ERROR   | 
+139     when Foo == #foo{} -> ok.              |         | #foo{...}: id is 'undefined'
+140                                            |         | 
+141 -spec rec_guard3_pos(any(), any())         |         | 
+142     -> number().                           |         | 
+143 rec_guard3_pos(Foo, X)                     | OK      | 
+144     when Foo == #foo_def{id = X} -> X.     |         | 
+145                                            |         | 
+146 -spec rec_guard4_neg(any(), any())         |         | 
+147         -> atom().                         |         | 
+148 rec_guard4_neg(Foo, X)                     | ERROR   | 
+149     when Foo == #foo_def{id = X} -> X.     |         | X. Expected: atom(), Got: number()
+150                                            |         | 
+151 -record(rec_a, { field :: number() }).     |         | 
+152 -record(rec_b, { field :: #rec_a{} }).     |         | 
+153                                            |         | 
+154 -spec record_in_record                     |         | 
+155     (#rec_b{}) -> number().                |         | 
+156 record_in_record(X) ->                     | OK      | 
+157     (X#rec_b.field)#rec_a.field.           |         | 
+158                                            |         | 
+159 -spec record_in_record_neg                 |         | 
+160     (#rec_b{}) -> atom().                  |         | 
+161 record_in_record_neg(X) ->                 | ERROR   | 
+162     (X#rec_b.field)#rec_a.field.           |         | ...#rec_a.field. Expected: atom(), Got: number()

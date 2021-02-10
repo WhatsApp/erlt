@@ -56,6 +56,8 @@ object Show {
         "reference()"
       case BinaryType =>
         "binary()"
+      case RecordType(n) =>
+        s"#$n{}"
     }
 
   def show(e: Expr): String = e match {
@@ -107,5 +109,13 @@ object Show {
       "[ || ]"
     case BComprehension(_, _) =>
       "<< || >>"
+    case RecordCreate(recName, _) =>
+      s"#$recName{...}"
+    case RecordUpdate(_, recName, _) =>
+      s"...#$recName{...}"
+    case RecordSelect(_, recName, fieldName) =>
+      s"...#$recName.$fieldName"
+    case RecordIndex(recName, fieldName) =>
+      s"#$recName.$fieldName"
   }
 }

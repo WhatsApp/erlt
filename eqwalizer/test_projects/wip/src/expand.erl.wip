@@ -28,3 +28,5 @@
  28     Rec when Rec :: {rec, Rec}.          |         |                                | 
  29 fun_with_rec_constraints() ->            | LOADED  |                                | 
  30     {rec, fun_with_rec_constraints()}.   |         |                                | 
+ 31                                          |         |                                | 
+ 32 -record(rec_box, {box :: box(atom())}).  | LOADED  |                                | 

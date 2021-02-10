@@ -42,7 +42,7 @@ object Expand {
         ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
         t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
@@ -69,7 +69,7 @@ object Expand {
             case Some(tp) => expandConstraints(tp, s, stack + v)
             case None     => t
           }
-      case _: BuiltinType | _: AtomLitType | NilType | BinaryType => t
+      case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType => t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$
@@ -100,4 +100,10 @@ object Expand {
       case e: WIPDiagnostics.ExpansionFailure => FailedExpandTypeDecl(decl.id, e)(decl.line)
     }
   }
+
+  def expandRecDecl(decl: RecDecl): Form =
+    decl.copy(fields = decl.fields.map(expandRecField))(decl.line)
+
+  private def expandRecField(field: RecField): RecField =
+    field.copy(tp = expand(field.tp, Set.empty))(field.line)
 }

@@ -19,8 +19,9 @@ package com.whatsapp.eqwalizer.tc
 import com.whatsapp.eqwalizer.ast.Guards._
 import com.whatsapp.eqwalizer.ast.Id
 import com.whatsapp.eqwalizer.ast.Types._
+import com.whatsapp.eqwalizer.tc.TcDiagnostics.UndefinedField
 
-object ElabGuard {
+final class ElabGuard(module: String) {
   private def elabPredicateType(pred: String): Option[Type] = pred match {
     case "is_atom"      => Some(AtomType)
     case "is_boolean"   => Some(booleanType)
@@ -57,6 +58,26 @@ object ElabGuard {
         elabBinOp(binOp, env)
       case TestBinaryLit() =>
         env
+      case TestRecordIndex(_, _) =>
+        env
+      case TestRecordSelect(rec, recName, _) =>
+        elabTestT(rec, RecordType(recName), env)
+      case TestRecordCreate(recName, fields) =>
+        val recDecl = Util.getRecord(module, recName).get
+        val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+        val undefinedFields = fieldDecls.keySet -- fields.map(_.name)
+        for (uField <- undefinedFields) {
+          val fieldDecl = fieldDecls(uField)
+          if (fieldDecl.defaultValue.isEmpty && !Subtype.subType(undefined, fieldDecl.tp)) {
+            throw UndefinedField(test.l, recName, uField)
+          }
+        }
+        var envAcc = env
+        for (field <- fields) {
+          val fieldDecl = fieldDecls(field.name)
+          envAcc = elabTestT(field.value, fieldDecl.tp, envAcc)
+        }
+        envAcc
     }
 
   private def elabTestT(test: Test, t: Type, env: Env): Env =

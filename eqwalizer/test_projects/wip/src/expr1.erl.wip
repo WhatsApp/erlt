@@ -2,7 +2,7 @@
   2                                          |         |                                | 
   3 -compile([export_all, nowarn_export_all]……         |                                | 
   4                                          |         |                                | 
-  5 -record(test_rec, {id}).                 | SKIPPED |                                | 
+  5 -record(test_rec, {id}).                 | LOADED  |                                | 
   6                                          |         |                                | 
   7 id(X) ->                                 | LOADED  |                                | 
   8     X.                                   |         |                                | 
@@ -44,17 +44,17 @@
  44 bin_op(X, Y) ->                          | LOADED  |                                | 
  45     X andalso Y.                         |         |                                | 
  46                                          |         |                                | 
- 47 record_create() ->                       | SKIPPED |                                | 
- 48     #test_rec{}.                         |         | E: #test_rec{...}              | 
+ 47 record_create() ->                       | LOADED  |                                | 
+ 48     #test_rec{}.                         |         |                                | 
  49                                          |         |                                | 
- 50 record_update(Rec) ->                    | SKIPPED |                                | 
- 51     Rec#test_rec{id = 1}.                |         | E: #test_rec{...}              | 
+ 50 record_update(Rec) ->                    | LOADED  |                                | 
+ 51     Rec#test_rec{id = 1}.                |         |                                | 
  52                                          |         |                                | 
- 53 record_select(Rec) ->                    | SKIPPED |                                | 
- 54     Rec#test_rec.id.                     |         | E: #test_rec{...}              | 
+ 53 record_select(Rec) ->                    | LOADED  |                                | 
+ 54     Rec#test_rec.id.                     |         |                                | 
  55                                          |         |                                | 
- 56 record_index() ->                        | SKIPPED |                                | 
- 57     #test_rec.id.                        |         | E: #test_rec{...}              | 
+ 56 record_index() ->                        | LOADED  |                                | 
+ 57     #test_rec.id.                        |         |                                | 
  58                                          |         |                                | 
  59 map_create() ->                          | SKIPPED |                                | 
  60     #{id => 1}.                          |         | E: #{...}                      | 
@@ -155,9 +155,9 @@
 155                                          |         |                                | 
 156 binop_pat(3 + 5) -> 0.                   | LOADED  |                                | 
 157                                          |         |                                | 
-158 record_pat(#test_rec{}) -> test_rec.     | SKIPPED | P: #test_rec{...}              | 
+158 record_pat(#test_rec{}) -> test_rec.     | LOADED  |                                | 
 159                                          |         |                                | 
-160 record_index_pat(#test_rec.id) -> test_r…… SKIPPED | P: #test_rec{...}              | 
+160 record_index_pat(#test_rec.id) -> test_r…… LOADED  |                                | 
 161                                          |         |                                | 
 162 map_pat(#{id := X}) -> id.               | SKIPPED | P: #{...}                      | 
 163                                          |         |                                | 
@@ -177,14 +177,14 @@
 177                                          |         |                                | 
 178 binop_guard(X, Y) when X + Y -> Y.       | LOADED  |                                | 
 179                                          |         |                                | 
-180 record_guard(X, Y)                       | SKIPPED |                                | 
-181     when #test_rec{} -> Y.               |         | G: #test_rec{...}              | 
+180 record_guard(X, Y)                       | LOADED  |                                | 
+181     when #test_rec{} -> Y.               |         |                                | 
 182                                          |         |                                | 
-183 record_index_guard(X, Y)                 | SKIPPED |                                | 
-184     when #test_rec.id -> Y.              |         | G: #test_rec{...}              | 
+183 record_index_guard(X, Y)                 | LOADED  |                                | 
+184     when #test_rec.id -> Y.              |         |                                | 
 185                                          |         |                                | 
-186 record_field_guard(X)                    | SKIPPED |                                | 
-187     when X#test_rec.id -> ok.            |         | G: #test_rec{...}              | 
+186 record_field_guard(X)                    | LOADED  |                                | 
+187     when X#test_rec.id -> ok.            |         |                                | 
 188                                          |         |                                | 
 189 map_guard(X)                             | SKIPPED |                                | 
 190     when #{} -> ok.                      |         | G: #{...}                      | 

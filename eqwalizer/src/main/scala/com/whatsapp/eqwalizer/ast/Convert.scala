@@ -22,7 +22,7 @@ import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.ast.Guards._
 import com.whatsapp.eqwalizer.ast.Pats._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.io.EData._
+import com.whatsapp.eqwalizer.io.EData.{ETuple, _}
 
 object Convert {
   private val specifiers: Map[String, Specifier] =
@@ -49,8 +49,14 @@ object Convert {
         Some(Import(m, ids.map(convertIdInAttr))(line.intValue))
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("export_type"), EList(typesIds, None))) =>
         Some(ExportType(typesIds.map(convertIdInAttr))(line.intValue))
-      case ETuple(List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(_, None))))) =>
-        Some(SkippedRecordDecl(name)(line.intValue))
+      case ETuple(
+            List(EAtom("attribute"), ELong(line), EAtom("record"), ETuple(List(EAtom(name), EList(fields, None))))
+          ) =>
+        try {
+          Some(RecDecl(name, fields.map(recField))(line.intValue))
+        } catch {
+          case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedRecordDecl(name, d)(line.intValue))
+        }
       case ETuple(List(EAtom("attribute"), ELong(line), EAtom("file"), ETuple(List(EString(file), ELong(start))))) =>
         Some(File(file, start.intValue)(line.intValue))
       case ETuple(List(EAtom("eof"), ELong(line))) =>
@@ -74,6 +80,32 @@ object Convert {
         val funId = Id(name, arity.intValue)
         try Some(FunDecl(funId, clauseSeq.map(convertClause))(line.intValue))
         catch { case d: WIPDiagnostics.SkippedConstructDiagnostics => Some(SkippedFunDecl(funId, d)(line.intValue)) }
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def recField(term: EObject): RecField =
+    term match {
+      case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit)) =>
+        RecField(atomLit(fieldNameLit), AnyType, None)(l.intValue)
+      case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit, expr)) =>
+        val defaultValue = convertExp(expr)
+        RecField(atomLit(fieldNameLit), AnyType, Some(defaultValue))(l.intValue)
+      case ETuple(List(EAtom("typed_record_field"), eUntypedField, eType)) =>
+        val (name, defaultValue, i) =
+          eUntypedField match {
+            case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit)) =>
+              (atomLit(fieldNameLit), None, l.intValue)
+            case ETuple(List(EAtom("record_field"), ELong(l), fieldNameLit, expr)) =>
+              val defaultValue = convertExp(expr)
+              (atomLit(fieldNameLit), Some(defaultValue), l.intValue)
+            // $COVERAGE-OFF$
+            case _ => throw new IllegalStateException()
+            // $COVERAGE-ON$
+          }
+        val tp = convertType(eType)
+        RecField(name, tp, defaultValue)(i)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
@@ -135,11 +167,14 @@ object Convert {
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyMap)
       case ETuple(List(EAtom("type"), ELong(line), EAtom("map"), EList(assocTypes, _))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeMap)
-      case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordNameLit :: eFieldTypes, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(
-          line.intValue,
-          WIPDiagnostics.TypeRecord(atomLit(recordNameLit)),
-        )
+      case ETuple(List(EAtom("type"), ELong(line), EAtom("record"), EList(recordName :: eFieldTypes, None))) =>
+        if (eFieldTypes.isEmpty)
+          RecordType(atomLit(recordName))
+        else
+          throw WIPDiagnostics.SkippedConstructDiagnostics(
+            line.intValue,
+            WIPDiagnostics.RefinedRecord(atomLit(recordName)),
+          )
       case ETuple(List(EAtom("remote_type"), _, EList(List(moduleLit, typeNameLit, EList(args, None)), None))) =>
         RemoteType(
           RemoteId(atomLit(moduleLit), atomLit(typeNameLit), args.size),
@@ -232,13 +267,13 @@ object Convert {
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), exp)) =>
         UnOp(op, convertExp(exp))(l.intValue)
       case ETuple(List(EAtom("record"), ELong(l), EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordCreate(recordName, eRecordFieldExps.map(convertRecordField))(l.intValue)
       case ETuple(List(EAtom("record"), ELong(l), eExp, EAtom(recordName), EList(eRecordFieldExps, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordUpdate(convertExp(eExp), recordName, eRecordFieldExps.map(convertRecordField))(l.intValue)
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recordName), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordIndex(recordName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("record_field"), ELong(l), eExp, EAtom(recordName), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpRecord(recordName))
+        RecordSelect(convertExp(eExp), recordName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), EList(eAssocs, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpMap)
       case ETuple(List(EAtom("map"), ELong(l), eExp, EList(eAssocs, None))) =>
@@ -327,6 +362,15 @@ object Convert {
       // $COVERAGE-ON$
     }
 
+  private def convertRecordField(term: EObject): RecordField =
+    term match {
+      case ETuple(List(EAtom("record_field"), _anno, eName, exp)) =>
+        RecordField(atomLit(eName), convertExp(exp))
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
   private def convertBinaryElem(e: EObject): BinaryElem = {
     val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
     val size = eSize match {
@@ -371,16 +415,21 @@ object Convert {
         }
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), p)) =>
         PatUnOp(op, convertPat(p))(l.intValue)
-      case ETuple(List(EAtom("record"), ELong(l), EAtom(name), EList(eRecordFieldPatterns, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
+      case ETuple(List(EAtom("record"), ELong(l), EAtom(name), EList(eFields, None))) =>
+        PatRecord(name, eFields.map(convertPatRecordField))(l.intValue)
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(name), eFieldName)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatRecord(name))
+        PatRecordIndex(name, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatMap)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertPatRecordField(term: EObject): PatRecordField = {
+    val ETuple(List(EAtom("record_field"), _, eName, ePat)) = term
+    PatRecordField(atomLit(eName), convertPat(ePat))
+  }
 
   private def convertPatBinaryElem(e: EObject): PatBinaryElem = {
     val ETuple(List(EAtom("bin_element"), ELong(l), elem, eSize, eSpecifier)) = e
@@ -422,12 +471,12 @@ object Convert {
         TestBinOp(op, convertTest(t1), convertTest(t2))(l.intValue)
       case ETuple(List(EAtom("op"), ELong(l), EAtom(op), t)) =>
         TestUnOp(op, convertTest(t))(l.intValue)
-      case ETuple(List(EAtom("record"), ELong(l), EAtom(recordName), EList(_, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
-      case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recordName), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
-      case ETuple(List(EAtom("record_field"), ELong(l), eTest, EAtom(recordName), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestRecord(recordName))
+      case ETuple(List(EAtom("record"), ELong(l), EAtom(recName), EList(eFields, None))) =>
+        TestRecordCreate(recName, eFields.map(convertTestRecordField))(l.intValue)
+      case ETuple(List(EAtom("record_index"), ELong(l), EAtom(recName), eFieldName)) =>
+        TestRecordIndex(recName, atomLit(eFieldName))(l.intValue)
+      case ETuple(List(EAtom("record_field"), ELong(l), eTest, EAtom(recName), eFieldName)) =>
+        TestRecordSelect(convertTest(eTest), recName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("map"), ELong(l), EList(_, None))) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestMap)
       case ETuple(List(EAtom("map"), ELong(l), _, EList(_, None))) =>
@@ -459,6 +508,11 @@ object Convert {
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertTestRecordField(term: EObject): TestRecordField = {
+    val ETuple(List(EAtom("record_field"), _, eName, eVal)) = term
+    TestRecordField(atomLit(eName), convertTest(eVal))
+  }
 
   private def convertSpecifier(eSpecifier: EObject): Specifier = {
     val unsignedSpec = eSpecifier match {

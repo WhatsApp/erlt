@@ -22,8 +22,10 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.ast.Vars
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
-final case class Check(module: String) {
-  val elab = new Elab(module)
+final class Check(module: String) {
+  lazy val elab = new Elab(module, this)
+  lazy val elabPat = new ElabPat(module)
+  lazy val elabGuard = new ElabGuard(module)
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
     val constrainedFunType = spec.types.head
@@ -49,8 +51,8 @@ final case class Check(module: String) {
   ): Env = {
     val allScopeVars = Vars.clauseVars(clause)
     val env1 = Util.enterScope(env0, allScopeVars)
-    val env2 = ElabGuard.elabGuards(clause.guards, env1)
-    val (_, env3) = ElabPat.elabPats(clause.pats, argTys, env2)
+    val env2 = elabGuard.elabGuards(clause.guards, env1)
+    val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
     val env4 = checkBlock(clause.body, resTy, env3)
     Util.exitScope(env0, env4, exportedVars)
   }
@@ -63,7 +65,7 @@ final case class Check(module: String) {
     envAcc
   }
 
-  def checkExpr(expr: Expr, resTy: Type, env: Env): Env = {
+  def checkExpr(expr: Expr, resTy: Type, env: Env): Env =
     if (Subtype.subType(AnyType, resTy)) elab.elabExpr(expr, env)._2
     else
       expr match {
@@ -146,7 +148,7 @@ final case class Check(module: String) {
           Approx.joinEnvs(envs1)
         case Match(mPat, mExp) =>
           val (mType, env1) = elab.elabExpr(mExp, env)
-          val (t2, env2) = ElabPat.elabPat(mPat, mType, env1)
+          val (t2, env2) = elabPat.elabPat(mPat, mType, env1)
           if (Subtype.subType(t2, resTy)) env2
           else throw TypeMismatch(expr.l, expr, expected = resTy, got = t2)
         case UnOp(op, arg) =>
@@ -239,11 +241,11 @@ final case class Check(module: String) {
               if (!Subtype.subType(gT, ListType(AnyType)))
                 throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
               val Some(ListType(gElemT)) = Approx.asListType(gT)
-              val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+              val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
               envAcc = pEnv
             case BGenerate(gPat, gExpr) =>
               envAcc = checkExpr(gExpr, BinaryType, envAcc)
-              val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+              val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
               envAcc = pEnv
             case Filter(fExpr) =>
               envAcc = checkExpr(fExpr, booleanType, envAcc)
@@ -263,17 +265,73 @@ final case class Check(module: String) {
               if (!Subtype.subType(gT, ListType(AnyType)))
                 throw TypeMismatch(expr.l, gExpr, expected = ListType(AnyType), got = gT)
               val Some(ListType(gElemT)) = Approx.asListType(gT)
-              val (_, pEnv) = ElabPat.elabPat(gPat, gElemT, gEnv)
+              val (_, pEnv) = elabPat.elabPat(gPat, gElemT, gEnv)
               envAcc = pEnv
             case BGenerate(gPat, gExpr) =>
               envAcc = checkExpr(gExpr, BinaryType, envAcc)
-              val (_, pEnv) = ElabPat.elabPat(gPat, BinaryType, envAcc)
+              val (_, pEnv) = elabPat.elabPat(gPat, BinaryType, envAcc)
               envAcc = pEnv
             case Filter(fExpr) =>
               envAcc = checkExpr(fExpr, booleanType, envAcc)
           }
           checkExpr(template, BinaryType, envAcc)
           env
+        case rCreate: RecordCreate =>
+          val recType = RecordType(rCreate.recName)
+          if (!Subtype.subType(recType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = recType)
+          else
+            checkRecordCreate(rCreate, env)
+        case rUpdate: RecordUpdate =>
+          val recType = RecordType(rUpdate.recName)
+          if (!Subtype.subType(recType, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = recType)
+          else
+            checkRecordUpdate(rUpdate, env)
+        case RecordSelect(recExpr, recName, fieldName) =>
+          val recDecl = Util.getRecord(module, recName).get
+          val field = recDecl.fields.find(_.name == fieldName).get
+          val fieldT = field.tp
+          if (!Subtype.subType(fieldT, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = fieldT)
+          else
+            checkExpr(recExpr, RecordType(recName), env)
+        case RecordIndex(_, _) =>
+          val indT = integerType
+          if (!Subtype.subType(indT, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = indT)
+          else
+            env
       }
+
+  def checkRecordCreate(rCreate: RecordCreate, env: Env): Env = {
+    val RecordCreate(recName, fields) = rCreate
+    val recDecl = Util.getRecord(module, recName).get
+    val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+    val undefinedFields = fieldDecls.keySet -- fields.map(_.name)
+    for (uField <- undefinedFields) {
+      val fieldDecl = fieldDecls(uField)
+      if (fieldDecl.defaultValue.isEmpty && !Subtype.subType(undefined, fieldDecl.tp)) {
+        throw UndefinedField(rCreate.l, recName, uField)
+      }
+    }
+    var envAcc = env
+    for (field <- fields) {
+      val fieldDecl = fieldDecls(field.name)
+      envAcc = checkExpr(field.value, fieldDecl.tp, envAcc)
+    }
+    envAcc
+  }
+
+  def checkRecordUpdate(rUpdate: RecordUpdate, env: Env): Env = {
+    val RecordUpdate(recExpr, recName, fields) = rUpdate
+    var envAcc = checkExpr(recExpr, RecordType(recName), env)
+    val recDecl = Util.getRecord(module, recName).get
+    val fieldDecls = recDecl.fields.map(f => f.name -> f).toMap
+    for (field <- fields) {
+      val fieldDecl = fieldDecls(field.name)
+      envAcc = checkExpr(field.value, fieldDecl.tp, envAcc)
+    }
+    envAcc
   }
 }

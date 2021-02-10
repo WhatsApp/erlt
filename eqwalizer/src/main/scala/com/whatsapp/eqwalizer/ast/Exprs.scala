@@ -61,8 +61,14 @@ object Exprs {
   case class Receive(clauses: List[Clause])(val l: Int) extends Expr
   case class ReceiveWithTimeout(clauses: List[Clause], timeout: Expr, timeoutBlock: List[Expr])(val l: Int) extends Expr
 
+  case class RecordCreate(recName: String, fields: List[RecordField])(val l: Int) extends Expr
+  case class RecordUpdate(expr: Expr, recName: String, fields: List[RecordField])(val l: Int) extends Expr
+  case class RecordSelect(expr: Expr, recName: String, fieldName: String)(val l: Int) extends Expr
+  case class RecordIndex(recName: String, fieldName: String)(val l: Int) extends Expr
+
   case class Clause(pats: List[Pat], guards: List[Guard], body: List[Expr])(val l: Int)
   case class BinaryElem(expr: Expr, size: Option[Expr], specifier: Specifier)(val l: Int)
+  case class RecordField(name: String, value: Expr)
 
   sealed trait Qualifier
   sealed trait Generator extends Qualifier
