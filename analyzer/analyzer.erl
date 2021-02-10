@@ -58,7 +58,9 @@
     dicts/1,
     empty_maps/1,
     strange_maps/1,
-    record_indices/1
+    record_indices/1,
+    exact_map_updates/1,
+    assoc_map_updates/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -759,6 +761,28 @@ strange_map(F) ->
         {{Line}, {Line}} -> {Line};
         _ -> false
     end.
+
+-spec exact_map_updates(BeamFile :: file:filename()) -> [{integer()}].
+exact_map_updates(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun exact_map_update/1).
+
+exact_map_update({map, Line, _MapExpr, Assocs}) ->
+    Exacts = [Exact || {map_field_exact,_,_,_} = Exact <- Assocs],
+    (erlang:length(Exacts) > 0) andalso {Line};
+exact_map_update(_) ->
+    false.
+
+-spec assoc_map_updates(BeamFile :: file:filename()) -> [{integer()}].
+assoc_map_updates(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun assoc_map_update/1).
+
+assoc_map_update({map, Line, _MapExpr, Assocs}) ->
+    Exacts = [Exact || {map_field_assoc,_,_,_} = Exact <- Assocs],
+    (erlang:length(Exacts) > 1) andalso {Line};
+assoc_map_update(_) ->
+    false.
 
 -spec record_indices(BeamFile :: file:filename()) -> [{integer()}].
 record_indices(BeamFile) ->
