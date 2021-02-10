@@ -5,9 +5,9 @@
   5 % occurrence typing                        |         | 
   6 -spec clauses(any()) ->                    |         | 
   7     atom() | number().                     |         | 
-  8 clauses(X) ->                              | ERROR   | case .... Expected: atom() | number(), Got: term()
+  8 clauses(X) ->                              | ERROR   | 
   9     case X of                              |         | 
- 10         ok -> X;                           |         | 
+ 10         ok -> X;                           |         | X. Expected: atom() | number(), Got: term()
  11         1 -> X                             |         | 
  12     end.                                   |         | 
  13                                            |         | 
@@ -21,8 +21,8 @@
  21 slice_inter1(ok) -> inter(ok).             | ERROR   | Unbound var: inter/1
  22                                            |         | 
  23 -spec slice_inter2(ok) -> nok.             |         | 
- 24 slice_inter2(ok) ->                        | ERROR   | Unbound var: other:inter/1
- 25     other:inter(ok).                       |         | 
+ 24 slice_inter2(ok) ->                        | ERROR   | 
+ 25     other:inter(ok).                       |         | Unbound var: other:inter/1
  26                                            |         | 
  27 -spec get_inter1() ->                      |         | 
  28     any().                                 |         | 
