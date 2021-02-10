@@ -1,8 +1,9 @@
 -module(sample).
 -exports module_info/0, module_info/1, test03_pos/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/sample.erl 1})])
+-file([({sample.erl 1})])
 -compile([(export_all)])
 
+:: fun((binary()) -> binary())
 test03_pos/1 = fun (var0)  { 
     case primop:dialyzer_unknown() of { 
         a when true -> case var0 of { 

@@ -1,26 +1,24 @@
 -module(guards_simple).
 -exports atom_neg_1/1, atom_neg_2/1, atom_neg_3/1, atom_pos_1/1, atom_pos_2/1, atom_pos_3/1, boolean_neg_1/1, boolean_neg_2/1, boolean_neg_3/1, boolean_pos_1/1, boolean_pos_2/1, boolean_pos_3/1, float_neg/1, float_pos/1, integer_neg/1, integer_pos/1, module_info/0, module_info/1, pid_neg/1, pid_pos/1, port_neg/1, port_pos/1, reference_neg/1, reference_pos/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/guards_simple.erl 1})])
+-file([({guards_simple.erl 1})])
 -compile([(export_all nowarn_export_all)])
 
-module_info/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> erlang:get_module_info(guards_simple, X)
+:: fun((term()) -> atom())
+atom_pos_1/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_atom(X) -> X
     }
 }
 
-float_neg/1 = fun (var0)  { 
+:: fun((term()) -> atom())
+atom_pos_2/1 = fun (var0)  { 
     case var0 of { 
-        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
+        X when true -> case <> of { 
+                 when erlang:is_atom(X) -> X
+            }
     }
 }
 
-integer_neg/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
-    }
-}
-
+:: fun((term()) -> atom())
 atom_pos_3/1 = fun (var0)  { 
     case var0 of { 
         X when true -> case X of { 
@@ -29,6 +27,23 @@ atom_pos_3/1 = fun (var0)  {
     }
 }
 
+:: fun((term()) -> atom())
+atom_neg_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_number(X) -> X                      | X. Expected: atom(), Got: number()
+    }
+}
+
+:: fun((term()) -> atom())
+atom_neg_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_list(X) -> X                 | X. Expected: atom(), Got: term()
+            }
+    }
+}
+
+:: fun((term()) -> atom())
 atom_neg_3/1 = fun (var0)  { 
     case var0 of { 
         X when true -> case X of { 
@@ -37,11 +52,119 @@ atom_neg_3/1 = fun (var0)  {
     }
 }
 
-atom_neg_2/1 = fun (var0)  { 
+:: fun((term()) -> 'false' | 'true')
+boolean_pos_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X
+    }
+}
+
+:: fun((term()) -> 'false' | 'true')
+boolean_pos_2/1 = fun (var0)  { 
     case var0 of { 
         X when true -> case <> of { 
-                 when erlang:is_list(X) -> X                 | X. Expected: atom(), Got: term()
+                 when erlang:is_boolean(X) -> X
             }
+    }
+}
+
+:: fun((term()) -> 'false' | 'true')
+boolean_pos_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_boolean(Y) -> Y
+            }
+    }
+}
+
+:: fun((term()) -> 'false' | 'true')
+boolean_neg_1/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_atom(X) -> X                        | X. Expected: 'false' | 'true', Got: atom()
+    }
+}
+
+:: fun((term()) -> 'false' | 'true')
+boolean_neg_2/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case <> of { 
+                 when erlang:is_atom(X) -> X                 | X. Expected: 'false' | 'true', Got: atom()
+            }
+    }
+}
+
+:: fun((term()) -> 'false' | 'true')
+boolean_neg_3/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                Y when erlang:is_atom(Y) -> Y                | Y. Expected: 'false' | 'true', Got: atom()
+            }
+    }
+}
+
+:: fun((term()) -> number())
+float_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_float(X) -> X
+    }
+}
+
+:: fun((term()) -> number())
+float_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
+    }
+}
+
+:: fun((term()) -> number())
+integer_pos/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_integer(X) -> X
+    }
+}
+
+:: fun((term()) -> number())
+integer_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_boolean(X) -> X                     | X. Expected: number(), Got: 'false' | 'true'
+    }
+}
+
+:: fun((term()) -> pid())
+pid_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_pid(X) -> X }
+}
+
+:: fun((term()) -> pid())
+pid_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_number(X) -> X                      | X. Expected: pid(), Got: number()
+    }
+}
+
+:: fun((term()) -> port())
+port_pos/1 = fun (var0)  { 
+    case var0 of {  X when erlang:is_port(X) -> X
+    }
+}
+
+:: fun((term()) -> pid())
+port_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_reference(X) -> X                   | X. Expected: pid(), Got: reference()
+    }
+}
+
+:: fun((term()) -> port())
+reference_pos/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_reference(X) -> X                   | X. Expected: port(), Got: reference()
+    }
+}
+
+:: fun((term()) -> pid())
+reference_neg/1 = fun (var0)  { 
+    case var0 of { 
+        X when erlang:is_port(X) -> X                        | X. Expected: pid(), Got: port()
     }
 }
 
@@ -51,109 +174,8 @@ module_info/0 = fun ()  {
     }
 }
 
-atom_pos_2/1 = fun (var0)  { 
+module_info/1 = fun (var0)  { 
     case var0 of { 
-        X when true -> case <> of { 
-                 when erlang:is_atom(X) -> X
-            }
-    }
-}
-
-boolean_pos_2/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> case <> of { 
-                 when erlang:is_boolean(X) -> X
-            }
-    }
-}
-
-boolean_neg_3/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> case X of { 
-                Y when erlang:is_atom(Y) -> Y                | Y. Expected: 'false' | 'true', Got: atom()
-            }
-    }
-}
-
-boolean_pos_3/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> case X of { 
-                Y when erlang:is_boolean(Y) -> Y
-            }
-    }
-}
-
-pid_neg/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_number(X) -> X                      | X. Expected: pid(), Got: number()
-    }
-}
-
-reference_neg/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_port(X) -> X                        | X. Expected: pid(), Got: port()
-    }
-}
-
-boolean_neg_1/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_atom(X) -> X                        | X. Expected: 'false' | 'true', Got: atom()
-    }
-}
-
-boolean_pos_1/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_boolean(X) -> X
-    }
-}
-
-integer_pos/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_integer(X) -> X
-    }
-}
-
-boolean_neg_2/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> case <> of { 
-                 when erlang:is_atom(X) -> X                 | X. Expected: 'false' | 'true', Got: atom()
-            }
-    }
-}
-
-pid_pos/1 = fun (var0)  { 
-    case var0 of {  X when erlang:is_pid(X) -> X }
-}
-
-atom_neg_1/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_number(X) -> X                      | X. Expected: atom(), Got: number()
-    }
-}
-
-port_pos/1 = fun (var0)  { 
-    case var0 of {  X when erlang:is_port(X) -> X
-    }
-}
-
-float_pos/1 = fun (var0)  { 
-    case var0 of {  X when erlang:is_float(X) -> X
-    }
-}
-
-port_neg/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_reference(X) -> X                   | X. Expected: pid(), Got: reference()
-    }
-}
-
-reference_pos/1 = fun (var0)  { 
-    case var0 of { 
-        X when erlang:is_reference(X) -> X                   | X. Expected: port(), Got: reference()
-    }
-}
-
-atom_pos_1/1 = fun (var0)  { 
-    case var0 of {  X when erlang:is_atom(X) -> X
+        X when true -> erlang:get_module_info(guards_simple, X)
     }
 }

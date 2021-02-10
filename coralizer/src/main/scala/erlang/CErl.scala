@@ -20,6 +20,8 @@ package erlang
 import com.whatsapp.coralizer.ast.Id
 import erlang.Data.Anno
 
+import scala.collection.immutable.ListMap
+
 object CErl {
   var currentNodeId = 0
 
@@ -56,7 +58,8 @@ object CErl {
   case class CFun(anno: Anno, vars: List[CVar], body: CErl) extends CErl
   case class CLet(anno: Anno, vars: List[CVar], arg: CErl, body: CErl)
       extends CErl
-  case class CLetRec(anno: Anno, defs: Map[CVar, CFun], body: CErl) extends CErl
+  case class CLetRec(anno: Anno, defs: List[(CVar, CFun)], body: CErl)
+      extends CErl
   case class CLiteral(anno: Anno, value: Data.EObject) extends CErl
   // TODO
   case class CMap(anno: Anno, arg: CErl, es: List[CErl], isPat: Boolean)
@@ -67,8 +70,8 @@ object CErl {
       anno: Anno,
       name: String,
       exports: List[CErl],
-      attrs: Map[String, CErl],
-      defs: Map[CVar, CFun]
+      attrs: List[(String, CErl)],
+      defs: List[(CVar, CFun)]
   ) extends CErl
   case class CPrimOp(anno: Anno, name: CErl, args: List[CErl]) extends CErl
   case class CReceive(

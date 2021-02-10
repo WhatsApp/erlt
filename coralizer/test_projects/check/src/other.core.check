@@ -1,7 +1,17 @@
 -module(other).
 -exports clauses/1, get_inter1/0, get_inter2/0, inter/1, module_info/0, module_info/1, slice_inter1/1, slice_inter2/1.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/other.erl 1})])
+-file([({other.erl 1})])
 -compile([(export_all nowarn_export_all)])
+
+:: fun((term()) -> atom() | number())
+clauses/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> case X of { 
+                ok when true -> X                            | X. Expected: atom() | number(), Got: term()
+                1 when true -> X
+            }
+    }
+}
 
 inter/1 = fun (var0)  { 
     case var0 of { 
@@ -10,15 +20,29 @@ inter/1 = fun (var0)  {
     }
 }
 
-get_inter2/0 = fun ()  { 
-    case <> of { 
-         when true -> erlang:make_fun(other, inter, 1)       | Unbound var: other:inter/1
-    }
-}
-
+:: fun(('ok') -> 'nok')
 slice_inter1/1 = fun (var0)  { 
     case var0 of { 
         ok when true -> inter/1(ok)                          | Unbound var: inter/1
+    }
+}
+
+:: fun(('ok') -> 'nok')
+slice_inter2/1 = fun (var0)  { 
+    case var0 of { 
+        ok when true -> other:inter(ok)                      | Unbound var: other:inter/1
+    }
+}
+
+:: fun(() -> term())
+get_inter1/0 = fun ()  { 
+    case <> of {   when true -> inter/1 }                    | Unbound var: inter/1
+}
+
+:: fun(() -> term())
+get_inter2/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:make_fun(other, inter, 1)       | Unbound var: other:inter/1
     }
 }
 
@@ -28,27 +52,8 @@ module_info/0 = fun ()  {
     }
 }
 
-slice_inter2/1 = fun (var0)  { 
-    case var0 of { 
-        ok when true -> other:inter(ok)                      | Unbound var: other:inter/1
-    }
-}
-
-get_inter1/0 = fun ()  { 
-    case <> of {   when true -> inter/1 }                    | Unbound var: inter/1
-}
-
 module_info/1 = fun (var0)  { 
     case var0 of { 
         X when true -> erlang:get_module_info(other, X)
-    }
-}
-
-clauses/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> case X of { 
-                ok when true -> X                            | X. Expected: atom() | number(), Got: term()
-                1 when true -> X
-            }
     }
 }

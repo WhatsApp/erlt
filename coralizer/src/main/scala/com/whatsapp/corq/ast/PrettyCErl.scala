@@ -16,16 +16,22 @@
 
 package com.whatsapp.coralizer.ast
 
+import com.whatsapp.coralizer.ast.Forms.FunSpec
 import com.whatsapp.coralizer.tc.TcDiagnostics.TypeError
 import erlang.Data._
 import erlang.CErl._
 
 object PrettyCErl {
-  def apply(e: CErl, errors: Map[Int, TypeError], width: Int): String =
-    new PrettyCErl(errors).formattedLayout(e, width)
+  def apply(
+      e: CErl,
+      specs: Map[Id, FunSpec],
+      errors: Map[Int, TypeError],
+      width: Int
+  ): String =
+    new PrettyCErl(specs, errors).formattedLayout(e, width)
 }
 
-private class PrettyCErl(errors: Map[Int, TypeError])
+private class PrettyCErl(specs: Map[Id, FunSpec], errors: Map[Int, TypeError])
     extends org.bitbucket.inkytonik.kiama.output.PrettyPrinter {
 
   def formattedLayout(e: CErl, width: Int): String =
@@ -59,12 +65,28 @@ private class PrettyCErl(errors: Map[Int, TypeError])
       case CMap(__, arg, es, _isPat)   => arg <> "#" <> braces(es)
       case CMapPair(_, _op, key, cVal) => key <+> "=>" <+> cVal
       case CModule(_, name, exports, attrs, defs) =>
+        def defToDoc(d: (CVar, CFun)): Doc =
+          line <> d._1 <+> "=" <+> d._2
+
+        def specToDoc(id: Id): Doc =
+          specs
+            .get(id)
+            .map(spec =>
+              line <> (vsep(spec.types map { x =>
+                ":: " + Show.show(x.ty)
+              }))
+            )
+            .getOrElse("")
+
+        val defsDocs = defs collect {
+          case d @ (CVar(_, VarNameAtomInt(id)), _) =>
+            specToDoc(id) <> defToDoc(d)
+          case d => defToDoc(d)
+        }
+
         val attrDocs =
           for ((k, v) <- attrs filter (_._1 != "spec"))
             yield "-" <> k <> "(" <> v <> ")"
-        val defsDocs =
-          for ((k, v) <- defs)
-            yield line <> k <+> "=" <+> v
         "-module(" <> name <> ")." <@>
           "-exports " <> exports <> "." <@> vsep(attrDocs.toList) <@> vsep(
           defsDocs.toList

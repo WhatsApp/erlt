@@ -1,20 +1,39 @@
 -module(pos).
 -exports atom_id1/1, atom_lit/0, atom_pat/1, block_example/0, char_lit/0, clauses/1, match_example/0, module_info/0, module_info/1, nil_lit/0.
--file([({/Users/mheiber/erlt/coralizer/test_projects/check/src/pos.erl 1})])
+-file([({pos.erl 1})])
 -compile([(export_all nowarn_export_all)])
 
+:: fun((atom()) -> atom())
 atom_id1/1 = fun (var0)  { 
     case var0 of {  X when true -> X }
 }
 
+:: fun((atom()) -> term())
 atom_pat/1 = fun (var0)  { 
     case var0 of {  1 when true -> ok }
 }
 
+:: fun(() -> atom())
+atom_lit/0 = fun ()  { 
+    case <> of {   when true -> ok }
+}
+
+:: fun(() -> number())
+char_lit/0 = fun ()  { 
+    case <> of {   when true -> 65 }
+}
+
+:: fun(() -> [atom()])
+nil_lit/0 = fun ()  { 
+    case <> of {   when true -> [()] }
+}
+
+:: fun(() -> {atom()})
 block_example/0 = fun ()  { 
     case <> of {   when true -> block , {block} }
 }
 
+:: fun(() -> {'match'})
 match_example/0 = fun ()  { 
     case <> of { 
          when true -> let M = match in { 
@@ -25,22 +44,7 @@ match_example/0 = fun ()  {
     }
 }
 
-module_info/0 = fun ()  { 
-    case <> of { 
-         when true -> erlang:get_module_info(pos)
-    }
-}
-
-nil_lit/0 = fun ()  { 
-    case <> of {   when true -> [()] }
-}
-
-module_info/1 = fun (var0)  { 
-    case var0 of { 
-        X when true -> erlang:get_module_info(pos, X)
-    }
-}
-
+:: fun((term()) -> atom() | number())
 clauses/1 = fun (var0)  { 
     case var0 of { 
         X when true -> case X of { 
@@ -50,10 +54,14 @@ clauses/1 = fun (var0)  {
     }
 }
 
-char_lit/0 = fun ()  { 
-    case <> of {   when true -> 65 }
+module_info/0 = fun ()  { 
+    case <> of { 
+         when true -> erlang:get_module_info(pos)
+    }
 }
 
-atom_lit/0 = fun ()  { 
-    case <> of {   when true -> ok }
+module_info/1 = fun (var0)  { 
+    case var0 of { 
+        X when true -> erlang:get_module_info(pos, X)
+    }
 }

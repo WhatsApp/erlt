@@ -85,7 +85,7 @@ object CErlConvert {
       case ETuple(List(EAtom("c_letrec"), anno, EList(defs, None), body)) =>
         CLetRec(
           convertAnno(anno),
-          defs.map(convertTuple2(_).asInstanceOf[(CVar, CFun)]).toMap,
+          defs.map(convertTuple2(_).asInstanceOf[(CVar, CFun)]),
           convert(body)
         )
       case ETuple(List(EAtom("c_literal"), anno, value)) =>
@@ -117,7 +117,7 @@ object CErlConvert {
           convertAnno(anno),
           convert(name) match {
             case LitAtom(nameStr) => nameStr
-            case _ => sys.error(s"unexpected module name attribute $name")
+            case _                => sys.error(s"unexpected module name attribute $name")
           },
           exports.map(convert),
           attrs
@@ -125,9 +125,8 @@ object CErlConvert {
             .map {
               case (LitAtom(attrName), attrVal) => (attrName, attrVal)
               case x                            => sys.error(s"unexpected attribute ${x}")
-            }
-            .toMap,
-          defs.map(convertTuple2).asInstanceOf[List[(CVar, CFun)]].toMap
+            },
+          defs.map(convertTuple2).asInstanceOf[List[(CVar, CFun)]]
         )
       case ETuple(List(EAtom("c_primop"), anno, name, EList(args, None))) =>
         CPrimOp(convertAnno(anno), convert(name), args.map(convert))
