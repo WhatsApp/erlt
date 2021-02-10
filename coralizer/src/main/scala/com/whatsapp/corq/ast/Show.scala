@@ -66,6 +66,8 @@ object Show {
 
   def show(data: EObject): String =
     data match {
+      case EDouble(value)                  => value.toString
+      case ELong(value)                    => value.toString
       case EDouble(_) | ELong(_)           => data.toString
       case EAtom(atom)                     => s"'$atom'"
       case EBitStr(bin, pad_bits)          => "<<...>>"
@@ -89,7 +91,7 @@ object Show {
   def show(e: CErl): String =
     e match {
       case CApply(_, f, args) =>
-        s"""$f(${showExprs(args)})"""
+        s"""${show(f)}(${showExprs(args)})"""
       case CCall(_, m, f, args) =>
         s"""${show(m)}:${show(f)}(${showExprs(args)})"""
       case CCase(_, _arg, _clauses)    => "case ..."

@@ -80,7 +80,7 @@
  80 test08_neg() ->                            | ERROR   | 
  81     try ok()                               |         | 
  82     after                                  |         | 
- 83         only_atom(1)                       |         | ELong(1). Expected: atom(), Got: number()
+ 83         only_atom(1)                       |         | 1. Expected: atom(), Got: number()
  84     end.                                   |         | 
  85                                            |         | 
  86 -spec test09_pos() -> ok.                  |         | 
