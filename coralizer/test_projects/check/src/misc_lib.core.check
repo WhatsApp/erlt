@@ -4,17 +4,17 @@
 -compile([(export_all nowarn_export_all)])
 
 :: fun(('false' | 'true') -> 'false' | 'true')
-boolean_id/1 = fun (var0)  { 
+boolean_id/1 = fun (var0) { 
     case var0 of {  B when true -> B }
 }
 
-module_info/0 = fun ()  { 
+module_info/0 = fun () { 
     case <> of { 
          when true -> erlang:get_module_info(misc_lib)
     }
 }
 
-module_info/1 = fun (var0)  { 
+module_info/1 = fun (var0) { 
     case var0 of { 
         X when true -> erlang:get_module_info(misc_lib, X)
     }

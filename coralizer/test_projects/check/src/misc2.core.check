@@ -4,14 +4,14 @@
 -compile([(export_all)])
 
 :: fun(() -> term())
-improper_neg/0 = fun ()  { 
+improper_neg/0 = fun () { 
     case <> of { 
          when true -> [a | [b | c]]                          | ['b' | 'c']. Expected: [term()], Got: 'c'
     }
 }
 
 :: fun((term()) -> {atom(), atom()})
-test_env_pos/1 = fun (var0)  { 
+test_env_pos/1 = fun (var0) { 
     case var0 of { 
         X when true -> let var1 = case <> of { 
                  when erlang:is_atom(X) -> X
@@ -20,59 +20,59 @@ test_env_pos/1 = fun (var0)  {
 }
 
 :: fun((fun((atom()) -> pid()), atom()) -> pid())
-test_var_fun_pos/2 = fun (var0, var1)  { 
+test_var_fun_pos/2 = fun (var0, var1) { 
     case <var0, var1> of {  F X when true -> F(X)
     }
 }
 
 :: fun((fun((atom()) -> pid()), reference()) -> pid())
-test_var_fun_neg/2 = fun (var0, var1)  { 
+test_var_fun_neg/2 = fun (var0, var1) { 
     case <var0, var1> of {  F X when true -> F(X)
     }
 }
 
 :: fun((atom()) -> term())
-atom_call_neg_01/1 = fun (var0)  { 
+atom_call_neg_01/1 = fun (var0) { 
     case var0 of { 
         X when true -> X:main(1)                             | X. Expected: '<<known atom>>', Got: atom()
     }
 }
 
 :: fun((atom()) -> term())
-atom_call_neg_02/1 = fun (var0)  { 
+atom_call_neg_02/1 = fun (var0) { 
     case var0 of { 
         X when true -> lists:X(1)                            | X. Expected: '<<known atom>>', Got: atom()
     }
 }
 
 :: fun(('maps' | 'sets', 'new') -> term())
-atom_call_neg_03/2 = fun (var0, var1)  { 
+atom_call_neg_03/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         M F when true -> M:F(0)                              | M. Expected: '<<known atom>>', Got: 'maps' | 'sets'
     }
 }
 
 :: fun(('maps', 'to_list' | 'union') -> term())
-atom_call_neg_04/2 = fun (var0, var1)  { 
+atom_call_neg_04/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         M F when true -> M:F()                               | F. Expected: '<<known atom>>', Got: 'to_list' | 'union'
     }
 }
 
 :: fun(('lists', 'member') -> 'false' | 'true')
-atom_call_pos_01/2 = fun (var0, var1)  { 
+atom_call_pos_01/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         Mod Fun when true -> Mod:Fun(1, [()])
     }
 }
 
-module_info/0 = fun ()  { 
+module_info/0 = fun () { 
     case <> of { 
          when true -> erlang:get_module_info(misc2)
     }
 }
 
-module_info/1 = fun (var0)  { 
+module_info/1 = fun (var0) { 
     case var0 of { 
         X when true -> erlang:get_module_info(misc2, X)
     }

@@ -4,7 +4,7 @@
 -compile([(export_all nowarn_export_all)])
 
 :: fun((atom()) -> 'false' | 'true')
-test01/1 = fun (var0)  { 
+test01/1 = fun (var0) { 
     case var0 of { 
         X when erlang:=:=(X, true) -> X
         var2 when true -> false
@@ -12,11 +12,11 @@ test01/1 = fun (var0)  {
 }
 
 :: fun((atom()) -> 'false' | 'true')
-test02/1 = fun (var0)  { 
+test02/1 = fun (var0) { 
     case var0 of { 
         X when try let var1 = erlang:=:=(X, false) in { 
                 var1
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -26,7 +26,7 @@ test02/1 = fun (var0)  {
 }
 
 :: fun((atom(), atom()) -> 'false' | 'true')
-test03/2 = fun (var0, var1)  { 
+test03/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X var4 when erlang:=:=(X, true) -> X
         var5 Y when erlang:=:=(Y, true) -> Y
@@ -34,13 +34,13 @@ test03/2 = fun (var0, var1)  {
 }
 
 :: fun((atom(), atom()) -> 'false' | 'true')
-test04/2 = fun (var0, var1)  { 
+test04/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var4 = case X of { 
                 true when true -> true
                 false when true -> Y
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  erlang:=:=(var4, true) } of  { 
+            } in {  erlang:=:=(var4, true) } of { 
             Try -> Try
         }
         catch {
@@ -51,13 +51,13 @@ test04/2 = fun (var0, var1)  {
 }
 
 :: fun((atom(), atom()) -> 'false' | 'true')
-test05/2 = fun (var0, var1)  { 
+test05/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  erlang:=:=(var4, true) } of  { 
+            } in {  erlang:=:=(var4, true) } of { 
             Try -> Try
         }
         catch {
@@ -68,13 +68,13 @@ test05/2 = fun (var0, var1)  {
 }
 
 :: fun((atom(), atom()) -> 'true')
-test06/2 = fun (var0, var1)  { 
+test06/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  erlang:=:=(var4, true) } of  { 
+            } in {  erlang:=:=(var4, true) } of { 
             Try -> Try
         }
         catch {
@@ -85,13 +85,13 @@ test06/2 = fun (var0, var1)  {
 }
 
 :: fun((atom(), atom()) -> 'false')
-test07_neg/2 = fun (var0, var1)  { 
+test07_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  erlang:=:=(var4, true) } of  { 
+            } in {  erlang:=:=(var4, true) } of { 
             Try -> Try
         }
         catch {
@@ -102,11 +102,11 @@ test07_neg/2 = fun (var0, var1)  {
 }
 
 :: fun((term()) -> number())
-test08_neg/1 = fun (var0)  { 
+test08_neg/1 = fun (var0) { 
     case var0 of { 
         X when try let var1 = erlang:is_number(X) in { 
                 erlang:not(var1)
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -115,13 +115,13 @@ test08_neg/1 = fun (var0)  {
 }
 
 :: fun((term()) -> number() | atom())
-test09_neg/1 = fun (var0)  { 
+test09_neg/1 = fun (var0) { 
     case var0 of { 
         X when try let var1 = erlang:is_number(X) in { 
                 let var2 = erlang:is_atom(X) in { 
                     erlang:or(var1, var2)
                 }
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -130,7 +130,7 @@ test09_neg/1 = fun (var0)  {
 }
 
 :: fun((term()) -> number() | atom())
-test10/1 = fun (var0)  { 
+test10/1 = fun (var0) { 
     case var0 of { 
         X when let var1 = erlang:is_number(X) in { 
             let var2 = erlang:is_atom(X) in { 
@@ -141,7 +141,7 @@ test10/1 = fun (var0)  {
 }
 
 :: fun((term()) -> number() | atom())
-test11_neg/1 = fun (var0)  { 
+test11_neg/1 = fun (var0) { 
     case var0 of { 
         X when let var1 = erlang:is_number(X) in { 
             let var2 = erlang:is_atom(X) in { 
@@ -156,18 +156,18 @@ test11_neg/1 = fun (var0)  {
 }
 
 :: fun((term(), term()) -> number())
-test12/2 = fun (var0, var1)  { 
+test12/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X var6 when try let var2 = erlang:+(X, 1) in { 
                 erlang:>(var2, 0)
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
          -> X
         var7 Y when try let var3 = erlang:/(Y, 3) in { 
                 erlang:>(var3, 1)
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -176,7 +176,7 @@ test12/2 = fun (var0, var1)  {
 }
 
 :: fun((term(), term()) -> {number(), number()})
-test13/2 = fun (var0, var1)  { 
+test13/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var2 = erlang:+(X, 1) in { 
                 let var3 = erlang:>(var2, 0) in { 
@@ -186,7 +186,7 @@ test13/2 = fun (var0, var1)  {
                         }
                     }
                 }
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -195,18 +195,18 @@ test13/2 = fun (var0, var1)  {
 }
 
 :: fun((term(), term()) -> {number(), number()})
-test14_neg/2 = fun (var0, var1)  { 
+test14_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when let var3 = try let var2 = erlang:+(X, 1) in { 
                 erlang:>(var2, 0)
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
          in { 
             let var5 = try let var4 = erlang:/(Y, 3) in { 
                     erlang:>(var4, 1)
-                } of  {  Try -> Try }
+                } of {  Try -> Try }
             catch {
                 T, R -> false
             }
@@ -216,11 +216,11 @@ test14_neg/2 = fun (var0, var1)  {
 }
 
 :: fun((term(), term()) -> {number(), number()} | {'false' | 'true', 'false' | 'true'})
-test15/2 = fun (var0, var1)  { 
+test15/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         X Y when try let var2 = erlang:+(X, Y) in { 
                 erlang:>(var2, 0)
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -229,7 +229,7 @@ test15/2 = fun (var0, var1)  {
                 let var4 = erlang:=:=(Y, true) in { 
                     erlang:and(var3, var4)
                 }
-            } of  {  Try -> Try }
+            } of {  Try -> Try }
         catch {
             T, R -> false
         }
@@ -237,13 +237,13 @@ test15/2 = fun (var0, var1)  {
     }
 }
 
-module_info/0 = fun ()  { 
+module_info/0 = fun () { 
     case <> of { 
          when true -> erlang:get_module_info(guards_logic)
     }
 }
 
-module_info/1 = fun (var0)  { 
+module_info/1 = fun (var0) { 
     case var0 of { 
         X when true -> erlang:get_module_info(guards_logic, X)
     }
