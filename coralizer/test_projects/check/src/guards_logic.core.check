@@ -1,7 +1,7 @@
 -module(guards_logic)
 -exports(module_info/0, module_info/1, test01/1, test02/1, test03/2, test04/2, test05/2, test06/2, test07_neg/2, test08_neg/1, test09_neg/1, test10/1, test11_neg/1, test12/2, test13/2, test14_neg/2, test15/2)
--file([({guards_logic.erl 1})])
--compile([(export_all nowarn_export_all)])
+-file([{guards_logic.erl 1}])
+-compile([export_all nowarn_export_all])
 
 :: fun((atom()) -> 'false' | 'true')
 test01/1 = fun (var0) { 

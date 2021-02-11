@@ -1,7 +1,7 @@
 -module(misc)
 -exports(module_info/0, module_info/1, test01/1, test02/1, test03_neg/1, test04_neg/1, test05_neg/1, test06_neg/1, test07/1, test08_neg/1, test09/2, test10_neg/2, test11_neg/2, test12_neg/1, test13_neg/2, test14/2, test15/2, test16_neg/2, test17_neg/2, test18_neg/2, test19_neg/2, test20_neg/1, test21_neg/2, test22_neg/1, test23_neg/2, test24_neg/2, test25_pos/1, test26_pos/1, test27_pos/1, test28_neg/1, test29_neg/0, test30_neg/0, test31_neg/0, test32_neg/0, test33_pos/2, test34_pos/2, test35_pos/2, test36_pos/2, test37_pos/2, test38_pos/1, test39_pos/1, test40_pos/1, test41_pos/1, test42_pos/1, test43_pos/1, test44_neg/1, test45_neg/1, test46_neg/0, test47_neg/0, test48_neg/0, test49_neg/0, test50_pos/0, test51_pos/0, test52_pos/0, test53_pos/0, test54_unspecced/0, test55_neg/0, test56_neg/0, test57_pos/0, test58_pos/3, test59_pos/0, test60_pos/0, test61_neg/0, test62_neg/0, test63_pos/0, test64_pos/0, test65_pos/0, test66_pos/0, test67_pos/2, test68_pos/1, test69_pos/1, test70_neg/0, test71_neg/0, test72_neg/0, test73_pos/0, test74_pos/0, test75_pos/0, test76_pos/1, test77_neg/1)
--file([({misc.erl 1})])
--compile([(export_all nowarn_export_all)])
+-file([{misc.erl 1}])
+-compile([export_all nowarn_export_all])
 
 :: fun((term()) -> number())
 test01/1 = fun (var0) { 
@@ -150,7 +150,7 @@ test19_neg/2 = fun (var0, var1) {
 test20_neg/1 = fun (var0) { 
     case var0 of { 
         X when true -> let var1 = erlang:-(X) in {           | let .... Expected: [atom()], Got: [number()]
-                [var1 | [()]]
+                [var1 | []]
             }
     }
 }
@@ -159,7 +159,7 @@ test20_neg/1 = fun (var0) {
 test21_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         <X, Y> when true -> let var2 = erlang:/(X, Y) in {   | let .... Expected: [atom()], Got: [number()]
-                [var2 | [()]]
+                [var2 | []]
             }
     }
 }
@@ -168,7 +168,7 @@ test21_neg/2 = fun (var0, var1) {
 test22_neg/1 = fun (var0) { 
     case var0 of { 
         X when true -> let var1 = erlang:not(X) in {         | let .... Expected: [number()], Got: ['false' | 'true']
-                [var1 | [()]]
+                [var1 | []]
             }
     }
 }
@@ -177,7 +177,7 @@ test22_neg/1 = fun (var0) {
 test23_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         <X, Y> when true -> let var2 = erlang:or(X, Y) in {  | let .... Expected: [number()], Got: ['false' | 'true']
-                [var2 | [()]]
+                [var2 | []]
             }
     }
 }
@@ -189,15 +189,15 @@ test24_neg/2 = fun (var0, var1) {
                 true when true -> true
                 false when true -> Y
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  [var4 | [()]] }
+            } in {  [var4 | []] }
     }
 }
 
 :: fun((['false' | 'true']) -> 'false' | 'true' | 'undefined')
 test25_pos/1 = fun (var0) { 
     case var0 of { 
-        [()] when true -> undefined
-        [X | [()]] when true -> X
+        [] when true -> undefined
+        [X | []] when true -> X
         [var2 | T] when true -> test25_pos/1(T)
     }
 }
@@ -209,7 +209,7 @@ test26_pos/1 = fun (var0) {
 
 :: fun((X) -> [X])
 test27_pos/1 = fun (var0) { 
-    case var0 of {  X when true -> [X | [()]] }
+    case var0 of {  X when true -> [X | []] }
 }
 
 :: fun((atom()) -> 'false' | 'true')
@@ -222,7 +222,7 @@ test28_neg/1 = fun (var0) {
 :: fun(() -> [])
 test29_neg/0 = fun () { 
     case <> of { 
-        <> when true -> [true | [false | [()]]]              | ['true' | ['false' | []]]. Expected: [], Got: ['true' | 'false']
+        <> when true -> [true | [false | []]]                | ['true' | ['false' | []]]. Expected: [], Got: ['true' | 'false']
     }
 }
 
@@ -349,7 +349,7 @@ test44_neg/1 = fun (var0) {
         X when true -> let var4, Z = case X of { 
                 Z when true -> <ok, Z>
                 var1 when true -> let var3 = primop:match_fail({case_clause, var1}) in { 
-                        <var3, [()]>
+                        <var3, []>
                     }
             } in {  Z }
     }
@@ -363,7 +363,7 @@ test45_neg/1 = fun (var0) {
                         <Z, Z>
                     }
                 var2 when true -> let var5 = primop:match_fail({case_clause, var2}) in { 
-                        <var5, [()]>
+                        <var5, []>
                     }
             } in {  Z }
     }
@@ -376,7 +376,7 @@ test46_neg/0 = fun () {
 
 :: fun(() -> number())
 test47_neg/0 = fun () { 
-    case <> of {  <> when true -> [()] }                     | []. Expected: number(), Got: []
+    case <> of {  <> when true -> [] }                       | []. Expected: number(), Got: []
 }
 
 :: fun(() -> atom())
@@ -511,7 +511,7 @@ test64_pos/0 = fun () {
 :: fun(() -> [term()])
 test65_pos/0 = fun () { 
     case <> of { 
-        <> when true -> let L = [()] in {  L }
+        <> when true -> let L = [] in {  L }
     }
 }
 
@@ -532,7 +532,7 @@ test66_pos/0 = fun () {
 test67_pos/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         <A, N> when true -> let Head = A in { 
-                let Tail = [N | [()]] in { 
+                let Tail = [N | []] in { 
                     let Result = [Head | Tail] in { 
                         Result
                     }
@@ -554,7 +554,7 @@ test69_pos/1 = fun (var0) {
 :: fun(() -> [atom() | number()])
 test70_neg/0 = fun () { 
     case <> of { 
-        <> when true -> catch test69_pos/1([atom | [()]])    | catch .... Expected: [atom() | number()], Got: term()
+        <> when true -> catch test69_pos/1([atom | []])      | catch .... Expected: [atom() | number()], Got: term()
     }
 }
 
@@ -575,14 +575,14 @@ test72_neg/0 = fun () {
 :: fun(() -> term())
 test73_pos/0 = fun () { 
     case <> of { 
-        <> when true -> catch test69_pos/1([atom | [()]])
+        <> when true -> catch test69_pos/1([atom | []])
     }
 }
 
 :: fun(() -> term())
 test74_pos/0 = fun () { 
     case <> of { 
-        <> when true -> let var0 = catch test69_pos/1([atom | [()]]) in { 
+        <> when true -> let var0 = catch test69_pos/1([atom | []]) in { 
                 let X = var0 in {  X }
             }
     }

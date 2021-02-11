@@ -1,7 +1,7 @@
 -module(misc2)
 -exports(atom_call_neg_01/1, atom_call_neg_02/1, atom_call_neg_03/2, atom_call_neg_04/2, atom_call_pos_01/2, improper_neg/0, module_info/0, module_info/1, test_env_pos/1, test_var_fun_neg/2, test_var_fun_pos/2)
--file([({misc2.erl 1})])
--compile([(export_all)])
+-file([{misc2.erl 1}])
+-compile([export_all])
 
 :: fun(() -> term())
 improper_neg/0 = fun () { 
@@ -64,7 +64,7 @@ atom_call_neg_04/2 = fun (var0, var1) {
 :: fun(('lists', 'member') -> 'false' | 'true')
 atom_call_pos_01/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        <Mod, Fun> when true -> Mod:Fun(1, [()])
+        <Mod, Fun> when true -> Mod:Fun(1, [])
     }
 }
 

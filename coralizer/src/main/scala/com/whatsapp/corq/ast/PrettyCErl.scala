@@ -132,7 +132,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case EDouble(d)                      => d.toString
       case EExternalFun(RemoteId(m, f, a)) => s"$m:$f/$a"
       case EList(elems) =>
-        "[" <> parens(elems) <> "]"
+        "[" <> elems <> "]"
       case ELong(value)                                                      => value.toString
       case data: EMap                                                        => Show.show(data)
       case EString(str)                                                      => str
