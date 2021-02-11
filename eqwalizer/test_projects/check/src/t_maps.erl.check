@@ -258,3 +258,21 @@
 258 -spec lit_type_neg(a) ->                   |         | 
 259     #{a => number()}.                      |         | 
 260 lit_type_neg(A) -> #{A => 3}.              | ERROR   | #{..}. Expected: #S{a => number()}, Got: #D{'a' => number()}
+261                                            |         | 
+262 -spec needs_shape_a                        |         | 
+263     (#{a := any()}) -> ok.                 |         | 
+264 needs_shape_a(_) -> ok.                    | OK      | 
+265                                            |         | 
+266 -spec needs_shape_ab                       |         | 
+267     (#{a := any(), b := any()}) -> ok.     |         | 
+268 needs_shape_ab(_) -> ok.                   | OK      | 
+269                                            |         | 
+270 -spec shapeab_neg(#{a := 3}) -> ok.        |         | 
+271 shapeab_neg(X) ->                          | ERROR   | 
+272     needs_shape_a(X),                      |         | 
+273     needs_shape_a(X#{b => hello}).         |         | ..#{..}. Expected: #S{a := term()}, Got: #S{b := 'hello', a := number()}
+274                                            |         | 
+275 -spec shape_ab(#{a := any()}) -> ok.       |         | 
+276 shape_ab(X) ->                             | OK      | 
+277     needs_shape_a(X),                      |         | 
+278     needs_shape_ab(X#{b => hello}).        |         | 

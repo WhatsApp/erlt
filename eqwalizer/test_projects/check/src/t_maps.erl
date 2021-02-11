@@ -258,3 +258,21 @@ kvs_neg(Dict, K2, V2) ->
 -spec lit_type_neg(a) ->
     #{a => number()}.
 lit_type_neg(A) -> #{A => 3}.
+
+-spec needs_shape_a
+    (#{a := any()}) -> ok.
+needs_shape_a(_) -> ok.
+
+-spec needs_shape_ab
+    (#{a := any(), b := any()}) -> ok.
+needs_shape_ab(_) -> ok.
+
+-spec shapeab_neg(#{a := 3}) -> ok.
+shapeab_neg(X) ->
+    needs_shape_a(X),
+    needs_shape_a(X#{b => hello}).
+
+-spec shape_ab(#{a := any()}) -> ok.
+shape_ab(X) ->
+    needs_shape_a(X),
+    needs_shape_ab(X#{b => hello}).
