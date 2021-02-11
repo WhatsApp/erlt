@@ -1,15 +1,15 @@
 -module(sample)
 -exports(module_info/0, module_info/1, test03_pos/1)
--file([({sample.erl 1})])
--compile([(export_all)])
+-file([{sample.erl 1}])
+-compile([export_all])
 
 :: fun((binary()) -> binary())
 test03_pos/1 = fun (var0) { 
     case primop:dialyzer_unknown() of { 
         a when true -> case var0 of { 
-                <<N: size-8 unit-1 type-integer flags-[(unsigned big)], var3: size-all unit-1 type-binary flags-[(unsigned big)]>> when true ->
+                <<N: size-8 unit-1 type-integer flags-[unsigned big], var3: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
                 case var3 of {                               | Unbound var: _3
-                        <<var2: size-N unit-1 type-integer flags-[(unsigned big)], Rest: size-all unit-8 type-binary flags-[(unsigned big)]>> when true ->
+                        <<var2: size-N unit-1 type-integer flags-[unsigned big], Rest: size-all unit-8 type-binary flags-[unsigned big]>> when true ->
                         Rest
                     }
             }

@@ -1,7 +1,7 @@
 -module(neg)
 -exports(atom_id_e/1, foo/1, foo/2, match/1, module_info/0, module_info/1)
--file([({neg.erl 1})])
--compile([(export_all nowarn_export_all)])
+-file([{neg.erl 1}])
+-compile([export_all nowarn_export_all])
 
 :: fun((A) -> A)
 foo/1 = fun (var0) { 

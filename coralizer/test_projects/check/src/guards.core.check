@@ -1,7 +1,7 @@
 -module(guards)
 -exports(module_info/0, module_info/1, test01/1, test01_if/1, test02/2, test02_if/2, test03/1, test04/1)
--file([({guards.erl 1})])
--compile([(export_all nowarn_export_all)])
+-file([{guards.erl 1}])
+-compile([export_all nowarn_export_all])
 
 :: fun((atom() | number()) -> atom())
 test01/1 = fun (var0) { 

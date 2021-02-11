@@ -1,7 +1,7 @@
 -module(subtype_neg)
 -exports(f01/1, f02/1, f03/1, f04/1, f05/1, f06/1, f07/1, f08/1, module_info/0, module_info/1)
--file([({subtype_neg.erl 1})])
--compile([(export_all nowarn_export_all)])
+-file([{subtype_neg.erl 1}])
+-compile([export_all nowarn_export_all])
 -type ab(0) :: 'a' | 'b'
 -type pair_diff_elems(0) :: {'a', 'b'} | {'b', 'a'}
 -type pair_ab(0) :: {ab(), ab()}
