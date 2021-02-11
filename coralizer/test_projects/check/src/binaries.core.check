@@ -5,7 +5,7 @@
 
 :: fun(() -> binary())
 test01_pos/0 = fun () { 
-    case <> of {   when true -> << pad(0)>> }
+    case <> of {  <> when true -> << pad(0)>> }
 }
 
 :: fun((binary()) -> {number(), binary()})
@@ -32,7 +32,8 @@ test03_pos/1 = fun (var0) {
 
 :: fun(() -> [term()])
 test04_neg/0 = fun () { 
-    case <> of {   when true -> << pad(0)>>                  | <<...>>. Expected: [term()], Got: binary()
+    case <> of { 
+        <> when true -> << pad(0)>>                          | <<...>>. Expected: [term()], Got: binary()
     }
 }
 
@@ -54,7 +55,7 @@ test05_neg/1 = fun (var0) {
 :: fun((atom(), number()) -> binary())
 test06_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        A S when true -> <<A: size-S unit-1 type-integer flags-[(unsigned big)]>>
+        <A, S> when true -> <<A: size-S unit-1 type-integer flags-[(unsigned big)]>>
     }
 }
 
@@ -76,7 +77,7 @@ test08_neg/1 = fun (var0) {
 :: fun((number(), number()) -> binary())
 test09_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        I1 I2 when true -> let X = <<I1: size-8 unit-1 type-integer flags-[(unsigned big)], I2: size-8 unit-1 type-integer flags-[(unsigned big)]>> in { 
+        <I1, I2> when true -> let X = <<I1: size-8 unit-1 type-integer flags-[(unsigned big)], I2: size-8 unit-1 type-integer flags-[(unsigned big)]>> in { 
                 X
             }
     }
@@ -84,7 +85,7 @@ test09_neg/2 = fun (var0, var1) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(binaries)
+        <> when true -> erlang:get_module_info(binaries)
     }
 }
 

@@ -15,28 +15,29 @@ atom_pat/1 = fun (var0) {
 
 :: fun(() -> atom())
 atom_lit/0 = fun () { 
-    case <> of {   when true -> ok }
+    case <> of {  <> when true -> ok }
 }
 
 :: fun(() -> number())
 char_lit/0 = fun () { 
-    case <> of {   when true -> 65 }
+    case <> of {  <> when true -> 65 }
 }
 
 :: fun(() -> [atom()])
 nil_lit/0 = fun () { 
-    case <> of {   when true -> [()] }
+    case <> of {  <> when true -> [()] }
 }
 
 :: fun(() -> {atom()})
 block_example/0 = fun () { 
-    case <> of {   when true -> block , {block} }
+    case <> of {  <> when true -> block , {block}
+    }
 }
 
 :: fun(() -> {'match'})
 match_example/0 = fun () { 
     case <> of { 
-         when true -> let M = match in { 
+        <> when true -> let M = match in { 
                 case {M} of { 
                     {match} when true -> {M}
                 }
@@ -56,7 +57,7 @@ clauses/1 = fun (var0) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(pos)
+        <> when true -> erlang:get_module_info(pos)
     }
 }
 

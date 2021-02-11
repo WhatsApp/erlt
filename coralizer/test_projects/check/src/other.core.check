@@ -36,19 +36,20 @@ slice_inter2/1 = fun (var0) {
 
 :: fun(() -> term())
 get_inter1/0 = fun () { 
-    case <> of {   when true -> inter/1 }                    | Unbound var: inter/1
+    case <> of {  <> when true -> inter/1                    | Unbound var: inter/1
+    }
 }
 
 :: fun(() -> term())
 get_inter2/0 = fun () { 
     case <> of { 
-         when true -> erlang:make_fun(other, inter, 1)       | Unbound var: other:inter/1
+        <> when true -> erlang:make_fun(other, inter, 1)     | Unbound var: other:inter/1
     }
 }
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(other)
+        <> when true -> erlang:get_module_info(other)
     }
 }
 
