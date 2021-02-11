@@ -80,7 +80,7 @@ object Pipeline {
       // $COVERAGE-OFF$
       case d => sys.error(s"unexpected def $d")
       // $COVERAGE-ON$
-    }.toList
+    }
     (srcFile, forms)
   }
 
