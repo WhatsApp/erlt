@@ -54,8 +54,8 @@ object WIPDiagnostics {
   case object TypeIntersection extends SkippedType {
     override def toString: String = "Intersection"
   }
-  case object BadProp extends SkippedType {
-    override def toString: String = "Bad shape prop"
+  case object BadMapKey extends SkippedType {
+    override def toString: String = "Bad map key"
   }
   case object PatListConcat extends SkippedPat {
     override def toString: String = "P: _ ++ _"

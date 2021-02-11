@@ -292,12 +292,12 @@
 292 inter(nok) -> ok.                        |         |                                | 
 293                                          |         |                                | 
 294 -type bad_map1() :: #{                   | SKIPPED |                                | 
-295     atom() => atom(),                    |         | Bad shape prop                 | 
+295     atom() => atom(),                    |         | Bad map key                    | 
 296     integer() => integer()               |         |                                | 
 297 }.                                       |         |                                | 
 298                                          |         |                                | 
 299 -type bad_map2() :: #{                   | SKIPPED |                                | 
-300     atom() := atom(),                    |         | Bad shape prop                 | 
+300     atom() := atom(),                    |         | Bad map key                    | 
 301     integer() := integer()               |         |                                | 
 302 }.                                       |         |                                | 
 303                                          |         |                                | 

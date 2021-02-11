@@ -241,7 +241,7 @@ object Convert {
           case AtomLitType(k) =>
             OptProp(k, valType)
           case _ =>
-            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
         }
       case ETuple(List(EAtom("type"), ELong(l), EAtom("map_field_exact"), EList(List(ekT, evT), None))) =>
         val keyType = convertType(ekT)
@@ -250,7 +250,7 @@ object Convert {
           case AtomLitType(k) =>
             ReqProp(k, valType)
           case _ =>
-            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
         }
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
@@ -415,7 +415,7 @@ object Convert {
       case ETuple(List(EAtom("map_field_assoc"), _, eExp1, eExp2)) =>
         (convertExp(eExp1), convertExp(eExp2))
       case ETuple(List(_, ELong(l), _, _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
@@ -426,7 +426,7 @@ object Convert {
       case ETuple(List(EAtom("map_field_exact"), ELong(l), ETuple(List(EAtom("atom"), _, EAtom(key))), eExp2)) =>
         (key, convertExp(eExp2))
       case ETuple(List(_, ELong(l), _, _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadProp)
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
