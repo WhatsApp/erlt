@@ -61,7 +61,8 @@
     record_indices/1,
     exact_map_updates/1,
     assoc_map_updates/1,
-    mixed_map_updates/1
+    mixed_map_updates/1,
+    opt_shapes/1
 ]).
 
 -include_lib("stdlib/include/assert.hrl").
@@ -796,6 +797,21 @@ mixed_map_update({map, Line, _MapExpr, MapPairs}) ->
     (erlang:length(Exacts) > 0) andalso (erlang:length(Assocs) > 1) andalso {Line};
 mixed_map_update(_) ->
     false.
+
+-spec opt_shapes(BeamFile :: file:filename()) -> [{integer()}].
+opt_shapes(BeamFile) ->
+    {ok, Forms} = get_abstract_forms(BeamFile),
+    collect(Forms, fun pred/1, fun opt_shape/1).
+
+opt_shape({type, Line, map, Assocs}) when is_list(Assocs), length(Assocs) > 0 ->
+    lists:all(
+        fun
+            ({type, _, map_field_assoc, [{atom, _, _}, _]}) -> true;
+            (_) -> false
+        end,
+        Assocs
+    ) andalso {Line};
+opt_shape(_) -> false.
 
 -spec record_indices(BeamFile :: file:filename()) -> [{integer()}].
 record_indices(BeamFile) ->
