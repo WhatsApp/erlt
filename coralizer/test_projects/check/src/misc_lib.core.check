@@ -10,7 +10,7 @@ boolean_id/1 = fun (var0) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(misc_lib)
+        <> when true -> erlang:get_module_info(misc_lib)
     }
 }
 

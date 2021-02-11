@@ -28,15 +28,15 @@ test02/1 = fun (var0) {
 :: fun((atom(), atom()) -> 'false' | 'true')
 test03/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X var4 when erlang:=:=(X, true) -> X
-        var5 Y when erlang:=:=(Y, true) -> Y
+        <X, var4> when erlang:=:=(X, true) -> X
+        <var5, Y> when erlang:=:=(Y, true) -> Y
     }
 }
 
 :: fun((atom(), atom()) -> 'false' | 'true')
 test04/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var4 = case X of { 
+        <X, Y> when try let var4 = case X of { 
                 true when true -> true
                 false when true -> Y
                 var2 when true -> erlang:error({badarg, var2})
@@ -53,7 +53,7 @@ test04/2 = fun (var0, var1) {
 :: fun((atom(), atom()) -> 'false' | 'true')
 test05/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var4 = case X of { 
+        <X, Y> when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
@@ -70,7 +70,7 @@ test05/2 = fun (var0, var1) {
 :: fun((atom(), atom()) -> 'true')
 test06/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var4 = case X of { 
+        <X, Y> when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
@@ -87,7 +87,7 @@ test06/2 = fun (var0, var1) {
 :: fun((atom(), atom()) -> 'false')
 test07_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var4 = case X of { 
+        <X, Y> when try let var4 = case X of { 
                 true when true -> Y
                 false when true -> false
                 var2 when true -> erlang:error({badarg, var2})
@@ -158,14 +158,14 @@ test11_neg/1 = fun (var0) {
 :: fun((term(), term()) -> number())
 test12/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X var6 when try let var2 = erlang:+(X, 1) in { 
+        <X, var6> when try let var2 = erlang:+(X, 1) in { 
                 erlang:>(var2, 0)
             } of {  Try -> Try }
         catch {
             T, R -> false
         }
          -> X
-        var7 Y when try let var3 = erlang:/(Y, 3) in { 
+        <var7, Y> when try let var3 = erlang:/(Y, 3) in { 
                 erlang:>(var3, 1)
             } of {  Try -> Try }
         catch {
@@ -178,7 +178,7 @@ test12/2 = fun (var0, var1) {
 :: fun((term(), term()) -> {number(), number()})
 test13/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var2 = erlang:+(X, 1) in { 
+        <X, Y> when try let var2 = erlang:+(X, 1) in { 
                 let var3 = erlang:>(var2, 0) in { 
                     let var4 = erlang:/(Y, 3) in { 
                         let var5 = erlang:>(var4, 1) in { 
@@ -197,7 +197,7 @@ test13/2 = fun (var0, var1) {
 :: fun((term(), term()) -> {number(), number()})
 test14_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when let var3 = try let var2 = erlang:+(X, 1) in { 
+        <X, Y> when let var3 = try let var2 = erlang:+(X, 1) in { 
                 erlang:>(var2, 0)
             } of {  Try -> Try }
         catch {
@@ -218,14 +218,14 @@ test14_neg/2 = fun (var0, var1) {
 :: fun((term(), term()) -> {number(), number()} | {'false' | 'true', 'false' | 'true'})
 test15/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X Y when try let var2 = erlang:+(X, Y) in { 
+        <X, Y> when try let var2 = erlang:+(X, Y) in { 
                 erlang:>(var2, 0)
             } of {  Try -> Try }
         catch {
             T, R -> false
         }
          -> {X, Y}
-        X Y when try let var3 = erlang:=:=(X, true) in { 
+        <X, Y> when try let var3 = erlang:=:=(X, true) in { 
                 let var4 = erlang:=:=(Y, true) in { 
                     erlang:and(var3, var4)
                 }
@@ -239,7 +239,7 @@ test15/2 = fun (var0, var1) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(guards_logic)
+        <> when true -> erlang:get_module_info(guards_logic)
     }
 }
 

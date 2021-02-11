@@ -17,7 +17,7 @@ atom_id_e/1 = fun (var0) {
 :: fun((term(), A) -> A)
 foo/2 = fun (var0, var1) { 
     case <var0, var1> of { 
-        X var4 when true -> X                                | X. Expected: A, Got: term()
+        <X, var4> when true -> X                             | X. Expected: A, Got: term()
     }
 }
 
@@ -32,7 +32,7 @@ match/1 = fun (var0) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(neg)
+        <> when true -> erlang:get_module_info(neg)
     }
 }
 

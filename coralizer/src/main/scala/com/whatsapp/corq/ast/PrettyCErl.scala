@@ -49,7 +49,10 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
         softbreak <> "case" <+> sel <+> "of" <+> block(vsep(clauses map doc))
       case CCatch(_, body) => "catch" <+> body
       case CClause(_, pats, guard, body) =>
-        hsep(pats map doc) <+> "when" <+> guard <+> "->" </> nest(body)
+        val left: Doc =
+          if (pats.sizeCompare(1) == 0) pats else "<" <> pats <> ">"
+        val right = "when" <+> guard <+> "->" </> nest(body)
+        left <+> right
       case CCons(_, hd, tl) => "[" <> hd <+> "|" <+> tl <> "]"
       case CFun(_, vars, body) =>
         softbreak <> "fun" <+> parens(vars) <+> block(body)
@@ -104,7 +107,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
         vsep(moduleDoc :: exportsDoc :: attrDocs ++ typeDocs ++ defsDocs)
 
       case CPrimOp(_, name, args) => "primop:" <> name <> parens(args)
-      case CSeq(_, arg, body) => arg <+> "," <+> body
+      case CSeq(_, arg, body)     => arg <+> "," <+> body
       case CTry(_, arg, bodyVars, body, evars, handler) =>
         "try" <+> nest(arg) <+> "of" <+> block(
           bodyVars <+> "->" <+> body
@@ -115,7 +118,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CValues(_, elems) => "<" <> elems <> ">"
       case e: CVar           => Show.show(e)
       // $COVERAGE-OFF$
-      case _: C___XXX        => sys.error(s"unexpected $e")
+      case _: C___XXX => sys.error(s"unexpected $e")
       // $COVERAGE-ON$
     }
 
@@ -133,10 +136,10 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
           case None     => emptyDoc
         }
         "[" <> parens(elems) <> improper <> "]"
-      case ELong(value)  => value.toString
-      case data: EMap    => Show.show(data)
-      case EString(str)  => str
-      case ETuple(elems) => braces(elems)
+      case ELong(value)                                                      => value.toString
+      case data: EMap                                                        => Show.show(data)
+      case EString(str)                                                      => str
+      case ETuple(elems)                                                     => braces(elems)
       case _: Anno | _: EPid | _: EPort | _: ERef | _: C___XXX | _: CReceive =>
         // $COVERAGE-OFF$
         sys.error(s"unexpected $data")

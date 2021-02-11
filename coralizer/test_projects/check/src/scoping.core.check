@@ -5,18 +5,18 @@
 
 :: fun(() -> term())
 foo/0 = fun () { 
-    case <> of {   when true -> atom }
+    case <> of {  <> when true -> atom }
 }
 
 :: fun(() -> term())
 bar/0 = fun () { 
-    case <> of {   when true -> number }
+    case <> of {  <> when true -> number }
 }
 
 :: fun(() -> {'tuple' | 'triple', atom(), number()})
 test01/0 = fun () { 
     case <> of { 
-         when true -> let var5, A, N = case bar/0() of { 
+        <> when true -> let var5, A, N = case bar/0() of { 
                 {A, N} when try let var0 = erlang:is_atom(A) in { 
                         let var1 = erlang:is_number(N) in { 
                             erlang:and(var0, var1)
@@ -49,12 +49,12 @@ test01/0 = fun () {
 :: fun(() -> {'an' | 'na', atom() | number(), atom() | number()})
 test02/0 = fun () { 
     case <> of { 
-         when true -> let var1 = foo/0() in { 
+        <> when true -> let var1 = foo/0() in { 
                 let var0 = bar/0() in { 
                     case {var1, var0} of { 
                         {X, Y} when true -> let var7 = 
                             case <> of { 
-                                 when try let var3 = erlang:is_atom(X) in { 
+                                <> when try let var3 = erlang:is_atom(X) in { 
                                         let var4 = erlang:is_number(Y) in { 
                                             erlang:and(var3, var4)
                                         }
@@ -65,7 +65,7 @@ test02/0 = fun () {
                                     T, R -> false
                                 }
                                  -> an
-                                 when try let var5 = erlang:is_number(X) in { 
+                                <> when try let var5 = erlang:is_number(X) in { 
                                         let var6 = erlang:is_atom(Y) in { 
                                             erlang:and(var5, var6)
                                         }
@@ -90,7 +90,7 @@ test02/0 = fun () {
 :: fun(() -> {'tuple' | 'triple', atom(), number()})
 test03/0 = fun () { 
     case <> of { 
-         when true -> let var4, A, N = let var9, var7 = primop:recv_peek_message() in { 
+        <> when true -> let var4, A, N = let var9, var7 = primop:recv_peek_message() in { 
                 case var9 of { 
                     true when true -> case var7 of { 
                             {A, N} when try let var0 = erlang:is_atom(A) in { 
@@ -126,7 +126,7 @@ test03/0 = fun () {
 :: fun(() -> {'tuple' | 'triple' | 'timeout', atom(), number()})
 test04/0 = fun () { 
     case <> of { 
-         when true -> let var6, A, N = let var11, var9 = primop:recv_peek_message() in { 
+        <> when true -> let var6, A, N = let var11, var9 = primop:recv_peek_message() in { 
                 case var11 of { 
                     true when true -> case var9 of { 
                             {A, N} when try let var2 = erlang:is_atom(A) in { 
@@ -172,10 +172,10 @@ test04/0 = fun () {
 :: fun(() -> 'tuple' | 'triple')
 test05/0 = fun () { 
     case <> of { 
-         when true -> let var13 = letrec (after$^0/0 = 
+        <> when true -> let var13 = letrec (after$^0/0 = 
                 fun () { 
                     case <> of { 
-                         when true -> foo/0()
+                        <> when true -> foo/0()
                     }
                 }) in { 
                 try try bar/0() of { 
@@ -227,7 +227,7 @@ test05/0 = fun () {
 :: fun(() -> 'tuple' | 'triple' | 'error')
 test06/0 = fun () { 
     case <> of { 
-         when true -> let var9 = try bar/0() of { 
+        <> when true -> let var9 = try bar/0() of { 
                 var0 -> case var0 of { 
                     {A, N} when try let var1 = erlang:is_atom(A) in { 
                             let var2 = erlang:is_number(N) in { 
@@ -263,7 +263,7 @@ test06/0 = fun () {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(scoping)
+        <> when true -> erlang:get_module_info(scoping)
     }
 }
 

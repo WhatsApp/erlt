@@ -13,7 +13,7 @@ atom_pos_1/1 = fun (var0) {
 atom_pos_2/1 = fun (var0) { 
     case var0 of { 
         X when true -> case <> of { 
-                 when erlang:is_atom(X) -> X
+                <> when erlang:is_atom(X) -> X
             }
     }
 }
@@ -38,7 +38,7 @@ atom_neg_1/1 = fun (var0) {
 atom_neg_2/1 = fun (var0) { 
     case var0 of { 
         X when true -> case <> of { 
-                 when erlang:is_list(X) -> X                 | X. Expected: atom(), Got: term()
+                <> when erlang:is_list(X) -> X               | X. Expected: atom(), Got: term()
             }
     }
 }
@@ -63,7 +63,7 @@ boolean_pos_1/1 = fun (var0) {
 boolean_pos_2/1 = fun (var0) { 
     case var0 of { 
         X when true -> case <> of { 
-                 when erlang:is_boolean(X) -> X
+                <> when erlang:is_boolean(X) -> X
             }
     }
 }
@@ -88,7 +88,7 @@ boolean_neg_1/1 = fun (var0) {
 boolean_neg_2/1 = fun (var0) { 
     case var0 of { 
         X when true -> case <> of { 
-                 when erlang:is_atom(X) -> X                 | X. Expected: 'false' | 'true', Got: atom()
+                <> when erlang:is_atom(X) -> X               | X. Expected: 'false' | 'true', Got: atom()
             }
     }
 }
@@ -170,7 +170,7 @@ reference_neg/1 = fun (var0) {
 
 module_info/0 = fun () { 
     case <> of { 
-         when true -> erlang:get_module_info(guards_simple)
+        <> when true -> erlang:get_module_info(guards_simple)
     }
 }
 
