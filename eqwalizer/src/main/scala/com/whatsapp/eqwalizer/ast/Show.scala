@@ -41,7 +41,7 @@ object Show {
       case VarType(name) =>
         name
       case DictMap(kt, vt) =>
-        s"#{${show(kt)} => ${show(vt)}}"
+        s"#D{${show(kt)} => ${show(vt)}}"
       case AnyType =>
         "term()"
       case AtomType =>
@@ -61,7 +61,7 @@ object Show {
       case RecordType(n) =>
         s"#$n{}"
       case ShapeMap(props) =>
-        props.map(showProp).mkString("#{", ", ", "}")
+        props.map(showProp).mkString("#S{", ", ", "}")
     }
 
   private def showProp(prop: Prop): String =

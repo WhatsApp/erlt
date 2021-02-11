@@ -254,3 +254,7 @@ kvs(Dict, K2, V2) ->
     kv(K1 | K2, V1 | V2).
 kvs_neg(Dict, K2, V2) ->
     Dict#{V2 => K2}.
+
+-spec lit_type_neg(a) ->
+    #{a => number()}.
+lit_type_neg(A) -> #{A   => 3}.
