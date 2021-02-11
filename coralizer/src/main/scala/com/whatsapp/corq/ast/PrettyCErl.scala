@@ -26,8 +26,9 @@ object PrettyCErl {
       moduleStub: ModuleStub,
       errors: Map[Int, TypeError],
       width: Int
-  ): String =
+  ): String = {
     new PrettyCErl(moduleStub, errors).formattedLayout(e, width)
+  }
 }
 
 private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
@@ -130,12 +131,8 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
         "<<" <> nest(hsep(binDocs)) <+> s"pad($pad_bits)" <> ">>"
       case EDouble(d)                      => d.toString
       case EExternalFun(RemoteId(m, f, a)) => s"$m:$f/$a"
-      case EList(elems, lastTail) =>
-        val improper: Doc = lastTail match {
-          case Some(tl) => space <> "| improper" <> parens(tl)
-          case None     => emptyDoc
-        }
-        "[" <> parens(elems) <> improper <> "]"
+      case EList(elems) =>
+        "[" <> parens(elems) <> "]"
       case ELong(value)                                                      => value.toString
       case data: EMap                                                        => Show.show(data)
       case EString(str)                                                      => str

@@ -48,7 +48,7 @@ object ElabPat {
         // are not strings in the surface syntax such as
         // `case X of [1, 2]`.
         ListType(NumberType)
-      case EList(elems, _) =>
+      case EList(elems) =>
         Approx.asListType(t) match {
           case None =>
             NoneType

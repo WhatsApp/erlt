@@ -71,7 +71,7 @@ object Show {
       case EAtom(atom)                     => s"'$atom'"
       case EBitStr(bin, pad_bits)          => "<<...>>"
       case EExternalFun(RemoteId(m, f, a)) => s"$m:$f/$a"
-      case EList(elems, _lastTail) =>
+      case EList(elems) =>
         s"[${showDatas(elems)}]"
       case EString(str)  => s""""$str""""
       case ETuple(elems) => s"{${showDatas(elems)}}"

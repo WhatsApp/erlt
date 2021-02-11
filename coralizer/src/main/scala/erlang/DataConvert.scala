@@ -33,8 +33,7 @@ object DataConvert {
         EDouble(otpDouble.doubleValue())
       case otpList: OtpErlangList =>
         val elems = otpList.elements().toList.map(fromJava)
-        val lastTail = Option(otpList.getLastTail).map(fromJava)
-        EList(elems, lastTail)
+        EList(elems)
       case otpLong: OtpErlangLong =>
         ELong(otpLong.bigIntegerValue())
       case otpString: OtpErlangString =>

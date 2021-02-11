@@ -23,7 +23,7 @@ import com.whatsapp.coralizer.ast.DB
 import com.whatsapp.coralizer.test.util.TcDiagnosticsText.Checked
 
 class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
-  val generateOut = true
+  val generateOut = false
 
   testDir(
     srcDir = "test_projects/check/src",

@@ -33,11 +33,11 @@ final class Elab(val module: String, check: Check) {
         Util
           .getCallType(remoteId)
           .getOrElse(throw UnboundRemoteId(parent.line, parent, remoteId))
-      case EList(Nil, None) =>
+      case EList(Nil) =>
         NilType
-      case EList(hd :: tl, None) =>
+      case EList(hd :: tl) =>
         val hdType = elabData(parent, hd, env)
-        val tlType = elabData(parent, EList(tl, None), env)
+        val tlType = elabData(parent, EList(tl), env)
         consType(parent, hdType, tlType)
       case _: EBitStr =>
         BinaryType
