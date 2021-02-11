@@ -3,23 +3,23 @@
 -file([{test.erl 1}])
 
 :: fun((term()) -> atom() | number())
-clauses/1 = fun (var0) { 
-    case var0 of { 
-        X when true -> case X of { 
+clauses/1 = fun (var0) {
+    case var0 of {
+        X when true -> case X of {
                 1 when true -> 1
                 1 when true -> ok
             }
     }
 }
 
-module_info/0 = fun () { 
-    case <> of { 
+module_info/0 = fun () {
+    case <> of {
         <> when true -> erlang:get_module_info(test)
     }
 }
 
-module_info/1 = fun (var0) { 
-    case var0 of { 
+module_info/1 = fun (var0) {
+    case var0 of {
         X when true -> erlang:get_module_info(test, X)
     }
 }
