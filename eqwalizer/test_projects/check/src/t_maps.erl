@@ -257,4 +257,4 @@ kvs_neg(Dict, K2, V2) ->
 
 -spec lit_type_neg(a) ->
     #{a => number()}.
-lit_type_neg(A) -> #{A   => 3}.
+lit_type_neg(A) -> #{A => 3}.
