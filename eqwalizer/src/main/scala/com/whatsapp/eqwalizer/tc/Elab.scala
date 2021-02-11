@@ -240,6 +240,59 @@ final class Elab(module: String, check: Check) {
         (fieldT, env1)
       case RecordIndex(_, _) =>
         (integerType, env)
+      case MapCreate(kvs) =>
+        val isShape = kvs.forall(_._1.isInstanceOf[AtomLit])
+        var envAcc = env
+        if (isShape) {
+          val props = kvs.collect { case (AtomLit(key), value) =>
+            val (valT, env1) = elabExpr(value, envAcc)
+            envAcc = env1
+            ReqProp(key, valT)
+          }
+          (ShapeMap(props), envAcc)
+        } else {
+          val (keyTs, valTs) = kvs.map { case (key, value) =>
+            val (keyT, env1) = elabExpr(key, envAcc)
+            val (valT, env2) = elabExpr(value, env1)
+            envAcc = env2
+            (keyT, valT)
+          }.unzip
+          val domain = keyTs.reduce(Subtype.join)
+          val codomain = valTs.reduce(Subtype.join)
+          (DictMap(domain, codomain), envAcc)
+        }
+      case GenMapUpdate(map, kvs) =>
+        val (mapT, env1) = elabExpr(map, env)
+        val anyMap = DictMap(AnyType, AnyType)
+        if (!Subtype.subType(mapT, anyMap)) {
+          throw TypeMismatch(map.l, map, expected = anyMap, got = mapT)
+        }
+        var envAcc = env1
+        var resT = mapT
+        for ((key, value) <- kvs) {
+          val (keyT, env2) = elabExpr(key, envAcc)
+          val (valT, env3) = elabExpr(value, env2)
+          envAcc = env3
+          resT = Approx.adjustMapType(resT, keyT, valT)
+        }
+        (resT, envAcc)
+      case ReqMapUpdate(map, kvs) =>
+        val (mapT, env1) = elabExpr(map, env)
+        val anyMap = DictMap(AnyType, AnyType)
+        if (!Subtype.subType(mapT, anyMap))
+          // it would be more understandable error first
+          throw TypeMismatch(map.l, map, expected = anyMap, got = mapT)
+
+        var envAcc = env1
+        var resT = mapT
+        for ((key, value) <- kvs) {
+          if (!Approx.isShapeWithKey(mapT, key))
+            throw UndefinedKey(expr.l, map, key, mapT)
+          val (valT, env2) = elabExpr(value, envAcc)
+          envAcc = env2
+          resT = Approx.adjustMapType(resT, AtomLitType(key), valT)
+        }
+        (resT, envAcc)
     }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

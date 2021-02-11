@@ -42,11 +42,23 @@ object Expand {
         ListType(expand(et, stack))
       case UnionType(params) =>
         UnionType(params.map(expand(_, stack)))
+      case DictMap(kt, vt) =>
+        DictMap(expand(kt, stack), expand(vt, stack))
+      case ShapeMap(props) =>
+        ShapeMap(props.map(expandProp(_, stack)))
       case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
         t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$
+    }
+
+  private def expandProp(prop: Prop, stack: Set[RemoteId]): Prop =
+    prop match {
+      case ReqProp(key, tp) =>
+        ReqProp(key, expand(tp, stack))
+      case OptProp(key, tp) =>
+        OptProp(key, expand(tp, stack))
     }
 
   private def expandConstraints(t: Type, s: Map[String, Type], stack: Set[String]): Type =
@@ -61,6 +73,10 @@ object Expand {
         ListType(expandConstraints(et, s, stack))
       case UnionType(params) =>
         UnionType(params.map(expandConstraints(_, s, stack)))
+      case DictMap(kt, vt) =>
+        DictMap(expandConstraints(kt, s, stack), expandConstraints(vt, s, stack))
+      case ShapeMap(props) =>
+        ShapeMap(props.map(expandProp(_, s, stack)))
       case VarType(v) =>
         if (stack(v))
           throw WIPDiagnostics.RecursiveConstraint(v)
@@ -73,6 +89,14 @@ object Expand {
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$
+    }
+
+  private def expandProp(prop: Prop, s: Map[String, Type], stack: Set[String]): Prop =
+    prop match {
+      case ReqProp(key, tp) =>
+        ReqProp(key, expandConstraints(tp, s, stack))
+      case OptProp(key, tp) =>
+        OptProp(key, expandConstraints(tp, s, stack))
     }
 
   def expandFunSpec(funSpec: FunSpec): Form = {

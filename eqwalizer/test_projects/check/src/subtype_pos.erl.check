@@ -34,3 +34,38 @@
  34                                            |         | 
  35 -spec f08(none()) -> {none(), none()}.     |         | 
  36 f08(X) -> X.                               | OK      | 
+ 37                                            |         | 
+ 38 -spec map01(#{}) -> map().                 |         | 
+ 39 map01(M) -> M.                             | OK      | 
+ 40                                            |         | 
+ 41 -spec map02(#{a := atom()})                |         | 
+ 42     -> #{a => atom()}.                     |         | 
+ 43 map02(M) -> M.                             | OK      | 
+ 44                                            |         | 
+ 45 -spec map03(#{a := atom(), b => atom()})   |         | 
+ 46         -> #{atom() => atom()}.            |         | 
+ 47 map03(M) -> M.                             | OK      | 
+ 48                                            |         | 
+ 49 -spec map04(#{                             |         | 
+ 50     a := a | b,                            |         | 
+ 51     b => a | b                             |         | 
+ 52 }) -> #{a | b => a | b}.                   |         | 
+ 53 map04(M) -> M.                             | OK      | 
+ 54                                            |         | 
+ 55 -spec map05(#{                             |         | 
+ 56     a := a | b,                            |         | 
+ 57     b => a | b                             |         | 
+ 58 }) -> #{a | b => a | b | c}.               |         | 
+ 59 map05(M) -> M.                             | OK      | 
+ 60                                            |         | 
+ 61 -spec map06(#{atom() => integer()})        |         | 
+ 62     -> #{any() => integer()}.              |         | 
+ 63 map06(M) -> M.                             | OK      | 
+ 64                                            |         | 
+ 65 -spec map07(#{atom() => integer()})        |         | 
+ 66         -> #{atom() => any()}.             |         | 
+ 67 map07(M) -> M.                             | OK      | 
+ 68                                            |         | 
+ 69 -spec map08(#{})                           |         | 
+ 70         -> #{atom() => any()}.             |         | 
+ 71 map08(M) -> M.                             | OK      | 

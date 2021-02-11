@@ -38,6 +38,27 @@ object Subtype {
       case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
         subType(res1, res2) && args2.lazyZip(args1).forall(subType)
 
+      case (DictMap(kT1, vT1), DictMap(kT2, vT2)) =>
+        subType(kT1, kT2) && subType(vT1, vT2)
+      case (ShapeMap(props), DictMap(kT, vT)) =>
+        val shapeDomain = UnionType(props.map(prop => AtomLitType(prop.key)))
+        val shapeCodomain = UnionType(props.map(_.tp))
+        subType(shapeDomain, kT) && subType(shapeCodomain, vT)
+      case (ShapeMap(props1), ShapeMap(props2)) =>
+        val keys1 = props1.map(_.key).toSet
+        val keys2 = props2.map(_.key).toSet
+        if (keys1 != keys2) return false
+        val reqKeys1 = props1.collect { case ReqProp(k, _) => k }.toSet
+        val reqKeys2 = props2.collect { case ReqProp(k, _) => k }.toSet
+        if (!reqKeys2.subsetOf(reqKeys1)) return false
+        val kvs2 = props2.map(prop => prop.key -> prop.tp).toMap
+        for (prop1 <- props1) {
+          val t1 = prop1.tp
+          val t2 = kvs2(prop1.key)
+          if (!subType(t1, t2)) return false
+        }
+        true
+
       case _ =>
         false
     }
@@ -65,6 +86,22 @@ object Subtype {
           ListType(meet(et1, et2))
         case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
           FunType(args1.lazyZip(args2).map(join), meet(res1, res2))
+
+        case (DictMap(kT1, vT1), DictMap(kT2, vT2)) =>
+          DictMap(meet(kT1, kT2), meet(vT1, vT2))
+        case (ShapeMap(props1), ShapeMap(props2)) =>
+          val keys1 = props1.map(_.key).toSet
+          val keys2 = props2.map(_.key).toSet
+          if (keys1 != keys2) return NoneType
+          val reqKeys1 = props1.collect { case ReqProp(k, _) => k }.toSet
+          val reqKeys2 = props1.collect { case ReqProp(k, _) => k }.toSet
+          val allReqKeys = reqKeys1.union(reqKeys2)
+          val allOptKeys = keys1.diff(allReqKeys)
+          val kvs1 = props1.map(prop => prop.key -> prop.tp).toMap
+          val kvs2 = props2.map(prop => prop.key -> prop.tp).toMap
+          val reqProps = allReqKeys.toList.sorted.map(k => ReqProp(k, meet(kvs1(k), kvs2(k))))
+          val optProps = allOptKeys.toList.sorted.map(k => OptProp(k, meet(kvs1(k), kvs2(k))))
+          ShapeMap(reqProps ++ optProps)
 
         case (_, _) =>
           NoneType

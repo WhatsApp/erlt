@@ -34,6 +34,10 @@ object Globalize {
         ListType(globalize(module, et))
       case UnionType(params) =>
         UnionType(params.map(globalize(module, _)))
+      case DictMap(kt, vt) =>
+        DictMap(globalize(module, kt), globalize(module, vt))
+      case ShapeMap(props) =>
+        ShapeMap(props.map(globalizeProp(module, _)))
       case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
         t
     }
@@ -56,4 +60,12 @@ object Globalize {
 
   private def globalizeRecField(module: String, field: RecField): RecField =
     field.copy(tp = globalize(module, field.tp))(field.line)
+
+  private def globalizeProp(module: String, prop: Prop): Prop =
+    prop match {
+      case ReqProp(key, tp) =>
+        ReqProp(key, globalize(module, tp))
+      case OptProp(key, tp) =>
+        OptProp(key, globalize(module, tp))
+    }
 }

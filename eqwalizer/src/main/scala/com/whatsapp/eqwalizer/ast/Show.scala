@@ -40,6 +40,8 @@ object Show {
         s"""$m:$t(${args.map(show).mkString(", ")})"""
       case VarType(name) =>
         name
+      case DictMap(kt, vt) =>
+        s"#D{${show(kt)} => ${show(vt)}}"
       case AnyType =>
         "term()"
       case AtomType =>
@@ -58,6 +60,16 @@ object Show {
         "binary()"
       case RecordType(n) =>
         s"#$n{}"
+      case ShapeMap(props) =>
+        props.map(showProp).mkString("#S{", ", ", "}")
+    }
+
+  private def showProp(prop: Prop): String =
+    prop match {
+      case ReqProp(key, tp) =>
+        s"$key := ${show(tp)}"
+      case OptProp(key, tp) =>
+        s"$key => ${show(tp)}"
     }
 
   def show(e: Expr): String = e match {
@@ -117,5 +129,9 @@ object Show {
       s"...#$recName.$fieldName"
     case RecordIndex(recName, fieldName) =>
       s"#$recName.$fieldName"
+    case MapCreate(_) =>
+      "#{..}"
+    case ReqMapUpdate(_, _) | GenMapUpdate(_, _) =>
+      "..#{..}"
   }
 }

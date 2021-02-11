@@ -35,7 +35,19 @@ object Subst {
         UnionType(params.map(subst(s, _)))
       case VarType(v) =>
         s.getOrElse(v, t)
+      case DictMap(kt, vt) =>
+        DictMap(subst(s, kt), subst(s, vt))
+      case ShapeMap(props) =>
+        ShapeMap(props.map(substProp(s, _)))
       case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
         t
+    }
+
+  private def substProp(s: Map[String, Type], prop: Prop): Prop =
+    prop match {
+      case ReqProp(key, tp) =>
+        ReqProp(key, subst(s, tp))
+      case OptProp(key, tp) =>
+        OptProp(key, subst(s, tp))
     }
 }

@@ -302,6 +302,13 @@ final class Check(module: String) {
             throw TypeMismatch(expr.l, expr, expected = resTy, got = indT)
           else
             env
+        case _: MapCreate | _: GenMapUpdate | _: ReqMapUpdate =>
+          // delegating all map stuff to elaborate for now
+          val (mapT, env1) = elab.elabExpr(expr, env)
+          if (!Subtype.subType(mapT, resTy))
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = mapT)
+          else
+            env1
       }
 
   def checkRecordCreate(rCreate: RecordCreate, env: Env): Env = {

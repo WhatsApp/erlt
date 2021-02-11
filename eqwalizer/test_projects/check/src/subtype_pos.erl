@@ -34,3 +34,38 @@ f07(X) -> X.
 
 -spec f08(none()) -> {none(), none()}.
 f08(X) -> X.
+
+-spec map01(#{}) -> map().
+map01(M) -> M.
+
+-spec map02(#{a := atom()})
+    -> #{a => atom()}.
+map02(M) -> M.
+
+-spec map03(#{a := atom(), b => atom()})
+        -> #{atom() => atom()}.
+map03(M) -> M.
+
+-spec map04(#{
+    a := a | b,
+    b => a | b
+}) -> #{a | b => a | b}.
+map04(M) -> M.
+
+-spec map05(#{
+    a := a | b,
+    b => a | b
+}) -> #{a | b => a | b | c}.
+map05(M) -> M.
+
+-spec map06(#{atom() => integer()})
+    -> #{any() => integer()}.
+map06(M) -> M.
+
+-spec map07(#{atom() => integer()})
+        -> #{atom() => any()}.
+map07(M) -> M.
+
+-spec map08(#{})
+        -> #{atom() => any()}.
+map08(M) -> M.

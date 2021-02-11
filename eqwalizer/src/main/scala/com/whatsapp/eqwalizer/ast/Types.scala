@@ -28,6 +28,8 @@ object Types {
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
   case class VarType(name: String) extends Type
   case class RecordType(name: String) extends Type
+  case class DictMap(kType: Type, vType: Type) extends Type
+  case class ShapeMap(props: List[Prop]) extends Type
   case object BinaryType extends Type
 
   sealed trait BuiltinType extends Type
@@ -41,6 +43,13 @@ object Types {
 
   case class ConstrainedFunType(ty: FunType, constraints: List[Constraint])
   case class Constraint(tVar: String, ty: Type)
+
+  sealed trait Prop {
+    val key: String
+    val tp: Type
+  }
+  case class ReqProp(key: String, tp: Type) extends Prop
+  case class OptProp(key: String, tp: Type) extends Prop
 
   val falseType: Type = AtomLitType("false")
   val trueType: Type = AtomLitType("true")

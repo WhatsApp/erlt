@@ -36,12 +36,6 @@ object WIPDiagnostics {
   case object TypeFunAnyArg extends SkippedType {
     override def toString: String = "T: fun((...) -> Type)"
   }
-  case object TypeAnyMap extends SkippedType {
-    override def toString: String = "T: map()"
-  }
-  case object TypeMap extends SkippedType {
-    override def toString: String = "T: #{...}"
-  }
   case class RefinedRecord(name: String) extends SkippedType {
     override def toString: String = s"T: #$name{_::_}"
   }
@@ -60,6 +54,9 @@ object WIPDiagnostics {
   case object TypeIntersection extends SkippedType {
     override def toString: String = "Intersection"
   }
+  case object BadMapKey extends SkippedType {
+    override def toString: String = "Bad map key"
+  }
   case object PatListConcat extends SkippedPat {
     override def toString: String = "P: _ ++ _"
   }
@@ -68,9 +65,6 @@ object WIPDiagnostics {
   }
   case object PatMap extends SkippedPat {
     override def toString: String = "P: #{...}"
-  }
-  case object ExpMap extends SkippedExpr {
-    override def toString: String = "E: #{...}"
   }
   case object ExpString extends SkippedExpr {
     override def toString: String = """E: "...""""

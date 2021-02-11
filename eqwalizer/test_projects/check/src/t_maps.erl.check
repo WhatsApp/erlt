@@ -1,0 +1,278 @@
+  1 -module(t_maps).                           |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -type b() :: boolean().                    |         | 
+  6 -type n() :: number().                     |         | 
+  7 -type a() :: atom().                       |         | 
+  8                                            |         | 
+  9 -spec empty_map_01() -> #{}.               |         | 
+ 10 empty_map_01() -> #{}.                     | OK      | 
+ 11                                            |         | 
+ 12 -spec empty_map_02() -> map().             |         | 
+ 13 empty_map_02() -> #{}.                     | OK      | 
+ 14                                            |         | 
+ 15 -spec empty_map_03() -> any().             |         | 
+ 16 empty_map_03() -> #{}.                     | OK      | 
+ 17                                            |         | 
+ 18 -spec dict_map_01() ->                     |         | 
+ 19     #{integer() => atom()}.                |         | 
+ 20 dict_map_01() ->                           | OK      | 
+ 21     #{0 => zero, 1 => one}.                |         | 
+ 22                                            |         | 
+ 23 -spec dict_map_02_neg() ->                 |         | 
+ 24     #{integer() => atom()}.                |         | 
+ 25 dict_map_02_neg() ->                       | ERROR   | 
+ 26     #{0 => 1, 1 => 2}.                     |         | #{..}. Expected: #D{number() => atom()}, Got: #D{number() => number()}
+ 27                                            |         | 
+ 28 -spec dict_map_03_neg() ->                 |         | 
+ 29     #{integer() => atom()}.                |         | 
+ 30 dict_map_03_neg() ->                       | ERROR   | 
+ 31     #{0 => zero, 1 => 2}.                  |         | #{..}. Expected: #D{number() => atom()}, Got: #D{number() => 'zero' | number()}
+ 32                                            |         | 
+ 33 -spec dict_map_04() ->                     |         | 
+ 34     #{integer() => atom() | number()}.     |         | 
+ 35 dict_map_04() ->                           | OK      | 
+ 36     #{0 => zero, 1 => 2}.                  |         | 
+ 37                                            |         | 
+ 38 -spec shape_01() ->                        |         | 
+ 39     #{zero := number(), one => number()}.  |         | 
+ 40 shape_01() ->                              | OK      | 
+ 41     #{zero => 0, one => 1}.                |         | 
+ 42                                            |         | 
+ 43 -spec shape_02_neg() ->                    |         | 
+ 44     #{zero := number(), one => number()}.  |         | 
+ 45 shape_02_neg() ->                          | ERROR   | 
+ 46     #{zero => 0, one => one}.              |         | #{..}. Expected: #S{zero := number(), one => number()}, Got: #S{zero := number(), one := 'one'}
+ 47                                            |         | 
+ 48 % only atom keys can be updated            |         | 
+ 49 % unconditionally                          |         | 
+ 50 -spec update_req_non_atom_neg              |         | 
+ 51     (map()) -> map().                      |         | 
+ 52 update_req_non_atom_neg(M) ->              | SKIP    | 
+ 53     M#{1 := 1}.                            |         | 
+ 54                                            |         | 
+ 55 % it is not allowed to use                 |         | 
+ 56 % a dict for unconditional update          |         | 
+ 57 -spec dict_update_req_neg                  |         | 
+ 58     (map()) -> map().                      |         | 
+ 59 dict_update_req_neg(M) ->                  | ERROR   | 
+ 60     M#{one := 1}.                          |         | M. Undef key `one`. Type: #D{term() => term()}
+ 61                                            |         | 
+ 62 -spec empty_update1                        |         | 
+ 63     (map()) -> map().                      |         | 
+ 64 empty_update1(M) ->                        | OK      | 
+ 65     M#{}.                                  |         | 
+ 66                                            |         | 
+ 67 -spec empty_update2_neg                    |         | 
+ 68     (any()) -> map().                      |         | 
+ 69 empty_update2_neg(M) ->                    | ERROR   | 
+ 70     M#{}.                                  |         | M. Expected: #D{term() => term()}, Got: term()
+ 71                                            |         | 
+ 72 -spec empty_update3                        |         | 
+ 73     () -> #{}.                             |         | 
+ 74 empty_update3() ->                         | OK      | 
+ 75     (#{})#{}.                              |         | 
+ 76                                            |         | 
+ 77 -spec dict_update1                         |         | 
+ 78     (#{atom() => true})                    |         | 
+ 79   -> #{atom() => boolean()}.               |         | 
+ 80 dict_update1(D) ->                         | OK      | 
+ 81     D#{foo => false}.                      |         | 
+ 82                                            |         | 
+ 83 -spec dict_update2                         |         | 
+ 84     (#{atom() => true})                    |         | 
+ 85   -> map().                                |         | 
+ 86 dict_update2(D) ->                         | OK      | 
+ 87     D#{1 => bar}.                          |         | 
+ 88                                            |         | 
+ 89 -spec shape_update1                        |         | 
+ 90     (#{foo => b(), bar => n()})            |         | 
+ 91     -> #{foo => b(), bar => b()}.          |         | 
+ 92 shape_update1(S) ->                        | OK      | 
+ 93     S#{bar => true}.                       |         | 
+ 94                                            |         | 
+ 95 -spec shape_update2                        |         | 
+ 96     (#{foo => b(), bar := n()})            |         | 
+ 97         -> #{foo => b(), bar := b()}.      |         | 
+ 98 shape_update2(S) ->                        | OK      | 
+ 99     S#{bar := true}.                       |         | 
+100                                            |         | 
+101 -spec shape_update3_neg                    |         | 
+102     (#{foo => b(), bar => n()})            |         | 
+103         -> #{foo => b(), bar := b()}.      |         | 
+104 shape_update3_neg(S) ->                    | ERROR   | 
+105     S#{bar := true}.                       |         | S. Undef key `bar`. Type: #S{foo => 'false' | 'true', bar => number()}
+106                                            |         | 
+107 -spec shape_update4_neg                    |         | 
+108     (any()) -> #{bar := b()}.              |         | 
+109 shape_update4_neg(S) ->                    | ERROR   | 
+110     S#{bar := true}.                       |         | S. Expected: #D{term() => term()}, Got: term()
+111                                            |         | 
+112 -spec meet_dict1                           |         | 
+113     (#{b() | n() => any()}, #{a() => any()……         | 
+114      #{b() => any()}.                      |         | 
+115 meet_dict1(D, D) -> D.                     | OK      | 
+116                                            |         | 
+117 -spec meet_dict2_neg                       |         | 
+118     (#{b() | n() => any()}, #{a() => any()……         | 
+119     #{n() => any()}.                       |         | 
+120 meet_dict2_neg(D, D) -> D.                 | ERROR   | D. Expected: #D{number() => term()}, Got: #D{'false' | 'true' | none() => term()}
+121                                            |         | 
+122 -spec meet_shape1                          |         | 
+123     (#{a := a()}, #{a := b()}) ->          |         | 
+124     #{a := b()}.                           |         | 
+125 meet_shape1(S, S) -> S.                    | OK      | 
+126                                            |         | 
+127 -spec meet_shape2_neg                      |         | 
+128     (#{a := a()}, #{a := b()}) ->          |         | 
+129     #{a := n()}.                           |         | 
+130 meet_shape2_neg(S, S) -> S.                | ERROR   | S. Expected: #S{a := number()}, Got: #S{a := 'false' | 'true'}
+131                                            |         | 
+132 -spec meet_shape3_neg                      |         | 
+133     (#{a := a()}, #{a := b()}) ->          |         | 
+134     #{a => n()}.                           |         | 
+135 meet_shape3_neg(S, S) -> S.                | ERROR   | S. Expected: #S{a => number()}, Got: #S{a := 'false' | 'true'}
+136                                            |         | 
+137 -spec meet_shape4                          |         | 
+138     (#{a => a()}, #{a => b() | n()}) ->    |         | 
+139     #{a => b()}.                           |         | 
+140 meet_shape4(S, S) -> S.                    | OK      | 
+141                                            |         | 
+142 -spec meet_shape5_neg                      |         | 
+143     (#{a => a()}, #{a => b() | n()}) ->    |         | 
+144     #{a := b()}.                           |         | 
+145 meet_shape5_neg(S, S) -> S.                | ERROR   | S. Expected: #S{a := 'false' | 'true'}, Got: #S{a => 'false' | 'true' | none()}
+146                                            |         | 
+147 -spec meet_shape6                          |         | 
+148     (#{a := a()}, #{a => b() | n()}) ->    |         | 
+149     #{a := b()}.                           |         | 
+150 meet_shape6(S, S) -> S.                    | OK      | 
+151                                            |         | 
+152 -spec meet_shape7                          |         | 
+153     (#{a := a()}, #{b := b()}) ->          |         | 
+154     none().                                |         | 
+155 meet_shape7(S, S) -> S.                    | OK      | 
+156                                            |         | 
+157 % this seems to be really cool             |         | 
+158 -spec u_shape1                             |         | 
+159     (#{a := a()} | #{a := b(), b := b()}) ……         | 
+160     (#{a := n()} | #{a := n(), b := b()}). |         | 
+161 u_shape1(S) ->                             | OK      | 
+162     S#{a := 1}.                            |         | 
+163                                            |         | 
+164 -spec u_shape2_neg                         |         | 
+165     (#{a := a()}) ->                       |         | 
+166     (#{a := a(), b := a()}).               |         | 
+167 u_shape2_neg(S) ->                         | ERROR   | 
+168     S#{b := foo}.                          |         | S. Undef key `b`. Type: #S{a := atom()}
+169                                            |         | 
+170 -spec u_shape3                             |         | 
+171     (#{a := a()}) ->                       |         | 
+172     (#{a := a(), b := a()}).               |         | 
+173 u_shape3(S) ->                             | OK      | 
+174     S#{b => foo}.                          |         | 
+175                                            |         | 
+176 -spec u_empty1                             |         | 
+177     (#{}) ->                               |         | 
+178     (#{n() => a()}).                       |         | 
+179 u_empty1(S) ->                             | OK      | 
+180     S#{1 => one}.                          |         | 
+181                                            |         | 
+182 -spec shape@dict1                          |         | 
+183     (#{a := a()}, a(), a()) ->             |         | 
+184     (#{a() => a()}).                       |         | 
+185 shape@dict1(S, K, V) ->                    | OK      | 
+186     S#{K => V}.                            |         | 
+187                                            |         | 
+188 -spec shape@dict2_neg                      |         | 
+189     (#{a := a()}, n(), a()) ->             |         | 
+190     (#{a() => a()}).                       |         | 
+191 shape@dict2_neg(S, K, V) ->                | ERROR   | 
+192     S#{K => V}.                            |         | ..#{..}. Expected: #D{atom() => atom()}, Got: #D{atom() | number() => atom()}
+193                                            |         | 
+194 -spec shape@dict3_neg                      |         | 
+195     (#{a := a()}, n(), a()) ->             |         | 
+196     (#{n() => a()}).                       |         | 
+197 shape@dict3_neg(S, K, V) ->                | ERROR   | 
+198     S#{K => V}.                            |         | ..#{..}. Expected: #D{number() => atom()}, Got: #D{atom() | number() => atom()}
+199                                            |         | 
+200 -spec shape@dict4_neg                      |         | 
+201     (Shape, n(), a()) ->                   |         | 
+202     (Dict) when                            |         | 
+203     Shape :: #{a := a()},                  |         | 
+204     Dict :: #{n() => a()}.                 |         | 
+205 shape@dict4_neg(S, K, V) ->                | ERROR   | 
+206     S#{K => V}.                            |         | ..#{..}. Expected: #D{number() => atom()}, Got: #D{atom() | number() => atom()}
+207                                            |         | 
+208 -spec shape@dict5_neg                      |         | 
+209     (Shape, n(), a()) ->                   |         | 
+210     (Dict) when                            |         | 
+211     Shape :: #{a => a()},                  |         | 
+212     Dict :: #{n() => a()}.                 |         | 
+213 shape@dict5_neg(S, K, V) ->                | ERROR   | 
+214     S#{K => V}.                            |         | ..#{..}. Expected: #D{number() => atom()}, Got: #D{atom() | number() => atom()}
+215                                            |         | 
+216 -type foo_bar(F, B) ::                     |         | 
+217     #{foo := F, bar := B}.                 |         | 
+218                                            |         | 
+219 -type foo_bar_opt(F, B) ::                 |         | 
+220     #{foo => F, bar => B}.                 |         | 
+221                                            |         | 
+222 -spec foo_bar_u                            |         | 
+223     (foo_bar(F1, B1), F1, B1) ->           |         | 
+224     foo_bar(F1, B1).                       |         | 
+225 foo_bar_u(FB, F1, B1) ->                   | OK      | 
+226     FB#{foo := F1, bar := B1}.             |         | 
+227                                            |         | 
+228 -spec foo_bar_u_neg                        |         | 
+229     (foo_bar(F1, B1), F1, B1) ->           |         | 
+230     foo_bar(B1, F1).                       |         | 
+231 foo_bar_u_neg(FB, F1, B1) ->               | ERROR   | 
+232     FB#{foo := F1, bar := B1}.             |         | ..#{..}. Expected: #S{foo := B1, bar := F1}, Got: #S{bar := B1, foo := F1}
+233                                            |         | 
+234 -spec foo_bar_u_opt                        |         | 
+235     (foo_bar_opt(F1, B1), F1, B1) ->       |         | 
+236     foo_bar(F1, B1).                       |         | 
+237 foo_bar_u_opt(FB, F1, B1) ->               | OK      | 
+238     FB#{foo => F1, bar => B1}.             |         | 
+239                                            |         | 
+240 -spec foo_bar_u_opt_neg                    |         | 
+241     (foo_bar_opt(F1, B1), F1, B1) ->       |         | 
+242     foo_bar_opt(B1, F1).                   |         | 
+243 foo_bar_u_opt_neg(FB, F1, B1) ->           | ERROR   | 
+244     FB#{foo => F1, bar => B1}.             |         | ..#{..}. Expected: #S{foo => B1, bar => F1}, Got: #S{bar := B1, foo := F1}
+245                                            |         | 
+246 -type kv(K, V) :: #{K => V}.               |         | 
+247                                            |         | 
+248 -spec kvs(kv(K1, V1), K2, V2) ->           |         | 
+249     kv(K1 | K2, V1 | V2).                  |         | 
+250 kvs(Dict, K2, V2) ->                       | OK      | 
+251     Dict#{K2 => V2}.                       |         | 
+252                                            |         | 
+253 -spec kvs_neg(kv(K1, V1), K2, V2) ->       |         | 
+254     kv(K1 | K2, V1 | V2).                  |         | 
+255 kvs_neg(Dict, K2, V2) ->                   | ERROR   | 
+256     Dict#{V2 => K2}.                       |         | ..#{..}. Expected: #D{K1 | K2 => V1 | V2}, Got: #D{K1 | V2 => V1 | K2}
+257                                            |         | 
+258 -spec lit_type_neg(a) ->                   |         | 
+259     #{a => number()}.                      |         | 
+260 lit_type_neg(A) -> #{A => 3}.              | ERROR   | #{..}. Expected: #S{a => number()}, Got: #D{'a' => number()}
+261                                            |         | 
+262 -spec needs_shape_a                        |         | 
+263     (#{a := any()}) -> ok.                 |         | 
+264 needs_shape_a(_) -> ok.                    | OK      | 
+265                                            |         | 
+266 -spec needs_shape_ab                       |         | 
+267     (#{a := any(), b := any()}) -> ok.     |         | 
+268 needs_shape_ab(_) -> ok.                   | OK      | 
+269                                            |         | 
+270 -spec shapeab_neg(#{a := 3}) -> ok.        |         | 
+271 shapeab_neg(X) ->                          | ERROR   | 
+272     needs_shape_a(X),                      |         | 
+273     needs_shape_a(X#{b => hello}).         |         | ..#{..}. Expected: #S{a := term()}, Got: #S{b := 'hello', a := number()}
+274                                            |         | 
+275 -spec shape_ab(#{a := any()}) -> ok.       |         | 
+276 shape_ab(X) ->                             | OK      | 
+277     needs_shape_a(X),                      |         | 
+278     needs_shape_ab(X#{b => hello}).        |         | 
