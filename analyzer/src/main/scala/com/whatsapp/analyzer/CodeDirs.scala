@@ -51,13 +51,15 @@ object CodeDirs {
 
   private val libraryNameRegex = "/lib/(.*)/".r.unanchored
 
+  def sourcePath(appName: String, moduleName: String): String = s"$root/$appName/src/$moduleName.erl"
+
   def isGenerated(appName: String, moduleName: String): Boolean = {
-    val erlFile = s"$root/$appName/src/$moduleName.erl"
+    val erlFile = sourcePath(appName, moduleName)
     if (Files.exists(Paths.get(erlFile))) {
       val src = Source.fromFile(erlFile)
-      val line = src.getLines.take(1).toList.head
+      val isGen = src.getLines.take(10).exists(_.contains("@generated"))
       src.close
-      line.contains("@generated")
+      isGen
     } else {
       false
     }
