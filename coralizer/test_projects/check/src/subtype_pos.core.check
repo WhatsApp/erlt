@@ -7,53 +7,53 @@
 -type pair_ab(0) :: {ab(), ab()}
 
 :: fun(({A, A}) -> term())
-f01/1 = fun (var0) { 
+f01/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun((atom()) -> term())
-f02/1 = fun (var0) { 
+f02/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun((fun((term()) -> atom())) -> fun((atom()) -> term()))
-f03/1 = fun (var0) { 
+f03/1 = fun (var0) {
     case var0 of {  F when true -> F }
 }
 
 :: fun(('a' | 'b') -> 'a' | 'b' | 'c')
-f04/1 = fun (var0) { 
+f04/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun((none() | none()) -> 'a' | 'b')
-f05/1 = fun (var0) { 
+f05/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun(({'a', 'b'} | {'b', 'a'}) -> {'a' | 'b', 'a' | 'b'})
-f06/1 = fun (var0) { 
+f06/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun((pair_diff_elems()) -> pair_ab())
-f07/1 = fun (var0) { 
+f07/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
 :: fun((none()) -> {none(), none()})
-f08/1 = fun (var0) { 
+f08/1 = fun (var0) {
     case var0 of {  X when true -> X }
 }
 
-module_info/0 = fun () { 
-    case <> of { 
+module_info/0 = fun () {
+    case <> of {
         <> when true -> erlang:get_module_info(subtype_pos)
     }
 }
 
-module_info/1 = fun (var0) { 
-    case var0 of { 
+module_info/1 = fun (var0) {
+    case var0 of {
         X when true -> erlang:get_module_info(subtype_pos, X)
     }
 }

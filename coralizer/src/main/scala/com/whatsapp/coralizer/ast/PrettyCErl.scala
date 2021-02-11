@@ -27,15 +27,24 @@ object PrettyCErl {
       errors: Map[Int, TypeError],
       width: Int
   ): String = {
-    new PrettyCErl(moduleStub, errors).formattedLayout(e, width)
+    new PrettyCErl(moduleStub, errors).layout(e, width)
   }
 }
 
 private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
     extends org.bitbucket.inkytonik.kiama.output.PrettyPrinter {
 
-  def formattedLayout(e: CErl, width: Int): String =
-    pretty(e, w = width).layout
+  def layout(e: CErl, width: Int): String =
+    stripTrailing(pretty(e, width).layout)
+
+  private def stripTrailing(str: String): String = {
+    val buf = new StringBuilder("")
+    for (line <- str.linesIterator) {
+      buf ++= line.stripTrailing
+      buf ++= "\n"
+    }
+    buf.toString
+  }
 
   def doc(e: CErl): Doc =
     e match {
