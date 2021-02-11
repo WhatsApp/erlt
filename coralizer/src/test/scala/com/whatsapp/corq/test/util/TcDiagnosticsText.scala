@@ -97,7 +97,7 @@ object TcDiagnosticsText {
     val core = PrettyCErl(module, moduleStub, errNodeIds, 50)
     val pat = "¦⊢([0-9]+)⊣¦".r
     var lines = new StringBuilder("")
-    for (line <- core.lines) {
+    for (line <- core.linesIterator) {
       val matchData = pat.findAllIn(line).matchData
       if (matchData.isEmpty) {
         lines ++= line
