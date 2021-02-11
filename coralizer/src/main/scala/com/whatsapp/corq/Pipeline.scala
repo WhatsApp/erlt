@@ -55,7 +55,7 @@ object Pipeline {
       .collect({
         case (
               "file",
-              CLiteral(_, EList(ETuple(EString(fileName) :: _) :: _, _))
+              CLiteral(_, EList(ETuple(EString(fileName) :: _) :: _))
             ) =>
           fileName
       })
