@@ -272,7 +272,7 @@ final class Elab(module: String, check: Check) {
         for ((key, value) <- kvs) {
           val (keyT, env2) = elabExpr(key, envAcc)
           val (valT, env3) = elabExpr(value, env2)
-          envAcc = env2
+          envAcc = env3
           resT = Approx.adjustMapType(resT, keyT, valT)
         }
         (resT, envAcc)
