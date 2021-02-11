@@ -46,7 +46,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CCall(_, m, f, args) =>
         m <> ":" <> f <> parens(args)
       case CCase(_, sel, clauses) =>
-        softbreak <> "case" <+> sel <+> "of" <> block(vsep(clauses map doc))
+        softbreak <> "case" <+> sel <+> "of" <+> block(vsep(clauses map doc))
       case CCatch(_, body) => "catch" <+> body
       case CClause(_, pats, guard, body) =>
         hsep(pats map doc) <+> "when" <+> guard <+> "->" </> nest(body)
@@ -54,7 +54,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CFun(_, vars, body) =>
         softbreak <> "fun" <+> parens(vars) <+> block(body)
       case CLet(_, vars, arg, body) =>
-        softbreak <> "let " <> vars <+> "=" <+> arg <+> "in" <> block(body)
+        softbreak <> "let " <> vars <+> "=" <+> arg <+> "in" <+> block(body)
       case CLetRec(_, defs, body) =>
         val args =
           for ((k, v) <- defs)
@@ -161,5 +161,5 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
     else nest(hsep(es.toList, comma))
 
   def block(doc: Doc) =
-    space <> group("{" <+> nest(group(line <> doc)) <@> "}")
+    group("{" <+> nest(group(line <> doc)) <@> "}")
 }

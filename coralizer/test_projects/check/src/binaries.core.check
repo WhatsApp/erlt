@@ -4,12 +4,12 @@
 -compile([(export_all nowarn_export_all)])
 
 :: fun(() -> binary())
-test01_pos/0 = fun ()  { 
+test01_pos/0 = fun () { 
     case <> of {   when true -> << pad(0)>> }
 }
 
 :: fun((binary()) -> {number(), binary()})
-test02_pos/1 = fun (var0)  { 
+test02_pos/1 = fun (var0) { 
     case var0 of { 
         <<X: size-8 unit-1 type-integer flags-[(unsigned big)], Y: size-all unit-8 type-binary flags-[(unsigned big)]>> when true ->
         {X, Y}
@@ -17,7 +17,7 @@ test02_pos/1 = fun (var0)  {
 }
 
 :: fun((binary()) -> binary())
-test03_pos/1 = fun (var0)  { 
+test03_pos/1 = fun (var0) { 
     case primop:dialyzer_unknown() of { 
         a when true -> case var0 of { 
                 <<N: size-8 unit-1 type-integer flags-[(unsigned big)], var3: size-all unit-1 type-binary flags-[(unsigned big)]>> when true ->
@@ -31,13 +31,13 @@ test03_pos/1 = fun (var0)  {
 }
 
 :: fun(() -> [term()])
-test04_neg/0 = fun ()  { 
+test04_neg/0 = fun () { 
     case <> of {   when true -> << pad(0)>>                  | <<...>>. Expected: [term()], Got: binary()
     }
 }
 
 :: fun((binary()) -> {binary(), binary()})
-test05_pos/1 = fun (var0)  { 
+test05_pos/1 = fun (var0) { 
     case var0 of { 
         <<H: size-42 unit-8 type-binary flags-[(unsigned big)], Rest: size-all unit-8 type-binary flags-[(unsigned big)]>> when true ->
         {H, Rest}
@@ -45,28 +45,28 @@ test05_pos/1 = fun (var0)  {
 }
 
 :: fun((atom()) -> binary())
-test05_neg/1 = fun (var0)  { 
+test05_neg/1 = fun (var0) { 
     case var0 of { 
         A when true -> <<A: size-8 unit-1 type-integer flags-[(signed big)]>>
     }
 }
 
 :: fun((atom(), number()) -> binary())
-test06_neg/2 = fun (var0, var1)  { 
+test06_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         A S when true -> <<A: size-S unit-1 type-integer flags-[(unsigned big)]>>
     }
 }
 
 :: fun((atom()) -> binary())
-test07_neg/1 = fun (var0)  { 
+test07_neg/1 = fun (var0) { 
     case var0 of { 
         A when true -> [A | [()]]                            | [A | []]. Expected: binary(), Got: [atom()]
     }
 }
 
 :: fun((binary()) -> number())
-test08_neg/1 = fun (var0)  { 
+test08_neg/1 = fun (var0) { 
     case var0 of { 
         <<F: size-64 unit-1 type-float flags-[(unsigned big)], R: size-all unit-8 type-binary flags-[(unsigned big)]>> when true ->
         F                                                    | Unbound var: 'F'
@@ -74,7 +74,7 @@ test08_neg/1 = fun (var0)  {
 }
 
 :: fun((number(), number()) -> binary())
-test09_neg/2 = fun (var0, var1)  { 
+test09_neg/2 = fun (var0, var1) { 
     case <var0, var1> of { 
         I1 I2 when true -> let X = <<I1: size-8 unit-1 type-integer flags-[(unsigned big)], I2: size-8 unit-1 type-integer flags-[(unsigned big)]>> in { 
                 X
@@ -82,13 +82,13 @@ test09_neg/2 = fun (var0, var1)  {
     }
 }
 
-module_info/0 = fun ()  { 
+module_info/0 = fun () { 
     case <> of { 
          when true -> erlang:get_module_info(binaries)
     }
 }
 
-module_info/1 = fun (var0)  { 
+module_info/1 = fun (var0) { 
     case var0 of { 
         X when true -> erlang:get_module_info(binaries, X)
     }
