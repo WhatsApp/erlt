@@ -12,14 +12,14 @@ packages: .
           ../../../../haskell/haskell-language-server/shake-bench
           ../../../../haskell/haskell-language-server/ghcide
           ../../../../haskell/haskell-language-server/hls-plugin-api
-          ../../../../haskell/haskell-language-server/plugins/hls-tactics-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-class-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-eval-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-explicit-imports-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-hlint-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-retrie-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-haddock-comments-plugin
-          ../../../../haskell/haskell-language-server/plugins/hls-splice-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-tactics-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-class-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-eval-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-explicit-imports-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-hlint-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-retrie-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-haddock-comments-plugin
+          -- ../../../../haskell/haskell-language-server/plugins/hls-splice-plugin
           ../../../../alanz/lsp/
           ../../../../alanz/lsp/lsp-types
           ../../../../bubba/lsp-test
@@ -52,7 +52,8 @@ allow-newer:
             aeson
 --             diagrams-svg
 
-constraints: 
+constraints:
+        -- unset as many flags as possible, no point building hls-specific plugins
              haskell-language-server -agpl -all-formatters -all-plugins -brittany -class -eval -floskell -fourmolu -haddockcomments -hlint -importlens -modulename -ormolu -pedantic -pragmas -retrie -splice -stylishhaskell -tactic
 
 index-state: 2021-02-12T08:14:07Z

@@ -14,7 +14,7 @@ import Plugins
 
 main :: IO ()
 main = withUtf8 $ do
-  args <- getArguments "haskell-language-server"
+  args <- getArguments "erlang-language-platform"
 
   let withExamples =
         case args of

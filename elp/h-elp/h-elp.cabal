@@ -73,12 +73,12 @@ executable h-elp
   main-is:             Main.hs
   -- other-extensions:
   other-modules:    Plugins
-  hs-source-dirs:   exe src
-  -- hs-source-dirs:   exe
+  -- hs-source-dirs:   exe src
+  hs-source-dirs:   exe
   build-depends:
        base >=4.13 && <4.15
      -- temporary, putting src directory in hs-source-dirs for now
-     -- , h-elp
+     , h-elp
 
      , aeson
      , aeson >=1.2.2.0

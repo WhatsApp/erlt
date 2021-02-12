@@ -2,9 +2,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE ExplicitNamespaces #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeInType #-}
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 
 module ELP where
 
@@ -20,8 +24,11 @@ import AST.Unmarshal
 import Control.Carrier.State.Strict (runState)
 import Control.Exception (catch)
 import Control.Lens (to, (^.))
+import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.ByteString (ByteString)
+import qualified Data.HashMap.Strict as HM
+import Data.Hashable
 import qualified Data.Map as Map
 import Data.Rope.UTF16 (Rope, codeUnitsRowColumn)
 import qualified Data.Rope.UTF16 as Rope
@@ -29,8 +36,11 @@ import qualified Data.Rope.UTF16.Internal.Position as Rope
 import qualified Data.SplayTree as Rope
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
-import Development.IDE (IdeState (..))
-import Development.IDE.Core.Shake (IsIdeGlobal, addIdeGlobalExtras, getIdeGlobalExtras)
+import Development.IDE (IdeState (..), define, getClientConfigAction, getFilesOfInterest, uses, logInfo, ideLogger)
+import Development.IDE.Core.Shake (IsIdeGlobal, getIdeGlobalExtras, getIdeGlobalAction, updatePositionMapping)
+import Development.IDE.Types.Diagnostics
+import qualified Development.Shake as S
+import Development.Shake.Classes
 import Foreign.C.String
   ( peekCString,
     withCStringLen,
@@ -38,9 +48,10 @@ import Foreign.C.String
 import Foreign.Marshal.Alloc (alloca, free)
 import Foreign.Ptr (Ptr, castPtr, nullPtr, plusPtr)
 import Foreign.Storable (Storable (peek, poke))
+import GHC.Generics (Generic)
 import GHC.Word (Word32)
 import Ide.Plugin.Config (Config)
-import Ide.Types (PluginDescriptor (..), PluginId, PluginNotificationMethodHandler, defaultPluginDescriptor, mkPluginNotificationHandler)
+import Ide.Types (PluginDescriptor (..), PluginId, PluginNotificationMethodHandler, configForPlugin, defaultPluginDescriptor, mkPluginNotificationHandler)
 import Language.Erlang.AST (SourceFile)
 import qualified Language.Erlang.AST as Erlang
 import Language.LSP.Diagnostics (partitionBySource)
@@ -79,6 +90,13 @@ import TreeSitter.Tree
     ts_tree_root_node_p,
     withRootNode,
   )
+import UnliftIO (MVar, modifyMVar)
+import Development.IDE.LSP.Notifications
+    ( setHandlersNotifications
+    , whenUriFile
+    )
+import Development.IDE.Core.OfInterest
+import Development.IDE.Core.FileStore hiding (getVirtualFile)
 
 -- ---------------------------------------------------------------------
 
@@ -96,14 +114,64 @@ data TsFile = TsFile
 -- We store the Tree Sitter state in an Shake IdeGlobal, to avoid
 -- polluting the import space in ghcide.  It used Dynamic under the
 -- hood.
-instance IsIdeGlobal ParserContext
+instance IsIdeGlobal (MVar ParserContext)
+
+-- ---------------------------------------------------------------------
+-- ghcide rules
+
+-- This section modelled on the HLint plugin, as it is also a "guest" into HLS
+
+-- This rule only exists for generating file diagnostics
+-- so the RuleResult is empty
+data GetTreeSitterDiagnostics = GetTreeSitterDiagnostics
+  deriving (Eq, Show, Typeable, Generic)
+
+instance Hashable GetTreeSitterDiagnostics
+
+instance NFData GetTreeSitterDiagnostics
+
+instance Binary GetTreeSitterDiagnostics
+
+type instance S.RuleResult GetTreeSitterDiagnostics = ()
+
+rules :: PluginId -> S.Rules ()
+rules plugin = do
+  define $ \GetTreeSitterDiagnostics file -> do
+    config <- getClientConfigAction
+    let pluginConfig = configForPlugin config plugin
+    -- let hlintOn' = hlintOn config && plcGlobalOn pluginConfig && plcDiagnosticsOn pluginConfig
+    -- ideas <- if hlintOn' then getIdeas file else return (Right [])
+    -- return (diagnostics file ideas, Just ())
+    liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:file:" ++ show file
+
+
+    mparser <- getIdeGlobalAction
+    -- mparser <- liftIO $ getIdeGlobalExtras (shakeExtras ide) :: LspM Config (MVar ParserContext)
+    diagnostics <- liftIO $ do
+      modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+        diags <- case Map.lookup (normalizedFilePathToUri file)  pcsmap of
+          Just (TsFile tree node rope) -> do
+            liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:found TS:" ++ show file
+            makeDiagnostics rope tree
+          Nothing -> do
+            liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:****NO TS***:" ++ show file
+            return []
+        return (ParserContext parser pcsmap, diags)
+    let dd = [(file, ShowDiag, d)| d <- diagnostics]
+    -- reportDiagnostics docUri (Just 0) (Rope.fromText aContent) tree
+    -- return ([(file, ShowDiag, textDiagnostic "hello from rule!")], Just ())
+    return (dd, Just ())
+
+  S.action $ do
+    files <- getFilesOfInterest
+    void $ uses GetTreeSitterDiagnostics $ HM.keys files
 
 -- ---------------------------------------------------------------------
 
 hlsPlugin :: PluginId -> PluginDescriptor IdeState
 hlsPlugin plId =
   (defaultPluginDescriptor plId)
-    { pluginRules = mempty,
+    { pluginRules = rules plId,
       pluginCommands = [],
       pluginNotificationHandlers =
         mkPluginNotificationHandler STextDocumentDidOpen didOpen
@@ -114,83 +182,98 @@ hlsPlugin plId =
 
 -- PluginNotificationMethodHandler a m = a -> PluginId -> MessageParams m -> LspM Config ()
 didOpen :: PluginNotificationMethodHandler IdeState 'TextDocumentDidOpen
-didOpen cfg _pid params = do
-  let doc = params ^. textDocument . uri
-      fileName = uriToFilePath doc
+didOpen ide _pid (DidOpenTextDocumentParams (TextDocumentItem uri _ version text) ) = do
+  let doc = uri
       docUri = toNormalizedUri doc
-  let aContent = params ^. textDocument . text
-  liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show fileName
+  let aContent = text
+  liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show (uriToFilePath doc)
   mdoc <- getVirtualFile docUri
   case mdoc of
     Just (VirtualFile _lspversion vsn rope) -> do
       liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
-      (ParserContext parser pcsmap) <- liftIO $ getIdeGlobalExtras (shakeExtras cfg) :: LspM Config ParserContext
-      -- mparser <- asks heParser
+      mparser <- liftIO $ getIdeGlobalExtras (shakeExtras ide) :: LspM Config (MVar ParserContext)
       tree <- liftIO $ do
-        -- modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
-        (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
-        sexp <- nodeAsSexpr node
-        liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
-        let pcsmap' = Map.insert docUri (TsFile tree node rope) pcsmap
-        -- return (ParserContext parser pcsmap', tree)
-        addIdeGlobalExtras (shakeExtras cfg) (ParserContext parser pcsmap')
-        return tree
+        modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+          (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+          sexp <- nodeAsSexpr node
+          liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
+          let pcsmap' = Map.insert docUri (TsFile tree node rope) pcsmap
+          return (ParserContext parser pcsmap', tree)
       reportDiagnostics docUri (Just 0) (Rope.fromText aContent) tree
       return ()
     Nothing -> do
       liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
-
--- return ()
+  -- -----------------------------------
+  -- Because the (<>) combining notification handlers inside ghcide is
+  -- left-biased, we have to reporduce the pre-existing processing if
+  -- we want it.  It *does* give us the opportunity to tweak it if we
+  -- need to, else is duplication.
+  liftIO $ do
+      void $ updatePositionMapping ide (VersionedTextDocumentIdentifier uri (Just version)) (List [])
+      whenUriFile uri $ \file -> do
+          -- We don't know if the file actually exists, or if the contents match those on disk
+          -- For example, vscode restores previously unsaved contents on open
+          void $ modifyFilesOfInterest ide (HM.insert file Modified)
+          void $ setFileModified ide False file
+          logInfo (ideLogger ide) $ "Opened text document: " <> getUri uri
 
 -- ---------------------------------------------------------------------
 
 -- PluginNotificationMethodHandler a m = a -> PluginId -> MessageParams m -> LspM Config ()
 didChange :: PluginNotificationMethodHandler IdeState 'TextDocumentDidChange
-didChange cfg _pid (DidChangeTextDocumentParams textDoc (List changeList)) = do
-  let doc = textDoc ^. uri . to toNormalizedUri
+didChange ide _pid (DidChangeTextDocumentParams identifier changes@(List changeList)) = do
+  let doc = identifier ^. uri . to toNormalizedUri
+      docUri = identifier ^. uri
   liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
   -- logm "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
   mdoc <- getVirtualFile doc
   case mdoc of
     Just (VirtualFile lspversion vsn ropeNew) -> do
       liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
-      -- mparser <- asks heParser
-      (ParserContext parser pcsmap) <- liftIO $ getIdeGlobalExtras (shakeExtras cfg) :: LspM Config ParserContext
-      -- liftIO $ infoM "h-elp" "Got the parser"
+      mparser <- liftIO $ getIdeGlobalExtras (shakeExtras ide) :: LspM Config (MVar ParserContext)
       tree <- liftIO $ do
-        -- modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
-        -- liftIO $ infoM "h-elp" "Got the mvar"
-        (tree, node) <- case Map.lookup doc pcsmap of
-          Nothing -> do
-            infoM "h-elp" "ParserContext not found, doing full parse"
-            treeSitterParseFull parser (Rope.toString ropeNew)
-          Just (TsFile tree node ropeOld) -> do
-            -- liftIO $ infoM "h-elp" "Got the TsFile"
-            -- TODO: fold over the changes
-            -- Question: Is this valid, given the rope has all the changes already?
-            -- TODO: update lsp/vfs to provide a callback on every change
-            case changeList of
-              [] -> do
-                infoM "h-elp" "No changes in didChange message"
-                return (tree, node)
-              [c] -> do
-                -- infoM "h-elp" $ "One change in didChange message:" ++ show c
-                parseChange ropeOld ropeNew parser tree c
-              _ -> do
-                infoM "h-elp" "Multiple changes in didChange message, doing full parse"
-                treeSitterParseFull parser (Rope.toString ropeNew)
-        -- infoM "h-elp" "Got (tree,node)"
-        sexp <- nodeAsSexpr node
-        liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
-        let pcsmap' = Map.insert doc (TsFile tree node ropeNew) pcsmap
-        -- return (ParserContext parser pcsmap', tree)
-        addIdeGlobalExtras (shakeExtras cfg) (ParserContext parser pcsmap')
-        return tree
+        modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+          -- liftIO $ infoM "h-elp" "Got the mvar"
+          (tree, node) <- case Map.lookup doc pcsmap of
+            Nothing -> do
+              infoM "h-elp" "ParserContext not found, doing full parse"
+              treeSitterParseFull parser (Rope.toString ropeNew)
+            Just (TsFile tree node ropeOld) -> do
+              -- liftIO $ infoM "h-elp" "Got the TsFile"
+              -- TODO: fold over the changes
+              -- Question: Is this valid, given the rope has all the changes already?
+              -- TODO: update lsp/vfs to provide a callback on every change
+              case changeList of
+                [] -> do
+                  infoM "h-elp" "No changes in didChange message"
+                  return (tree, node)
+                [c] -> do
+                  -- infoM "h-elp" $ "One change in didChange message:" ++ show c
+                  parseChange ropeOld ropeNew parser tree c
+                _ -> do
+                  infoM "h-elp" "Multiple changes in didChange message, doing full parse"
+                  treeSitterParseFull parser (Rope.toString ropeNew)
+          -- infoM "h-elp" "Got (tree,node)"
+          sexp <- nodeAsSexpr node
+          liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
+          let pcsmap' = Map.insert doc (TsFile tree node ropeNew) pcsmap
+          return (ParserContext parser pcsmap', tree)
       reportDiagnostics doc (Just lspversion) ropeNew tree
       liftIO $ infoM "h-elp" "DidChange done"
       return ()
     Nothing -> do
       liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
+  -- -----------------------------------
+  -- Because the (<>) combining notification handlers inside ghcide is
+  -- left-biased, we have to reporduce the pre-existing processing if
+  -- we want it.  It *does* give us the opportunity to tweak it if we
+  -- need to, else is duplication.
+  liftIO $ do
+        updatePositionMapping ide identifier changes
+        whenUriFile docUri $ \file -> do
+          modifyFilesOfInterest ide (HM.insert file Modified)
+          setFileModified ide False file
+        logInfo (ideLogger ide) $ "Modified text document: " <> getUri docUri
 
 -- ---------------------------------------------------------------------
 
@@ -203,8 +286,9 @@ reportDiagnostics ::
   m ()
 reportDiagnostics fileUri version rope tree = do
   diags <- liftIO $ makeDiagnostics rope tree
-  -- liftIO $ pp $ "reportDiagnostics:diags=" ++ show diags
-  sendDiagnostics fileUri version diags
+  liftIO $ pp $ "reportDiagnostics:diags=" ++ show diags
+
+-- sendDiagnostics fileUri version diags
 
 makeDiagnostics :: Rope.Rope -> Ptr Tree -> IO [Diagnostic]
 makeDiagnostics rope tree = do
@@ -282,7 +366,8 @@ sendDiagnosticsMessage fileUri version msg = do
 -- | Print st stderr, where the haskell tree-sitter logging goes
 -- too. Convenient, it does not get in the way of tasty output either.
 pp :: String -> IO ()
-pp = hPutStrLn stderr
+-- pp = hPutStrLn stderr
+pp _ = return ()
 
 -- ---------------------------------------------------------------------
 -- TODO: free the parser, or bracket it with a free

@@ -16,6 +16,7 @@ module ELP.Ide.Main(defaultMain, runLspMode) where
 
 import Control.Concurrent.Extra
 import Control.Monad.Extra
+import Control.Monad.IO.Class
 import Control.Exception.Safe
 import Data.Default
 import Data.List.Extra
@@ -55,7 +56,7 @@ import System.FilePath
 import System.IO
 import qualified System.Log.Logger as L
 import System.Time.Extra
-import Development.Shake (ShakeOptions (shakeThreads), action)
+import Development.Shake (ShakeOptions (shakeThreads), action, Rules(..))
 import TreeSitter.ErlangELP
 import TreeSitter.Parser
 -- import HieDb.Run
@@ -113,7 +114,7 @@ runLspMode lspArgs@LspArguments{argsCwd} idePlugins = do
 
 runLspMode' :: LspArguments -> IdePlugins IdeState -> HieDb -> IndexQueue -> IO ()
 runLspMode' lspArgs@LspArguments{..} idePlugins hiedb hiechan = do
-    LSP.setupLogger argsLogFile ["hls", "hie-bios"]
+    LSP.setupLogger argsLogFile ["hls", "h-elp", "hie-bios"]
       $ if argsDebugOn then L.DEBUG else L.INFO
 
     -- lock to avoid overlapping output on stdout
@@ -137,9 +138,10 @@ runLspMode' lspArgs@LspArguments{..} idePlugins hiedb hiechan = do
         hPutStrLn stderr $ "  with plugins: " <> show (Map.keys $ ipMap idePlugins)
         hPutStrLn stderr $ "  in directory: " <> dir
         hPutStrLn stderr "If you are seeing this in a terminal, you probably should have run WITHOUT the --lsp option!"
+        hPutStrLn stderr "hello there"
 
         withParser tree_sitter_erlang_elp $ \parser -> do
-            ts_parser_log_to_stderr parser
+            -- ts_parser_log_to_stderr parser
             runLanguageServer options getConfigFromNotification (pluginHandlers plugins) $ \env vfs _rootPath -> do
                 t <- t
                 hPutStrLn stderr $ "Started LSP server in " ++ showDuration t
@@ -158,10 +160,11 @@ runLspMode' lspArgs@LspArguments{..} idePlugins hiedb hiechan = do
                     defOptions = defaultIdeOptions sessionLoader
                 debouncer <- newAsyncDebouncer
                 -- initialise (mainRule >> pluginRules plugins >> action kick)
-                cfg <- initialise (pluginRules plugins >> action kick)
+                cfg <- initialise (elpMainRule >> pluginRules plugins >> action kick)
                     (Just env) hlsLogger debouncer options vfs
                     hiedb hiechan
-                addIdeGlobalExtras (shakeExtras cfg) (ParserContext parser mempty)
+                pc <- newMVar (ParserContext parser mempty)
+                addIdeGlobalExtras (shakeExtras cfg) pc
                 return cfg
     else do
         -- GHC produces messages with UTF8 in them, so make sure the terminal doesn't error
@@ -222,3 +225,40 @@ showEvent _ (EventFileDiagnostics _ []) = return ()
 showEvent lock (EventFileDiagnostics (toNormalizedFilePath' -> file) diags) =
     withLock lock $ T.putStrLn $ showDiagnosticsColored $ map (file,ShowDiag,) diags
 showEvent lock e = withLock lock $ print e
+
+-- ---------------------------------------------------------------------
+
+-- | A rule that wires per-file rules together
+elpMainRule :: Rules ()
+elpMainRule = do
+    -- linkables <- liftIO $ newVar emptyModuleEnv
+    -- addIdeGlobal $ CompiledLinkables linkables
+    getParsedModuleRule
+    getParsedModuleWithCommentsRule
+    getLocatedImportsRule
+    getDependencyInformationRule
+    reportImportCyclesRule
+    getDependenciesRule
+    typeCheckRule
+    getDocMapRule
+    loadGhcSession -- Needed to trigger our GetTreeSitterDiagnostics rule
+    getModIfaceFromDiskRule
+    -- getModIfaceFromDiskAndIndexRule
+    getModIfaceRule
+    getModIfaceWithoutLinkableRule
+    getModSummaryRule
+    isHiFileStableRule
+    getModuleGraphRule
+    knownFilesRule
+    getClientSettingsRule
+    getHieAstsRule
+    getBindingsRule
+    needsCompilationRule
+    generateCoreRule
+    getImportMapRule
+    -- getAnnotatedParsedSourceRule
+    -- persistentHieFileRule
+    -- persistentDocMapRule
+    -- persistentImportMapRule
+-- ---------------------------------------------------------------------
+

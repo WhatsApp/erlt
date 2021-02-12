@@ -2,12 +2,5 @@
 
 -x(x).
 -ff(floog).
--c(x).
-
-%% blah() ->
-%%     ok.
-vvvv() ->
-    4.
-yy() .
-
-x
+-cc(x).
+-f ff(a).
