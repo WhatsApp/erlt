@@ -63,9 +63,6 @@ object WIPDiagnostics {
   case object PatString extends SkippedPat {
     override def toString: String = """P: "...""""
   }
-  case object PatMap extends SkippedPat {
-    override def toString: String = "P: #{...}"
-  }
   case object ExpString extends SkippedExpr {
     override def toString: String = """E: "...""""
   }

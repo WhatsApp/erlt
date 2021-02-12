@@ -28,6 +28,47 @@ object Approx {
       case ts  => Some(ListType(UnionType(ts)))
     }
 
+  private def unite(ts: List[Type]): Type =
+    ts.filterNot(_ == NoneType) match {
+      case List()       => NoneType
+      case List(single) => single
+      case many         => UnionType(many)
+    }
+
+  def asMapType(t: Type): Type =
+    t match {
+      case AnyType            => DictMap(AnyType, AnyType)
+      case dictMap: DictMap   => dictMap
+      case shapeMap: ShapeMap => shapeMap
+      case UnionType(ts)      => unite(ts.map(asMapType))
+      case _                  => NoneType
+    }
+
+  def getKeyType(t: Type): Type =
+    t match {
+      case DictMap(kt, _) => kt
+      case ShapeMap(_)    => AtomType
+      case UnionType(ts)  => unite(ts.map(getKeyType))
+      case _ =>
+        NoneType
+    }
+
+  def getValType(t: Type): Type =
+    t match {
+      case DictMap(_, vt)  => vt
+      case ShapeMap(props) => UnionType(props.map(_.tp))
+      case UnionType(ts)   => unite(ts.map(getValType))
+      case _               => NoneType
+    }
+
+  def getValType(key: String, t: Type): Type =
+    t match {
+      case DictMap(_, vt)  => vt
+      case ShapeMap(props) => props.find(_.key == key).map(_.tp).getOrElse(NoneType)
+      case UnionType(ts)   => unite(ts.map(getValType(key, _)))
+      case _               => NoneType
+    }
+
   private def extractListElem(t: Type): List[Type] =
     t match {
       case AnyType =>

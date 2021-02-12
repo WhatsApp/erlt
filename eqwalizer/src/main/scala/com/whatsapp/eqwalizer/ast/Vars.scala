@@ -48,6 +48,8 @@ object Vars {
         fields.flatMap(f => patVars(f.pat)).toSet
       case PatRecordIndex(_, _) =>
         Set.empty
+      case PatMap(kvs) =>
+        kvs.flatMap(kv => patVars(kv._1) ++ patVars(kv._2)).toSet
     }
 
   private def binaryElemVars(elem: PatBinaryElem): Set[String] = {

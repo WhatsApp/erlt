@@ -112,6 +112,21 @@ final class ElabPat(module: String) {
           envAcc = env1
         }
         (recType, envAcc)
+      case PatMap(kvs) =>
+        val mapType = Approx.asMapType(t)
+        var envAcc = env
+        for ((keyPat, valPat) <- kvs) {
+          keyPat match {
+            case PatAtom(key) =>
+              val (_, env1) = elabPat(valPat, Approx.getValType(key, mapType), envAcc)
+              envAcc = env1
+            case _ =>
+              val (_, env1) = elabPat(keyPat, Approx.getKeyType(mapType), envAcc)
+              val (_, env2) = elabPat(valPat, Approx.getValType(mapType), env1)
+              envAcc = env2
+          }
+        }
+        (mapType, envAcc)
     }
 
   private def elabBinaryElem(elem: PatBinaryElem, env: Env): Env = {
