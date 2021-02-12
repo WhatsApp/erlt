@@ -26,7 +26,7 @@ test03_pos/1 = fun (var0) {
                         Rest
                     }
             };
-        b when true -> case var0 of {  }
+        b when true -> case var0 of {}
     }
 }
 
@@ -77,9 +77,8 @@ test08_neg/1 = fun (var0) {
 :: fun((number(), number()) -> binary())
 test09_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
-        <I1, I2> when true -> let X = <<I1: size-8 unit-1 type-integer flags-[unsigned big], I2: size-8 unit-1 type-integer flags-[unsigned big]>> in {
-                X
-            }
+        <I1, I2> when true -> let X = <<I1: size-8 unit-1 type-integer flags-[unsigned big], I2: size-8 unit-1 type-integer flags-[unsigned big]>>
+            in { X }
     }
 }
 
