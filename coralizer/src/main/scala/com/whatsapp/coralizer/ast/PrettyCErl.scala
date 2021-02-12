@@ -49,32 +49,42 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
   def doc(e: CErl): Doc =
     e match {
       case CAlias(_, v, pat)    => v <> "=" <> pat
-      case CApply(_, f, args)   => f <> parens(args)
-      case CBinary(_, segments) => "<<" <> segments <> ">>"
+      case CApply(_, f, args)   => f <> parens(cerlsToDoc(args))
+      case CBinary(_, segments) => "<<" <> cerlsToDoc(segments) <> ">>"
       case CBitstr(_, value, size, unit, typ, flags) =>
         value <> ":" <+> "size-" <> size <+> "unit-" <> unit <+> "type-" <> typ <+> "flags-" <> flags
       case CCall(_, m, f, args) =>
-        m <> ":" <> f <> parens(args)
+        m <> ":" <> f <> parens(cerlsToDoc(args))
       case CCase(_, sel, clauses) =>
-        softbreak <> "case" <+> sel <+> "of" <+> (if (clauses.isEmpty) "{}" else block(vsep(clauses map (doc(_)), ";")))
+        softbreak <> "case" <+> sel <+> "of" <+> (if (clauses.isEmpty) "{}"
+                                                  else
+                                                    block(
+                                                      vsep(
+                                                        clauses map (doc(_)),
+                                                        ";"
+                                                      )
+                                                    ))
       case CCatch(_, body) => "catch" <+> body
       case CClause(_, pats, guard, body) =>
         val left: Doc =
-          if (pats.sizeCompare(1) == 0) pats else "<" <> pats <> ">"
+          if (pats.sizeCompare(1) == 0) cerlsToDoc(pats)
+          else "<" <> cerlsToDoc(pats) <> ">"
         val right = "when" <+> guard <+> "->" </> nest(body)
         left <+> right
       case CCons(_, hd, tl) => "[" <> hd <+> "|" <+> tl <> "]"
       case CFun(_, vars, body) =>
-        softbreak <> "fun" <+> parens(vars) <+> block(body)
+        softbreak <> "fun" <+> parens(cerlsToDoc(vars)) <+> block(body)
       case CLet(_, vars, arg, body) =>
-        softbreak <> "let " <> vars <+> "=" </> arg </> "in" </> block(body)
+        softbreak <> "let " <> cerlsToDoc(
+          vars
+        ) <+> "=" </> arg </> "in" </> block(body)
       case CLetRec(_, defs, body) =>
         val args =
           for ((k, v) <- defs)
             yield k <+> "=" </> v
         softbreak <> "letrec" <+> parens(docArgs(args)) </> "in" </> block(body)
       case CLiteral(_, data)           => data
-      case CMap(__, arg, es, _isPat)   => arg <> "#" <> braces(es)
+      case CMap(__, arg, es, _isPat)   => arg <> "#" <> braces(cerlsToDoc(es))
       case CMapPair(_, _op, key, cVal) => key <+> "=>" <+> cVal
       case CModule(_, name, exports, attrs, defs) =>
         def defToDoc(d: (CVar, CFun)): Doc =
@@ -112,20 +122,21 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
             yield "-" <> k <> "(" <> v <> ")"
 
         val moduleDoc = "-module" <> parens(name)
-        val exportsDoc = "-exports" <> parens(exports)
+        val exportsDoc = "-exports" <> parens(cerlsToDoc(exports))
 
         vsep(moduleDoc :: exportsDoc :: attrDocs ++ typeDocs ++ defsDocs)
 
-      case CPrimOp(_, name, args) => "primop:" <> name <> parens(args)
-      case CSeq(_, arg, body)     => arg <+> "," <+> body
+      case CPrimOp(_, name, args) =>
+        "primop:" <> name <> parens(cerlsToDoc(args))
+      case CSeq(_, arg, body) => arg <+> "," <+> body
       case CTry(_, arg, bodyVars, body, evars, handler) =>
         "try" <+> nest(arg) <+> "of" <+> block(
-          bodyVars <+> "->" <+> body
+          cerlsToDoc(bodyVars) <+> "->" <+> body
         ) <@> "catch {" <@> indent(
-          evars <+> "->" <+> handler
+          cerlsToDoc(evars) <+> "->" <+> handler
         ) <> line <> "}" <> line
-      case CTuple(_, elems)  => braces(elems)
-      case CValues(_, elems) => "<" <> elems <> ">"
+      case CTuple(_, elems)  => braces(cerlsToDoc(elems))
+      case CValues(_, elems) => "<" <> cerlsToDoc(elems) <> ">"
       case e: CVar           => Show.show(e)
       // $COVERAGE-OFF$
       case _: C___XXX => sys.error(s"unexpected $e")
@@ -141,11 +152,11 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case EDouble(d)                      => d.toString
       case EExternalFun(RemoteId(m, f, a)) => s"$m:$f/$a"
       case EList(elems) =>
-        "[" <> elems <> "]"
+        "[" <> datasToDoc(elems) <> "]"
       case ELong(value)                                                      => value.toString
       case data: EMap                                                        => Show.show(data)
       case EString(str)                                                      => str
-      case ETuple(elems)                                                     => braces(elems)
+      case ETuple(elems)                                                     => braces(datasToDoc(elems))
       case _: Anno | _: EPid | _: EPort | _: ERef | _: C___XXX | _: CReceive =>
         // $COVERAGE-OFF$
         sys.error(s"unexpected $data")
@@ -156,12 +167,12 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
     if (errors.contains(e.nodeId)) s"¦⊢${e.nodeId}⊣¦" <> doc(e)
     else doc(e)
 
-  implicit def cerlsToDoc(es: Iterable[CErl]): Doc = docArgs(es map doc)
-
-  implicit def datasToDoc(datas: Iterable[EObject]): Doc =
-    nest(hsep(datas.toList map dataToDoc))
+  def cerlsToDoc(es: Iterable[CErl]): Doc = docArgs(es map doc)
 
   implicit def dataToDoc(data: EObject): Doc = doc(data)
+
+  def datasToDoc(datas: Iterable[EObject]): Doc =
+    nest(hsep(datas.toList map dataToDoc))
 
   def docArgs(
       es: Iterable[Doc]
