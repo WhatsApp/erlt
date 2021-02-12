@@ -31,10 +31,11 @@ Erlang surface syntax.
 
 - [ ] Propagate selector type in case-expressions
 - [ ] Propagate try-body type in try-of expressions
+- [ ] `when X = Y` -> `X` and `Y` are of the same type.
 
 ### Data-driven analysis
 
-- [ ] Named inner functions
+- [x] [Named inner functions](https://fb.workplace.com/groups/typederlang/permalink/268350134631822) 
 - [ ] Private functions - recursive and non-recursive.
 - [ ] Dependencies between modules and functions in general.
 
