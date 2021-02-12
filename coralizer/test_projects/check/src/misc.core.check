@@ -50,7 +50,8 @@ test08_neg/1 = fun (var0) {
 :: fun((term(), term()) -> number())
 test09/2 = fun (var0, var1) {
     case <var0, var1> of {
-        <X, Y> when try let var2 = erlang:is_number(X) in {
+        <X, Y> when try let var2 = erlang:is_number(X)
+            in {
                 let var3 = erlang:is_number(Y) in {
                     erlang:and(var2, var3)
                 }
@@ -149,36 +150,32 @@ test19_neg/2 = fun (var0, var1) {
 :: fun((number()) -> [atom()])
 test20_neg/1 = fun (var0) {
     case var0 of {
-        X when true -> let var1 = erlang:-(X) in {           | let .... Expected: [atom()], Got: [number()]
-                [var1 | []]
-            }
+        X when true -> let var1 = erlang:-(X)                | let .... Expected: [atom()], Got: [number()]
+            in { [var1 | []] }
     }
 }
 
 :: fun((number(), number()) -> [atom()])
 test21_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
-        <X, Y> when true -> let var2 = erlang:/(X, Y) in {   | let .... Expected: [atom()], Got: [number()]
-                [var2 | []]
-            }
+        <X, Y> when true -> let var2 = erlang:/(X, Y)        | let .... Expected: [atom()], Got: [number()]
+            in { [var2 | []] }
     }
 }
 
 :: fun(('false' | 'true') -> [number()])
 test22_neg/1 = fun (var0) {
     case var0 of {
-        X when true -> let var1 = erlang:not(X) in {         | let .... Expected: [number()], Got: ['false' | 'true']
-                [var1 | []]
-            }
+        X when true -> let var1 = erlang:not(X)              | let .... Expected: [number()], Got: ['false' | 'true']
+            in { [var1 | []] }
     }
 }
 
 :: fun(('false' | 'true', 'false' | 'true') -> [number()])
 test23_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
-        <X, Y> when true -> let var2 = erlang:or(X, Y) in {  | let .... Expected: [number()], Got: ['false' | 'true']
-                [var2 | []]
-            }
+        <X, Y> when true -> let var2 = erlang:or(X, Y)       | let .... Expected: [number()], Got: ['false' | 'true']
+            in { [var2 | []] }
     }
 }
 
@@ -284,9 +281,10 @@ test36_pos/2 = fun (var0, var1) {
 :: fun((term(), term()) -> {number(), number()})
 test37_pos/2 = fun (var0, var1) {
     case <var0, var1> of {
-        <X, Y> when try let var2 = erlang:+(X, Y) in {
-                erlang:>(var2, 0)
-            } of { Try -> Try }
+        <X, Y> when try let var2 = erlang:+(X, Y) in
+            { erlang:>(var2, 0) } of {
+            Try -> Try
+        }
         catch {
             T, R -> false
         }
@@ -333,9 +331,10 @@ test42_pos/1 = fun (var0) {
 :: fun((term()) -> none())
 test43_pos/1 = fun (var0) {
     case var0 of {
-        [var3 | Y] when try let var1 = erlang:+(Y, 1) in {
-                erlang:>(var1, 0)
-            } of { Try -> Try }
+        [var3 | Y] when try let var1 = erlang:+(Y, 1)
+            in { erlang:>(var1, 0) } of {
+            Try -> Try
+        }
         catch {
             T, R -> false
         }
@@ -348,9 +347,8 @@ test44_neg/1 = fun (var0) {
     case var0 of {
         X when true -> let var4, Z = case X of {
                 Z when true -> <ok, Z>;
-                var1 when true -> let var3 = primop:match_fail({case_clause, var1}) in {
-                        <var3, []>
-                    }
+                var1 when true -> let var3 = primop:match_fail({case_clause, var1})
+                    in { <var3, []> }
             } in { Z }
     }
 }
@@ -362,9 +360,8 @@ test45_neg/1 = fun (var0) {
                 var4 when true -> let Z = ok in {
                         <Z, Z>
                     };
-                var2 when true -> let var5 = primop:match_fail({case_clause, var2}) in {
-                        <var5, []>
-                    }
+                var2 when true -> let var5 = primop:match_fail({case_clause, var2})
+                    in { <var5, []> }
             } in { Z }
     }
 }
@@ -457,9 +454,8 @@ test58_pos/3 = fun (var0, var1, var2) {
 :: fun(() -> number())
 test59_pos/0 = fun () {
     case <> of {
-        <> when true -> let X = misc:test47_neg() in {
-                X
-            }
+        <> when true -> let X = misc:test47_neg() in
+            { X }
     }
 }
 
@@ -475,36 +471,32 @@ test60_pos/0 = fun () {
 :: fun(() -> number())
 test61_neg/0 = fun () {
     case <> of {
-        <> when true -> let X = misc:test54_unspecced() in { | Unbound var: misc:test54_unspecced/0
-                X
-            }
+        <> when true -> let X = misc:test54_unspecced()      | Unbound var: misc:test54_unspecced/0
+            in { X }
     }
 }
 
 :: fun(() -> number())
 test62_neg/0 = fun () {
     case <> of {
-        <> when true -> let X = test54_unspecced/0() in {    | Unbound var: test54_unspecced/0
-                X
-            }
+        <> when true -> let X = test54_unspecced/0()         | Unbound var: test54_unspecced/0
+            in { X }
     }
 }
 
 :: fun(() -> fun(() -> number()))
 test63_pos/0 = fun () {
     case <> of {
-        <> when true -> let Fun = erlang:make_fun(misc, test47_neg, 0) in {
-                Fun
-            }
+        <> when true -> let Fun = erlang:make_fun(misc, test47_neg, 0)
+            in { Fun }
     }
 }
 
 :: fun(() -> fun(() -> number()))
 test64_pos/0 = fun () {
     case <> of {
-        <> when true -> let var0 = test47_neg/0 in {
-                let Fun = var0 in { Fun }
-            }
+        <> when true -> let var0 = test47_neg/0 in
+            { let Fun = var0 in { Fun } }
     }
 }
 
@@ -582,9 +574,8 @@ test73_pos/0 = fun () {
 :: fun(() -> term())
 test74_pos/0 = fun () {
     case <> of {
-        <> when true -> let var0 = catch test69_pos/1([atom | []]) in {
-                let X = var0 in { X }
-            }
+        <> when true -> let var0 = catch test69_pos/1([atom | []])
+            in { let X = var0 in { X } }
     }
 }
 
@@ -602,9 +593,7 @@ test75_pos/0 = fun () {
                         }
                     }
                     catch {
-                        var4, var3, var2 -> case {var4, var3, var2} of {
-
-                        }
+                        var4, var3, var2 -> case {var4, var3, var2} of {}
                     }
                      of {
                     var5 -> after$^0/0() , var5

@@ -56,7 +56,7 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CCall(_, m, f, args) =>
         m <> ":" <> f <> parens(args)
       case CCase(_, sel, clauses) =>
-        softbreak <> "case" <+> sel <+> "of" <+> block(vsep(clauses map (doc(_)), ";"))
+        softbreak <> "case" <+> sel <+> "of" <+> (if (clauses.isEmpty) "{}" else block(vsep(clauses map (doc(_)), ";")))
       case CCatch(_, body) => "catch" <+> body
       case CClause(_, pats, guard, body) =>
         val left: Doc =
@@ -67,12 +67,12 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CFun(_, vars, body) =>
         softbreak <> "fun" <+> parens(vars) <+> block(body)
       case CLet(_, vars, arg, body) =>
-        softbreak <> "let " <> vars <+> "=" <+> arg <+> "in" <+> block(body)
+        softbreak <> "let " <> vars <+> "=" </> arg </> "in" </> block(body)
       case CLetRec(_, defs, body) =>
         val args =
           for ((k, v) <- defs)
-            yield k <+> "=" <+> v
-        softbreak <> "letrec" <+> parens(docArgs(args)) <+> "in" <+> block(body)
+            yield k <+> "=" </> v
+        softbreak <> "letrec" <+> parens(docArgs(args)) </> "in" </> block(body)
       case CLiteral(_, data)           => data
       case CMap(__, arg, es, _isPat)   => arg <> "#" <> braces(es)
       case CMapPair(_, _op, key, cVal) => key <+> "=>" <+> cVal

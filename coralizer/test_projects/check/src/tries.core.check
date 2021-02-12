@@ -237,9 +237,7 @@ test10_pos/0 = fun () {
                         }
                     }
                     catch {
-                        var4, var3, var2 -> case {var4, var3, var2} of {
-
-                        }
+                        var4, var3, var2 -> case {var4, var3, var2} of {}
                     }
                      of {
                     var5 -> after$^0/0() , var5
