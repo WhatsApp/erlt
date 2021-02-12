@@ -27,7 +27,7 @@ rewrite(Other, _) ->
 rewrite_clauses(Clauses) ->
     [
         {clause, Anno, [rewrite_head(Head)], Guards, Body}
-        || {clause, Anno, Head, Guards, Body} <- Clauses
+     || {clause, Anno, Head, Guards, Body} <- Clauses
     ].
 
 rewrite_head([Reason]) ->

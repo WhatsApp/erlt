@@ -105,11 +105,11 @@ do_file(
 write_built_ins("compile", #args{build_dir = BuildDir, output_dir = EbinDir}) ->
     [
         ok = file:write_file(filename:join(BuildDir, Basename), Contents)
-        || {Basename, Contents} <- erlt_build_statics:built_in_defs()
+     || {Basename, Contents} <- erlt_build_statics:built_in_defs()
     ],
     [
         ok = file:write_file(filename:join(EbinDir, Basename), Contents)
-        || {Basename, Contents} <- erlt_build_statics:built_in_ebins()
+     || {Basename, Contents} <- erlt_build_statics:built_in_ebins()
     ],
     ok;
 write_built_ins(_, #args{src_dir = _SrcDir}) ->
@@ -132,7 +132,7 @@ p_map(F, List, Results0) ->
         receive
             {Key, Res} -> {Key, Res}
         end
-        || Key <- L1
+     || Key <- L1
     ],
     TimedOutKeys = [Key || {Key, timeout} <- ResList],
     case TimedOutKeys of

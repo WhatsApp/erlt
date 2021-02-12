@@ -779,7 +779,7 @@ pack_errors(Es) ->
 pack_warnings(Ws) ->
     [
         {File, lists:sort([W || {F, W} <- Ws, F =:= File])}
-        || File <- lists:usort([F || {F, _} <- Ws])
+     || File <- lists:usort([F || {F, _} <- Ws])
     ].
 
 %% add_error(ErrorDescriptor, State) -> State'
@@ -875,7 +875,7 @@ includes_qlc_hrl(Forms, St) ->
     %% attribute removed. The file attribute, however, is left as is.
     QH = [
         File
-        || {attribute, _, file, {File, _line}} <- Forms, filename:basename(File) =:= "qlc.hrl"
+     || {attribute, _, file, {File, _line}} <- Forms, filename:basename(File) =:= "qlc.hrl"
     ],
     St#lint{xqlc = QH =/= []}.
 
@@ -1023,7 +1023,7 @@ eof(_Line, St0) ->
 bif_clashes(Forms, #lint{nowarn_bif_clash = Nowarn} = St) ->
     Clashes0 = [
         {Name, Arity}
-        || {F, _L, Name, Arity, _Cs} <- Forms, ?IS_FUNCTION(F), erl_internal:bif(Name, Arity)
+     || {F, _L, Name, Arity, _Cs} <- Forms, ?IS_FUNCTION(F), erl_internal:bif(Name, Arity)
     ],
     Clashes = ordsets:subtract(ordsets:from_list(Clashes0), Nowarn),
     St#lint{clashes = Clashes}.
@@ -1034,9 +1034,9 @@ not_deprecated(Forms, #lint{compile = Opts} = St0) ->
     %% There are no line numbers in St0#lint.compile.
     MFAsL = [
         {MFA, L}
-        || {attribute, L, compile, Args} <- Forms,
-           {nowarn_deprecated_function, MFAs0} <- lists:flatten([Args]),
-           MFA <- lists:flatten([MFAs0])
+     || {attribute, L, compile, Args} <- Forms,
+        {nowarn_deprecated_function, MFAs0} <- lists:flatten([Args]),
+        MFA <- lists:flatten([MFAs0])
     ],
     Nowarn = [MFA || {nowarn_deprecated_function, MFAs0} <- Opts, MFA <- lists:flatten([MFAs0])],
     ML = [{M, L} || {{M, _F, _A}, L} <- MFAsL, is_atom(M)],
@@ -1055,9 +1055,9 @@ not_removed(Forms, #lint{compile = Opts} = St0) ->
     %% There are no line numbers in St0#lint.compile.
     MFAsL = [
         {MFA, L}
-        || {attribute, L, compile, Args} <- Forms,
-           {nowarn_removed, MFAs0} <- lists:flatten([Args]),
-           MFA <- lists:flatten([MFAs0])
+     || {attribute, L, compile, Args} <- Forms,
+        {nowarn_removed, MFAs0} <- lists:flatten([Args]),
+        MFA <- lists:flatten([MFAs0])
     ],
     Nowarn = [MFA || {nowarn_removed, MFAs0} <- Opts, MFA <- lists:flatten([MFAs0])],
     St1 = foldl(
@@ -1077,11 +1077,11 @@ disallowed_compile_flags(Forms, St0) ->
     %% There are (still) no line numbers in St0#lint.compile.
     Errors0 = [
         {St0#lint.file, {L, erlt_lint, disallowed_nowarn_bif_clash}}
-        || {attribute, A, compile, nowarn_bif_clash} <- Forms, {_, L} <- [loc(A, St0)]
+     || {attribute, A, compile, nowarn_bif_clash} <- Forms, {_, L} <- [loc(A, St0)]
     ],
     Errors1 = [
         {St0#lint.file, {L, erlt_lint, disallowed_nowarn_bif_clash}}
-        || {attribute, A, compile, {nowarn_bif_clash, {_, _}}} <- Forms, {_, L} <- [loc(A, St0)]
+     || {attribute, A, compile, {nowarn_bif_clash, {_, _}}} <- Forms, {_, L} <- [loc(A, St0)]
     ],
     Disabled = (not is_warn_enabled(bif_clash, St0)),
     Errors =
@@ -1136,9 +1136,9 @@ behaviour_check(Bs, St0) ->
     F = fun(Bfs, OBfs) ->
         [
             B
-            || B <- Bfs,
-               not lists:member(B, OBfs) orelse
-                   gb_sets:is_member(B, Exports)
+         || B <- Bfs,
+            not lists:member(B, OBfs) orelse
+                gb_sets:is_member(B, Exports)
         ]
     end,
     %% After fixing missing callbacks new warnings may be emitted.
@@ -1245,9 +1245,9 @@ check_deprecated(Forms, St0) ->
     #lint{module = Mod} = St0,
     Bad = [
         {E, L}
-        || {attribute, L, deprecated, Depr} <- Forms,
-           D <- lists:flatten([Depr]),
-           E <- depr_cat(D, X, Mod)
+     || {attribute, L, deprecated, Depr} <- Forms,
+        D <- lists:flatten([Depr]),
+        E <- depr_cat(D, X, Mod)
     ],
     foldl(
         fun({E, L}, St1) ->
@@ -1312,9 +1312,9 @@ check_removed(Forms, St0) ->
     #lint{module = Mod} = St0,
     Bad = [
         {E, L}
-        || {attribute, L, removed, Removed} <- Forms,
-           R <- lists:flatten([Removed]),
-           E <- removed_cat(R, X, Mod)
+     || {attribute, L, removed, Removed} <- Forms,
+        R <- lists:flatten([Removed]),
+        E <- removed_cat(R, X, Mod)
     ],
     foldl(
         fun({E, L}, St1) ->
@@ -1387,14 +1387,14 @@ check_imports(Forms, St0) ->
             Unused = ordsets:subtract(St0#lint.imports, Usage#usage.imported),
             Imports = [
                 {{FA, Mod}, L}
-                || {attribute, L, import, {Mod, Fs}} <- Forms, FA <- lists:usort(Fs)
+             || {attribute, L, import, {Mod, Fs}} <- Forms, FA <- lists:usort(Fs)
             ],
             Bad = [{FM, L} || FM <- Unused, {FM2, L} <- Imports, FM =:= FM2],
             St1 = func_line_warning(unused_import, Bad, St0),
             TUnused = ordsets:subtract(St1#lint.imp_types, Usage#usage.imported_types),
             TImports = [
                 {{FA, Mod}, L}
-                || {attribute, L, import_type, {Mod, Fs}} <- Forms, FA <- lists:usort(Fs)
+             || {attribute, L, import_type, {Mod, Fs}} <- Forms, FA <- lists:usort(Fs)
             ],
             TBad = [{FM, L} || FM <- TUnused, {FM2, L} <- TImports, FM =:= FM2],
             func_line_warning(unused_import_type, TBad, St1)
@@ -1479,9 +1479,9 @@ check_undefined_types(#lint{usage = Usage, types = Def} = St0) ->
     UTAs = maps:keys(Used),
     Undef = [
         {TA, map_get(TA, Used)}
-        || TA <- UTAs,
-           not is_map_key(TA, Def),
-           not is_default_type(TA)
+     || TA <- UTAs,
+        not is_map_key(TA, Def),
+        not is_default_type(TA)
     ],
     foldl(
         fun({TA, L}, St) ->
@@ -1501,10 +1501,10 @@ check_option_functions(Forms, Tag0, Type, St0) ->
     %% There are no line numbers in St0#lint.compile.
     FAsL = [
         {FA, L}
-        || {attribute, L, compile, Args} <- Forms,
-           {Tag, FAs0} <- lists:flatten([Args]),
-           Tag0 =:= Tag,
-           FA <- lists:flatten([FAs0])
+     || {attribute, L, compile, Args} <- Forms,
+        {Tag, FAs0} <- lists:flatten([Args]),
+        Tag0 =:= Tag,
+        FA <- lists:flatten([FAs0])
     ],
     DefFunctions =
         (gb_sets:to_list(St0#lint.defined) -- pseudolocals()) ++
@@ -3286,7 +3286,7 @@ enum_def(Loc, {type, _, enum, {atom, _, Name}, Variants}, TypeArity, St) ->
 enum_variants_map(Variants) ->
     maps:from_list([
         {Name, field_defs(Fields)}
-        || {variant, _, {atom, _, Name}, Fields} <- Variants
+     || {variant, _, {atom, _, Name}, Fields} <- Variants
     ]).
 
 %% type_def(Attr, Line, TypeName, PatField, Args, State) -> State.
@@ -3807,9 +3807,9 @@ add_missing_spec_warnings(Forms, St0, Type) ->
             all ->
                 [
                     {FA, L}
-                    || {FN, L, F, A, _} <- Forms,
-                       ?IS_FUNCTION(FN),
-                       not lists:member(FA = {F, A}, Specs)
+                 || {FN, L, F, A, _} <- Forms,
+                    ?IS_FUNCTION(FN),
+                    not lists:member(FA = {F, A}, Specs)
                 ];
             exported ->
                 Exps0 = gb_sets:to_list(St0#lint.exports) -- pseudolocals(),
@@ -3885,15 +3885,15 @@ check_local_opaque_types(St) ->
 check_dialyzer_attribute(Forms, St0) ->
     Vals = [
         {L, V}
-        || {attribute, L, dialyzer, Val} <- Forms,
-           V0 <- lists:flatten([Val]),
-           V <-
-               case V0 of
-                   {O, F} ->
-                       [{A, B} || A <- lists:flatten([O]), B <- lists:flatten([F])];
-                   T ->
-                       [T]
-               end
+     || {attribute, L, dialyzer, Val} <- Forms,
+        V0 <- lists:flatten([Val]),
+        V <-
+            case V0 of
+                {O, F} ->
+                    [{A, B} || A <- lists:flatten([O]), B <- lists:flatten([F])];
+                T ->
+                    [T]
+            end
     ],
     {Wellformed, Bad} =
         lists:partition(
@@ -4550,11 +4550,11 @@ vtold(New, Old) ->
 vt_no_unsafe(Vt) ->
     [
         V
-        || {_, {S, _U, _L}} = V <- Vt,
-           case S of
-               {unsafe, _} -> false;
-               _ -> true
-           end
+     || {_, {S, _U, _L}} = V <- Vt,
+        case S of
+            {unsafe, _} -> false;
+            _ -> true
+        end
     ].
 
 vt_no_unused(Vt) -> [V || {_, {_, U, _L}} = V <- Vt, U =/= unused].

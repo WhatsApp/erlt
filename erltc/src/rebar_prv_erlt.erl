@@ -53,7 +53,7 @@ run(F, Description, State) ->
             error ->
                 rebar_utils:abort("~s failed", [Description])
         end
-        || App <- Apps
+     || App <- Apps
     ],
     {ok, State}.
 

@@ -549,7 +549,7 @@ falist(Falist) ->
             {Name, Arity} = Fa,
             [{atom, Name}, leaf(format("/~w", [Arity]))]
         end
-        || Fa <- Falist
+     || Fa <- Falist
     ],
     [{seq, $[, $], $,, L}].
 
@@ -1372,27 +1372,27 @@ wordtable() ->
             {leaf, Sz, S} = leaf(W),
             {S, Sz}
         end
-        || W <- [
-               " ->",
-               " =",
-               "<<",
-               ">>",
-               "[]",
-               "after",
-               "begin",
-               "case",
-               "catch",
-               "end",
-               "fun",
-               "if",
-               "of",
-               "receive",
-               "try",
-               "when",
-               " ::",
-               "..",
-               " |"
-           ]
+     || W <- [
+            " ->",
+            " =",
+            "<<",
+            ">>",
+            "[]",
+            "after",
+            "begin",
+            "case",
+            "catch",
+            "end",
+            "fun",
+            "if",
+            "of",
+            "receive",
+            "try",
+            "when",
+            " ::",
+            "..",
+            " |"
+        ]
     ],
     list_to_tuple(L).
 

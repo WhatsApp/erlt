@@ -458,7 +458,7 @@ check_option_compat(_) ->
 ensure_input_filenames_valid(#args{incremental = false, input_files = InputFiles}) ->
     BadFilenames = [
         Filename
-        || Filename <- InputFiles, filename:extension(Filename) =/= ?SOURCE_FILE_EXTENSION
+     || Filename <- InputFiles, filename:extension(Filename) =/= ?SOURCE_FILE_EXTENSION
     ],
     case length(BadFilenames) of
         0 ->

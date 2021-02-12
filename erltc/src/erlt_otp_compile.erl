@@ -672,7 +672,7 @@ messages_per_file(Ms) ->
 mpf(Ms) ->
     [
         {File, [M || {F, M} <- Ms, F =:= File]}
-        || File <- lists:usort([F || {F, _} <- Ms])
+     || File <- lists:usort([F || {F, _} <- Ms])
     ].
 
 %% passes(forms|file, [Option]) -> {Extension,[{Name,PassFun}]}
@@ -2319,7 +2319,7 @@ diffable(Code0, St) ->
     {Mod, Exp, Attr, Fs0, NumLabels} = Code0,
     EntryLabels0 = [
         {Entry, {Name, Arity}}
-        || {function, Name, Arity, Entry, _} <- Fs0
+     || {function, Name, Arity, Entry, _} <- Fs0
     ],
     EntryLabels = maps:from_list(EntryLabels0),
     Fs = [diffable_fix_function(F, EntryLabels) || F <- Fs0],

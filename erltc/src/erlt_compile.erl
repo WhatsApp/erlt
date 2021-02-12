@@ -358,9 +358,9 @@ gen_depfile_make_rule(Target, Deps0, IncludeParseTransforms) ->
     % and other stuff)
     Deps1 = [
         X
-        || X = {DepType, _} <- Deps0,
-           DepType =:= file orelse
-               (DepType =:= parse_transform andalso IncludeParseTransforms)
+     || X = {DepType, _} <- Deps0,
+        DepType =:= file orelse
+            (DepType =:= parse_transform andalso IncludeParseTransforms)
     ],
     DepsFilenames = deps_to_unique_filenames(Deps1),
     gen_make_rule(Target, DepsFilenames).
@@ -880,7 +880,7 @@ write_erl1(Forms, #compile{build_dir = BuildDir, filename = SourceFilename}) ->
                 io:nl(File),
                 io:nl(File)
             end
-            || Form <- Forms
+         || Form <- Forms
         ],
         ok
     after

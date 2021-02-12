@@ -46,7 +46,7 @@ generic_open_shape_field_type(Line) ->
 to_typed_map_fields(Fields) ->
     [
         {type, Line, map_field_exact, [Key, Value]}
-        || {field_definition, Line, Key, undefined, Value} <- Fields
+     || {field_definition, Line, Key, undefined, Value} <- Fields
     ].
 
 to_map_fields(TypeOfMapField, Fields) ->

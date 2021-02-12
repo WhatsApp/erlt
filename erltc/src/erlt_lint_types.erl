@@ -136,11 +136,11 @@ gather_state(Ast, St) ->
     [Module] = [M || {attribute, _, module, M} <- Ast],
     ExportedTypes = [
         {Type, {not_defined, Line}}
-        || {attribute, Line, export_type, List} <- Ast, Type <- List
+     || {attribute, Line, export_type, List} <- Ast, Type <- List
     ],
     ExportedFunctions = [
         {Fun, {no_spec_or_def, Line}}
-        || {attribute, Line, export, List} <- Ast, Fun <- List
+     || {attribute, Line, export, List} <- Ast, Fun <- List
     ],
     {TypeMap, St1} = find_duplicate_exports(ExportedTypes, type, St),
     {FunctionMap, St2} = find_duplicate_exports(ExportedFunctions, function, St1),
@@ -525,7 +525,7 @@ pack_errors(Es) ->
 pack_warnings(Ws) ->
     [
         {File, lists:sort([W || {F, W} <- Ws, F =:= File])}
-        || File <- lists:usort([F || {F, _} <- Ws])
+     || File <- lists:usort([F || {F, _} <- Ws])
     ].
 
 loc(Anno, St) ->
