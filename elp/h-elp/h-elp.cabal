@@ -17,76 +17,106 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:     ELP
-  -- other-modules:
+  exposed-modules:
+     ELP
+     ELP.Ide.Arguments
+     ELP.Ide.Main
+     ELP.Ide.Version
+  other-modules:    Paths_h_elp
+  autogen-modules:  Paths_h_elp
   -- other-extensions:
   build-depends:
        base >=4.13 && <4.15
-     , semantic-erlang
-     -- following needed because of https://github.com/alanz/lsp/issues/263
-     -- , constraints-extras == 0.3.0.2
-     -- , dependent-map == 0.4.0.0
-     -- , dependent-sum == 0.7.1.0
-     -- , dependent-sum-template == 0.1.0.3
-     , attoparsec
      , aeson >=1.2.2.0
-     , binary
-     , bytestring
-     , containers
-     , directory
-     , filepath
-     , fused-effects
-     , hashable
-     , hslogger
-     , lens >= 4.15.2
-     , lsp-test
-     , lsp-types
-     , rope-utf16-splay >= 0.3.2.0
-     , semantic-erlang
-     , semantic-ast
-     , semantic-source
-     , temporary
-     , text
-     , tree-sitter
-     , tree-sitter-elp
-  hs-source-dirs:      src
-  ghc-options:         -Wall
-  default-language:    Haskell2010
-
-executable h-elp
-  main-is:             Main.hs
-  -- other-extensions:
-  build-depends:
-       base >=4.13 && <4.15
-     -- temporary, putting src directory in hs-source-dirs for now
-     -- , h-elp
-
      , attoparsec
-     , aeson
      , binary
      , bytestring
      , containers
+     , data-default
      , directory
+     , extra
      , filepath
      , fused-effects
+     , ghcide >= 0.7.4.0
+     , gitrev
      , hashable
+     , hls-plugin-api
      , hslogger
      , lens >= 4.15.2
      , lsp
      , lsp-test
      , lsp-types
      , mtl
+     , optparse-applicative
+     , optparse-simple
+     , process
      , rope-utf16-splay >= 0.3.2.0
-     , semantic-erlang
+     , safe-exceptions
      , semantic-ast
+     , semantic-erlang
+     , semantic-erlang
      , semantic-source
+     , shake
      , temporary
      , text
      , tree-sitter
      , tree-sitter-elp
      , unliftio
      , unordered-containers
-  hs-source-dirs:      exe src
+     , with-utf8
+  hs-source-dirs:      src
+  -- ghc-options:         -Wall
+  ghc-options:         -rtsopts -with-rtsopts=-N -Wall
+  default-language:    Haskell2010
+
+executable h-elp
+  main-is:             Main.hs
+  -- other-extensions:
+  other-modules:    Plugins
+  hs-source-dirs:   exe src
+  -- hs-source-dirs:   exe
+  build-depends:
+       base >=4.13 && <4.15
+     -- temporary, putting src directory in hs-source-dirs for now
+     -- , h-elp
+
+     , aeson
+     , aeson >=1.2.2.0
+     , attoparsec
+     , binary
+     , bytestring
+     , containers
+     , data-default
+     , directory
+     , extra
+     , filepath
+     , fused-effects
+     , ghcide >= 0.7.4.0
+     , gitrev
+     , hashable
+     , hls-plugin-api
+     , hslogger
+     , lens >= 4.15.2
+     , lsp
+     , lsp-test
+     , lsp-types
+     , mtl
+     , optparse-applicative
+     , optparse-simple
+     , process
+     , rope-utf16-splay >= 0.3.2.0
+     , safe-exceptions
+     , semantic-ast
+     , semantic-erlang
+     , semantic-source
+     , shake
+     , temporary
+     , text
+     , tree-sitter
+     , tree-sitter-elp
+     , unliftio
+     , unordered-containers
+     , with-utf8
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   default-language:    Haskell2010
 

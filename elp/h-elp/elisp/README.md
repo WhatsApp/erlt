@@ -29,7 +29,7 @@ https://github.com/emacs-lsp/lsp-mode/issues/2566
 Put the locally built `h-elp` on the path as `h-elp-t`.
 
 ```bash
-sudo ln -s /Users/alanzimm/repos/WhatsApp/erlt/elp/h-elp/dist-newstyle/build/x86_64-osx/ghc-8.10.3/h-elp-0.1.0.0/x/h-elp/build/h-elp/h-elp /usr/local/bin/h-elp-t
+sudo ln -s ./dist-newstyle/build/x86_64-osx/ghc-8.8.4/h-elp-0.1.0.0/x/h-elp/build/h-elp/h-elp /usr/local/bin/h-elp-t
 ```
 
 Then customize `lsp-elp-server-path` to be `h-elp-t`

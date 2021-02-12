@@ -1,26 +1,36 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeInType #-}
 
 module ELP where
 
 import AST.Unmarshal
-  ( Unmarshal,
+  ( TSDiagnostic (..),
+    Unmarshal,
     UnmarshalAnn,
-    UnmarshalDiagnostics,
+    UnmarshalDiagnostics (..),
     UnmarshalError (getUnmarshalError),
     UnmarshalState (UnmarshalState, diagnostics),
     unmarshalNode,
   )
 import Control.Carrier.State.Strict (runState)
 import Control.Exception (catch)
+import Control.Lens (to, (^.))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.ByteString (ByteString)
+import qualified Data.Map as Map
 import Data.Rope.UTF16 (Rope, codeUnitsRowColumn)
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Rope.UTF16.Internal.Position as Rope
 import qualified Data.SplayTree as Rope
 import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
+import Development.IDE (IdeState (..))
+import Development.IDE.Core.Shake (IsIdeGlobal, addIdeGlobalExtras, getIdeGlobalExtras)
 import Foreign.C.String
   ( peekCString,
     withCStringLen,
@@ -29,15 +39,23 @@ import Foreign.Marshal.Alloc (alloca, free)
 import Foreign.Ptr (Ptr, castPtr, nullPtr, plusPtr)
 import Foreign.Storable (Storable (peek, poke))
 import GHC.Word (Word32)
+import Ide.Plugin.Config (Config)
+import Ide.Types (PluginDescriptor (..), PluginId, PluginNotificationMethodHandler, defaultPluginDescriptor, mkPluginNotificationHandler)
 import Language.Erlang.AST (SourceFile)
+import qualified Language.Erlang.AST as Erlang
+import Language.LSP.Diagnostics (partitionBySource)
+import Language.LSP.Server
 import Language.LSP.Types
-  ( Position (Position),
-    Range (Range),
-    TextDocumentContentChangeEvent (TextDocumentContentChangeEvent),
+import Language.LSP.Types.Lens as Lsp
+  ( HasUri (uri),
+    text,
+    textDocument,
   )
+import Language.LSP.VFS (VirtualFile (VirtualFile))
 import qualified Source.Range as S
 import qualified Source.Span as S
 import System.IO (hPutStrLn, stderr)
+import System.Log.Logger (infoM)
 import TreeSitter.Cursor (withCursor)
 import TreeSitter.Node
   ( Node (nodeTSNode),
@@ -61,6 +79,203 @@ import TreeSitter.Tree
     ts_tree_root_node_p,
     withRootNode,
   )
+
+-- ---------------------------------------------------------------------
+
+data ParserContext = ParserContext
+  { pcParser :: !(Ptr Parser),
+    pcsMap :: Map.Map NormalizedUri TsFile
+  }
+
+data TsFile = TsFile
+  { pcTree :: !(Ptr Tree),
+    pcNode :: !Node,
+    pcRope :: !Rope.Rope
+  }
+
+-- We store the Tree Sitter state in an Shake IdeGlobal, to avoid
+-- polluting the import space in ghcide.  It used Dynamic under the
+-- hood.
+instance IsIdeGlobal ParserContext
+
+-- ---------------------------------------------------------------------
+
+hlsPlugin :: PluginId -> PluginDescriptor IdeState
+hlsPlugin plId =
+  (defaultPluginDescriptor plId)
+    { pluginRules = mempty,
+      pluginCommands = [],
+      pluginNotificationHandlers =
+        mkPluginNotificationHandler STextDocumentDidOpen didOpen
+          <> mkPluginNotificationHandler STextDocumentDidChange didChange
+    }
+
+-- ---------------------------------------------------------------------
+
+-- PluginNotificationMethodHandler a m = a -> PluginId -> MessageParams m -> LspM Config ()
+didOpen :: PluginNotificationMethodHandler IdeState 'TextDocumentDidOpen
+didOpen cfg _pid params = do
+  let doc = params ^. textDocument . uri
+      fileName = uriToFilePath doc
+      docUri = toNormalizedUri doc
+  let aContent = params ^. textDocument . text
+  liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show fileName
+  mdoc <- getVirtualFile docUri
+  case mdoc of
+    Just (VirtualFile _lspversion vsn rope) -> do
+      liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
+      (ParserContext parser pcsmap) <- liftIO $ getIdeGlobalExtras (shakeExtras cfg) :: LspM Config ParserContext
+      -- mparser <- asks heParser
+      tree <- liftIO $ do
+        -- modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+        (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
+        sexp <- nodeAsSexpr node
+        liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
+        let pcsmap' = Map.insert docUri (TsFile tree node rope) pcsmap
+        -- return (ParserContext parser pcsmap', tree)
+        addIdeGlobalExtras (shakeExtras cfg) (ParserContext parser pcsmap')
+        return tree
+      reportDiagnostics docUri (Just 0) (Rope.fromText aContent) tree
+      return ()
+    Nothing -> do
+      liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
+
+-- return ()
+
+-- ---------------------------------------------------------------------
+
+-- PluginNotificationMethodHandler a m = a -> PluginId -> MessageParams m -> LspM Config ()
+didChange :: PluginNotificationMethodHandler IdeState 'TextDocumentDidChange
+didChange cfg _pid (DidChangeTextDocumentParams textDoc (List changeList)) = do
+  let doc = textDoc ^. uri . to toNormalizedUri
+  liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
+  -- logm "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
+  mdoc <- getVirtualFile doc
+  case mdoc of
+    Just (VirtualFile lspversion vsn ropeNew) -> do
+      liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
+      -- mparser <- asks heParser
+      (ParserContext parser pcsmap) <- liftIO $ getIdeGlobalExtras (shakeExtras cfg) :: LspM Config ParserContext
+      -- liftIO $ infoM "h-elp" "Got the parser"
+      tree <- liftIO $ do
+        -- modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
+        -- liftIO $ infoM "h-elp" "Got the mvar"
+        (tree, node) <- case Map.lookup doc pcsmap of
+          Nothing -> do
+            infoM "h-elp" "ParserContext not found, doing full parse"
+            treeSitterParseFull parser (Rope.toString ropeNew)
+          Just (TsFile tree node ropeOld) -> do
+            -- liftIO $ infoM "h-elp" "Got the TsFile"
+            -- TODO: fold over the changes
+            -- Question: Is this valid, given the rope has all the changes already?
+            -- TODO: update lsp/vfs to provide a callback on every change
+            case changeList of
+              [] -> do
+                infoM "h-elp" "No changes in didChange message"
+                return (tree, node)
+              [c] -> do
+                -- infoM "h-elp" $ "One change in didChange message:" ++ show c
+                parseChange ropeOld ropeNew parser tree c
+              _ -> do
+                infoM "h-elp" "Multiple changes in didChange message, doing full parse"
+                treeSitterParseFull parser (Rope.toString ropeNew)
+        -- infoM "h-elp" "Got (tree,node)"
+        sexp <- nodeAsSexpr node
+        liftIO $ infoM "h-elp" $ "parsed to: " ++ show sexp
+        let pcsmap' = Map.insert doc (TsFile tree node ropeNew) pcsmap
+        -- return (ParserContext parser pcsmap', tree)
+        addIdeGlobalExtras (shakeExtras cfg) (ParserContext parser pcsmap')
+        return tree
+      reportDiagnostics doc (Just lspversion) ropeNew tree
+      liftIO $ infoM "h-elp" "DidChange done"
+      return ()
+    Nothing -> do
+      liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
+
+-- ---------------------------------------------------------------------
+
+reportDiagnostics ::
+  MonadLsp config m =>
+  NormalizedUri ->
+  TextDocumentVersion ->
+  Rope.Rope ->
+  Ptr Tree ->
+  m ()
+reportDiagnostics fileUri version rope tree = do
+  diags <- liftIO $ makeDiagnostics rope tree
+  -- liftIO $ pp $ "reportDiagnostics:diags=" ++ show diags
+  sendDiagnostics fileUri version diags
+
+makeDiagnostics :: Rope.Rope -> Ptr Tree -> IO [Diagnostic]
+makeDiagnostics rope tree = do
+  -- mr <- treeToAstBare (encodeUtf8 $ Rope.toText rope) tree
+  mr <- treeToAstText (encodeUtf8 $ Rope.toText rope) tree
+  case mr of
+    Right (UnmarshalDiagnostics diags, Erlang.SourceFile a _) -> do
+      let bar = concatMap snd diags
+          lspDiags = map (toDiagnostic . \(p, d) -> (offsetsToRange rope p, d)) bar
+          astDiag = textDiagnostic a
+      return (astDiag : lspDiags)
+    Left err -> return [textDiagnostic (T.pack $ "treeToAst:" <> err)]
+
+toDiagnostic :: (Range, TSDiagnostic) -> Diagnostic
+toDiagnostic (range, diag) =
+  Diagnostic
+    range
+    (Just DsWarning) -- severity
+    Nothing -- code
+    (Just "ELP") -- source
+    (T.pack $ show diag)
+    Nothing -- tags
+    (Just (List []))
+
+textDiagnostic :: T.Text -> Diagnostic
+textDiagnostic msg =
+  Diagnostic
+    (Range (Position 1 1) (Position 1 5))
+    (Just DsWarning) -- severity
+    Nothing -- code
+    (Just "ELP") -- source
+    msg
+    Nothing -- tags
+    (Just (List []))
+
+sendDiagnostics ::
+  MonadLsp config m =>
+  NormalizedUri ->
+  TextDocumentVersion ->
+  [Diagnostic] ->
+  m ()
+sendDiagnostics fileUri version diags = do
+  -- liftIO $ pp $ "sendDiagnostics:(fileUri,version,diags)=" ++ show (fileUri, version, diags)
+  publishDiagnostics 100 fileUri version (partitionBySource diags)
+
+-- ---------------------------------------------------------------------
+
+-- | Analyze the file and send any diagnostics to the client in a
+-- "textDocument/publishDiagnostics" notification
+-- sendDiagnostics :: NormalizedUri -> Maybe Int -> LspM Config ()
+sendDiagnosticsMessage :: MonadLsp config m => NormalizedUri -> TextDocumentVersion -> T.Text -> m ()
+sendDiagnosticsMessage fileUri version msg = do
+  let diags =
+        [ Diagnostic
+            (Range (Position 0 1) (Position 0 5))
+            (Just DsWarning) -- severity
+            Nothing -- code
+            (Just "ELP") -- source
+            msg
+            Nothing -- tags
+            (Just (List []))
+        ]
+  publishDiagnostics 100 fileUri version (partitionBySource diags)
+
+-- ---------------------------------------------------------------------
+
+-- data Config = Config {fooTheBar :: Bool, wibbleFactor :: Int}
+--   deriving (Generic, ToJSON, FromJSON)
+
+-- defaultConfig :: Config
+-- defaultConfig = Config True 0
 
 -- ---------------------------------------------------------------------
 
@@ -207,8 +422,9 @@ vfsReadFunction ppayload offset ppos lenPtr = do
   str <- peekCString pstr
   hPutStrLn stderr $ "******vfsReadFunction str=[" ++ show str ++ "]"
   len <- withCStringLen str $ \(_s, l) -> return l
+  pp $ "******vfsReadFunction (pstr, len)=" ++ show (pstr, len)
   poke lenPtr (fromIntegral len)
-  -- pp $ "******vfsReadFunction ending=" ++ show (pstr, len)
+  pp "******vfsReadFunction ending="
   return pstr
 
 -- ---------------------------------------------------------------------

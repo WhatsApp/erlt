@@ -9,11 +9,11 @@ And modelled on [haskell-language-server](https://github.com/haskell/haskell-lan
 
 ## Compiling
 
-### Install GHC 8.10.3
+### Install GHC
 
 Install ghcup via https://www.haskell.org/ghcup/
 
-Run `ghcup tui` and install GHC 8.10.3 (and HLS, optional)
+Run `ghcup tui` and install GHC 8.8.4 (and HLS, optional)
 
 ```
 cabal update

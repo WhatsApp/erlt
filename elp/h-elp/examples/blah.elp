@@ -1,4 +1,13 @@
 -module(foo).
--(x).
+
+-x(x).
 -ff(floog).
 -c(x).
+
+%% blah() ->
+%%     ok.
+vvvv() ->
+    4.
+yy() .
+
+x

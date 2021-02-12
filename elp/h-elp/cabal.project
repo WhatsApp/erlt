@@ -1,33 +1,58 @@
 packages: .
           tree-sitter-elp
           semantic-erlang
-          -- ../../../../tree-sitter/haskell-tree-sitter/tree-sitter
-          -- ../../../../github/semantic/semantic-ast
-          -- ../../../../github/semantic/semantic-tags
-          -- ../../../../github/semantic/semantic-proto
+          ../../../../tree-sitter/haskell-tree-sitter/tree-sitter
+          ../../../../github/semantic/semantic-ast
+          ../../../../github/semantic/semantic-tags
+          ../../../../github/semantic/semantic-proto
 
-source-repository-package
-    type: git
-    location: https://github.com/alanz/haskell-tree-sitter.git
-    tag: 4cdaa7b04d835748d1c9ac8c8076b79b5feedc94
-    subdir: tree-sitter
 
-source-repository-package
-    type: git
-    location: https://github.com/alanz/semantic.git
-    tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
-    subdir: semantic-ast
+          ../../../../haskell/haskell-language-server/
+          ../../../../haskell/haskell-language-server/hie-compat
+          ../../../../haskell/haskell-language-server/shake-bench
+          ../../../../haskell/haskell-language-server/ghcide
+          ../../../../haskell/haskell-language-server/hls-plugin-api
+          ../../../../haskell/haskell-language-server/plugins/hls-tactics-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-class-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-eval-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-explicit-imports-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-hlint-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-retrie-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-haddock-comments-plugin
+          ../../../../haskell/haskell-language-server/plugins/hls-splice-plugin
+          ../../../../alanz/lsp/
+          ../../../../alanz/lsp/lsp-types
+          ../../../../bubba/lsp-test
 
-source-repository-package
-    type: git
-    location: https://github.com/alanz/semantic.git
-    tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
-    subdir: semantic-tags
+-- source-repository-package
+--     type: git
+--     location: https://github.com/alanz/haskell-tree-sitter.git
+--     tag: 4cdaa7b04d835748d1c9ac8c8076b79b5feedc94
+--     subdir: tree-sitter
 
-source-repository-package
-    type: git
-    location: https://github.com/alanz/semantic.git
-    tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
-    subdir: semantic-proto
+-- source-repository-package
+--     type: git
+--     location: https://github.com/alanz/semantic.git
+--     tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
+--     subdir: semantic-ast
 
-index-state:2021-02-08T08:52:23Z
+-- source-repository-package
+--     type: git
+--     location: https://github.com/alanz/semantic.git
+--     tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
+--     subdir: semantic-tags
+
+-- source-repository-package
+--     type: git
+--     location: https://github.com/alanz/semantic.git
+--     tag: 0b09d4d1df8158117cb4c8fdd4795b988dbfa2f4
+--     subdir: semantic-proto
+
+allow-newer:
+            aeson
+--             diagrams-svg
+
+constraints: 
+             haskell-language-server -agpl -all-formatters -all-plugins -brittany -class -eval -floskell -fourmolu -haddockcomments -hlint -importlens -modulename -ormolu -pedantic -pragmas -retrie -splice -stylishhaskell -tactic
+
+index-state: 2021-02-12T08:14:07Z
