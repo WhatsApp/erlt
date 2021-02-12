@@ -56,14 +56,10 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
       case CCall(_, m, f, args) =>
         m <> ":" <> f <> parens(cerlsToDoc(args))
       case CCase(_, sel, clauses) =>
-        softbreak <> "case" <+> sel <+> "of" <+> (if (clauses.isEmpty) "{}"
-                                                  else
-                                                    block(
-                                                      vsep(
-                                                        clauses map (doc(_)),
-                                                        ";"
-                                                      )
-                                                    ))
+        val clausesDoc: Doc =
+          if (clauses.isEmpty) "{}"
+          else block(vsep(clauses map (doc(_)), ";"))
+        softbreak <> "case" <+> sel <+> "of" <+> clausesDoc
       case CCatch(_, body) => "catch" <+> body
       case CClause(_, pats, guard, body) =>
         val left: Doc =
