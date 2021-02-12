@@ -8,42 +8,42 @@
 
 :: fun((term()) -> {A, A})
 f01/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: {A, A}, Got: term()
+    case var0 of { X when true -> X }                        | X. Expected: {A, A}, Got: term()
 }
 
 :: fun((term()) -> atom())
 f02/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: atom(), Got: term()
+    case var0 of { X when true -> X }                        | X. Expected: atom(), Got: term()
 }
 
 :: fun((fun((atom()) -> term())) -> fun((term()) -> atom()))
 f03/1 = fun (var0) {
-    case var0 of {  F when true -> F }                       | F. Expected: fun((term()) -> atom()), Got: fun((atom()) -> term())
+    case var0 of { F when true -> F }                        | F. Expected: fun((term()) -> atom()), Got: fun((atom()) -> term())
 }
 
 :: fun(('a' | 'b' | 'c') -> 'a' | 'b')
 f04/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: 'a' | 'b', Got: 'a' | 'b' | 'c'
+    case var0 of { X when true -> X }                        | X. Expected: 'a' | 'b', Got: 'a' | 'b' | 'c'
 }
 
 :: fun(('a' | 'b') -> none() | none())
 f05/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: none() | none(), Got: 'a' | 'b'
+    case var0 of { X when true -> X }                        | X. Expected: none() | none(), Got: 'a' | 'b'
 }
 
 :: fun(({'a' | 'b', 'a' | 'b'}) -> {'a', 'b'} | {'b', 'a'})
 f06/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: {'a', 'b'} | {'b', 'a'}, Got: {'a' | 'b', 'a' | 'b'}
+    case var0 of { X when true -> X }                        | X. Expected: {'a', 'b'} | {'b', 'a'}, Got: {'a' | 'b', 'a' | 'b'}
 }
 
 :: fun((pair_ab()) -> pair_diff_elems())
 f07/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: {'a', 'b'} | {'b', 'a'}, Got: {'a' | 'b', 'a' | 'b'}
+    case var0 of { X when true -> X }                        | X. Expected: {'a', 'b'} | {'b', 'a'}, Got: {'a' | 'b', 'a' | 'b'}
 }
 
 :: fun(({none(), none()}) -> none())
 f08/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: none(), Got: {none(), none()}
+    case var0 of { X when true -> X }                        | X. Expected: none(), Got: {none(), none()}
 }
 
 module_info/0 = fun () {

@@ -15,7 +15,7 @@ test_env_pos/1 = fun (var0) {
     case var0 of {
         X when true -> let var1 = case <> of {
                 <> when erlang:is_atom(X) -> X
-            } in {  let Y = var1 in {  {X, Y} } }
+            } in { let Y = var1 in { {X, Y} } }
     }
 }
 

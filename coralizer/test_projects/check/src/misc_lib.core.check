@@ -5,7 +5,7 @@
 
 :: fun(('false' | 'true') -> 'false' | 'true')
 boolean_id/1 = fun (var0) {
-    case var0 of {  B when true -> B }
+    case var0 of { B when true -> B }
 }
 
 module_info/0 = fun () {

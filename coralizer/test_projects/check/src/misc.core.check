@@ -5,27 +5,27 @@
 
 :: fun((term()) -> number())
 test01/1 = fun (var0) {
-    case var0 of {  X=-4 when true -> X }
+    case var0 of { X=-4 when true -> X }
 }
 
 :: fun((term()) -> number())
 test02/1 = fun (var0) {
-    case var0 of {  Y=2.0 when true -> Y }
+    case var0 of { Y=2.0 when true -> Y }
 }
 
 :: fun((term()) -> atom())
 test03_neg/1 = fun (var0) {
-    case var0 of {  X=-4 when true -> X }                    | X. Expected: atom(), Got: number()
+    case var0 of { X=-4 when true -> X }                     | X. Expected: atom(), Got: number()
 }
 
 :: fun((term()) -> atom())
 test04_neg/1 = fun (var0) {
-    case var0 of {  Y=2.0 when true -> Y }                   | Y. Expected: atom(), Got: number()
+    case var0 of { Y=2.0 when true -> Y }                    | Y. Expected: atom(), Got: number()
 }
 
 :: fun((term()) -> term())
 test05_neg/1 = fun (var0) {
-    case var0 of {  X when true -> erlang:+(X) }
+    case var0 of { X when true -> erlang:+(X) }
 }
 
 :: fun((term()) -> atom())
@@ -37,7 +37,7 @@ test06_neg/1 = fun (var0) {
 
 :: fun(('false' | 'true') -> atom())
 test07/1 = fun (var0) {
-    case var0 of {  X when true -> erlang:not(X) }
+    case var0 of { X when true -> erlang:not(X) }
 }
 
 :: fun(('false' | 'true') -> number())
@@ -54,7 +54,7 @@ test09/2 = fun (var0, var1) {
                 let var3 = erlang:is_number(Y) in {
                     erlang:and(var2, var3)
                 }
-            } of {  Try -> Try }
+            } of { Try -> Try }
         catch {
             T, R -> false
         }
@@ -78,7 +78,7 @@ test11_neg/2 = fun (var0, var1) {
 
 :: fun((atom()) -> number())
 test12_neg/1 = fun (var0) {
-    case var0 of {  X when true -> erlang:-(X) }
+    case var0 of { X when true -> erlang:-(X) }
 }
 
 :: fun((term(), term()) -> 'false' | 'true')
@@ -92,8 +92,8 @@ test13_neg/2 = fun (var0, var1) {
 test14/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when true -> case X of {
-                true when true -> true
-                false when true -> Y
+                true when true -> true;
+                false when true -> Y;
                 var2 when true -> erlang:error({badarg, var2})
             }
     }
@@ -103,8 +103,8 @@ test14/2 = fun (var0, var1) {
 test15/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when true -> case X of {
-                true when true -> Y
-                false when true -> false
+                true when true -> Y;
+                false when true -> false;
                 var2 when true -> erlang:error({badarg, var2})
             }
     }
@@ -128,8 +128,8 @@ test17_neg/2 = fun (var0, var1) {
 test18_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when true -> case X of {
-                true when true -> true                       | 'true'. Expected: number(), Got: 'true'
-                false when true -> Y
+                true when true -> true;                      | 'true'. Expected: number(), Got: 'true'
+                false when true -> Y;
                 var2 when true -> erlang:error({badarg, var2})
             }
     }
@@ -139,8 +139,8 @@ test18_neg/2 = fun (var0, var1) {
 test19_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when true -> case X of {
-                true when true -> Y                          | Y. Expected: {number()}, Got: number()
-                false when true -> false
+                true when true -> Y;                         | Y. Expected: {number()}, Got: number()
+                false when true -> false;
                 var2 when true -> erlang:error({badarg, var2})
             }
     }
@@ -186,30 +186,30 @@ test23_neg/2 = fun (var0, var1) {
 test24_neg/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when true -> let var4 = case X of {           | let .... Expected: [number()], Got: [atom()]
-                true when true -> true
-                false when true -> Y
+                true when true -> true;
+                false when true -> Y;
                 var2 when true -> erlang:error({badarg, var2})
-            } in {  [var4 | []] }
+            } in { [var4 | []] }
     }
 }
 
 :: fun((['false' | 'true']) -> 'false' | 'true' | 'undefined')
 test25_pos/1 = fun (var0) {
     case var0 of {
-        [] when true -> undefined
-        [X | []] when true -> X
+        [] when true -> undefined;
+        [X | []] when true -> X;
         [var2 | T] when true -> test25_pos/1(T)
     }
 }
 
 :: fun((X) -> X)
 test26_pos/1 = fun (var0) {
-    case var0 of {  X when true -> X }
+    case var0 of { X when true -> X }
 }
 
 :: fun((X) -> [X])
 test27_pos/1 = fun (var0) {
-    case var0 of {  X when true -> [X | []] }
+    case var0 of { X when true -> [X | []] }
 }
 
 :: fun((atom()) -> 'false' | 'true')
@@ -228,7 +228,7 @@ test29_neg/0 = fun () {
 
 :: fun(() -> 'atom')
 test30_neg/0 = fun () {
-    case <> of {  <> when true -> 1 }                        | 1. Expected: 'atom', Got: number()
+    case <> of { <> when true -> 1 }                         | 1. Expected: 'atom', Got: number()
 }
 
 :: fun(() -> 'atom')
@@ -286,7 +286,7 @@ test37_pos/2 = fun (var0, var1) {
     case <var0, var1> of {
         <X, Y> when try let var2 = erlang:+(X, Y) in {
                 erlang:>(var2, 0)
-            } of {  Try -> Try }
+            } of { Try -> Try }
         catch {
             T, R -> false
         }
@@ -299,7 +299,7 @@ test38_pos/1 = fun (var0) {
     case var0 of {
         X when try let var1 = erlang:bnot(X) in {
                 erlang:>(var1, 0)
-            } of {  Try -> Try }
+            } of { Try -> Try }
         catch {
             T, R -> false
         }
@@ -310,24 +310,24 @@ test38_pos/1 = fun (var0) {
 :: fun(({atom(), atom()} | number()) -> {atom(), atom()})
 test39_pos/1 = fun (var0) {
     case var0 of {
-        {X, Y} when true -> {X, Y}
+        {X, Y} when true -> {X, Y};
         var2 when true -> {a, b}
     }
 }
 
 :: fun((number()) -> {none(), none()})
 test40_pos/1 = fun (var0) {
-    case var0 of {  {X, Y} when true -> {X, Y} }
+    case var0 of { {X, Y} when true -> {X, Y} }
 }
 
 :: fun((number()) -> {none(), [none()]})
 test41_pos/1 = fun (var0) {
-    case var0 of {  [X | Y] when true -> {X, Y} }
+    case var0 of { [X | Y] when true -> {X, Y} }
 }
 
 :: fun((term()) -> {term(), [term()]})
 test42_pos/1 = fun (var0) {
-    case var0 of {  [X | Y] when true -> {X, Y} }
+    case var0 of { [X | Y] when true -> {X, Y} }
 }
 
 :: fun((term()) -> none())
@@ -335,7 +335,7 @@ test43_pos/1 = fun (var0) {
     case var0 of {
         [var3 | Y] when try let var1 = erlang:+(Y, 1) in {
                 erlang:>(var1, 0)
-            } of {  Try -> Try }
+            } of { Try -> Try }
         catch {
             T, R -> false
         }
@@ -347,11 +347,11 @@ test43_pos/1 = fun (var0) {
 test44_neg/1 = fun (var0) {
     case var0 of {
         X when true -> let var4, Z = case X of {
-                Z when true -> <ok, Z>
+                Z when true -> <ok, Z>;
                 var1 when true -> let var3 = primop:match_fail({case_clause, var1}) in {
                         <var3, []>
                     }
-            } in {  Z }
+            } in { Z }
     }
 }
 
@@ -361,22 +361,22 @@ test45_neg/1 = fun (var0) {
         X when true -> let var6, Z = case X of {
                 var4 when true -> let Z = ok in {
                         <Z, Z>
-                    }
+                    };
                 var2 when true -> let var5 = primop:match_fail({case_clause, var2}) in {
                         <var5, []>
                     }
-            } in {  Z }
+            } in { Z }
     }
 }
 
 :: fun(() -> number())
 test46_neg/0 = fun () {
-    case <> of {  <> when true -> false }                    | 'false'. Expected: number(), Got: 'false'
+    case <> of { <> when true -> false }                     | 'false'. Expected: number(), Got: 'false'
 }
 
 :: fun(() -> number())
 test47_neg/0 = fun () {
-    case <> of {  <> when true -> [] }                       | []. Expected: number(), Got: []
+    case <> of { <> when true -> [] }                        | []. Expected: number(), Got: []
 }
 
 :: fun(() -> atom())
@@ -402,12 +402,12 @@ test50_pos/0 = fun () {
 
 :: fun(() -> number())
 test51_pos/0 = fun () {
-    case <> of {  <> when true -> test47_neg/0() }
+    case <> of { <> when true -> test47_neg/0() }
 }
 
 :: fun(() -> fun(() -> number()))
 test52_pos/0 = fun () {
-    case <> of {  <> when true -> test47_neg/0 }
+    case <> of { <> when true -> test47_neg/0 }
 }
 
 :: fun(() -> fun(() -> number()))
@@ -418,7 +418,7 @@ test53_pos/0 = fun () {
 }
 
 test54_unspecced/0 = fun () {
-    case <> of {  <> when true -> ok }
+    case <> of { <> when true -> ok }
 }
 
 :: fun(() -> fun(() -> number()))
@@ -439,7 +439,7 @@ test56_neg/0 = fun () {
 test57_pos/0 = fun () {
     case <> of {
         <> when true -> let A = atom in {
-                let N = 1 in {  {A, N} }
+                let N = 1 in { {A, N} }
             }
     }
 }
@@ -448,9 +448,9 @@ test57_pos/0 = fun () {
 test58_pos/3 = fun (var0, var1, var2) {
     case <var0, var1, var2> of {
         <B, A, N> when true -> let var3 = case <> of {
-                <> when erlang:=:=(B, true) -> A
+                <> when erlang:=:=(B, true) -> A;
                 <> when true -> N
-            } in {  let Res = var3 in {  Res } }
+            } in { let Res = var3 in { Res } }
     }
 }
 
@@ -503,7 +503,7 @@ test63_pos/0 = fun () {
 test64_pos/0 = fun () {
     case <> of {
         <> when true -> let var0 = test47_neg/0 in {
-                let Fun = var0 in {  Fun }
+                let Fun = var0 in { Fun }
             }
     }
 }
@@ -511,7 +511,7 @@ test64_pos/0 = fun () {
 :: fun(() -> [term()])
 test65_pos/0 = fun () {
     case <> of {
-        <> when true -> let L = [] in {  L }
+        <> when true -> let L = [] in { L }
     }
 }
 
@@ -543,12 +543,12 @@ test67_pos/2 = fun (var0, var1) {
 
 :: fun(({atom()}) -> none())
 test68_pos/1 = fun (var0) {
-    case var0 of {  {E, var2} when true -> E }
+    case var0 of { {E, var2} when true -> E }
 }
 
 :: fun(([atom()] | [number()]) -> [atom() | number()])
 test69_pos/1 = fun (var0) {
-    case var0 of {  [H | T] when true -> [H | T] }
+    case var0 of { [H | T] when true -> [H | T] }
 }
 
 :: fun(() -> [atom() | number()])
@@ -583,7 +583,7 @@ test73_pos/0 = fun () {
 test74_pos/0 = fun () {
     case <> of {
         <> when true -> let var0 = catch test69_pos/1([atom | []]) in {
-                let X = var0 in {  X }
+                let X = var0 in { X }
             }
     }
 }
@@ -623,7 +623,7 @@ test75_pos/0 = fun () {
 :: fun((term()) -> atom())
 test76_pos/1 = fun (var0) {
     case var0 of {
-        A when erlang:is_atom(A) -> A
+        A when erlang:is_atom(A) -> A;
         var2 when true -> erlang:throw({error, not_an_atom})
     }
 }

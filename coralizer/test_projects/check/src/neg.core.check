@@ -5,13 +5,12 @@
 
 :: fun((A) -> A)
 foo/1 = fun (var0) {
-    case var0 of {  X when true -> {X, X}                    | {X, X}. Expected: A, Got: {A, A}
-    }
+    case var0 of { X when true -> {X, X} }                   | {X, X}. Expected: A, Got: {A, A}
 }
 
 :: fun((atom()) -> number())
 atom_id_e/1 = fun (var0) {
-    case var0 of {  X when true -> X }                       | X. Expected: number(), Got: atom()
+    case var0 of { X when true -> X }                        | X. Expected: number(), Got: atom()
 }
 
 :: fun((term(), A) -> A)

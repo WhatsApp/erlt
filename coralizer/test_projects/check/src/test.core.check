@@ -6,7 +6,7 @@
 clauses/1 = fun (var0) {
     case var0 of {
         X when true -> case X of {
-                1 when true -> 1
+                1 when true -> 1;
                 1 when true -> ok
             }
     }

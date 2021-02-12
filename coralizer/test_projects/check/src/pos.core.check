@@ -5,33 +5,32 @@
 
 :: fun((atom()) -> atom())
 atom_id1/1 = fun (var0) {
-    case var0 of {  X when true -> X }
+    case var0 of { X when true -> X }
 }
 
 :: fun((atom()) -> term())
 atom_pat/1 = fun (var0) {
-    case var0 of {  1 when true -> ok }
+    case var0 of { 1 when true -> ok }
 }
 
 :: fun(() -> atom())
 atom_lit/0 = fun () {
-    case <> of {  <> when true -> ok }
+    case <> of { <> when true -> ok }
 }
 
 :: fun(() -> number())
 char_lit/0 = fun () {
-    case <> of {  <> when true -> 65 }
+    case <> of { <> when true -> 65 }
 }
 
 :: fun(() -> [atom()])
 nil_lit/0 = fun () {
-    case <> of {  <> when true -> [] }
+    case <> of { <> when true -> [] }
 }
 
 :: fun(() -> {atom()})
 block_example/0 = fun () {
-    case <> of {  <> when true -> block , {block}
-    }
+    case <> of { <> when true -> block , {block} }
 }
 
 :: fun(() -> {'match'})
@@ -49,7 +48,7 @@ match_example/0 = fun () {
 clauses/1 = fun (var0) {
     case var0 of {
         X when true -> case X of {
-                1 when true -> 1
+                1 when true -> 1;
                 1 when true -> ok
             }
     }
