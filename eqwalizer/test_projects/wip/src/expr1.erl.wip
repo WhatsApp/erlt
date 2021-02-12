@@ -159,7 +159,7 @@
 159                                          |         |                                | 
 160 record_index_pat(#test_rec.id) -> test_r…… LOADED  |                                | 
 161                                          |         |                                | 
-162 map_pat(#{id := X}) -> id.               | SKIPPED | P: #{...}                      | 
+162 map_pat(#{id := X}) -> id.               | LOADED  |                                | 
 163                                          |         |                                | 
 164 %%% Guards                               |         |                                | 
 165                                          |         |                                | 

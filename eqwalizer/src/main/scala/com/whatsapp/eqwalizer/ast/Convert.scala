@@ -497,12 +497,17 @@ object Convert {
         PatRecord(name, eFields.map(convertPatRecordField))(l.intValue)
       case ETuple(List(EAtom("record_index"), ELong(l), EAtom(name), eFieldName)) =>
         PatRecordIndex(name, atomLit(eFieldName))(l.intValue)
-      case ETuple(List(EAtom("map"), ELong(l), _)) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.PatMap)
+      case ETuple(List(EAtom("map"), ELong(l), EList(kvs, None))) =>
+        PatMap(kvs.map(convertPatKV))(l.intValue)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$
     }
+
+  private def convertPatKV(term: EObject): (Pat, Pat) = {
+    val ETuple(List(EAtom("map_field_exact"), _, pat1, pat2)) = term
+    (convertPat(pat1), convertPat(pat2))
+  }
 
   private def convertPatRecordField(term: EObject): PatRecordField = {
     val ETuple(List(EAtom("record_field"), _, eName, ePat)) = term

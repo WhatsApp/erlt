@@ -276,3 +276,120 @@ shapeab_neg(X) ->
 shape_ab(X) ->
     needs_shape_a(X),
     needs_shape_ab(X#{b => hello}).
+
+-spec slice_map(#{a() => n()} | [a()])
+    -> #{a() => n()}.
+slice_map(#{} = M) -> M;
+slice_map(_) -> #{}.
+
+-spec get_kv(any(), #{a() => n()})
+    -> {a(), n()}.
+get_kv(K, M) ->
+    case M of
+        #{K := V} -> {K, V};
+        _ -> {not_found, 0}
+    end.
+
+-spec get_kv_neg(any(), #{a() => n()})
+        -> {n(), a()}.
+get_kv_neg(K, M) ->
+    case M of
+        #{K := V} -> {K, V};
+        _ -> {0, not_found}
+    end.
+
+-spec f_shape1(#{a => a(), n => n()})
+    -> {n(), a()}.
+f_shape1(#{a := A, n := N}) ->
+    {N, A};
+f_shape1(#{a := A}) -> {0, A};
+f_shape1(#{n := N}) -> {N, n}.
+
+-spec f_shape2_neg(#{a => a(), n => n()})
+        -> {n(), a()}.
+f_shape2_neg(#{a := A, n := N}) ->
+    {A, N}.
+
+-spec to_map1(any()) -> map().
+to_map1(#{} = M) -> M;
+to_map1(_) -> #{}.
+
+-spec to_map2(#{K => V} | {K, V})
+    -> #{K => V}.
+to_map2(#{} = M) -> M;
+to_map2({K, V}) -> #{K => V}.
+
+-spec to_map3_neg(#{V => K} | {K, V})
+        -> #{K => V}.
+to_map3_neg(#{} = M) -> M;
+to_map3_neg({K, V}) -> #{K => V}.
+
+-spec to_map4(
+    #{a() => n()}
+    | #{n() => a()}
+    | #{id => id | no_id}
+    | {}
+) -> #{a() | n() => a() | n()}.
+to_map4(#{} = M) -> M.
+
+-spec to_map5_neg(
+    #{a() => n()}
+    | #{n() => a()}
+    | #{id => id | no_id}
+    | {}
+) -> #{a() | n() => a()}.
+to_map5_neg(#{} = M) -> M.
+
+-spec no_map(
+    [] | {}
+) -> none().
+no_map(#{} = M) -> M.
+
+-spec no_prop(
+    #{a := a(), b := b()}
+) -> none().
+no_prop(#{foo := V}) -> V.
+
+-spec shape_atom_key(
+    any(), #{a := a(), b := b()}
+) -> {a(), a()}.
+shape_atom_key(K, Shape) ->
+    case Shape of
+        #{K := V} -> {K, V};
+        _ -> {undef, undef}
+    end.
+
+-spec shape_atom_key_neg(
+    any(), #{a := a(), b := b()}
+) -> {n(), a()}.
+shape_atom_key_neg(K, Shape) ->
+    case Shape of
+        #{K := V} -> {K, V};
+        _ -> {0, undef}
+    end.
+
+-spec no_kv_neg(
+    K, [{K, V}]
+) -> {K, V}.
+no_kv_neg(K, Props) ->
+    case Props of
+        #{K := V} -> {K, V}
+    end.
+
+-spec k_union1(
+    any(), #{K1 => any()} | #{K2 => any()}
+) -> K1 | K2 | undefined.
+k_union1(K, Dict) ->
+    case Dict of
+        #{K := _} -> K;
+        _ -> undefined
+    end.
+
+-spec no_key(
+    any(), a() | [{a(), any()}]
+) -> undefined.
+no_key(K, Dict) ->
+    case Dict of
+        #{K := _} -> K;
+        _ -> undefined
+    end.

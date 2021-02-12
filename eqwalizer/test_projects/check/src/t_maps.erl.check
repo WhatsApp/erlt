@@ -276,3 +276,120 @@
 276 shape_ab(X) ->                             | OK      | 
 277     needs_shape_a(X),                      |         | 
 278     needs_shape_ab(X#{b => hello}).        |         | 
+279                                            |         | 
+280 -spec slice_map(#{a() => n()} | [a()])     |         | 
+281     -> #{a() => n()}.                      |         | 
+282 slice_map(#{} = M) -> M;                   | OK      | 
+283 slice_map(_) -> #{}.                       |         | 
+284                                            |         | 
+285 -spec get_kv(any(), #{a() => n()})         |         | 
+286     -> {a(), n()}.                         |         | 
+287 get_kv(K, M) ->                            | OK      | 
+288     case M of                              |         | 
+289         #{K := V} -> {K, V};               |         | 
+290         _ -> {not_found, 0}                |         | 
+291     end.                                   |         | 
+292                                            |         | 
+293 -spec get_kv_neg(any(), #{a() => n()})     |         | 
+294         -> {n(), a()}.                     |         | 
+295 get_kv_neg(K, M) ->                        | ERROR   | 
+296     case M of                              |         | 
+297         #{K := V} -> {K, V};               |         | {K, V}. Expected: {number(), atom()}, Got: {atom(), number()}
+298         _ -> {0, not_found}                |         | 
+299     end.                                   |         | 
+300                                            |         | 
+301 -spec f_shape1(#{a => a(), n => n()})      |         | 
+302     -> {n(), a()}.                         |         | 
+303 f_shape1(#{a := A, n := N}) ->             | OK      | 
+304     {N, A};                                |         | 
+305 f_shape1(#{a := A}) -> {0, A};             |         | 
+306 f_shape1(#{n := N}) -> {N, n}.             |         | 
+307                                            |         | 
+308 -spec f_shape2_neg(#{a => a(), n => n()})  |         | 
+309         -> {n(), a()}.                     |         | 
+310 f_shape2_neg(#{a := A, n := N}) ->         | ERROR   | 
+311     {A, N}.                                |         | {A, N}. Expected: {number(), atom()}, Got: {atom(), number()}
+312                                            |         | 
+313 -spec to_map1(any()) -> map().             |         | 
+314 to_map1(#{} = M) -> M;                     | OK      | 
+315 to_map1(_) -> #{}.                         |         | 
+316                                            |         | 
+317 -spec to_map2(#{K => V} | {K, V})          |         | 
+318     -> #{K => V}.                          |         | 
+319 to_map2(#{} = M) -> M;                     | OK      | 
+320 to_map2({K, V}) -> #{K => V}.              |         | 
+321                                            |         | 
+322 -spec to_map3_neg(#{V => K} | {K, V})      |         | 
+323         -> #{K => V}.                      |         | 
+324 to_map3_neg(#{} = M) -> M;                 | ERROR   | M. Expected: #D{K => V}, Got: #D{V => K}
+325 to_map3_neg({K, V}) -> #{K => V}.          |         | 
+326                                            |         | 
+327 -spec to_map4(                             |         | 
+328     #{a() => n()}                          |         | 
+329     | #{n() => a()}                        |         | 
+330     | #{id => id | no_id}                  |         | 
+331     | {}                                   |         | 
+332 ) -> #{a() | n() => a() | n()}.            |         | 
+333 to_map4(#{} = M) -> M.                     | OK      | 
+334                                            |         | 
+335 -spec to_map5_neg(                         |         | 
+336     #{a() => n()}                          |         | 
+337     | #{n() => a()}                        |         | 
+338     | #{id => id | no_id}                  |         | 
+339     | {}                                   |         | 
+340 ) -> #{a() | n() => a()}.                  |         | 
+341 to_map5_neg(#{} = M) -> M.                 | ERROR   | M. Expected: #D{atom() | number() => atom()}, Got: #D{atom() => number()} | #D{number() => atom()} | #S{id => 'id' | '……
+342                                            |         | 
+343 -spec no_map(                              |         | 
+344     [] | {}                                |         | 
+345 ) -> none().                               |         | 
+346 no_map(#{} = M) -> M.                      | OK      | 
+347                                            |         | 
+348 -spec no_prop(                             |         | 
+349     #{a := a(), b := b()}                  |         | 
+350 ) -> none().                               |         | 
+351 no_prop(#{foo := V}) -> V.                 | OK      | 
+352                                            |         | 
+353 -spec shape_atom_key(                      |         | 
+354     any(), #{a := a(), b := b()}           |         | 
+355 ) -> {a(), a()}.                           |         | 
+356 shape_atom_key(K, Shape) ->                | OK      | 
+357     case Shape of                          |         | 
+358         #{K := V} -> {K, V};               |         | 
+359         _ -> {undef, undef}                |         | 
+360     end.                                   |         | 
+361                                            |         | 
+362 -spec shape_atom_key_neg(                  |         | 
+363     any(), #{a := a(), b := b()}           |         | 
+364 ) -> {n(), a()}.                           |         | 
+365 shape_atom_key_neg(K, Shape) ->            | ERROR   | 
+366     case Shape of                          |         | 
+367         #{K := V} -> {K, V};               |         | {K, V}. Expected: {number(), atom()}, Got: {atom(), atom() | 'false' | 'true'}
+368         _ -> {0, undef}                    |         | 
+369     end.                                   |         | 
+370                                            |         | 
+371 -spec no_kv_neg(                           |         | 
+372     K, [{K, V}]                            |         | 
+373 ) -> {K, V}.                               |         | 
+374 no_kv_neg(K, Props) ->                     | OK      | 
+375     case Props of                          |         | 
+376         #{K := V} -> {K, V}                |         | 
+377     end.                                   |         | 
+378                                            |         | 
+379 -spec k_union1(                            |         | 
+380     any(), #{K1 => any()} | #{K2 => any()} |         | 
+381 ) -> K1 | K2 | undefined.                  |         | 
+382 k_union1(K, Dict) ->                       | OK      | 
+383     case Dict of                           |         | 
+384         #{K := _} -> K;                    |         | 
+385         _ -> undefined                     |         | 
+386     end.                                   |         | 
+387                                            |         | 
+388 -spec no_key(                              |         | 
+389     any(), a() | [{a(), any()}]            |         | 
+390 ) -> undefined.                            |         | 
+391 no_key(K, Dict) ->                         | OK      | 
+392     case Dict of                           |         | 
+393         #{K := _} -> K;                    |         | 
+394         _ -> undefined                     |         | 
+395     end.                                   |         | 

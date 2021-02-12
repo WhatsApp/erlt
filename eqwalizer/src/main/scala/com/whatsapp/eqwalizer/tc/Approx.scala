@@ -28,6 +28,83 @@ object Approx {
       case ts  => Some(ListType(UnionType(ts)))
     }
 
+  def asMapType(t: Type): Type =
+    t match {
+      case AnyType =>
+        DictMap(AnyType, AnyType)
+      case dictMap: DictMap =>
+        dictMap
+      case shapeMap: ShapeMap =>
+        shapeMap
+      case UnionType(elems) =>
+        val elemMaps = elems.map(asMapType).filterNot(_ == NoneType)
+        if (elemMaps.isEmpty)
+          NoneType
+        else if (elemMaps.size == 1)
+          elemMaps.head
+        else
+          UnionType(elemMaps)
+      case _ =>
+        NoneType
+    }
+
+  def getKeyType(t: Type): Type =
+    t match {
+      case DictMap(kt, _) =>
+        kt
+      case ShapeMap(_) =>
+        AtomType
+      case UnionType(elems) =>
+        val elemKeys = elems.map(getKeyType).filterNot(_ == NoneType)
+        if (elemKeys.isEmpty)
+          NoneType
+        else if (elemKeys.size == 1)
+          elemKeys.head
+        else
+          UnionType(elemKeys)
+      case _ =>
+        NoneType
+    }
+
+  def getValType(t: Type): Type =
+    t match {
+      case DictMap(_, vt) =>
+        vt
+      case ShapeMap(props) =>
+        UnionType(props.map(_.tp))
+      case UnionType(elems) =>
+        val elemVals = elems.map(getValType).filterNot(_ == NoneType)
+        if (elemVals.isEmpty)
+          NoneType
+        else if (elemVals.size == 1)
+          elemVals.head
+        else
+          UnionType(elemVals)
+      case _ =>
+        NoneType
+    }
+
+  def getValType(key: String, t: Type): Type =
+    t match {
+      case DictMap(_, vt) =>
+        vt
+      case ShapeMap(props) =>
+        props.find(_.key == key) match {
+          case Some(prop) => prop.tp
+          case None       => NoneType
+        }
+      case UnionType(elems) =>
+        val elemVals = elems.map(getValType(key, _)).filterNot(_ == NoneType)
+        if (elemVals.isEmpty)
+          NoneType
+        else if (elemVals.size == 1)
+          elemVals.head
+        else
+          UnionType(elemVals)
+      case _ =>
+        NoneType
+    }
+
   private def extractListElem(t: Type): List[Type] =
     t match {
       case AnyType =>
