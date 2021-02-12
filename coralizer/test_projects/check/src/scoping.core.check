@@ -5,12 +5,12 @@
 
 :: fun(() -> term())
 foo/0 = fun () {
-    case <> of {  <> when true -> atom }
+    case <> of { <> when true -> atom }
 }
 
 :: fun(() -> term())
 bar/0 = fun () {
-    case <> of {  <> when true -> number }
+    case <> of { <> when true -> number }
 }
 
 :: fun(() -> {'tuple' | 'triple', atom(), number()})
@@ -21,20 +21,20 @@ test01/0 = fun () {
                         let var1 = erlang:is_number(N) in {
                             erlang:and(var0, var1)
                         }
-                    } of {  Try -> Try }
+                    } of { Try -> Try }
                 catch {
                     T, R -> false
                 }
-                 -> <tuple, A, N>
+                 -> <tuple, A, N>;
                 {A, N, var7} when try let var2 = erlang:is_atom(A) in {
                         let var3 = erlang:is_number(N) in {
                             erlang:and(var2, var3)
                         }
-                    } of {  Try -> Try }
+                    } of { Try -> Try }
                 catch {
                     T, R -> false
                 }
-                 -> <triple, A, N>
+                 -> <triple, A, N>;
                 var4 when true -> let var8 = primop:match_fail({case_clause, var4}) in {
                         <var8, [], []>
                     }
@@ -64,7 +64,7 @@ test02/0 = fun () {
                                 catch {
                                     T, R -> false
                                 }
-                                 -> an
+                                 -> an;
                                 <> when try let var5 = erlang:is_number(X) in {
                                         let var6 = erlang:is_atom(Y) in {
                                             erlang:and(var5, var6)
@@ -97,17 +97,19 @@ test03/0 = fun () {
                                     let var1 = erlang:is_number(N) in {
                                         erlang:and(var0, var1)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
                             }
-                             -> primop:remove_message() , <tuple, A, N>
+                             -> primop:remove_message() , <tuple, A, N>;
                             {A, N, var6} when try let var2 = erlang:is_atom(A) in {
                                     let var3 = erlang:is_number(N) in {
                                         erlang:and(var2, var3)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
@@ -133,23 +135,25 @@ test04/0 = fun () {
                                     let var3 = erlang:is_number(N) in {
                                         erlang:and(var2, var3)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
                             }
-                             -> primop:remove_message() , <tuple, A, N>
+                             -> primop:remove_message() , <tuple, A, N>;
                             {A, N, var8} when try let var4 = erlang:is_atom(A) in {
                                     let var5 = erlang:is_number(N) in {
                                         erlang:and(var4, var5)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
                             }
                              -> primop:remove_message() , <triple, A, N>
-                        }
+                        };
                     false when true -> let var10 = primop:recv_wait_timeout(10) in {
                             case var10 of {
                                 true when true -> primop:timeout() ,
@@ -184,18 +188,20 @@ test05/0 = fun () {
                                     let var2 = erlang:is_number(N) in {
                                         erlang:and(var1, var2)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
                             }
-                             -> tuple
+                             -> tuple;
                             {A, N, var15} when try
                                 let var3 = erlang:is_atom(A) in {
                                     let var4 = erlang:is_number(N) in {
                                         erlang:and(var3, var4)
                                     }
-                                } of {  Try -> Try
+                                } of {
+                                Try -> Try
                             }
                             catch {
                                 T, R -> false
@@ -219,7 +225,7 @@ test05/0 = fun () {
                 }
 
             } in {
-                let Marker = var13 in {  Marker }
+                let Marker = var13 in { Marker }
             }
     }
 }
@@ -233,16 +239,16 @@ test06/0 = fun () {
                             let var2 = erlang:is_number(N) in {
                                 erlang:and(var1, var2)
                             }
-                        } of {  Try -> Try }
+                        } of { Try -> Try }
                     catch {
                         T, R -> false
                     }
-                     -> tuple
+                     -> tuple;
                     {A, N, var11} when try let var3 = erlang:is_atom(A) in {
                             let var4 = erlang:is_number(N) in {
                                 erlang:and(var3, var4)
                             }
-                        } of {  Try -> Try }
+                        } of { Try -> Try }
                     catch {
                         T, R -> false
                     }
@@ -256,7 +262,7 @@ test06/0 = fun () {
                 }
             }
              in {
-                let Marker = var9 in {  Marker }
+                let Marker = var9 in { Marker }
             }
     }
 }

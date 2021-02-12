@@ -5,8 +5,7 @@
 
 :: fun((term()) -> atom())
 atom_pos_1/1 = fun (var0) {
-    case var0 of {  X when erlang:is_atom(X) -> X
-    }
+    case var0 of { X when erlang:is_atom(X) -> X }
 }
 
 :: fun((term()) -> atom())
@@ -104,7 +103,8 @@ boolean_neg_3/1 = fun (var0) {
 
 :: fun((term()) -> number())
 float_pos/1 = fun (var0) {
-    case var0 of {  X when erlang:is_float(X) -> X
+    case var0 of {
+        X when erlang:is_float(X) -> X
     }
 }
 
@@ -131,7 +131,7 @@ integer_neg/1 = fun (var0) {
 
 :: fun((term()) -> pid())
 pid_pos/1 = fun (var0) {
-    case var0 of {  X when erlang:is_pid(X) -> X }
+    case var0 of { X when erlang:is_pid(X) -> X }
 }
 
 :: fun((term()) -> pid())
@@ -143,8 +143,7 @@ pid_neg/1 = fun (var0) {
 
 :: fun((term()) -> port())
 port_pos/1 = fun (var0) {
-    case var0 of {  X when erlang:is_port(X) -> X
-    }
+    case var0 of { X when erlang:is_port(X) -> X }
 }
 
 :: fun((term()) -> pid())

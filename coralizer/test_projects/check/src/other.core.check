@@ -7,7 +7,7 @@
 clauses/1 = fun (var0) {
     case var0 of {
         X when true -> case X of {
-                ok when true -> X                            | X. Expected: atom() | number(), Got: term()
+                ok when true -> X;                           | X. Expected: atom() | number(), Got: term()
                 1 when true -> X
             }
     }
@@ -15,8 +15,7 @@ clauses/1 = fun (var0) {
 
 inter/1 = fun (var0) {
     case var0 of {
-        ok when true -> nok
-        nok when true -> ok
+        ok when true -> nok; nok when true -> ok
     }
 }
 
@@ -36,8 +35,7 @@ slice_inter2/1 = fun (var0) {
 
 :: fun(() -> term())
 get_inter1/0 = fun () {
-    case <> of {  <> when true -> inter/1                    | Unbound var: inter/1
-    }
+    case <> of { <> when true -> inter/1 }                   | Unbound var: inter/1
 }
 
 :: fun(() -> term())

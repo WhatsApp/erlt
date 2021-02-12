@@ -12,8 +12,8 @@ test03_pos/1 = fun (var0) {
                         <<var2: size-N unit-1 type-integer flags-[unsigned big], Rest: size-all unit-8 type-binary flags-[unsigned big]>> when true ->
                         Rest
                     }
-            }
-        b when true -> case var0 of {   }
+            };
+        b when true -> case var0 of {  }
     }
 }
 

@@ -5,7 +5,7 @@
 
 :: fun(() -> binary())
 test01_pos/0 = fun () {
-    case <> of {  <> when true -> << pad(0)>> }
+    case <> of { <> when true -> << pad(0)>> }
 }
 
 :: fun((binary()) -> {number(), binary()})
@@ -25,8 +25,8 @@ test03_pos/1 = fun (var0) {
                         <<var2: size-N unit-1 type-integer flags-[unsigned big], Rest: size-all unit-8 type-binary flags-[unsigned big]>> when true ->
                         Rest
                     }
-            }
-        b when true -> case var0 of {   }
+            };
+        b when true -> case var0 of {  }
     }
 }
 
@@ -61,7 +61,8 @@ test06_neg/2 = fun (var0, var1) {
 
 :: fun((atom()) -> binary())
 test07_neg/1 = fun (var0) {
-    case var0 of {  A when true -> [A | []]                  | [A | []]. Expected: binary(), Got: [atom()]
+    case var0 of {
+        A when true -> [A | []]                              | [A | []]. Expected: binary(), Got: [atom()]
     }
 }
 
