@@ -20,3 +20,13 @@ bad_mixed_update1(M) ->
     (#{a := any()}) -> #{a := a, b := b}.
 bad_mixed_update2(M) ->
     M#{b => b, a := a}.
+
+-spec bad_mixed_update3
+    (any()) -> any().
+bad_mixed_update3(M)
+    when is_map(M#{a := a, b => b}) -> M.
+
+-spec bad_mixed_update4
+    (any()) -> any().
+bad_mixed_update4(M)
+    when is_map(M#{b => b, a := a}) -> M.

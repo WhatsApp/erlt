@@ -20,3 +20,13 @@
  20     (#{a := any()}) -> #{a := a, b := b}……         |                                | 
  21 bad_mixed_update2(M) ->                  | SKIPPED |                                | 
  22     M#{b => b, a := a}.                  |         | Bad map key                    | 
+ 23                                          |         |                                | 
+ 24 -spec bad_mixed_update3                  | LOADED  |                                | 
+ 25     (any()) -> any().                    |         |                                | 
+ 26 bad_mixed_update3(M)                     | SKIPPED |                                | 
+ 27     when is_map(M#{a := a, b => b}) -> M……         | Bad map key                    | 
+ 28                                          |         |                                | 
+ 29 -spec bad_mixed_update4                  | LOADED  |                                | 
+ 30     (any()) -> any().                    |         |                                | 
+ 31 bad_mixed_update4(M)                     | SKIPPED |                                | 
+ 32     when is_map(M#{b => b, a := a}) -> M……         | Bad map key                    | 

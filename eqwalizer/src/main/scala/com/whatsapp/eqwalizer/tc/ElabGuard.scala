@@ -31,6 +31,7 @@ final class ElabGuard(module: String) {
     case "is_pid"       => Some(PidType)
     case "is_port"      => Some(PortType)
     case "is_reference" => Some(ReferenceType)
+    case "is_map"       => Some(DictMap(AnyType, AnyType))
     case _              => None
   }
 
@@ -48,7 +49,7 @@ final class ElabGuard(module: String) {
 
   private def elabTest(test: Test, env: Env): Env =
     test match {
-      case TestVar(_) | TestAtom(_) | TestNumber() | TestTuple(_) | TestNil() | TestCons(_, _) =>
+      case TestVar(_) | TestAtom(_) | TestNumber() | TestTuple(_) | TestNil() | TestCons(_, _) | TestMapCreate(_) =>
         env
       case TestLocalCall(_, _) =>
         env
@@ -78,6 +79,10 @@ final class ElabGuard(module: String) {
           envAcc = elabTestT(field.value, fieldDecl.tp, envAcc)
         }
         envAcc
+      case TestReqMapUpdate(map, _) =>
+        elabTestT(map, DictMap(AnyType, AnyType), env)
+      case TestGenMapUpdate(map, _) =>
+        elabTestT(map, DictMap(AnyType, AnyType), env)
     }
 
   private def elabTestT(test: Test, t: Type, env: Env): Env =
@@ -88,8 +93,8 @@ final class ElabGuard(module: String) {
           case None     => t
         }
         env + (v -> testType)
-      case TestLocalCall(Id(f, 1), List(TestVar(v))) if Subtype.eqv(trueType, t) =>
-        elabUnaryPredicate(f, v, env)
+      case TestLocalCall(Id(f, 1), List(arg)) if Subtype.eqv(trueType, t) =>
+        elabUnaryPredicate(f, arg, env)
       case TestBinOp("andalso", arg1, arg2) =>
         val env1 = elabTestT(arg1, AtomLitType("true"), env)
         val env2 = elabTestT(arg2, t, env1)
@@ -101,10 +106,10 @@ final class ElabGuard(module: String) {
         elabTest(test, env)
     }
 
-  private def elabUnaryPredicate(f: String, v: String, env: Env): Env =
-    elabPredicateType(f) match {
+  private def elabUnaryPredicate(pred: String, arg: Test, env: Env): Env =
+    elabPredicateType(pred) match {
       case None     => env
-      case Some(pt) => env + (v -> Subtype.meet(pt, env(v)))
+      case Some(pt) => elabTestT(arg, pt, env)
     }
 
   def elabUnOp(unOp: TestUnOp, env: Env): Env = {
