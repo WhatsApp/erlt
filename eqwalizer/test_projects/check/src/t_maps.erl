@@ -393,3 +393,40 @@ no_key(K, Dict) ->
         #{K := _} -> K;
         _ -> undefined
     end.
+
+-spec no_val(
+    any(), a() | [{a(), any()}]
+) -> undefined.
+no_val(K, Dict) ->
+    case Dict of
+        #{K := V} -> V;
+        _ -> undefined
+    end.
+
+-spec val1(
+    #{a := a()} | #{a := n()}
+) -> a() | n().
+val1(#{a := V}) -> V.
+
+-spec val2(
+    #{a := a()} | #{b := n()}
+) -> a().
+val2(#{a := V}) -> V.
+
+-spec val3(
+    #{a1 := a()} | #{b1 := n()}
+) -> none().
+val3(#{a := V}) -> V.
+
+-spec val4(
+    {a(), a()}
+) -> none().
+val4(#{a := V}) -> V.
+
+-spec val5(
+    a(), {a()} | {a(), a()}
+) -> none().
+val5(K, M) ->
+    case M of
+        #{K := V} -> V
+    end.
