@@ -1,11 +1,11 @@
 # Eqwalizer milestones
 
-## January 2021
+## Jan-Feb 2021
 
 Simple (naive) bidirectional type-checking. Main goal: to support full range of
 Erlang surface syntax.
 
-### Surface syntax (TODO)
+### Surface syntax
 
 - [x] Catch
 - [x] Try/catch
@@ -14,7 +14,7 @@ Erlang surface syntax.
 - [ ] `catch X:Y:Z ->` syntax
 - [x] List comprehensions
 - [x] Binary comprehensions
-- [ ] Maps
+- [x] Maps
 - [x] Records
 - [ ] Anonymous functions
 - [ ] Named inner functions (not priority)
