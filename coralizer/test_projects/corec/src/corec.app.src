@@ -1,0 +1,3 @@
+{application, corec,
+  [{description, "corec"}, {vsn, "inplace"}, {applications, [kernel, stdlib]}]
+}.

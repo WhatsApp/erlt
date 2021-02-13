@@ -17,29 +17,13 @@
 package com.whatsapp.coralizer.ast
 
 import com.whatsapp.coralizer.ast.Forms._
+import com.whatsapp.coralizer.io.{Beam, EData}
 import com.whatsapp.coralizer.config
-import com.whatsapp.coralizer.io.{Beam, EData, RPC}
-import com.whatsapp.coralizer.config
-import erlang.CErl
 import java.nio.file.Paths
 
 import com.whatsapp.coralizer.tc.BuiltIn
 
-import scala.util.Using
-
 object DB {
-
-  // BEGIN new
-  def loadCoreModule(beamFilePath: String): CErl.CModule = {
-    Using.resource(RPC.connect())(loadData(beamFilePath))
-  }
-
-  private def loadData(beamFilePath: String)(rpc: RPC): CErl.CModule = {
-    val Some(module) = rpc.loadCoreForms(beamFilePath)
-    // pprint.pprintln(module)
-    module
-  }
-  // END
 
   private def dirModules(dir: String): List[String] =
     Paths

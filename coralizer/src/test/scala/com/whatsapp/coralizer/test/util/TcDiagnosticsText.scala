@@ -19,9 +19,10 @@ package com.whatsapp.coralizer.test.util
 import com.whatsapp.coralizer.Pipeline
 import com.whatsapp.coralizer.ast.Forms._
 import com.whatsapp.coralizer.tc.TcDiagnostics.TypeError
-import java.nio.file.{Files, Paths}
 
+import java.nio.file.{Files, Paths}
 import com.whatsapp.coralizer.ast.{DB, PrettyCErl}
+import com.whatsapp.coralizer.io.Beam
 import erlang.CErl.CModule
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
@@ -73,8 +74,7 @@ object TcDiagnosticsText {
   case class Checked(erlWithErrors: String, coreWithErrors: String)
 
   private def checkBeam(beamFile: String): (CModule, String, List[Form]) = {
-    import scala.jdk.CollectionConverters.CollectionHasAsScala
-    val module = DB.loadCoreModule(beamFile)
+    val module = Beam.loadCore(beamFile)
     val (erlFile, forms) = Pipeline.checkForms(module)
     (module, erlFile, forms)
   }
