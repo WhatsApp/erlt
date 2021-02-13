@@ -102,15 +102,17 @@ object Expand {
   def expandFunSpec(funSpec: FunSpec): Form = {
     val sFunTypes: List[ConstrainedFunType] = funSpec.types
     try {
-      val cfts = sFunTypes.map { cft =>
-        val FunType(args, res) =
-          if (cft.constraints.isEmpty) cft.ty
-          else {
-            val FunType(args, res) = cft.ty
-            val subst = cft.constraints.map(c => c.tVar -> c.ty).toMap
-            FunType(args.map(expandConstraints(_, subst, Set.empty)), expandConstraints(res, subst, Set.empty))
-          }
-        ConstrainedFunType(FunType(args.map(expand(_, Set.empty)), expand(res, Set.empty)), List.empty)
+      val cfts = sFunTypes.map {
+        case cft@ConstrainedFunType(_: FoonType, _) => cft
+        case cft =>
+          val FunType(args, res) =
+            if (cft.constraints.isEmpty) cft.ty
+            else {
+              val FunType(args, res) = cft.ty
+              val subst = cft.constraints.map(c => c.tVar -> c.ty).toMap
+              FunType(args.map(expandConstraints(_, subst, Set.empty)), expandConstraints(res, subst, Set.empty))
+            }
+          ConstrainedFunType(FunType(args.map(expand(_, Set.empty)), expand(res, Set.empty)), List.empty)
       }
       FunSpec(funSpec.id, cfts)(funSpec.line)
     } catch {

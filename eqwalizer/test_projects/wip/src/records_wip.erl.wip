@@ -6,14 +6,14 @@
   6     func :: fun(() -> 3)                 |         |                                | 
   7 }).                                      |         |                                | 
   8                                          |         |                                | 
-  9 -record(func_rec1, {                     | SKIPPED |                                | 
+  9 -record(func_rec1, {                     | LOADED  |                                | 
  10     func =                               |         |                                | 
- 11         fun() -> 3 end                   |         | E: lambda                      | 
+ 11         fun() -> 3 end                   |         |                                | 
  12         :: fun(() -> 3)                  |         |                                | 
  13 }).                                      |         |                                | 
  14                                          |         |                                | 
  15 -spec fun_call(#func_rec{}) -> number(). | LOADED  |                                | 
- 16 fun_call(X) -> (X#func_rec.func)().      | SKIPPED | E: dcall                       | 
+ 16 fun_call(X) -> (X#func_rec.func)().      | LOADED  |                                | 
  17                                          |         |                                | 
  18 -record(any_box, {inner :: any()}).      | LOADED  |                                | 
  19                                          |         |                                | 

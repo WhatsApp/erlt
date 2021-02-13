@@ -131,6 +131,10 @@ object Vars {
       exprVars(m) ++ kvs.flatMap(kv => List(kv._1, kv._2)).flatMap(exprVars)
     case ReqMapUpdate(m, avs) =>
       exprVars(m) ++ avs.map(_._2).flatMap(exprVars)
+    case Fun(clauses) =>
+      clausesVars(clauses)
+    case FunCall(expr, args) =>
+      exprVars(expr) ++ args.flatMap(exprVars)
   }
 
   private def fieldVars(recordField: RecordField): Set[String] =

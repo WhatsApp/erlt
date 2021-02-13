@@ -19,8 +19,10 @@ package com.whatsapp.eqwalizer.ast
 import com.whatsapp.eqwalizer.ast.Forms._
 import com.whatsapp.eqwalizer.config
 import com.whatsapp.eqwalizer.io.{Beam, EData}
-
 import java.nio.file.Paths
+
+import com.typesafe.config.ConfigLoadingStrategy
+import com.whatsapp.eqwalizer.ast.Types.{ConstrainedFunType, FoonType}
 
 object DB {
   private def dirModules(dir: String): List[String] =
@@ -59,7 +61,8 @@ object DB {
       val formsDef = (for {
         i <- 0 until formsJ.arity()
         f = formsJ.elementAt(i)
-        if !isFunForm(f)
+        // TODO: only convert funs when needed
+//        if !isFunForm(f)
       } yield f).toArray
       formsDef.flatMap(f => Convert.convertForm(EData.fromJava(f))).toList
     }
@@ -81,9 +84,16 @@ object DB {
         case r: RecDecl         => records += r.name -> r
         case t: SkippedTypeDecl => skippedTypes += t.id -> t
         case s: SkippedFunSpec  => skippedSpecs += s.id -> s
+        case f: FunDecl         => if (!specs.contains(f.id)) specs += f.id -> declToSpec(f, module)
         case _                  =>
       }
     ModuleStub(module, exports, imports, exportTypes, specs, types, records, skippedSpecs, skippedTypes)
+  }
+
+  private def declToSpec(funDecl: FunDecl, module: String): FunSpec = {
+    val ty = FoonType(funDecl.clauses, module, Map.empty)
+    val tys = List(ConstrainedFunType(ty, Nil))
+    FunSpec(funDecl.id, tys)(funDecl.line)
   }
 
   private var globalizedModuleStubs: Map[String, ModuleStub] =

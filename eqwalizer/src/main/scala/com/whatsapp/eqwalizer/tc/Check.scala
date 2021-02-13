@@ -29,8 +29,11 @@ final class Check(module: String) {
 
   def checkFun(f: FunDecl, spec: FunSpec): Unit = {
     val constrainedFunType = spec.types.head
-    val FunType(argTys, resTy) = constrainedFunType.ty
-    f.clauses.map(checkClause(_, argTys, resTy, Map.empty, Set.empty))
+    constrainedFunType.ty match {
+      case FunType(argTys, resTy) =>
+        f.clauses.map(checkClause(_, argTys, resTy, Map.empty, Set.empty))
+      case _: FoonType => ()
+    }
   }
 
   private def checkBlock(block: List[Expr], resTy: Type, env: Env): Env = {
@@ -42,7 +45,7 @@ final class Check(module: String) {
     checkExpr(block.last, resTy, envAcc)
   }
 
-  private def checkClause(
+  def checkClause(
       clause: Clause,
       argTys: List[Type],
       resTy: Type,
@@ -103,6 +106,10 @@ final class Check(module: String) {
           checkExpr(tail, resTy, env1)
         case LocalCall(id, args) =>
           Util.getFunType(module, id) match {
+            case Some(ft: FoonType) =>
+              val (ty, env1) = elab.elabFoonCall(expr, ft, args, env)
+              if (Subtype.subType(ty, resTy)) env1
+              else throw TypeMismatch(expr.l, expr, expected = resTy, got = ty)
             case Some(FunType(argTys, fResTy)) =>
               val env1 = checkExprs(args, argTys, env)
               if (Subtype.subType(fResTy, resTy)) env1
@@ -112,6 +119,10 @@ final class Check(module: String) {
           }
         case RemoteCall(fqn, args) =>
           Util.getFunType(fqn) match {
+            case Some(ft: FoonType) =>
+              val (ty, env1) = elab.elabFoonCall(expr, ft, args, env)
+              if (Subtype.subType(ty, resTy)) env1
+              else throw TypeMismatch(expr.l, expr, expected = resTy, got = ty)
             case Some(FunType(argTys, fResTy)) =>
               val env1 = checkExprs(args, argTys, env)
               if (Subtype.subType(fResTy, resTy)) env1
@@ -309,6 +320,12 @@ final class Check(module: String) {
             throw TypeMismatch(expr.l, expr, expected = resTy, got = mapT)
           else
             env1
+        case _: Fun | _: FunCall =>
+          val (ty, env1) = elab.elabExpr(expr, env)
+          if (!Subtype.subType(ty, resTy)) {
+            throw TypeMismatch(expr.l, expr, expected = resTy, got = ty)
+          }
+          env1
       }
 
   def checkRecordCreate(rCreate: RecordCreate, env: Env): Env = {

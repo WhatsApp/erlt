@@ -217,17 +217,17 @@
 217 test53_pos() ->                            | OK      | 
 218     fun misc:test47_neg/0.                 |         | 
 219                                            |         | 
-220 test54_unspecced() -> ok.                  | NO SPEC | 
+220 test54_unspecced() -> ok.                  | OK      | 
 221                                            |         | 
 222 -spec test55_neg() ->                      |         | 
 223     fun(() -> number()).                   |         | 
 224 test55_neg() ->                            | ERROR   | 
-225     fun misc:test54_unspecced/0.           |         | Unbound var: misc:test54_unspecced/0
+225     fun misc:test54_unspecced/0.           |         | misc:test54_unspecced/0. Expected: fun(() -> number()), Got: fun
 226                                            |         | 
 227 -spec test56_neg() ->                      |         | 
 228     fun(() -> number()).                   |         | 
 229 test56_neg() ->                            | ERROR   | 
-230     fun test54_unspecced/0.                |         | Unbound var: test54_unspecced/0
+230     fun test54_unspecced/0.                |         | test54_unspecced/0. Expected: fun(() -> number()), Got: fun
 231                                            |         | 
 232 -spec test57_pos() -> {atom(), number()}.  |         | 
 233 test57_pos() ->                            | OK      | 
@@ -257,13 +257,13 @@
 257                                            |         | 
 258 -spec test61_neg() -> number().            |         | 
 259 test61_neg() ->                            | ERROR   | 
-260     X = misc:test54_unspecced(),           |         | Unbound var: misc:test54_unspecced/0
-261     X.                                     |         | 
+260     X = misc:test54_unspecced(),           |         | 
+261     X.                                     |         | X. Expected: number(), Got: 'ok'
 262                                            |         | 
 263 -spec test62_neg() -> number().            |         | 
 264 test62_neg() ->                            | ERROR   | 
-265     X = test54_unspecced(),                |         | Unbound var: test54_unspecced/0
-266     X.                                     |         | 
+265     X = test54_unspecced(),                |         | 
+266     X.                                     |         | X. Expected: number(), Got: 'ok'
 267                                            |         | 
 268 -spec test63_pos() ->                      |         | 
 269     fun(() -> number()).                   |         | 

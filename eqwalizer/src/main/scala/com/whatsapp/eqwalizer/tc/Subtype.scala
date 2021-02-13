@@ -16,7 +16,10 @@
 
 package com.whatsapp.eqwalizer.tc
 
+import com.whatsapp.eqwalizer.tc.Check
+import com.whatsapp.eqwalizer.ast.Exprs.Fun
 import com.whatsapp.eqwalizer.ast.Types._
+import com.whatsapp.eqwalizer.tc.TcDiagnostics.TypeMismatch
 
 object Subtype {
   def subType(t1: Type, t2: Type): Boolean = {
@@ -37,6 +40,15 @@ object Subtype {
         subType(et1, et2)
       case (FunType(args1, res1), FunType(args2, res2)) if args1.size == args2.size =>
         subType(res1, res2) && args2.lazyZip(args1).forall(subType)
+      case (FoonType(clauses, module, env), FunType(argTys, resTy)) =>
+        val check = new Check(module)
+        try {
+          clauses.foreach(check.checkClause(_, argTys, resTy, env, Set.empty))
+          true
+        }
+        catch {
+          case _: TypeMismatch => false
+        }
 
       case (DictMap(kT1, vT1), DictMap(kT2, vT2)) =>
         subType(kT1, kT2) && subType(vT1, vT2)

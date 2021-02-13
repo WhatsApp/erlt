@@ -77,6 +77,8 @@ final class Elab(module: String, check: Check) {
         }
       case LocalCall(id, args) =>
         Util.getFunType(module, id) match {
+          case Some(ft: FoonType) =>
+            elabFoonCall(expr, ft, args, env)
           case Some(FunType(argTys, resTy)) =>
             val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
@@ -85,12 +87,28 @@ final class Elab(module: String, check: Check) {
         }
       case RemoteCall(fqn, args) =>
         Util.getFunType(fqn) match {
+          case Some(ft: FoonType) =>
+            elabFoonCall(expr, ft, args, env)
           case Some(FunType(argTys, resTy)) =>
             val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
           case None =>
             throw UnboundVar(expr.l, fqn.toString)
         }
+      case FunCall(expr, args) =>
+        val (exprTy, env1) = elabExpr(expr, env)
+        exprTy match {
+          case ft: FoonType => elabFoonCall(expr, ft, args, env)
+          case FunType(fArgTys, fResTy) =>
+            val env2 = check.checkExprs(args, fArgTys, env1)
+            (fResTy, env2)
+          case ft: FoonType =>
+            elabFoonCall(expr, ft, args, env)
+          case _ =>
+            val funTy = FunType(args.map(_ => AnyType), AnyType)
+            throw TypeMismatch(expr.l, expr, expected = funTy, got = exprTy)
+        }
+
       case LocalFun(id) =>
         Util.getFunType(module, id) match {
           case Some(ft) =>
@@ -293,7 +311,30 @@ final class Elab(module: String, check: Check) {
           resT = Approx.adjustMapType(resT, AtomLitType(key), valT)
         }
         (resT, envAcc)
+      case fun: Fun => (FoonType(fun.clauses, module, env), env)
+
     }
+
+  def elabFoonCall(expr: Expr, ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
+    val FoonType(clauses, _m, fEnv) = ft
+    val (argTys, argEnvs) = args.map(elabExpr(_, env)).unzip
+
+    def elabClause(clause: Clause, argTys: List[Type], env0: Env): (Type, Env) = {
+      if (clause.pats.sizeCompare(argTys) != 0) {
+        throw ArityMismatch(expr.l, expr, expected = clause.pats.size, got = argTys.size)
+      }
+      val allScopeVars = Vars.clauseVars(clause)
+      val env1 = Util.enterScope(env0, allScopeVars)
+      val env2 = elabGuard.elabGuards(clause.guards, env1)
+      val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
+      val (ty, env4) = elabBlock(clause.body, env3)
+      (ty, env4)
+    }
+
+    val (tys, _) = clauses.map(elabClause(_, argTys, fEnv)).unzip
+    val ty = tys.reduce(Subtype.join)
+    (ty, Approx.joinEnvs(argEnvs))
+  }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {
     val env1 = elem.size match {

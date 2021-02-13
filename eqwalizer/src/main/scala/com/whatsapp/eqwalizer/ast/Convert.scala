@@ -341,8 +341,10 @@ object Convert {
             RemoteCall(RemoteId(m, f, eArgs.size), eArgs.map(convertExp))(l.intValue)
           case ETuple(List(EAtom("atom"), ELong(_), EAtom(fname))) =>
             LocalCall(Id(fname, eArgs.size), eArgs.map(convertExp))(l.intValue)
-          case _ =>
+          case ETuple(EAtom("remote") :: _) =>
             throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpDCall)
+          case _ =>
+            FunCall(convertExp(eExp), eArgs.map(convertExp))(l.intValue)
         }
       case ETuple(List(EAtom("lc"), ELong(l), eTemplate, EList(eQualifiers, None))) =>
         LComprehension(convertExp(eTemplate), eQualifiers.map(convertQualifier))(l.intValue)
@@ -379,7 +381,7 @@ object Convert {
       case ETuple(List(EAtom("fun"), ELong(l), eFunction)) =>
         eFunction match {
           case ETuple(List(EAtom("clauses"), EList(eClauses, None))) =>
-            throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.ExpAnonFun)
+            Fun(eClauses.map(convertClause))(l.intValue)
           case ETuple(List(EAtom("function"), EAtom(name), ELong(arity))) =>
             LocalFun(Id(name, arity.intValue))(l.intValue)
           case ETuple(

@@ -1,0 +1,110 @@
+  1 -module(funs).                             |         | 
+  2 -compile([export_all]).                    |         | 
+  3                                            |         | 
+  4 -spec test_01_pos() -> fun((number(), numb……         | 
+  5 test_01_pos() ->                           | OK      | 
+  6     Mult = fun (X, Y) -> X * Y end,        |         | 
+  7     Mult.                                  |         | 
+  8                                            |         | 
+  9                                            |         | 
+ 10 -spec test_02_neg() -> pid().              |         | 
+ 11 test_02_neg() ->                           | ERROR   | 
+ 12     F = fun (X) -> nok end,                |         | 
+ 13     F([]).                                 |         | F([]). Expected: pid(), Got: 'nok'
+ 14                                            |         | 
+ 15 -spec test_03_neg() -> pid().              |         | 
+ 16 test_03_neg() ->                           | ERROR   | 
+ 17     Mult = fun (X, Y) -> X * Y end,        |         | 
+ 18     Mult(4, 5).                            |         | Mult(number_expr, number_expr). Expected: pid(), Got: number()
+ 19                                            |         | 
+ 20 -spec test_04_pos(number()) -> number().   |         | 
+ 21 test_04_pos(X) ->                          | OK      | 
+ 22     F = fun (X) -> other(X) end,           |         | 
+ 23     F(3).                                  |         | 
+ 24                                            |         | 
+ 25 -spec test_05_pos(number()) -> number().   |         | 
+ 26 test_05_pos(X) ->                          | OK      | 
+ 27     F = fun () -> other(X) end,            |         | 
+ 28     F().                                   |         | 
+ 29                                            |         | 
+ 30 -spec test_06_pos(number()) -> number().   |         | 
+ 31 test_06_pos(X) ->                          | OK      | 
+ 32     Sq = fun (Y) -> Y * Y end,             |         | 
+ 33     apply_fun(Sq, 2).                      |         | 
+ 34                                            |         | 
+ 35 -spec test_07_neg(number()) -> number().   |         | 
+ 36 test_07_neg(X) ->                          | ERROR   | 
+ 37     Sq = fun (Y) -> Y * Y end,             |         | Y. Expected: number(), Got: 'an_atom'
+ 38     apply_fun(Sq, an_atom).                |         | 
+ 39                                            |         | 
+ 40 -spec test_08_neg(number()) -> pid().      |         | 
+ 41 test_08_neg(X) ->                          | ERROR   | 
+ 42     NumToBool = fun (Y) -> Y * Y, true end……         | 
+ 43     AnyToAnyToOk = fun(Z) ->               |         | 
+ 44                        fun (B) ->          |         | 
+ 45                          ok                |         | 
+ 46                        end                 |         | 
+ 47                      end,                  |         | 
+ 48     B = NumToBool(X),                      |         | 
+ 49     AnyToOk = AnyToAnyToOk(B),             |         | 
+ 50     AnyToOk(true).                         |         | AnyToOk('true'). Expected: pid(), Got: 'ok'
+ 51                                            |         | 
+ 52 -spec test_09_neg(atom()) -> pid().        |         | 
+ 53 test_09_neg(X) ->                          | ERROR   | 
+ 54     F = fun (X) -> X * 2 end,              |         | 
+ 55     X,                                     |         | 
+ 56     F(3).                                  |         | F(number_expr). Expected: pid(), Got: number()
+ 57                                            |         | 
+ 58 -spec test_10_neg(atom()) -> pid().        |         | 
+ 59 test_10_neg(X) ->                          | ERROR   | 
+ 60     F = fun (X) -> X * 2 end,              |         | 
+ 61     F(3),                                  |         | 
+ 62     X.                                     |         | X. Expected: pid(), Got: atom()
+ 63                                            |         | 
+ 64 -spec test_11_neg(atom()) -> pid().        |         | 
+ 65 test_11_neg(X) ->                          | ERROR   | 
+ 66     F = fun (X) -> X * 2 end,              |         | X. Expected: number(), Got: 'ok'
+ 67     apply_fun(F, ok).                      |         | 
+ 68                                            |         | 
+ 69 % We don't yet support calls with union ty……         | 
+ 70 % but easily could.                        |         | 
+ 71 -spec test_12_neg(boolean()) -> pid().     |         | 
+ 72 test_12_neg(B) ->                          | ERROR   | 
+ 73     F = case B of                          |         | 
+ 74         true -> fun(_X) -> ok end;         |         | 
+ 75         false -> fun(_X) -> error end      |         | 
+ 76     end,                                   |         | 
+ 77     F(2).                                  |         | F. Expected: fun((term()) -> term()), Got: fun | fun
+ 78                                            |         | 
+ 79 -spec test_13_neg() -> number().           |         | 
+ 80 test_13_neg() ->                           | ERROR   | 
+ 81     F = fun (_X, _Y) -> ok end,            |         | 
+ 82     reduce_nums(F, [1, 2, 3]).             |         | F. Expected: fun((number(), number()) -> number()), Got: fun
+ 83                                            |         | 
+ 84 -spec test_14_pos() -> number().           |         | 
+ 85 test_14_pos() ->                           | OK      | 
+ 86     F = fun (X, _Y) -> X end,              |         | 
+ 87     reduce_nums(F, [1, 2, 3]).             |         | 
+ 88                                            |         | 
+ 89 -spec test_15_neg() -> any().              |         | 
+ 90 test_15_neg() ->                           | ERROR   | 
+ 91     F = fun (X, Y) -> X * Y end,           |         | 
+ 92     F(2).                                  |         | F. Wrong number of arguments. Expected: 2, Got: 1
+ 93                                            |         | 
+ 94 -spec reduce_nums(                         |         | 
+ 95     fun((number(), number()) -> number()), |         | 
+ 96     [number()]                             |         | 
+ 97 ) -> number().                             |         | 
+ 98 reduce_nums(_, _) -> 0.                    | OK      | 
+ 99                                            |         | 
+100 % TODO: arity check for higher-order funs  |         | 
+101                                            |         | 
+102 apply_fun(F, Arg) ->                       | OK      | 
+103     case F of                              |         | 
+104       _ -> F(Arg)                          |         | 
+105     end.                                   |         | 
+106                                            |         | 
+107 other(Z) -> other_other(Z).                | OK      | 
+108                                            |         | 
+109 other_other(X) ->  X * 3.                  | OK      | 
+110                                            |         | 

@@ -39,4 +39,7 @@ object TcDiagnostics {
   case class UnboundVar(line: Int, n: String) extends TypeError {
     override val msg: String = s"Unbound var: ${n}"
   }
+  case class ArityMismatch(line: Int, call: Expr, expected: Int, got: Int) extends TypeError {
+    override val msg: String = s"${show(call)}. Wrong number of arguments. Expected: $expected, Got: $got"
+  }
 }

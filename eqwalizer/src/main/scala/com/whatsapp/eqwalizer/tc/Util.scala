@@ -18,10 +18,10 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Forms.RecDecl
 import com.whatsapp.eqwalizer.ast.{DB, Id, RemoteId}
-import com.whatsapp.eqwalizer.ast.Types.{AnyType, FunType}
+import com.whatsapp.eqwalizer.ast.Types.{AnyType, FunishType}
 
 object Util {
-  def getFunType(module: String, id: Id): Option[FunType] =
+  def getFunType(module: String, id: Id): Option[FunishType] =
     for {
       moduleStub <- DB.getExpandedModuleStub(module)
       hostModule = moduleStub.imports.getOrElse(id, module)
@@ -34,7 +34,7 @@ object Util {
       recRecl <- moduleStub.records.get(name)
     } yield recRecl
 
-  def getFunType(fqn: RemoteId): Option[FunType] =
+  def getFunType(fqn: RemoteId): Option[FunishType] =
     for {
       moduleStub <- DB.getExpandedModuleStub(fqn.module)
       spec <- moduleStub.specs.get(Id(fqn.name, fqn.arity)) if spec.types.size == 1

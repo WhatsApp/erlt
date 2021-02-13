@@ -43,7 +43,9 @@ object Globalize {
     }
 
   def globalizeSpec(module: String, spec: FunSpec): FunSpec = {
-    val types = spec.types.map { case ConstrainedFunType(FunType(args, res), constraints) =>
+    val types = spec.types.map {
+      case cft@ConstrainedFunType(_: FoonType, _) => cft
+      case ConstrainedFunType(FunType(args, res), constraints) =>
       ConstrainedFunType(
         FunType(args.map(globalize(module, _)), globalize(module, res)),
         constraints.map { case Constraint(v, tp) => Constraint(v, globalize(module, tp)) },

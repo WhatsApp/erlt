@@ -16,10 +16,15 @@
 
 package com.whatsapp.eqwalizer.ast
 
+import com.whatsapp.eqwalizer.ast.Exprs.{Clause}
+import com.whatsapp.eqwalizer.tc.Env
+
 object Types {
   sealed trait Type
   case class AtomLitType(atom: String) extends Type
-  case class FunType(argTys: List[Type], resTy: Type) extends Type
+  sealed trait FunishType extends Type
+  case class FunType(argTys: List[Type], resTy: Type) extends FunishType
+  case class FoonType(clauses: List[Clause], module: String, env: Env) extends FunishType
   case class TupleType(argTys: List[Type]) extends Type
   case object NilType extends Type
   case class ListType(t: Type) extends Type
@@ -41,7 +46,7 @@ object Types {
   case object PortType extends BuiltinType
   case object ReferenceType extends BuiltinType
 
-  case class ConstrainedFunType(ty: FunType, constraints: List[Constraint])
+  case class ConstrainedFunType(ty: FunishType, constraints: List[Constraint])
   case class Constraint(tVar: String, ty: Type)
 
   sealed trait Prop {

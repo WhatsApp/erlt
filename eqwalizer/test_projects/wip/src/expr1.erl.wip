@@ -80,8 +80,8 @@
  80 binary_comp2() ->                        | LOADED  |                                | 
  81     << X || <<X>> <= <<1, 2, 3>> >>.     |         |                                | 
  82                                          |         |                                | 
- 83 dynamic_call1(F, Arg) ->                 | SKIPPED |                                | 
- 84     F(Arg).                              |         | E: dcall                       | 
+ 83 dynamic_call1(F, Arg) ->                 | LOADED  |                                | 
+ 84     F(Arg).                              |         |                                | 
  85                                          |         |                                | 
  86 dynamic_call2(M, F, Arg) ->              | SKIPPED |                                | 
  87     M:F(Arg).                            |         | E: dcall                       | 
@@ -108,8 +108,8 @@
 108         Y -> Y                           |         |                                | 
 109     end.                                 |         |                                | 
 110                                          |         |                                | 
-111 anon_fun() ->                            | SKIPPED |                                | 
-112     fun (X) -> X end.                    |         | E: lambda                      | 
+111 anon_fun() ->                            | LOADED  |                                | 
+112     fun (X) -> X end.                    |         |                                | 
 113                                          |         |                                | 
 114 named_fun() ->                           | SKIPPED |                                | 
 115     fun Fun(X) -> X end.                 |         | E: named_fun                   | 

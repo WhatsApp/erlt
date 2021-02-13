@@ -62,6 +62,8 @@ object Show {
         s"#$n{}"
       case ShapeMap(props) =>
         props.map(showProp).mkString("#S{", ", ", "}")
+      case _: FoonType =>
+        "fun"
     }
 
   private def showProp(prop: Prop): String =
@@ -85,6 +87,12 @@ object Show {
       s"""$f(${args.map(show).mkString(", ")})"""
     case Exprs.RemoteCall(RemoteId(m, t, _), args) =>
       s"""$m:$t(${args.map(show).mkString(", ")})"""
+    case FunCall(expr, args) =>
+      val f = expr match {
+        case Var(_) => show(expr)
+        case _ => s"(${show(expr)})"
+      }
+      s"""$f(${args.map(show).mkString(", ")})"""
     case LocalFun(id) =>
       id.toString
     case RemoteFun(id) =>
@@ -133,5 +141,8 @@ object Show {
       "#{..}"
     case ReqMapUpdate(_, _) | GenMapUpdate(_, _) =>
       "..#{..}"
+    case _: Fun =>
+      "fun"
   }
 }
+

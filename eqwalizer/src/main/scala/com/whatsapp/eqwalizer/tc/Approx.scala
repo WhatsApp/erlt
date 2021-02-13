@@ -101,7 +101,7 @@ object Approx {
         List()
     }
 
-  def joinEnvs(envs: List[Env]): Env = {
+  def joinEnvs(envs: List[Env]): Env = if (envs == Nil) Map.empty else {
     var envAcc: Env = envs.head
     val vars = envAcc.keySet
     for { env <- envs; v <- vars } envAcc = envAcc.updated(v, Subtype.join(envAcc(v), env(v)))
