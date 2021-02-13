@@ -18,6 +18,7 @@ package com.whatsapp.coralizer.io
 
 import com.ericsson.otp.erlang._
 import com.whatsapp.coralizer.io.EData.EObject
+import erlang.{CErl, CErlConvert}
 
 import java.io.DataInputStream
 import java.nio.file.{Files, Paths}
@@ -50,5 +51,13 @@ object Beam {
       } else byteInputStream.skip((length + 3) & ~3)
     }
     result
+  }
+
+  def loadCore(beamPath: String): CErl.CModule = {
+    val corePath = beamPath + ".core"
+    val etfBytes = Files.readAllBytes(Paths.get(corePath))
+    val otpObject = new OtpInputStream(etfBytes).read_any()
+    val eObject = erlang.DataConvert.fromJava(otpObject)
+    CErlConvert.convert(eObject).asInstanceOf[CErl.CModule]
   }
 }
