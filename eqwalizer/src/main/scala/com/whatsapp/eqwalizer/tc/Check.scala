@@ -19,7 +19,7 @@ package com.whatsapp.eqwalizer.tc
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Forms.{FunDecl, FunSpec}
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.ast.Vars
+import com.whatsapp.eqwalizer.ast.{Id, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final class Check(module: String) {
@@ -107,7 +107,7 @@ final class Check(module: String) {
         case LocalCall(id, args) =>
           Util.getFunType(module, id) match {
             case Some(ft: FoonType) =>
-              val (ty, env1) = elab.elabFoonCall(expr, ft, args, env)
+              val (ty, env1) = elab.elabFoonCall(expr, Some(id), ft, args, env)
               if (Subtype.subType(ty, resTy)) env1
               else throw TypeMismatch(expr.l, expr, expected = resTy, got = ty)
             case Some(FunType(argTys, fResTy)) =>
@@ -120,7 +120,7 @@ final class Check(module: String) {
         case RemoteCall(fqn, args) =>
           Util.getFunType(fqn) match {
             case Some(ft: FoonType) =>
-              val (ty, env1) = elab.elabFoonCall(expr, ft, args, env)
+              val (ty, env1) = elab.elabFoonCall(expr, (Some(Id(fqn.name, fqn.arity))), ft, args, env)
               if (Subtype.subType(ty, resTy)) env1
               else throw TypeMismatch(expr.l, expr, expected = resTy, got = ty)
             case Some(FunType(argTys, fResTy)) =>

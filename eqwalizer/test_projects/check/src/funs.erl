@@ -86,16 +86,24 @@ test_14_pos() ->
     F = fun (X, _Y) -> X end,
     reduce_nums(F, [1, 2, 3]).
 
--spec test_15_neg() -> any().
-test_15_neg() ->
-    F = fun (X, Y) -> X * Y end,
-    F(2).
-
 -spec reduce_nums(
     fun((number(), number()) -> number()),
     [number()]
 ) -> number().
 reduce_nums(_, _) -> 0.
+
+-spec test_15_neg() -> any().
+test_15_neg() ->
+    F = fun (X, Y) -> X * Y end,
+    F(2).
+
+-spec test_16_neg() -> pid().
+test_16_neg() ->
+  rec(5).
+
+rec(0) -> [];
+rec(1) -> [];
+rec(X) -> [X|rec(X - 1)].
 
 % TODO: arity check for higher-order funs
 
@@ -107,4 +115,5 @@ apply_fun(F, Arg) ->
 other(Z) -> other_other(Z).
 
 other_other(X) ->  X * 3.
+
 

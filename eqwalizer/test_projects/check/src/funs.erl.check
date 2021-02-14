@@ -86,25 +86,34 @@
  86     F = fun (X, _Y) -> X end,              |         | 
  87     reduce_nums(F, [1, 2, 3]).             |         | 
  88                                            |         | 
- 89 -spec test_15_neg() -> any().              |         | 
- 90 test_15_neg() ->                           | ERROR   | 
- 91     F = fun (X, Y) -> X * Y end,           |         | 
- 92     F(2).                                  |         | F. Wrong number of arguments. Expected: 2, Got: 1
- 93                                            |         | 
- 94 -spec reduce_nums(                         |         | 
- 95     fun((number(), number()) -> number()), |         | 
- 96     [number()]                             |         | 
- 97 ) -> number().                             |         | 
- 98 reduce_nums(_, _) -> 0.                    | OK      | 
+ 89 -spec reduce_nums(                         |         | 
+ 90     fun((number(), number()) -> number()), |         | 
+ 91     [number()]                             |         | 
+ 92 ) -> number().                             |         | 
+ 93 reduce_nums(_, _) -> 0.                    | OK      | 
+ 94                                            |         | 
+ 95 -spec test_15_neg() -> any().              |         | 
+ 96 test_15_neg() ->                           | ERROR   | 
+ 97     F = fun (X, Y) -> X * Y end,           |         | 
+ 98     F(2).                                  |         | F. Wrong number of arguments. Expected: 2, Got: 1
  99                                            |         | 
-100 % TODO: arity check for higher-order funs  |         | 
-101                                            |         | 
-102 apply_fun(F, Arg) ->                       | OK      | 
-103     case F of                              |         | 
-104       _ -> F(Arg)                          |         | 
-105     end.                                   |         | 
-106                                            |         | 
-107 other(Z) -> other_other(Z).                | OK      | 
-108                                            |         | 
-109 other_other(X) ->  X * 3.                  | OK      | 
-110                                            |         | 
+100 -spec test_16_neg() -> pid().              |         | 
+101 test_16_neg() ->                           | ERROR   | 
+102   rec(5).                                  |         | rec(number_expr). Expected: pid(), Got: [number()]
+103                                            |         | 
+104 rec(0) -> [];                              | OK      | 
+105 rec(1) -> [];                              |         | 
+106 rec(X) -> [X|rec(X - 1)].                  |         | 
+107                                            |         | 
+108 % TODO: arity check for higher-order funs  |         | 
+109                                            |         | 
+110 apply_fun(F, Arg) ->                       | OK      | 
+111     case F of                              |         | 
+112       _ -> F(Arg)                          |         | 
+113     end.                                   |         | 
+114                                            |         | 
+115 other(Z) -> other_other(Z).                | OK      | 
+116                                            |         | 
+117 other_other(X) ->  X * 3.                  | OK      | 
+118                                            |         | 
+119                                            |         | 

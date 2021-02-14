@@ -18,12 +18,14 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Vars}
+import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Id, Recursion, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final class Elab(module: String, check: Check) {
   private val elabPat = new ElabPat(module)
   private val elabGuard = new ElabGuard(module)
+
+  var idAndArgTys2Ty = Map[(Id, List[Type]), Type]()
 
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
     var (elabType, envAcc) = elabExpr(exprs.head, env)
@@ -78,7 +80,7 @@ final class Elab(module: String, check: Check) {
       case LocalCall(id, args) =>
         Util.getFunType(module, id) match {
           case Some(ft: FoonType) =>
-            elabFoonCall(expr, ft, args, env)
+            elabFoonCall(expr, Some(id), ft, args, env)
           case Some(FunType(argTys, resTy)) =>
             val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
@@ -88,7 +90,7 @@ final class Elab(module: String, check: Check) {
       case RemoteCall(fqn, args) =>
         Util.getFunType(fqn) match {
           case Some(ft: FoonType) =>
-            elabFoonCall(expr, ft, args, env)
+            elabFoonCall(expr, Some(Id(fqn.module, fqn.arity)), ft, args, env)
           case Some(FunType(argTys, resTy)) =>
             val env1 = check.checkExprs(args, argTys, env)
             (resTy, env1)
@@ -98,12 +100,12 @@ final class Elab(module: String, check: Check) {
       case FunCall(expr, args) =>
         val (exprTy, env1) = elabExpr(expr, env)
         exprTy match {
-          case ft: FoonType => elabFoonCall(expr, ft, args, env)
+          case ft: FoonType => elabFoonCall(expr, None, ft, args, env)
           case FunType(fArgTys, fResTy) =>
             val env2 = check.checkExprs(args, fArgTys, env1)
             (fResTy, env2)
           case ft: FoonType =>
-            elabFoonCall(expr, ft, args, env)
+            elabFoonCall(expr, None, ft, args, env)
           case _ =>
             val funTy = FunType(args.map(_ => AnyType), AnyType)
             throw TypeMismatch(expr.l, expr, expected = funTy, got = exprTy)
@@ -315,11 +317,18 @@ final class Elab(module: String, check: Check) {
 
     }
 
-  def elabFoonCall(expr: Expr, ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
-    val FoonType(clauses, _m, fEnv) = ft
+  var x = 0
+  def elabFoonCall(expr: Expr, idOpt: Option[Id], ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
+    val FoonType(clauses, _module, fEnv) = ft
     val (argTys, argEnvs) = args.map(elabExpr(_, env)).unzip
+    println(s"elab foon $idOpt")
 
-    def elabClause(clause: Clause, argTys: List[Type], env0: Env): (Type, Env) = {
+    x += 1
+    if (x == 1000) {
+      sys.error("oops")
+    }
+
+    def elabFoonClause(clause: Clause, argTys: List[Type], env0: Env): Type = {
       if (clause.pats.sizeCompare(argTys) != 0) {
         throw ArityMismatch(expr.l, expr, expected = clause.pats.size, got = argTys.size)
       }
@@ -327,13 +336,35 @@ final class Elab(module: String, check: Check) {
       val env1 = Util.enterScope(env0, allScopeVars)
       val env2 = elabGuard.elabGuards(clause.guards, env1)
       val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
-      val (ty, env4) = elabBlock(clause.body, env3)
-      (ty, env4)
+      elabBlock(clause.body, env3)._1
+    }
+    def elabFoonClauses(clauses: List[Clause]): (Type, Env) = {
+      val tys = clauses.map(elabFoonClause(_, argTys, fEnv))
+      val ty = tys.reduce(Subtype.join)
+      (ty, Approx.joinEnvs(argEnvs))
     }
 
-    val (tys, _) = clauses.map(elabClause(_, argTys, fEnv)).unzip
-    val ty = tys.reduce(Subtype.join)
-    (ty, Approx.joinEnvs(argEnvs))
+    idOpt match {
+      case Some(id) => idAndArgTys2Ty.get(id, argTys) match {
+        case Some(ty) =>
+          println(s"using type from store $id $ty")
+          (ty, Approx.joinEnvs(argEnvs))
+        case None =>
+          Recursion.rec(clauses, id) match {
+            case Some(baseClauses) =>
+              val (baseTy, _) = elabFoonClauses(baseClauses)
+              idAndArgTys2Ty += (id, argTys) -> baseTy
+              println(s"setting type for $id to $baseTy")
+              elabFoonClauses(clauses)
+            case None => throw NeedsSpec(ft.clauses.head.l, ft.clauses.head.body.head)
+          }
+
+      }
+      case None =>
+        println(s"in none case $expr")
+        elabFoonClauses(clauses)
+    }
+
   }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

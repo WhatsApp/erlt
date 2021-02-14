@@ -30,6 +30,9 @@ object TcDiagnostics {
   case class TypeMismatch(line: Int, expr: Expr, expected: Type, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
+  case class NeedsSpec(line: Int, expr: Expr) extends TypeError {
+    override val msg: String = s"${show(expr)} cannot be type-checked without a spec."
+  }
   case class UndefinedKey(line: Int, expr: Expr, key: String, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Undef key `$key`. Type: ${show(got)}"
   }
