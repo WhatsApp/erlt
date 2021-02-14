@@ -102,6 +102,8 @@ impl Server {
             },
         }
 
+        // self.process_changes();
+
         Ok(())
     }
 

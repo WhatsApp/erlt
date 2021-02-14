@@ -13,6 +13,7 @@ path = "src/bin/main.rs"
 
 [dependencies]
 anyhow = "1.0"
+baltazar_ide = {path = "../ide"}
 crossbeam-channel = "0.5.0"
 env_logger = "0.8.2"
 fxhash = "0.2.1"

@@ -1,11 +1,12 @@
 [package]
-name = "baltazar_syntax"
-version = "0.1.0"
 authors = ["Michał Muskała <micmus@whatsapp.com>"]
 edition = "2018"
+name = "baltazar_ide"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tree-sitter-erlang = { path = "../tree-sitter-erlang" }
-tree-sitter = "0.16"
+salsa = "0.16.0"
+baltazar_syntax = {path = "../syntax"}
+vfs = {git = "https://github.com/rust-analyzer/rust-analyzer", rev = "336909b"}
