@@ -1,11 +1,11 @@
 # Eqwalizer milestones
 
-## January 2021
+## Jan-Feb 2021
 
 Simple (naive) bidirectional type-checking. Main goal: to support full range of
 Erlang surface syntax.
 
-### Surface syntax (TODO)
+### Surface syntax
 
 - [x] Catch
 - [x] Try/catch
@@ -14,7 +14,7 @@ Erlang surface syntax.
 - [ ] `catch X:Y:Z ->` syntax
 - [x] List comprehensions
 - [x] Binary comprehensions
-- [ ] Maps
+- [x] Maps
 - [x] Records
 - [ ] Anonymous functions
 - [ ] Named inner functions (not priority)
@@ -31,10 +31,11 @@ Erlang surface syntax.
 
 - [ ] Propagate selector type in case-expressions
 - [ ] Propagate try-body type in try-of expressions
+- [ ] `when X = Y` -> `X` and `Y` are of the same type.
 
 ### Data-driven analysis
 
-- [ ] Named inner functions
+- [x] [Named inner functions](https://fb.workplace.com/groups/typederlang/permalink/268350134631822) 
 - [ ] Private functions - recursive and non-recursive.
 - [ ] Dependencies between modules and functions in general.
 

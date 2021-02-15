@@ -560,10 +560,16 @@ object Convert {
         TestRecordIndex(recName, atomLit(eFieldName))(l.intValue)
       case ETuple(List(EAtom("record_field"), ELong(l), eTest, EAtom(recName), eFieldName)) =>
         TestRecordSelect(convertTest(eTest), recName, atomLit(eFieldName))(l.intValue)
-      case ETuple(List(EAtom("map"), ELong(l), EList(_, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestMap)
-      case ETuple(List(EAtom("map"), ELong(l), _, EList(_, None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestMap)
+      case ETuple(List(EAtom("map"), ELong(l), EList(kvs, None))) =>
+        TestMapCreate(kvs.map(convertTestKV))(l.intValue)
+      case ETuple(List(EAtom("map"), ELong(l), t, EList(kvs, None))) =>
+        val map = convertTest(t)
+        if (kvs.isEmpty)
+          TestGenMapUpdate(map, List())(l.intValue)
+        else if (isAvUpdate(kvs.head))
+          TestReqMapUpdate(map, kvs.map(convertTestAV))(l.intValue)
+        else
+          TestGenMapUpdate(map, kvs.map(convertTestKV))(l.intValue)
       case ETuple(List(EAtom("call"), ELong(l), eExp, EList(eArgs, None))) =>
         eExp match {
           case ETuple(
@@ -587,6 +593,28 @@ object Convert {
         TestNumber()(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _value)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestString)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def convertTestKV(term: EObject): (Test, Test) =
+    term match {
+      case ETuple(List(EAtom("map_field_assoc"), _, t1, t2)) =>
+        (convertTest(t1), convertTest(t2))
+      case ETuple(List(_, ELong(l), _, _)) =>
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
+      // $COVERAGE-OFF$
+      case _ => throw new IllegalStateException()
+      // $COVERAGE-ON$
+    }
+
+  private def convertTestAV(term: EObject): (String, Test) =
+    term match {
+      case ETuple(List(EAtom("map_field_exact"), ELong(l), ETuple(List(EAtom("atom"), _, EAtom(key))), eExp2)) =>
+        (key, convertTest(eExp2))
+      case ETuple(List(_, ELong(l), _, _)) =>
+        throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.BadMapKey)
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$

@@ -186,11 +186,11 @@
 186 record_field_guard(X)                    | LOADED  |                                | 
 187     when X#test_rec.id -> ok.            |         |                                | 
 188                                          |         |                                | 
-189 map_guard(X)                             | SKIPPED |                                | 
-190     when #{} -> ok.                      |         | G: #{...}                      | 
+189 map_guard(X)                             | LOADED  |                                | 
+190     when #{} -> ok.                      |         |                                | 
 191                                          |         |                                | 
-192 map_update_guard(X)                      | SKIPPED |                                | 
-193     when X#{id := 3} -> ok.              |         | G: #{...}                      | 
+192 map_update_guard(X)                      | LOADED  |                                | 
+193     when X#{id := 3} -> ok.              |         |                                | 
 194                                          |         |                                | 
 195 call_guard(X)                            | LOADED  |                                | 
 196     when is_number(X) -> ok.             |         |                                | 

@@ -430,3 +430,36 @@ val5(K, M) ->
     case M of
         #{K := V} -> V
     end.
+
+-spec guard1
+    (#{a() => a()} | a())
+    -> #{a() => a()}.
+guard1(M) when is_map(M) -> M;
+guard1(A) when is_atom(A) -> #{A => A}.
+
+-spec guard2(a()) -> none().
+guard2(M) when is_map(M) -> M.
+
+-spec guard3
+    (any()) -> map().
+guard3(A) when is_map(A#{}) -> A.
+
+-spec guard4
+    (any()) -> map().
+guard4(A) when is_map(A#{a := 1}) -> A.
+
+-spec guard5
+    (any(), any()) -> {map(), map()}.
+guard5(M1, M2) when
+    M1#{} == M2#{} -> {M1, M2}.
+
+-spec guard6
+    (any(), any()) -> {map(), map()}.
+guard6(M1, M2) when
+    M1#{a := 1} == M2#{a := 1}
+    -> {M1, M2}.
+
+-spec guard7
+    (any()) -> map().
+guard7(M) when M#{a => 1} == #{a => 1}
+    -> M.

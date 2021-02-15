@@ -430,3 +430,36 @@
 430     case M of                              |         | 
 431         #{K := V} -> V                     |         | 
 432     end.                                   |         | 
+433                                            |         | 
+434 -spec guard1                               |         | 
+435     (#{a() => a()} | a())                  |         | 
+436     -> #{a() => a()}.                      |         | 
+437 guard1(M) when is_map(M) -> M;             | OK      | 
+438 guard1(A) when is_atom(A) -> #{A => A}.    |         | 
+439                                            |         | 
+440 -spec guard2(a()) -> none().               |         | 
+441 guard2(M) when is_map(M) -> M.             | OK      | 
+442                                            |         | 
+443 -spec guard3                               |         | 
+444     (any()) -> map().                      |         | 
+445 guard3(A) when is_map(A#{}) -> A.          | OK      | 
+446                                            |         | 
+447 -spec guard4                               |         | 
+448     (any()) -> map().                      |         | 
+449 guard4(A) when is_map(A#{a := 1}) -> A.    | OK      | 
+450                                            |         | 
+451 -spec guard5                               |         | 
+452     (any(), any()) -> {map(), map()}.      |         | 
+453 guard5(M1, M2) when                        | OK      | 
+454     M1#{} == M2#{} -> {M1, M2}.            |         | 
+455                                            |         | 
+456 -spec guard6                               |         | 
+457     (any(), any()) -> {map(), map()}.      |         | 
+458 guard6(M1, M2) when                        | OK      | 
+459     M1#{a := 1} == M2#{a := 1}             |         | 
+460     -> {M1, M2}.                           |         | 
+461                                            |         | 
+462 -spec guard7                               |         | 
+463     (any()) -> map().                      |         | 
+464 guard7(M) when M#{a => 1} == #{a => 1}     | OK      | 
+465     -> M.                                  |         | 

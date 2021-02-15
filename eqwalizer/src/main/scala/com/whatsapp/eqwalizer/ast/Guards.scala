@@ -30,6 +30,9 @@ object Guards {
   case class TestRecordCreate(recName: String, fields: List[TestRecordField])(val l: Int) extends Test
   case class TestRecordSelect(rec: Test, recName: String, fieldName: String)(val l: Int) extends Test
   case class TestRecordIndex(recName: String, fieldName: String)(val l: Int) extends Test
+  case class TestMapCreate(kvs: List[(Test, Test)])(val l: Int) extends Test
+  case class TestReqMapUpdate(map: Test, kvs: List[(String, Test)])(val l: Int) extends Test
+  case class TestGenMapUpdate(map: Test, kvs: List[(Test, Test)])(val l: Int) extends Test
 
   case class TestUnOp(op: String, arg: Test)(val l: Int) extends Test
   case class TestBinOp(op: String, arg1: Test, arg2: Test)(val l: Int) extends Test
