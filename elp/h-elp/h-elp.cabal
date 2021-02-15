@@ -61,6 +61,7 @@ library
      , text
      , tree-sitter
      , tree-sitter-elp
+     , transformers
      , unliftio
      , unordered-containers
      , with-utf8

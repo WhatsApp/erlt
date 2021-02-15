@@ -12,6 +12,7 @@
 
 module ELP where
 
+import qualified Development.IDE.Types.Logger as L
 import AST.Unmarshal
   ( TSDiagnostic (..),
     Unmarshal,
@@ -24,21 +25,28 @@ import AST.Unmarshal
 import Control.Carrier.State.Strict (runState)
 import Control.Exception (catch)
 import Control.Lens (to, (^.))
-import Control.Monad (void)
+import Control.Monad (void, when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.ByteString (ByteString)
 import qualified Data.HashMap.Strict as HM
 import Data.Hashable
 import qualified Data.Map as Map
+import Data.Maybe
 import Data.Rope.UTF16 (Rope, codeUnitsRowColumn)
 import qualified Data.Rope.UTF16 as Rope
 import qualified Data.Rope.UTF16.Internal.Position as Rope
 import qualified Data.SplayTree as Rope
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
-import Development.IDE (IdeState (..), define, getClientConfigAction, getFilesOfInterest, uses, logInfo, ideLogger)
-import Development.IDE.Core.Shake (IsIdeGlobal, getIdeGlobalExtras, getIdeGlobalAction, updatePositionMapping)
+import Development.IDE (IdeState (..), define, getClientConfigAction, ideLogger, logInfo, uses, Action)
+import Development.IDE.Core.FileStore hiding (getVirtualFile)
+import Development.IDE.Core.OfInterest
+import Development.IDE.Core.Shake (IsIdeGlobal, VFSHandle (..), getIdeGlobalAction, getIdeGlobalExtras, getIdeGlobalState, shakeRestart, updatePositionMapping, ShakeExtras (progressUpdate))
+import Development.IDE.LSP.Notifications
+  ( whenUriFile,
+  )
 import Development.IDE.Types.Diagnostics
+import qualified Development.IDE.Core.Shake as S
 import qualified Development.Shake as S
 import Development.Shake.Classes
 import Foreign.C.String
@@ -55,12 +63,10 @@ import Ide.Types (PluginDescriptor (..), PluginId, PluginNotificationMethodHandl
 import Language.Erlang.AST (SourceFile)
 import qualified Language.Erlang.AST as Erlang
 import Language.LSP.Diagnostics (partitionBySource)
-import Language.LSP.Server
+import Language.LSP.Server as Lsp
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lsp
   ( HasUri (uri),
-    text,
-    textDocument,
   )
 import Language.LSP.VFS (VirtualFile (VirtualFile))
 import qualified Source.Range as S
@@ -91,12 +97,6 @@ import TreeSitter.Tree
     withRootNode,
   )
 import UnliftIO (MVar, modifyMVar)
-import Development.IDE.LSP.Notifications
-    ( setHandlersNotifications
-    , whenUriFile
-    )
-import Development.IDE.Core.OfInterest
-import Development.IDE.Core.FileStore hiding (getVirtualFile)
 
 -- ---------------------------------------------------------------------
 
@@ -134,9 +134,25 @@ instance Binary GetTreeSitterDiagnostics
 
 type instance S.RuleResult GetTreeSitterDiagnostics = ()
 
+-- ---------------------------------------------------------------------
+data GetTreeSitterAst = GetTreeSitterAst
+  deriving (Eq, Show, Typeable, Generic)
+
+instance Hashable GetTreeSitterAst
+
+instance NFData GetTreeSitterAst
+
+instance Binary GetTreeSitterAst
+
+-- | The Semantic AST for GetTreeSitterAst
+type instance S.RuleResult GetTreeSitterAst = Erlang.SourceFile ()
+
+-- ---------------------------------------------------------------------
+
 rules :: PluginId -> S.Rules ()
 rules plugin = do
   define $ \GetTreeSitterDiagnostics file -> do
+    _ <- getFileContents file -- Trigger graph?
     config <- getClientConfigAction
     let pluginConfig = configForPlugin config plugin
     -- let hlintOn' = hlintOn config && plcGlobalOn pluginConfig && plcDiagnosticsOn pluginConfig
@@ -144,12 +160,11 @@ rules plugin = do
     -- return (diagnostics file ideas, Just ())
     liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:file:" ++ show file
 
-
     mparser <- getIdeGlobalAction
     -- mparser <- liftIO $ getIdeGlobalExtras (shakeExtras ide) :: LspM Config (MVar ParserContext)
     diagnostics <- liftIO $ do
       modifyMVar mparser $ \(ParserContext parser pcsmap) -> do
-        diags <- case Map.lookup (normalizedFilePathToUri file)  pcsmap of
+        diags <- case Map.lookup (normalizedFilePathToUri file) pcsmap of
           Just (TsFile tree node rope) -> do
             liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:found TS:" ++ show file
             makeDiagnostics rope tree
@@ -157,14 +172,21 @@ rules plugin = do
             liftIO $ infoM "h-elp" $ "elp:GetTreeSitterDiagnostics:****NO TS***:" ++ show file
             return []
         return (ParserContext parser pcsmap, diags)
-    let dd = [(file, ShowDiag, d)| d <- diagnostics]
+    let dd = [(file, ShowDiag, d) | d <- diagnostics]
     -- reportDiagnostics docUri (Just 0) (Rope.fromText aContent) tree
     -- return ([(file, ShowDiag, textDiagnostic "hello from rule!")], Just ())
+    liftIO $ hPutStrLn stderr $ "GetTreeSitterDiagnostics:dd" ++ show dd
     return (dd, Just ())
 
   S.action $ do
     files <- getFilesOfInterest
     void $ uses GetTreeSitterDiagnostics $ HM.keys files
+
+getTreeSitterDiagnostics :: NormalizedFilePath -> Action ()
+getTreeSitterDiagnostics nfp = do
+  liftIO $ hPutStrLn stderr $ "getTreeSitterDiagnostics:" ++ show nfp
+  r <- S.use GetTreeSitterDiagnostics nfp
+  liftIO $ hPutStrLn stderr $ "getTreeSitterDiagnostics:r=" ++ show r
 
 -- ---------------------------------------------------------------------
 
@@ -182,12 +204,12 @@ hlsPlugin plId =
 
 -- PluginNotificationMethodHandler a m = a -> PluginId -> MessageParams m -> LspM Config ()
 didOpen :: PluginNotificationMethodHandler IdeState 'TextDocumentDidOpen
-didOpen ide _pid (DidOpenTextDocumentParams (TextDocumentItem uri _ version text) ) = do
+didOpen ide _pid (DidOpenTextDocumentParams (TextDocumentItem uri _ version text)) = do
   let doc = uri
       docUri = toNormalizedUri doc
   let aContent = text
   liftIO $ infoM "h-elp" $ "Processing DidOpenTextDocument for: " ++ show (uriToFilePath doc)
-  mdoc <- getVirtualFile docUri
+  mdoc <- Lsp.getVirtualFile docUri
   case mdoc of
     Just (VirtualFile _lspversion vsn rope) -> do
       liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
@@ -209,13 +231,15 @@ didOpen ide _pid (DidOpenTextDocumentParams (TextDocumentItem uri _ version text
   -- we want it.  It *does* give us the opportunity to tweak it if we
   -- need to, else is duplication.
   liftIO $ do
-      void $ updatePositionMapping ide (VersionedTextDocumentIdentifier uri (Just version)) (List [])
-      whenUriFile uri $ \file -> do
-          -- We don't know if the file actually exists, or if the contents match those on disk
-          -- For example, vscode restores previously unsaved contents on open
-          void $ modifyFilesOfInterest ide (HM.insert file Modified)
-          void $ setFileModified ide False file
-          logInfo (ideLogger ide) $ "Opened text document: " <> getUri uri
+    void $ updatePositionMapping ide (VersionedTextDocumentIdentifier uri (Just version)) (List [])
+    whenUriFile uri $ \file -> do
+      -- We don't know if the file actually exists, or if the contents match those on disk
+      -- For example, vscode restores previously unsaved contents on open
+      void $ modifyFilesOfInterest ide (HM.insert file Modified)
+      void $ elsSetFileModified ide False file
+      logInfo (ideLogger ide) $ "Opened text document: " <> getUri uri
+  -- (S.use elpKick)
+  return ()
 
 -- ---------------------------------------------------------------------
 
@@ -225,8 +249,9 @@ didChange ide _pid (DidChangeTextDocumentParams identifier changes@(List changeL
   let doc = identifier ^. uri . to toNormalizedUri
       docUri = identifier ^. uri
   liftIO $ infoM "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
+  liftIO $ logInfo (ideLogger ide) $ "ELP: Processing DidChangeTextDocument for: " <> getUri docUri
   -- logm "h-elp" $ "Processing DidChangeTextDocument for: " ++ show doc
-  mdoc <- getVirtualFile doc
+  mdoc <- Lsp.getVirtualFile doc
   case mdoc of
     Just (VirtualFile lspversion vsn ropeNew) -> do
       liftIO $ infoM "h-elp" $ "Found the virtual file: " ++ show vsn
@@ -260,6 +285,7 @@ didChange ide _pid (DidChangeTextDocumentParams identifier changes@(List changeL
           return (ParserContext parser pcsmap', tree)
       reportDiagnostics doc (Just lspversion) ropeNew tree
       liftIO $ infoM "h-elp" "DidChange done"
+      liftIO $ logInfo (ideLogger ide) $ "ELP: Modified text document: " <> getUri docUri
       return ()
     Nothing -> do
       liftIO $ infoM "h-elp" $ "Didn't find anything in the VFS for: " ++ show doc
@@ -269,11 +295,40 @@ didChange ide _pid (DidChangeTextDocumentParams identifier changes@(List changeL
   -- we want it.  It *does* give us the opportunity to tweak it if we
   -- need to, else is duplication.
   liftIO $ do
-        updatePositionMapping ide identifier changes
-        whenUriFile docUri $ \file -> do
-          modifyFilesOfInterest ide (HM.insert file Modified)
-          setFileModified ide False file
-        logInfo (ideLogger ide) $ "Modified text document: " <> getUri docUri
+    updatePositionMapping ide identifier changes
+    whenUriFile docUri $ \file -> do
+      modifyFilesOfInterest ide (HM.insert file Modified)
+      elsSetFileModified ide False file
+    logInfo (ideLogger ide) $ "Modified text document: " <> getUri docUri
+  -- S.use elpKick
+
+-- ---------------------------------------------------------------------
+
+-- | Note that some buffer for a specific file has been modified but not
+-- with what changes.
+elsSetFileModified ::
+  IdeState ->
+  -- | Was the file saved?
+  Bool ->
+  NormalizedFilePath ->
+  IO ()
+elsSetFileModified state saved nfp = do
+  -- ideOptions <- getIdeOptionsIO $ shakeExtras state
+  -- doCheckParents <- optCheckParents ideOptions
+  let checkParents = True
+  VFSHandle {setVirtualFileContents} <- getIdeGlobalState state
+  when (isJust setVirtualFileContents) $
+    fail "elsSetFileModified can't be called on this type of VFSHandle"
+  shakeRestart state []
+  when checkParents $
+    elpTypecheckParents state nfp
+
+elpTypecheckParents :: IdeState -> NormalizedFilePath -> IO ()
+elpTypecheckParents ide nfp = do
+  let parents = S.mkDelayedAction "EParentTC" L.Debug (getTreeSitterDiagnostics nfp)
+  -- where parents = mkDelayedAction "EParentTC" L.Debug (typecheckParentsAction nfp)
+  logInfo (ideLogger ide) $ "elpTypecheckParents" 
+  void $ S.shakeEnqueue (shakeExtras ide) parents
 
 -- ---------------------------------------------------------------------
 
@@ -577,3 +632,37 @@ offsetsToRange rope (start, end) = Range (Position r1 c1) (Position r2 c2)
     Rope.RowColumn r2 c2 = codeUnitsRowColumn end rope
 
 -- ---------------------------------------------------------------------
+
+-- | Typecheck all the files of interest.
+--   Could be improved
+elpKick :: Action ()
+elpKick = do
+    liftIO $ hPutStrLn stderr $ "elpKick entered"
+    files <- HM.keys <$> getFilesOfInterest
+    S.ShakeExtras{progressUpdate} <- S.getShakeExtras
+    liftIO $ progressUpdate S.KickStarted
+
+    -- -- Update the exports map for FOIs
+    -- (results, ()) <- par (uses GenerateCore files) (void $ uses GetHieAst files)
+    -- (results, ()) <- par (uses GenerateCore files) (void $ uses GetHieAst files)
+    _r <- uses GetTreeSitterDiagnostics files
+
+    -- -- Update the exports map for non FOIs
+    -- -- We can skip this if checkProject is True, assuming they never change under our feet.
+    -- IdeOptions{ optCheckProject = doCheckProject } <- getIdeOptions
+    -- checkProject <- liftIO $ doCheckProject
+    -- ifaces <- if checkProject then return Nothing else runMaybeT $ do
+    --     deps <- MaybeT $ sequence <$> uses GetDependencies files
+    --     hiResults <- lift $ uses GetModIface (nubOrd $ foldMap transitiveModuleDeps deps)
+    --     return $ map hirModIface $ catMaybes hiResults
+
+    -- ShakeExtras{exportsMap} <- getShakeExtras
+    -- let mguts = catMaybes results
+    --     !exportsMap' = createExportsMapMg mguts
+    --     !exportsMap'' = maybe mempty createExportsMap ifaces
+    -- liftIO $ modifyVar_ exportsMap $ evaluate . (exportsMap'' <>) . (exportsMap' <>)
+
+
+    liftIO $ progressUpdate S.KickCompleted
+
+    liftIO $ hPutStrLn stderr $ "elpKick done"

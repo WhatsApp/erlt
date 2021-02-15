@@ -16,6 +16,8 @@ module ELP.Ide.Main(defaultMain, runLspMode) where
 
 import Control.Concurrent.Extra
 import Control.Monad.Extra
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 import Control.Exception.Safe
 import Data.Default
@@ -56,7 +58,7 @@ import System.FilePath
 import System.IO
 import qualified System.Log.Logger as L
 import System.Time.Extra
-import Development.Shake (ShakeOptions (shakeThreads), action, Rules(..))
+import Development.Shake (ShakeOptions (shakeThreads), action, Rules(..), Action, par)
 import TreeSitter.ErlangELP
 import TreeSitter.Parser
 -- import HieDb.Run
@@ -148,7 +150,7 @@ runLspMode' lspArgs@LspArguments{..} idePlugins hiedb hiechan = do
 
                 _libdir <- setInitialDynFlags
                               `catchAny` (\e -> (hPutStrLn stderr $ "setInitialDynFlags: " ++ displayException e) >> pure Nothing)
-                sessionLoader <- loadSession dir
+                -- sessionLoader <- loadSession dir
                 caps <- LSP.runLspT env LSP.getClientCapabilities
                 -- config <- fromMaybe defaultLspConfig <$> getConfig
                 let options = defOptions
@@ -157,10 +159,10 @@ runLspMode' lspArgs@LspArguments{..} idePlugins hiedb hiechan = do
                         , optTesting        = IdeTesting argsTesting
                         , optShakeOptions   = (optShakeOptions defOptions){shakeThreads = argsThreads}
                         }
-                    defOptions = defaultIdeOptions sessionLoader
+                    defOptions = defaultIdeOptions elpSessionLoader
                 debouncer <- newAsyncDebouncer
                 -- initialise (mainRule >> pluginRules plugins >> action kick)
-                cfg <- initialise (elpMainRule >> pluginRules plugins >> action kick)
+                cfg <- initialise (elpMainRule >> pluginRules plugins >> action elpKick)
                     (Just env) hlsLogger debouncer options vfs
                     hiedb hiechan
                 pc <- newMVar (ParserContext parser mempty)
@@ -260,5 +262,49 @@ elpMainRule = do
     -- persistentHieFileRule
     -- persistentDocMapRule
     -- persistentImportMapRule
+-- ---------------------------------------------------------------------
+
+{-
+-- | Typecheck all the files of interest.
+--   Could be improved
+elpKick :: Action ()
+elpKick = do
+    files <- HashMap.keys <$> getFilesOfInterest
+    ShakeExtras{progressUpdate} <- getShakeExtras
+    liftIO $ progressUpdate KickStarted
+
+    -- -- Update the exports map for FOIs
+    -- (results, ()) <- par (uses GenerateCore files) (void $ uses GetHieAst files)
+    -- (results, ()) <- par (uses GenerateCore files) (void $ uses GetHieAst files)
+    _r <- uses GetTreeSitterDiagnostics files
+
+    -- -- Update the exports map for non FOIs
+    -- -- We can skip this if checkProject is True, assuming they never change under our feet.
+    -- IdeOptions{ optCheckProject = doCheckProject } <- getIdeOptions
+    -- checkProject <- liftIO $ doCheckProject
+    -- ifaces <- if checkProject then return Nothing else runMaybeT $ do
+    --     deps <- MaybeT $ sequence <$> uses GetDependencies files
+    --     hiResults <- lift $ uses GetModIface (nubOrd $ foldMap transitiveModuleDeps deps)
+    --     return $ map hirModIface $ catMaybes hiResults
+
+    -- ShakeExtras{exportsMap} <- getShakeExtras
+    -- let mguts = catMaybes results
+    --     !exportsMap' = createExportsMapMg mguts
+    --     !exportsMap'' = maybe mempty createExportsMap ifaces
+    -- liftIO $ modifyVar_ exportsMap $ evaluate . (exportsMap'' <>) . (exportsMap' <>)
+
+
+    liftIO $ progressUpdate KickCompleted
+
+-}
+-- ---------------------------------------------------------------------
+
+elpSessionLoader :: Action IdeGhcSession
+elpSessionLoader = return (IdeGhcSession loader 0)
+  where
+    diag = textDiagnostic "elpSessionLoader NOP"
+    loader file = return (([(toNormalizedFilePath file, ShowDiag, diag)]
+                          ,Nothing),[])
+
 -- ---------------------------------------------------------------------
 
