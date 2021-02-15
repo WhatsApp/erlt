@@ -7,8 +7,9 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-salsa = "0.16.0"
 baltazar_syntax = {path = "../syntax"}
-vfs = {git = "https://github.com/rust-analyzer/rust-analyzer", rev = "336909b"}
 fxhash = "0.2.1"
+log = "0.4.14"
+salsa = "0.16.0"
 text-size = "1.1"
+vfs = {git = "https://github.com/rust-analyzer/rust-analyzer", rev = "336909b"}

@@ -26,6 +26,8 @@ fn try_main() -> Result<()> {
         args::Command::Help => eprintln!("{}", args::HELP),
     }
 
+    log::logger().flush();
+
     Ok(())
 }
 
