@@ -6,12 +6,10 @@ use crossbeam_channel::{select, Receiver, Sender};
 use dispatch::NotificationDispatcher;
 use fxhash::FxHashMap;
 use lsp_server::{ErrorCode, Notification, Request, RequestId, Response};
-use lsp_types::{
-    notification::{self, Notification as _, Progress},
-    request::{self, Request as _},
-};
+use lsp_types::{Registration, notification::{self, Notification as _, Progress}, request::{self, Request as _}};
+use notification::DidChangeWatchedFiles;
 use parking_lot::RwLock;
-use vfs::{AbsPathBuf, FileId, Vfs, VfsPath};
+use vfs::{AbsPath, AbsPathBuf, FileId, Vfs, VfsPath};
 
 use crate::{
     config::Config,
@@ -94,6 +92,11 @@ impl Server {
     }
 
     pub fn main_loop(mut self) -> Result<()> {
+        {
+            let config = self.config.clone();
+            self.switch_workspaces(&[config.root_path.clone()]);
+        }
+
         while let Some(event) = self.next_event() {
             if let Event::Lsp(lsp_server::Message::Notification(notif)) = &event {
                 if notif.method == notification::Exit::METHOD {
@@ -127,8 +130,7 @@ impl Server {
             Event::Lsp(msg) => match msg {
                 lsp_server::Message::Request(req) => self.on_request(loop_start, req)?,
                 lsp_server::Message::Notification(notif) => self.on_notification(notif)?,
-                _ => (),
-                // Message::Response(resp) => self.complete_request(resp)?,
+                lsp_server::Message::Response(resp) => self.complete_request(resp),
             },
             Event::Vfs(mut msg) => {
                 loop {
@@ -293,6 +295,39 @@ impl Server {
         }
     }
 
+    fn switch_workspaces(&mut self, roots: &[AbsPathBuf]) {
+        let register_options = lsp_types::DidChangeWatchedFilesRegistrationOptions {
+            watchers: roots
+                .iter()
+                .map(|root| format!("{}/**/*.{{e,h}}rl", root.display()))
+                .map(|glob_pattern| lsp_types::FileSystemWatcher { glob_pattern, kind: None })
+                .collect(),
+        };
+
+        let registration = lsp_types::Registration {
+            id: "workspace/didChangeWatchedFiles".to_string(),
+            method: notification::DidChangeWatchedFiles::METHOD.to_string(),
+            register_options: Some(serde_json::to_value(register_options).unwrap()),
+        };
+
+        self.send_request::<lsp_types::request::RegisterCapability>(
+            lsp_types::RegistrationParams { registrations: vec![registration] },
+            |_, _| (),
+        );
+
+        let loader_dirs = vfs::loader::Directories {
+            extensions: vec!["erl".to_string(), "hrl".to_string()],
+            include: roots.to_vec(),
+            exclude: vec![],
+
+        };
+        let vfs_loader_config = vfs::loader::Config {
+            load: vec![vfs::loader::Entry::Directories(loader_dirs)],
+            watch: vec![],
+        };
+        self.vfs_loader.handle.set_config(vfs_loader_config)
+    }
+
     fn transition(&mut self, status: Status) {
         if self.status != status {
             log::info!("transitioning from {:?} to {:?}", self.status, status);
@@ -312,6 +347,16 @@ impl Server {
         if let Some(response) = self.req_queue.incoming.cancel(request_id) {
             self.send(response.into());
         }
+    }
+
+    fn send_request<R: lsp_types::request::Request>(&mut self, params: R::Params, handler: ReqHandler) {
+        let request = self.req_queue.outgoing.register(R::METHOD.to_string(), params, handler);
+        self.send(request.into());
+    }
+
+    fn complete_request(&mut self, response: Response) {
+        let handler = self.req_queue.outgoing.complete(response.id.clone());
+        handler(self, response)
     }
 
     fn send(&mut self, message: lsp_server::Message) {
