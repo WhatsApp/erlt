@@ -8,6 +8,11 @@ pub struct Document {
     content: String,
 }
 
+pub enum LineEndings {
+    Unix,
+    Dos,
+}
+
 impl Document {
     pub fn from_bytes(bytes: Vec<u8>) -> Document {
         Document { content: String::from_utf8(bytes).unwrap() }
@@ -56,5 +61,46 @@ impl Document {
 
     pub fn to_bytes(self) -> Vec<u8> {
         self.content.into_bytes()
+    }
+
+    // From https://github.com/rust-analyzer/rust-analyzer/blob/c01cd6e3ed0763f8e773c34dc76db0e39396133d/crates/rust-analyzer/src/line_endings.rs#L13-L51
+    pub fn to_normalized_string(self) -> (String, LineEndings) {
+        if !self.content.as_bytes().contains(&b'\r') {
+            return (self.content, LineEndings::Unix);
+        }
+
+        // We replace `\r\n` with `\n` in-place, which doesn't break utf-8 encoding.
+        // While we *can* call `as_mut_vec` and do surgery on the live string
+        // directly, let's rather steal the contents of `src`. This makes the code
+        // safe even if a panic occurs.
+
+        let mut buf = self.content.into_bytes();
+        let mut gap_len = 0;
+        let mut tail = buf.as_mut_slice();
+        loop {
+            let idx = match find_crlf(&tail[gap_len..]) {
+                None => tail.len(),
+                Some(idx) => idx + gap_len,
+            };
+            tail.copy_within(gap_len..idx, 0);
+            tail = &mut tail[idx - gap_len..];
+            if tail.len() == gap_len {
+                break;
+            }
+            gap_len += 1;
+        }
+
+        // Account for removed `\r`.
+        // After `set_len`, `buf` is guaranteed to contain utf-8 again.
+        let new_len = buf.len() - gap_len;
+        let content = unsafe {
+            buf.set_len(new_len);
+            String::from_utf8_unchecked(buf)
+        };
+        return (content, LineEndings::Dos);
+
+        fn find_crlf(src: &[u8]) -> Option<usize> {
+            src.windows(2).position(|window| window == b"\r\n")
+        }
     }
 }

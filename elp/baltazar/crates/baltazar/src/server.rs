@@ -1,6 +1,7 @@
 use std::{fmt, sync::Arc, time::Instant};
 
 use anyhow::{bail, Result};
+use baltazar_ide::{RootDatabase, SourceDatabase};
 use crossbeam_channel::{select, Receiver, Sender};
 use dispatch::NotificationDispatcher;
 use fxhash::FxHashMap;
@@ -12,7 +13,7 @@ use lsp_types::{
 use parking_lot::RwLock;
 use vfs::{FileId, Vfs, VfsPath};
 
-use crate::{config::Config, convert, document::Document};
+use crate::{config::Config, convert, document::{Document, LineEndings}};
 
 mod dispatch;
 
@@ -50,7 +51,9 @@ pub struct Server {
     req_queue: ReqQueue,
     open_document_versions: FxHashMap<VfsPath, i32>,
     vfs: Arc<RwLock<Vfs>>,
+    line_ending_map: Arc<RwLock<FxHashMap<FileId, LineEndings>>>,
     config: Arc<Config>,
+    db: RootDatabase,
     status: Status,
 }
 
@@ -62,7 +65,9 @@ impl Server {
             req_queue: ReqQueue::default(),
             open_document_versions: FxHashMap::default(),
             vfs: Arc::new(RwLock::new(Vfs::default())),
+            line_ending_map: Arc::new(RwLock::new(FxHashMap::default())),
             config: Arc::new(config),
+            db: RootDatabase::default(),
             status: Status::Loading,
         }
     }
@@ -102,7 +107,7 @@ impl Server {
             },
         }
 
-        // self.process_changes();
+        self.process_changes();
 
         Ok(())
     }
@@ -194,6 +199,28 @@ impl Server {
             .finish();
 
         Ok(())
+    }
+
+    fn process_changes(&mut self) {
+        let mut vfs = self.vfs.write();
+        let changed_files = vfs.take_changes();
+
+        if changed_files.is_empty() {
+            return;
+        }
+
+        for file in changed_files {
+            if file.exists() {
+                let bytes = vfs.file_contents(file.file_id).to_vec();
+                let document = Document::from_bytes(bytes);
+                let (text, line_ending) = document.to_normalized_string();
+                self.line_ending_map.write().insert(file.file_id, line_ending);
+                self.db.set_file_text(file.file_id, Arc::new(text));
+            } else {
+                // We can't actually delete things from salsa, just set it to empty
+                self.db.set_file_text(file.file_id, Default::default());
+            };
+        }
     }
 
     fn respond(&mut self, response: Response) {
