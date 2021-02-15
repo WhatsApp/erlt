@@ -1,8 +1,9 @@
 use std::ops::Range;
 
 use lsp_types::TextDocumentContentChangeEvent;
+use baltazar_ide::line_index::LineIndex;
 
-use crate::{convert, line_index::LineIndex};
+use crate::convert;
 
 pub struct Document {
     content: String,

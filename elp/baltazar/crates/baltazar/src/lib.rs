@@ -7,7 +7,6 @@ mod config;
 mod convert;
 mod diagnostics;
 mod document;
-mod line_index;
 mod server;
 mod server_setup;
 mod task_pool;

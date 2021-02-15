@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use ast::{AstNode, SourceFile};
 use syntax::SyntaxNode;
@@ -18,7 +18,7 @@ impl Parser {
 
     pub fn parse(&mut self, text: &str) -> SourceFile {
         let tree = self.0.parse(text, None).unwrap();
-        SourceFile::cast(SyntaxNode::root(Rc::new(tree))).unwrap()
+        SourceFile::cast(SyntaxNode::root(Arc::new(tree))).unwrap()
     }
 }
 

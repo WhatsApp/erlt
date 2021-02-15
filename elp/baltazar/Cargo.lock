@@ -67,7 +67,9 @@ name = "baltazar_ide"
 version = "0.1.0"
 dependencies = [
  "baltazar_syntax",
+ "fxhash",
  "salsa",
+ "text-size",
  "vfs",
 ]
 
