@@ -5,32 +5,38 @@ use baltazar_ide::{RootDatabase, SourceDatabase};
 use crossbeam_channel::{select, Receiver, Sender};
 use dispatch::NotificationDispatcher;
 use fxhash::FxHashMap;
-use lsp_server::{ErrorCode, Message, Notification, Request, RequestId, Response};
+use lsp_server::{ErrorCode, Notification, Request, RequestId, Response};
 use lsp_types::{
-    notification::{self, Notification as _},
+    notification::{self, Notification as _, Progress},
     request::{self, Request as _},
 };
 use parking_lot::RwLock;
-use vfs::{FileId, Vfs, VfsPath};
+use vfs::{AbsPathBuf, FileId, Vfs, VfsPath};
 
-use crate::{config::Config, convert, document::{Document, LineEndings}};
+use crate::{
+    config::Config,
+    convert,
+    document::{Document, LineEndings},
+};
 
 mod dispatch;
 
 enum Event {
-    Lsp(Message),
+    Lsp(lsp_server::Message),
+    Vfs(vfs::loader::Message),
 }
 
 impl fmt::Debug for Event {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Event::Lsp(Message::Notification(notif))
+            Event::Lsp(lsp_server::Message::Notification(notif))
                 if notif.method == notification::DidOpenTextDocument::METHOD
                     || notif.method == notification::DidChangeTextDocument::METHOD =>
             {
                 f.debug_struct("Notification").field("method", &notif.method).finish()
             }
             Event::Lsp(it) => fmt::Debug::fmt(it, f),
+            Event::Vfs(it) => fmt::Debug::fmt(it, f),
         }
     }
 }
@@ -38,16 +44,25 @@ impl fmt::Debug for Event {
 type ReqHandler = fn(&mut Server, Response);
 type ReqQueue = lsp_server::ReqQueue<(String, Instant), ReqHandler>;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Status {
     Loading,
     Running,
     ShuttingDown,
+    Invalid,
 }
 
+pub(crate) struct Handle<H, C> {
+    pub(crate) handle: H,
+    pub(crate) receiver: C,
+}
+
+pub(crate) type VfsLoader = Handle<Box<dyn vfs::loader::Handle>, Receiver<vfs::loader::Message>>;
+
 pub struct Server {
-    sender: Sender<Message>,
-    lsp_receiver: Receiver<Message>,
+    sender: Sender<lsp_server::Message>,
+    lsp_receiver: Receiver<lsp_server::Message>,
+    vfs_loader: VfsLoader,
     req_queue: ReqQueue,
     open_document_versions: FxHashMap<VfsPath, i32>,
     vfs: Arc<RwLock<Vfs>>,
@@ -58,10 +73,16 @@ pub struct Server {
 }
 
 impl Server {
-    pub fn new(sender: Sender<Message>, receiver: Receiver<Message>, config: Config) -> Server {
+    pub(crate) fn new(
+        sender: Sender<lsp_server::Message>,
+        receiver: Receiver<lsp_server::Message>,
+        vfs_loader: VfsLoader,
+        config: Config,
+    ) -> Server {
         Server {
             sender,
             lsp_receiver: receiver,
+            vfs_loader,
             req_queue: ReqQueue::default(),
             open_document_versions: FxHashMap::default(),
             vfs: Arc::new(RwLock::new(Vfs::default())),
@@ -74,7 +95,7 @@ impl Server {
 
     pub fn main_loop(mut self) -> Result<()> {
         while let Some(event) = self.next_event() {
-            if let Event::Lsp(Message::Notification(notif)) = &event {
+            if let Event::Lsp(lsp_server::Message::Notification(notif)) = &event {
                 if notif.method == notification::Exit::METHOD {
                     return Ok(());
                 }
@@ -90,6 +111,10 @@ impl Server {
             recv(self.lsp_receiver) -> msg => {
                 msg.ok().map(Event::Lsp)
             }
+
+            recv(self.vfs_loader.receiver) -> msg => {
+                Some(Event::Vfs(msg.unwrap()))
+            }
         }
     }
 
@@ -100,11 +125,28 @@ impl Server {
 
         match event {
             Event::Lsp(msg) => match msg {
-                Message::Request(req) => self.on_request(loop_start, req)?,
-                Message::Notification(notif) => self.on_notification(notif)?,
+                lsp_server::Message::Request(req) => self.on_request(loop_start, req)?,
+                lsp_server::Message::Notification(notif) => self.on_notification(notif)?,
                 _ => (),
                 // Message::Response(resp) => self.complete_request(resp)?,
             },
+            Event::Vfs(mut msg) => {
+                loop {
+                    use vfs::loader::Message;
+                    match msg {
+                        Message::Progress { n_total, n_done } => {
+                            self.on_loader_progress(n_total, n_done)
+                        }
+                        Message::Loaded { files } => self.on_loader_loaded(files),
+                    }
+
+                    // Coalesce many VFS event into a single main loop turn
+                    msg = match self.vfs_loader.receiver.try_recv() {
+                        Ok(msg) => msg,
+                        Err(_) => break,
+                    }
+                }
+            }
         }
 
         self.process_changes();
@@ -201,6 +243,34 @@ impl Server {
         Ok(())
     }
 
+    fn on_loader_progress(&mut self, n_total: usize, n_done: usize) {
+        // TODO: report progress
+        if n_total == 0 {
+            self.transition(Status::Invalid);
+        } else {
+            if n_done == 0 {
+                self.transition(Status::Loading);
+            // Progress::Begin
+            } else if n_done < n_total {
+                // Progress::Report
+            } else {
+                assert_eq!(n_done, n_total);
+                self.transition(Status::Running);
+                // Progress::End
+            };
+        }
+    }
+
+    fn on_loader_loaded(&mut self, files: Vec<(AbsPathBuf, Option<Vec<u8>>)>) {
+        let mut vfs = self.vfs.write();
+        for (path, contents) in files {
+            let path = VfsPath::from(path);
+            if !self.open_document_versions.contains_key(&path) {
+                vfs.set_file_contents(path, contents);
+            }
+        }
+    }
+
     fn process_changes(&mut self) {
         let mut vfs = self.vfs.write();
         let changed_files = vfs.take_changes();
@@ -223,6 +293,13 @@ impl Server {
         }
     }
 
+    fn transition(&mut self, status: Status) {
+        if self.status != status {
+            log::info!("transitioning from {:?} to {:?}", self.status, status);
+            self.status = status;
+        }
+    }
+
     fn respond(&mut self, response: Response) {
         if let Some((method, start)) = self.req_queue.incoming.complete(response.id.clone()) {
             let duration = start.elapsed();
@@ -237,7 +314,7 @@ impl Server {
         }
     }
 
-    fn send(&mut self, message: Message) {
+    fn send(&mut self, message: lsp_server::Message) {
         self.sender.send(message).unwrap()
     }
 
