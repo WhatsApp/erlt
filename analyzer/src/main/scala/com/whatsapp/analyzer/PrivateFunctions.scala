@@ -231,41 +231,41 @@ object PrivateFunctions {
     val pctPrivUsedAndUnused = pct(rows.size, totalFuns)
     val pctPriv = pct(usedPrivFunsCnt, totalFuns)
 
-    val privFunSpeccedCnt = uRows.filter(_.hasSpec).size
+    val privFunSpeccedCnt = uRows.count(_.hasSpec)
     val privFunsUnspeccedCnt = usedPrivFunsCnt - privFunSpeccedCnt
     val pctPrivFunsSpecced = pct(privFunSpeccedCnt, usedPrivFunsCnt)
     val pctPrivFunsUnspecced = pct(privFunsUnspeccedCnt, usedPrivFunsCnt)
-    val privSRecursiveCnt = uRows.filter(_.isSelfRecursive).size
+    val privSRecursiveCnt = uRows.count(_.isSelfRecursive)
     val pctPrivFunsSRecursive = pct(privSRecursiveCnt, usedPrivFunsCnt)
-    val calledLeqOneTime = uRows.filter(_.callSitesCnt <= 1).size
-    val calledOnlyByPrivCnt = uRows.filter(r => r.calledByNPubFuns == 0 && r.calledByNPrivFuns > 0).size
+    val calledLeqOneTime = uRows.count(_.callSitesCnt <= 1)
+    val calledOnlyByPrivCnt = uRows.count(r => r.calledByNPubFuns == 0 && r.calledByNPrivFuns > 0)
     val calledOnlyByPrivPct = pct(calledOnlyByPrivCnt, usedPrivFunsCnt)
-    val calledOnlyByPubCnt = uRows.filter(r => r.calledByNPrivFuns == 0 && r.calledByNPubFuns > 0).size
+    val calledOnlyByPubCnt = uRows.count(r => r.calledByNPrivFuns == 0 && r.calledByNPubFuns > 0)
     val calledOnlyByPubPct = pct(calledOnlyByPubCnt, usedPrivFunsCnt)
     val pctPrivFunsCalledOneTime = pct(calledLeqOneTime, usedPrivFunsCnt)
     val callSites = uRows.map(_.callSitesCnt).sum
     val callSitesAvg = safeDiv(callSites, usedPrivFunsCnt)
-    val privFunSpeccedOrLeqOneUsageCnt = uRows.filter(r => r.hasSpec || r.callSitesCnt <= 1).size
+    val privFunSpeccedOrLeqOneUsageCnt = uRows.count(r => r.hasSpec || r.callSitesCnt <= 1)
     val pctPrivFunSpeccedOrLeqOneUsage = pct(privFunSpeccedOrLeqOneUsageCnt, usedPrivFunsCnt)
 
-    val privSRecursiveFunsUnspeccedCnt = uRows.filter(r => r.isSelfRecursive && !r.hasSpec).size
+    val privSRecursiveFunsUnspeccedCnt = uRows.count(r => r.isSelfRecursive && !r.hasSpec)
     val pctSRecursivePrivFunsUnSpecced = pct(privSRecursiveFunsUnspeccedCnt, privSRecursiveCnt)
 
     val privFunSpeccedOrNonRecursiveCnt =
-      uRows.filter(r => r.hasSpec || (!r.isSelfRecursive && !r.isMutuallyRecursive)).size
+      uRows.count(r => r.hasSpec || (!r.isSelfRecursive && !r.isMutuallyRecursive))
     val pctPrivFunSpeccedOrNonRecursive = pct(privFunSpeccedOrNonRecursiveCnt, usedPrivFunsCnt)
 
-    val withFanciestInferenceCnt = uRows.filter(r => r.hasSpec || !r.isMutuallyRecursive).size
+    val withFanciestInferenceCnt = uRows.count(r => r.hasSpec || !r.isMutuallyRecursive)
     val pctWithFanciestInference = pct(withFanciestInferenceCnt, usedPrivFunsCnt)
 
-    val privFunMRecursiveCnt = uRows.filter(r => r.isMutuallyRecursive).size
+    val privFunMRecursiveCnt = uRows.count(r => r.isMutuallyRecursive)
     val pctPrivFunMRecursive = pct(privFunMRecursiveCnt, usedPrivFunsCnt)
 
-    val privFunMRecursiveUnSpeccedCnt = uRows.filter(r => !r.hasSpec && r.isMutuallyRecursive).size
+    val privFunMRecursiveUnSpeccedCnt = uRows.count(r => !r.hasSpec && r.isMutuallyRecursive)
     val pctPrivFunMRecursiveUnspecced = pct(privFunMRecursiveUnSpeccedCnt, privFunMRecursiveCnt)
 
     val privFunMRecursiveThriftyCnt =
-      uRows.filter(r => r.isMutuallyRecursive && r.privateFun.name.startsWith("thrift")).size
+      uRows.count(r => r.isMutuallyRecursive && r.privateFun.name.startsWith("thrift"))
     val pctPrivFunMRecursiveThrifty = pct(privFunMRecursiveThriftyCnt, privFunMRecursiveCnt)
 
     val formatter = java.text.NumberFormat.getIntegerInstance
