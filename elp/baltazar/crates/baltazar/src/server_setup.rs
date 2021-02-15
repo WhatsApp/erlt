@@ -5,11 +5,7 @@ use lsp_server::Connection;
 use lsp_types::{InitializeParams, InitializeResult, ServerInfo};
 use vfs::AbsPathBuf;
 
-use crate::{
-    config::Config,
-    from_json,
-    server::{Handle, Server, VfsLoader},
-};
+use crate::{config::Config, from_json, server::{Handle, Server, TaskHandle, VfsHandle}, task_pool::TaskPool};
 
 mod capabilities;
 
@@ -25,10 +21,11 @@ impl ServerSetup {
     pub fn to_server(self) -> Result<Server> {
         let config = self.initialize()?;
         let vfs_loader = self.set_up_vfs_loader();
+        let task_pool = self.set_up_task_pool();
 
         log::info!("initial state: {:#?}", config);
 
-        Ok(Server::new(self.connection.sender, self.connection.receiver, vfs_loader, config))
+        Ok(Server::new(self.connection.sender, self.connection.receiver, vfs_loader, task_pool, config))
     }
 
     fn initialize(&self) -> Result<Config> {
@@ -65,11 +62,17 @@ impl ServerSetup {
         Ok(config)
     }
 
-    fn set_up_vfs_loader(&self) -> VfsLoader {
-        let (sender, receiver) = crossbeam_channel::unbounded::<vfs::loader::Message>();
+    fn set_up_vfs_loader(&self) -> VfsHandle {
+        let (sender, receiver) = crossbeam_channel::unbounded();
         let handle: vfs_notify::NotifyHandle =
             vfs::loader::Handle::spawn(Box::new(move |msg| sender.send(msg).unwrap()));
         let handle = Box::new(handle) as Box<dyn vfs::loader::Handle>;
+        Handle { handle, receiver }
+    }
+
+    fn set_up_task_pool(&self) -> TaskHandle {
+        let (sender, receiver) = crossbeam_channel::unbounded();
+        let handle = TaskPool::new(sender);
         Handle { handle, receiver }
     }
 }
