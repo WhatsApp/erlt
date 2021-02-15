@@ -105,6 +105,12 @@ object WIPDiagnostics {
   case object ExpListConcat extends SkippedExpr {
     override def toString: String = "E: _ ++ _"
   }
+  case object BinaryComp extends SkippedExpr {
+    override def toString: String = "<< || >>"
+  }
+  case object BinaryGenerator extends SkippedExpr {
+    override def toString: String = "<="
+  }
   case object ExpListSubtract extends SkippedExpr {
     override def toString: String = "E: _ -- _"
   }

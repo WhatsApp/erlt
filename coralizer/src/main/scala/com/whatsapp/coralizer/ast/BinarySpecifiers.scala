@@ -17,6 +17,8 @@
 package com.whatsapp.coralizer.ast
 
 import com.whatsapp.coralizer.ast.Types._
+import com.whatsapp.coralizer.tc.LitAtom
+import erlang.CErl.CErl
 
 object BinarySpecifiers {
   sealed trait Specifier
@@ -30,19 +32,4 @@ object BinarySpecifiers {
   case object Utf8Specifier extends Specifier
   case object Utf16Specifier extends Specifier
   case object Utf32Specifier extends Specifier
-
-  def expType(s: Specifier, stringLiteral: Boolean): Types.Type =
-    s match {
-      case SignedIntegerSpecifier | UnsignedIntegerSpecifier | Utf8Specifier |
-          Utf16Specifier | Utf32Specifier =>
-        // $COVERAGE-OFF$
-        if (stringLiteral) throw new IllegalStateException()
-        // $COVERAGE-ON$
-        integerType
-      case FloatSpecifier =>
-        floatType
-      case BinarySpecifier | BytesSpecifier | BitstringSpecifier |
-          BitsSpecifier =>
-        BinaryType
-    }
 }

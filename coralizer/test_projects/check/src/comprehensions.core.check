@@ -1,0 +1,576 @@
+-module(comprehensions)
+-exports(gen_atom/1, gen_number/1, module_info/0, module_info/1, num_atom/2, test01/1, test02_neg/1, test03/1, test04_neg/1, test05/1, test06_neg/1, test07/1, test08_neg/1, test09_neg/1, test10/1, test11_neg/1, test12/1, test13_neg/1, test14/1, test15_neg/1, test16_neg/1, test17/1, test18_neg/1, test19/1, test20/1, test21_neg/1, test22_neg/1, test23/1, test24/1, test25/1)
+-file([{comprehensions.erl 1}])
+-compile([export_all nowarn_export_all])
+
+:: fun((term()) -> atom())
+gen_atom/1 = fun (var0) {
+    case var0 of {
+        A when erlang:is_atom(A) -> A;
+        var2 when true -> not_atom
+    }
+}
+
+:: fun((term()) -> number())
+gen_number/1 = fun (var0) {
+    case var0 of {
+        N when erlang:is_number(N) -> N;
+        var2 when true -> 0
+    }
+}
+
+:: fun(([{atom()} | {atom(), number()}]) -> [atom()])
+test01/1 = fun (var0) {
+    case var0 of {
+        L when true -> letrec (lc$^0/1 = fun (var3) {
+                    case var3 of {
+                        [{A} | var2] when true -> let var5 =
+                            lc$^0/1(var2) in {
+                                [A | var5]
+                            };
+                        [var1 | var2] when true ->
+                        lc$^0/1(var2);
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) }
+    }
+}
+
+:: fun(([{atom()} | {atom(), number()}]) -> [atom()])
+test02_neg/1 = fun (var0) {
+    case var0 of {
+        L when true -> letrec (lc$^0/1 = fun (var3) {
+                    case var3 of {
+                        [{var7, N} | var2] when true ->
+                        let var5 = lc$^0/1(var2) in
+                            { [N | var5] };
+                        [var1 | var2] when true ->
+                        lc$^0/1(var2);
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) }                         | [ || ](L). Expected: [atom()], Got: [number()]
+    }
+}
+
+:: fun(([{atom()} | {atom(), number()}]) -> {[atom()], 'x'})
+test03/1 = fun (var0) {
+    case var0 of {
+        L when true -> let var7 = letrec (lc$^0/1 =
+                fun (var3) {
+                    case var3 of {
+                        [X | var2] when true -> let var5 =
+                            gen_atom/1(X) in {
+                                let var6 = lc$^0/1(var2)
+                                in {
+                                    [var5 | var6]
+                                }
+                            };
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) } in {
+                let Atoms = var7 in {
+                    let X = x in { {Atoms, X} }
+                }
+            }
+    }
+}
+
+:: fun((term()) -> [term()])
+test04_neg/1 = fun (var0) {
+    case var0 of {
+        L when true -> letrec (lc$^0/1 = fun (var3) {
+                    case var3 of {
+                        [X | var2] when true -> let var5 =
+                            lc$^0/1(var2) in {
+                                [X | var5]
+                            };
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) }
+    }
+}
+
+:: fun((binary()) -> [number()])
+test05/1 = fun (var0) {
+    case var0 of {
+        B when true -> letrec (lc$^0/1 = fun (var2) {
+                    case var2 of {
+                        <<Y: size-8 unit-1 type-integer flags-[unsigned big], var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        let var4 = lc$^0/1(var1) in
+                            { [Y | var4] };
+                        <<var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        []
+                    }
+                }) in { lc$^0/1(B) }
+    }
+}
+
+:: fun((binary()) -> [term()])
+test06_neg/1 = fun (var0) {
+    case var0 of {
+        B when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var8> when erlang:=:=(var8, var3) ->
+                            let var3 = <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var9> when erlang:=:=(var9, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(B, var1) }
+            }
+    }
+}
+
+:: fun(([binary()]) -> binary())
+test07/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var5, var4) {
+                        case <var5, var4> of {
+                            <[Y | var3], var9> when erlang:=:=(var9, var4) ->
+                            let var4 = <<var4: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var3, var4)
+                                };
+                            <[], var10> when erlang:=:=(var10, var4) ->
+                            var4
+                        }
+                    }) in { lbc$^0/2(LB, var1) }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test08_neg/1 = fun (var0) {
+    case var0 of {
+        B when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var5, var4) {
+                        case <var5, var4> of {
+                            <[Y | var3], var9> when erlang:=:=(var9, var4) ->
+                            let var4 = <<var4: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var3, var4)
+                                };
+                            <[], var10> when erlang:=:=(var10, var4) ->
+                            var4
+                        }
+                    }) in { lbc$^0/2(B, var1) }
+            }
+    }
+}
+
+:: fun(([binary()]) -> binary())
+test09_neg/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var8> when erlang:=:=(var8, var3) ->
+                            let var3 = <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var9> when erlang:=:=(var9, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(LB, var1) }
+            }
+    }
+}
+
+:: fun((binary()) -> [number()])
+test10/1 = fun (var0) {
+    case var0 of {
+        LB when true -> letrec (lc$^0/1 = fun (var2) {
+                    case var2 of {
+                        <<Y: size-8 unit-1 type-integer flags-[unsigned big], var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        let var4 = lc$^0/1(var1) in
+                            { [Y | var4] };
+                        <<var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        []
+                    }
+                }) in { lc$^0/1(LB) }
+    }
+}
+
+:: fun((binary()) -> [binary()])
+test11_neg/1 = fun (var0) {
+    case var0 of {
+        LB when true -> letrec (lc$^0/1 = fun (var2) {
+                    case var2 of {
+                        <<Y: size-8 unit-1 type-integer flags-[unsigned big], var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        let var4 = lc$^0/1(var1) in
+                            { [Y | var4] };
+                        <<var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        []
+                    }
+                }) in { lc$^0/1(LB) }
+    }
+}
+
+:: fun((binary()) -> [binary()])
+test12/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var8> when erlang:=:=(var8, var3) ->
+                            let var3 = <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var9> when erlang:=:=(var9, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(LB, var1) }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test13_neg/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var8> when erlang:=:=(var8, var3) ->
+                            let var3 = <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var9> when erlang:=:=(var9, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(LB, var1) }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test14/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var4 = erlang:bit_size(LB)
+            in {
+                let var3 = erlang:div(var4, 8) in {
+                    let var2 = var3 in {
+                        let var1 = primop:bs_init_writable(var2)
+                        in {
+                            letrec (lbc$^0/2 = fun (var7, var6) {
+                                    case <var7, var6> of {
+                                        <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var5: size-all unit-1 type-binary flags-[unsigned big]>>, var11> when erlang:=:=(var11, var6) ->
+                                        let var6 =
+                                            <<var6: size-all unit-1 type-binary flags-[unsigned big], Y: size-8 unit-1 type-integer flags-[unsigned big]>>
+                                            in {
+                                                lbc$^0/2(var5, var6)
+                                            };
+                                        <<<var5: size-all unit-1 type-binary flags-[unsigned big]>>, var12> when erlang:=:=(var12, var6) ->
+                                        var6
+                                    }
+                                }) in {
+                                lbc$^0/2(LB, var1)
+                            }
+                        }
+                    }
+                }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test15_neg/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var9> when erlang:=:=(var9, var3) ->
+                            let var3 = case gen_atom/1(Y) of {
+                                    true when true ->
+                                    <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-8 unit-1 type-integer flags-[unsigned big]>>;
+                                    false when true ->
+                                    var3
+                                } in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var10> when erlang:=:=(var10, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(LB, var1) }
+            }
+    }
+}
+
+:: fun((term()) -> [term()])
+test16_neg/1 = fun (var0) {
+    case var0 of {
+        L when true -> let var6 = letrec (lc$^0/1 =
+                fun (var3) {
+                    case var3 of {
+                        [X | var2] when true -> let var5 =
+                            lc$^0/1(var2) in {
+                                [X | var5]
+                            };
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) } in {
+                let Res = var6 in { Res }
+            }
+    }
+}
+
+:: fun((binary()) -> [number()])
+test17/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var5 = letrec (lc$^0/1 =
+                fun (var2) {
+                    case var2 of {
+                        <<Y: size-8 unit-1 type-integer flags-[unsigned big], var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        let var4 = lc$^0/1(var1) in
+                            { [Y | var4] };
+                        <<var1: size-all unit-1 type-binary flags-[unsigned big]>> when true ->
+                        []
+                    }
+                }) in { lc$^0/1(LB) } in {
+                let Res = var5 in { Res }
+            }
+    }
+}
+
+:: fun(('false' | 'true') -> ['false' | 'true'])
+test18_neg/1 = fun (var0) {
+    case var0 of {
+        L when true -> let var6 = letrec (lc$^0/1 =
+                fun (var3) {
+                    case var3 of {
+                        [X | var2] when erlang:=:=(X, true) ->
+                        let var5 = lc$^0/1(var2) in
+                            { [X | var5] };
+                        [X | var2] when true -> lc$^0/1(var2);
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) } in {
+                let Res = var6 in { Res }
+            }
+    }
+}
+
+:: fun((['false' | 'true']) -> [binary()])
+test19/1 = fun (var0) {
+    case var0 of {
+        L when true -> let var7 = letrec (lc$^0/1 =
+                fun (var3) {
+                    case var3 of {
+                        [X | var2] when erlang:=:=(X, true) ->
+                        let var5 = erlang:atom_to_binary(X)
+                            in {
+                                let var6 = lc$^0/1(var2)
+                                in {
+                                    [var5 | var6]
+                                }
+                            };
+                        [X | var2] when true -> lc$^0/1(var2);
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) } in {
+                let Res = var7 in { Res }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test20/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var4 = erlang:bit_size(LB)
+            in {
+                let var3 = erlang:div(var4, 8) in {
+                    let var2 = var3 in {
+                        let var1 = primop:bs_init_writable(var2)
+                        in {
+                            let var10 = letrec (lbc$^0/2 =
+                                fun (var7, var6) {
+                                    case <var7, var6> of {
+                                        <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var5: size-all unit-1 type-binary flags-[unsigned big]>>, var13> when erlang:=:=(var13, var6) ->
+                                        let var6 =
+                                            <<var6: size-all unit-1 type-binary flags-[unsigned big], Y: size-8 unit-1 type-integer flags-[unsigned big]>>
+                                            in {
+                                                lbc$^0/2(var5, var6)
+                                            };
+                                        <<<var5: size-all unit-1 type-binary flags-[unsigned big]>>, var14> when erlang:=:=(var14, var6) ->
+                                        var6
+                                    }
+                                }) in {
+                                lbc$^0/2(LB, var1)
+                            } in {
+                                let Res = var10 in
+                                { Res }
+                            }
+                        }
+                    }
+                }
+            }
+    }
+}
+
+:: fun(([binary()]) -> binary())
+test21_neg/1 = fun (var0) {
+    case var0 of {
+        LB when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                let var7 = letrec (lbc$^0/2 = fun (var4, var3) {
+                        case <var4, var3> of {
+                            <<<Y: size-8 unit-1 type-integer flags-[unsigned big], var2: size-all unit-1 type-binary flags-[unsigned big]>>, var10> when erlang:=:=(var10, var3) ->
+                            let var3 = <<var3: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var2, var3)
+                                };
+                            <<<var2: size-all unit-1 type-binary flags-[unsigned big]>>, var11> when erlang:=:=(var11, var3) ->
+                            var3
+                        }
+                    }) in { lbc$^0/2(LB, var1) } in
+                { let Res = var7 in { Res } }
+            }
+    }
+}
+
+:: fun((binary()) -> binary())
+test22_neg/1 = fun (var0) {
+    case var0 of {
+        B when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                let var8 = letrec (lbc$^0/2 = fun (var5, var4) {
+                        case <var5, var4> of {
+                            <[Y | var3], var11> when erlang:=:=(var11, var4) ->
+                            let var4 = <<var4: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var3, var4)
+                                };
+                            <[], var12> when erlang:=:=(var12, var4) ->
+                            var4
+                        }
+                    }) in { lbc$^0/2(B, var1) } in
+                { let Res = var8 in { Res } }
+            }
+    }
+}
+
+:: fun(([binary()]) -> binary())
+test23/1 = fun (var0) {
+    case var0 of {
+        B when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                let var8 = letrec (lbc$^0/2 = fun (var5, var4) {
+                        case <var5, var4> of {
+                            <[Y | var3], var11> when erlang:=:=(var11, var4) ->
+                            let var4 = <<var4: size-all unit-1 type-binary flags-[unsigned big], Y: size-all unit-1 type-binary flags-[unsigned big]>>
+                                in {
+                                    lbc$^0/2(var3, var4)
+                                };
+                            <[], var12> when erlang:=:=(var12, var4) ->
+                            var4
+                        }
+                    }) in { lbc$^0/2(B, var1) } in
+                { let Res = var8 in { Res } }
+            }
+    }
+}
+
+:: fun((['false' | 'true']) -> binary())
+test24/1 = fun (var0) {
+    case var0 of {
+        B when true -> let var1 = primop:bs_init_writable(256)
+            in {
+                let var9 = letrec (lbc$^0/2 = fun (var5, var4) {
+                        case <var5, var4> of {
+                            <[Y | var3], var12> when
+                            let var13 = erlang:=:=(var12, var4)
+                            in {
+                                let var14 = erlang:=:=(Y, true)
+                                in {
+                                    erlang:and(var13, var14)
+                                }
+                            } -> let var8 = erlang:atom_to_binary(Y)
+                                in {
+                                    let var4 = <<var4: size-all unit-1 type-binary flags-[unsigned big], var8: size-all unit-1 type-binary flags-[unsigned big]>>
+                                    in {
+                                        lbc$^0/2(var3, var4)
+                                    }
+                                };
+                            <[Y | var3], var15> when erlang:=:=(var15, var4) ->
+                            lbc$^0/2(var3, var4);
+                            <[], var16> when erlang:=:=(var16, var4) ->
+                            var4
+                        }
+                    }) in { lbc$^0/2(B, var1) } in
+                { let Res = var9 in { Res } }
+            }
+    }
+}
+
+:: fun((number(), atom()) -> number())
+num_atom/2 = fun (var0, var1) {
+    case <var0, var1> of {
+        <var4, var5> when true -> 3
+    }
+}
+
+:: fun(([{number()} | [atom()]]) -> [number()])
+test25/1 = fun (var0) {
+    case var0 of {
+        L when true -> letrec (lc$^0/1 = fun (var5) {
+                    case var5 of {
+                        [{A} | var2] when true -> letrec (lc$^1/1 =
+                                fun (var7) {
+                                    case var7 of {
+                                        [[B | []] | var4] when true ->
+                                        let var9 =
+                                            num_atom/2(A, B)
+                                            in {
+                                                let var10 =
+                                                erlang:+(var9, 1)
+                                                in
+                                                {
+
+                                                    let var11 =
+                                                    lc$^1/1(var4)
+                                                    in
+                                                    {
+                                                        [var10 | var11]
+                                                    }
+                                                }
+                                            };
+                                        [var3 | var4] when true ->
+                                        lc$^1/1(var4);
+                                        [] when true ->
+                                        lc$^0/1(var2)
+                                    }
+                                }) in {
+                                lc$^1/1(L)
+                            };
+                        [var1 | var2] when true ->
+                        lc$^0/1(var2);
+                        [] when true -> []
+                    }
+                }) in { lc$^0/1(L) }
+    }
+}
+
+module_info/0 = fun () {
+    case <> of {
+        <> when true -> erlang:get_module_info(comprehensions)
+    }
+}
+
+module_info/1 = fun (var0) {
+    case var0 of {
+        X when true -> erlang:get_module_info(comprehensions, X)
+    }
+}
