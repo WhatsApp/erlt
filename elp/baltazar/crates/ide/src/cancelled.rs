@@ -17,6 +17,8 @@
 
 // From https://github.com/rust-analyzer/rust-analyzer/blob/205e72f34d26898779c8ab11c8500e74fd8ce28b/crates/base_db/src/cancellation.rs
 
+pub type Cancellable<T> = Result<T, Cancelled>;
+
 /// An "error" signifying that the operation was canceled.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Cancelled {

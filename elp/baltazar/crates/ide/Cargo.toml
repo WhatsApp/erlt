@@ -10,3 +10,5 @@ version = "0.1.0"
 salsa = "0.16.0"
 baltazar_syntax = {path = "../syntax"}
 vfs = {git = "https://github.com/rust-analyzer/rust-analyzer", rev = "336909b"}
+fxhash = "0.2.1"
+text-size = "1.1"

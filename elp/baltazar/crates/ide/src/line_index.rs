@@ -7,7 +7,6 @@ use std::{cmp::Ordering, iter};
 use fxhash::FxHashMap;
 use text_size::{TextRange, TextSize};
 
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct LineIndex {
     /// Offset of the beginning of each line, zero-based

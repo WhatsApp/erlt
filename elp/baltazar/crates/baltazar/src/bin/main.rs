@@ -42,7 +42,7 @@ fn setup_logging(log_file: Option<PathBuf>, no_buffering: bool) -> Result<()> {
         None => None,
     };
     // let filter = env::var("BALTAZAR_LOG").ok();
-    let filter = Some("debug".to_string());
+    let filter = Some("info".to_string());
     logger::Logger::new(log_file, no_buffering, filter.as_deref()).install();
 
     Ok(())

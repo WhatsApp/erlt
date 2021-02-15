@@ -1,11 +1,10 @@
 use std::{convert::TryFrom, path};
 
 use anyhow::{anyhow, Result};
+use baltazar_ide::line_index::{LineCol, LineIndex};
+use itertools::Itertools;
 use text_size::{TextRange, TextSize};
 use vfs::{AbsPath, AbsPathBuf, VfsPath};
-use itertools::Itertools;
-
-use crate::line_index::{LineCol, LineIndex};
 
 pub fn abs_path(url: &lsp_types::Url) -> Result<AbsPathBuf> {
     let path = url.to_file_path().map_err(|()| anyhow!("url '{}' is not a file", url))?;
@@ -35,8 +34,7 @@ pub fn url_from_abs_path(path: &AbsPath) -> lsp_types::Url {
     assert!(path.is_absolute());
     let url = lsp_types::Url::from_file_path(path).unwrap();
     match path.components().next() {
-        Some(path::Component::Prefix(prefix))
-            if matches!(prefix.kind(), path::Prefix::Disk(_) | path::Prefix::VerbatimDisk(_)) =>
+        Some(path::Component::Prefix(prefix)) if matches!(prefix.kind(), path::Prefix::Disk(_) | path::Prefix::VerbatimDisk(_)) =>
         {
             // Need to lowercase driver letter
         }

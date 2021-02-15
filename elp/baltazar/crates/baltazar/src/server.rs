@@ -457,6 +457,7 @@ fn parse_id(id: lsp_types::NumberOrString) -> RequestId {
 }
 
 fn publish_diagnostics(server: &Server, file_id: FileId) -> Result<Vec<Diagnostic>> {
+    let line_index = server.db.line_index(file_id)?;
     Ok(vec![])
 }
 

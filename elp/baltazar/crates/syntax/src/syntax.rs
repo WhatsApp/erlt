@@ -1,15 +1,15 @@
-use std::{fmt, iter::FusedIterator, mem, ops::Range, rc::Rc};
+use std::{fmt, iter::FusedIterator, mem, ops::Range, sync::Arc};
 
 use tree_sitter::{Node, Tree, TreeCursor};
 
 pub use crate::generated::syntax_kind::SyntaxKind;
 
 #[derive(Clone)]
-pub struct SyntaxNode(Rc<Tree>, Node<'static>);
+pub struct SyntaxNode(Arc<Tree>, Node<'static>);
 
 impl PartialEq for SyntaxNode {
     fn eq(&self, other: &Self) -> bool {
-        Rc::as_ptr(&self.0) == Rc::as_ptr(&other.0) && self.1 == other.1
+        Arc::as_ptr(&self.0) == Arc::as_ptr(&other.0) && self.1 == other.1
     }
 }
 
@@ -17,7 +17,7 @@ impl Eq for SyntaxNode {}
 
 impl std::hash::Hash for SyntaxNode {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        Rc::as_ptr(&self.0).hash(state);
+        Arc::as_ptr(&self.0).hash(state);
         self.1.hash(state)
     }
 }
@@ -36,11 +36,11 @@ impl fmt::Debug for SyntaxNode {
 }
 
 impl SyntaxNode {
-    pub fn root(tree: Rc<Tree>) -> SyntaxNode {
+    pub fn root(tree: Arc<Tree>) -> SyntaxNode {
         Self::new(tree.clone(), tree.root_node())
     }
 
-    pub fn new<'a>(tree: Rc<Tree>, node: Node<'a>) -> SyntaxNode {
+    pub fn new<'a>(tree: Arc<Tree>, node: Node<'a>) -> SyntaxNode {
         // Safety: the lifetime parameter of the node relates to
         // the lifetime of the tree - since we store the two together,
         // and only hand out references to Node with the lifetime
@@ -71,7 +71,7 @@ impl SyntaxNode {
 }
 
 pub struct SyntaxNodeFieldChildren {
-    tree: Rc<Tree>,
+    tree: Arc<Tree>,
     field_id: u16,
     done: bool,
     raw: TreeCursor<'static>,
