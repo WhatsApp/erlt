@@ -68,6 +68,7 @@ version = "0.1.0"
 dependencies = [
  "baltazar_syntax",
  "fxhash",
+ "log",
  "salsa",
  "text-size",
  "vfs",

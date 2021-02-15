@@ -1,7 +1,7 @@
 use std::{convert::TryFrom, path};
 
 use anyhow::{anyhow, Result};
-use baltazar_ide::line_index::{LineCol, LineIndex};
+use baltazar_ide::{diagnostics::Severity, line_index::{LineCol, LineIndex}};
 use itertools::Itertools;
 use text_size::{TextRange, TextSize};
 use vfs::{AbsPath, AbsPathBuf, VfsPath};
@@ -24,6 +24,24 @@ pub fn text_range(line_index: &LineIndex, range: lsp_types::Range) -> TextRange 
     let start = offset(line_index, range.start);
     let end = offset(line_index, range.end);
     TextRange::new(start, end)
+}
+
+pub fn range(line_index: &LineIndex, range: TextRange) -> lsp_types::Range {
+    let start = position(line_index, range.start());
+    let end = position(line_index, range.end());
+    lsp_types::Range::new(start, end)
+}
+
+pub fn position(line_index: &LineIndex, offset: TextSize) -> lsp_types::Position {
+    let line_col = line_index.line_col(offset);
+    lsp_types::Position::new(line_col.line, line_col.col_utf16)
+}
+
+pub fn diagnostic_severity(severity: Severity) -> lsp_types::DiagnosticSeverity {
+    match severity {
+        Severity::Error => lsp_types::DiagnosticSeverity::Error,
+        Severity::WeakWarning => lsp_types::DiagnosticSeverity::Hint,
+    }
 }
 
 /// Returns a `Url` object from a given path, will lowercase drive letters if present.

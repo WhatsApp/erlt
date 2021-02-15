@@ -2,10 +2,12 @@ use std::{error::Error, panic, sync::Arc};
 
 use baltazar_syntax::{Parser, ast};
 use cancelled::{Cancellable, Cancelled};
+use diagnostics::Diagnostic;
 use line_index::LineIndex;
 use vfs::FileId;
 
 mod cancelled;
+pub mod diagnostics;
 pub mod line_index;
 
 #[salsa::database(SourceDatabaseStorage, LineIndexDatabaseStorage)]
@@ -35,6 +37,11 @@ impl RootDatabase {
     /// offsets and line/column representation.
     pub fn line_index(&self, file_id: FileId) -> Cancellable<Arc<LineIndex>> {
         self.with_db(|db| db.file_line_index(file_id))
+    }
+
+    /// Computes the set of diagnostics for the given file.
+    pub fn diagnostics(&self, file_id: FileId) -> Cancellable<Vec<Diagnostic>> {
+        self.with_db(|db| diagnostics::diagnostics(db, file_id))
     }
 
     /// Performs an operation on that may be Canceled.
@@ -105,7 +112,6 @@ fn file_line_index(db: &dyn LineIndexDatabase, file_id: FileId) -> Arc<LineIndex
     let text = db.file_text(file_id);
     Arc::new(LineIndex::new(&*text))
 }
-
 
 pub fn is_cancelled(e: &(dyn Error + 'static)) -> bool {
     e.downcast_ref::<Cancelled>().is_some()

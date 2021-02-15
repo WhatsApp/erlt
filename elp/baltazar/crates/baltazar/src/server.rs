@@ -6,7 +6,11 @@ use crossbeam_channel::{select, Receiver, Sender};
 use dispatch::NotificationDispatcher;
 use fxhash::FxHashMap;
 use lsp_server::{ErrorCode, Notification, Request, RequestId, Response};
-use lsp_types::{Diagnostic, Url, notification::{self, Notification as _}, request::{self, Request as _}};
+use lsp_types::{
+    notification::{self, Notification as _},
+    request::{self, Request as _},
+    Diagnostic, Url,
+};
 use parking_lot::RwLock;
 use vfs::{AbsPath, AbsPathBuf, FileId, Vfs, VfsPath};
 
@@ -458,7 +462,25 @@ fn parse_id(id: lsp_types::NumberOrString) -> RequestId {
 
 fn publish_diagnostics(server: &Server, file_id: FileId) -> Result<Vec<Diagnostic>> {
     let line_index = server.db.line_index(file_id)?;
-    Ok(vec![])
+
+    let diagnostics: Vec<_> = server
+        .db
+        .diagnostics(file_id)?
+        .into_iter()
+        .map(|d| Diagnostic {
+            range: convert::range(&line_index, d.range),
+            severity: Some(convert::diagnostic_severity(d.severity)),
+            code: d.code.map(|d| d.as_str().to_owned()).map(lsp_types::NumberOrString::String),
+            code_description: None,
+            source: Some("baltazar".into()),
+            message: d.message,
+            related_information: None,
+            tags: None,
+            data: None,
+        })
+        .collect();
+
+    Ok(diagnostics)
 }
 
 pub fn file_id_to_url(vfs: &vfs::Vfs, id: FileId) -> Url {
