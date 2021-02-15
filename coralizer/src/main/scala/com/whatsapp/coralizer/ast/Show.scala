@@ -17,6 +17,7 @@
 package com.whatsapp.coralizer.ast
 
 import com.whatsapp.coralizer.ast.Types._
+import com.whatsapp.coralizer.tc.BuiltIn
 import erlang.CErl._
 import erlang.Data._
 
@@ -105,9 +106,19 @@ object Show {
       case CLiteral(_, value)          => show(value)
       case CVar(_, name) =>
         name match {
-          case VarNameInt(i)                   => s"var$i"
-          case VarNameAtom(atom)               => s"$atom"
-          case VarNameAtomInt(Id(name, arity)) => s"$name/$arity"
+          case VarNameInt(i)     => s"var$i"
+          case VarNameAtom(atom) => s"$atom"
+          case VarNameAtomInt(id) =>
+            BuiltIn.parseLetRecId(id) match {
+              case Some(special) =>
+                special match {
+                  case BuiltIn.SpecialListComp   => "[ || ]"
+                  case BuiltIn.SpecialBinaryComp => "<< || >>"
+                  case BuiltIn.SpecialAfter(_)   => "after"
+                  case BuiltIn.SpecialReceive(_) => "receive"
+                }
+              case None => id.toString
+            }
         }
       case CCons(_, h, t) =>
         s"[${show(h)} | ${show(t)}]"

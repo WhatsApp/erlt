@@ -23,13 +23,11 @@ import erlang.Data.ELong
 
 object Util {
   def getApplyType(module: String, id: Id): Option[FunType] = {
-    BuiltIn.letRecSpecialFunToType
-      .get(id)
-      .orElse(for {
-        moduleStub <- DB.getExpandedModuleStub(module)
-        hostModule = moduleStub.imports.getOrElse(id, module)
-        ft <- getCallType(RemoteId(hostModule, id.name, id.arity))
-      } yield ft)
+    for {
+      moduleStub <- DB.getExpandedModuleStub(module)
+      hostModule = moduleStub.imports.getOrElse(id, module)
+      ft <- getCallType(RemoteId(hostModule, id.name, id.arity))
+    } yield ft
   }
 
   def getCallType(fqn: RemoteId): Option[FunType] =

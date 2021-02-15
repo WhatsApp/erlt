@@ -34,8 +34,9 @@ object PrettyCErl {
 private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
     extends org.bitbucket.inkytonik.kiama.output.PrettyPrinter {
 
-  def layout(e: CErl, width: Int): String =
+  def layout(e: CErl, width: Int): String = {
     stripTrailing(pretty(e, width).layout)
+  }
 
   private def stripTrailing(str: String): String = {
     val buf = new StringBuilder("")
@@ -133,7 +134,12 @@ private class PrettyCErl(moduleStub: ModuleStub, errors: Map[Int, TypeError])
         ) <> line <> "}" <> line
       case CTuple(_, elems)  => braces(cerlsToDoc(elems))
       case CValues(_, elems) => "<" <> cerlsToDoc(elems) <> ">"
-      case e: CVar           => Show.show(e)
+      case CVar(_, varName) =>
+        varName match {
+          case VarNameInt(i)      => s"var$i"
+          case VarNameAtom(atom)  => atom
+          case VarNameAtomInt(id) => id.toString
+        }
       // $COVERAGE-OFF$
       case _: C___XXX => sys.error(s"unexpected $e")
       // $COVERAGE-ON$

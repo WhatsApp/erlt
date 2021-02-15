@@ -18,7 +18,7 @@ package com.whatsapp.coralizer.tc
 
 import com.whatsapp.coralizer.ast.Forms.FunSpec
 import com.whatsapp.coralizer.ast.Types._
-import com.whatsapp.coralizer.ast.{Id, Vars}
+import com.whatsapp.coralizer.ast.{Id, Vars, WIPDiagnostics}
 import com.whatsapp.coralizer.tc.TcDiagnostics._
 import erlang.CErl._
 
@@ -80,15 +80,38 @@ final case class Check(module: String) {
           Approx.combineEnvs(env2, Subtype.join, envs)
         }
       case CLetRec(_, defs, body) =>
+        var envAcc = env
         for ((cvar, fun) <- defs) {
           cvar match {
-            case CVar(_, VarNameAtomInt(id)) =>
-              val FunType(_, retTy) = BuiltIn.letRecSpecialFunToType(id)
-              checkFunBody(fun.body, retTy, env)
-            case _ => sys.error(s"unexpected fun in letrec $cvar")
+            case CVar(_, name @ VarNameAtomInt(id)) =>
+              BuiltIn
+                .parseLetRecId(id)
+                // $COVERAGE-OFF$
+                .getOrElse(sys.error(s"Unexpected letrec fun $id")) match {
+                // $COVERAGE-ON$
+                case BuiltIn.SpecialReceive(funTy) =>
+                  envAcc += (name -> funTy)
+                case BuiltIn.SpecialAfter(funTy) =>
+                  envAcc += (name -> funTy)
+                  envAcc ++= checkFunBody(fun.body, funTy.resTy, envAcc)
+                case BuiltIn.SpecialBinaryComp =>
+                  throw WIPDiagnostics.SkippedConstructDiagnostics(
+                    fun.body.line,
+                    WIPDiagnostics.BinaryComp
+                  )
+                case BuiltIn.SpecialListComp =>
+                  assert(defs.size == 1)
+                  val (lcTy, lcEnv) = elab.elabListComp(cvar, fun, body, env)
+                  if (!Subtype.subType(lcTy, resTy))
+                    throw TypeMismatch(body.line, body, resTy, lcTy)
+                  return lcEnv
+              }
+            // $COVERAGE-OFF$
+            case _ => sys.error(s"unexpected variable in letrec $cvar")
+            // $COVERAGE-ON$
           }
         }
-        checkExpr(body, resTy, env)
+        checkExpr(body, resTy, envAcc)
       case CSeq(_, arg, body) =>
         val env1 = checkExpr(arg, AnyType, env)
         checkExpr(body, resTy, env1)

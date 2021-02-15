@@ -86,8 +86,9 @@ final class Elab(val module: String, check: Check) {
       case CApply(_, cvar @ CVar(_, varName), args) =>
         val FunType(funArgTys, funResTy) = varName match {
           case VarNameAtomInt(id) =>
-            Util
-              .getApplyType(module, id)
+            env
+              .get(varName)
+              .orElse(Util.getApplyType(module, id))
               .getOrElse(throw UnboundId(cvar.line, cvar, id))
           case _ =>
             env.getOrElse(cvar.name, throw UnboundVar(cvar.line, cvar))
@@ -181,15 +182,36 @@ final class Elab(val module: String, check: Check) {
             elabExpr(body, env2)
         }
       case CLetRec(_, defs, body) =>
+        var envAcc = env
         for ((cvar, fun) <- defs) {
           cvar match {
-            case CVar(_, VarNameAtomInt(id)) =>
-              val FunType(_, retTy) = BuiltIn.letRecSpecialFunToType(id)
-              check.checkFunBody(fun.body, retTy, env)
-            case _ => sys.error(s"unexpected fun in letrec $cvar")
+            case CVar(_, name @ VarNameAtomInt(id)) =>
+              BuiltIn
+                .parseLetRecId(id)
+                // $COVERAGE-OFF$
+                .getOrElse(sys.error(s"Unexpected letrec fun $id")) match {
+                // $COVERAGE-ON$
+                case BuiltIn.SpecialReceive(funTy) =>
+                  envAcc += (name -> funTy)
+                case BuiltIn.SpecialAfter(funTy) =>
+                  envAcc += (name -> funTy)
+                  envAcc ++= check.checkFunBody(fun.body, funTy.resTy, envAcc)
+                case BuiltIn.SpecialBinaryComp =>
+                  assert(defs.size == 1)
+                  throw WIPDiagnostics.SkippedConstructDiagnostics(
+                    fun.body.line,
+                    WIPDiagnostics.BinaryComp
+                  )
+                case BuiltIn.SpecialListComp =>
+                  assert(defs.size == 1)
+                  return elabListComp(cvar, fun, body, env)
+              }
+            // $COVERAGE-OFF$
+            case _ => sys.error(s"unexpected variable in letrec $cvar")
+            // $COVERAGE-ON$
           }
         }
-        elabExpr(body, env)
+        elabExpr(body, envAcc)
       case lit: CLiteral =>
         (elabData(lit, lit.value, env), env)
       case primop: CPrimOp =>
@@ -203,7 +225,6 @@ final class Elab(val module: String, check: Check) {
         val (bodyTy, bodyEnv) = elabExpr(body, env2)
         val (handlerTy, handlerEnv) = elabTryHandler(evars, handler, env1)
         val ty = Subtype.join(bodyTy, handlerTy)
-        // TODO: consider including env for `after` call as well. It's in a fun defined in a letrec
         (
           ty,
           Approx.combineEnvs(env, Subtype.join, bodyEnv :: handlerEnv :: Nil)
@@ -264,6 +285,47 @@ final class Elab(val module: String, check: Check) {
           moduleExprTy
         )
     }
+  }
+
+  /**
+    * The Core Erlang for list comprehensions in roughly:
+    *
+    *  [doHeadStuff(H) || Pat1, Pat2 <- ListExpression]
+    * letrec  lc$01 = fun (List) ->
+    *                      case List of
+    *                        [Pat1|T]  -> let NewHead = doHeadStuff(Pat1)
+    *                                  in [H | lc$01(T)];
+    *                        [Pat2|T]  -> let NewHead = doHeadStuff(Pat2)
+    *                                  in [H | lc$01(T)];
+    *                           [] -> []
+    *                        end
+    *           end
+    *           in lc$01(ListExpression)
+    */
+  def elabListComp(
+      lcVar: CVar,
+      lcFun: CFun,
+      letBody: CErl,
+      env: Env
+  ): (Type, Env) = {
+    val CApply(_, recurseVar: CVar, arg :: Nil) = letBody
+    assert(recurseVar.name == lcVar.name)
+    val (genTy, env1) = elabExpr(arg, env)
+    if (Subtype.subType(genTy, BinaryType)) {
+      throw WIPDiagnostics.SkippedConstructDiagnostics(
+        arg.line,
+        WIPDiagnostics.BinaryGenerator
+      )
+    }
+    if (!Subtype.subType(genTy, ListType(AnyType))) {
+      throw TypeMismatch(arg.line, arg, ListType(AnyType), genTy)
+    }
+    val CFun(_, CVar(_, argName) :: Nil, funBody) = lcFun
+    val env2 = env1 ++ Map(
+      argName -> genTy,
+      lcVar.name -> FunType(AnyType :: Nil, NilType)
+    )
+    elabExpr(funBody, env2)
   }
 
   private def consType(expr: CErl, hdType: Type, tlType: Type): Type = {

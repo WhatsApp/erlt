@@ -50,13 +50,22 @@ object BuiltIn {
 
   case class unSpec(id: Id, types: List[ConstrainedFunType])(val line: Int)
 
-  val afterId = Id("after$^0", 0)
-  val receiveId = Id("recv$^0", 0)
+  sealed trait SpecialFun
+  case object SpecialListComp extends SpecialFun
+  case object SpecialBinaryComp extends SpecialFun
+  case class SpecialAfter(funType: FunType) extends SpecialFun
+  case class SpecialReceive(funType: FunType) extends SpecialFun
 
-  val letRecSpecialFunToType = Map(
-    afterId -> FunType(Nil, AnyType),
-    receiveId -> FunType(Nil, AnyType)
-  )
+  def parseLetRecId(id: Id): Option[SpecialFun] = {
+    val Id(name, arity) = id
+    name.split("\\$") match {
+      case Array("after", _) => Some(SpecialAfter(FunType(Nil, AnyType)))
+      case Array("recv", _)  => Some(SpecialReceive(FunType(Nil, AnyType)))
+      case Array("lc", _)    => Some(SpecialListComp)
+      case Array("lbc", _)   => Some(SpecialBinaryComp)
+      case _                 => None
+    }
+  }
 
   def primOpToReturnType(primOp: CPrimOp): Type = {
     primOp match {
@@ -68,8 +77,8 @@ object BuiltIn {
           case "remove_message"       => AnyType
           case "recv_wait_timeout"    => booleanType
           case "timeout"              => AnyType
+          case "bs_init_writable"     => BinaryType
           // dialyzer checks for these, but I haven't found any yet
-          //  case "bs_init_writable" => BinaryType,
           //  case "build_stacktrace" => ListType(AnyType)
           // $COVERAGE-OFF$
           case _ => sys.error(s"unexpected $name")
