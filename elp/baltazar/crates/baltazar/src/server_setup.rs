@@ -5,7 +5,11 @@ use lsp_server::Connection;
 use lsp_types::{InitializeParams, InitializeResult, ServerInfo};
 use vfs::AbsPathBuf;
 
-use crate::{config::Config, from_json, server::Server};
+use crate::{
+    config::Config,
+    from_json,
+    server::{Handle, Server, VfsLoader},
+};
 
 mod capabilities;
 
@@ -20,10 +24,11 @@ impl ServerSetup {
 
     pub fn to_server(self) -> Result<Server> {
         let config = self.initialize()?;
+        let vfs_loader = self.set_up_vfs_loader();
 
         log::info!("initial state: {:#?}", config);
 
-        Ok(Server::new(self.connection.sender, self.connection.receiver, config))
+        Ok(Server::new(self.connection.sender, self.connection.receiver, vfs_loader, config))
     }
 
     fn initialize(&self) -> Result<Config> {
@@ -58,6 +63,14 @@ impl ServerSetup {
         }
 
         Ok(config)
+    }
+
+    fn set_up_vfs_loader(&self) -> VfsLoader {
+        let (sender, receiver) = crossbeam_channel::unbounded::<vfs::loader::Message>();
+        let handle: vfs_notify::NotifyHandle =
+            vfs::loader::Handle::spawn(Box::new(move |msg| sender.send(msg).unwrap()));
+        let handle = Box::new(handle) as Box<dyn vfs::loader::Handle>;
+        Handle { handle, receiver }
     }
 }
 
