@@ -1,8 +1,9 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, path};
 
 use anyhow::{anyhow, Result};
 use text_size::{TextRange, TextSize};
-use vfs::{AbsPathBuf, VfsPath};
+use vfs::{AbsPath, AbsPathBuf, VfsPath};
+use itertools::Itertools;
 
 use crate::line_index::{LineCol, LineIndex};
 
@@ -24,4 +25,37 @@ pub fn text_range(line_index: &LineIndex, range: lsp_types::Range) -> TextRange 
     let start = offset(line_index, range.start);
     let end = offset(line_index, range.end);
     TextRange::new(start, end)
+}
+
+/// Returns a `Url` object from a given path, will lowercase drive letters if present.
+/// This will only happen when processing windows paths.
+///
+/// When processing non-windows path, this is essentially the same as `Url::from_file_path`.
+pub fn url_from_abs_path(path: &AbsPath) -> lsp_types::Url {
+    assert!(path.is_absolute());
+    let url = lsp_types::Url::from_file_path(path).unwrap();
+    match path.components().next() {
+        Some(path::Component::Prefix(prefix))
+            if matches!(prefix.kind(), path::Prefix::Disk(_) | path::Prefix::VerbatimDisk(_)) =>
+        {
+            // Need to lowercase driver letter
+        }
+        _ => return url,
+    }
+
+    let driver_letter_range = {
+        let (scheme, drive_letter, _rest) = match url.as_str().splitn(3, ':').collect_tuple() {
+            Some(it) => it,
+            None => return url,
+        };
+        let start = scheme.len() + ':'.len_utf8();
+        start..(start + drive_letter.len())
+    };
+
+    // Note: lowercasing the `path` itself doesn't help, the `Url::parse`
+    // machinery *also* canonicalizes the drive letter. So, just massage the
+    // string in place.
+    let mut url = url.into_string();
+    url[driver_letter_range].make_ascii_lowercase();
+    lsp_types::Url::parse(&url).unwrap()
 }

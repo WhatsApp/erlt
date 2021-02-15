@@ -1,20 +1,21 @@
 use std::{fmt, sync::Arc, time::Instant};
 
 use anyhow::{bail, Result};
-use baltazar_ide::{RootDatabase, SourceDatabase};
+use baltazar_ide::{is_cancelled, RootDatabase, SourceDatabase};
 use crossbeam_channel::{select, Receiver, Sender};
 use dispatch::NotificationDispatcher;
 use fxhash::FxHashMap;
 use lsp_server::{ErrorCode, Notification, Request, RequestId, Response};
-use lsp_types::{Registration, notification::{self, Notification as _, Progress}, request::{self, Request as _}};
-use notification::DidChangeWatchedFiles;
+use lsp_types::{Diagnostic, Url, notification::{self, Notification as _}, request::{self, Request as _}};
 use parking_lot::RwLock;
 use vfs::{AbsPath, AbsPathBuf, FileId, Vfs, VfsPath};
 
 use crate::{
     config::Config,
     convert,
+    diagnostics::DiagnosticCollection,
     document::{Document, LineEndings},
+    task_pool::TaskPool,
 };
 
 mod dispatch;
@@ -22,6 +23,10 @@ mod dispatch;
 enum Event {
     Lsp(lsp_server::Message),
     Vfs(vfs::loader::Message),
+}
+
+pub enum Task {
+    Diagnostics(Vec<(FileId, Vec<Diagnostic>)>),
 }
 
 impl fmt::Debug for Event {
@@ -55,12 +60,15 @@ pub(crate) struct Handle<H, C> {
     pub(crate) receiver: C,
 }
 
-pub(crate) type VfsLoader = Handle<Box<dyn vfs::loader::Handle>, Receiver<vfs::loader::Message>>;
+pub(crate) type VfsHandle = Handle<Box<dyn vfs::loader::Handle>, Receiver<vfs::loader::Message>>;
+pub(crate) type TaskHandle = Handle<TaskPool<Task>, Receiver<Task>>;
 
 pub struct Server {
     sender: Sender<lsp_server::Message>,
     lsp_receiver: Receiver<lsp_server::Message>,
-    vfs_loader: VfsLoader,
+    vfs_loader: VfsHandle,
+    task_pool: TaskHandle,
+    diagnostics: DiagnosticCollection,
     req_queue: ReqQueue,
     open_document_versions: FxHashMap<VfsPath, i32>,
     vfs: Arc<RwLock<Vfs>>,
@@ -70,17 +78,27 @@ pub struct Server {
     status: Status,
 }
 
+// pub struct Snapshot {
+//     config: Arc<Config>,
+//     db: RootDatabaseSnapshot,
+//     opened_document_versions: FxHashMap<VfsPath, i32>,
+//     vfs: Arc<RwLock<Vfs>>,
+// }
+
 impl Server {
     pub(crate) fn new(
         sender: Sender<lsp_server::Message>,
         receiver: Receiver<lsp_server::Message>,
-        vfs_loader: VfsLoader,
+        vfs_loader: VfsHandle,
+        task_pool: TaskHandle,
         config: Config,
     ) -> Server {
         Server {
             sender,
             lsp_receiver: receiver,
             vfs_loader,
+            task_pool,
+            diagnostics: DiagnosticCollection::default(),
             req_queue: ReqQueue::default(),
             open_document_versions: FxHashMap::default(),
             vfs: Arc::new(RwLock::new(Vfs::default())),
@@ -151,7 +169,25 @@ impl Server {
             }
         }
 
-        self.process_changes();
+        let changed = self.process_changes();
+
+        if changed {
+            self.update_diagnostics();
+        }
+
+        if let Some(diagnostic_changes) = self.diagnostics.take_changes() {
+            for file_id in diagnostic_changes {
+                let url = file_id_to_url(&self.vfs.read(), file_id);
+                let diagnostics = self.diagnostics.diagnostics_for(file_id).cloned().collect();
+                let version = convert::vfs_path(&url)
+                    .map(|path| self.open_document_versions.get(&path).cloned())
+                    .unwrap_or_default();
+
+                self.send_notification::<lsp_types::notification::PublishDiagnostics>(
+                    lsp_types::PublishDiagnosticsParams { uri: url, diagnostics, version },
+                );
+            }
+        }
 
         Ok(())
     }
@@ -277,12 +313,12 @@ impl Server {
         }
     }
 
-    fn process_changes(&mut self) {
+    fn process_changes(&mut self) -> bool {
         let mut vfs = self.vfs.write();
         let changed_files = vfs.take_changes();
 
         if changed_files.is_empty() {
-            return;
+            return false;
         }
 
         for file in changed_files {
@@ -297,6 +333,43 @@ impl Server {
                 self.db.set_file_text(file.file_id, Default::default());
             };
         }
+
+        true
+    }
+
+    fn update_diagnostics(&mut self) {
+        let opened_documents: Vec<_> = {
+            let vfs = self.vfs.read();
+            self.open_document_versions.keys().map(|path| vfs.file_id(path).unwrap()).collect()
+        };
+
+        // This should be done async, but it looks like the Rust bindings to tree-sitter
+        // are not properly thread-safe. Let's make it sync
+
+        // let snapshot = self.snapshot();
+
+        // self.task_pool.handle.spawn(move || {
+        let diagnostics: Vec<_> = opened_documents
+            .into_iter()
+            .filter_map(|file_id| {
+                publish_diagnostics(self, file_id)
+                    .map_err(|err| {
+                        if !is_cancelled(&*err) {
+                            log::error!("failed to compute diagnostics: {:?}", err);
+                        }
+                        ()
+                    })
+                    .ok()
+                    .map(|diags| (file_id, diags))
+            })
+            .collect();
+
+        for (file_id, diagnostics) in diagnostics {
+            self.diagnostics.set_native_diagnostics(file_id, diagnostics);
+        }
+
+        //     Task::Diagnostics(diagnostics)
+        // });
     }
 
     fn switch_workspaces(&mut self, roots: &[AbsPathBuf]) {
@@ -314,7 +387,7 @@ impl Server {
             register_options: Some(serde_json::to_value(register_options).unwrap()),
         };
 
-        self.send_request::<lsp_types::request::RegisterCapability>(
+        self.send_request::<request::RegisterCapability>(
             lsp_types::RegistrationParams { registrations: vec![registration] },
             |_, _| (),
         );
@@ -323,7 +396,6 @@ impl Server {
             extensions: vec!["erl".to_string(), "hrl".to_string()],
             include: roots.to_vec(),
             exclude: vec![],
-
         };
         let vfs_loader_config = vfs::loader::Config {
             load: vec![vfs::loader::Entry::Directories(loader_dirs)],
@@ -353,7 +425,7 @@ impl Server {
         }
     }
 
-    fn send_request<R: lsp_types::request::Request>(&mut self, params: R::Params, handler: ReqHandler) {
+    fn send_request<R: request::Request>(&mut self, params: R::Params, handler: ReqHandler) {
         let request = self.req_queue.outgoing.register(R::METHOD.to_string(), params, handler);
         self.send(request.into());
     }
@@ -363,11 +435,16 @@ impl Server {
         handler(self, response)
     }
 
+    fn send_notification<N: notification::Notification>(&mut self, params: N::Params) {
+        let not = Notification::new(N::METHOD.to_string(), params);
+        self.send(not.into());
+    }
+
     fn send(&mut self, message: lsp_server::Message) {
         self.sender.send(message).unwrap()
     }
 
-    fn register_request(&mut self, request: &lsp_server::Request, received: Instant) {
+    fn register_request(&mut self, request: &Request, received: Instant) {
         self.req_queue.incoming.register(request.id.clone(), (request.method.clone(), received))
     }
 }
@@ -377,4 +454,14 @@ fn parse_id(id: lsp_types::NumberOrString) -> RequestId {
         lsp_types::NumberOrString::Number(id) => id.into(),
         lsp_types::NumberOrString::String(id) => id.into(),
     }
+}
+
+fn publish_diagnostics(server: &Server, file_id: FileId) -> Result<Vec<Diagnostic>> {
+    Ok(vec![])
+}
+
+pub fn file_id_to_url(vfs: &vfs::Vfs, id: FileId) -> Url {
+    let path = vfs.file_path(id);
+    let path = path.as_path().unwrap();
+    convert::url_from_abs_path(&path)
 }
