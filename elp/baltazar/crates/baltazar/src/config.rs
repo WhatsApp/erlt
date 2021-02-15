@@ -16,8 +16,8 @@ impl Default for ConfigData {
 
 #[derive(Clone, Debug)]
 pub struct Config {
-    root_path: AbsPathBuf,
-    caps: ClientCapabilities,
+    pub root_path: AbsPathBuf,
+    pub caps: ClientCapabilities,
     data: ConfigData
 }
 
