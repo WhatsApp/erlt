@@ -1,15 +1,36 @@
 package com.whatsapp.eqwalizer.ast
 
 import com.whatsapp.eqwalizer.ast.Exprs._
+import com.whatsapp.eqwalizer.tc.Util
 
-object Recursion {
+object RecursiveFuns {
 
-  def rec(clauses: List[Clause], funId: Id): Option[List[Clause]] = {
+  /**
+   * Note: This rewriting will not be necessary when we have type checker
+   * error recovery.
+   *
+   *
+   * Rewrite the abstract forms (if possible) so that only non-self-recursive
+   * branches remain.
+   *
+   * For example, given this list of clauses:
+   *
+   * List(
+   * sum(0, Y) -> Y,
+   * sum(X, Y) -> sum(X - 1, Y + 1)
+   * )
+   *
+   * toRecursionNBaseCases returns Some(List(sum(0, Y) -> Y))
+   *
+   * But for `loop() -> loop()` returns None
+   *
+   */
+  def toRecursionBaseCases(clauses: List[Clause], funId: Id): Option[List[Clause]] = {
 
     def baseClause(c: Clause): Option[Clause] =
       mapBase(c.body) map (
         Clause(c.pats, c.guards, _)(c.l)
-      )
+        )
 
     def baseClauses[T](clauses: List[Clause], f: List[Clause] => T): Option[T] =
       clauses.map(baseClause).flatten match {
@@ -17,14 +38,14 @@ object Recursion {
         case clauses => Some(f(clauses))
       }
 
-//    def baseField(field: RecordField): Option[RecordField] = base(field.value).map(RecordField(field.name, _))
-//
-//    def baseKvs(kvs: List[(Expr, Expr)]): List[(Expr, Expr)] = {
-//      val handleKv = {
-//         case (k, v) => for (k1 <- base(k); v1 <- base(v)) yield (k1, v1)
-//      }
-//      kvs.map(handleKv).flatten
-//    }
+    //    def baseField(field: RecordField): Option[RecordField] = base(field.value).map(RecordField(field.name, _))
+    //
+    //    def baseKvs(kvs: List[(Expr, Expr)]): List[(Expr, Expr)] = {
+    //      val handleKv = {
+    //         case (k, v) => for (k1 <- base(k); v1 <- base(v)) yield (k1, v1)
+    //      }
+    //      kvs.map(handleKv).flatten
+    //    }
 
     def allOrNone[A](l: List[Option[A]]): Option[List[A]] =
       if (l.forall(_.isDefined)) Some(l map (_.get))
@@ -51,7 +72,7 @@ object Recursion {
         if (id == funId) None
         else mapBase(args) map (LocalCall(id, _)(e.l))
       case RemoteCall(id, args) =>
-        if (id == funId) None
+        if (id.name == funId.name && id.arity == funId.arity) None
         else mapBase(args) map (RemoteCall(id, _)(e.l))
       case FunCall(expr, args) =>
         for (
@@ -71,8 +92,8 @@ object Recursion {
       case TryCatchExpr(tryBody, catchClauses, after) =>
         val after1 = after flatMap mapBase
         for (
-        tryBody1 <- mapBase(tryBody);
-        res <- baseClauses(catchClauses, TryCatchExpr(tryBody1, _, after1)(e.l))
+          tryBody1 <- mapBase(tryBody);
+          res <- baseClauses(catchClauses, TryCatchExpr(tryBody1, _, after1)(e.l))
         ) yield res
       case TryOfCatchExpr(tryBody, tryClauses, catchClauses, after) =>
         val after1 = after flatMap mapBase
@@ -89,16 +110,16 @@ object Recursion {
           timeoutBlock1 <- mapBase(timeoutBlock);
           res <- baseClauses(clauses, ReceiveWithTimeout(_, timeout1, timeoutBlock1)(e.l))
         ) yield res
-        // TODO!
-//      case RecordCreate(recName, fields) =>
-//        RecordCreate(recName, fields map baseField)(e.l)
-//      case RecordUpdate(expr, recName, fields) =>
-//        RecordUpdate(base(expr), recName, fields map baseField)(e.l)
-//      case RecordSelect(expr, recName, fieldName) =>
-//        RecordSelect(base(expr), recName, fieldName)
-//      case MapCreate(kvs) => MapCreate(baseKvs(kvs))(e.l)
-//      case ReqMapUpdate(map, kvs) => ReqMapUpdate(base(map), kvs map { case (k, v) => (k, base(v)) })(e.l)
-//      case GenMapUpdate(map, kvs) => GenMapUpdate(base(map), baseKvs(kvs))(e.l)
+      // TODO!
+      //      case RecordCreate(recName, fields) =>
+      //        RecordCreate(recName, fields map baseField)(e.l)
+      //      case RecordUpdate(expr, recName, fields) =>
+      //        RecordUpdate(base(expr), recName, fields map baseField)(e.l)
+      //      case RecordSelect(expr, recName, fieldName) =>
+      //        RecordSelect(base(expr), recName, fieldName)
+      //      case MapCreate(kvs) => MapCreate(baseKvs(kvs))(e.l)
+      //      case ReqMapUpdate(map, kvs) => ReqMapUpdate(base(map), kvs map { case (k, v) => (k, base(v)) })(e.l)
+      //      case GenMapUpdate(map, kvs) => GenMapUpdate(base(map), baseKvs(kvs))(e.l)
       case _: Var | _: AtomLit | _: NumberLit | _: NilLit | _: LocalFun | _: RemoteFun |
            _: Binary | _: RecordIndex => Some(e)
     }

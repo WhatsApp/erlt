@@ -105,15 +105,31 @@
 105 rec(1) -> [];                              |         | 
 106 rec(X) -> [X|rec(X - 1)].                  |         | 
 107                                            |         | 
-108 % TODO: arity check for higher-order funs  |         | 
-109                                            |         | 
-110 apply_fun(F, Arg) ->                       | OK      | 
-111     case F of                              |         | 
-112       _ -> F(Arg)                          |         | 
-113     end.                                   |         | 
-114                                            |         | 
-115 other(Z) -> other_other(Z).                | OK      | 
+108 -spec test_17_neg() -> ok.                 |         | 
+109 test_17_neg() ->                           | ERROR   | 
+110     F = fun (F1) -> F1(F1) end,            |         | Cannot check F1 Consider making refactoring this into a specced function
+111     F(F).                                  |         | 
+112                                            |         | 
+113 -spec test_18_neg() -> boolean().          |         | 
+114 test_18_neg() -> odd(10).                  | ERROR   | 
+115                                            |         | 
 116                                            |         | 
-117 other_other(X) ->  X * 3.                  | OK      | 
-118                                            |         | 
+117 even(0) -> true;                           | OK      | 
+118 even(X) when X > 0 -> not odd(X - 1).      |         | 
 119                                            |         | 
+120 odd(1) -> true;                            | OK      | odd/1 cannot be type-checked without a spec.
+121 odd(X) when X >= 0 -> not even(X - 1).     |         | 
+122                                            |         | 
+123                                            |         | 
+124 % TODO: arity check for higher-order funs  |         | 
+125                                            |         | 
+126 apply_fun(F, Arg) ->                       | OK      | 
+127     case F of                              |         | 
+128       _ -> F(Arg)                          |         | 
+129     end.                                   |         | 
+130                                            |         | 
+131 other(Z) -> other_other(Z).                | OK      | 
+132                                            |         | 
+133 other_other(X) ->  X * 3.                  | OK      | 
+134                                            |         | 
+135                                            |         | 

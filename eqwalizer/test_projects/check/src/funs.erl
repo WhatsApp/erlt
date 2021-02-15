@@ -105,6 +105,22 @@ rec(0) -> [];
 rec(1) -> [];
 rec(X) -> [X|rec(X - 1)].
 
+-spec test_17_neg() -> ok.
+test_17_neg() ->
+    F = fun (F1) -> F1(F1) end,
+    F(F).
+
+-spec test_18_neg() -> boolean().
+test_18_neg() -> odd(10).
+
+
+even(0) -> true;
+even(X) when X > 0 -> not odd(X - 1).
+
+odd(1) -> true;
+odd(X) when X >= 0 -> not even(X - 1).
+
+
 % TODO: arity check for higher-order funs
 
 apply_fun(F, Arg) ->

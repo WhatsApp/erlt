@@ -18,14 +18,15 @@ package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs._
 import com.whatsapp.eqwalizer.ast.Types._
-import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, Id, Recursion, Vars}
+import com.whatsapp.eqwalizer.ast.{BinarySpecifiers, RecursiveFuns, Id, Vars}
 import com.whatsapp.eqwalizer.tc.TcDiagnostics._
 
 final class Elab(module: String, check: Check) {
   private val elabPat = new ElabPat(module)
   private val elabGuard = new ElabGuard(module)
 
-  var idAndArgTys2Ty = Map[(Id, List[Type]), Type]()
+  // TODO: keep this cache in a singleton object somewhere
+  var toBaseReturnTy = Map[(Id, List[Type]), Type]()
 
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
     var (elabType, envAcc) = elabExpr(exprs.head, env)
@@ -104,8 +105,6 @@ final class Elab(module: String, check: Check) {
           case FunType(fArgTys, fResTy) =>
             val env2 = check.checkExprs(args, fArgTys, env1)
             (fResTy, env2)
-          case ft: FoonType =>
-            elabFoonCall(expr, None, ft, args, env)
           case _ =>
             val funTy = FunType(args.map(_ => AnyType), AnyType)
             throw TypeMismatch(expr.l, expr, expected = funTy, got = exprTy)
@@ -317,15 +316,16 @@ final class Elab(module: String, check: Check) {
 
     }
 
-  var x = 0
+  var curFoons = Set[(FoonType, List[Type])]()
+
   def elabFoonCall(expr: Expr, idOpt: Option[Id], ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
     val FoonType(clauses, _module, fEnv) = ft
     val (argTys, argEnvs) = args.map(elabExpr(_, env)).unzip
-    println(s"elab foon $idOpt")
+    val funBody = ft.clauses.head.body.head
 
-    x += 1
-    if (x == 1000) {
-      sys.error("oops")
+    def tooRecursive: TypeError = idOpt match {
+      case Some(id) => NeedsSpec(funBody.l, id)
+      case None => UncheckableFun(expr.l, expr)
     }
 
     def elabFoonClause(clause: Clause, argTys: List[Type], env0: Env): Type = {
@@ -339,29 +339,29 @@ final class Elab(module: String, check: Check) {
       elabBlock(clause.body, env3)._1
     }
     def elabFoonClauses(clauses: List[Clause]): (Type, Env) = {
+      if (curFoons.contains(ft, argTys)) throw tooRecursive
+      curFoons += ((ft, argTys))
       val tys = clauses.map(elabFoonClause(_, argTys, fEnv))
+      curFoons -= ((ft, argTys))
       val ty = tys.reduce(Subtype.join)
       (ty, Approx.joinEnvs(argEnvs))
     }
 
     idOpt match {
-      case Some(id) => idAndArgTys2Ty.get(id, argTys) match {
+      case Some(id) => toBaseReturnTy.get(id, argTys) match {
         case Some(ty) =>
-          println(s"using type from store $id $ty")
           (ty, Approx.joinEnvs(argEnvs))
         case None =>
-          Recursion.rec(clauses, id) match {
+          RecursiveFuns.toRecursionBaseCases(clauses, id) match {
             case Some(baseClauses) =>
               val (baseTy, _) = elabFoonClauses(baseClauses)
-              idAndArgTys2Ty += (id, argTys) -> baseTy
-              println(s"setting type for $id to $baseTy")
+              toBaseReturnTy += (id, argTys) -> baseTy
               elabFoonClauses(clauses)
-            case None => throw NeedsSpec(ft.clauses.head.l, ft.clauses.head.body.head)
+            case None => throw tooRecursive
           }
 
       }
       case None =>
-        println(s"in none case $expr")
         elabFoonClauses(clauses)
     }
 

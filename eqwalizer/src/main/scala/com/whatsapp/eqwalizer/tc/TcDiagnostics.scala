@@ -17,6 +17,7 @@
 package com.whatsapp.eqwalizer.tc
 
 import com.whatsapp.eqwalizer.ast.Exprs.Expr
+import com.whatsapp.eqwalizer.ast.Id
 import com.whatsapp.eqwalizer.ast.Show.show
 import com.whatsapp.eqwalizer.ast.Types.Type
 
@@ -30,8 +31,11 @@ object TcDiagnostics {
   case class TypeMismatch(line: Int, expr: Expr, expected: Type, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Expected: ${show(expected)}, Got: ${show(got)}"
   }
-  case class NeedsSpec(line: Int, expr: Expr) extends TypeError {
-    override val msg: String = s"${show(expr)} cannot be type-checked without a spec."
+  case class NeedsSpec(line: Int, id: Id) extends TypeError {
+    override val msg: String = s"${id} cannot be type-checked without a spec."
+  }
+  case class UncheckableFun(line: Int, expr: Expr) extends TypeError {
+    override val msg: String = s"Cannot check ${show(expr)} Consider making refactoring this into a specced function"
   }
   case class UndefinedKey(line: Int, expr: Expr, key: String, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Undef key `$key`. Type: ${show(got)}"
