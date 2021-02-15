@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 tree-sitter-erlang = { path = "../tree-sitter-erlang" }
 tree-sitter = "0.16"
+text-size = "1.1"

@@ -1,5 +1,6 @@
-use std::{fmt, iter::FusedIterator, mem, ops::Range, sync::Arc};
+use std::{convert::TryFrom, fmt, iter::FusedIterator, mem, ops::Range, sync::Arc};
 
+use text_size::{TextRange, TextSize};
 use tree_sitter::{Node, Tree, TreeCursor};
 
 pub use crate::generated::syntax_kind::SyntaxKind;
@@ -63,6 +64,14 @@ impl SyntaxNode {
 
     pub fn byte_range(&self) -> Range<usize> {
         self.1.byte_range()
+    }
+
+    pub fn range(&self) -> TextRange {
+        let byte_range = self.1.byte_range();
+        TextRange::new(
+            TextSize::try_from(byte_range.start).unwrap(),
+            TextSize::try_from(byte_range.end).unwrap(),
+        )
     }
 
     // pub(crate) fn node<'a>(&'a self) -> Node<'a> {
