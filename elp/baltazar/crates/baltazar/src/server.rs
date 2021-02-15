@@ -236,8 +236,12 @@ impl Server {
                 // Nothing to do for now
                 Ok(())
             })?
-            .on::<notification::DidChangeWatchedFiles>(|_, _| {
-                // Nothing to do for now
+            .on::<notification::DidChangeWatchedFiles>(|this, params| {
+                for change in params.changes {
+                    if let Ok(path) = convert::abs_path(&change.uri) {
+                        this.vfs_loader.handle.invalidate(path);
+                    }
+                }
                 Ok(())
             })?
             .finish();
