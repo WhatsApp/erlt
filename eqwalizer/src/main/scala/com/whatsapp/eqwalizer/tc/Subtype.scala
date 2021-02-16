@@ -45,8 +45,7 @@ object Subtype {
         try {
           clauses.foreach(check.checkClause(_, argTys, resTy, env, Set.empty))
           true
-        }
-        catch {
+        } catch {
           case _: TypeMismatch => false
         }
 

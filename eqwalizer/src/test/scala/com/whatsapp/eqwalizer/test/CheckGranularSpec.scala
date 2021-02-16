@@ -22,7 +22,7 @@ import com.whatsapp.eqwalizer.test.util.TcDiagnosticsText
 import java.nio.file.{Files, Paths}
 
 class CheckGranularSpec extends org.scalatest.funspec.AnyFunSpec {
-  val generateOut = true
+  val generateOut = false
 
   val srcDir = "test_projects/check/src"
   val ebinDir = "test_projects/_build/default/lib/check/ebin"

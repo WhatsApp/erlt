@@ -21,7 +21,7 @@ import com.whatsapp.eqwalizer.test.util.TcDiagnosticsText
 import java.nio.file.{Files, Paths}
 
 class CheckSpec extends org.scalatest.funspec.AnyFunSpec {
-  val generateOut = true
+  val generateOut = false
 
   testDir(srcDir = "test_projects/check/src", ebinDir = "test_projects/_build/default/lib/check/ebin")
 

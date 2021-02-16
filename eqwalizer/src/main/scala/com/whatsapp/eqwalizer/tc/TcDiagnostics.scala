@@ -35,7 +35,7 @@ object TcDiagnostics {
     override val msg: String = s"${id} cannot be type-checked without a spec."
   }
   case class UncheckableFun(line: Int, expr: Expr) extends TypeError {
-    override val msg: String = s"Cannot check ${show(expr)} Consider making refactoring this into a specced function"
+    override val msg: String = s"Cannot check ${show(expr)} Consider refactoring this into a specced function"
   }
   case class UndefinedKey(line: Int, expr: Expr, key: String, got: Type) extends TypeError {
     override val msg: String = s"${show(expr)}. Undef key `$key`. Type: ${show(got)}"

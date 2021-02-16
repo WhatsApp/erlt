@@ -103,7 +103,7 @@ object Expand {
     val sFunTypes: List[ConstrainedFunType] = funSpec.types
     try {
       val cfts = sFunTypes.map {
-        case cft@ConstrainedFunType(_: FoonType, _) => cft
+        case cft @ ConstrainedFunType(_: FoonType, _) => cft
         case cft =>
           val FunType(args, res) =
             if (cft.constraints.isEmpty) cft.ty

@@ -90,7 +90,7 @@ object Show {
     case FunCall(expr, args) =>
       val f = expr match {
         case Var(_) => show(expr)
-        case _ => s"(${show(expr)})"
+        case _      => s"(${show(expr)})"
       }
       s"""$f(${args.map(show).mkString(", ")})"""
     case LocalFun(id) =>
@@ -145,4 +145,3 @@ object Show {
       "fun"
   }
 }
-

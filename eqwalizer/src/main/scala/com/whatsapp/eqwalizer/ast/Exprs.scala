@@ -39,7 +39,7 @@ object Exprs {
 
   case class LocalCall(id: Id, args: List[Expr])(val l: Int) extends Expr
   case class RemoteCall(id: RemoteId, args: List[Expr])(val l: Int) extends Expr
-  case class FunCall(expr: Expr, args: List[Expr])(val l: Int) extends  Expr
+  case class FunCall(expr: Expr, args: List[Expr])(val l: Int) extends Expr
   case class Fun(clauses: List[Clause])(val l: Int) extends Expr
   case class LocalFun(id: Id)(val l: Int) extends Expr
   case class RemoteFun(id: RemoteId)(val l: Int) extends Expr
