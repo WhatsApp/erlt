@@ -195,7 +195,7 @@ final class Elab(val module: String, check: Check) {
                   envAcc += (name -> funTy)
                 case BuiltIn.SpecialAfter(funTy) =>
                   envAcc += (name -> funTy)
-                  envAcc ++= check.checkFunBody(fun.body, funTy.resTy, envAcc)
+                  envAcc = check.checkFunBody(fun.body, funTy.resTy, envAcc)
                 case BuiltIn.SpecialBinaryComp =>
                   assert(defs.size == 1)
                   throw WIPDiagnostics.SkippedConstructDiagnostics(
