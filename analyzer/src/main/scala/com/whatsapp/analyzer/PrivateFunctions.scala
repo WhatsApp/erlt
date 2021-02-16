@@ -22,7 +22,6 @@ object PrivateFunctions {
   case class Priv(name: String, arity: Int) extends Id
 
   case class Row(
-      sourcePath: String,
       module: String,
       privateFun: Priv,
       callSitesCnt: Int,
@@ -39,22 +38,21 @@ object PrivateFunctions {
 
   def main(args: Array[String]): Unit = {
     println("Loading beam DB")
-    val otp = args sameElements Array("-otp")
+    val otp = true // args sameElements Array("-otp")
     assert(BeamDb.dupMod2App.isEmpty, s"Dupmodes: ${BeamDb.dupMod2App}")
     if (otp) {
       println("*** OTP")
-      BeamDb.otpApps.values.toList.sortBy(_.name).foreach(analyzeApp)
+      BeamDb.otpApps.values.toList.sortBy(_.name).foreach(analyzeApp(CodeDirs.isOtp))
     } else {
       println("*** PROJECT")
-      BeamDb.projectApps.values.toList.sortBy(_.name).foreach(analyzeApp)
+      BeamDb.projectApps.values.toList.sortBy(_.name).foreach(analyzeApp(CodeDirs.isFirstParty))
     }
     printStat()
   }
 
-  private def analyzeApp(app: App): Unit = {
+  private def analyzeApp(moduleFilter: String => Boolean)(app: App): Unit = {
     println(s">>>> APP: ${app.name}")
-    if (!CodeDirs.thirdParty.contains(app.name))
-      app.modules.sorted.filterNot(CodeDirs.isGenerated(app.name, _)).foreach(analyzeModule(app, _))
+    app.modules.sorted.filter(moduleFilter).foreach(analyzeModule(app, _))
   }
 
   def analyzeModule(app: App, module: String): Unit = {
@@ -147,7 +145,6 @@ object PrivateFunctions {
         }
 
         rows ::= Row(
-          sourcePath = CodeDirs.sourcePath(app.name, module),
           module = module,
           privateFun = priv,
           callSitesCnt = fun2callSitesCnt(priv),
@@ -271,13 +268,17 @@ object PrivateFunctions {
     val formatter = java.text.NumberFormat.getIntegerInstance
     def fmt(n: Int): String = formatter.format(n)
 
-    def p(msg: String, r: Row): Unit =
-      println(s"file://${r.sourcePath} ${r.privateFun.name}/${r.privateFun.arity}  $msg")
+    def p(msg: String, r: Row): Unit = {
+      val locationStr = CodeDirs.sourcePath(r.module).getOrElse(s"${r.module}")
+      val funStr = s"${r.privateFun.name}/${r.privateFun.arity}"
+      val formatted = (r.module.padTo(20, ' ') + "    " + funStr).padTo(60, ' ') + s" $msg    $locationStr"
+      println(formatted)
+    }
 
     def sample(l: List[Row], msg: String, pred: Row => Boolean) = {
       val SAMPLE_SIZE = 30
       println(s"$msg SAMPLE\n")
-      Random.shuffle(l.filter(pred)).take(SAMPLE_SIZE).foreach(p(msg, _))
+      Random.shuffle(l.filter(pred)).take(SAMPLE_SIZE).sortBy(_.module).foreach(p(msg, _))
       println(s"\n\n")
     }
 

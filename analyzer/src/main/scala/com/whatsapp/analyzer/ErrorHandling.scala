@@ -120,7 +120,7 @@ object ErrorHandling {
       for (mName <- moduleNames) yield {
         val path = s"$dir/${mName}.beam"
         val Some((catches, tries)) = rpc.getErrorHandling(path)
-        ModuleInfo(mName, catches, tries, CodeDirs.isGenerated(libName, mName))
+        ModuleInfo(mName, catches, tries, CodeDirs.isGenerated(mName))
       }
 
     AppInfo(libName, moduleInfos)

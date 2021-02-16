@@ -22,6 +22,13 @@ object SourceMap {
   var maps: Map[String, SourceMap] =
     Map.empty
 
+  def getOrFind(module: String): SourceMap =
+    get(module).getOrElse {
+      // populates SourceMap as a side-effect
+      BeamDb.getModuleApi(module).get
+      get(module).get
+    }
+
   def get(module: String): Option[SourceMap] =
     maps.get(module)
 
@@ -36,9 +43,12 @@ object SourceMap {
       Map.empty
     var types: Map[(String, Int), String] =
       Map.empty
+    var sourceFile: Option[String] = None
     for (form <- forms)
       form match {
         case AF_File(file) =>
+          if (!sourceFile.isDefined)
+            sourceFile = Some(file)
           curFile = file
         case AF_RecordDecl(name, _) =>
           records += name -> curFile
@@ -46,12 +56,13 @@ object SourceMap {
           types += (typeName, params.size) -> curFile
         case _ =>
       }
-    SourceMap(module, records, types)
+    SourceMap(module, sourceFile.get, records, types)
   }
 }
 
 case class SourceMap(
     module: String,
+    sourceFile: String,
     // recordName -> file
     records: Map[String, String],
     // (name, arity) -> file
