@@ -58,7 +58,7 @@ object BuiltIn {
 
   def parseLetRecId(id: Id): Option[SpecialFun] = {
     val Id(name, arity) = id
-    name.split("\\$") match {
+    name.split('$') match {
       case Array("after", _) => Some(SpecialAfter(FunType(Nil, AnyType)))
       case Array("recv", _)  => Some(SpecialReceive(FunType(Nil, AnyType)))
       case Array("lc", _)    => Some(SpecialListComp)
