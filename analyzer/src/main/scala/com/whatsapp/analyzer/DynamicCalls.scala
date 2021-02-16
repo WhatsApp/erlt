@@ -59,7 +59,7 @@ object DynamicCalls {
     val beamFiles = dirFile.list().toList.filter(_.endsWith(".beam"))
     val moduleNames = beamFiles.map(s => s.substring(0, s.length - 5)).sorted
     moduleNames map { m =>
-      Usage(m, rpc.getDynamicCalls(s"$dir/${m}.beam"), CodeDirs.isGenerated(libName, m))
+      Usage(m, rpc.getDynamicCalls(s"$dir/${m}.beam"), CodeDirs.isGenerated(m))
     }
   }
 }

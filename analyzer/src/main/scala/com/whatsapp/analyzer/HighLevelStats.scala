@@ -77,7 +77,7 @@ object HighLevelStats {
     val modules: List[ModuleInfo] = for (mName <- moduleNames) yield {
       val path = s"$dir/${mName}.beam"
       val count = rpc.getFunctions(path)
-      ModuleInfo(mName, count, CodeDirs.isGenerated(libName, mName))
+      ModuleInfo(mName, count, CodeDirs.isGenerated(mName))
     }
     AppInfo(libName, modules)
   }

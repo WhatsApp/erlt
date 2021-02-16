@@ -80,20 +80,25 @@ object BeamDb {
     rawForms.map(AbstractFormConvert.convertForm(_, lite = lite)).filter(_ != null)
   }
 
-  def getModuleApi(module: String): Option[ModuleApi] = {
-    if (moduleApis.contains(module))
-      return Some(moduleApis(module))
+  def getApp(module: String): Option[App] = {
     val appNames = module2App(module)
     if (appNames.isEmpty)
       None
     else if (appNames.size > 1)
       throw new IllegalStateException(s"module $module is defined in ${appNames.mkString(", ")}")
     else {
-      val moduleApi = loadModuleApi(apps(appNames.head), module)
-      moduleApis = moduleApis.updated(module, moduleApi)
-      Some(moduleApi)
+      Some(apps(appNames.head))
     }
   }
+
+  def getModuleApi(module: String): Option[ModuleApi] =
+    moduleApis.get(module).orElse {
+      getApp(module) map { app =>
+        val moduleApi = loadModuleApi(app, module)
+        moduleApis = moduleApis.updated(module, moduleApi)
+        moduleApi
+      }
+    }
 
   def getAbstractForms(module: String): Option[List[AbstractForm]] = {
     val appNames = module2App(module)
