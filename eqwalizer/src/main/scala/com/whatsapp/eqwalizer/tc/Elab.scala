@@ -26,7 +26,6 @@ final class Elab(module: String, check: Check) {
   private val elabGuard = new ElabGuard(module)
   private val recursiveFuns = new RecursiveFuns(module)
 
-  // TODO: keep this cache in a singleton object somewhere
   var toBaseReturnTy = Map[FoonType, Type]()
 
   def elabBlock(exprs: List[Expr], env: Env): (Type, Env) = {
@@ -317,6 +316,8 @@ final class Elab(module: String, check: Check) {
 
     }
 
+  var foonCallsInProgress = Set[(FoonType, List[Expr])]()
+
   def elabFoonCall(expr: Expr, idOpt: Option[Id], ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
     val (argTys, argEnvs) = args.map(elabExpr(_, env)).unzip
     val funBody = ft.clauses.head.body.head
@@ -324,10 +325,10 @@ final class Elab(module: String, check: Check) {
     def tooRecursive: TypeError =
       idOpt match {
         case Some(id) => NeedsSpec(funBody.l, id)
-        case None => UncheckableFun(expr.l, expr)
+        case None     => UncheckableFun(expr.l, expr)
       }
 
-    def elabFoonClause(clause: Clause, argTys: List[Type], env0: Env): Type = {
+    def applyFoonToClause(clause: Clause, argTys: List[Type], env0: Env): Type = {
       if (clause.pats.sizeCompare(argTys) != 0) {
         throw ArityMismatch(expr.l, expr, expected = clause.pats.size, got = argTys.size)
       }
@@ -337,26 +338,30 @@ final class Elab(module: String, check: Check) {
       val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
       elabBlock(clause.body, env3)._1
     }
-    def doFoonClauses(ft1: FoonType): (Type, Env) = {
-      val tys = ft1.clauses.map(elabFoonClause(_, argTys, ft1.env))
+
+    def applyFoon(ft1: FoonType): (Type, Env) = {
+      val tys = ft1.clauses.map(applyFoonToClause(_, argTys, ft1.env))
       val ty = tys.reduce(Subtype.join)
       (ty, Approx.joinEnvs(argEnvs))
     }
 
-      toBaseReturnTy.get(ft) match {
-        case Some(ty) =>
-          (ty, Approx.joinEnvs(argEnvs))
-        case None =>
-            recursiveFuns.baseFoon(ft) match {
-            case Some(basedFt) =>
-              val (baseTy, _) = doFoonClauses(basedFt)
-              toBaseReturnTy += ft -> baseTy
-              val res = doFoonClauses(ft)
-              toBaseReturnTy -= ft
-              res
-            case None => throw tooRecursive
-          }
-      }
+    if (foonCallsInProgress.contains(ft, args)) {
+      throw tooRecursive
+    }
+    foonCallsInProgress += ((ft, args))
+
+    toBaseReturnTy.get(ft) match {
+      case Some(ty) =>
+        (ty, Approx.joinEnvs(argEnvs))
+      case None =>
+        val basedFt = recursiveFuns.baseFoon(ft).getOrElse(throw tooRecursive)
+        val (baseTy, _) = applyFoon(basedFt)
+        toBaseReturnTy += ft -> baseTy
+        val res = applyFoon(ft)
+        toBaseReturnTy -= ft
+        foonCallsInProgress -= ((ft, args))
+        res
+    }
   }
 
   def elabBinaryElem(elem: BinaryElem, env: Env): (Type, Env) = {

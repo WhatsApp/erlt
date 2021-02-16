@@ -110,8 +110,15 @@ test_17_neg() ->
     F = fun (F1) -> F1(F1) end,
     F(F).
 
--spec test_18_neg() -> boolean().
-test_18_neg() -> odd(10).
+-spec test_18_pos() -> boolean().
+test_18_pos() -> odd(10).
+
+-spec test_19_pos([atom()]) -> atom().
+test_19_pos(As) -> union_helper(As, no_a).
+
+union_helper([], D) -> D;
+union_helper([A], _) -> A;
+union_helper([_ | T], D) -> union_helper(T, D).
 
 
 even(0) -> true;
