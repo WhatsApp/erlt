@@ -21,7 +21,7 @@ import com.whatsapp.eqwalizer.test.util.WIPDiagnosticsText
 import java.nio.file.{Files, Paths}
 
 class WIPSpec extends org.scalatest.funspec.AnyFunSpec {
-  val generateOut = false
+  val generateOut = true
 
   testDir(srcDir = "test_projects/wip/src", ebinDir = "test_projects/_build/default/lib/wip/ebin")
 

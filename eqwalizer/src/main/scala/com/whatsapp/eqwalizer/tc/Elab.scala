@@ -318,7 +318,12 @@ final class Elab(module: String, check: Check) {
 
   var curFoons = Set[(FoonType, List[Type])]()
 
+  var x = 0
   def elabFoonCall(expr: Expr, idOpt: Option[Id], ft: FoonType, args: List[Expr], env: Env): (Type, Env) = {
+    x += 1
+    if (x == 1000) {
+      sys.error("oops")
+    }
     val FoonType(clauses, _module, fEnv) = ft
     val (argTys, argEnvs) = args.map(elabExpr(_, env)).unzip
     val funBody = ft.clauses.head.body.head
@@ -339,7 +344,7 @@ final class Elab(module: String, check: Check) {
       elabBlock(clause.body, env3)._1
     }
     def elabFoonClauses(clauses: List[Clause]): (Type, Env) = {
-      if (curFoons.contains(ft, argTys)) throw tooRecursive
+//      if (curFoons.contains(ft, argTys)) throw tooRecursive
       curFoons += ((ft, argTys))
       val tys = clauses.map(elabFoonClause(_, argTys, fEnv))
       curFoons -= ((ft, argTys))
