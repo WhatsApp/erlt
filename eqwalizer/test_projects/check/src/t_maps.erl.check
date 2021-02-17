@@ -117,7 +117,7 @@
 117 -spec meet_dict2_neg                       |         | 
 118     (#{b() | n() => any()}, #{a() => any()……         | 
 119     #{n() => any()}.                       |         | 
-120 meet_dict2_neg(D, D) -> D.                 | ERROR   | D. Expected: #D{number() => term()}, Got: #D{'false' | 'true' | none() => term()}
+120 meet_dict2_neg(D, D) -> D.                 | ERROR   | D. Expected: #D{number() => term()}, Got: #D{'false' | 'true' => term()}
 121                                            |         | 
 122 -spec meet_shape1                          |         | 
 123     (#{a := a()}, #{a := b()}) ->          |         | 
@@ -142,7 +142,7 @@
 142 -spec meet_shape5_neg                      |         | 
 143     (#{a => a()}, #{a => b() | n()}) ->    |         | 
 144     #{a := b()}.                           |         | 
-145 meet_shape5_neg(S, S) -> S.                | ERROR   | S. Expected: #S{a := 'false' | 'true'}, Got: #S{a => 'false' | 'true' | none()}
+145 meet_shape5_neg(S, S) -> S.                | ERROR   | S. Expected: #S{a := 'false' | 'true'}, Got: #S{a => 'false' | 'true'}
 146                                            |         | 
 147 -spec meet_shape6                          |         | 
 148     (#{a := a()}, #{a => b() | n()}) ->    |         | 
@@ -364,7 +364,7 @@
 364 ) -> {n(), a()}.                           |         | 
 365 shape_atom_key_neg(K, Shape) ->            | ERROR   | 
 366     case Shape of                          |         | 
-367         #{K := V} -> {K, V};               |         | {K, V}. Expected: {number(), atom()}, Got: {atom(), atom() | 'false' | 'true'}
+367         #{K := V} -> {K, V};               |         | {K, V}. Expected: {number(), atom()}, Got: {atom(), atom()}
 368         _ -> {0, undef}                    |         | 
 369     end.                                   |         | 
 370                                            |         | 

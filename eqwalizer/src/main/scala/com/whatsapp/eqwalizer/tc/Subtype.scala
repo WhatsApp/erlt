@@ -25,8 +25,8 @@ object Subtype {
       case (DictMap(kT1, vT1), DictMap(kT2, vT2)) =>
         subType(kT1, kT2) && subType(vT1, vT2)
       case (ShapeMap(props), DictMap(kT, vT)) =>
-        val shapeDomain = UnionType(props.map(prop => AtomLitType(prop.key)))
-        val shapeCodomain = UnionType(props.map(_.tp))
+        val shapeDomain = join(props.map(prop => AtomLitType(prop.key)))
+        val shapeCodomain = join(props.map(_.tp))
         subType(shapeDomain, kT) && subType(shapeCodomain, vT)
       case (ShapeMap(props1), ShapeMap(props2)) =>
         val keys1 = props1.map(_.key).toSet
@@ -51,6 +51,11 @@ object Subtype {
   def eqv(t1: Type, t2: Type): Boolean =
     subType(t1, t2) && subType(t2, t1)
 
+  def join(ts: List[Type]): Type = ts match {
+    case Nil => NoneType
+    case _   => ts reduce join
+  }
+
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
     else if (subType(t2, t1)) t1
@@ -61,8 +66,8 @@ object Subtype {
     else if (subType(t2, t1)) t2
     else
       (t1, t2) match {
-        case (UnionType(ty1s), _) => UnionType(ty1s.map(meet(_, t2)))
-        case (_, UnionType(ty2s)) => UnionType(ty2s.map(meet(t1, _)))
+        case (UnionType(ty1s), _) => join(ty1s.map(meet(_, t2)))
+        case (_, UnionType(ty2s)) => join(ty2s.map(meet(t1, _)))
 
         case (TupleType(elems1), TupleType(elems2)) if elems1.size == elems2.size =>
           TupleType(elems1.lazyZip(elems2).map(meet))
