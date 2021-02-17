@@ -16,3 +16,15 @@ tuple_slice(_) -> {}.
     ({} | {any()} | {any(), any()}) ->
     tuple().
 tuple_gen(T) -> T.
+
+-spec any_list(any()) -> list().
+any_list(L) when is_list(L) -> L;
+any_list(_) -> [].
+
+-spec list_slice([A] | tuple()) -> [A].
+list_slice(L) when is_list(L) -> L;
+list_slice(_) -> [].
+
+-spec list_gen
+    ([number()] | [atom()]) -> list().
+list_gen(L) -> L.

@@ -23,7 +23,7 @@
  23 -spec atom_neg_2(any()) -> atom().         |         | 
  24 atom_neg_2(X) ->                           | ERROR   | 
  25     if                                     |         | 
- 26         is_list(X) -> X                    |         | X. Expected: atom(), Got: term()
+ 26         is_list(X) -> X                    |         | X. Expected: atom(), Got: [term()]
  27     end.                                   |         | 
  28                                            |         | 
  29 -spec atom_neg_3(any()) -> atom().         |         | 

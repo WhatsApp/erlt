@@ -56,6 +56,7 @@ object Types {
       "byte" -> NumberType,
       "char" -> NumberType,
       "float" -> floatType,
+      "list" -> ListType(AnyType),
       "pos_integer" -> NumberType,
       "neg_integer" -> NumberType,
       "non_neg_integer" -> NumberType,

@@ -11,6 +11,7 @@ final class ElabGuard(module: String) {
     case "is_boolean"   => Some(booleanType)
     case "is_float"     => Some(floatType)
     case "is_integer"   => Some(integerType)
+    case "is_list"      => Some(ListType(AnyType))
     case "is_number"    => Some(NumberType)
     case "is_pid"       => Some(PidType)
     case "is_port"      => Some(PortType)

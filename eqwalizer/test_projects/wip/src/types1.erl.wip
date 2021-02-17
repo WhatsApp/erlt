@@ -184,8 +184,8 @@
 184 -type my_number() ::                     | LOADED  |                                | 
 185     number().                            |         |                                | 
 186                                          |         |                                | 
-187 -type my_list() ::                       | SKIPPED |                                | 
-188     list().                              |         | T: list()                      | 
+187 -type my_list() ::                       | LOADED  |                                | 
+188     list().                              |         |                                | 
 189                                          |         |                                | 
 190 -type my_maybe_improper_list0() ::       | SKIPPED |                                | 
 191     maybe_improper_list().               |         | T: maybe_improper_list()       | 
