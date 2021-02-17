@@ -29,9 +29,6 @@ object WIPDiagnostics {
   case class TypeBinOp(op: String) extends SkippedType {
     override def toString: String = s"T: _ $op _"
   }
-  case object TypeAnyTuple extends SkippedType {
-    override def toString: String = "T: tuple()"
-  }
   case class TypePredefined(name: String) extends SkippedType {
     override def toString: String = s"T: $name()"
   }

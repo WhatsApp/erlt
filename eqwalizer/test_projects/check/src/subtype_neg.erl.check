@@ -65,3 +65,7 @@
  65 -spec map08(#{atom() => any()})            |         | 
  66         -> #{}.                            |         | 
  67 map08(M) -> M.                             | ERROR   | M. Expected: #S{}, Got: #D{atom() => term()}
+ 68                                            |         | 
+ 69 -spec tuple1                               |         | 
+ 70     (tuple()) -> {any()}.                  |         | 
+ 71 tuple1(X) -> X.                            | ERROR   | X. Expected: {term()}, Got: tuple()

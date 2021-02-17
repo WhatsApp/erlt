@@ -155,8 +155,8 @@
 155 -type my_nonempty_list1(T) ::            | SKIPPED |                                | 
 156     nonempty_list(T).                    |         | T: nonempty_list()             | 
 157                                          |         |                                | 
-158 -type my_tuple() ::                      | SKIPPED |                                | 
-159     tuple().                             |         | T: tuple()                     | 
+158 -type my_tuple() ::                      | LOADED  |                                | 
+159     tuple().                             |         |                                | 
 160                                          |         |                                | 
 161 %%%%%%%%                                 |         |                                | 
 162                                          |         |                                | 

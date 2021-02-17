@@ -30,7 +30,7 @@ object Expand {
         DictMap(expand(kt, stack), expand(vt, stack))
       case ShapeMap(props) =>
         ShapeMap(props.map(expandProp(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType =>
         t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
@@ -69,7 +69,7 @@ object Expand {
             case Some(tp) => expandConstraints(tp, s, stack + v)
             case None     => t
           }
-      case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType => t
+      case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType => t
       // $COVERAGE-OFF$
       case LocalType(_, _) => throw new IllegalStateException()
       // $COVERAGE-ON$

@@ -46,6 +46,8 @@ object Show {
         s"#$n{}"
       case ShapeMap(props) =>
         props.map(showProp).mkString("#S{", ", ", "}")
+      case AnyTupleType =>
+        "tuple()"
     }
 
   private def showProp(prop: Prop): String =

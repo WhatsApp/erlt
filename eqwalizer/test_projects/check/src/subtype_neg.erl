@@ -65,3 +65,7 @@ map07(M) -> M.
 -spec map08(#{atom() => any()})
         -> #{}.
 map08(M) -> M.
+
+-spec tuple1
+    (tuple()) -> {any()}.
+tuple1(X) -> X.

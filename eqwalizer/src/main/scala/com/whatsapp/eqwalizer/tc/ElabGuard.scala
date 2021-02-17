@@ -16,6 +16,7 @@ final class ElabGuard(module: String) {
     case "is_port"      => Some(PortType)
     case "is_reference" => Some(ReferenceType)
     case "is_map"       => Some(DictMap(AnyType, AnyType))
+    case "is_tuple"     => Some(AnyTupleType)
     case _              => None
   }
 

@@ -192,7 +192,7 @@ object Convert {
       case ETuple(List(EAtom("op"), ELong(line), EAtom(op), _, _)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeBinOp(op))
       case ETuple(List(EAtom("type"), ELong(line), EAtom("tuple"), EAtom("any"))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyTuple)
+        AnyTupleType
       case ETuple(List(EAtom("type"), _, EAtom("tuple"), EList(types, None))) =>
         TupleType(types.map(convertType))
       case ETuple(List(EAtom("type"), _, EAtom("union"), EList(types, None))) =>

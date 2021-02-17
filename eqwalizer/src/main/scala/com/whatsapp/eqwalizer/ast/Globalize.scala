@@ -22,7 +22,7 @@ object Globalize {
         DictMap(globalize(module, kt), globalize(module, vt))
       case ShapeMap(props) =>
         ShapeMap(props.map(globalizeProp(module, _)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
+      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType =>
         t
     }
 

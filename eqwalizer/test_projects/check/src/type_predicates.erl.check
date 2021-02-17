@@ -1,0 +1,18 @@
+  1 -module(type_predicates).                  |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec any_tuple(any()) -> tuple().         |         | 
+  6 any_tuple(T) when is_tuple(T) -> T;        | OK      | 
+  7 any_tuple(_) -> {}.                        |         | 
+  8                                            |         | 
+  9 -spec tuple_slice                          |         | 
+ 10     ({any(), any()} | number())            |         | 
+ 11     -> {any(), any()} | {}.                |         | 
+ 12 tuple_slice(T) when is_tuple(T) -> T;      | OK      | 
+ 13 tuple_slice(_) -> {}.                      |         | 
+ 14                                            |         | 
+ 15 -spec tuple_gen                            |         | 
+ 16     ({} | {any()} | {any(), any()}) ->     |         | 
+ 17     tuple().                               |         | 
+ 18 tuple_gen(T) -> T.                         | OK      | 
