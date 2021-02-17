@@ -51,10 +51,7 @@ object Subtype {
   def eqv(t1: Type, t2: Type): Boolean =
     subType(t1, t2) && subType(t2, t1)
 
-  def join(ts: List[Type]): Type = ts match {
-    case Nil => NoneType
-    case _   => ts reduce join
-  }
+  def join(ts: List[Type]): Type = ts.fold(NoneType)(join)
 
   def join(t1: Type, t2: Type): Type =
     if (subType(t1, t2)) t2
