@@ -28,3 +28,16 @@
  28 -spec list_gen                             |         | 
  29     ([number()] | [atom()]) -> list().     |         | 
  30 list_gen(L) -> L.                          | OK      | 
+ 31                                            |         | 
+ 32 -spec any_binary(any()) -> binary().       |         | 
+ 33 any_binary(B) when is_binary(B) -> B;      | OK      | 
+ 34 any_binary(_) -> <<>>.                     |         | 
+ 35                                            |         | 
+ 36 -spec any_bitstring(any()) -> bitstring(). |         | 
+ 37 any_bitstring(B)                           | OK      | 
+ 38     when is_bitstring(B) -> B;             |         | 
+ 39 any_bitstring(_) -> <<>>.                  |         | 
+ 40                                            |         | 
+ 41 -spec binary_slice                         |         | 
+ 42     (binary() | list()) -> binary().       |         | 
+ 43 binary_slice(B) when is_binary(B) -> B.    | OK      | 

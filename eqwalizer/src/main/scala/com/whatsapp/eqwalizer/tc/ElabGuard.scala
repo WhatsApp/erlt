@@ -8,6 +8,8 @@ import com.whatsapp.eqwalizer.tc.TcDiagnostics.UndefinedField
 final class ElabGuard(module: String) {
   private def elabPredicateType(pred: String): Option[Type] = pred match {
     case "is_atom"      => Some(AtomType)
+    case "is_binary"    => Some(BinaryType)
+    case "is_bitstring" => Some(BinaryType)
     case "is_boolean"   => Some(booleanType)
     case "is_float"     => Some(floatType)
     case "is_integer"   => Some(integerType)
