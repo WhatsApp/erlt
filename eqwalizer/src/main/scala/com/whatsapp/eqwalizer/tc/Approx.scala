@@ -9,14 +9,7 @@ object Approx {
   def asListType(t: Type): Option[ListType] =
     extractListElem(t) match {
       case Nil => None
-      case ts  => Some(ListType(UnionType(ts)))
-    }
-
-  private def unite(ts: List[Type]): Type =
-    ts.filterNot(_ == NoneType) match {
-      case List()       => NoneType
-      case List(single) => single
-      case many         => UnionType(many)
+      case ts  => Some(ListType(Subtype.join(ts)))
     }
 
   def asMapType(t: Type): Type =
@@ -24,7 +17,7 @@ object Approx {
       case AnyType            => DictMap(AnyType, AnyType)
       case dictMap: DictMap   => dictMap
       case shapeMap: ShapeMap => shapeMap
-      case UnionType(ts)      => unite(ts.map(asMapType))
+      case UnionType(ts)      => Subtype.join(ts.map(asMapType))
       case _                  => NoneType
     }
 
@@ -32,7 +25,7 @@ object Approx {
     t match {
       case DictMap(kt, _) => kt
       case ShapeMap(_)    => AtomType
-      case UnionType(ts)  => unite(ts.map(getKeyType))
+      case UnionType(ts)  => Subtype.join(ts.map(getKeyType))
       case _ =>
         NoneType
     }
@@ -40,8 +33,8 @@ object Approx {
   def getValType(t: Type): Type =
     t match {
       case DictMap(_, vt)  => vt
-      case ShapeMap(props) => UnionType(props.map(_.tp))
-      case UnionType(ts)   => unite(ts.map(getValType))
+      case ShapeMap(props) => Subtype.join(props.map(_.tp))
+      case UnionType(ts)   => Subtype.join(ts.map(getValType))
       case _               => NoneType
     }
 
@@ -49,7 +42,7 @@ object Approx {
     t match {
       case DictMap(_, vt)  => vt
       case ShapeMap(props) => props.find(_.key == key).map(_.tp).getOrElse(NoneType)
-      case UnionType(ts)   => unite(ts.map(getValType(key, _)))
+      case UnionType(ts)   => Subtype.join(ts.map(getValType(key, _)))
       case _               => NoneType
     }
 
@@ -112,7 +105,7 @@ object Approx {
     mapT match {
       case shapeMap: ShapeMap => adjustShapeMap(shapeMap, keyT, valT)
       case dictMap: DictMap   => adjustDictMap(dictMap, keyT, valT)
-      case UnionType(elems)   => UnionType(elems.map(adjustMapType(_, keyT, valT)))
+      case UnionType(elems)   => Subtype.join(elems.map(adjustMapType(_, keyT, valT)))
       // $COVERAGE-OFF$
       case _ => throw new IllegalStateException()
       // $COVERAGE-ON$

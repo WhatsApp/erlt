@@ -150,7 +150,7 @@ final class Elab(module: String, check: Check) {
           case Some(block) => elabBlock(block, env)._2
           case None        => env
         }
-        (UnionType(tryT :: catchTs), env1)
+        (Subtype.join(tryT :: catchTs), env1)
       case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
         val (_, tryEnv) = elabBlock(tryBody, env)
         val (tryTs, _) = tryClauses.map(elabClause(_, tryEnv, Set.empty)).unzip
@@ -159,17 +159,17 @@ final class Elab(module: String, check: Check) {
           case Some(block) => elabBlock(block, env)._2
           case None        => env
         }
-        (UnionType(tryTs ::: catchTs), env1)
+        (Subtype.join(tryTs ::: catchTs), env1)
       case Receive(clauses) =>
         val effVars = Vars.clausesVars(clauses)
         val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
-        (UnionType(ts), Approx.joinEnvs(envs))
+        (Subtype.join(ts), Approx.joinEnvs(envs))
       case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
         val effVars = Vars.clausesAndBlockVars(clauses, timeoutBlock)
         val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
         val env1 = check.checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
-        (UnionType(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
+        (Subtype.join(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
       case LComprehension(template, qualifiers) =>
         var envAcc = env
         qualifiers.foreach {

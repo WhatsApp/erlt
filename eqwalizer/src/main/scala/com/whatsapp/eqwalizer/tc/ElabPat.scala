@@ -65,7 +65,7 @@ final class ElabPat(module: String) {
               case None =>
                 (NoneType, env2)
               case Some(refinedT) =>
-                (ListType(UnionType(List(hType, refinedT))), env2)
+                (ListType(Subtype.join(hType, refinedT)), env2)
             }
         }
       case PatMatch(p1, p2) =>
