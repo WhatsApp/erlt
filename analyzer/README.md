@@ -78,11 +78,6 @@ Make sure you've configured `root`, `paths` and `third_party` before continuing.
  
    e.g. `sbt "runMain com.whatsapp.analyzer.Behaviours"`
 
-  If the code being analyzed has particularly deep expressions, you may need to
-  increase your stack size to accomodate it, e.g.:
-
-  ```export SBT_OPTS="-Xss1000M"```
-
 ## Implemented analyses
 
 - `com.whatsapp.analyzer.Behaviours` - stats about implemented behaviours
