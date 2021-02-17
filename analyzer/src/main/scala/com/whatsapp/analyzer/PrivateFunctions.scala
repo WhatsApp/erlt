@@ -38,7 +38,7 @@ object PrivateFunctions {
 
   def main(args: Array[String]): Unit = {
     println("Loading beam DB")
-    val otp = true // args sameElements Array("-otp")
+    val otp = args sameElements Array("-otp")
     assert(BeamDb.dupMod2App.isEmpty, s"Dupmodes: ${BeamDb.dupMod2App}")
     if (otp) {
       println("*** OTP")
