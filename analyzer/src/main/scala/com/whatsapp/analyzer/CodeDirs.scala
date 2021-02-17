@@ -98,12 +98,6 @@ object CodeDirs {
     classified.getOrElseUpdate(moduleName, provenance)
   }
 
-  def isOtp(moduleName: String) =
-    toProvenance(moduleName) match {
-      case OtpProvenance => true
-      case _             => false
-    }
-
   def isFirstParty(moduleName: String) =
     toProvenance(moduleName) match {
       case _: FirstParty => true
@@ -114,7 +108,7 @@ object CodeDirs {
     * For analyzing generated files,
     * use `toProvenance` instead.
     *
-    * For filtering, use `isOtp` or `isFirstParty`
+    * For filtering, use `isFirstParty`
     */
   @deprecated
   def isGenerated(moduleName: String): Boolean = {
