@@ -42,7 +42,7 @@ object PrivateFunctions {
     assert(BeamDb.dupMod2App.isEmpty, s"Dupmodes: ${BeamDb.dupMod2App}")
     if (otp) {
       println("*** OTP")
-      BeamDb.otpApps.values.toList.sortBy(_.name).foreach(analyzeApp(CodeDirs.isOtp))
+      BeamDb.otpApps.values.toList.sortBy(_.name).foreach(analyzeApp(_moduleName => true))
     } else {
       println("*** PROJECT")
       BeamDb.projectApps.values.toList.sortBy(_.name).foreach(analyzeApp(CodeDirs.isFirstParty))

@@ -74,29 +74,28 @@ object CodeDirs {
     }
 
   def toProvenance(moduleName: String): Provenance = {
-    classified.getOrElseUpdate(
-      moduleName, {
-        val app = BeamDb.getApp(moduleName).get
-        if (thirdParty.contains(app.name)) ThirdParty
-        else if (isChildOfOtpDir(app.ebinDir)) OtpProvenance
+    lazy val provenance = {
+      val app = BeamDb.getApp(moduleName).get
+      if (thirdParty.contains(app.name)) ThirdParty
+      else if (isChildOfOtpDir(app.ebinDir)) OtpProvenance
+      else {
+        val erlFile = SourceMap.getOrFind(moduleName).sourceFile
+        val path = Paths.get(erlFile)
+        if (!Files.exists(path)) UnknownProvenance(s"file $erlFile doesn't exist")
         else {
-          val erlFile = SourceMap.getOrFind(moduleName).sourceFile
-          val path = Paths.get(erlFile)
-          if (!Files.exists(path)) UnknownProvenance(s"file $erlFile doesn't exist")
-          else {
-            Using.resource(Source.fromFile(erlFile)) { contents =>
-              try {
-                if (contents.getLines().take(50).exists(_.contains("@generated"))) Generated(path)
-                else FirstParty(path)
-              } catch {
-                // Some yaws source files have a weird encoding. But we probably don't mean to analyze those anyway
-                case error: Throwable => UnknownProvenance(s"error reading $erlFile : $error")
-              }
+          Using.resource(Source.fromFile(erlFile)) { contents =>
+            try {
+              if (contents.getLines().take(50).exists(_.contains("@generated"))) Generated(path)
+              else FirstParty(path)
+            } catch {
+              // Some yaws source files have a weird encoding. But we probably don't mean to analyze those anyway
+              case error: Throwable => UnknownProvenance(s"error reading $erlFile : $error")
             }
           }
         }
-      },
-    )
+      }
+    }
+    classified.getOrElseUpdate(moduleName, provenance)
   }
 
   def isOtp(moduleName: String) =
