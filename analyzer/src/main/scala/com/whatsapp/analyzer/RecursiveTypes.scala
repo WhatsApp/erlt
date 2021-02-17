@@ -105,7 +105,7 @@ object RecursiveTypes {
 
   private def analyzeModule(m: String): Unit = {
     val Some(api) = BeamDb.getModuleApi(m)
-    val Some(sourceMap) = SourceMap.get(m)
+    val sourceMap = SourceMap.get(m)
     api.types.foreach { typeDecl =>
       totalTypeCount += 1
       val typeId = Id(api.module, typeDecl.typeName, typeDecl.params.length)

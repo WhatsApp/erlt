@@ -79,7 +79,7 @@ object CodeDirs {
       if (thirdParty.contains(app.name)) ThirdParty
       else if (isChildOfOtpDir(app.ebinDir)) OtpProvenance
       else {
-        val erlFile = SourceMap.getOrFind(moduleName).sourceFile
+        val erlFile = SourceMap.get(moduleName).sourceFile
         val path = Paths.get(erlFile)
         if (!Files.exists(path)) UnknownProvenance(s"file $erlFile doesn't exist")
         else {

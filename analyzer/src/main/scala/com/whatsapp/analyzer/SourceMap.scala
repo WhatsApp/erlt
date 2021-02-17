@@ -22,21 +22,20 @@ object SourceMap {
   var maps: Map[String, SourceMap] =
     Map.empty
 
-  def getOrFind(module: String): SourceMap =
-    get(module).getOrElse {
-      // populates SourceMap as a side-effect
-      BeamDb.getModuleApi(module).get
-      get(module).get
-    }
-
-  def get(module: String): Option[SourceMap] =
-    maps.get(module)
+  def get(module: String): SourceMap =
+    maps.getOrElse(
+      module, {
+        val Some(forms) = BeamDb.getAbstractForms(module)
+        val map = buildMap(module, forms)
+        maps += module -> map
+        map
+      },
+    )
 
   def put(module: String, forms: List[AbstractForm]): Unit = {
     maps += module -> buildMap(module, forms)
   }
-
-  def buildMap(module: String, forms: List[AbstractForm]): SourceMap = {
+  private def buildMap(module: String, forms: List[AbstractForm]): SourceMap = {
     var curFile: String =
       null
     var records: Map[String, String] =
