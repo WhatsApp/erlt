@@ -11,11 +11,12 @@ Erlang surface syntax.
 - [x] Try/catch
 - [x] Try-of/catch
 - [x] Receives
-- [ ] `catch X:Y:Z ->` syntax
 - [x] List comprehensions
 - [x] Binary comprehensions
 - [x] Maps
 - [x] Records
+- [x] `tuple()`, `list()`, `fun()`
+- [ ] `catch X:Y:Z ->` syntax
 - [ ] Anonymous functions
 - [ ] Named inner functions (not priority)
 - [ ] Recursive type definitions
@@ -23,9 +24,8 @@ Erlang surface syntax.
 - [ ] Simple polymorphism
 - [ ] Simple inference for unspecced funs
 - [ ] Numeric tower
-- [ ] Non-empty lists, maybe improper lists, etc
-- [ ] `tuple()`, `list()`
 - [ ] (Expr)(Arg1, Arg2) - checking that the head is proper fun
+- [ ] Non-empty lists, maybe improper lists, etc
 
 ### More elaboration/propagation
 
