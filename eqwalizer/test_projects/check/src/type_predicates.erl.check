@@ -41,3 +41,19 @@
  41 -spec binary_slice                         |         | 
  42     (binary() | list()) -> binary().       |         | 
  43 binary_slice(B) when is_binary(B) -> B.    | OK      | 
+ 44                                            |         | 
+ 45 -spec unit_fun() -> {}.                    |         | 
+ 46 unit_fun() -> {}.                          | OK      | 
+ 47                                            |         | 
+ 48 -spec id_any(any()) -> any().              |         | 
+ 49 id_any(X) -> X.                            | OK      | 
+ 50                                            |         | 
+ 51 -spec any_fun(any()) -> fun().             |         | 
+ 52 any_fun(F) when is_function(F) -> F;       | OK      | 
+ 53 any_fun(_) -> fun unit_fun/0.              |         | 
+ 54                                            |         | 
+ 55 -spec fun_slice                            |         | 
+ 56     (fun((any()) -> any()) | atom())       |         | 
+ 57     -> fun((any()) -> any()).              |         | 
+ 58 fun_slice(F) when is_function(F) -> F;     | OK      | 
+ 59 fun_slice(_) -> fun id_any/1.              |         | 

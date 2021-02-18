@@ -116,8 +116,8 @@
 116                                          |         |                                | 
 117 %%% functions                            |         |                                | 
 118                                          |         |                                | 
-119 -type my_fun_any() ::                    | SKIPPED |                                | 
-120     fun().                               |         | T: fun()                       | 
+119 -type my_fun_any() ::                    | LOADED  |                                | 
+120     fun().                               |         |                                | 
 121                                          |         |                                | 
 122 -type my_fun_any_arg() ::                | SKIPPED |                                | 
 123     fun((...) -> ok).                    |         | T: fun((...) -> Type)          | 

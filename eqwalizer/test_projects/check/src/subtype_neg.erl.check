@@ -69,3 +69,6 @@
  69 -spec tuple1                               |         | 
  70     (tuple()) -> {any()}.                  |         | 
  71 tuple1(X) -> X.                            | ERROR   | X. Expected: {term()}, Got: tuple()
+ 72                                            |         | 
+ 73 -spec any_fun(any()) -> fun().             |         | 
+ 74 any_fun(F) -> F.                           | ERROR   | F. Expected: fun(), Got: term()

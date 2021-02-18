@@ -13,6 +13,7 @@ object Subtype {
 
       case (AtomLitType(_), AtomType)   => true
       case (TupleType(_), AnyTupleType) => true
+      case (FunType(_, _), AnyFunType)  => true
 
       case (TupleType(tys1), TupleType(tys2)) if tys1.size == tys2.size =>
         tys1.lazyZip(tys2).forall(subType)

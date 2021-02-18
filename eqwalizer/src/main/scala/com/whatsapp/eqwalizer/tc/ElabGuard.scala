@@ -12,6 +12,7 @@ final class ElabGuard(module: String) {
     case "is_bitstring" => Some(BinaryType)
     case "is_boolean"   => Some(booleanType)
     case "is_float"     => Some(floatType)
+    case "is_function"  => Some(AnyFunType)
     case "is_integer"   => Some(integerType)
     case "is_list"      => Some(ListType(AnyType))
     case "is_number"    => Some(NumberType)

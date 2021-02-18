@@ -125,8 +125,8 @@ object Convert {
         AtomLitType(atomVal)
       case ETuple(List(EAtom("type"), _, EAtom("nil"), EList(List(), None))) =>
         NilType
-      case ETuple(List(EAtom("type"), ELong(line), EAtom("fun"), EList(List(), None))) =>
-        throw WIPDiagnostics.SkippedConstructDiagnostics(line.intValue, WIPDiagnostics.TypeAnyFun)
+      case ETuple(List(EAtom("type"), _, EAtom("fun"), EList(List(), None))) =>
+        AnyFunType
       case ETuple(
             List(
               EAtom("type"),

@@ -48,6 +48,8 @@ object Show {
         props.map(showProp).mkString("#S{", ", ", "}")
       case AnyTupleType =>
         "tuple()"
+      case AnyFunType =>
+        "fun()"
     }
 
   private def showProp(prop: Prop): String =

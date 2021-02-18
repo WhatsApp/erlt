@@ -69,3 +69,6 @@ map08(M) -> M.
 -spec tuple1
     (tuple()) -> {any()}.
 tuple1(X) -> X.
+
+-spec any_fun(any()) -> fun().
+any_fun(F) -> F.

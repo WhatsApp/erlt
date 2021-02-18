@@ -41,3 +41,19 @@ any_bitstring(_) -> <<>>.
 -spec binary_slice
     (binary() | list()) -> binary().
 binary_slice(B) when is_binary(B) -> B.
+
+-spec unit_fun() -> {}.
+unit_fun() -> {}.
+
+-spec id_any(any()) -> any().
+id_any(X) -> X.
+
+-spec any_fun(any()) -> fun().
+any_fun(F) when is_function(F) -> F;
+any_fun(_) -> fun unit_fun/0.
+
+-spec fun_slice
+    (fun((any()) -> any()) | atom())
+    -> fun((any()) -> any()).
+fun_slice(F) when is_function(F) -> F;
+fun_slice(_) -> fun id_any/1.
