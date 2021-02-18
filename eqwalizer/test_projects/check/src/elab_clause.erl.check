@@ -1,0 +1,97 @@
+  1 -module(elab_clause).                      |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec foo(any()) -> {atom(), atom()}.      |         | 
+  6 foo(_) -> {any, any}.                      | OK      | 
+  7                                            |         | 
+  8 -spec bar(any()) ->                        |         | 
+  9     {atom(), atom()} | {number()}.         |         | 
+ 10 bar(true) -> {any, any};                   | OK      | 
+ 11 bar(_) -> {0}.                             |         | 
+ 12                                            |         | 
+ 13 -spec app_foo(any()) -> atom().            |         | 
+ 14 app_foo(X) ->                              | OK      | 
+ 15     Res = case foo(X) of                   |         | 
+ 16               {Y, _} -> Y                  |         | 
+ 17           end,                             |         | 
+ 18     Res.                                   |         | 
+ 19                                            |         | 
+ 20 -spec app_foo_neg(any()) -> binary().      |         | 
+ 21 app_foo_neg(X) ->                          | ERROR   | 
+ 22     Res = case foo(X) of                   |         | 
+ 23               {_, Y} -> Y                  |         | 
+ 24           end,                             |         | 
+ 25     Res.                                   |         | Res. Expected: binary(), Got: atom()
+ 26                                            |         | 
+ 27 -spec app_bar(any()) ->                    |         | 
+ 28     {atom()} | number().                   |         | 
+ 29 app_bar(X) ->                              | OK      | 
+ 30     Res = case bar(X) of                   |         | 
+ 31               {Y, _} -> {Y};               |         | 
+ 32               {N} -> N                     |         | 
+ 33           end,                             |         | 
+ 34     Res.                                   |         | 
+ 35                                            |         | 
+ 36 -spec app_bar_neg(any()) ->                |         | 
+ 37     {atom()} | number().                   |         | 
+ 38 app_bar_neg(X) ->                          | ERROR   | 
+ 39     Res = case bar(X) of                   |         | 
+ 40               {Y, _} -> Y;                 |         | 
+ 41               {N} -> {N}                   |         | 
+ 42           end,                             |         | 
+ 43     Res.                                   |         | Res. Expected: {atom()} | number(), Got: atom() | {number()}
+ 44                                            |         | 
+ 45 -spec catch_foo(any()) -> atom().          |         | 
+ 46 catch_foo(X) ->                            | OK      | 
+ 47     Res =                                  |         | 
+ 48         try foo(X)                         |         | 
+ 49         of {Y, _} -> Y                     |         | 
+ 50         catch                              |         | 
+ 51             A:_  -> A                      |         | 
+ 52         end,                               |         | 
+ 53     Res.                                   |         | 
+ 54                                            |         | 
+ 55 -spec catch_foo1(any()) -> atom().         |         | 
+ 56 catch_foo1(X) ->                           | OK      | 
+ 57     try foo(X)                             |         | 
+ 58     of {Y, _} -> Y                         |         | 
+ 59     catch                                  |         | 
+ 60         A:_  -> A                          |         | 
+ 61     end.                                   |         | 
+ 62                                            |         | 
+ 63 -spec catch_foo1_neg(any()) -> number().   |         | 
+ 64 catch_foo1_neg(X) ->                       | ERROR   | 
+ 65     Res =                                  |         | 
+ 66         try foo(X)                         |         | 
+ 67         of {Y, _} -> 1                     |         | 
+ 68         catch                              |         | 
+ 69             A:_  -> A                      |         | 
+ 70         end,                               |         | 
+ 71     Res.                                   |         | Res. Expected: number(), Got: number() | 'error' | 'exit' | 'throw'
+ 72                                            |         | 
+ 73 -spec catch_foo2_neg(any()) -> number().   |         | 
+ 74 catch_foo2_neg(X) ->                       | ERROR   | 
+ 75     Res =                                  |         | 
+ 76         try foo(X)                         |         | 
+ 77         of {Y, _} -> 1                     |         | 
+ 78         catch                              |         | 
+ 79             _:_:Stack  -> Stack            |         | 
+ 80         end,                               |         | 
+ 81     Res.                                   |         | Res. Expected: number(), Got: number() | [term()]
+ 82                                            |         | 
+ 83 -spec catch_foo3_neg(any()) -> number().   |         | 
+ 84 catch_foo3_neg(X) ->                       | ERROR   | 
+ 85     try foo(X)                             |         | 
+ 86     of {Y, _} -> 1                         |         | 
+ 87     catch                                  |         | 
+ 88         A:_  -> A                          |         | A. Expected: number(), Got: 'error' | 'exit' | 'throw'
+ 89     end.                                   |         | 
+ 90                                            |         | 
+ 91 -spec catch_foo4_neg(any()) -> number().   |         | 
+ 92 catch_foo4_neg(X) ->                       | ERROR   | 
+ 93     try foo(X)                             |         | 
+ 94     of {Y, _} -> 1                         |         | 
+ 95     catch                                  |         | 
+ 96         Class:_:Stack  -> {Class, Stack}   |         | {Class, Stack}. Expected: number(), Got: {'error' | 'exit' | 'throw', [term()]}
+ 97     end.                                   |         | 

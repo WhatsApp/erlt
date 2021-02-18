@@ -35,8 +35,8 @@ Erlang surface syntax.
 
 ### More elaboration/propagation
 
-- [ ] Propagate selector type in case-expressions
-  - [ ] `catch X:Y:Z ->` syntax (depends of adding more propagation logic)
+- [x] Propagate selector type in case-expressions
+  - [x] `catch X:Y:Z ->` syntax (depends of adding more propagation logic)
 - [ ] Propagate try-body type in try-of expressions
 - [ ] `when X = Y` -> `X` and `Y` are of the same type.
 
