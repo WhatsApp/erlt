@@ -75,30 +75,30 @@ rec_slice1(R)
 rec_slice1(A)
     when is_atom(A) -> #rec1{id = A}.
 
--spec rec_cast
+-spec as_rec1
     (#rec1{} | #rec2{}) -> #rec1{}.
-rec_cast(R)
+as_rec1(R)
     when is_record(R, rec1) -> R;
-rec_cast(R)
+as_rec1(R)
     when is_record(R, rec2) ->
         #rec1{id = R#rec2.id}.
 
--spec rec_cast1
+-spec as_rec1a
     (#rec1{} | #rec2{}) -> #rec1{}.
-rec_cast1(R)
+as_rec1a(R)
     when is_record(R, rec1, 1) -> R;
-rec_cast1(R)
+as_rec1a(R)
     when is_record(R, rec2, 1) ->
     #rec1{id = R#rec2.id}.
 
--spec rec_cast_neg
+-spec as_rec1_neg
     (#rec1{} | #rec2{}) -> #rec1{}.
-rec_cast_neg(R)
+as_rec1_neg(R)
     when is_record(R, rec2) -> R.
 
--spec rec_cast1_neg
+-spec as_rec1a_neg
     (#rec1{} | #rec2{}) -> #rec1{}.
-rec_cast1_neg(R)
+as_rec1a_neg(R)
     when is_record(R, rec2, 1) -> R.
 
 -spec any_fun_x(any()) -> fun().

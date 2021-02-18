@@ -75,30 +75,30 @@
  75 rec_slice1(A)                              |         | 
  76     when is_atom(A) -> #rec1{id = A}.      |         | 
  77                                            |         | 
- 78 -spec rec_cast                             |         | 
+ 78 -spec as_rec1                              |         | 
  79     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
- 80 rec_cast(R)                                | OK      | 
+ 80 as_rec1(R)                                 | OK      | 
  81     when is_record(R, rec1) -> R;          |         | 
- 82 rec_cast(R)                                |         | 
+ 82 as_rec1(R)                                 |         | 
  83     when is_record(R, rec2) ->             |         | 
  84         #rec1{id = R#rec2.id}.             |         | 
  85                                            |         | 
- 86 -spec rec_cast1                            |         | 
+ 86 -spec as_rec1a                             |         | 
  87     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
- 88 rec_cast1(R)                               | OK      | 
+ 88 as_rec1a(R)                                | OK      | 
  89     when is_record(R, rec1, 1) -> R;       |         | 
- 90 rec_cast1(R)                               |         | 
+ 90 as_rec1a(R)                                |         | 
  91     when is_record(R, rec2, 1) ->          |         | 
  92     #rec1{id = R#rec2.id}.                 |         | 
  93                                            |         | 
- 94 -spec rec_cast_neg                         |         | 
+ 94 -spec as_rec1_neg                          |         | 
  95     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
- 96 rec_cast_neg(R)                            | ERROR   | 
+ 96 as_rec1_neg(R)                             | ERROR   | 
  97     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}
  98                                            |         | 
- 99 -spec rec_cast1_neg                        |         | 
+ 99 -spec as_rec1a_neg                         |         | 
 100     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
-101 rec_cast1_neg(R)                           | ERROR   | 
+101 as_rec1a_neg(R)                            | ERROR   | 
 102     when is_record(R, rec2, 1) -> R.       |         | R. Expected: #rec1{}, Got: #rec2{}
 103                                            |         | 
 104 -spec any_fun_x(any()) -> fun().           |         | 
