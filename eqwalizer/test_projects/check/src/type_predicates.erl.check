@@ -68,29 +68,49 @@
  68 rec_slice(A)                               |         | 
  69     when is_atom(A) -> #rec1{id = A}.      |         | 
  70                                            |         | 
- 71 -spec rec_cast                             |         | 
- 72     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
- 73 rec_cast(R)                                | OK      | 
- 74     when is_record(R, rec1) -> R;          |         | 
- 75 rec_cast(R)                                |         | 
- 76     when is_record(R, rec2) ->             |         | 
- 77         #rec1{id = R#rec2.id}.             |         | 
- 78                                            |         | 
- 79 -spec rec_cast_neg                         |         | 
- 80     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
- 81 rec_cast_neg(R)                            | ERROR   | 
- 82     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}
- 83                                            |         | 
- 84 -spec any_fun_x(any()) -> fun().           |         | 
- 85 any_fun_x(F) when is_function(F, 2) -> F;  | OK      | 
- 86 any_fun_x(F) when is_function(F, 3) -> F;  |         | 
- 87 any_fun_x(_) -> fun unit_fun/0.            |         | 
- 88                                            |         | 
- 89 -spec any_fun_x(any(), number()) -> fun(). |         | 
- 90 any_fun_x(F, Arity)                        | OK      | 
- 91     when is_function(F, Arity) -> F;       |         | 
- 92 any_fun_x(_, _) -> fun unit_fun/0.         |         | 
+ 71 -spec rec_slice1                           |         | 
+ 72     (#rec1{} | atom()) -> #rec1{}.         |         | 
+ 73 rec_slice1(R)                              | OK      | 
+ 74     when is_record(R, rec1, 1) -> R;       |         | 
+ 75 rec_slice1(A)                              |         | 
+ 76     when is_atom(A) -> #rec1{id = A}.      |         | 
+ 77                                            |         | 
+ 78 -spec rec_cast                             |         | 
+ 79     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 80 rec_cast(R)                                | OK      | 
+ 81     when is_record(R, rec1) -> R;          |         | 
+ 82 rec_cast(R)                                |         | 
+ 83     when is_record(R, rec2) ->             |         | 
+ 84         #rec1{id = R#rec2.id}.             |         | 
+ 85                                            |         | 
+ 86 -spec rec_cast1                            |         | 
+ 87     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 88 rec_cast1(R)                               | OK      | 
+ 89     when is_record(R, rec1, 1) -> R;       |         | 
+ 90 rec_cast1(R)                               |         | 
+ 91     when is_record(R, rec2, 1) ->          |         | 
+ 92     #rec1{id = R#rec2.id}.                 |         | 
  93                                            |         | 
- 94 -spec any_mk(any(), any()) -> map().       |         | 
- 95 any_mk(M, K) when is_map_key(K, M) -> M;   | OK      | 
- 96 any_mk(_, _) -> #{}.                       |         | 
+ 94 -spec rec_cast_neg                         |         | 
+ 95     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 96 rec_cast_neg(R)                            | ERROR   | 
+ 97     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}
+ 98                                            |         | 
+ 99 -spec rec_cast1_neg                        |         | 
+100     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+101 rec_cast1_neg(R)                           | ERROR   | 
+102     when is_record(R, rec2, 1) -> R.       |         | R. Expected: #rec1{}, Got: #rec2{}
+103                                            |         | 
+104 -spec any_fun_x(any()) -> fun().           |         | 
+105 any_fun_x(F) when is_function(F, 2) -> F;  | OK      | 
+106 any_fun_x(F) when is_function(F, 3) -> F;  |         | 
+107 any_fun_x(_) -> fun unit_fun/0.            |         | 
+108                                            |         | 
+109 -spec any_fun_x(any(), number()) -> fun(). |         | 
+110 any_fun_x(F, Arity)                        | OK      | 
+111     when is_function(F, Arity) -> F;       |         | 
+112 any_fun_x(_, _) -> fun unit_fun/0.         |         | 
+113                                            |         | 
+114 -spec any_mk(any(), any()) -> map().       |         | 
+115 any_mk(M, K) when is_map_key(K, M) -> M;   | OK      | 
+116 any_mk(_, _) -> #{}.                       |         | 
