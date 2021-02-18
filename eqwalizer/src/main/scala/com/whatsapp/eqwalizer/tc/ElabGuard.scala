@@ -23,8 +23,11 @@ final class ElabGuard(module: String) {
     case "is_tuple"     => AnyTupleType
   }
 
-  private val elabPredicateType22: PartialFunction[(String, Test), Type] = { case ("is_record", TestAtom(recName)) =>
-    RecordType(recName)
+  private val elabPredicateType22: PartialFunction[(String, Test), Type] = {
+    case ("is_record", TestAtom(recName)) =>
+      RecordType(recName)
+    case ("is_function", _) =>
+      AnyFunType
   }
 
   def elabGuards(guards: List[Guard], env: Env): Env =

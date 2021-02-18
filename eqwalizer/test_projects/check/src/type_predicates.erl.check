@@ -80,3 +80,13 @@
  80     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
  81 rec_cast_neg(R)                            | ERROR   | 
  82     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}
+ 83                                            |         | 
+ 84 -spec any_fun_x(any()) -> fun().           |         | 
+ 85 any_fun_x(F) when is_function(F, 2) -> F;  | OK      | 
+ 86 any_fun_x(F) when is_function(F, 3) -> F;  |         | 
+ 87 any_fun_x(_) -> fun unit_fun/0.            |         | 
+ 88                                            |         | 
+ 89 -spec any_fun_x(any(), number()) -> fun(). |         | 
+ 90 any_fun_x(F, Arity)                        | OK      | 
+ 91     when is_function(F, Arity) -> F;       |         | 
+ 92 any_fun_x(_, _) -> fun unit_fun/0.         |         | 

@@ -80,3 +80,13 @@ rec_cast(R)
     (#rec1{} | #rec2{}) -> #rec1{}.
 rec_cast_neg(R)
     when is_record(R, rec2) -> R.
+
+-spec any_fun_x(any()) -> fun().
+any_fun_x(F) when is_function(F, 2) -> F;
+any_fun_x(F) when is_function(F, 3) -> F;
+any_fun_x(_) -> fun unit_fun/0.
+
+-spec any_fun_x(any(), number()) -> fun().
+any_fun_x(F, Arity)
+    when is_function(F, Arity) -> F;
+any_fun_x(_, _) -> fun unit_fun/0.
