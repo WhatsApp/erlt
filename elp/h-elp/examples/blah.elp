@@ -1,4 +1,6 @@
 -module(foo).
--(x).
--ff(floog).
--c(x).
+
+-x(x).
+-cc(x).
+-xxx(x).
+-f(xxx)
