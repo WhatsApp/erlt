@@ -6,22 +6,21 @@ import com.whatsapp.eqwalizer.ast.Types._
 import com.whatsapp.eqwalizer.tc.TcDiagnostics.UndefinedField
 
 final class ElabGuard(module: String) {
-  private def elabPredicateType(pred: String): Option[Type] = pred match {
-    case "is_atom"      => Some(AtomType)
-    case "is_binary"    => Some(BinaryType)
-    case "is_bitstring" => Some(BinaryType)
-    case "is_boolean"   => Some(booleanType)
-    case "is_float"     => Some(floatType)
-    case "is_function"  => Some(AnyFunType)
-    case "is_integer"   => Some(integerType)
-    case "is_list"      => Some(ListType(AnyType))
-    case "is_number"    => Some(NumberType)
-    case "is_pid"       => Some(PidType)
-    case "is_port"      => Some(PortType)
-    case "is_reference" => Some(ReferenceType)
-    case "is_map"       => Some(DictMap(AnyType, AnyType))
-    case "is_tuple"     => Some(AnyTupleType)
-    case _              => None
+  private val elabPredicateType1: PartialFunction[String, Type] = {
+    case "is_atom"      => AtomType
+    case "is_binary"    => BinaryType
+    case "is_bitstring" => BinaryType
+    case "is_boolean"   => booleanType
+    case "is_float"     => floatType
+    case "is_function"  => AnyFunType
+    case "is_integer"   => integerType
+    case "is_list"      => ListType(AnyType)
+    case "is_number"    => NumberType
+    case "is_pid"       => PidType
+    case "is_port"      => PortType
+    case "is_reference" => ReferenceType
+    case "is_map"       => DictMap(AnyType, AnyType)
+    case "is_tuple"     => AnyTupleType
   }
 
   def elabGuards(guards: List[Guard], env: Env): Env =
@@ -82,8 +81,8 @@ final class ElabGuard(module: String) {
           case None     => t
         }
         env + (v -> testType)
-      case TestLocalCall(Id(f, 1), List(arg)) if Subtype.eqv(trueType, t) =>
-        elabUnaryPredicate(f, arg, env)
+      case TestLocalCall(Id(pred, 1), List(arg)) if Subtype.eqv(trueType, t) && elabPredicateType1.isDefinedAt(pred) =>
+        elabTestT(arg, elabPredicateType1(pred), env)
       case TestBinOp("andalso", arg1, arg2) =>
         val env1 = elabTestT(arg1, AtomLitType("true"), env)
         val env2 = elabTestT(arg2, t, env1)
@@ -93,12 +92,6 @@ final class ElabGuard(module: String) {
         env1
       case _ =>
         elabTest(test, env)
-    }
-
-  private def elabUnaryPredicate(pred: String, arg: Test, env: Env): Env =
-    elabPredicateType(pred) match {
-      case None     => env
-      case Some(pt) => elabTestT(arg, pt, env)
     }
 
   def elabUnOp(unOp: TestUnOp, env: Env): Env = {
