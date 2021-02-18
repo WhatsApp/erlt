@@ -57,3 +57,26 @@
  57     -> fun((any()) -> any()).              |         | 
  58 fun_slice(F) when is_function(F) -> F;     | OK      | 
  59 fun_slice(_) -> fun id_any/1.              |         | 
+ 60                                            |         | 
+ 61 -record(rec1, {id :: atom()}).             |         | 
+ 62 -record(rec2, {id :: atom()}).             |         | 
+ 63                                            |         | 
+ 64 -spec rec_slice                            |         | 
+ 65     (#rec1{} | atom()) -> #rec1{}.         |         | 
+ 66 rec_slice(R)                               | OK      | 
+ 67     when is_record(R, rec1) -> R;          |         | 
+ 68 rec_slice(A)                               |         | 
+ 69     when is_atom(A) -> #rec1{id = A}.      |         | 
+ 70                                            |         | 
+ 71 -spec rec_cast                             |         | 
+ 72     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 73 rec_cast(R)                                | OK      | 
+ 74     when is_record(R, rec1) -> R;          |         | 
+ 75 rec_cast(R)                                |         | 
+ 76     when is_record(R, rec2) ->             |         | 
+ 77         #rec1{id = R#rec2.id}.             |         | 
+ 78                                            |         | 
+ 79 -spec rec_cast_neg                         |         | 
+ 80     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 81 rec_cast_neg(R)                            | ERROR   | 
+ 82     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}

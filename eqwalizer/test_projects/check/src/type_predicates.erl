@@ -57,3 +57,26 @@ any_fun(_) -> fun unit_fun/0.
     -> fun((any()) -> any()).
 fun_slice(F) when is_function(F) -> F;
 fun_slice(_) -> fun id_any/1.
+
+-record(rec1, {id :: atom()}).
+-record(rec2, {id :: atom()}).
+
+-spec rec_slice
+    (#rec1{} | atom()) -> #rec1{}.
+rec_slice(R)
+    when is_record(R, rec1) -> R;
+rec_slice(A)
+    when is_atom(A) -> #rec1{id = A}.
+
+-spec rec_cast
+    (#rec1{} | #rec2{}) -> #rec1{}.
+rec_cast(R)
+    when is_record(R, rec1) -> R;
+rec_cast(R)
+    when is_record(R, rec2) ->
+        #rec1{id = R#rec2.id}.
+
+-spec rec_cast_neg
+    (#rec1{} | #rec2{}) -> #rec1{}.
+rec_cast_neg(R)
+    when is_record(R, rec2) -> R.

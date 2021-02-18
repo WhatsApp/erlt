@@ -23,6 +23,10 @@ final class ElabGuard(module: String) {
     case "is_tuple"     => AnyTupleType
   }
 
+  private val elabPredicateType22: PartialFunction[(String, Test), Type] = { case ("is_record", TestAtom(recName)) =>
+    RecordType(recName)
+  }
+
   def elabGuards(guards: List[Guard], env: Env): Env =
     if (guards.isEmpty) env
     else Approx.joinEnvs(guards.map(elabGuard(_, env)))
@@ -83,6 +87,9 @@ final class ElabGuard(module: String) {
         env + (v -> testType)
       case TestLocalCall(Id(pred, 1), List(arg)) if Subtype.eqv(trueType, t) && elabPredicateType1.isDefinedAt(pred) =>
         elabTestT(arg, elabPredicateType1(pred), env)
+      case TestLocalCall(Id(pred, 2), List(arg1, arg2))
+          if Subtype.eqv(trueType, t) && elabPredicateType22.isDefinedAt((pred, arg2)) =>
+        elabTestT(arg1, elabPredicateType22(pred, arg2), env)
       case TestBinOp("andalso", arg1, arg2) =>
         val env1 = elabTestT(arg1, AtomLitType("true"), env)
         val env2 = elabTestT(arg2, t, env1)
