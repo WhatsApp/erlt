@@ -68,6 +68,9 @@ final class ElabPat(module: String) {
                 (ListType(Subtype.join(hType, refinedT)), env2)
             }
         }
+      case PatMatch(p1: PatVar, p2) =>
+        val (t2, env1) = elabPat(p2, t, env)
+        elabPat(p1, t2, env1)
       case PatMatch(p1, p2) =>
         val (t1, env1) = elabPat(p1, t, env)
         elabPat(p2, t1, env1)
