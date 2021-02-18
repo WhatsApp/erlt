@@ -23,7 +23,7 @@ object Subst {
         DictMap(subst(s, kt), subst(s, vt))
       case ShapeMap(props) =>
         ShapeMap(props.map(substProp(s, _)))
-      case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType =>
+      case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType | AnyFunType =>
         t
     }
 

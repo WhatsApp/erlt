@@ -23,13 +23,13 @@
  23 -spec atom_neg_2(any()) -> atom().         |         | 
  24 atom_neg_2(X) ->                           | ERROR   | 
  25     if                                     |         | 
- 26         is_list(X) -> X                    |         | X. Expected: atom(), Got: term()
+ 26         is_list(X) -> X                    |         | X. Expected: atom(), Got: [term()]
  27     end.                                   |         | 
  28                                            |         | 
  29 -spec atom_neg_3(any()) -> atom().         |         | 
  30 atom_neg_3(X) ->                           | ERROR   | 
  31     case X of                              |         | 
- 32         Y when is_tuple(Y) -> Y            |         | Y. Expected: atom(), Got: term()
+ 32         Y when is_tuple(Y) -> Y            |         | Y. Expected: atom(), Got: tuple()
  33     end.                                   |         | 
  34                                            |         | 
  35 -spec boolean_pos_1(any()) -> boolean().   |         | 

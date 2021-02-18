@@ -1,0 +1,116 @@
+  1 -module(type_predicates).                  |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -spec any_tuple(any()) -> tuple().         |         | 
+  6 any_tuple(T) when is_tuple(T) -> T;        | OK      | 
+  7 any_tuple(_) -> {}.                        |         | 
+  8                                            |         | 
+  9 -spec tuple_slice                          |         | 
+ 10     ({any(), any()} | number())            |         | 
+ 11     -> {any(), any()} | {}.                |         | 
+ 12 tuple_slice(T) when is_tuple(T) -> T;      | OK      | 
+ 13 tuple_slice(_) -> {}.                      |         | 
+ 14                                            |         | 
+ 15 -spec tuple_gen                            |         | 
+ 16     ({} | {any()} | {any(), any()}) ->     |         | 
+ 17     tuple().                               |         | 
+ 18 tuple_gen(T) -> T.                         | OK      | 
+ 19                                            |         | 
+ 20 -spec any_list(any()) -> list().           |         | 
+ 21 any_list(L) when is_list(L) -> L;          | OK      | 
+ 22 any_list(_) -> [].                         |         | 
+ 23                                            |         | 
+ 24 -spec list_slice([A] | tuple()) -> [A].    |         | 
+ 25 list_slice(L) when is_list(L) -> L;        | OK      | 
+ 26 list_slice(_) -> [].                       |         | 
+ 27                                            |         | 
+ 28 -spec list_gen                             |         | 
+ 29     ([number()] | [atom()]) -> list().     |         | 
+ 30 list_gen(L) -> L.                          | OK      | 
+ 31                                            |         | 
+ 32 -spec any_binary(any()) -> binary().       |         | 
+ 33 any_binary(B) when is_binary(B) -> B;      | OK      | 
+ 34 any_binary(_) -> <<>>.                     |         | 
+ 35                                            |         | 
+ 36 -spec any_bitstring(any()) -> bitstring(). |         | 
+ 37 any_bitstring(B)                           | OK      | 
+ 38     when is_bitstring(B) -> B;             |         | 
+ 39 any_bitstring(_) -> <<>>.                  |         | 
+ 40                                            |         | 
+ 41 -spec binary_slice                         |         | 
+ 42     (binary() | list()) -> binary().       |         | 
+ 43 binary_slice(B) when is_binary(B) -> B.    | OK      | 
+ 44                                            |         | 
+ 45 -spec unit_fun() -> {}.                    |         | 
+ 46 unit_fun() -> {}.                          | OK      | 
+ 47                                            |         | 
+ 48 -spec id_any(any()) -> any().              |         | 
+ 49 id_any(X) -> X.                            | OK      | 
+ 50                                            |         | 
+ 51 -spec any_fun(any()) -> fun().             |         | 
+ 52 any_fun(F) when is_function(F) -> F;       | OK      | 
+ 53 any_fun(_) -> fun unit_fun/0.              |         | 
+ 54                                            |         | 
+ 55 -spec fun_slice                            |         | 
+ 56     (fun((any()) -> any()) | atom())       |         | 
+ 57     -> fun((any()) -> any()).              |         | 
+ 58 fun_slice(F) when is_function(F) -> F;     | OK      | 
+ 59 fun_slice(_) -> fun id_any/1.              |         | 
+ 60                                            |         | 
+ 61 -record(rec1, {id :: atom()}).             |         | 
+ 62 -record(rec2, {id :: atom()}).             |         | 
+ 63                                            |         | 
+ 64 -spec rec_slice                            |         | 
+ 65     (#rec1{} | atom()) -> #rec1{}.         |         | 
+ 66 rec_slice(R)                               | OK      | 
+ 67     when is_record(R, rec1) -> R;          |         | 
+ 68 rec_slice(A)                               |         | 
+ 69     when is_atom(A) -> #rec1{id = A}.      |         | 
+ 70                                            |         | 
+ 71 -spec rec_slice1                           |         | 
+ 72     (#rec1{} | atom()) -> #rec1{}.         |         | 
+ 73 rec_slice1(R)                              | OK      | 
+ 74     when is_record(R, rec1, 1) -> R;       |         | 
+ 75 rec_slice1(A)                              |         | 
+ 76     when is_atom(A) -> #rec1{id = A}.      |         | 
+ 77                                            |         | 
+ 78 -spec as_rec1                              |         | 
+ 79     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 80 as_rec1(R)                                 | OK      | 
+ 81     when is_record(R, rec1) -> R;          |         | 
+ 82 as_rec1(R)                                 |         | 
+ 83     when is_record(R, rec2) ->             |         | 
+ 84         #rec1{id = R#rec2.id}.             |         | 
+ 85                                            |         | 
+ 86 -spec as_rec1a                             |         | 
+ 87     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 88 as_rec1a(R)                                | OK      | 
+ 89     when is_record(R, rec1, 1) -> R;       |         | 
+ 90 as_rec1a(R)                                |         | 
+ 91     when is_record(R, rec2, 1) ->          |         | 
+ 92     #rec1{id = R#rec2.id}.                 |         | 
+ 93                                            |         | 
+ 94 -spec as_rec1_neg                          |         | 
+ 95     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+ 96 as_rec1_neg(R)                             | ERROR   | 
+ 97     when is_record(R, rec2) -> R.          |         | R. Expected: #rec1{}, Got: #rec2{}
+ 98                                            |         | 
+ 99 -spec as_rec1a_neg                         |         | 
+100     (#rec1{} | #rec2{}) -> #rec1{}.        |         | 
+101 as_rec1a_neg(R)                            | ERROR   | 
+102     when is_record(R, rec2, 1) -> R.       |         | R. Expected: #rec1{}, Got: #rec2{}
+103                                            |         | 
+104 -spec any_fun_x(any()) -> fun().           |         | 
+105 any_fun_x(F) when is_function(F, 2) -> F;  | OK      | 
+106 any_fun_x(F) when is_function(F, 3) -> F;  |         | 
+107 any_fun_x(_) -> fun unit_fun/0.            |         | 
+108                                            |         | 
+109 -spec any_fun_x(any(), number()) -> fun(). |         | 
+110 any_fun_x(F, Arity)                        | OK      | 
+111     when is_function(F, Arity) -> F;       |         | 
+112 any_fun_x(_, _) -> fun unit_fun/0.         |         | 
+113                                            |         | 
+114 -spec any_mk(any(), any()) -> map().       |         | 
+115 any_mk(M, K) when is_map_key(K, M) -> M;   | OK      | 
+116 any_mk(_, _) -> #{}.                       |         | 

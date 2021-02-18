@@ -14,9 +14,6 @@ object WIPDiagnostics {
   sealed trait SkippedType extends SkippedConstruct
   sealed trait SkippedGuard extends SkippedConstruct
   case object NotRequested extends SkippedConstruct
-  case object TypeAnyFun extends SkippedType {
-    override def toString: String = "T: fun()"
-  }
   case object TypeFunAnyArg extends SkippedType {
     override def toString: String = "T: fun((...) -> Type)"
   }
@@ -28,9 +25,6 @@ object WIPDiagnostics {
   }
   case class TypeBinOp(op: String) extends SkippedType {
     override def toString: String = s"T: _ $op _"
-  }
-  case object TypeAnyTuple extends SkippedType {
-    override def toString: String = "T: tuple()"
   }
   case class TypePredefined(name: String) extends SkippedType {
     override def toString: String = s"T: $name()"

@@ -3,7 +3,9 @@ package com.whatsapp.eqwalizer.ast
 object Types {
   sealed trait Type
   case class AtomLitType(atom: String) extends Type
+  case object AnyFunType extends Type
   case class FunType(argTys: List[Type], resTy: Type) extends Type
+  case object AnyTupleType extends Type
   case class TupleType(argTys: List[Type]) extends Type
   case object NilType extends Type
   case class ListType(t: Type) extends Type
@@ -55,6 +57,7 @@ object Types {
       "byte" -> NumberType,
       "char" -> NumberType,
       "float" -> floatType,
+      "list" -> ListType(AnyType),
       "pos_integer" -> NumberType,
       "neg_integer" -> NumberType,
       "non_neg_integer" -> NumberType,
