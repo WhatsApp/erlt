@@ -6,7 +6,7 @@ object Guards {
   sealed trait Test { val l: Int }
   case class TestVar(v: String)(val l: Int) extends Test
   case class TestAtom(s: String)(val l: Int) extends Test
-  case class TestNumber()(val l: Int) extends Test
+  case class TestNumber(lit: Option[Int])(val l: Int) extends Test
   case class TestTuple(elems: List[Test])(val l: Int) extends Test
   case class TestNil()(val l: Int) extends Test
   case class TestCons(h: Test, t: Test)(val l: Int) extends Test

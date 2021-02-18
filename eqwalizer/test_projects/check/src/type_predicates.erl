@@ -114,3 +114,31 @@ any_fun_x(_, _) -> fun unit_fun/0.
 -spec any_mk(any(), any()) -> map().
 any_mk(M, K) when is_map_key(K, M) -> M;
 any_mk(_, _) -> #{}.
+
+-record(f0, {
+    f :: fun(() -> any())
+}).
+-record(f1, {
+    f :: fun((any()) -> any())
+}).
+-record(f2, {
+    f :: fun((any(), any()) -> any())
+}).
+
+-type fs() :: #f0{} | #f1{} | #f2{}.
+
+-spec as_fs(any()) -> fs().
+as_fs(F) when is_function(F, 0) ->
+    #f0{f = F};
+as_fs(F) when is_function(F, 1) ->
+    #f1{f = F};
+as_fs(F) when is_function(F, 2) ->
+    #f2{f = F}.
+
+-spec as_f0_neg(any(), any()) -> fs().
+as_f0_neg(F, A)
+    when is_function(F, A) -> #f0{f = F}.
+
+-spec as_f1_neg(any()) -> #f1{}.
+as_f1_neg(F)
+    when is_function(F, 2) -> #f1{f = F}.

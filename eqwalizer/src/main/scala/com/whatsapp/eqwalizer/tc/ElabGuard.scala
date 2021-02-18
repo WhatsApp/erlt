@@ -30,6 +30,8 @@ final class ElabGuard(module: String) {
   private val elabPredicateType22: PartialFunction[(String, Test), Type] = {
     case ("is_record", TestAtom(recName)) =>
       RecordType(recName)
+    case ("is_function", TestNumber(Some(arity))) =>
+      FunType(List.fill(arity)(AnyType), AnyType)
     case ("is_function", _) =>
       AnyFunType
   }
@@ -48,7 +50,7 @@ final class ElabGuard(module: String) {
 
   private def elabTest(test: Test, env: Env): Env =
     test match {
-      case TestVar(_) | TestAtom(_) | TestNumber() | TestTuple(_) | TestNil() | TestCons(_, _) | TestMapCreate(_) =>
+      case TestVar(_) | TestAtom(_) | TestNumber(_) | TestTuple(_) | TestNil() | TestCons(_, _) | TestMapCreate(_) =>
         env
       case TestLocalCall(_, _) =>
         env
