@@ -90,3 +90,7 @@
  90 any_fun_x(F, Arity)                        | OK      | 
  91     when is_function(F, Arity) -> F;       |         | 
  92 any_fun_x(_, _) -> fun unit_fun/0.         |         | 
+ 93                                            |         | 
+ 94 -spec any_mk(any(), any()) -> map().       |         | 
+ 95 any_mk(M, K) when is_map_key(K, M) -> M;   | OK      | 
+ 96 any_mk(_, _) -> #{}.                       |         | 

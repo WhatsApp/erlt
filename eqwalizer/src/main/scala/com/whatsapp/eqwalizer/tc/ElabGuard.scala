@@ -23,6 +23,10 @@ final class ElabGuard(module: String) {
     case "is_tuple"     => AnyTupleType
   }
 
+  private val elabPredicateType21: PartialFunction[(String, Test), Type] = { case ("is_map_key", _) =>
+    DictMap(AnyType, AnyType)
+  }
+
   private val elabPredicateType22: PartialFunction[(String, Test), Type] = {
     case ("is_record", TestAtom(recName)) =>
       RecordType(recName)
@@ -93,6 +97,9 @@ final class ElabGuard(module: String) {
       case TestLocalCall(Id(pred, 2), List(arg1, arg2))
           if Subtype.eqv(trueType, t) && elabPredicateType22.isDefinedAt((pred, arg2)) =>
         elabTestT(arg1, elabPredicateType22(pred, arg2), env)
+      case TestLocalCall(Id(pred, 2), List(arg1, arg2))
+          if Subtype.eqv(trueType, t) && elabPredicateType21.isDefinedAt((pred, arg1)) =>
+        elabTestT(arg2, elabPredicateType21(pred, arg1), env)
       case TestBinOp("andalso", arg1, arg2) =>
         val env1 = elabTestT(arg1, AtomLitType("true"), env)
         val env2 = elabTestT(arg2, t, env1)
