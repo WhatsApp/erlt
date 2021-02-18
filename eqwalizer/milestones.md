@@ -16,7 +16,6 @@ Erlang surface syntax.
 - [x] Maps
 - [x] Records
 - [x] `tuple()`, `list()`, `fun()`
-- [ ] `catch X:Y:Z ->` syntax
 - [ ] Anonymous functions
 - [ ] Named inner functions (not priority)
 - [ ] Recursive type definitions
@@ -25,11 +24,19 @@ Erlang surface syntax.
 - [ ] Simple inference for unspecced funs
 - [ ] Numeric tower
 - [ ] (Expr)(Arg1, Arg2) - checking that the head is proper fun
+
+### Low-priority, edgy, rare cases
+
 - [ ] Non-empty lists, maybe improper lists, etc
+- [ ] `fun((...) -> Type)` - "any arity type"
+- [ ] `is_function(F, Arity)` type predicate
+- [ ] `bitstring()` vs `binary()` distinction - do we really distinguish these
+       cases semantically in WA code base?
 
 ### More elaboration/propagation
 
 - [ ] Propagate selector type in case-expressions
+  - [ ] `catch X:Y:Z ->` syntax (depends of adding more propagation logic)
 - [ ] Propagate try-body type in try-of expressions
 - [ ] `when X = Y` -> `X` and `Y` are of the same type.
 
