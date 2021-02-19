@@ -24,7 +24,7 @@ do(State) ->
     Data =
         #{
             apps => [{list_to_binary(App), list_to_binary(Dir)} || {App, Dir} <- ToPrint],
-            otp_root => list_to_binary(code:lib_dir())
+            otp_lib_dir => list_to_binary(code:lib_dir())
         },
     case To of
         undefined ->
