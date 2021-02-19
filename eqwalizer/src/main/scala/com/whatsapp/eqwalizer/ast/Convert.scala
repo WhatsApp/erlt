@@ -200,7 +200,7 @@ object Convert {
       case ETuple(List(EAtom("var"), _, EAtom("_"))) =>
         AnyType
       case ETuple(List(EAtom("var"), _, EAtom(name))) =>
-        VarType(name)
+        RawVarType(name)
       case ETuple(List(EAtom("type"), _, EAtom("list"), EList(List(elemType), None))) =>
         ListType(convertType(elemType))
       case ETuple(List(EAtom("type"), ELong(line), EAtom(name), EList(List(), None))) =>

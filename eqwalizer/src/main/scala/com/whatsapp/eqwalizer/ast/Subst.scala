@@ -17,7 +17,8 @@ object Subst {
         ListType(subst(s, elemT))
       case UnionType(params) =>
         UnionType(params.map(subst(s, _)))
-      case VarType(v) =>
+        // TODO: treat VarType with distinct id differently T85206030
+      case VarType(v, _idTodo) =>
         s.getOrElse(v, t)
       case DictMap(kt, vt) =>
         DictMap(subst(s, kt), subst(s, vt))
@@ -25,6 +26,9 @@ object Subst {
         ShapeMap(props.map(substProp(s, _)))
       case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType | AnyFunType =>
         t
+      // $COVERAGE-OFF$
+      case _: RawVarType => throw new IllegalStateException(s"Unexpected RawVarType $t. Globalize should convert to VarType")
+      // $COVERAGE-ON$
     }
 
   private def substProp(s: Map[String, Type], prop: Prop): Prop =

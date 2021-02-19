@@ -30,11 +30,11 @@ object Expand {
         DictMap(expand(kt, stack), expand(vt, stack))
       case ShapeMap(props) =>
         ShapeMap(props.map(expandProp(_, stack)))
-      case _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType |
+      case _: RawVarType | _: VarType | _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType |
           AnyFunType =>
         t
       // $COVERAGE-OFF$
-      case LocalType(_, _) => throw new IllegalStateException()
+      case _: LocalType | _: RawVarType => throw new IllegalStateException(s"unexpected $t")
       // $COVERAGE-ON$
     }
 
@@ -62,7 +62,7 @@ object Expand {
         DictMap(expandConstraints(kt, s, stack), expandConstraints(vt, s, stack))
       case ShapeMap(props) =>
         ShapeMap(props.map(expandProp(_, s, stack)))
-      case VarType(v) =>
+      case VarType(v, _) =>
         if (stack(v))
           throw WIPDiagnostics.RecursiveConstraint(v)
         else
@@ -72,7 +72,7 @@ object Expand {
           }
       case _: BuiltinType | _: AtomLitType | NilType | BinaryType | _: RecordType | AnyTupleType | AnyFunType => t
       // $COVERAGE-OFF$
-      case LocalType(_, _) => throw new IllegalStateException()
+      case _: RawVarType | _: LocalType => throw new IllegalStateException(s"unexpected unglobalized type $t")
       // $COVERAGE-ON$
     }
 

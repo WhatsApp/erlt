@@ -15,7 +15,8 @@ object Types {
   case class UnionType(tys: List[Type]) extends Type
   case class LocalType(id: Id, args: List[Type]) extends Type
   case class RemoteType(id: RemoteId, args: List[Type]) extends Type
-  case class VarType(name: String) extends Type
+  case class RawVarType(name: String) extends Type
+  case class VarType(name: String, remoteId: RemoteId) extends Type
   case class RecordType(name: String) extends Type
   case class DictMap(kType: Type, vType: Type) extends Type
   case class ShapeMap(props: List[Prop]) extends Type

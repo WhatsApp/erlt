@@ -22,7 +22,9 @@ object Show {
         s"""$t(${args.map(show).mkString(", ")})"""
       case RemoteType(RemoteId(m, t, _), args) =>
         s"""$m:$t(${args.map(show).mkString(", ")})"""
-      case VarType(name) =>
+      case VarType(name, _id) =>
+        name
+      case RawVarType(name) =>
         name
       case DictMap(kt, vt) =>
         s"#D{${show(kt)} => ${show(vt)}}"
