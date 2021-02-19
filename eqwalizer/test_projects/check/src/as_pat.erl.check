@@ -1,0 +1,56 @@
+  1 -module(as_pat).                           |         | 
+  2                                            |         | 
+  3 -compile([export_all, nowarn_export_all]). |         | 
+  4                                            |         | 
+  5 -record(box_a, {a :: atom()}).             |         | 
+  6 -record(box_b, {b :: binary()}).           |         | 
+  7 -record(box_n, {n :: number()}).           |         | 
+  8                                            |         | 
+  9 -type abn() :: atom() | binary() | number(……         | 
+ 10                                            |         | 
+ 11 -type box() :: #box_a{}                    |         | 
+ 12              | #box_b{}                    |         | 
+ 13              | #box_n{}.                   |         | 
+ 14                                            |         | 
+ 15 -spec box_a(atom()) -> #box_a{}.           |         | 
+ 16 box_a(A) -> #box_a{a = A}.                 | OK      | 
+ 17                                            |         | 
+ 18 -spec unbox_a(#box_a{}) -> atom().         |         | 
+ 19 unbox_a(#box_a{a = A}) -> A.               | OK      | 
+ 20                                            |         | 
+ 21 -spec box_n(number()) -> #box_n{}.         |         | 
+ 22 box_n(N) -> #box_n{n = N}.                 | OK      | 
+ 23                                            |         | 
+ 24 -spec unbox_n(#box_n{}) -> number().       |         | 
+ 25 unbox_n(#box_n{n = N}) -> N.               | OK      | 
+ 26                                            |         | 
+ 27 -spec box_b(binary()) -> #box_b{}.         |         | 
+ 28 box_b(B) -> #box_b{b = B}.                 | OK      | 
+ 29                                            |         | 
+ 30 -spec unbox_b(#box_b{}) -> binary().       |         | 
+ 31 unbox_b({b, B}) -> B.                      | OK      | 
+ 32                                            |         | 
+ 33 -spec unbox(box()) -> abn().               |         | 
+ 34 unbox(#box_a{a = A}) -> A;                 | OK      | 
+ 35 unbox(#box_b{b = B}) -> B;                 |         | 
+ 36 unbox(#box_n{n = N}) -> N.                 |         | 
+ 37                                            |         | 
+ 38 -spec unboxL(box()) -> abn().              |         | 
+ 39 unboxL(BA = #box_a{}) -> unbox_a(BA);      | OK      | 
+ 40 unboxL(BB = #box_b{}) -> unbox_b(BB);      |         | 
+ 41 unboxL(BN = #box_n{}) -> unbox_n(BN).      |         | 
+ 42                                            |         | 
+ 43 -spec unboxL_neg(box()) -> abn().          |         | 
+ 44 unboxL_neg(BA = #box_a{}) -> unbox_a(BA);  | ERROR   | 
+ 45 unboxL_neg(BB = #box_b{}) -> unbox_b(BB);  |         | 
+ 46 unboxL_neg(BN = #box_n{}) -> unbox_a(BN).  |         | BN. Expected: #box_a{}, Got: #box_n{}
+ 47                                            |         | 
+ 48 -spec unboxR(box()) -> abn().              |         | 
+ 49 unboxR(#box_a{} = BA) -> unbox_a(BA);      | OK      | 
+ 50 unboxR(#box_b{} = BB) -> unbox_b(BB);      |         | 
+ 51 unboxR(#box_n{} = BN) -> unbox_n(BN).      |         | 
+ 52                                            |         | 
+ 53 -spec unboxR_neg(box()) -> abn().          |         | 
+ 54 unboxR_neg(#box_a{} = BA) -> unbox_a(BA);  | ERROR   | 
+ 55 unboxR_neg(#box_b{} = BB) -> unbox_b(BB);  |         | 
+ 56 unboxR_neg(#box_n{} = BN) -> unbox_b(BN).  |         | BN. Expected: #box_b{}, Got: #box_n{}
