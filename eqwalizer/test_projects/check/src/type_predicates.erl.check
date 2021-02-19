@@ -114,3 +114,31 @@
 114 -spec any_mk(any(), any()) -> map().       |         | 
 115 any_mk(M, K) when is_map_key(K, M) -> M;   | OK      | 
 116 any_mk(_, _) -> #{}.                       |         | 
+117                                            |         | 
+118 -record(f0, {                              |         | 
+119     f :: fun(() -> any())                  |         | 
+120 }).                                        |         | 
+121 -record(f1, {                              |         | 
+122     f :: fun((any()) -> any())             |         | 
+123 }).                                        |         | 
+124 -record(f2, {                              |         | 
+125     f :: fun((any(), any()) -> any())      |         | 
+126 }).                                        |         | 
+127                                            |         | 
+128 -type fs() :: #f0{} | #f1{} | #f2{}.       |         | 
+129                                            |         | 
+130 -spec as_fs(any()) -> fs().                |         | 
+131 as_fs(F) when is_function(F, 0) ->         | OK      | 
+132     #f0{f = F};                            |         | 
+133 as_fs(F) when is_function(F, 1) ->         |         | 
+134     #f1{f = F};                            |         | 
+135 as_fs(F) when is_function(F, 2) ->         |         | 
+136     #f2{f = F}.                            |         | 
+137                                            |         | 
+138 -spec as_f0_neg(any(), any()) -> fs().     |         | 
+139 as_f0_neg(F, A)                            | ERROR   | 
+140     when is_function(F, A) -> #f0{f = F}.  |         | F. Expected: fun(() -> term()), Got: fun()
+141                                            |         | 
+142 -spec as_f1_neg(any()) -> #f1{}.           |         | 
+143 as_f1_neg(F)                               | ERROR   | 
+144     when is_function(F, 2) -> #f1{f = F}.  |         | F. Expected: fun((term()) -> term()), Got: fun((term(), term()) -> term())

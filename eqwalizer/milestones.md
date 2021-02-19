@@ -29,7 +29,7 @@ Erlang surface syntax.
 
 - [ ] Non-empty lists, maybe improper lists, etc
 - [ ] `fun((...) -> Type)` - "any arity type"
-- [ ] `is_function(F, Arity)` type predicate
+- [x] `is_function(F, Arity)` type predicate
 - [ ] `bitstring()` vs `binary()` distinction - do we really distinguish these
        cases semantically in WA code base?
 

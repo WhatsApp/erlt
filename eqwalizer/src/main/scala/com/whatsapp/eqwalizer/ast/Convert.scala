@@ -573,8 +573,12 @@ object Convert {
         }
       case ETuple(List(EAtom("atom"), ELong(l), EAtom(value))) =>
         TestAtom(value)(l.intValue)
-      case ETuple(List(EAtom("char" | "float" | "integer"), ELong(l), _value)) =>
-        TestNumber()(l.intValue)
+      case ETuple(List(EAtom("char" | "float"), ELong(l), _value)) =>
+        TestNumber(None)(l.intValue)
+      case ETuple(List(EAtom("integer"), ELong(l), ELong(literal))) =>
+        val optValue =
+          if (literal >= 0 && literal <= 256) Some(literal.intValue) else None
+        TestNumber(optValue)(l.intValue)
       case ETuple(List(EAtom("string"), ELong(l), _value)) =>
         throw WIPDiagnostics.SkippedConstructDiagnostics(l.intValue, WIPDiagnostics.TestString)
       // $COVERAGE-OFF$
