@@ -193,7 +193,7 @@ final class Check(module: String) {
           throw TypeMismatch(expr.l, expr, expected = resTy, got = AnyType)
         case TryCatchExpr(tryBody, catchClauses, afterBody) =>
           checkBlock(tryBody, resTy, env)
-          catchClauses.map(checkClause(_, List(AnyType), resTy, env, Set.empty))
+          catchClauses.map(checkClause(_, List(clsExnStackType), resTy, env, Set.empty))
           afterBody match {
             case Some(block) => elab.elabBlock(block, env)._2
             case None        => env
@@ -201,7 +201,7 @@ final class Check(module: String) {
         case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
           val (tryBodyT, tryEnv) = elab.elabBlock(tryBody, env)
           tryClauses.map(checkClause(_, List(tryBodyT), resTy, tryEnv, Set.empty))
-          catchClauses.map(checkClause(_, List(AnyType), resTy, env, Set.empty))
+          catchClauses.map(checkClause(_, List(clsExnStackType), resTy, env, Set.empty))
           afterBody match {
             case Some(block) => elab.elabBlock(block, env)._2
             case None        => env

@@ -46,6 +46,10 @@ object Types {
   val floatType: Type = NumberType
   val integerType: Type = NumberType
   val undefined: Type = AtomLitType("undefined")
+  val exnClassType: Type =
+    UnionType(List(AtomLitType("error"), AtomLitType("exit"), AtomLitType("throw")))
+  val clsExnStackType: Type =
+    TupleType(List(exnClassType, AnyType, ListType(AnyType)))
 
   val builtinTypes: Map[String, Type] =
     Map(

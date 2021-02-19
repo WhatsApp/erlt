@@ -19,12 +19,11 @@ final class Elab(module: String, check: Check) {
     (elabType, envAcc)
   }
 
-  private def elabClause(clause: Clause, env0: Env, exportedVars: Set[String]): (Type, Env) = {
+  private def elabClause(clause: Clause, argTys: List[Type], env0: Env, exportedVars: Set[String]): (Type, Env) = {
     val allScopeVars = Vars.clauseVars(clause)
     val env1 = Util.enterScope(env0, allScopeVars)
-    val argTypes = List.fill(clause.pats.size)(AnyType)
     val env2 = elabGuard.elabGuards(clause.guards, env1)
-    val (_, env3) = elabPat.elabPats(clause.pats, argTypes, env2)
+    val (_, env3) = elabPat.elabPats(clause.pats, argTys, env2)
     val (eType, env4) = elabBlock(clause.body, env3)
     (eType, Util.exitScope(env0, env4, exportedVars))
   }
@@ -92,13 +91,13 @@ final class Elab(module: String, check: Check) {
       case Block(block) =>
         elabBlock(block, env)
       case Case(sel, clauses) =>
-        val (_, env1) = elabExpr(sel, env)
+        val (selTy, env1) = elabExpr(sel, env)
         val effVars = Vars.clausesVars(clauses)
-        val (ts, envs) = clauses.map(elabClause(_, env1, effVars)).unzip
+        val (ts, envs) = clauses.map(elabClause(_, List(selTy), env1, effVars)).unzip
         (UnionType(ts), Approx.joinEnvs(envs))
       case If(clauses) =>
         val effVars = Vars.clausesVars(clauses)
-        val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
+        val (ts, envs) = clauses.map(elabClause(_, List.empty, env, effVars)).unzip
         (UnionType(ts), Approx.joinEnvs(envs))
       case Match(mPat, mExp) =>
         val (ty, env1) = elabExpr(mExp, env)
@@ -145,16 +144,16 @@ final class Elab(module: String, check: Check) {
         (AnyType, env1)
       case TryCatchExpr(tryBody, catchClauses, afterBody) =>
         val (tryT, _) = elabBlock(tryBody, env)
-        val (catchTs, _) = catchClauses.map(elabClause(_, env, Set.empty)).unzip
+        val (catchTs, _) = catchClauses.map(elabClause(_, List(clsExnStackType), env, Set.empty)).unzip
         val env1 = afterBody match {
           case Some(block) => elabBlock(block, env)._2
           case None        => env
         }
         (Subtype.join(tryT :: catchTs), env1)
       case TryOfCatchExpr(tryBody, tryClauses, catchClauses, afterBody) =>
-        val (_, tryEnv) = elabBlock(tryBody, env)
-        val (tryTs, _) = tryClauses.map(elabClause(_, tryEnv, Set.empty)).unzip
-        val (catchTs, _) = catchClauses.map(elabClause(_, env, Set.empty)).unzip
+        val (tryT, tryEnv) = elabBlock(tryBody, env)
+        val (tryTs, _) = tryClauses.map(elabClause(_, List(tryT), tryEnv, Set.empty)).unzip
+        val (catchTs, _) = catchClauses.map(elabClause(_, List(clsExnStackType), env, Set.empty)).unzip
         val env1 = afterBody match {
           case Some(block) => elabBlock(block, env)._2
           case None        => env
@@ -162,11 +161,11 @@ final class Elab(module: String, check: Check) {
         (Subtype.join(tryTs ::: catchTs), env1)
       case Receive(clauses) =>
         val effVars = Vars.clausesVars(clauses)
-        val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
+        val (ts, envs) = clauses.map(elabClause(_, List(AnyType), env, effVars)).unzip
         (Subtype.join(ts), Approx.joinEnvs(envs))
       case ReceiveWithTimeout(clauses, timeout, timeoutBlock) =>
         val effVars = Vars.clausesAndBlockVars(clauses, timeoutBlock)
-        val (ts, envs) = clauses.map(elabClause(_, env, effVars)).unzip
+        val (ts, envs) = clauses.map(elabClause(_, List(AnyType), env, effVars)).unzip
         val env1 = check.checkExpr(timeout, integerType, env)
         val (timeoutT, timeoutEnv) = elabBlock(timeoutBlock, env1)
         (Subtype.join(timeoutT :: ts), Approx.joinEnvs(timeoutEnv :: envs))
