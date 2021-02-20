@@ -106,6 +106,7 @@ object WIPDiagnosticsText {
     for (form <- forms) form match {
       case FailedExpandFunSpec(_, reason)  => diags += form.line -> reason
       case FailedExpandTypeDecl(_, reason) => diags += form.line -> reason
+      case FailedExpandRecDecl(_, reason)  => diags += form.line -> reason
       // nothing
       case _ =>
     }
