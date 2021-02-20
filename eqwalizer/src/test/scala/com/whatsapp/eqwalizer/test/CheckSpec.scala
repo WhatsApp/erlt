@@ -1,6 +1,6 @@
 package com.whatsapp.eqwalizer.test
 
-import com.whatsapp.eqwalizer.test.util.TcDiagnosticsText
+import com.whatsapp.eqwalizer.util.TcDiagnosticsText
 
 import java.nio.file.{Files, Paths}
 

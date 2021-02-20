@@ -1,7 +1,7 @@
-package com.whatsapp.eqwalizer.test
+package com.whatsapp.eqwalizer
 
 import com.whatsapp.eqwalizer.ast.{DB, Id}
-import com.whatsapp.eqwalizer.test.util._
+import com.whatsapp.eqwalizer.util.{TcDiagnosticsText, WIPDiagnosticsText}
 
 object Main {
   sealed trait Cmd
