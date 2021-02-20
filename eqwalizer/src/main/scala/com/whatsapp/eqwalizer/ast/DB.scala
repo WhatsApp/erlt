@@ -9,8 +9,6 @@ import java.nio.file.Paths
 object DB {
   private def dirModules(dir: String): List[String] =
     Paths.get(dir).toFile.listFiles((_, f) => f.endsWith(".beam")).map(_.getName.dropRight(5)).toList
-  private def appEbinDir(app: String): String =
-    s"${config.libRoot}/$app/ebin"
   private lazy val otpEbinDirs: Map[String, String] = {
     val libRoot = config.otpLibRoot
     val libs = Paths.get(libRoot).toFile.listFiles().filter(_.isDirectory).map(_.getName)
@@ -20,7 +18,7 @@ object DB {
   lazy val otpApps: Map[String, App] =
     otpEbinDirs.map { case (n, dir) => n -> App(n, dir, dirModules(dir)) }
   lazy val projectApps: Map[String, App] =
-    config.apps.map(n => n -> App(n, appEbinDir(n), dirModules(appEbinDir(n)))).toMap
+    config.apps.map { case (n, dir) => n -> App(n, dir, dirModules(dir)) }
   lazy val apps: Map[String, App] =
     otpApps ++ projectApps
 

@@ -5,3 +5,4 @@
 .metals/
 target/
 *.iml
+*.build_info

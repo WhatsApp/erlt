@@ -19,10 +19,11 @@ testProjects / fileInputs += (baseDirectory.value / "test_projects" / "*" / "src
 
 testProjects := {
   import sys.process.Process
-  streams.value.log.out("test_projects / rebar3 compile")
-  val exitCode = Process("rebar3 compile", baseDirectory.value / "test_projects").!(pLog(streams.value.log))
-  assert(exitCode == 0, "`rebar3 compile` == 0")
-  val output = baseDirectory.value / "test_projects" / "_build"
+  val cmd = "rebar3 build_info --to ../test_projects.build_info"
+  streams.value.log.out(s"test_projects / $cmd")
+  val exitCode = Process(cmd, baseDirectory.value / "test_projects").!(pLog(streams.value.log))
+  assert(exitCode == 0, "`rebar3 ...` == 0")
+  val output = baseDirectory.value / "test_projects.build_info"
   Seq(output)
 }
 
@@ -32,17 +33,3 @@ def pLog(log: Logger): scala.sys.process.ProcessLogger =
     def err(s: => String): Unit = log.err(s)
     def out(s: => String): Unit = log.out(s)
   }
-
-val otpLibConf = taskKey[Seq[File]]("Generate Configuration for otp_lib")
-
-otpLibConf := {
-  import sys.process.Process
-  IO.createDirectory((Compile / resourceManaged).value)
-  val file = (Compile / resourceManaged).value / "otp_lib_root.conf"
-  streams.value.log.out(s"generating $file")
-  val exitCode = Process(s"escript otp_lib.escript $file").!(pLog(streams.value.log))
-  assert(exitCode == 0, "`escript otp_lib.escript` == 0")
-  Seq(file)
-}
-
-Compile / resourceGenerators += otpLibConf.taskValue
