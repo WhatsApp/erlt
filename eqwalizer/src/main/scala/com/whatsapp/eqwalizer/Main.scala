@@ -43,12 +43,17 @@ object Main {
     }
   }
 
-  private def help(): Unit = {
-    Console.println("com.whatsapp.eqwalizer.test.util.TypeCheckModule")
-    Console.println("usage:")
-    Console.println("  check <module_name>")
-    Console.println("  debug <module_name>")
-  }
+  private def help(): Unit =
+    Console.print(helpText)
+
+  val helpText: String =
+    """com.whatsapp.eqwalizer.Main
+      |usage:
+      |    check <module_name>
+      |    check <module_name>:<fun_name>/<arity>
+      |    debug <module_name>
+      |    debug <module_name>:<fun_name>/<arity>
+      |""".stripMargin
 
   private def mfa(s: String): (String, Option[Id]) = {
     s.split(':') match {
