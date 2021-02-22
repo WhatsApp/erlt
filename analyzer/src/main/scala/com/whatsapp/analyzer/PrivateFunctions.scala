@@ -3,7 +3,7 @@ package com.whatsapp.analyzer
 import erlang.forms.AbstractForm._
 import erlang.forms.AbstractExpr._
 import BeamDb.App
-import erlang.forms.AbstractExpr
+import com.whatsapp.analyzer.util.Children
 
 import scala.util.Random
 
@@ -90,7 +90,7 @@ object PrivateFunctions {
                 handleEdge(caller, id(calleeName, args.size))
               case _ => ()
             }
-            children(expr) foreach (dfs(_))
+            Children.children(expr) foreach (dfs(_))
           }
 
           clauses.flatMap(_.body).foreach(dfs)
@@ -159,56 +159,6 @@ object PrivateFunctions {
 
     walk()
     addRows()
-  }
-
-  private def children(expr: AbstractExpr): List[AbstractExpr] = {
-
-    def gatherQualifiers(qualifiers: List[AF_Qualifier]): List[AbstractExpr] =
-      qualifiers flatMap {
-        case AF_Generate(_pat, expr)  => expr :: Nil
-        case AF_BGenerate(_pat, expr) => expr :: Nil
-        case AF_Filter(expr)          => expr :: Nil
-      }
-
-    def gatherClauses(clauses: List[AF_Clause]): List[AbstractExpr] = (clauses flatMap (_.body))
-
-    def gatherEntries(entries: List[AF_Assoc]): List[AbstractExpr] =
-      entries flatMap {
-        case AF_FieldAssoc(k, v) => k :: v :: Nil
-        case AF_FieldExact(k, v) => k :: v :: Nil
-      }
-
-    expr match {
-      case AF_Match(_pat, arg)                         => arg :: Nil
-      case AF_Tuple(elems)                             => elems
-      case AF_Cons(hd, tl)                             => hd :: tl :: Nil
-      case AbstractExpr.AF_BinaryOp(_op, exp1, exp2)   => exp1 :: exp2 :: Nil
-      case AbstractExpr.AF_UnaryOp(_op, exp1)          => exp1 :: Nil
-      case AF_RecordCreation(_recordName, fields)      => fields map (_.value)
-      case AF_RecordUpdate(_exp1, _recordName, fields) => fields map (_.value)
-      case AF_MapCreation(entries)                     => gatherEntries(entries)
-      case AF_MapUpdate(exp, entries)                  => exp :: gatherEntries(entries)
-      case AF_Catch(exp)                               => exp :: Nil
-      case AF_LocalCall(fun, args)                     => fun :: args
-      case AF_RemoteCall(module, fun, args)            => module :: fun :: args
-      case AF_ListComprehension(template, qualifiers) =>
-        template :: gatherQualifiers(qualifiers)
-      case AF_BinaryComprehension(template, qualifiers) =>
-        template :: gatherQualifiers(qualifiers)
-      case AF_Block(exprs)        => exprs
-      case AF_If(clauses)         => gatherClauses(clauses)
-      case AF_Case(expr, clauses) => expr :: gatherClauses(clauses)
-      case AF_Try(body, cl1, cl2, extra) =>
-        body ++ gatherClauses(cl1 ++ cl2) ++ extra
-      case AF_Receive(cl) => gatherClauses(cl)
-      case AF_ReceiveWithTimeout(cl, _timeout, default) =>
-        gatherClauses(cl) ++ default
-      case AF_Fun(clauses)                => gatherClauses(clauses)
-      case AF_NamedFun(_funName, clauses) => gatherClauses(clauses)
-      case AF_Nil | _: AF_Literal | _: AF_Variable | _: AF_Bin | _: AF_RecordIndex | _: AF_RecordFieldAccess |
-          _: AF_LocalFun | _: AF_RemoteFun | _: AF_RemoteFunDynamic =>
-        Nil
-    }
   }
 
   private def printStat(): Unit = {
