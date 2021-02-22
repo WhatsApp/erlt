@@ -29,6 +29,7 @@ object Forms {
   sealed trait FailedExpandForm extends Form
   case class FailedExpandTypeDecl(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
   case class FailedExpandFunSpec(id: Id, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
+  case class FailedExpandRecDecl(name: String, diag: ExpansionFailure)(val line: Int) extends FailedExpandForm
 
   case class NoSpecFuncDecl(id: Id)(val line: Int) extends Form
   case class TypedFuncDecl(id: Id)(val line: Int) extends Form

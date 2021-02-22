@@ -176,7 +176,7 @@ final class Check(module: String) {
               }
               env2
             // $COVERAGE-OFF$
-            case _ => throw new IllegalStateException()
+            case _ => throw new IllegalStateException("Unhandled op: " + op)
             // $COVERAGE-ON$
           }
         case Binary(elems) =>

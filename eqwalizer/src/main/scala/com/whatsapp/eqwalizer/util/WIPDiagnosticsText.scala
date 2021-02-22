@@ -1,4 +1,4 @@
-package com.whatsapp.eqwalizer.test.util
+package com.whatsapp.eqwalizer.util
 
 import com.whatsapp.eqwalizer.Pipeline
 import com.whatsapp.eqwalizer.ast.WIPDiagnostics.{ExpansionFailure, SkippedConstruct}
@@ -106,6 +106,7 @@ object WIPDiagnosticsText {
     for (form <- forms) form match {
       case FailedExpandFunSpec(_, reason)  => diags += form.line -> reason
       case FailedExpandTypeDecl(_, reason) => diags += form.line -> reason
+      case FailedExpandRecDecl(_, reason)  => diags += form.line -> reason
       // nothing
       case _ =>
     }

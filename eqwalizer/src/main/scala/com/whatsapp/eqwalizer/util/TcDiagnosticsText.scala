@@ -1,4 +1,4 @@
-package com.whatsapp.eqwalizer.test.util
+package com.whatsapp.eqwalizer.util
 
 import com.whatsapp.eqwalizer.Pipeline
 import com.whatsapp.eqwalizer.ast.Forms._

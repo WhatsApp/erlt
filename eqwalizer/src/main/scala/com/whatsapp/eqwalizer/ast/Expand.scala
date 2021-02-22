@@ -111,7 +111,10 @@ object Expand {
   }
 
   def expandRecDecl(decl: RecDecl): Form =
-    decl.copy(fields = decl.fields.map(expandRecField))(decl.line)
+    try decl.copy(fields = decl.fields.map(expandRecField))(decl.line)
+    catch {
+      case e: WIPDiagnostics.ExpansionFailure => FailedExpandRecDecl(decl.name, e)(decl.line)
+    }
 
   private def expandRecField(field: RecField): RecField =
     field.copy(tp = expand(field.tp, Set.empty))(field.line)

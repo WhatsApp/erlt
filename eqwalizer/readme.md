@@ -70,7 +70,17 @@ From command line:
 sbt 'test:run check foo'
 ```
 
-#### Debugging
+###  Experimenting with WA code base
+
+Using `build_info` rebar plugin (D26577055), dump `wa.buld_info`.
+
+Then from sbt: 
+
+```
+run check mfa
+```
+
+### Debugging
 
 Eqwalizer doesn't support full set of Erlang expressions yet.
 It also has some other restrictions for now: for example, - it doesn't work 

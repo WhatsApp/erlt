@@ -1,7 +1,9 @@
-package com.whatsapp.eqwalizer.test
+package com.whatsapp.eqwalizer
 
 import com.whatsapp.eqwalizer.ast.{DB, Id}
-import com.whatsapp.eqwalizer.test.util._
+import com.whatsapp.eqwalizer.util.{TcDiagnosticsText, WIPDiagnosticsText}
+
+import java.nio.file.Paths
 
 object Main {
   sealed trait Cmd
@@ -22,9 +24,10 @@ object Main {
     val (module, idOpt) = mfa(args(1))
     DB.beamLocation(module) match {
       case None =>
-        Console.err.println(s"Cannot locate beam file for module $module")
+        Console.err.println(s"Cannot locate beam file for module `$module`")
       case Some(beamFile) =>
-        Console.println(s"Loading forms from $beamFile")
+        val relPath = relativize(beamFile)
+        Console.println(s"Loading forms from $relPath")
 
         val feedback = cmd match {
           case Check =>
@@ -43,12 +46,17 @@ object Main {
     }
   }
 
-  private def help(): Unit = {
-    Console.println("com.whatsapp.eqwalizer.test.util.TypeCheckModule")
-    Console.println("usage:")
-    Console.println("  check <module_name>")
-    Console.println("  debug <module_name>")
-  }
+  private def help(): Unit =
+    Console.print(helpText)
+
+  val helpText: String =
+    """com.whatsapp.eqwalizer.Main
+      |usage:
+      |    check <module_name>
+      |    check <module_name>:<fun_name>/<arity>
+      |    debug <module_name>
+      |    debug <module_name>:<fun_name>/<arity>
+      |""".stripMargin
 
   private def mfa(s: String): (String, Option[Id]) = {
     s.split(':') match {
@@ -62,5 +70,9 @@ object Main {
       case _ =>
         sys.error(s"Cannot parse $s")
     }
+  }
+
+  private def relativize(path: String): String = {
+    Paths.get(".").toAbsolutePath.relativize(Paths.get(path)).toString
   }
 }
