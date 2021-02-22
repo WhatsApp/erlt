@@ -1,0 +1,6 @@
+com.whatsapp.eqwalizer.Main
+usage:
+    check <module_name>
+    check <module_name>:<fun_name>/<arity>
+    debug <module_name>
+    debug <module_name>:<fun_name>/<arity>

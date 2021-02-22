@@ -1,0 +1,34 @@
+Loading forms from test_projects/_build/default/lib/wip/ebin/wip_maps.beam
+  1 -module(wip_maps).                       | LOADED  |                                | 
+  2                                          |         |                                | 
+  3 -compile([export_all, nowarn_export_all]……         |                                | 
+  4                                          |         |                                | 
+  5 % only atom keys can be updated          |         |                                | 
+  6 % unconditionally                        |         |                                | 
+  7 -spec update_req_non_atom_neg            | LOADED  |                                | 
+  8     (map()) -> map().                    |         |                                | 
+  9 update_req_non_atom_neg(M) ->            | SKIPPED |                                | 
+ 10     M#{1 := 1}.                          |         | Bad map key                    | 
+ 11                                          |         |                                | 
+ 12 % "mixed" updates are not supported      |         |                                | 
+ 13 % (they are not used in WA codebase)     |         |                                | 
+ 14 -spec bad_mixed_update1                  | LOADED  |                                | 
+ 15     (#{a := any()}) -> #{a := a, b := b}……         |                                | 
+ 16 bad_mixed_update1(M) ->                  | SKIPPED |                                | 
+ 17     M#{a := a, b => b}.                  |         | Bad map key                    | 
+ 18                                          |         |                                | 
+ 19 -spec bad_mixed_update2                  | LOADED  |                                | 
+ 20     (#{a := any()}) -> #{a := a, b := b}……         |                                | 
+ 21 bad_mixed_update2(M) ->                  | SKIPPED |                                | 
+ 22     M#{b => b, a := a}.                  |         | Bad map key                    | 
+ 23                                          |         |                                | 
+ 24 -spec bad_mixed_update3                  | LOADED  |                                | 
+ 25     (any()) -> any().                    |         |                                | 
+ 26 bad_mixed_update3(M)                     | SKIPPED |                                | 
+ 27     when is_map(M#{a := a, b => b}) -> M……         | Bad map key                    | 
+ 28                                          |         |                                | 
+ 29 -spec bad_mixed_update4                  | LOADED  |                                | 
+ 30     (any()) -> any().                    |         |                                | 
+ 31 bad_mixed_update4(M)                     | SKIPPED |                                | 
+ 32     when is_map(M#{b => b, a := a}) -> M……         | Bad map key                    | 
+

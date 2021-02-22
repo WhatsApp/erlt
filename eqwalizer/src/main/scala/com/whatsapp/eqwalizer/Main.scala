@@ -3,6 +3,8 @@ package com.whatsapp.eqwalizer
 import com.whatsapp.eqwalizer.ast.{DB, Id}
 import com.whatsapp.eqwalizer.util.{TcDiagnosticsText, WIPDiagnosticsText}
 
+import java.nio.file.Paths
+
 object Main {
   sealed trait Cmd
   case object Check extends Cmd
@@ -22,9 +24,10 @@ object Main {
     val (module, idOpt) = mfa(args(1))
     DB.beamLocation(module) match {
       case None =>
-        Console.err.println(s"Cannot locate beam file for module $module")
+        Console.err.println(s"Cannot locate beam file for module `$module`")
       case Some(beamFile) =>
-        Console.println(s"Loading forms from $beamFile")
+        val relPath = relativize(beamFile)
+        Console.println(s"Loading forms from $relPath")
 
         val feedback = cmd match {
           case Check =>
@@ -67,5 +70,9 @@ object Main {
       case _ =>
         sys.error(s"Cannot parse $s")
     }
+  }
+
+  private def relativize(path: String): String = {
+    Paths.get(".").toAbsolutePath.relativize(Paths.get(path)).toString
   }
 }
