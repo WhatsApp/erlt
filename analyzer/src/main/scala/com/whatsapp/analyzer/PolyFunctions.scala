@@ -46,12 +46,6 @@ object PolyFunctions {
     */
   var expressionCalls = List[FunArg]()
 
-  /**
-    * mfa(F)  (literally, the variable is "F")
-    * where mfa is polymorphic)
-    */
-  var fCalls = List[FunArg]()
-
   def main(args: Array[String]): Unit = {
     println("Loading beam DB")
     val otp = args sameElements Array("-otp")
@@ -162,14 +156,6 @@ object PolyFunctions {
       ) {
         expressionCalls ::= FunArg(module, fn)
       }
-      if (
-        args.exists {
-          case AF_Variable("F" | "Fun") => true
-          case _                => false
-        }
-      ) {
-        fCalls ::= FunArg(module, fn)
-      }
       val polyArg = mfaArgs.find(isPolyFun)
       if (polyArg.isDefined) {
         rows ::= Row(module, fn, polyArg.get, isSpeccedPolymorphic = true)
@@ -225,7 +211,6 @@ object PolyFunctions {
     }
 
     val listExprCallCnt = expressionCalls.count(_.caller.module == "lists")
-    val listFCallCnt = fCalls.count(_.caller.module == "lists")
     rows = rows.sortBy(_.caller.module)
     val (definitelys, maybes) = rows.partition(_.isSpeccedPolymorphic)
     val unspeccedCnt = maybes.size - definitelys.size
@@ -238,10 +223,6 @@ object PolyFunctions {
     println("Polymorphic functions with a fun expression as an argument (sample)")
     println("=======================")
     printFunArgs(expressionCalls)
-    println("\n\n\n\n")
-    println("Polymorphic functions with variable `Fun` or `F` as an argument (sample)")
-    println("=======================")
-    printFunArgs(fCalls)
     println("\n\n\n\n")
     println("Polymorphic functions with a declared function as an argument (sample)")
     println("=======================")
@@ -256,9 +237,6 @@ object PolyFunctions {
         | =======================
         | polymorphic func called with a fun expression as an arg: ${expressionCalls.size}
         | polymorphic func **in lists module** called with a fun expression as an arg: ${listExprCallCnt}
-        \n\n
-        | polymorphic func called with variable `F` as an arg: ${fCalls.size}
-        | polymorphic func **in lists module** called with variable `F` as an arg: ${listFCallCnt}
         \n\n
         | polymorphic func called with an unspecced declared func as an arg: ${unspeccedCnt}
         | polymorphic func **in lists module** called with an unspecced declared func as an arg: ${listUnspeccedCnt}
