@@ -13,7 +13,7 @@ import scala.util.Random
   *
   * Simplifying assumptions/caveats:
   * - "polymorphic function" is a function with >= 1 type variable that is used
-  * >= once in the definition, where either there is no constraint (`when`) affecting the type var
+  * >= twice in the definition, where either there is no constraint (`when`) affecting the type var
   * or the var is constrained only to be `:: any()` or `:: term()`.
   * - We skip very dynamic code, such as calls M:F:A where one of `M`, `F`, or `A` is not a literal
   */
@@ -82,7 +82,7 @@ object PolyFunctions {
   }
 
   private def findPolymorphicFuns(app: App): Set[Mfa] =
-    app.modules.sortBy(identity).flatMap(findPolymoprhicFunsInModule).toSet
+    app.modules.sorted.flatMap(findPolymoprhicFunsInModule).toSet
 
   private def findPolymoprhicFunsInModule(module: String): List[Mfa] = {
     val api = BeamDb.getModuleApi(module).get
@@ -126,7 +126,6 @@ object PolyFunctions {
     // as a type variable even though eqwalizer treats such a T as any()
     val fromConstraints = constraints.flatMap {
       case Constraint(_v, ty) => tyToVarsList(ty, constraintsMap)
-      case _                  => Nil
     }
     val tys = resTy :: argTys
     tys.flatMap(tyToVarsList(_, constraintsMap)) ++ fromConstraints
@@ -135,7 +134,7 @@ object PolyFunctions {
   private def isPolymorphicSpec(spec: AF_FunctionSpec): Boolean = {
     val varsList = spec.types.flatMap(constrainedTyToVarsList)
     val varsUsedMultipleTimes = varsList.groupBy(identity).valuesIterator.filter { _.sizeCompare(2) >= 0 }
-    !varsUsedMultipleTimes.isEmpty
+    varsUsedMultipleTimes.nonEmpty
   }
 
   private def isPolyFun(mfa: Mfa): Boolean = otpPolyFuns.contains(mfa) || projectPolyFuns.contains(mfa)
@@ -165,16 +164,16 @@ object PolyFunctions {
       }
       if (
         args.exists {
-          case AF_Variable("F") => true
+          case AF_Variable("F" | "Fun") => true
           case _                => false
         }
       ) {
         fCalls ::= FunArg(module, fn)
       }
       val polyArg = mfaArgs.find(isPolyFun)
-      if (!polyArg.isEmpty) {
+      if (polyArg.isDefined) {
         rows ::= Row(module, fn, polyArg.get, isSpeccedPolymorphic = true)
-      } else if (!mfaArgs.isEmpty) {
+      } else if (mfaArgs.nonEmpty) {
         rows ::= Row(module, fn, mfaArgs.head, isSpeccedPolymorphic = false)
       }
     }
@@ -240,7 +239,7 @@ object PolyFunctions {
     println("=======================")
     printFunArgs(expressionCalls)
     println("\n\n\n\n")
-    println("Polymorphic functions with variable `F` as an argument (sample)")
+    println("Polymorphic functions with variable `Fun` or `F` as an argument (sample)")
     println("=======================")
     printFunArgs(fCalls)
     println("\n\n\n\n")
