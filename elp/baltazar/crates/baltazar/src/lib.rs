@@ -7,6 +7,7 @@ mod config;
 mod convert;
 mod diagnostics;
 mod document;
+mod passthru;
 mod server;
 mod server_setup;
 mod task_pool;
