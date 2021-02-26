@@ -17,8 +17,25 @@
         "vscode-test": "^1.3.0"
     },
     "activationEvents": [
-		"onLanguage:plaintext"
+        "onLanguage:erlang"
     ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "erlang",
+                "aliases": [
+                    "Erlang"
+                ],
+                "extensions": [
+                    ".erl",
+                    ".hrl",
+                    ".src",
+                    ".escript",
+                    ".config"
+                ]
+            }
+        ]
+    },
     "main": "./out/extension",
     "scripts": {
         "vscode:prepublish": "npm run compile",

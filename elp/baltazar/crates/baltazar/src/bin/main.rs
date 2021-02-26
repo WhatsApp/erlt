@@ -1,7 +1,7 @@
 use std::{env, fs, path::PathBuf, process};
 
 use anyhow::Result;
-use baltazar::ServerSetup;
+use baltazar::{ServerSetup, passthru};
 use lsp_server::Connection;
 
 mod args;
@@ -52,11 +52,12 @@ fn setup_logging(log_file: Option<PathBuf>, no_buffering: bool) -> Result<()> {
 
 fn run_server() -> Result<()> {
     log::info!("server will start");
-    let (connection, io_threads) = Connection::stdio();
+    passthru::run_server()?;
+    // let (connection, io_threads) = Connection::stdio();
 
-    ServerSetup::new(connection).to_server()?.main_loop()?;
+    // ServerSetup::new(connection).to_server()?.main_loop()?;
 
-    io_threads.join()?;
+    // io_threads.join()?;
     log::info!("server did shut down");
     Ok(())
 }

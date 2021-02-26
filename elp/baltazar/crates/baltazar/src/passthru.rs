@@ -15,8 +15,9 @@
 // use crate::server_setup::ServerSetup;
 use ::lsp_server::Message;
 use anyhow::Result;
-use crossbeam_channel::{bounded, Receiver, Sender};
-use lsp_server::Connection;
+use crossbeam_channel::{bounded, select, Receiver, Sender};
+use lsp_server::{Connection, Response};
+use serde_json::json;
 // use std::io::{BufRead, Write};
 use std::process::ChildStdin;
 use std::process::ChildStdout;
@@ -63,11 +64,25 @@ pub fn foo() {
 //
 // Currently (from main.rs)
 
+enum Event {
+    SubLsp(Message),
+    Client(Message),
+}
+
+struct Passthru {
+    sub_lsp_sender: Sender<Message>,
+    sub_lsp_receiver: Receiver<Message>,
+    client_sender: Sender<Message>,
+    client_receiver: Receiver<Message>,
+}
+
 pub fn run_server() -> Result<()> {
     log::info!("server will start");
     let (client_connection, io_threads) = Connection::stdio();
 
     let mut sub_lsp = Command::new("erlang_ls")
+        .arg("-l")
+        .arg("debug")
         // .arg("Oh no, a tpyo!")
         .stdout(Stdio::piped())
         .stdin(Stdio::piped())
@@ -81,11 +96,15 @@ pub fn run_server() -> Result<()> {
     let outstream = BufReader::new(sub_lsp.stdout.take().unwrap());
     // The sub_lsp stdio connections are raw. We must turn them into
     // Connection ones too
-    let (sub_lsp_sender, sub_lsp_reader, sub_lsp_io_threads) =
+    let (sub_lsp_sender, sub_lsp_receiver, sub_lsp_io_threads) =
         wrap_stdio_transport(instream, outstream);
 
     let Connection { sender: client_sender, receiver: client_receiver } = client_connection;
 
+    let passthru = Passthru { sub_lsp_sender, sub_lsp_receiver, client_sender, client_receiver };
+    while let Some(event) = passthru.receive_event() {
+        passthru.process_event(event)?;
+    }
     // Now, theoretically, we can read from client_sender, and forward
     // it to sub_lsp-reader, and vice versa
 
@@ -99,6 +118,51 @@ pub fn run_server() -> Result<()> {
     Ok(())
 }
 
+impl Passthru {
+    fn receive_event(&self) -> Option<Event> {
+        select! {
+            recv(self.sub_lsp_receiver) -> msg => {
+                msg.ok().map(Event::SubLsp)
+            }
+
+            recv(self.client_receiver) -> msg => {
+                msg.ok().map(Event::Client)
+            }
+        }
+    }
+
+    fn process_event(&self, event: Event) -> Result<()> {
+        match event {
+            Event::SubLsp(msg) => {
+                log::info!("From sub lsp {:?}", msg);
+                match &msg {
+                    Message::Request(_) => {
+                        self.client_sender.send(msg)?;
+                    }
+                    // foldingRange requests returns result: null,
+                    // but lsp decodes it as result: None, rather than result: Some(null)
+                    // Do manual fixup of messages that decode with both results & errors as None -
+                    // one of them has to always be Some
+                    Message::Response(resp) if resp.result.is_none() && resp.error.is_none() => {
+                        let response = Response { id: resp.id.clone(), result: Some(json!(null)), error: None };
+                        self.client_sender.send(Message::Response(response))?;
+                    }
+                    Message::Response(_) => {
+                        self.client_sender.send(msg)?;
+                    }
+                    Message::Notification(_) => {
+                        self.client_sender.send(msg)?;
+                    }
+                }
+            }
+            Event::Client(msg) => {
+                log::info!("From client {:?}", msg);
+                self.sub_lsp_sender.send(msg)?;
+            }
+        }
+        Ok(())
+    }
+}
 // ---------------------------------------------------------------------
 // Taken directly from the existing lsp_server crate code
 
