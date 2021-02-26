@@ -1,6 +1,6 @@
 -module(foo).
 
 -x(x).
--cc(x).
--xxx(x).
--f(xxx)
+-cc (x)
+-abc(x).
+

@@ -302,9 +302,10 @@ elpKick = do
 elpSessionLoader :: Action IdeGhcSession
 elpSessionLoader = return (IdeGhcSession loader 0)
   where
-    diag = textDiagnostic "elpSessionLoader NOP"
-    loader file = return (([(toNormalizedFilePath file, ShowDiag, diag)]
-                          ,Nothing),[])
+    -- diag = textDiagnostic "elpSessionLoader NOP"
+    -- loader file = return (([(toNormalizedFilePath file, ShowDiag, diag)]
+    --                       ,Nothing),[])
+    loader file = return (([],Nothing),[])
 
 -- ---------------------------------------------------------------------
 
