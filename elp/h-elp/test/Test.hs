@@ -155,7 +155,7 @@ testVFS =
             -- parser <- treeSitterParser
             (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
             sexp <- nodeAsSexpr node
-            sexp @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)))"
+            sexp @?= "(source_file forms: (module_attribute name: (atom)) forms: (attribute name: (atom) value: (atom)))"
 
             let Just (VirtualFile _ _ rope1) = Map.lookup nUriA (vfsMap v1)
             let change = TextDocumentContentChangeEvent Nothing Nothing content4
@@ -165,7 +165,7 @@ testVFS =
             let rope2 = applyChange rope1 change
             (tree3, node2) <- treeSitterParseIncrement parser rope2 tree2
             sexp2 <- nodeAsSexpr node2
-            sexp2 @?= "(source_file (module_attribute (atom)) (attribute (atom) (atom)) (attribute (atom) (atom)))"
+            sexp2 @?= "(source_file forms: (module_attribute name: (atom)) forms: (attribute name: (atom) value: (atom)) forms: (attribute name: (atom) value: (atom)))"
 
             let change2 =
                   TextDocumentContentChangeEvent
@@ -214,7 +214,7 @@ testQuery =
             -- parser <- treeSitterParser
             (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
             sexp <- nodeAsSexpr node
-            sexp @?= "(source_file (attribute (atom) (atom)) (attribute (atom) (atom)))"
+            sexp @?= "(source_file forms: (attribute name: (atom) value: (atom)) forms: (attribute name: (atom) value: (atom)))"
 
             -- let queryStr = "(module_attribute)"
             -- let queryStr = "(attribute)"
@@ -274,7 +274,7 @@ testQuery =
             -- parser <- treeSitterParser
             (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
             sexp <- nodeAsSexpr node
-            sexp @?= "(source_file (attribute (atom) (atom) (MISSING \".\")) (attribute (atom) (atom)))"
+            sexp @?= "(source_file forms: (attribute name: (atom) value: (atom) (MISSING \".\")) forms: (attribute name: (atom) value: (atom)))"
             let queryStr = "(attribute (atom) @a (atom) @b)"
             -- let queryStr = "(MISSING)"
             (str, len) <- newCStringLen queryStr
@@ -339,12 +339,12 @@ testAST =
             (tree, node) <- treeSitterParseFull parser (T.unpack aContent)
             -- sexp <- nodeAsSexpr node
             sexp <- nodeAsSexprDetail node
-            sexp @?= "(source_file (source_file_repeat1 (source_file_repeat1 (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.)) (attribute (-) (atom (_raw_atom)) (ERROR (_ERROR (_raw_atom))) (() (atom (_raw_atom)) ()) (MISSING \".\"))) (attribute (-) (atom (_raw_atom)) (() (atom (_raw_atom)) ()) (.))) (end))"
+            sexp @?= "(source_file forms: (source_file_repeat1 (source_file_repeat1 (attribute (-) name: (atom (_raw_atom)) (() value: (atom (_raw_atom)) ()) (.)) (attribute (-) name: (atom (_raw_atom)) (ERROR (_ERROR (_raw_atom))) (() value: (atom (_raw_atom)) ()) (MISSING \".\"))) (attribute (-) name: (atom (_raw_atom)) (() value: (atom (_raw_atom)) ()) (.))) (end))"
 
             -- ast <- erlangAst (encodeUtf8 aContent)
             -- ast <- erlangAstBare (encodeUtf8 aContent)
             ast <- erlangAstText (encodeUtf8 aContent)
-            let expectedAstStr = "Right (UnmarshalDiagnostics [(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")])],SourceFile {ann = \"-xxx(yyy).\\n-odu le(foo)\\n-aaaa(bbb).\\n\", extraChildren = [L1 (Attribute {ann = \"-xxx(yyy).\", extraChildren = L1 (Atom {ann = \"xxx\", text = \"xxx\"}) :| [L1 (Atom {ann = \"yyy\", text = \"yyy\"})]}),L1 (Attribute {ann = \"-odu le(foo)\", extraChildren = L1 (Atom {ann = \"odu\", text = \"odu\"}) :| [L1 (Atom {ann = \"foo\", text = \"foo\"})]}),L1 (Attribute {ann = \"-aaaa(bbb).\", extraChildren = L1 (Atom {ann = \"aaaa\", text = \"aaaa\"}) :| [L1 (Atom {ann = \"bbb\", text = \"bbb\"})]})]})"
+            let expectedAstStr = "Right (UnmarshalDiagnostics [(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")]),(Range {start = 11, end = 23},[((16,19),TSDError),((24,24),TSDMissing \".\")])],SourceFile {ann = \"-xxx(yyy).\\n-odu le(foo)\\n-aaaa(bbb).\\n\", forms = [Form {getForm = L1 (Attribute {ann = \"-xxx(yyy).\", value = Expr {getExpr = L1 (Atom {ann = \"yyy\", text = \"yyy\"})}, name = Atom {ann = \"xxx\", text = \"xxx\"}})},Form {getForm = L1 (Attribute {ann = \"-odu le(foo)\", value = Expr {getExpr = L1 (Atom {ann = \"foo\", text = \"foo\"})}, name = Atom {ann = \"odu\", text = \"odu\"}})},Form {getForm = L1 (Attribute {ann = \"-aaaa(bbb).\", value = Expr {getExpr = L1 (Atom {ann = \"bbb\", text = \"bbb\"})}, name = Atom {ann = \"aaaa\", text = \"aaaa\"}})}]})"
             -- [ast] @?= []
             show ast @?= expectedAstStr
 

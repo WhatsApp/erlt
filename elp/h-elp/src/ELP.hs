@@ -19,12 +19,13 @@ import AST.Unmarshal
   )
 import Control.Carrier.State.Strict (runState)
 import Control.Exception (catch)
-import Control.Lens ((^.))
+import Control.Lens ((^.), to)
 import Control.Monad (void, when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.ByteString (ByteString)
 import qualified Data.HashMap.Strict as HM
 import Data.Hashable
+import Data.List
 import qualified Data.Map as Map
 import Data.Maybe
 import Data.Rope.UTF16 (Rope, codeUnitsRowColumn)
@@ -353,10 +354,12 @@ makeDiagnostics rope tree = do
   mr <- treeToAstText (encodeUtf8 $ Rope.toText rope) tree
   case mr of
     Right (UnmarshalDiagnostics diags, Erlang.SourceFile a _) -> do
-      let bar = concatMap snd diags
+      let bar = nub $ concatMap snd diags
           lspDiags = map (toDiagnostic . \(p, d) -> (offsetsToRange rope p, d)) bar
           astDiag = textDiagnostic a
-      return (astDiag : lspDiags)
+      -- return (astDiag : lspDiags)
+      return ( lspDiags)
+    -- Left err -> return [textDiagnostic (T.pack $ "treeToAst:" <> err)]
     Left err -> return [textDiagnostic (T.pack $ "treeToAst:" <> err)]
 
 toDiagnostic :: (Range, TSDiagnostic) -> Diagnostic
