@@ -24,7 +24,7 @@ export function activate(context: ExtensionContext) {
     };
 
     let clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'plaintext' }],
+        documentSelector: [{ scheme: 'file', language: 'erlang' }],
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('**/rebar.config')
         }

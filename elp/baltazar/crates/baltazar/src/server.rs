@@ -12,7 +12,7 @@ use lsp_types::{
     Diagnostic, Url,
 };
 use parking_lot::RwLock;
-use vfs::{AbsPath, AbsPathBuf, FileId, Vfs, VfsPath};
+use vfs::{AbsPathBuf, FileId, Vfs, VfsPath};
 
 use crate::{
     config::Config,
