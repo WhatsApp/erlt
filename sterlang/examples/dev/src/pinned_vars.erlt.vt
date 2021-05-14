@@ -1,0 +1,35 @@
+val t01/2: fun((A, A) -> boolean())
+val A: A
+val B: A
+val t02/2: fun(({A}, A) -> boolean())
+val A: {A}
+val B: A
+val t03/2: fun((list(A), A) -> boolean())
+val A: list(A)
+val B: A
+val t04/2: fun((#( id :: number(), A ), number()) -> number())
+val A: #( id :: number(), A )
+val B: number()
+val t05/3: fun((my_struct(number()), number(), number()) -> number())
+val X: my_struct(number())
+val B: number()
+val C: number()
+val t06/3: fun((my_enum(number()), number(), number()) -> number())
+val X: my_enum(number())
+val B: number()
+val C: number()
+val t07/3: fun((binary(), number(), binary()) -> boolean())
+val Binary: binary()
+val Elem1: number()
+val Elem2: binary()
+val t08/3: fun((binary(), binary(), number()) -> number())
+val Binary: binary()
+val Elem: binary()
+val Size: number()
+val t09/1: fun((binary()) -> {number(), binary()})
+val Binary: binary()
+val Size: number()
+val Elem: binary()
+val t10/2: fun((A, A) -> A)
+val X: A
+val Y: A

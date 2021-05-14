@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e93.erlt:20:16
+Unknown field unknown_field
+ 20|     #my_struct{unknown_field = 1}.
+...|                ~~~~~~~~~~~~~~~~~

@@ -1,0 +1,155 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(erltodo).
+-export([main/1]).
+
+-struct state() :: (
+    todos = [] :: list(string()),
+    deleted_count = 0 :: integer()
+).
+
+-enum choice() :: (
+      add{string()}
+    , delete{integer()}
+    , view_stats
+).
+
+-spec main(term()) -> no_return().
+main(_Argv) ->
+    loop(#state{}).
+
+%% core logic using our struct and enum
+
+loop(#state{todos = Todos, deleted_count = DeletedCount} = State) ->
+    display_todos(Todos),
+    case prompt(Todos) of
+        choice.add{TodoText} ->
+            loop(#state{todos = [TodoText|Todos]});
+        choice.delete{Index} ->
+            loop(#state{todos = splice(Index, Todos), deleted_count = DeletedCount + 1});
+        choice.view_stats ->
+            display_stats(State),
+            loop(State)
+    end.
+
+ %% get and adapt user input
+
+-spec prompt(list(string())) -> choice().
+prompt(Todos) ->
+     t_io:format("What would you like to do?~n"
+            "1. add todo~n"
+            "2. delete todo~n"
+            "3. view stats~n~n"
+    ),
+     case read_or_error("Enter a number followed by a dot: ") of
+         1 ->
+             prompt_add_todo();
+         2 ->
+             prompt_delete_todo(Todos);
+         3 ->
+             choice.view_stats;
+         _ ->
+             invalid_input(),
+             prompt(Todos)
+     end.
+
+-spec prompt_add_todo() -> choice().
+prompt_add_todo() ->
+    case read_or_error("enter todo text in quotes followed by a dot. Example: \"buy eggs\".: ") of
+        TodoText when erlang:is_list(TodoText) ->
+            choice.add{TodoText};
+         Res ->
+            erlang:display(Res),
+            invalid_input(),
+            prompt_add_todo()
+    end.
+
+-spec prompt_delete_todo([string()]) -> choice().
+prompt_delete_todo(Todos) ->
+    display_todos(Todos),
+    case read_or_error("enter the id of the todo you would like to delete followed by a dot. ") of
+        Id when erlang:is_integer(Id) ->
+            choice.delete{Id};
+        _ ->
+            invalid_input(),
+            prompt_delete_todo(Todos)
+    end.
+
+%% display stuff
+-spec display_stats(state()) -> string().
+display_stats(#state{todos = [], deleted_count=0}) ->
+    t_io:format("You haven't started yet: try creating and deleting todos~n"),
+    prompt_for_ok(),
+    % todo: change to atom when/if that is permitted
+    "ok";
+display_stats(#state{todos = Todos, deleted_count = DeletedCount}) ->
+    line(),
+    t_io:format("You have ~p active todos and ~p deleted todos", {erlang:length(Todos), DeletedCount}),
+    line(),
+    prompt_for_ok(),
+    "ok".
+
+-spec prompt_for_ok() -> atom().
+[unchecked] % because of atom literals
+prompt_for_ok() ->
+    case read_or_error("type ok followed by a dot to continue. ") of
+        'ok' -> 'ok';
+        _ -> prompt_for_ok()
+    end.
+
+-spec read_or_error(string()) -> _.
+[unchecked]
+read_or_error(Prompt) ->
+    case io:read(Prompt) of
+        {'ok', Res} -> Res;
+        'eof' -> erlang:error("eof when reading from prompt ~p~n", [Prompt]);
+        {'error', Reason} ->
+            erlang:error("error when reading from prompt ~p: ~p~n", [Prompt, Reason])
+    end.
+
+%% utils
+with_indices(List) ->
+    Indices = t_lists:seq(len(List), 1, -1),
+    t_lists:zip(Indices, List).
+
+-spec len([_]) -> integer().
+len(L) ->
+    erlang:length(L).
+
+-spec display_todos(list(string())) -> atom().
+display_todos([]) ->
+    line(),
+    t_io:format("You have no todos~n"),
+    line(),
+    'ok';
+display_todos(Todos) ->
+    line(),
+    t_io:format("Your todos are:~n"),
+    [
+        t_io:format("~p. ~p~n", {Index, Todo})
+    || { Index, Todo } <- with_indices(Todos)],
+    line(),
+    'ok'.
+
+line() ->
+    t_io:format("------~n").
+
+ invalid_input() ->
+     t_io:format("invalid input~n").
+
+-spec splice(number(), list(A)) -> list(A).
+splice(Index, List) ->
+    {Left, [_|Right]} = t_lists:split(Index - 1, List),
+    Left ++ Right.

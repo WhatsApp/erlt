@@ -1,0 +1,4 @@
+val getOrElse/2: fun((option(A), A) -> A)
+val Opt: option(A)
+val Alt: A
+val X: A

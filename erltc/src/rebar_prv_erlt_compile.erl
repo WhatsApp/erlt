@@ -1,0 +1,58 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(rebar_prv_erlt_compile).
+
+-export([init/1, do/1, format_error/1]).
+
+-include("erlt_build_types.hrl").
+
+% rebar3 plugin docs: https://www.rebar3.org/docs/tutorials/building_plugins/
+-behaviour(provider).
+
+-define(PROVIDER, compile).
+-define(NAMESPACE, erlt).
+-define(DEPS, [{default, app_discovery}, {default, compile}]).
+-define(SRC_DIR, "src").
+
+-define(EXAMPLE,
+    "compile all apps in the project: `rebar3 erlt compile`~n\tbuild a single app: `rebar3 compile erlt <app-name>`"
+).
+
+-spec init(rebar_state:t()) -> {ok, rebar_state:t()}.
+init(State) ->
+    Provider =
+        providers:create([
+            {name, ?PROVIDER},
+            {namespace, ?NAMESPACE},
+            {module, ?MODULE},
+            {bare, true},
+            {deps, ?DEPS},
+            {example, ?EXAMPLE},
+            {opts, []},
+            {short_desc, "compile ErlT files"},
+            {
+                desc,
+                "compile ErlT files~n~n"
+                ?EXAMPLE
+            }
+        ]),
+    {ok, rebar_state:add_provider(State, Provider)}.
+
+-spec do(rebar_state:t()) -> {ok, rebar_state:t()}.
+do(State) ->
+    rebar_prv_erlt:run(fun rebar_prv_erlt:compile_app/1, "Compiling ErlT code", State).
+
+format_error(Reason) ->
+    io_lib:format("~p", [Reason]).

@@ -1,0 +1,1 @@
+-spec getOrElse(option(A), A) -> A.

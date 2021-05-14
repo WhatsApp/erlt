@@ -1,0 +1,107 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(pin_mod01).
+
+-export([f/1, g/1, h/1, i/3, i2/4, j/2, j2/1, k/2, m/2, p/2, q/3]).
+
+[unchecked]
+f(X) ->
+    Y = 42,
+    case X of
+        ^Y -> {'that', Y};
+        Z -> {'this', Z}
+    end.
+
+[unchecked]
+g(X) ->
+    Y = 42,
+    case X of
+        {'foo', [^Y|Zs]} -> {'that', Y, Zs};
+        {'foo', [Z|Zs]} -> {'this', Z, Zs};
+        Z -> {'other', Z}
+    end.
+
+[unchecked]
+h(X) ->
+    Y = 42,
+    {'ok', ^Y} = X,  % assert
+    true.
+
+[unchecked]
+i(Elem, List1, List2) ->
+    Foo = 42,
+    ['found' || ^Elem <- List1, {'foo', ^Foo}<-List2].
+
+[unchecked]
+i2(Elem, List1, List2, List3) ->
+    [Elem || ^Elem <- List1, {'foo', ^Elem}<-List2, {'bar', ^Elem}<-List3].
+
+[unchecked]
+j(Elem, List) ->
+    Foo = 42,
+    lists:filter(fun(^Elem) -> true;
+                    ({'foo', ^Foo}) -> true;
+                    (_) -> false
+                 end,
+                 List).
+
+[unchecked]
+j2(X) ->
+    %% works
+    {fun Test(^X) -> Test(X) end,
+    %% not working yet
+    %% fun Test(^Test) -> Test(Test) end,
+    'ok'}.
+
+[unchecked]
+k(X, Y) ->
+    case X of
+        {'a', ^X} -> {'b', X};
+        {'a', ^Y} when X < Y; Y > X -> {'b', Y};
+        {'b', ^Y} ->
+            Z = {X, Y},
+            case Y of
+                {'c', ^X} -> {'d', X};
+                {'c', ^Y} when X < Y; Y > X -> {'d', Y};
+                {'d', ^X} -> {'d', Y};
+                {'d', ^Z} -> {'z', Z}
+            end
+    end.
+
+[unchecked]
+m(X, Y) ->
+    fun ({'foo', ^X, Z}) -> Z;
+        ({'bar', ^X, Z}) ->
+            case X of
+                {'ok', ^X} -> {'ok', Z};
+                'error' -> 'error'
+            end;
+        ({'baz', ^Y, Z}) -> Z
+    end.
+
+[unchecked]
+p(F, Class) ->
+    Term = {'x', 42},
+    try
+        F()
+    catch
+        ^Class, ^Term, _ -> "oops 🍌"
+    end.
+
+[unchecked]
+q(Bin, Size, B) ->
+    case Bin of
+        <<^B:Size/binary>> -> 'ok'
+    end.

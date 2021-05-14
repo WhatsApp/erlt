@@ -1,0 +1,4 @@
+import_type_builtin.erlt:19:1: imported a type from foo with the same name: integer as a pre-defined type
+%   19| -import_type(foo, [integer/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

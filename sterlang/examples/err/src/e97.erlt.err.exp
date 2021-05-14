@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e97.erlt:21:31
+Type Mismatch
+Found:    string()
+Required: number()
+ 21|     #my_record{hash = 1, id = "test"}.
+...|                               ~~~~~~

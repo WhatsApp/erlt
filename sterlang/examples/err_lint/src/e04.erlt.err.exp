@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e04.erlt:17:22
+e03:bad_arg() is not a type. Did you mean `exception()`?
+ 17| -type t_bad_arg() :: e03:bad_arg().
+...|                      ~~~~~~~~~~~~~

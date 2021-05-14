@@ -1,0 +1,4 @@
+undefined_enum.erlt:21:3: enum bar undefined
+%   21| f(bar.baz) ->
+%     |   ^^^^^^^
+

@@ -1,0 +1,53 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(erlang).
+
+-export([display/1, error/1, error/2, is_integer/1, is_list/1, length/1, max/2]).
+
+-spec stub() -> _.
+[unchecked]
+stub() ->
+    erlang:error('stub').
+
+% dangerous
+% TODO: update to return 'ok' when atom types allowed
+-spec display(_) -> atom().
+display(_) ->
+    stub().
+
+-spec error(string()) -> no_return().
+error(_) ->
+    stub().
+
+% dangerous
+-spec error(_A, [_]) -> no_return().
+error(_, _) ->
+    stub().
+
+-spec length([_]) -> integer().
+length(_) ->
+    stub().
+
+-spec is_integer(_) -> boolean().
+is_integer(_) ->
+    stub().
+
+-spec is_list(_) -> boolean().
+is_list(_) ->
+    stub().
+
+-spec max(A, A) -> A.
+max(_, _) ->
+    stub().

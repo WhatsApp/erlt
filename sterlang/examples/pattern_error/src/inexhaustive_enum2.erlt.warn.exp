@@ -1,0 +1,11 @@
+-- WARNING ------------- examples/pattern_error/src/inexhaustive_enum2.erlt:21:1
+Missing Patterns
+missing: bool_box1.box{_0 = true}
+ 21| test1(bool_box1.box{false}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-- WARNING ------------- examples/pattern_error/src/inexhaustive_enum2.erlt:23:1
+Missing Patterns
+missing: bool_box2.box{_1 = true}
+ 23| test2(bool_box2.box{_, false}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e54.erlt:18:12
+Got 1 positional field(s) instead of 0
+ 18| test() -> [my_enum.ctr{1}].
+...|            ~~~~~~~~~~~~~~

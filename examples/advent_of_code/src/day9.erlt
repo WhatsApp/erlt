@@ -1,0 +1,111 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(day9).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Numbers = get_input(FileName),
+    PreAmbleQueue = from_list(t_lists:sublist(Numbers, 25)),
+    Values = t_lists:nthtail(25, Numbers),
+    ok.error{Val} = check_values(Values, PreAmbleQueue),
+    Val.
+
+-enum ok(A) :: (ok, error{A}).
+
+check_values([Val|Rest], Queue) ->
+    case check_value(Val, to_list(Queue)) of
+        ok.ok -> check_values(Rest, in(Val, drop(Queue)));
+        Error -> Error
+    end;
+check_values([], _Queue) -> ok.ok.
+
+check_value(Val, [First|Rest]) ->
+    case t_lists:member(Val-First, Rest) of
+        true -> ok.ok;
+        false -> check_value(Val, Rest)
+    end;
+check_value(Val, []) ->
+    ok.error{Val}.
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    Numbers = get_input(FileName),
+    PreAmbleQueue = from_list(t_lists:sublist(Numbers, 25)),
+    Values = t_lists:nthtail(25, Numbers),
+    ok.error{Val} = check_values(Values, PreAmbleQueue),
+    sliding_window(Numbers, new(), 0, Val).
+
+sliding_window(_Numbers, Q, Value, Target) when Value =:= Target ->
+    L = to_list(Q),
+    t_lists:min(L) + t_lists:max(L);
+sliding_window(Numbers, Q, Value, Target) when Value > Target ->
+    out_result.value{V, NewQ} = out(Q),
+    sliding_window(Numbers, NewQ, Value-V, Target);
+sliding_window([First|Rest], Q, Value, Target) when Value < Target ->
+    sliding_window(Rest, in(First, Q), Value+First, Target).
+
+[unchecked]
+-opaque q(A) :: term().
+
+-spec new() -> q(_A).
+[unchecked]
+new() ->
+    queue:new().
+
+-spec from_list([A]) -> q(A).
+[unchecked]
+from_list(List) ->
+    queue:from_list(List).
+
+-spec to_list(q(A)) -> [A].
+[unchecked]
+to_list(List) ->
+    queue:to_list(List).
+
+-spec in(A, q(A)) -> q(A).
+[unchecked]
+in(A, Q) ->
+    queue:in(A, Q).
+
+-spec drop(q(A)) -> q(A).
+[unchecked]
+drop(Q) ->
+    queue:drop(Q).
+
+-enum out_result(A) :: (value{A, q(A)}, empty).
+
+-spec out(q(A)) -> out_result(A).
+[unchecked]
+out(Q) ->
+    case queue:out(Q) of
+        {{'value', V}, NewQ} -> out_result.value{V, NewQ};
+        _ -> out_result.empty
+    end.
+
+
+-spec get_input(string()) -> [integer()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_file(File).
+
+[unchecked]
+read_file(File) ->
+    case io:fread(File, "", "~d") of
+        {'ok', [Val]} -> [Val|read_file(File)];
+        _ -> []
+    end.

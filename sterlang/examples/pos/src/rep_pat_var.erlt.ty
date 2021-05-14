@@ -1,0 +1,4 @@
+-spec f01(A, A) -> A.
+-spec f02({A, A}) -> A.
+-spec f03({A, B}, {B, A}) -> A.
+-spec f04(list(A)) -> list(A).

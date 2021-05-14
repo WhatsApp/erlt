@@ -1,0 +1,20 @@
+bad_caret.erlt:22:12: operator ^ is only allowed in patterns
+%   22|     {'ok', ^X}.
+%     |            ^^
+
+bad_caret.erlt:27:31: illegal guard expression
+%   27|         {'foo', Y} when Y =:= ^X -> 'ok';
+%     |                               ^^
+
+bad_caret.erlt:34:10: illegal pattern
+%   34|         {^'foo', _} -> 'ok';
+%     |          ^^^^^^
+
+bad_caret.erlt:35:17: illegal pattern
+%   35|         {'foo', ^_} -> 'ok';
+%     |                 ^^
+
+bad_caret.erlt:36:18: operator ^ is only allowed in patterns
+%   36|         _ -> X + ^42
+%     |                  ^^^
+

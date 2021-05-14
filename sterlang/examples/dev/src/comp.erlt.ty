@@ -1,0 +1,17 @@
+-spec map(fun((A) -> B), list(A)) -> list(B).
+-spec filter(fun((A) -> boolean()), list(A)) -> list(A).
+-spec strange_perm(fun((A, B) -> boolean()), list(A), list(B)) -> list({A, B}).
+-spec sort(list(A)) -> list(A).
+-spec sort(list(A), fun((A, A) -> boolean())) -> list(A).
+-spec append(list(list(A))) -> list(A).
+-spec flat_map(fun((A) -> list(B)), list(A)) -> list(B).
+-spec list_from_binary(binary()) -> list(number()).
+-spec binary_from_list1(list(number())) -> binary().
+-spec binary_from_list2(list(binary())) -> binary().
+-spec even_from_binary(binary()) -> list(number()).
+-spec rgb(binary()) -> list({number(), number(), number()}).
+-spec pixels(list({number(), number(), number()})) -> binary().
+-spec slice(binary(), number()) -> list(binary()).
+-spec lengths(list(list(A))) -> list(number()).
+-spec t1() -> unchecked:t1(number(), boolean()).
+-spec xxx() -> list(unchecked:t2(unchecked:t1(boolean(), boolean()), unchecked:t1(boolean(), boolean()))).

@@ -1,0 +1,4 @@
+undefined_exported_type.erlt:17:1: type undefined() undefined
+%   17| -export_type([undefined/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+

@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e41.erlt:27:45
+Type Mismatch
+Found:    string()
+Required: boolean()
+ 27|     case {any()} of {F} -> {F == true, F == ""} end.
+...|                                             ^^

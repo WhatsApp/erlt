@@ -1,0 +1,4 @@
+-- ERROR -------------------------------- examples/err_syntax/src/e22.erlt:19:23
+Parse Error
+ 19| -spec bitstring2() -> <<_:5>>.
+...|                       ^

@@ -1,0 +1,7 @@
+-spec test1() -> {}.
+-spec test2() -> {}.
+-spec test3() -> {}.
+-spec test4() -> {}.
+-spec test5() -> {}.
+-spec test6() -> {}.
+-spec test7(message()) -> {}.

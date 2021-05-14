@@ -1,0 +1,37 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(let_polymorphism).
+-export([test_poly_nil/0, get_any/0, use_any/0]).
+
+-spec test_poly_nil() -> {list(number()), list(string())}.
+test_poly_nil() ->
+    Nil = [],
+    Numbers = [1 | Nil],
+    Strings =  ["string" | Nil],
+    {Numbers, Strings}.
+
+-spec get_any() -> _.
+[unchecked]
+get_any() ->
+    remote:any().
+
+% this is questionable
+% but Haskell works the same way:
+% myAny () = undefined
+% test () = let a = myAny () in (a == 1, a == "2")
+-spec use_any() -> {boolean(), boolean()}.
+use_any() ->
+    X = get_any(),
+    {X == 1, X == "2"}.

@@ -1,0 +1,6 @@
+-- ERROR ------------------ examples/err/src/repeated_variable_error1.erlt:19:11
+Type Mismatch
+Found:    boolean()
+Required: number()
+ 19| equals(X, X) -> true;
+...|           ^

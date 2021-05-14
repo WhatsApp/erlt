@@ -1,0 +1,64 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(struct_mod01).
+
+-export_type([foo/0, bar/1, default_with_default/0, unicodestruct/0, opaque_baz/0, in_pattern/0]).
+
+-export([foo/0, bar/0, baz/0, pattern/3, guard/1, field/1, update/1, index/1]).
+
+-struct bar(A) :: (a :: A, b :: foo()).
+
+-opaque opaque_baz :: baz().
+
+-struct baz :: (bar = #bar{a = 1.5, b = #foo{}} :: bar(integer())).
+
+-struct unicodestruct :: (smilies = "😃😄😁😆😅" :: string()).
+
+-struct in_pattern :: ().
+
+-struct default_with_default :: (x = #baz{} :: opaque_baz()).
+
+-struct foo :: ().
+
+-spec foo() -> foo().
+foo() ->
+    #foo{}.
+
+-spec bar() -> bar(integer()).
+bar() ->
+    #bar{a = 1, b = #foo{}}.
+
+-spec baz() -> {opaque_baz(), default_with_default()}.
+baz() ->
+    {#baz{}, #default_with_default{}}.
+
+-spec pattern(foo(), bar(_A), in_pattern()) -> foo().
+pattern(#foo{}, #bar{b = B}, #in_pattern{}) -> B.
+
+-spec guard(bar(integer())) -> string().
+guard(Value) when Value =:= #bar{a = 1, b = #foo{}} ->
+    "ok".
+
+-spec field(bar(integer())) -> foo().
+field(Value) when Value#bar.a =:= 1 ->
+    Value#bar.b.
+
+-spec update(bar(integer())) -> bar(integer()).
+update(Value) ->
+    Value#bar{a = 2}.
+
+[unchecked]
+index(#bar.a) when #bar.a =:= 2 ->
+    #bar.b.

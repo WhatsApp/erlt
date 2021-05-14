@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e88.erlt:17:16
+Duplicate type var: A
+ 17| -struct box(A, A) :: (value :: A).
+...|                ^

@@ -1,0 +1,4 @@
+-- ERROR --------------------------------- examples/err_lint/src/e108.erlt:20:11
+Unknown field name
+ 20| test(#foo{name = Name}) ->
+...|           ~~~~~~~~~~~

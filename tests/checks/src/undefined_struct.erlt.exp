@@ -1,0 +1,4 @@
+undefined_struct.erlt:21:5: struct does_not_exist undefined
+%   21|     #does_not_exist{}.
+%     |     ^^^^^^^^^^^^^^^^^
+

@@ -1,0 +1,4 @@
+redefine_enum_ctr.erlt:19:25: variant ctr already defined in enum broken
+%   19| -enum broken() :: (ctr, ctr).
+%     |                         ^^^
+

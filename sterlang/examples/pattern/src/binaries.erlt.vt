@@ -1,0 +1,5 @@
+val test1/1: fun((binary()) -> {})
+val test2/1: fun((binary()) -> {})
+val test3/1: fun((binary()) -> {})
+val test4/1: fun((binary()) -> {})
+val test5/2: fun((boolean(), binary()) -> {})

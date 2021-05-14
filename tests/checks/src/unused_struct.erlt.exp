@@ -1,0 +1,4 @@
+unused_struct.erlt:22:1: type unused() is unused
+%   22| -struct unused :: ().
+%     | ^^^^^^^^^^^^^^^^^^^^
+

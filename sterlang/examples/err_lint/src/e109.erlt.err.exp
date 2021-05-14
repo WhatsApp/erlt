@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e109.erlt:19:6
+Duplicate fields: id
+ 19| test(#foo{id = Id, id = Id}) ->
+...|      ~~~~~~~~~~~~~~~~~~~~~~

@@ -1,0 +1,35 @@
+-spec singleton(A) -> list(A).
+-spec repeat(number(), A) -> list(A).
+-spec repeat_help(list(A), number(), A) -> list(A).
+-spec range(number(), number()) -> list(number()).
+-spec range_help(number(), number(), list(number())) -> list(number()).
+-spec cons(A, list(A)) -> list(A).
+-spec map(fun((A) -> B), list(A)) -> list(B).
+-spec indexed_map(fun((number(), A) -> B), list(A)) -> list(B).
+-spec foldl(fun((A, B) -> B), B, list(A)) -> B.
+-spec foldr(fun((A, B) -> B), B, list(A)) -> B.
+-spec filter(fun((A) -> boolean()), list(A)) -> list(A).
+-spec filter_map(fun((A) -> maybe:maybe(B)), list(A)) -> list(B).
+-spec maybe_cons(fun((A) -> maybe:maybe(B)), A, list(B)) -> list(B).
+-spec maybe_cons(fun((A) -> maybe:maybe(B))) -> fun((A, list(B)) -> list(B)).
+-spec length(list(A)) -> number().
+-spec reverse(list(A)) -> list(A).
+-spec member(A, list(A)) -> boolean().
+-spec all(fun((A) -> boolean()), list(A)) -> boolean().
+-spec any(fun((A) -> boolean()), list(A)) -> boolean().
+-spec maximum(list(A)) -> maybe:maybe(A).
+-spec minimum(list(A)) -> maybe:maybe(A).
+-spec sum(list(number())) -> number().
+-spec product(list(number())) -> number().
+-spec append(list(A), list(A)) -> list(A).
+-spec concat(list(list(A))) -> list(A).
+-spec concat_map(fun((A) -> list(B)), list(A)) -> list(B).
+-spec intersperse(A, list(A)) -> list(A).
+-spec map2(fun((A, B) -> C), list(A), list(B)) -> list(C).
+-spec is_empty(list(A)) -> boolean().
+-spec head(list(A)) -> maybe:maybe(A).
+-spec tail(list(A)) -> maybe:maybe(list(A)).
+-spec take(number(), list(A)) -> list(A).
+-spec drop(number(), list(A)) -> list(A).
+-spec partition(fun((A) -> boolean()), list(A)) -> {list(A), list(A)}.
+-spec unzip(list({A, B})) -> {list(A), list(B)}.

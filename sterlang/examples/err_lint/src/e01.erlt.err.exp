@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e01.erlt:19:19
+ping() is not a type. Did you mean `message()`?
+ 19| -type t_ping() :: ping().
+...|                   ~~~~~~

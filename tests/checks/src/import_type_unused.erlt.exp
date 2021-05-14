@@ -1,0 +1,4 @@
+import_type_unused.erlt:19:1: imported type foo:t/0 is unused
+%   19| -import_type(foo, [t/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^
+

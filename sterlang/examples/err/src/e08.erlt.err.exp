@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/err/src/e08.erlt:22:17
+Infinite type
+A <> #( x :: A, B )
+ 22|         true -> R
+...|                 ^

@@ -1,0 +1,66 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(day2).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-type row :: #(range :: {Min::integer(), Max::integer()}, char :: [integer()], password :: [integer()]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    count_correct(get_input(FileName), fun in_range/1).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    count_correct(get_input(FileName), fun exactly_one/1).
+
+
+-spec count_correct(list(A), fun((A) -> number())) -> number().
+count_correct([Row | Rest], Fun) ->
+    Fun(Row) + count_correct(Rest, Fun);
+count_correct([], _Fun) ->
+    0.
+
+in_range(#(range={Min, Max}, char = [Char], password=Password)) ->
+    case erlang:length([1 || ^Char <- Password]) of
+        X when X >= Min, X =< Max -> 1;
+        _ -> 0
+    end.
+
+exactly_one(#(range={First, Second}, char = [Char], password=Password)) ->
+    case (nth(First, Password) == Char) xor (nth(Second, Password) == Char) of
+        true -> 1;
+        false -> 0
+    end.
+
+-spec get_input(string()) -> [row()].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File).
+
+-spec nth(integer(), [A]) -> A.
+[unchecked]
+nth(N, List) ->
+    lists:nth(N, List).
+
+[unchecked]
+read_input(File) ->
+    case io:fread(File, "", "~d-~d ~c: ~s") of
+        {'ok', [N1, N2, Char, Password]} ->
+            [#(range={N1,N2}, char=Char, password=Password) | read_input(File)];
+        _ ->
+            []
+    end.

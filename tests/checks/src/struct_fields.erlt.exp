@@ -1,0 +1,36 @@
+struct_fields.erlt:24:39: field a already defined in struct duplicate
+%   24| -struct duplicate :: (a :: integer(), a :: integer()).
+%     |                                       ^^^^^^^^^^^^^^
+
+struct_fields.erlt:28:9: field b of struct struct has no initializer or default value
+%   28|         #struct{},
+%     |         ^^^^^^^^^
+
+struct_fields.erlt:29:9: field b of struct struct has no initializer or default value
+%   29|         #struct{a = 10},
+%     |         ^^^^^^^^^^^^^^^
+
+struct_fields.erlt:30:26: field does_not_exist undefined in struct struct
+%   30|         #struct{b = 1.0, does_not_exist = 10},
+%     |                          ^^^^^^^^^^^^^^^^^^^
+
+struct_fields.erlt:31:17: field does_not_exist undefined in struct struct
+%   31|         #struct{does_not_exist = _} = #struct{b = 1.0}
+%     |                 ^^^^^^^^^^^^^^^^^^
+
+struct_fields.erlt:34:17: field does_not_exist undefined in struct struct
+%   34| another(#struct{does_not_exist = Name}) -> Name.
+%     |                 ^^^^^^^^^^^^^^^^^^^^^
+
+struct_fields.erlt:36:26: field a already defined in struct struct
+%   36| duplicate(#struct{a = 1, a = 2, b = 3}) ->
+%     |                          ^^^^^
+
+struct_fields.erlt:37:20: field a already defined in struct struct
+%   37|     #struct{a = 1, a = 2, b = 3}.
+%     |                    ^^^^^
+
+struct_fields.erlt:24:1: type duplicate() is unused
+%   24| -struct duplicate :: (a :: integer(), a :: integer()).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

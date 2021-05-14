@@ -1,0 +1,52 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(catch_and_throw).
+
+-export([test/0]).
+
+-exception exn :: (value :: integer()).
+
+-spec test() -> [integer()].
+test() ->
+    [test_checked(X) || X <- [0,1,2,3]].
+
+% NOTE: checked code does not support calling throw/error/exit
+-spec test(integer()) -> integer().
+[unchecked]
+test(X) ->
+    case X of
+        0 -> throw(#exn{value=X});
+        1 -> error(#exn{value=X});
+        2 -> exit(#exn{value=X});
+        _ -> X
+    end.
+
+test_checked(X) ->
+    try
+        test(X)
+    catch
+        #exn{value=Y} -> Y
+
+        % NOTE: checked code does not support capturing class or stacktrace in catch clauses
+        %'throw', #exn{value=Y} -> Y;
+        %'error', #exn{value=Y}, Stck -> deal_with_stack_trace(Stck), Y;
+        %'exit', #exn{value=Y} -> Y
+    end.
+
+% unused
+%-spec deal_with_stack_trace([_X]) -> {}.
+%[unchecked]
+%deal_with_stack_trace(Stck) ->
+%    io:format("~p~n", [Stck]).

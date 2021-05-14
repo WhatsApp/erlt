@@ -1,0 +1,4 @@
+redefine_enum.erlt:20:1: type foo already defined
+%   20| -enum foo(T) :: (b{value :: T}).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

@@ -1,0 +1,11 @@
+{application, {{name}}, [
+    {description, "{{name}}"},
+    {vsn, "0.0.0"},
+    {registered, []},
+    {applications, [kernel, stdlib]},
+    {env, []},
+    {modules, []},
+    {licenses, []},
+    {links, []},
+    {exclude_files, []}
+]}.

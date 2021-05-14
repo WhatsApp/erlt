@@ -1,0 +1,4 @@
+recursive_struct.erlt:18:24: field a of struct struct contains recursive default value
+%   18| -struct struct :: (a = #struct{} :: struct()).
+%     |                        ^^^^^^^^^
+

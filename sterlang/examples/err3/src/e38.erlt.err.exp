@@ -1,0 +1,6 @@
+-- ERROR -------------------------------------- examples/err3/src/e38.erlt:19:18
+Type Mismatch
+Found:    list(A)
+Required: boolean()
+ 19|     case true of [true|_] -> 2 end.
+...|                  ~~~~~~~

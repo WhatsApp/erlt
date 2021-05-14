@@ -1,0 +1,16 @@
+-spec mk_rgb() -> rgb().
+-spec mk_triple(A) -> triple(A, A, A).
+-spec mk_none() -> option(A).
+-spec mk_unit() -> unit0().
+-spec mk_box(A) -> boxed(A).
+-spec mk_left(A) -> either(A, B).
+-spec mk_right(A) -> either(B, A).
+-spec zero(unit0(), A) -> A.
+-spec unbox(boxed(A)) -> A.
+-spec un_either(either(A, A)) -> A.
+-spec un_pair(pair(A, B)) -> {A, B}.
+-spec first(pair(A, B)) -> A.
+-spec second(pair(A, B)) -> B.
+-spec call_this_mod(pair(A, B)) -> pair(A, B).
+-spec box_ast_pair(number(), number(), list(A)) -> box1({ast(B), ast(A)}).
+-spec un_box_ast_pair(box1({ast(A), ast(B)})) -> #( l :: list(B), n :: number(), p :: number() ).

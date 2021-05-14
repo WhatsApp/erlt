@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e153.erlt:19:9
+Unbound variable: Y
+ 19|         ^Y -> true
+...|         ^^

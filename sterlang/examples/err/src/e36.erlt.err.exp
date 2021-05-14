@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e36.erlt:20:15
+Type Mismatch
+Found:    boolean()
+Required: number()
+ 20|     case X of false -> 1 end.
+...|               ~~~~~

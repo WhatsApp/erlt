@@ -1,0 +1,7 @@
+bad_opaque_unchecked.erlt:20:1: opaque unchecked type must be term()
+%   19| 
+%   20| [opaque, unchecked]
+%     | ^^^^^^^^^^^^^^^^^^^
+%   21| -type bad(X) :: 2.
+%   22| 
+

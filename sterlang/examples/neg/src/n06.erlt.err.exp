@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/neg/src/n06.erlt:20:28
+Infinite type
+A <> #( x :: A, B )
+ 20|     if B -> R#(x); true -> R end.
+...|                            ^

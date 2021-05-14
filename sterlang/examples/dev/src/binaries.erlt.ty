@@ -1,0 +1,29 @@
+-spec b00() -> binary().
+-spec b01() -> binary().
+-spec b02(number()) -> binary().
+-spec b03(number()) -> binary().
+-spec b04(number()) -> binary().
+-spec b05(binary()) -> binary().
+-spec b06(binary()) -> binary().
+-spec b07(bitstring()) -> binary().
+-spec b08(bitstring()) -> binary().
+-spec b09(number()) -> binary().
+-spec b10(number()) -> binary().
+-spec b11(number()) -> binary().
+-spec b12() -> binary().
+-spec b13() -> binary().
+-spec b14() -> binary().
+-spec b15() -> binary().
+-spec b16(binary()) -> boolean().
+-spec b17(binary(), binary(), binary(), number()) -> boolean().
+-spec b18(binary(), binary(), number(), binary()) -> boolean().
+-spec b19(binary()) -> {number(), bitstring()}.
+-spec b20(binary()) -> {number(), binary()}.
+-spec b21(binary()) -> {number(), binary(), number(), binary()}.
+-spec b22(binary()) -> {number(), number(), number()}.
+-spec b23(binary()) -> {}.
+-spec b24(binary()) -> {}.
+-spec b25(binary(), number(), binary(), number()) -> boolean().
+-spec b26(binary(), number(), binary(), number()) -> boolean().
+-spec b27(binary()) -> binary().
+-spec b28(binary()) -> {number()}.

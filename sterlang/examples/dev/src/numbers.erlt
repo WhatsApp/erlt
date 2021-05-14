@@ -1,0 +1,34 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(numbers).
+-export([foldl/3, length/1, add/2, add_number/2]).
+
+-spec foldl(fun((A, B) -> B), B, list(A)) -> B.
+foldl(F, Acc, [H|T]) -> foldl(F, F(H, Acc), T);
+foldl(_F, Acc, []) -> Acc.
+
+-spec length(list(_)) -> integer().
+length(Xs) -> foldl(fun (_, I) -> I + 1 end, 0, Xs).
+
+-spec add(integer(), integer()) -> integer().
+add(X1, X2) -> X1 + X2.
+
+-spec add_number(number(), number()) -> number().
+add_number(X1, X2) -> add(X1, X2).
+
+-spec one_on_one(number(), number()) -> number().
+one_on_one(-1, -1) -> -1_0;
+one_on_one(+1, +1) -> +1_0;
+one_on_one(_, _) -> +0_0.

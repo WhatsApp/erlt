@@ -1,0 +1,7 @@
+val test1/1: fun(({boolean()}) -> {})
+val test2/1: fun(({boolean()}) -> {})
+val test3/1: fun(({boolean()}) -> {})
+val test4/1: fun(({boolean()}) -> {})
+val test5/1: fun(({boolean()}) -> {})
+val test6/1: fun(({boolean(), boolean()}) -> {})
+val test7/1: fun(({boolean(), boolean()}) -> {})

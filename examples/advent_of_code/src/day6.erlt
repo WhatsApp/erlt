@@ -1,0 +1,53 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(day6).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+[unchecked]
+puzzle1(FileName) ->
+    ListOfListOfStrings = get_input(FileName),
+    %%io:format("~p~n", [ListOfListOfStrings]),
+    lists:sum(
+        [gb_sets:size(lists:foldl(fun(L, Acc) -> gb_sets:union(gb_sets:from_list(L), Acc) end, gb_sets:empty(), List))
+    || List <- ListOfListOfStrings]).
+
+
+-spec puzzle2(string()) -> integer().
+[unchecked]
+puzzle2(FileName) ->
+     ListOfListOfStrings = get_input(FileName),
+    lists:sum(
+        [gb_sets:size(lists:foldl(fun(L, Acc) -> gb_sets:intersection(gb_sets:from_list(L), Acc) end, all(), List))
+    || List <- ListOfListOfStrings]).
+
+[unchecked]
+all() ->
+    gb_sets:from_list("abcdefghijklmnopqrstuvwxyz").
+
+-spec get_input(string()) -> [[string()]].
+[unchecked]
+get_input(FileName) ->
+    {'ok', File} = file:open(FileName, ['read']),
+    read_input(File, []).
+
+[unchecked]
+read_input(File, Acc) ->
+    case io:get_line(File, "") of
+        'eof' -> [Acc];
+        "\n" -> [Acc|read_input(File, [])];
+        Line  -> read_input(File, [lists:reverse(tl(lists:reverse(Line)))|Acc])
+    end.

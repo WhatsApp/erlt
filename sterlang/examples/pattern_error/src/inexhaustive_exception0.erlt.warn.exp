@@ -1,0 +1,9 @@
+-- WARNING -------- examples/pattern_error/src/inexhaustive_exception0.erlt:23:1
+Missing Patterns
+missing: _
+ 23| test(#e0{}) -> {};
+...| ~~~~~~~~~~~~~~~~~~
+...| test(#e1{a = true}) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 25| test(#e1{a = false}) -> {}.
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

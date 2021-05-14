@@ -1,0 +1,4 @@
+undefined_remote_enum.erlt:21:4: enum undefined_remote_enum:bar undefined
+%   21| f(?MODULE:bar.baz) ->
+%     |    ^^^^^^^^^^^^^^
+

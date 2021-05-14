@@ -1,0 +1,44 @@
+enum_fields.erlt:23:45: field a already defined in enum duplicate.variant
+%   23| -enum duplicate :: (variant{a :: integer(), a :: integer()}).
+%     |                                             ^^^^^^^^^^^^^^
+
+enum_fields.erlt:27:9: no fields defined for enum enum.no_fields
+%   27|         enum.no_fields{},
+%     |         ^^^^^^^^^^^^^^^^
+
+enum_fields.erlt:28:9: expected fields for enum enum.variant
+%   28|         enum.variant,
+%     |         ^^^^^^^^^^^^
+
+enum_fields.erlt:28:9: field b of enum enum.variant has no initializer or default value
+%   28|         enum.variant,
+%     |         ^^^^^^^^^^^^
+
+enum_fields.erlt:29:9: field b of enum enum.variant has no initializer or default value
+%   29|         enum.variant{},
+%     |         ^^^^^^^^^^^^^^
+
+enum_fields.erlt:30:9: field b of enum enum.variant has no initializer or default value
+%   30|         enum.variant{a = 10},
+%     |         ^^^^^^^^^^^^^^^^^^^^
+
+enum_fields.erlt:31:31: field does_not_exist undefined in enum enum.variant
+%   31|         enum.variant{b = 1.0, does_not_exist = 10},
+%     |                               ^^^^^^^^^^^^^^^^^^^
+
+enum_fields.erlt:32:22: field does_not_exist undefined in enum enum.variant
+%   32|         enum.variant{does_not_exist = _} = enum.variant{b = 1.0}
+%     |                      ^^^^^^^^^^^^^^^^^^
+
+enum_fields.erlt:35:31: field a already defined in enum enum.variant
+%   35| duplicate(enum.variant{a = 1, a = 2, b = 3}) ->
+%     |                               ^^^^^
+
+enum_fields.erlt:36:25: field a already defined in enum enum.variant
+%   36|     enum.variant{a = 1, a = 2, b = 3}.
+%     |                         ^^^^^
+
+enum_fields.erlt:23:1: type duplicate() is unused
+%   23| -enum duplicate :: (variant{a :: integer(), a :: integer()}).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

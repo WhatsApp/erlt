@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------- examples/err_lint/src/e57.erlt:17:3
+Duplicate fields: x
+ 17| f(#(x = XVal, x = YVal)) -> {XVal, YVal}.
+...|   ~~~~~~~~~~~~~~~~~~~~~

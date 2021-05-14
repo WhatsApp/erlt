@@ -1,0 +1,6 @@
+-- ERROR ---------------------------------------- examples/err/src/e83.erlt:20:7
+Type Mismatch
+Found:    boolean()
+Required: binary()
+ 20|     <<X/binary>>.
+...|       ^

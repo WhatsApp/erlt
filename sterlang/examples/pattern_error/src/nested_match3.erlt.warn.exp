@@ -1,0 +1,11 @@
+-- WARNING ------------------ examples/pattern_error/src/nested_match3.erlt:20:3
+Missing Patterns
+missing: false, _
+ 20|   fun
+...|   ~~~
+...|     Name(true, false) -> {};
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...|     Name(true, true) -> {}
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 23|   end,
+...| ~~~~~

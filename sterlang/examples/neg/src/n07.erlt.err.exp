@@ -1,0 +1,5 @@
+-- ERROR --------------------------------------- examples/neg/src/n07.erlt:28:25
+Infinite type
+A <> #( next :: option(A), B )
+ 28|   getOrElse(Rec#(next), Rec).
+...|                         ~~~

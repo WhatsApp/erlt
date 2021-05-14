@@ -1,0 +1,6 @@
+-- ERROR ---------------------------------------- examples/err/src/e10.erlt:30:9
+Type Mismatch
+Found:    string()
+Required: number()
+ 30|         "" -> false
+...|         ^^

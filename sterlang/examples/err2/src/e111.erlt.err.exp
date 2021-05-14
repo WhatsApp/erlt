@@ -1,0 +1,4 @@
+-- ERROR ------------------------------------- examples/err2/src/e111.erlt:18:15
+Message structs do not allow type parameters
+ 18| -message ping(A) :: (load :: A).
+...|               ^

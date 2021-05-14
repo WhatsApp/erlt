@@ -1,0 +1,8 @@
+undefined_variant.erlt:23:3: enum foo has no variant baz
+%   23| f(foo.baz) ->
+%     |   ^^^^^^^
+
+undefined_variant.erlt:20:1: type foo() is unused
+%   20| -enum foo() :: (bar).
+%     | ^^^^^^^^^^^^^^^^^^^^
+

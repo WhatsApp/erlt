@@ -1,0 +1,4 @@
+-- ERROR --------------------------------- examples/err_lint/src/e107.erlt:20:28
+Unknown field name
+ 20| test(Foo) when Foo == #foo{name = "anonymous"} ->
+...|                            ~~~~~~~~~~~~~~~~~~

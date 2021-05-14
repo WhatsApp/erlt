@@ -1,0 +1,12 @@
+remote_calls.erlt:29:6: function remote_calls:unchecked/0 is unchecked (called from checked code)
+%   29|     ?MODULE:unchecked(), %% error
+%     |      ^^^^^^^^^^^^^^^^^^
+
+remote_calls.erlt:30:6: function remote_calls:private/0 is not exported
+%   30|     ?MODULE:private(), %% error
+%     |      ^^^^^^^^^^^^^^^^
+
+remote_calls.erlt:31:6: checked spec for function remote_calls:undefined/0 undefined
+%   31|     ?MODULE:undefined(). %% error
+%     |      ^^^^^^^^^^^^^^^^^^
+

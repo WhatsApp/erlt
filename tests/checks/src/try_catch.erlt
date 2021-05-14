@@ -1,0 +1,58 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+
+-module(try_catch).
+
+-export([t1/2, t2/0]).
+
+-exception reason :: ().
+
+[unchecked]
+t1(F, Bound) ->
+    try
+        F()
+    catch
+        %% Stack tests
+        _, _, ^Bound -> 'error';
+        _, _, Bound -> 'error';
+        _, _, {'other', 'expression'} -> 'error';
+        _, _, Unbound when is_list(Unbound) -> 'error';
+        _, Repeat, Repeat -> 'error';
+        _, _, Unbound -> 'ok';
+        _, _, _ -> 'ok';
+        %% Kind tests
+        Bound, _ -> 'error';
+        {'other', 'expression'}, _ -> 'error';
+        'other_atom', _ -> 'error';
+        _, _ -> 'ok';
+        Unbound, _ -> 'ok';
+        ^Bound, _ -> 'ok';
+        'exit', _ -> 'ok';
+        'error', _ -> 'ok';
+        'throw', _ -> 'ok'
+    end.
+
+t2() ->
+    try
+        'ok'
+    catch
+        #reason{} -> 'ok';
+        'throw', #reason{} -> 'error';
+        'error', #reason{}  -> 'error';
+        'exit', #reason{} -> 'error';
+        _, #reason{}, Stack -> 'error'
+    end.
+
+-spec t2() -> atom().

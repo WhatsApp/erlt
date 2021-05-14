@@ -1,0 +1,7 @@
+-spec mk_pair1(A, A) -> {A, A}.
+-spec mk_pair2(A, B) -> {A, B}.
+-spec mk_con(A, B) -> p_con(A).
+-spec de_con(p_con(A)) -> {A, A}.
+-spec loop() -> A.
+-spec mk_pair_any1() -> {A, B}.
+-spec mk_pair_any2() -> {A, A}.

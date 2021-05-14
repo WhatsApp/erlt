@@ -1,0 +1,14 @@
+-spec with_default(A, result(B, A)) -> A.
+-spec with_default(A) -> fun((result(B, A)) -> A).
+-spec map(fun((A) -> B), result(C, A)) -> result(C, B).
+-spec map(fun((A) -> B)) -> fun((result(C, A)) -> result(C, B)).
+-spec map2(fun((A, B) -> C), result(D, A), result(D, B)) -> result(D, C).
+-spec map2(fun((A, B) -> C)) -> fun((result(D, A), result(D, B)) -> result(D, C)).
+-spec and_then(fun((A) -> result(B, C)), result(B, A)) -> result(B, C).
+-spec and_then(fun((A) -> result(B, C))) -> fun((result(B, A)) -> result(B, C)).
+-spec map_error(fun((A) -> B), result(A, C)) -> result(B, C).
+-spec map_error(fun((A) -> B)) -> fun((result(A, C)) -> result(B, C)).
+-spec to_maybe(result(A, B)) -> maybe:maybe(B).
+-spec from_maybe(A, maybe:maybe(B)) -> result(A, B).
+-spec from_maybe(A) -> fun((maybe:maybe(B)) -> result(A, B)).
+-spec is_ok(result(A, B)) -> boolean().

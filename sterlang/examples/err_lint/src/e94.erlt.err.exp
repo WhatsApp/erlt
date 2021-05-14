@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------- examples/err_lint/src/e94.erlt:20:5
+Duplicate fields: id
+ 20|     #my_record{id = 1, id = 2}.
+...|     ~~~~~~~~~~~~~~~~~~~~~~~~~~

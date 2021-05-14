@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------- examples/err_lint/src/e70.erlt:17:9
+Useless type variable: A
+ 17| -enum e(A) :: (e1).
+...|         ^

@@ -1,0 +1,4 @@
+unused_enum.erlt:21:1: type unused() is unused
+%   21| -enum unused :: (x).
+%     | ^^^^^^^^^^^^^^^^^^^
+

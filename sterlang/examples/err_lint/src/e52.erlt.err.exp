@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e52.erlt:18:12
+Unknown enum constructor: unknown_ctr
+ 18| test() -> [my_enum.unknown_ctr].
+...|            ~~~~~~~~~~~~~~~~~~~

@@ -1,0 +1,4 @@
+-- ERROR --------------------------------- examples/err_lint/src/e156.erlt:17:35
+Duplicate fields: id
+ 17| -enum bad_ctr(A) :: (ctr{id :: A, id :: A}).
+...|                                   ~~~~~~~

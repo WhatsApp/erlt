@@ -1,0 +1,21 @@
+illegal_enum.erlt:20:9: only fully qualified remote 'module:name' or local 'name' references are supported
+%   20|         Dynamic:enum.variant{field = 1},
+%     |         ^^^^^^^^^^^^
+
+illegal_enum.erlt:21:9: only fully qualified remote 'module:name' or local 'name' references are supported
+%   21|         foo:Dynamic.variant{field = 1}
+%     |         ^^^^^^^^^^^
+
+illegal_enum.erlt:18:1: function f/1 is unused
+%   17| 
+%   18| f(Dynamic) ->
+%     | ^^^^^^^^^^^^^
+%   19|     {
+%     | ...
+%   21|         foo:Dynamic.variant{field = 1}
+%   22|     }.
+
+illegal_enum.erlt:18:3: variable 'Dynamic' is unused
+%   18| f(Dynamic) ->
+%     |   ^^^^^^^
+

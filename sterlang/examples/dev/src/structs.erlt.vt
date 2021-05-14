@@ -1,0 +1,57 @@
+val test/1: fun((user()) -> user())
+val X: user()
+val mk_user/2: fun((string(), number()) -> user())
+val Name: string()
+val Id: number()
+val update_user/3: fun((user(), string(), number()) -> user())
+val User: user()
+val Name: string()
+val Id: number()
+val get_id/1: fun((user()) -> number())
+val User: user()
+val get_man_id/1: fun((manager()) -> number())
+val Manager: manager()
+val check_user/1: fun((user()) -> ok())
+val User: user()
+val check_users/2: fun((user(), user()) -> ok())
+val User1: user()
+val User2: user()
+val _User1: user()
+val _User2: user()
+val is_user/1: fun((user()) -> boolean())
+val match_users/2: fun((user(), user()) -> boolean())
+val Id: number()
+val Id: number()
+val foo/1: fun((manager()) -> user())
+val User: user()
+val mk_box_int/0: fun(() -> box(number()))
+val mk_box/1: fun((A) -> box(A))
+val X: A
+val mk_box2/1: fun((A) -> box2(A, A))
+val X: A
+val update_box/2: fun((box(A), A) -> box(A))
+val B: box(A)
+val X: A
+val update_box2/2: fun((box2(A, A), A) -> box2(A, A))
+val B: box2(A, A)
+val X: A
+val update_box2/3: fun((box2(B, A), A, B) -> box2(B, A))
+val B: box2(B, A)
+val Y: A
+val X: B
+val select_box2/1: fun((box2(number(), number())) -> number())
+val B: box2(number(), number())
+val test_box2/1: fun((box2(A, A)) -> boolean())
+val B: box2(A, A)
+val pat_box2/1: fun((box2(A, A)) -> A)
+val X: A
+val X: A
+val _X: A
+val Y: A
+val mk_wrapped_int/0: fun(() -> wrapped_int())
+val mk_mixed1/0: fun(() -> mixed_struct1(number()))
+val mk_mixed2/0: fun(() -> mixed_struct2(list(number()), number()))
+val match_mixed1/1: fun((mixed_struct1(number())) -> boolean())
+val match_mixed2/1: fun((mixed_struct2(list(number()), number())) -> boolean())
+val struct_indices/0: fun(() -> {number(), string()})
+val Indices: indices()

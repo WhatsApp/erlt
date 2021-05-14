@@ -1,0 +1,25 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(opaque_pair).
+-export_type([pair/2]).
+-export([mk/2, swap/1]).
+
+-opaque pair(A, B) :: {A, B}.
+
+-spec mk(A, B) -> pair(A, B).
+mk(A, B) -> {A, B}.
+
+-spec swap(pair(A, B)) -> pair(B, A).
+swap({A, B}) -> {B, A}.

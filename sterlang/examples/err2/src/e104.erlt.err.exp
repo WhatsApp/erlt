@@ -1,0 +1,4 @@
+-- ERROR -------------------------------------- examples/err2/src/e104.erlt:18:1
+Cyclic type: box2
+ 18| -type box2(A) :: box(box2(A)).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

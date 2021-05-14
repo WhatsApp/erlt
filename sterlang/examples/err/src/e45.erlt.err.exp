@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e45.erlt:18:21
+Type Mismatch
+Found:    list(A)
+Required: number()
+ 18| foo(_) -> case 1 of [true,false] -> 1 end.
+...|                     ~~~~~~~~~~~~

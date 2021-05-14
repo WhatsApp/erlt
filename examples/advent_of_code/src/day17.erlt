@@ -1,0 +1,110 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(day17).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    SMap = get_input(FileName),
+    loop(SMap, fun get_3d_neighbours/1, 0, 6).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    SMap = get_input(FileName),
+    loop(SMap, fun get_4d_neighbours/1, 0, 6).
+
+loop(SMap, _GetNs, N, N) -> nof_actives(SMap);
+loop(SMap, GetNs, M, N) ->
+    AllPossible = get_all_neighbours(SMap, GetNs),
+    loop(update(AllPossible, GetNs, SMap), GetNs, M+1, N).
+
+get_all_neighbours(SMap, GetNs) ->
+    to_ordset(t_lists:flatten([GetNs(XYZ) || XYZ <- keys(SMap)])).
+
+update(Keys, GetNs, SMap) ->
+    t_lists:foldl(fun(Key, NewMap) -> put(Key, new_val(Key, GetNs(Key), SMap), NewMap) end, new(), Keys).
+
+new_val(XYZ, Neighbours, SMap) ->
+    case {get(XYZ, SMap), count_actives(Neighbours, SMap)} of
+        {pos.active, 2} -> pos.active;
+        {_, 3} -> pos.active;
+        {_ ,_}-> pos.inactive
+    end.
+
+count_actives(Points, SMap) ->
+    t_lists:sum([1 || Point <- Points, get(Point, SMap) =:= pos.active]).
+
+nof_actives(SMap) ->
+    count_actives(keys(SMap), SMap).
+
+-spec to_ordset([A]) -> [A].
+[unchecked]
+to_ordset(L) -> ordsets:from_list(L).
+
+get_3d_neighbours(#xyz{x=OldX, y=OldY, z=OldZ} = XYZ) ->
+    [#xyz{x=OldX+X,y=OldY+Y,z=OldZ+Z} || X <- [0,1,-1], Y <- [0,1,-1], Z <- [0,1,-1]] -- [XYZ].
+
+get_4d_neighbours(#xyz{x=OldX, y=OldY, z=OldZ, w=OldW} = XYZ) ->
+    [#xyz{x=OldX+X,y=OldY+Y,z=OldZ+Z, w=OldW+W} || X <- [0,1,-1], Y <- [0,1,-1], Z <- [0,1,-1], W <- [0,1,-1]] -- [XYZ].
+
+get_input(FileName) ->
+    Bin = read_file(FileName),
+    create_map(Bin, new(), 1, 1).
+
+create_map(<<C,Rest/binary>>, Map, X, Y) when C == 46 ->
+    create_map(Rest, put(#xyz{x=X,y=Y}, pos.inactive, Map), X+1, Y);
+create_map(<<C,Rest/binary>>, Map, X, Y) when C == 35 ->
+    create_map(Rest, put(#xyz{x=X,y=Y}, pos.active, Map), X+1, Y);
+create_map(<<C,Rest/binary>>, Map, _X, Y) when C == 10 ->
+    create_map(Rest, Map, 1, Y+1);
+create_map(<<>>, Map, _X, _Y) ->
+    Map.
+
+
+
+-enum pos :: (active, inactive).
+
+-struct xyz :: (x::integer(), y::integer(), z=0::integer(), w=0::integer()).
+
+[unchecked]
+-opaque smap() :: term().
+
+
+-spec get(xyz(), smap()) -> pos().
+[unchecked]
+get(XYZ, Map) ->
+    maps:get(XYZ, Map, pos.inactive).
+
+-spec put(xyz(), pos(), smap()) -> smap().
+[unchecked]
+put(XYZ, Pos, Map) ->
+    maps:put(XYZ, Pos, Map).
+
+-spec new() -> smap().
+[unchecked]
+new() ->
+    #{}.
+
+-spec keys(smap()) -> [xyz()].
+[unchecked]
+keys(Map) ->
+    maps:keys(Map).
+
+-spec read_file(string()) -> binary().
+[unchecked]
+read_file(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    Bin.

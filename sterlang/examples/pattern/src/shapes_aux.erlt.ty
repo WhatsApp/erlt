@@ -1,0 +1,1 @@
+-spec id_shape(#( A )) -> #( A ).

@@ -1,0 +1,4 @@
+-- ERROR ----------------------------------- examples/err_lint/src/e91.erlt:18:1
+Duplicate struct: #duplicate_struct{}
+ 18| -struct duplicate_struct() :: (id :: integer()).
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

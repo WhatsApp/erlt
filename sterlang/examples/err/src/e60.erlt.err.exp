@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------------- examples/err/src/e60.erlt:17:1
+Cyclic type: cyclic
+ 17| -type cyclic() :: cyclic().
+...| ~~~~~~~~~~~~~~~~~~~~~~~~~~

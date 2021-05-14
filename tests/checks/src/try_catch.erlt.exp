@@ -1,0 +1,60 @@
+try_catch.erlt:28:15: only unbound variables are allowed in stacktrace position of catch clauses
+%   28|         _, _, ^Bound -> 'error';
+%     |               ^^^^^^
+
+try_catch.erlt:29:15: stacktrace variable 'Bound' must not be previously bound
+%   29|         _, _, Bound -> 'error';
+%     |               ^^^^^
+
+try_catch.erlt:30:15: only unbound variables are allowed in stacktrace position of catch clauses
+%   30|         _, _, {'other', 'expression'} -> 'error';
+%     |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:31:36: stacktrace variable 'Unbound' must not be used in a guard
+%   31|         _, _, Unbound when is_list(Unbound) -> 'error';
+%     |                                    ^^^^^^^
+
+try_catch.erlt:32:12: stacktrace variable 'Repeat' must not be previously bound
+%   32|         _, Repeat, Repeat -> 'error';
+%     |            ^^^^^^
+
+try_catch.erlt:36:9: variable 'Bound' is already bound - must write '^Bound' to use value in pattern
+%   36|         Bound, _ -> 'error';
+%     |         ^^^^^
+
+try_catch.erlt:37:9: only variables and atoms throw, exit, and error are allowed in kind position of catch clauses
+%   37|         {'other', 'expression'}, _ -> 'error';
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:38:9: only variables and atoms throw, exit, and error are allowed in kind position of catch clauses
+%   38|         'other_atom', _ -> 'error';
+%     |         ^^^^^^^^^^^^
+
+try_catch.erlt:52:9: checked code does not support capturing class or stacktrace in catch clauses
+%   52|         'throw', #reason{} -> 'error';
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:53:9: checked code does not support capturing class or stacktrace in catch clauses
+%   53|         'error', #reason{}  -> 'error';
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:54:9: checked code does not support capturing class or stacktrace in catch clauses
+%   54|         'exit', #reason{} -> 'error';
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:55:9: checked code does not support capturing class or stacktrace in catch clauses
+%   55|         _, #reason{}, Stack -> 'error'
+%     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+try_catch.erlt:33:15: variable 'Unbound' is unused
+%   33|         _, _, Unbound -> 'ok';
+%     |               ^^^^^^^
+
+try_catch.erlt:40:9: variable 'Unbound' is unused
+%   40|         Unbound, _ -> 'ok';
+%     |         ^^^^^^^
+
+try_catch.erlt:55:23: variable 'Stack' is unused
+%   55|         _, #reason{}, Stack -> 'error'
+%     |                       ^^^^^
+

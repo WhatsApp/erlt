@@ -1,0 +1,4 @@
+-- ERROR --------------------------------- examples/err_lint/src/e155.erlt:19:13
+Got 2 positional field(s) instead of 1
+ 19| match_mixed(#mixed_struct{1, 2}) ->
+...|             ~~~~~~~~~~~~~~~~~~~

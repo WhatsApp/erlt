@@ -1,0 +1,20 @@
+-spec empty() -> map_ffi:tmap(A, B).
+-spec get(A, map_ffi:tmap(A, B)) -> maybe:maybe(B).
+-spec member(A, map_ffi:tmap(A, B)) -> boolean().
+-spec size(map_ffi:tmap(A, B)) -> number().
+-spec is_empty(map_ffi:tmap(A, B)) -> boolean().
+-spec insert(A, B, map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec remove(A, map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec update(A, fun((maybe:maybe(B)) -> maybe:maybe(B)), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec singleton(A, B) -> map_ffi:tmap(A, B).
+-spec union(map_ffi:tmap(A, B), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec intersect(map_ffi:tmap(A, B), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec diff(map_ffi:tmap(A, B), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec fold(fun((A, B, C) -> C), C, map_ffi:tmap(A, B)) -> C.
+-spec map(fun((A, B) -> C), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, C).
+-spec filter(fun((A, B) -> boolean()), map_ffi:tmap(A, B)) -> map_ffi:tmap(A, B).
+-spec partition(fun((A, B) -> boolean()), map_ffi:tmap(A, B)) -> {map_ffi:tmap(A, B), map_ffi:tmap(A, B)}.
+-spec keys(map_ffi:tmap(A, B)) -> list(A).
+-spec values(map_ffi:tmap(A, B)) -> list(B).
+-spec to_list(map_ffi:tmap(A, B)) -> list({A, B}).
+-spec from_list(list({A, B})) -> map_ffi:tmap(A, B).

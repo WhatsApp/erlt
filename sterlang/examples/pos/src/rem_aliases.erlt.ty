@@ -1,0 +1,2 @@
+-spec mk_pair1(A, A) -> {A, A}.
+-spec mk_con(A, B) -> aliases:p_con(A).

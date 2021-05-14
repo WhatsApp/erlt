@@ -1,0 +1,6 @@
+-- ERROR --------------------------------------- examples/err/src/e03.erlt:18:20
+Type Mismatch
+Found:    boolean()
+Required: string()
+ 18| foo() -> "true" == true.
+...|                    ~~~~

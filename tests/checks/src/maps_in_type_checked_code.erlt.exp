@@ -1,0 +1,24 @@
+maps_in_type_checked_code.erlt:31:28: map syntax is only allowed in unchecked functions
+%   31| -struct hi :: (hello_map = #{} :: my_map()).
+%     |                            ^^^
+
+maps_in_type_checked_code.erlt:34:6: map syntax is only allowed in unchecked functions
+%   34| test(#{'x':=A}) when A > #{} ->
+%     |      ^^^^^^^^^
+
+maps_in_type_checked_code.erlt:34:26: map syntax is only allowed in unchecked functions
+%   34| test(#{'x':=A}) when A > #{} ->
+%     |                          ^^^
+
+maps_in_type_checked_code.erlt:35:10: map syntax is only allowed in unchecked functions
+%   35|     case #{'x'=>A} of
+%     |          ^^^^^^^^^
+
+maps_in_type_checked_code.erlt:36:20: map syntax is only allowed in unchecked functions
+%   36|         Z when Z > A#{'y'=>3} ->
+%     |                    ^^^^^^^^^^
+
+maps_in_type_checked_code.erlt:37:13: map syntax is only allowed in unchecked functions
+%   37|             Z#{'y'=>3}
+%     |             ^^^^^^^^^^
+

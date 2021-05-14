@@ -1,0 +1,17 @@
+val foldl/3: fun((fun((B, A) -> A), A, list(B)) -> A)
+val F: fun((B, A) -> A)
+val Acc: A
+val H: B
+val T: list(B)
+val _F: fun((B, A) -> A)
+val Acc: A
+val length/1: fun((list(A)) -> number())
+val Xs: list(A)
+val I: number()
+val add/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val add_number/2: fun((number(), number()) -> number())
+val X1: number()
+val X2: number()
+val one_on_one/2: fun((number(), number()) -> number())

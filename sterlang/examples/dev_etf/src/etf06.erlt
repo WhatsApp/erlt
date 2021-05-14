@@ -1,0 +1,33 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(etf06).
+
+-export([same/2, same/3, same1/3, foo/1, same2/1]).
+
+same(X, Y = X) -> Y;
+same(X, _) -> X.
+
+same(X, Y, X = Y = Z) -> Z;
+same(_, Y, _) -> Y.
+
+same1(X, Y, (X = Y) = Z) -> Z;
+same1(_, Y, _) -> Y.
+
+same2({X, X} = Z) -> Z;
+same2(Y) -> Y.
+
+foo(Y) ->
+    X = Y,
+    3 = X.

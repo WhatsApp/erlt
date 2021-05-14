@@ -1,0 +1,30 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(etf16).
+
+-export([unary_plus/1, unary_minus/1, unary_not/1, unary_bnot/1]).
+
+%% Unary operations
+-spec unary_plus(integer()) -> integer().
+unary_plus(X) -> + (+ X).
+
+-spec unary_minus(integer()) -> integer().
+unary_minus(X) -> - (- X).
+
+-spec unary_not(boolean()) -> boolean().
+unary_not(X) -> not (not X).
+
+-spec unary_bnot(integer()) -> integer().
+unary_bnot(X) -> bnot (bnot X).

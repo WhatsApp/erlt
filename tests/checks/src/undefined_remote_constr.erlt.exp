@@ -1,0 +1,4 @@
+undefined_remote_constr.erlt:22:1: syntax error before: -
+%   22| -enum foo() :: (bar).
+%     | ^
+

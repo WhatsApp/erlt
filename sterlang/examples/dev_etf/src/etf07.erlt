@@ -1,0 +1,31 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(etf07).
+
+-export([get/1, put/2, get2/1, put2/2]).
+
+-enum option(A) :: some{A} | none{}.
+
+get(option.some{A}, _) -> A;
+get(option.none{}, Default) -> Default.
+
+put(false, _) -> option.none{};
+put(true, X) -> option.some{X}.
+
+get2(maybe.maybe.just{A}, _) -> A;
+get2(maybe.maybe.nothing{}, Default) -> Default.
+
+put2(false, _) -> maybe.maybe.nothing{};
+put2(true, X) -> maybe.maybe.just{A}.

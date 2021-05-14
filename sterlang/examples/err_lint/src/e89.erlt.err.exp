@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e89.erlt:18:14
+Unbound type variable: TypeVar
+ 18|     field :: TypeVar
+...|              ~~~~~~~

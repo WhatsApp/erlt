@@ -1,0 +1,2 @@
+val foo/1: fun((#( x :: boolean(), y :: boolean(), A )) -> number())
+val Rec: #( x :: boolean(), y :: boolean(), A )

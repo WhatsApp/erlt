@@ -1,0 +1,8 @@
+redefine_imported_struct.erlt:20:1: type bar already defined
+%   20| -import_type(no_need_to_exist, [bar/0]).
+%     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+redefine_imported_struct.erlt:23:1: type foo already imported from no_need_to_exist1
+%   23| -struct foo :: ().
+%     | ^^^^^^^^^^^^^^^^^
+

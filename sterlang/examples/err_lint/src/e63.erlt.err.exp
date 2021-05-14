@@ -1,0 +1,4 @@
+-- ERROR ---------------------------------- examples/err_lint/src/e63.erlt:17:25
+Unknown type: some_type/0
+ 17| -enum my_enum() :: (ctr{some_type()}).
+...|                         ~~~~~~~~~~~

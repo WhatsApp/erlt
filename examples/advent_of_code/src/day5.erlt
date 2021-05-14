@@ -1,0 +1,47 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(day5).
+
+-export([puzzle1/1, puzzle2/1]).
+
+-spec puzzle1(string()) -> integer().
+puzzle1(FileName) ->
+    Bin = get_input(FileName),
+    t_lists:max([A*8+B || <<A:7,B:3>> <= Bin]).
+
+-spec puzzle2(string()) -> integer().
+puzzle2(FileName) ->
+    Bin = get_input(FileName),
+    find_step(t_lists:sort([A*8+B || <<A:7,B:3>> <= Bin])).
+
+find_step([First|List]) ->
+    find_step(List, First+1).
+
+find_step([X|Rest], X) ->
+    find_step(Rest, X+1);
+find_step(_, X) ->
+    X.
+
+-spec get_input(string()) -> binary().
+[unchecked]
+get_input(FileName) ->
+    {'ok', Bin} = file:read_file(FileName),
+    << <<(val(Char)):1>> || <<Char:8>> <= Bin, val(Char) >= 0 >>.
+
+val($B) -> 1;
+val($F) -> 0;
+val($R) -> 1;
+val($L) -> 0;
+val(_) -> -1.

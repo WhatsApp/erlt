@@ -1,0 +1,8 @@
+bad_specs.erlt:19:10: When guards for fun types are not supported by the type system
+%   19| -spec foo(A) -> A when A :: integer().
+%     |          ^^^^^^^^^^^^^^^
+
+bad_specs.erlt:19:24: The constraint type is not supported by the type system
+%   19| -spec foo(A) -> A when A :: integer().
+%     |                        ^
+

@@ -1,0 +1,107 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+%% Checks attempts to use variables exported from subexpressions
+
+-module(export_var).
+
+-export([f/1]).
+
+-enum e(A) :: (c{v::A}).
+
+-struct s :: (f = 0 :: integer()).
+
+%% Error: use of exported variables is not allowed
+[unchecked]
+f(X) ->
+    case X of
+        {'ok', Case} -> 'ok';
+        {'error', Case} -> 'ok'
+    end,
+    if X > 0 -> If = 1;
+       true -> If = 0
+    end,
+    %% note that in reveice with an 'after', all exports are unsafe
+    receive
+        {'a', Receive} -> 'ok';
+        {'b', Receive} -> 'ok'
+    end,
+
+    %% note: TryExpr is only safe inside an 'of...' part, in other parts
+    %% and outside the try, TryExpr might not have been given a value.
+    %% TryAfter is considered unsafe outside the try, even if it is in fact
+    %% guaranteed to have been executed. Similarly TryOf is always
+    %% considered unsafe outside the try, but if there is no catch part, it
+    %% is guaranteed to have been executed. These could potentially be
+    %% changed in the future. TryCatch can never be safe outside the try,
+    %% since that part only executes if an exception occurred.
+    try TryExpr=X
+    of
+        {'ok', TryOf} -> {'ok', TryOf, TryExpr};
+        {'error', TryOf} -> {'ok', TryOf, TryExpr}
+    catch
+        {'a', TryCatch} -> {'error', TryCatch};
+        {'b', TryCatch} -> {'error', TryCatch}
+    after
+        _TryAfter = 'done'
+    end,
+    begin
+        BlockVar = X+1
+    end,
+    g(LocalCallArg = X),
+    lists:append(RemoteCallArg = [1,2,3], [4,5]),
+    X:f(DynRemoteCallArg = 'foo'),
+    -(UnaryOpArg=42),
+    2*(RightBinaryOpArg = 42),
+    (LeftBinaryOpArg = 17)/2,
+    (AndAlsoLeftArg = true) andalso (X =:= 1),
+    _ = {'foo', TupleArg = X + 1, 'bar'},
+    _ = [ConsHeadArg = X + 1 | ConsTailArg = []],
+    Map = #{'a' => MapVal = 303},
+    _ = (MapUpdateArg=Map)#{'a' := MapUpdateVal=909},
+    _ = << 1:1, (BinaryVal=2):1, 3:1 >>,
+    _Enum = e.c{ v = (EnumVal = 42) },
+    Shape = #(a = (ShapeVal = 11)),
+    _ = (ShapeUpdateArg=Shape)#(a = (ShapeUpdateVal = 22)),
+    _ = (ShapeFieldArg=Shape)#(a),
+    Struct = #s{f = (StructVal = 1)},
+    _ = (StructUpdateArg=Struct)#s{f = (StructUpdateVal = 2)},
+    _ = (StructFieldArg=Struct)#s.f,
+    {'ok',
+      Case,
+      If,
+      Receive,
+      %% TryOf, TryAfter,
+      BlockVar,
+      LocalCallArg,
+      RemoteCallArg,
+      DynRemoteCallArg,
+      UnaryOpArg,
+      RightBinaryOpArg, LeftBinaryOpArg,
+      AndAlsoLeftArg,
+      TupleArg,
+      ConsHeadArg, ConsTailArg,
+      MapVal,
+      MapUpdateVal, MapUpdateArg,
+      BinaryVal,
+      EnumVal,
+      ShapeVal,
+      ShapeUpdateVal, ShapeUpdateArg,
+      ShapeFieldArg,
+      StructVal,
+      StructUpdateVal, StructUpdateArg,
+      StructFieldArg
+    }.
+
+g(A) -> erlang:display(A).

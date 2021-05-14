@@ -1,0 +1,41 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(enum_mod04).
+
+-export_type([foo/0, bar/0, baz/0]).
+
+-export([expr/0, pattern/3, guard/3]).
+
+-enum foo :: (x).
+
+-enum bar :: (x{a :: integer(), b :: integer()}).
+
+-enum baz :: (x{a = #(id = 1) :: #( id :: integer() )}).
+
+-spec expr() -> {foo(), bar(), baz()}.
+expr() ->
+    {
+        ?MODULE:foo.x,
+        ?MODULE:bar.x{a = 1, b = 2},
+        ?MODULE:baz.x{}
+    }.
+
+-spec pattern(foo(), bar(), integer()) -> integer().
+pattern(?MODULE:foo.x, ?MODULE:bar.x{a = 1, b = B}, B) ->
+    B.
+
+-spec guard(foo(), bar(), number()) -> atom().
+guard(Value1, Value2, B) when Value1 =:= ?MODULE:foo.x, Value2 =:= ?MODULE:bar.x{a = 1, b = B} ->
+    'ok'.

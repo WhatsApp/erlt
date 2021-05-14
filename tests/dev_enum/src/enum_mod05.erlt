@@ -1,0 +1,33 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(enum_mod05).
+
+-export([expr/0, pattern/3, guard/3]).
+
+-spec expr() -> {enum_mod04:foo(), enum_mod04:bar(), enum_mod04:baz()}.
+expr() ->
+    {
+        enum_mod04:foo.x,
+        enum_mod04:bar.x{a = 1, b = 2},
+        enum_mod04:baz.x{}
+    }.
+
+-spec pattern(enum_mod04:foo(), enum_mod04:bar(), number()) -> number().
+pattern(enum_mod04:foo.x, enum_mod04:bar.x{a = 1, b = B}, B) ->
+    B.
+
+-spec guard(enum_mod04:foo(), enum_mod04:bar(), number()) -> atom().
+guard(Value1, Value2, B) when Value1 =:= enum_mod04:foo.x, Value2 =:= enum_mod04:bar.x{a = 1, b = B} ->
+    'ok'.

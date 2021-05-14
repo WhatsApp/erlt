@@ -1,0 +1,6 @@
+{description, "ErlT App"}.
+{variables, [
+    {name, "my_app", "Name of your app"}
+]}.
+{template, "app.template.src", "{{name}}/src/{{name}}.app.src"}.
+{template, "main.template.erlt", "{{name}}/src/{{name}}.erlt"}.

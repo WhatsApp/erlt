@@ -1,0 +1,32 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+
+-module(type_vars).
+
+-type x1(A, A) :: A.
+-type x2(_) :: integer().
+-type x3() :: _.
+
+-struct y1(A, A) :: (a :: A).
+-struct y2(_) :: (a :: integer()).
+-struct y3 :: (a :: _).
+
+-opaque z1(A, A) :: A.
+-opaque z2(_) :: integer().
+-opaque z3() :: _.
+
+-enum e1(A, A) :: (e{value :: A}).
+-enum e2(_) :: (e{value :: integer()}).
+-enum e3() :: (e{value :: _}).

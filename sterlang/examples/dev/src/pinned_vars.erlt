@@ -1,0 +1,82 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+-module(pinned_vars).
+-export([inferred_funs/0]).
+
+-struct my_struct(A) :: (id1 :: A, id2 :: A).
+-enum my_enum(A) :: (ctr{A, A}).
+
+t01(A, B) ->
+    case A of
+        ^B -> true
+    end.
+
+t02(A, B) ->
+    case A of
+        {^B} -> true
+    end.
+
+t03(A, B) ->
+    case A of
+        [^B] -> true
+    end.
+
+t04(A, B) ->
+    case A of
+        #(id = ^B) -> B + 10
+    end.
+
+t05(X, B, C) ->
+    case X of
+        #my_struct{id1 = ^B, id2 = ^C} -> B + C
+    end.
+
+t06(X, B, C) ->
+    case X of
+        my_enum.ctr{^B, ^C} -> B + C
+    end.
+
+t07(Binary, Elem1, Elem2) ->
+    case Binary of
+        <<^Elem1, ^Elem2:10/binary>> -> true
+    end.
+
+t08(Binary, Elem, Size) ->
+    case Binary of
+        <<^Size, ^Elem:Size/binary>> -> Size
+    end.
+
+t09(Binary) ->
+    case Binary of
+        <<Size, Elem:Size/binary>> -> {Size, Elem}
+    end.
+
+t10(X, Y) ->
+    ^X = Y.
+
+-spec inferred_funs() -> [term()].
+[unchecked]
+inferred_funs() -> [
+    fun t01/2,
+    fun t02/2,
+    fun t03/2,
+    fun t04/2,
+    fun t05/3,
+    fun t06/3,
+    fun t07/3,
+    fun t08/3,
+    fun t09/1,
+    fun t10/2
+].

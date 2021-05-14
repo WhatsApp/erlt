@@ -1,0 +1,17 @@
+unquoted_atom.erlt:19:9: bare enums (or unquoted atoms) are not supported
+%   19|         foo,
+%     |         ^^^
+
+unquoted_atom.erlt:20:9: bare enums (or unquoted atoms) are not supported
+%   20|         bar{}
+%     |         ^^^^^
+
+unquoted_atom.erlt:17:1: function foo/0 is unused
+%   16| 
+%   17| foo() ->
+%     | ^^^^^^^^
+%   18|     [
+%     | ...
+%   20|         bar{}
+%   21|     ].
+

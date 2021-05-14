@@ -1,0 +1,45 @@
+%% Copyright (c) Facebook, Inc. and its affiliates.
+%%
+%% Licensed under the Apache License, Version 2.0 (the "License");
+%% you may not use this file except in compliance with the License.
+%% You may obtain a copy of the License at
+%%
+%%     http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing, software
+%% distributed under the License is distributed on an "AS IS" BASIS,
+%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+%% See the License for the specific language governing permissions and
+%% limitations under the License.
+
+%% When changing run command below to update .defs required for this
+%%
+%%    _build/default/bin/erltc +defs -o examples/checks/deps/ examples/checks/src/remote_types.erlt
+%%
+
+-module(remote_types).
+
+-export_type([type/0, struct/0, enum/0, opaque/0, unchecked/0]).
+
+-type check_undefined_module() :: undefined_module:type().
+
+-type check_undefined_type() :: ?MODULE:undefined_type().
+
+-type check_wrong_arity() :: ?MODULE:type(integer()).
+
+-type check_private() :: ?MODULE:private().
+
+-type check_ok() :: {?MODULE:type(), ?MODULE:struct(), ?MODULE:enum(), ?MODULE:opaque(), ?MODULE:unchecked()}.
+
+-type type() :: integer().
+
+-struct struct() :: ().
+
+-enum enum() :: (x).
+
+-opaque opaque() :: integer().
+
+[unchecked, opaque]
+-type unchecked() :: term().
+
+-type private() :: integer().
